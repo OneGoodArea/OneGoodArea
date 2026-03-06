@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Search, ArrowRight, Loader2, MapPin, Activity, BarChart3, Zap } from "lucide-react";
-import { AreaReport, Intent } from "@/lib/types";
-import { ReportView } from "@/components/report-view";
+import { Intent } from "@/lib/types";
 import Link from "next/link";
 
 const intents: { value: Intent; label: string; desc: string; icon: typeof MapPin }[] = [
@@ -108,10 +108,10 @@ function LoadingState({ area }: { area: string }) {
 }
 
 export default function ReportPage() {
+  const router = useRouter();
   const [area, setArea] = useState("");
   const [intent, setIntent] = useState<Intent>("research");
   const [loading, setLoading] = useState(false);
-  const [report, setReport] = useState<AreaReport | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -120,7 +120,6 @@ export default function ReportPage() {
 
     setLoading(true);
     setError(null);
-    setReport(null);
 
     try {
       const res = await fetch("/api/report", {
@@ -132,10 +131,9 @@ export default function ReportPage() {
       if (!res.ok) throw new Error("Failed to generate report");
 
       const data = await res.json();
-      setReport(data.report);
+      router.push(`/report/${data.id}`);
     } catch {
       setError("Failed to generate report. Please try again.");
-    } finally {
       setLoading(false);
     }
   }
@@ -164,7 +162,7 @@ export default function ReportPage() {
       {/* ── Main ── */}
       <main className="flex-1 max-w-[1200px] w-full mx-auto px-6">
         {/* ── Form State ── */}
-        {!report && !loading && (
+        {!loading && (
           <div className="animate-fade-in py-10">
             <div className="max-w-xl">
               <div className="mb-8">
@@ -255,23 +253,6 @@ export default function ReportPage() {
 
         {/* ── Loading ── */}
         {loading && <LoadingState area={area} />}
-
-        {/* ── Report ── */}
-        {report && !loading && (
-          <div className="animate-fade-in py-8">
-            <button
-              onClick={() => { setReport(null); setArea(""); }}
-              className="text-[11px] font-mono mb-6 flex items-center gap-1.5 transition-colors"
-              style={{ color: "var(--text-tertiary)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-tertiary)")}
-            >
-              <ArrowRight size={11} className="rotate-180" />
-              New report
-            </button>
-            <ReportView report={report} />
-          </div>
-        )}
       </main>
 
       {/* ── Footer ── */}
