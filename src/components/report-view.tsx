@@ -70,7 +70,7 @@ function AnimatedNumber({ value, className, style }: { value: number; className?
 }
 
 /* ── Sub-score bar ── */
-function SubScoreBar({ label, score, summary, delay }: { label: string; score: number; summary: string; delay: number }) {
+function SubScoreBar({ label, score, weight, summary, delay }: { label: string; score: number; weight?: number; summary: string; delay: number }) {
   const [mounted, setMounted] = useState(false);
   const { color, dim, glow } = getRAG(score);
 
@@ -82,7 +82,14 @@ function SubScoreBar({ label, score, summary, delay }: { label: string; score: n
   return (
     <div className="animate-fade-in-up" style={{ animationDelay: `${delay}ms` }}>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[11px] font-mono" style={{ color: "var(--text-secondary)" }}>{label}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-mono" style={{ color: "var(--text-secondary)" }}>{label}</span>
+          {weight && (
+            <span className="text-[9px] font-mono px-1 py-px" style={{ color: "var(--text-tertiary)", background: "var(--bg)" }}>
+              {weight}%
+            </span>
+          )}
+        </div>
         <span className={`text-[13px] font-mono font-semibold ${glow}`} style={{ color }}>
           {mounted ? score : 0}
         </span>
@@ -182,7 +189,7 @@ export function ReportView({ report }: { report: AreaReport }) {
             Intelligence Score
           </span>
           <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>
-            {report.sub_scores.length} dimensions
+            {report.sub_scores.length} weighted dimensions
           </span>
         </div>
 
@@ -199,7 +206,7 @@ export function ReportView({ report }: { report: AreaReport }) {
 
             <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
               {report.sub_scores.map((sub, i) => (
-                <SubScoreBar key={sub.label} label={sub.label} score={sub.score} summary={sub.summary} delay={300 + i * 120} />
+                <SubScoreBar key={sub.label} label={sub.label} score={sub.score} weight={sub.weight} summary={sub.summary} delay={300 + i * 120} />
               ))}
             </div>
           </div>

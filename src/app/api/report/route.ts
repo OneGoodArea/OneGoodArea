@@ -90,13 +90,28 @@ You must respond with ONLY valid JSON matching this exact structure (no markdown
 {
   "area": "${area}",
   "intent": "${intent}",
-  "areaiq_score": <number 0-100>,
+  "areaiq_score": <number 0-100, this MUST be the weighted average of sub_scores using the weights below>,
   "sub_scores": [
-    { "label": "Safety", "score": <0-100>, "summary": "<1 sentence>" },
-    { "label": "Transport", "score": <0-100>, "summary": "<1 sentence>" },
-    { "label": "Amenities", "score": <0-100>, "summary": "<1 sentence>" },
-    { "label": "Demographics", "score": <0-100>, "summary": "<1 sentence>" },
-    { "label": "${intent === "business" ? "Commercial Viability" : intent === "investing" ? "Growth Potential" : intent === "moving" ? "Livability" : "Overall Quality"}", "score": <0-100>, "summary": "<1 sentence>" }
+${intent === "moving" ? `    { "label": "Safety & Crime", "score": <0-100>, "weight": 25, "summary": "<actionable: e.g. 'Lower crime than 70% of London boroughs — anti-social behaviour is the main concern'>" },
+    { "label": "Schools & Education", "score": <0-100>, "weight": 20, "summary": "<actionable: e.g. '3 Ofsted Outstanding schools within 1.5km — strong primary options'>" },
+    { "label": "Transport & Commute", "score": <0-100>, "weight": 20, "summary": "<actionable: e.g. '2 tube stations within walking distance — 25min to central London'>" },
+    { "label": "Daily Amenities", "score": <0-100>, "weight": 15, "summary": "<actionable: e.g. '4 supermarkets and 12 restaurants within 1km — well-served for daily needs'>" },
+    { "label": "Cost of Living", "score": <0-100>, "weight": 20, "summary": "<actionable: e.g. 'Council tax Band D £1,450/yr — average rent £1,800/mo for 2-bed'>" }`
+  : intent === "business" ? `    { "label": "Foot Traffic & Demand", "score": <0-100>, "weight": 30, "summary": "<actionable: e.g. '15,000 daily commuters through nearby station — strong lunch trade potential'>" },
+    { "label": "Competition Density", "score": <0-100>, "weight": 20, "summary": "<actionable: e.g. '8 similar businesses within 500m — moderate saturation'>" },
+    { "label": "Transport & Access", "score": <0-100>, "weight": 15, "summary": "<actionable: e.g. '3 bus routes and 1 tube station — good customer catchment'>" },
+    { "label": "Local Spending Power", "score": <0-100>, "weight": 20, "summary": "<actionable: e.g. 'IMD decile 7 — above-average household income in catchment'>" },
+    { "label": "Commercial Costs", "score": <0-100>, "weight": 15, "summary": "<actionable: e.g. 'Average commercial rent £45/sq ft — business rates £12k/yr'>" }`
+  : intent === "investing" ? `    { "label": "Price Growth", "score": <0-100>, "weight": 25, "summary": "<actionable: e.g. '12% price growth over 3 years — outperforming borough average'>" },
+    { "label": "Rental Yield", "score": <0-100>, "weight": 25, "summary": "<actionable: e.g. 'Gross yield 4.8% — £1,650/mo for average 2-bed at £410k'>" },
+    { "label": "Regeneration & Infrastructure", "score": <0-100>, "weight": 20, "summary": "<actionable: e.g. '£200M regeneration scheme approved — new Crossrail station opening 2026'>" },
+    { "label": "Tenant Demand", "score": <0-100>, "weight": 15, "summary": "<actionable: e.g. 'Average void period 8 days — strong demand from young professionals'>" },
+    { "label": "Risk Factors", "score": <0-100>, "weight": 15, "summary": "<actionable: e.g. '3 flood risk zones nearby — leasehold concentration above average'>" }`
+  : `    { "label": "Safety & Crime", "score": <0-100>, "weight": 20, "summary": "<actionable insight with specific data>" },
+    { "label": "Transport Links", "score": <0-100>, "weight": 20, "summary": "<actionable insight with specific data>" },
+    { "label": "Amenities & Services", "score": <0-100>, "weight": 20, "summary": "<actionable insight with specific data>" },
+    { "label": "Demographics & Economy", "score": <0-100>, "weight": 20, "summary": "<actionable insight with specific data>" },
+    { "label": "Environment & Quality", "score": <0-100>, "weight": 20, "summary": "<actionable insight with specific data>" }`}
   ],
   "summary": "<2-3 sentence executive summary of the area for this specific intent>",
   "sections": [
@@ -126,8 +141,8 @@ You must respond with ONLY valid JSON matching this exact structure (no markdown
 Requirements:
 - Include 4-6 sections relevant to the intent
 - Each section should have 2-5 data_points with realistic, specific values
-- The areaiq_score should reflect the overall suitability of this area for the stated intent
-- Sub-scores should be weighted appropriately for the intent
+- The areaiq_score MUST be the weighted average of sub_scores (use the weight field for each). Example: if scores are 70,60,80 with weights 30,50,20 → (70×30 + 60×50 + 80×20) / 100 = 67
+- Each sub_score summary MUST be actionable — include specific numbers, comparisons, or benchmarks. Never say "good" or "moderate" without data to back it up
 - Be specific to this exact area — reference real streets, landmarks, stations, local pubs, parks, and features by name
 - Use UK-specific data: council tax bands, Ofsted ratings (Outstanding/Good/Requires Improvement/Inadequate), police.uk crime categories, Land Registry price data, NHS services
 - All monetary values in GBP (£)

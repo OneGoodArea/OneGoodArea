@@ -3,6 +3,7 @@ export type Intent = "moving" | "business" | "investing" | "research";
 export interface SubScore {
   label: string;
   score: number;
+  weight: number;
   summary: string;
 }
 
