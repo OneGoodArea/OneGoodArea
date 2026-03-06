@@ -3,13 +3,20 @@ import { auth } from "@clerk/nextjs/server";
 import { anthropic } from "@/lib/anthropic";
 import { sql } from "@/lib/db";
 import { canGenerateReport } from "@/lib/usage";
+import { geocodeArea, GeocodedArea } from "@/lib/data-sources/postcodes";
+import { getCrimeData, formatCrimeDataForPrompt, CrimeSummary } from "@/lib/data-sources/police";
 import { AreaReport, Intent } from "@/lib/types";
 
 function generateId(): string {
   return `rpt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function buildPrompt(area: string, intent: Intent): string {
+function buildPrompt(
+  area: string,
+  intent: Intent,
+  geo: GeocodedArea | null,
+  crime: CrimeSummary | null
+): string {
   const intentContext: Record<Intent, string> = {
     moving:
       "The user is considering moving to this UK area. Focus on livability: police.uk crime stats, Ofsted school ratings, NHS GP/hospital access, parks and green spaces, public transport (TfL/National Rail/bus), council tax band, community feel, noise levels, and cost of living.",
@@ -20,6 +27,29 @@ function buildPrompt(area: string, intent: Intent): string {
     research:
       "The user wants a general understanding of this UK area. Provide a balanced overview: ONS demographics, local economy, police.uk crime data, amenities, public transport, culture, history, and notable characteristics.",
   };
+
+  // Build real data section
+  let realDataBlock = "";
+
+  if (geo) {
+    realDataBlock += `\n\nVERIFIED LOCATION DATA (Source: Postcodes.io):
+- Coordinates: ${geo.latitude}, ${geo.longitude}
+- Local Authority: ${geo.admin_district}
+- Region: ${geo.region}
+- Ward: ${geo.ward}
+- Parliamentary Constituency: ${geo.constituency}
+- Country: ${geo.country}
+- LSOA: ${geo.lsoa}
+- MSOA: ${geo.msoa}`;
+  }
+
+  if (crime) {
+    realDataBlock += `\n\n${formatCrimeDataForPrompt(crime)}`;
+  }
+
+  const dataInstructions = realDataBlock
+    ? `\n\nIMPORTANT: Real data has been provided below. You MUST use this real data in your analysis — incorporate the actual crime statistics, location metadata, and any other verified data into the relevant sections and data_points. Do not fabricate numbers that contradict the real data. Where real data is provided, use exact figures. Where no real data is available, provide reasonable estimates and note them as estimates.`
+    : "";
 
   return `You are AreaIQ, an expert UK area intelligence analyst. You specialise in UK neighbourhoods, postcodes, and districts. Produce a detailed, data-driven intelligence report for the following UK area and intent.
 
@@ -35,7 +65,7 @@ IMPORTANT: This platform is UK-only. All data references should use UK-specific 
 - Council tax bands where relevant
 
 AREA: ${area}
-INTENT: ${intentContext[intent]}
+INTENT: ${intentContext[intent]}${dataInstructions}${realDataBlock}
 
 You must respond with ONLY valid JSON matching this exact structure (no markdown, no code fences, no explanation):
 
@@ -65,6 +95,7 @@ You must respond with ONLY valid JSON matching this exact structure (no markdown
     "<actionable recommendation 2>",
     "<actionable recommendation 3>"
   ],
+  "data_sources": [${geo ? '"postcodes.io"' : ""}${geo && crime ? ", " : ""}${crime ? '"police.uk"' : ""}],
   "generated_at": "${new Date().toISOString()}"
 }
 
@@ -76,7 +107,8 @@ Requirements:
 - Be specific to this exact area — reference real streets, landmarks, stations, local pubs, parks, and features by name
 - Use UK-specific data: council tax bands, Ofsted ratings (Outstanding/Good/Requires Improvement/Inadequate), police.uk crime categories, Land Registry price data, NHS services
 - All monetary values in GBP (£)
-- All data should be realistic and grounded in UK context. If you are uncertain about a specific number, provide a reasonable estimate and note it
+- Where real data has been provided, use the exact figures in data_points and analysis${crime ? "\n- The Safety section MUST reference the real police.uk crime data provided — use actual category counts and percentages" : ""}
+- Where no real data is available, provide reasonable estimates and clearly note them as estimates
 - Recommendations should be specific, actionable, and UK-relevant (reference local councils, planning authorities, specific streets, etc.)
 - Do NOT reference non-UK data sources or frameworks`;
 }
@@ -114,13 +146,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Fetch real data in parallel
+    const geo = await geocodeArea(area);
+    const crime = geo ? await getCrimeData(geo.latitude, geo.longitude) : null;
+
+    console.log(`[AreaIQ] Data fetched for "${area}": geo=${!!geo}, crime=${crime?.total_crimes ?? 0} crimes`);
+
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 4096,
       messages: [
         {
           role: "user",
-          content: buildPrompt(area, intent),
+          content: buildPrompt(area, intent, geo, crime),
         },
       ],
     });

@@ -20,6 +20,7 @@ export interface AreaReport {
   summary: string;
   sections: ReportSection[];
   recommendations: string[];
+  data_sources?: string[];
   generated_at: string;
 }
 

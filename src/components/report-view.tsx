@@ -241,14 +241,32 @@ export function ReportView({ report }: { report: AreaReport }) {
       )}
 
       {/* ── Footer ── */}
-      <div className="mt-6 py-4 border-t flex items-center justify-between" style={{ borderColor: "var(--border)" }}>
+      <div className="mt-6 py-4 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-2" style={{ borderColor: "var(--border)" }}>
         <div className="flex items-center gap-3">
           <span className="text-[11px] font-semibold tracking-tight" style={{ color: "var(--text-tertiary)" }}>AreaIQ</span>
           <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>Intelligence Report</span>
         </div>
-        <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>
-          {new Date(report.generated_at).toLocaleString("en-GB")}
-        </span>
+        <div className="flex items-center gap-3">
+          {report.data_sources && report.data_sources.length > 0 && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-[9px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+                Sources:
+              </span>
+              {report.data_sources.map((src) => (
+                <span
+                  key={src}
+                  className="text-[9px] font-mono px-1.5 py-0.5"
+                  style={{ color: "var(--neon-green)", background: "var(--neon-green-dim)" }}
+                >
+                  {src}
+                </span>
+              ))}
+            </div>
+          )}
+          <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>
+            {new Date(report.generated_at).toLocaleString("en-GB")}
+          </span>
+        </div>
       </div>
     </div>
   );
