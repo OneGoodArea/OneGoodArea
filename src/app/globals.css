@@ -9,11 +9,26 @@
   --bg: #09090b;
   --bg-elevated: #0f0f12;
   --bg-hover: #16161a;
+  --bg-active: #1a1a20;
   --border: #1c1c22;
   --border-hover: #2a2a32;
+  --border-active: #3a3a44;
   --text-primary: #e4e4e8;
   --text-secondary: #8a8a96;
   --text-tertiary: #5a5a66;
+  --accent: #3b82f6;
+  --accent-dim: rgba(59, 130, 246, 0.08);
+
+  /* Neon RAG system */
+  --neon-green: #00ff88;
+  --neon-green-dim: rgba(0, 255, 136, 0.06);
+  --neon-green-glow: rgba(0, 255, 136, 0.15);
+  --neon-amber: #ffaa00;
+  --neon-amber-dim: rgba(255, 170, 0, 0.06);
+  --neon-amber-glow: rgba(255, 170, 0, 0.15);
+  --neon-red: #ff3344;
+  --neon-red-dim: rgba(255, 51, 68, 0.06);
+  --neon-red-glow: rgba(255, 51, 68, 0.15);
 }
 
 * {
@@ -32,7 +47,7 @@ body {
 }
 
 ::selection {
-  background: rgba(228, 228, 232, 0.12);
+  background: rgba(59, 130, 246, 0.2);
 }
 
 input, textarea, select {
@@ -40,16 +55,49 @@ input, textarea, select {
 }
 
 input:focus, select:focus {
-  border-color: var(--border-hover) !important;
+  border-color: var(--border-active) !important;
 }
 
+/* ── Grid background ── */
+.bg-grid {
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* ── Neon glow utilities ── */
+.neon-green-glow {
+  text-shadow: 0 0 6px var(--neon-green-glow), 0 0 20px rgba(0, 255, 136, 0.08);
+}
+
+.neon-amber-glow {
+  text-shadow: 0 0 6px var(--neon-amber-glow), 0 0 20px rgba(255, 170, 0, 0.08);
+}
+
+.neon-red-glow {
+  text-shadow: 0 0 6px var(--neon-red-glow), 0 0 20px rgba(255, 51, 68, 0.08);
+}
+
+.neon-dot {
+  box-shadow: 0 0 4px currentColor, 0 0 8px currentColor;
+}
+
+/* ── Animations ── */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes shimmer {
@@ -57,8 +105,66 @@ input:focus, select:focus {
   100% { background-position: 200% 0; }
 }
 
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-fade-in-up {
+  opacity: 0;
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.animate-slide-in {
+  opacity: 0;
+  animation: slideIn 0.3s ease-out forwards;
+}
+
 .animate-shimmer {
   background: linear-gradient(90deg, #0f0f12 25%, #1c1c22 50%, #0f0f12 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* ── Score ring ── */
+.score-ring {
+  transform: rotate(-90deg);
+}
+
+.score-ring-track {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 3;
+}
+
+.score-ring-fill {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: square;
+  transition: stroke-dashoffset 1s ease-out;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-hover);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-active);
 }
