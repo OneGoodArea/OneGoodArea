@@ -1,83 +1,219 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ArrowRight, BarChart3, Shield, Train, Users, Crosshair, Globe } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { ArrowRight, MapPin, TrendingUp, Building2, Search, ChevronRight, Zap } from "lucide-react";
 import Link from "next/link";
 
-function StatusTicker() {
-  const events = [
-    { area: "Shoreditch, London", score: 82 },
-    { area: "Didsbury, Manchester", score: 78 },
-    { area: "Clifton, Bristol", score: 75 },
-    { area: "Leith, Edinburgh", score: 71 },
-    { area: "Jesmond, Newcastle", score: 68 },
-    { area: "Moseley, Birmingham", score: 73 },
-    { area: "Headingley, Leeds", score: 66 },
-    { area: "Pontcanna, Cardiff", score: 70 },
-  ];
-  const [tick, setTick] = useState(0);
+/* ── Animated Score Ring ── */
+function HeroScoreRing({ score, label, size = 100 }: { score: number; label: string; size?: number }) {
+  const [mounted, setMounted] = useState(false);
+  const radius = (size - 6) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (score / 100) * circumference;
+  const color = score >= 70 ? "var(--neon-green)" : score >= 45 ? "var(--neon-amber)" : "var(--neon-red)";
+  const glow = score >= 70 ? "neon-green-glow" : score >= 45 ? "neon-amber-glow" : "neon-red-glow";
 
   useEffect(() => {
-    const interval = setInterval(() => setTick((t) => t + 1), 3000);
-    return () => clearInterval(interval);
+    const t = setTimeout(() => setMounted(true), 400);
+    return () => clearTimeout(t);
   }, []);
 
-  const event = events[tick % events.length];
-  const color = event.score >= 70 ? "var(--neon-green)" : event.score >= 45 ? "var(--neon-amber)" : "var(--neon-red)";
-
   return (
-    <div className="flex items-center gap-2 text-[11px] font-mono" style={{ color: "var(--text-tertiary)" }}>
-      <span className="inline-block w-1.5 h-1.5 rounded-full neon-dot" style={{ color: "var(--neon-green)", background: "var(--neon-green)" }} />
-      <span>{event.area}</span>
-      <span style={{ color: "var(--border-hover)" }}>/</span>
-      <span className="neon-green-glow" style={{ color }}>{event.score}</span>
+    <div className="flex flex-col items-center">
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg className="score-ring" width={size} height={size}>
+          <circle className="score-ring-track" cx={size / 2} cy={size / 2} r={radius} />
+          <circle
+            className="score-ring-fill"
+            cx={size / 2} cy={size / 2} r={radius}
+            stroke={color}
+            strokeDasharray={circumference}
+            strokeDashoffset={mounted ? offset : circumference}
+            style={{ filter: `drop-shadow(0 0 6px ${color})` }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className={`text-[24px] font-mono font-bold ${glow}`} style={{ color }}>
+            {mounted ? score : 0}
+          </span>
+        </div>
+      </div>
+      <span className="text-[10px] font-mono mt-2" style={{ color: "var(--text-tertiary)" }}>{label}</span>
     </div>
   );
 }
 
-function NeonScore({ score }: { score: number }) {
-  const color = score >= 70 ? "var(--neon-green)" : score >= 45 ? "var(--neon-amber)" : "var(--neon-red)";
-  const glowClass = score >= 70 ? "neon-green-glow" : score >= 45 ? "neon-amber-glow" : "neon-red-glow";
+/* ── Animated Counter ── */
+function Counter({ end, suffix = "" }: { end: number; suffix?: string }) {
+  const [val, setVal] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          const start = performance.now();
+          function tick(now: number) {
+            const p = Math.min((now - start) / 1200, 1);
+            const eased = 1 - Math.pow(1 - p, 3);
+            setVal(Math.round(end * eased));
+            if (p < 1) requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [end]);
+
+  return <span ref={ref}>{val}{suffix}</span>;
+}
+
+/* ── Typing Effect ── */
+function TypingText({ texts }: { texts: string[] }) {
+  const [index, setIndex] = useState(0);
+  const [charIndex, setCharIndex] = useState(0);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    const text = texts[index];
+    if (!deleting && charIndex < text.length) {
+      const t = setTimeout(() => setCharIndex((c) => c + 1), 60);
+      return () => clearTimeout(t);
+    } else if (!deleting && charIndex === text.length) {
+      const t = setTimeout(() => setDeleting(true), 2000);
+      return () => clearTimeout(t);
+    } else if (deleting && charIndex > 0) {
+      const t = setTimeout(() => setCharIndex((c) => c - 1), 30);
+      return () => clearTimeout(t);
+    } else if (deleting && charIndex === 0) {
+      setDeleting(false);
+      setIndex((i) => (i + 1) % texts.length);
+    }
+  }, [charIndex, deleting, index, texts]);
+
   return (
-    <span className={`font-mono font-bold ${glowClass}`} style={{ color }}>{score}</span>
+    <span>
+      {texts[index].slice(0, charIndex)}
+      <span className="animate-blink" style={{ color: "var(--accent)" }}>|</span>
+    </span>
+  );
+}
+
+/* ── Mock Sub-Score Bar ── */
+function MockBar({ label, score, weight, delay }: { label: string; score: number; weight: number; delay: number }) {
+  const [mounted, setMounted] = useState(false);
+  const color = score >= 70 ? "var(--neon-green)" : score >= 45 ? "var(--neon-amber)" : "var(--neon-red)";
+  const dim = score >= 70 ? "var(--neon-green-dim)" : score >= 45 ? "var(--neon-amber-dim)" : "var(--neon-red-dim)";
+  const glow = score >= 70 ? "neon-green-glow" : score >= 45 ? "neon-amber-glow" : "neon-red-glow";
+
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), delay);
+    return () => clearTimeout(t);
+  }, [delay]);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] font-mono" style={{ color: "var(--text-secondary)" }}>{label}</span>
+          <span className="text-[8px] font-mono px-1" style={{ color: "var(--text-tertiary)", background: "var(--bg)" }}>{weight}%</span>
+        </div>
+        <span className={`text-[11px] font-mono font-semibold ${glow}`} style={{ color }}>{mounted ? score : 0}</span>
+      </div>
+      <div className="h-1 w-full" style={{ background: dim }}>
+        <div className="h-full transition-all duration-700 ease-out" style={{ width: mounted ? `${score}%` : "0%", background: color }} />
+      </div>
+    </div>
+  );
+}
+
+/* ── Data Source Badge ── */
+function SourceBadge({ name, live }: { name: string; live?: boolean }) {
+  return (
+    <div className="flex items-center gap-1.5 px-2.5 py-1.5 border" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
+      {live && <span className="w-1.5 h-1.5 rounded-full neon-dot" style={{ color: "var(--neon-green)", background: "var(--neon-green)" }} />}
+      <span className="text-[10px] font-mono" style={{ color: "var(--text-secondary)" }}>{name}</span>
+    </div>
   );
 }
 
 export default function Home() {
+  const [activeIntent, setActiveIntent] = useState(0);
+
+  const intentData = [
+    {
+      label: "Moving", icon: MapPin, area: "Clapham, London",
+      scores: [
+        { label: "Safety & Crime", score: 72, weight: 25 },
+        { label: "Schools & Education", score: 68, weight: 20 },
+        { label: "Transport & Commute", score: 88, weight: 20 },
+        { label: "Daily Amenities", score: 81, weight: 15 },
+        { label: "Cost of Living", score: 45, weight: 20 },
+      ],
+      overall: 69,
+    },
+    {
+      label: "Business", icon: Building2, area: "Clapham, London",
+      scores: [
+        { label: "Foot Traffic & Demand", score: 84, weight: 30 },
+        { label: "Competition Density", score: 42, weight: 20 },
+        { label: "Transport & Access", score: 88, weight: 15 },
+        { label: "Local Spending Power", score: 76, weight: 20 },
+        { label: "Commercial Costs", score: 38, weight: 15 },
+      ],
+      overall: 67,
+    },
+    {
+      label: "Investing", icon: TrendingUp, area: "Clapham, London",
+      scores: [
+        { label: "Price Growth", score: 71, weight: 25 },
+        { label: "Rental Yield", score: 58, weight: 25 },
+        { label: "Regeneration", score: 65, weight: 20 },
+        { label: "Tenant Demand", score: 82, weight: 15 },
+        { label: "Risk Factors", score: 61, weight: 15 },
+      ],
+      overall: 67,
+    },
+    {
+      label: "Research", icon: Search, area: "Clapham, London",
+      scores: [
+        { label: "Safety & Crime", score: 72, weight: 20 },
+        { label: "Transport Links", score: 88, weight: 20 },
+        { label: "Amenities & Services", score: 81, weight: 20 },
+        { label: "Demographics", score: 74, weight: 20 },
+        { label: "Environment", score: 69, weight: 20 },
+      ],
+      overall: 77,
+    },
+  ];
+
+  useEffect(() => {
+    const t = setInterval(() => setActiveIntent((i) => (i + 1) % 4), 5000);
+    return () => clearInterval(t);
+  }, []);
+
+  const current = intentData[activeIntent];
+
   return (
     <div className="min-h-screen bg-grid">
       {/* ── Header ── */}
       <header className="border-b" style={{ borderColor: "var(--border)" }}>
         <div className="max-w-[1200px] mx-auto px-6 h-12 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-[13px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
-              AreaIQ
-            </span>
-            <span
-              className="text-[10px] font-mono px-1.5 py-0.5 border"
-              style={{ color: "var(--text-tertiary)", borderColor: "var(--border)", background: "var(--bg-elevated)" }}
-            >
+            <span className="text-[13px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>AreaIQ</span>
+            <span className="text-[10px] font-mono px-1.5 py-0.5 border" style={{ color: "var(--text-tertiary)", borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
               BETA
             </span>
           </div>
           <div className="flex items-center gap-4 md:gap-6">
-            <div className="hidden md:block">
-              <StatusTicker />
-            </div>
-            <Link
-              href="/pricing"
-              className="hidden sm:block text-[11px] font-mono uppercase tracking-wide transition-colors hover:opacity-80"
-              style={{ color: "var(--text-tertiary)" }}
-            >
-              Pricing
-            </Link>
-            <Link
-              href="/report"
-              className="h-8 px-4 flex items-center gap-2 text-[11px] font-mono font-medium uppercase tracking-wide transition-colors"
-              style={{ background: "var(--text-primary)", color: "var(--bg)" }}
-            >
-              Launch App
-              <ArrowRight size={12} />
+            <Link href="/docs" className="hidden sm:block text-[11px] font-mono uppercase tracking-wide transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>API</Link>
+            <Link href="/pricing" className="hidden sm:block text-[11px] font-mono uppercase tracking-wide transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>Pricing</Link>
+            <Link href="/report" className="h-8 px-4 flex items-center gap-2 text-[11px] font-mono font-medium uppercase tracking-wide" style={{ background: "var(--text-primary)", color: "var(--bg)" }}>
+              Launch App <ArrowRight size={12} />
             </Link>
           </div>
         </div>
@@ -85,170 +221,415 @@ export default function Home() {
 
       {/* ── Hero ── */}
       <section className="border-b" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-[1200px] mx-auto px-6 py-12 md:py-20">
-          <div className="max-w-2xl">
-            <div className="text-[10px] font-mono uppercase tracking-wider mb-4" style={{ color: "var(--text-tertiary)" }}>
-              AI-Powered Area Intelligence — UK
+        <div className="max-w-[1200px] mx-auto px-6 py-16 md:py-24">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_400px] gap-12 items-center">
+            <div>
+              <div className="flex items-center gap-2 mb-5">
+                <span className="inline-block w-1.5 h-1.5 rounded-full neon-dot" style={{ color: "var(--neon-green)", background: "var(--neon-green)" }} />
+                <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+                  5 live data sources &bull; UK coverage
+                </span>
+              </div>
+              <h1 className="text-[32px] md:text-[46px] font-semibold tracking-tight leading-[1.06] mb-5" style={{ color: "var(--text-primary)" }}>
+                Area intelligence<br />for{" "}
+                <span style={{ color: "var(--accent)" }}>
+                  <TypingText texts={["moving home", "opening a business", "property investing", "market research"]} />
+                </span>
+              </h1>
+              <p className="text-[15px] leading-relaxed mb-8 max-w-lg" style={{ color: "var(--text-secondary)" }}>
+                Enter any UK neighbourhood or postcode. Get a scored intelligence report grounded in real government data — crime stats, deprivation indices, amenities, flood risk — in seconds, not hours.
+              </p>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <Link href="/report" className="h-12 px-8 flex items-center gap-2 text-[12px] font-mono font-medium uppercase tracking-wide transition-colors" style={{ background: "var(--text-primary)", color: "var(--bg)" }}>
+                  Generate a Report <ArrowRight size={13} />
+                </Link>
+                <span className="text-[11px] font-mono" style={{ color: "var(--text-tertiary)" }}>
+                  Free — no card required
+                </span>
+              </div>
             </div>
-            <h1 className="text-[28px] md:text-[42px] font-semibold tracking-tight leading-[1.08] mb-5" style={{ color: "var(--text-primary)" }}>
-              Know any area<br />in the UK. Instantly.
-            </h1>
-            <p className="text-[15px] leading-relaxed mb-8 max-w-lg" style={{ color: "var(--text-secondary)" }}>
-              Enter any UK neighbourhood, postcode, or area — and your intent. Get a scored,
-              structured intelligence report with demographics, safety, transport, amenities,
-              and actionable recommendations — in seconds, not hours.
-            </p>
-            <div className="flex items-center gap-4">
-              <Link
-                href="/report"
-                className="h-11 px-7 flex items-center gap-2 text-[12px] font-mono font-medium uppercase tracking-wide transition-colors"
-                style={{ background: "var(--text-primary)", color: "var(--bg)" }}
-              >
-                Generate a Report
-                <ArrowRight size={13} />
-              </Link>
-              <span className="text-[11px] font-mono" style={{ color: "var(--text-tertiary)" }}>
-                Free tier — 3 reports/month
-              </span>
+
+            {/* Hero illustration — Mini report card */}
+            <div className="hidden md:block">
+              <div className="border animate-fade-in-up" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
+                <div className="px-4 py-2 border-b flex items-center justify-between" style={{ borderColor: "var(--border)" }}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>Intelligence Report</span>
+                  </div>
+                  <span className="text-[9px] font-mono px-1.5 py-0.5" style={{ color: "var(--accent)", background: "var(--accent-dim)" }}>LIVE</span>
+                </div>
+                <div className="p-5">
+                  <div className="flex items-start gap-5">
+                    <HeroScoreRing score={74} label="AreaIQ Score" size={90} />
+                    <div className="flex-1 space-y-2.5 pt-1">
+                      <MockBar label="Safety & Crime" score={72} weight={25} delay={600} />
+                      <MockBar label="Transport" score={88} weight={20} delay={750} />
+                      <MockBar label="Amenities" score={81} weight={15} delay={900} />
+                      <MockBar label="Demographics" score={68} weight={20} delay={1050} />
+                      <MockBar label="Livability" score={62} weight={20} delay={1200} />
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-3 border-t" style={{ borderColor: "var(--border)" }}>
+                    <div className="text-[11px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
+                      &quot;Strong transport links with 2 tube stations within 800m. Anti-social behaviour accounts for 28% of reported crime. 4 Ofsted-rated Good schools within 1.5km...&quot;
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── RAG Score Example ── */}
+      {/* ── Data Sources Strip ── */}
       <section className="border-b" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-[1200px] mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px -mx-6" style={{ background: "var(--border)" }}>
-            {[
-              { area: "Shoreditch, London", intent: "Business", score: 82, verdict: "Strong opportunity" },
-              { area: "Peckham, London", intent: "Investing", score: 54, verdict: "Moderate risk" },
-              { area: "Rural Somerset", intent: "Business", score: 28, verdict: "High risk" },
-            ].map((item) => {
-              const color = item.score >= 70 ? "var(--neon-green)" : item.score >= 45 ? "var(--neon-amber)" : "var(--neon-red)";
-              const dimColor = item.score >= 70 ? "var(--neon-green-dim)" : item.score >= 45 ? "var(--neon-amber-dim)" : "var(--neon-red-dim)";
-              const glowClass = item.score >= 70 ? "neon-green-glow" : item.score >= 45 ? "neon-amber-glow" : "neon-red-glow";
-              return (
-                <div key={item.area} className="px-6 py-6" style={{ background: "var(--bg-elevated)" }}>
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <div className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>{item.area}</div>
-                      <div className="text-[10px] font-mono uppercase mt-0.5" style={{ color: "var(--text-tertiary)" }}>{item.intent}</div>
-                    </div>
-                    <div className={`text-[28px] font-mono font-bold ${glowClass}`} style={{ color }}>
-                      {item.score}
-                    </div>
-                  </div>
-                  <div className="h-1.5 w-full mb-2" style={{ background: dimColor }}>
-                    <div className="h-full" style={{ width: `${item.score}%`, background: color }} />
-                  </div>
-                  <div className="text-[10px] font-mono" style={{ color }}>{item.verdict}</div>
-                </div>
-              );
-            })}
+        <div className="max-w-[1200px] mx-auto px-6 py-5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+            <span className="text-[9px] font-mono uppercase tracking-wider shrink-0" style={{ color: "var(--text-tertiary)" }}>
+              Powered by real data
+            </span>
+            <div className="flex flex-wrap gap-2">
+              <SourceBadge name="Police.uk" live />
+              <SourceBadge name="ONS / IMD 2019" live />
+              <SourceBadge name="OpenStreetMap" live />
+              <SourceBadge name="Environment Agency" live />
+              <SourceBadge name="Postcodes.io" live />
+            </div>
           </div>
         </div>
       </section>
 
       {/* ── How It Works ── */}
       <section className="border-b" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-[1200px] mx-auto px-6 py-16">
-          <div className="text-[10px] font-mono uppercase tracking-wider mb-8" style={{ color: "var(--text-tertiary)" }}>
-            How It Works
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px" style={{ background: "var(--border)" }}>
+        <div className="max-w-[1200px] mx-auto px-6 py-16 md:py-20">
+          <div className="text-[10px] font-mono uppercase tracking-wider mb-2" style={{ color: "var(--text-tertiary)" }}>How It Works</div>
+          <h2 className="text-[22px] md:text-[28px] font-semibold tracking-tight mb-10" style={{ color: "var(--text-primary)" }}>
+            From postcode to intelligence in seconds
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-px" style={{ background: "var(--border)" }}>
             {[
-              { step: "01", title: "Enter an area", desc: "Type any UK location — a neighbourhood, postcode, city district, or address. Full UK coverage." },
-              { step: "02", title: "Choose your intent", desc: "Moving, opening a business, investing, or general research. The same area produces different intelligence for different goals." },
-              { step: "03", title: "Get your report", desc: "AI agent researches in real-time: demographics, safety, transport, amenities, competition. Scored, structured, actionable." },
+              {
+                step: "01", title: "Enter a location",
+                desc: "Any UK postcode, neighbourhood, or area name",
+                visual: (
+                  <div className="border px-3 py-2 flex items-center gap-2 mt-3" style={{ borderColor: "var(--border-hover)", background: "var(--bg)" }}>
+                    <MapPin size={12} style={{ color: "var(--text-tertiary)" }} />
+                    <span className="text-[11px] font-mono" style={{ color: "var(--text-secondary)" }}>Shoreditch, London</span>
+                  </div>
+                ),
+              },
+              {
+                step: "02", title: "Choose your intent",
+                desc: "Moving, business, investing, or research",
+                visual: (
+                  <div className="grid grid-cols-2 gap-1 mt-3">
+                    {["Moving", "Business", "Investing", "Research"].map((i, idx) => (
+                      <div key={i} className="px-2 py-1.5 text-center text-[9px] font-mono uppercase" style={{ background: idx === 0 ? "var(--accent-dim)" : "var(--bg)", color: idx === 0 ? "var(--accent)" : "var(--text-tertiary)", border: `1px solid ${idx === 0 ? "var(--accent)" : "var(--border)"}` }}>
+                        {i}
+                      </div>
+                    ))}
+                  </div>
+                ),
+              },
+              {
+                step: "03", title: "Real data is fetched",
+                desc: "5 UK APIs queried in parallel — crime, deprivation, amenities, flood risk, geocoding",
+                visual: (
+                  <div className="space-y-1 mt-3">
+                    {["police.uk", "ONS IMD", "OpenStreetMap", "Env. Agency", "postcodes.io"].map((s, i) => (
+                      <div key={s} className="flex items-center gap-1.5">
+                        <span className="w-1 h-1 rounded-full" style={{ background: "var(--neon-green)", animationDelay: `${i * 200}ms` }} />
+                        <span className="text-[9px] font-mono" style={{ color: "var(--text-tertiary)" }}>{s}</span>
+                      </div>
+                    ))}
+                  </div>
+                ),
+              },
+              {
+                step: "04", title: "AI analyses & scores",
+                desc: "Claude synthesises all data into a weighted, actionable report",
+                visual: (
+                  <div className="mt-3 flex items-center gap-3">
+                    <div className="relative w-10 h-10">
+                      <svg className="score-ring" width={40} height={40}>
+                        <circle className="score-ring-track" cx={20} cy={20} r={17} />
+                        <circle className="score-ring-fill" cx={20} cy={20} r={17} stroke="var(--neon-green)" strokeDasharray={106.8} strokeDashoffset={26.7} style={{ filter: "drop-shadow(0 0 4px var(--neon-green))" }} />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-[11px] font-mono font-bold neon-green-glow" style={{ color: "var(--neon-green)" }}>74</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-mono font-medium" style={{ color: "var(--text-primary)" }}>AreaIQ Score</div>
+                      <div className="text-[9px] font-mono" style={{ color: "var(--neon-green)" }}>Strong</div>
+                    </div>
+                  </div>
+                ),
+              },
             ].map((item) => (
               <div key={item.step} className="p-6" style={{ background: "var(--bg-elevated)" }}>
-                <div className="text-[11px] font-mono mb-3" style={{ color: "var(--accent)" }}>{item.step}</div>
-                <div className="text-[14px] font-semibold mb-2" style={{ color: "var(--text-primary)" }}>{item.title}</div>
-                <div className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{item.desc}</div>
+                <div className="text-[11px] font-mono mb-2" style={{ color: "var(--accent)" }}>{item.step}</div>
+                <div className="text-[14px] font-semibold mb-1.5" style={{ color: "var(--text-primary)" }}>{item.title}</div>
+                <div className="text-[11px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>{item.desc}</div>
+                {item.visual}
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Intelligence Dimensions ── */}
+      {/* ── Intent Showcase — Interactive ── */}
       <section className="border-b" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-[1200px] mx-auto px-6 py-16">
+        <div className="max-w-[1200px] mx-auto px-6 py-16 md:py-20">
           <div className="text-[10px] font-mono uppercase tracking-wider mb-2" style={{ color: "var(--text-tertiary)" }}>
-            Intelligence Dimensions
+            Intent-Driven Intelligence
           </div>
-          <div className="text-[15px] mb-8 max-w-lg" style={{ color: "var(--text-secondary)" }}>
-            Every report scores across 5 dimensions, weighted by your intent.
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-px" style={{ background: "var(--border)" }}>
-            {[
-              { icon: Shield, label: "Safety", desc: "Police.uk crime data, incident types, neighbourhood safety ratings" },
-              { icon: Train, label: "Transport", desc: "TfL, National Rail, bus routes, walk scores, cycling infrastructure" },
-              { icon: Globe, label: "Amenities", desc: "Shops, restaurants, NHS services, parks, fitness, nightlife" },
-              { icon: Users, label: "Demographics", desc: "ONS census data: population, age, income, education, diversity" },
-              { icon: Crosshair, label: "Intent-Specific", desc: "Livability, commercial viability, growth potential, or overall quality" },
-            ].map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.label} className="p-5" style={{ background: "var(--bg-elevated)" }}>
-                  <Icon size={16} className="mb-3" style={{ color: "var(--text-tertiary)" }} />
-                  <div className="text-[12px] font-medium mb-1.5" style={{ color: "var(--text-primary)" }}>{item.label}</div>
-                  <div className="text-[11px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>{item.desc}</div>
+          <h2 className="text-[22px] md:text-[28px] font-semibold tracking-tight mb-3" style={{ color: "var(--text-primary)" }}>
+            Same area. Different intent. Different intelligence.
+          </h2>
+          <p className="text-[14px] mb-8 max-w-lg" style={{ color: "var(--text-secondary)" }}>
+            A family moving and an investor evaluating the same postcode need completely different data. AreaIQ adapts scoring dimensions and weights to your purpose.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-px" style={{ background: "var(--border)" }}>
+            {/* Intent selector */}
+            <div style={{ background: "var(--bg-elevated)" }}>
+              {intentData.map((intent, i) => {
+                const Icon = intent.icon;
+                const isActive = i === activeIntent;
+                return (
+                  <button
+                    key={intent.label}
+                    onClick={() => setActiveIntent(i)}
+                    className="w-full px-5 py-4 flex items-center gap-3 border-b transition-colors text-left"
+                    style={{ borderColor: "var(--border)", background: isActive ? "var(--bg-active)" : "transparent" }}
+                  >
+                    <Icon size={14} style={{ color: isActive ? "var(--accent)" : "var(--text-tertiary)" }} />
+                    <span className="text-[12px] font-medium" style={{ color: isActive ? "var(--text-primary)" : "var(--text-tertiary)" }}>
+                      {intent.label}
+                    </span>
+                    {isActive && <ChevronRight size={12} className="ml-auto" style={{ color: "var(--accent)" }} />}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Score visualization */}
+            <div className="p-6" style={{ background: "var(--bg-elevated)" }}>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>{current.area}</span>
+                <span className="text-[10px] font-mono uppercase px-1.5 py-0.5" style={{ color: "var(--accent)", background: "var(--accent-dim)" }}>{current.label}</span>
+              </div>
+              <div className="text-[11px] font-mono mb-5" style={{ color: "var(--text-tertiary)" }}>
+                5 weighted dimensions — score reflects suitability for this specific intent
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start gap-6">
+                <HeroScoreRing score={current.overall} label="Overall" size={100} />
+                <div className="flex-1 w-full space-y-3">
+                  {current.scores.map((s, i) => (
+                    <MockBar key={`${activeIntent}-${s.label}`} label={s.label} score={s.score} weight={s.weight} delay={i * 100} />
+                  ))}
                 </div>
-              );
-            })}
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── Intent Types ── */}
+      {/* ── Stats ── */}
       <section className="border-b" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-[1200px] mx-auto px-6 py-16">
-          <div className="text-[10px] font-mono uppercase tracking-wider mb-2" style={{ color: "var(--text-tertiary)" }}>
-            Intent-Driven Reports
-          </div>
-          <div className="text-[15px] mb-8 max-w-lg" style={{ color: "var(--text-secondary)" }}>
-            The same area produces completely different intelligence based on your purpose.
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-px" style={{ background: "var(--border)" }}>
+        <div className="max-w-[1200px] mx-auto px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-px -mx-6" style={{ background: "var(--border)" }}>
             {[
-              { label: "Moving", data: "Safety, Ofsted school ratings, NHS access, parks, transport links, council tax, community feel" },
-              { label: "Business", data: "Foot traffic, competition density, commercial rent, local demographics, spending power, high street health" },
-              { label: "Investing", data: "Land Registry price trends, rental yields, regeneration zones, planning applications, growth signals" },
-              { label: "Research", data: "ONS demographics, local economy, crime stats, amenities, transport, culture, area character" },
-            ].map((item) => (
-              <div key={item.label} className="p-5" style={{ background: "var(--bg-elevated)" }}>
-                <div className="text-[12px] font-semibold mb-2" style={{ color: "var(--text-primary)" }}>{item.label}</div>
-                <div className="text-[11px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>{item.data}</div>
+              { value: 5, suffix: "", label: "Live data sources" },
+              { value: 32844, suffix: "", label: "LSOAs covered" },
+              { value: 4, suffix: "", label: "Intent types" },
+              { value: 100, suffix: "%", label: "UK coverage" },
+            ].map((stat) => (
+              <div key={stat.label} className="px-6 py-8 text-center" style={{ background: "var(--bg-elevated)" }}>
+                <div className="text-[28px] md:text-[36px] font-mono font-bold tracking-tight neon-green-glow" style={{ color: "var(--neon-green)" }}>
+                  <Counter end={stat.value} suffix={stat.suffix} />
+                </div>
+                <div className="text-[10px] font-mono uppercase tracking-wider mt-1" style={{ color: "var(--text-tertiary)" }}>
+                  {stat.label}
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Pricing Preview ── */}
+      {/* ── Comparison Feature ── */}
       <section className="border-b" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-[1200px] mx-auto px-6 py-16">
-          <div className="text-[10px] font-mono uppercase tracking-wider mb-2" style={{ color: "var(--text-tertiary)" }}>
-            Pricing
+        <div className="max-w-[1200px] mx-auto px-6 py-16 md:py-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="text-[10px] font-mono uppercase tracking-wider mb-2" style={{ color: "var(--text-tertiary)" }}>Compare Areas</div>
+              <h2 className="text-[22px] md:text-[28px] font-semibold tracking-tight mb-4" style={{ color: "var(--text-primary)" }}>
+                Side-by-side<br />intelligence comparison
+              </h2>
+              <p className="text-[14px] leading-relaxed mb-6" style={{ color: "var(--text-secondary)" }}>
+                Deciding between two areas? Compare them directly — see which one scores higher across every dimension, with clear winner indicators and weighted breakdowns.
+              </p>
+              <Link href="/report" className="inline-flex items-center gap-2 text-[12px] font-mono font-medium" style={{ color: "var(--accent)" }}>
+                Try it free <ArrowRight size={12} />
+              </Link>
+            </div>
+
+            {/* Mock comparison illustration */}
+            <div className="border" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
+              <div className="px-4 py-2 border-b" style={{ borderColor: "var(--border)" }}>
+                <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>Area Comparison</span>
+              </div>
+              <div className="p-5">
+                <div className="grid grid-cols-2 gap-6 mb-5">
+                  <div className="text-center">
+                    <div className="text-[24px] font-mono font-bold neon-green-glow" style={{ color: "var(--neon-green)" }}>78</div>
+                    <div className="text-[11px] font-medium mt-1" style={{ color: "var(--text-primary)" }}>Clapham</div>
+                    <div className="text-[9px] font-mono" style={{ color: "var(--text-tertiary)" }}>Moving</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-[24px] font-mono font-bold neon-amber-glow" style={{ color: "var(--neon-amber)" }}>62</div>
+                    <div className="text-[11px] font-medium mt-1" style={{ color: "var(--text-primary)" }}>Brixton</div>
+                    <div className="text-[9px] font-mono" style={{ color: "var(--text-tertiary)" }}>Moving</div>
+                  </div>
+                </div>
+                {[
+                  { label: "Safety", a: 74, b: 52 },
+                  { label: "Schools", a: 68, b: 58 },
+                  { label: "Transport", a: 82, b: 85 },
+                  { label: "Amenities", a: 79, b: 72 },
+                  { label: "Cost", a: 45, b: 62 },
+                ].map((row) => {
+                  const colorA = row.a >= 70 ? "var(--neon-green)" : row.a >= 45 ? "var(--neon-amber)" : "var(--neon-red)";
+                  const colorB = row.b >= 70 ? "var(--neon-green)" : row.b >= 45 ? "var(--neon-amber)" : "var(--neon-red)";
+                  return (
+                    <div key={row.label} className="flex items-center gap-2 py-1.5">
+                      <span className="text-[10px] font-mono w-16 shrink-0" style={{ color: "var(--text-tertiary)" }}>{row.label}</span>
+                      <div className="flex-1 flex gap-1">
+                        <div className="flex-1 h-1" style={{ background: "var(--border)" }}>
+                          <div className="h-full" style={{ width: `${row.a}%`, background: colorA }} />
+                        </div>
+                        <div className="flex-1 h-1" style={{ background: "var(--border)" }}>
+                          <div className="h-full" style={{ width: `${row.b}%`, background: colorB }} />
+                        </div>
+                      </div>
+                      <div className="flex gap-2 w-14">
+                        <span className="text-[10px] font-mono font-semibold" style={{ color: colorA }}>{row.a}</span>
+                        <span className="text-[10px] font-mono font-semibold" style={{ color: colorB }}>{row.b}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div className="mt-3 pt-3 border-t text-center" style={{ borderColor: "var(--border)" }}>
+                  <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>
+                    <span className="neon-green-glow" style={{ color: "var(--neon-green)" }}>Clapham</span> wins 3/5 dimensions
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="text-[15px] mb-8 max-w-lg" style={{ color: "var(--text-secondary)" }}>
-            Start free. Upgrade when you need more.
+        </div>
+      </section>
+
+      {/* ── API Section ── */}
+      <section className="border-b" style={{ borderColor: "var(--border)" }}>
+        <div className="max-w-[1200px] mx-auto px-6 py-16 md:py-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            {/* Code block */}
+            <div className="border order-2 md:order-1" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
+              <div className="px-4 py-2 border-b flex items-center gap-2" style={{ borderColor: "var(--border)" }}>
+                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5" style={{ color: "var(--bg)", background: "var(--neon-green)" }}>POST</span>
+                <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>/api/v1/report</span>
+              </div>
+              <pre className="p-4 text-[11px] font-mono leading-relaxed overflow-x-auto" style={{ color: "var(--text-secondary)" }}>
+{`curl -X POST /api/v1/report \\
+  -H "Authorization: Bearer aiq_..." \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "area": "Shoreditch",
+    "intent": "business"
+  }'`}
+              </pre>
+              <div className="px-4 py-2 border-t flex items-center gap-2" style={{ borderColor: "var(--border)" }}>
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--neon-green)" }} />
+                <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>200 OK &bull; ~12s</span>
+              </div>
+            </div>
+
+            <div className="order-1 md:order-2">
+              <div className="flex items-center gap-2 mb-2">
+                <Zap size={14} style={{ color: "var(--accent)" }} />
+                <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>REST API</span>
+              </div>
+              <h2 className="text-[22px] md:text-[28px] font-semibold tracking-tight mb-4" style={{ color: "var(--text-primary)" }}>
+                Embed intelligence<br />into any product
+              </h2>
+              <p className="text-[14px] leading-relaxed mb-4" style={{ color: "var(--text-secondary)" }}>
+                Property listings. CRM tools. Relocation platforms. Insurance risk models. One API call returns a complete area intelligence report with scored dimensions and real data.
+              </p>
+              <div className="flex flex-wrap gap-2 mb-6">
+                {["Property Sites", "Franchise Tools", "Relocation", "Insurance", "Marketing"].map((use) => (
+                  <span key={use} className="text-[9px] font-mono uppercase tracking-wider px-2 py-1 border" style={{ color: "var(--text-tertiary)", borderColor: "var(--border)" }}>
+                    {use}
+                  </span>
+                ))}
+              </div>
+              <Link href="/docs" className="inline-flex items-center gap-2 text-[12px] font-mono font-medium" style={{ color: "var(--accent)" }}>
+                Read the docs <ArrowRight size={12} />
+              </Link>
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px" style={{ background: "var(--border)" }}>
+        </div>
+      </section>
+
+      {/* ── Pricing ── */}
+      <section className="border-b" style={{ borderColor: "var(--border)" }}>
+        <div className="max-w-[1200px] mx-auto px-6 py-16 md:py-20">
+          <div className="text-center mb-10">
+            <div className="text-[10px] font-mono uppercase tracking-wider mb-2" style={{ color: "var(--text-tertiary)" }}>Pricing</div>
+            <h2 className="text-[22px] md:text-[28px] font-semibold tracking-tight mb-3" style={{ color: "var(--text-primary)" }}>
+              Start free. Scale when ready.
+            </h2>
+            <p className="text-[14px] max-w-md mx-auto" style={{ color: "var(--text-secondary)" }}>
+              Every plan includes all 5 data sources, all intent types, and full scored reports.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-px max-w-[900px] mx-auto" style={{ background: "var(--border)" }}>
             {[
-              { tier: "Free", price: "£0", desc: "3 reports / month", features: ["All intent types", "Full scored reports", "5 intelligence dimensions"] },
-              { tier: "Pro", price: "£39", desc: "Unlimited reports", features: ["Everything in Free", "Report history", "Priority generation", "Export & sharing"] },
-              { tier: "API", price: "£79", desc: "+ £0.08 per call", features: ["Everything in Pro", "REST API access", "API key management", "Embeddable widget"] },
+              {
+                tier: "Free", price: "£0", period: "forever", desc: "3 reports / month",
+                features: ["All 5 data sources", "All intent types", "Weighted scoring", "Report history", "Shareable URLs"],
+                cta: "Get Started", ctaStyle: { background: "var(--bg-active)", color: "var(--text-primary)" },
+              },
+              {
+                tier: "Pro", price: "£39", period: "/month", desc: "Unlimited reports",
+                features: ["Everything in Free", "Unlimited generation", "Area comparison", "Priority processing", "Export reports"],
+                cta: "Upgrade to Pro", ctaStyle: { background: "var(--text-primary)", color: "var(--bg)" },
+                highlight: true,
+              },
+              {
+                tier: "API", price: "£79", period: "/month", desc: "Programmatic access",
+                features: ["Everything in Pro", "REST API access", "API key management", "Webhook support", "Bulk generation"],
+                cta: "Get API Access", ctaStyle: { background: "var(--bg-active)", color: "var(--text-primary)" },
+              },
             ].map((item) => (
-              <div key={item.tier} className="p-6" style={{ background: "var(--bg-elevated)" }}>
-                <div className="text-[12px] font-semibold mb-1" style={{ color: "var(--text-primary)" }}>{item.tier}</div>
+              <div key={item.tier} className="p-6 flex flex-col" style={{ background: item.highlight ? "var(--bg-active)" : "var(--bg-elevated)" }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>{item.tier}</span>
+                  {item.highlight && (
+                    <span className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5" style={{ color: "var(--neon-green)", background: "var(--neon-green-dim)" }}>Popular</span>
+                  )}
+                </div>
                 <div className="flex items-baseline gap-1 mb-1">
-                  <span className="text-[24px] font-mono font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>{item.price}</span>
-                  <span className="text-[11px] font-mono" style={{ color: "var(--text-tertiary)" }}>/mo</span>
+                  <span className="text-[32px] font-mono font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>{item.price}</span>
+                  <span className="text-[12px] font-mono" style={{ color: "var(--text-tertiary)" }}>{item.period}</span>
                 </div>
-                <div className="text-[11px] font-mono mb-4" style={{ color: "var(--text-tertiary)" }}>{item.desc}</div>
-                <div className="space-y-1.5">
+                <div className="text-[11px] font-mono mb-5" style={{ color: "var(--text-tertiary)" }}>{item.desc}</div>
+                <div className="space-y-2 mb-6 flex-1">
                   {item.features.map((f) => (
                     <div key={f} className="text-[11px] flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
                       <span className="text-[9px]" style={{ color: "var(--neon-green)" }}>&#10003;</span>
@@ -256,41 +637,49 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
+                <Link
+                  href={item.tier === "Free" ? "/report" : "/pricing"}
+                  className="h-9 flex items-center justify-center text-[11px] font-mono font-medium uppercase tracking-wide transition-colors"
+                  style={item.ctaStyle}
+                >
+                  {item.cta}
+                </Link>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── CTA ── */}
+      {/* ── Final CTA ── */}
       <section>
-        <div className="max-w-[1200px] mx-auto px-6 py-20 text-center">
-          <h2 className="text-[24px] font-semibold tracking-tight mb-4" style={{ color: "var(--text-primary)" }}>
+        <div className="max-w-[1200px] mx-auto px-6 py-20 md:py-28 text-center">
+          <h2 className="text-[26px] md:text-[34px] font-semibold tracking-tight mb-4" style={{ color: "var(--text-primary)" }}>
             Stop Googling. Start knowing.
           </h2>
           <p className="text-[14px] mb-8 max-w-md mx-auto" style={{ color: "var(--text-secondary)" }}>
-            Generate your first area intelligence report in seconds. Free to start.
+            15 browser tabs, 3 spreadsheets, 2 hours of research — or one AreaIQ report.
           </p>
-          <Link
-            href="/report"
-            className="inline-flex h-11 px-8 items-center gap-2 text-[12px] font-mono font-medium uppercase tracking-wide"
-            style={{ background: "var(--text-primary)", color: "var(--bg)" }}
-          >
-            Generate a Report
-            <ArrowRight size={13} />
+          <Link href="/report" className="inline-flex h-12 px-10 items-center gap-2 text-[12px] font-mono font-medium uppercase tracking-wide" style={{ background: "var(--text-primary)", color: "var(--bg)" }}>
+            Generate Your First Report <ArrowRight size={13} />
           </Link>
+          <div className="mt-4 text-[11px] font-mono" style={{ color: "var(--text-tertiary)" }}>
+            Free — 3 reports/month — no card required
+          </div>
         </div>
       </section>
 
       {/* ── Footer ── */}
       <footer className="border-t" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-[1200px] mx-auto px-6 h-12 flex items-center justify-between">
-          <span className="text-[11px] font-mono" style={{ color: "var(--text-tertiary)" }}>
-            AreaIQ &copy; 2026
-          </span>
-          <span className="text-[11px] font-mono" style={{ color: "var(--text-tertiary)" }}>
-            Area intelligence, instantly.
-          </span>
+        <div className="max-w-[1200px] mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-4">
+            <span className="text-[11px] font-semibold" style={{ color: "var(--text-tertiary)" }}>AreaIQ</span>
+            <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>&copy; 2026</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link href="/docs" className="text-[10px] font-mono transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>API Docs</Link>
+            <Link href="/pricing" className="text-[10px] font-mono transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>Pricing</Link>
+            <Link href="/report" className="text-[10px] font-mono transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>Generate Report</Link>
+          </div>
         </div>
       </footer>
     </div>
