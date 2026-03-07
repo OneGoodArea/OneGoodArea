@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { Logo } from "@/components/logo";
 
 export const metadata: Metadata = {
   title: "API Documentation — AreaIQ",
@@ -33,9 +34,7 @@ export default function DocsPage() {
       <header className="border-b shrink-0" style={{ borderColor: "var(--border)" }}>
         <div className="max-w-[800px] mx-auto px-6 h-12 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-[13px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
-              AreaIQ
-            </Link>
+            <Logo href="/" />
             <span className="text-[10px] font-mono" style={{ color: "var(--border-hover)" }}>/</span>
             <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
               API Docs
@@ -248,7 +247,7 @@ print(data["report"]["areaiq_score"])  # 72`}</CodeBlock>
       {/* Footer */}
       <footer className="border-t shrink-0" style={{ borderColor: "var(--border)" }}>
         <div className="max-w-[800px] mx-auto px-6 h-10 flex items-center justify-between">
-          <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>AreaIQ</span>
+          <Logo size="sm" variant="footer" />
           <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>Area intelligence, instantly.</span>
         </div>
       </footer>

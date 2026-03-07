@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { ArrowRight, MapPin, TrendingUp, Building2, Search, ChevronRight, Zap } from "lucide-react";
 import Link from "next/link";
+import { Logo } from "@/components/logo";
 
 /* ── Animated Score Ring ── */
 function HeroScoreRing({ score, label, size = 100 }: { score: number; label: string; size?: number }) {
@@ -204,7 +205,7 @@ export default function Home() {
       <header className="border-b" style={{ borderColor: "var(--border)" }}>
         <div className="max-w-[1200px] mx-auto px-6 h-12 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-[13px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>AreaIQ</span>
+            <Logo />
             <span className="text-[10px] font-mono px-1.5 py-0.5 border" style={{ color: "var(--text-tertiary)", borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
               BETA
             </span>
@@ -672,7 +673,7 @@ export default function Home() {
       <footer className="border-t" style={{ borderColor: "var(--border)" }}>
         <div className="max-w-[1200px] mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-4">
-            <span className="text-[11px] font-semibold" style={{ color: "var(--text-tertiary)" }}>AreaIQ</span>
+            <Logo size="sm" variant="footer" />
             <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>&copy; 2026</span>
           </div>
           <div className="flex items-center gap-4">

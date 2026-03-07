@@ -6,6 +6,7 @@ import { Search, ArrowRight, Loader2, MapPin, Activity, BarChart3, Zap } from "l
 import { UserButton } from "@clerk/nextjs";
 import { Intent } from "@/lib/types";
 import Link from "next/link";
+import { Logo } from "@/components/logo";
 
 const intents: { value: Intent; label: string; desc: string; icon: typeof MapPin }[] = [
   { value: "moving", label: "Moving", desc: "Evaluate for living", icon: MapPin },
@@ -166,9 +167,7 @@ export default function ReportPage() {
       <header className="border-b shrink-0" style={{ borderColor: "var(--border)" }}>
         <div className="max-w-[1200px] mx-auto px-6 h-12 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-[13px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
-              AreaIQ
-            </Link>
+            <Logo href="/" />
             <span className="text-[10px] font-mono" style={{ color: "var(--border-hover)" }}>/</span>
             <span className="hidden sm:inline text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
               Report Generator
@@ -344,7 +343,7 @@ export default function ReportPage() {
       {/* ── Footer ── */}
       <footer className="border-t shrink-0" style={{ borderColor: "var(--border)" }}>
         <div className="max-w-[1200px] mx-auto px-6 h-10 flex items-center justify-between">
-          <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>AreaIQ</span>
+          <Logo size="sm" variant="footer" />
           <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>Area intelligence, instantly.</span>
         </div>
       </footer>

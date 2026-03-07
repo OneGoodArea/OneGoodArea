@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { AreaReport } from "@/lib/types";
+import { Logo } from "@/components/logo";
 
 function getRAG(score: number) {
   if (score >= 70) return { color: "var(--neon-green)", dim: "var(--neon-green-dim)", glow: "neon-green-glow" };
@@ -250,7 +251,7 @@ export function ReportView({ report }: { report: AreaReport }) {
       {/* ── Footer ── */}
       <div className="mt-6 py-4 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-2" style={{ borderColor: "var(--border)" }}>
         <div className="flex items-center gap-3">
-          <span className="text-[11px] font-semibold tracking-tight" style={{ color: "var(--text-tertiary)" }}>AreaIQ</span>
+          <Logo size="sm" variant="footer" />
           <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>Intelligence Report</span>
         </div>
         <div className="flex items-center gap-3">
