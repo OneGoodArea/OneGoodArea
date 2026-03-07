@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { ArrowRight, Plus, X } from "lucide-react";
-import { Logo } from "@/components/logo";
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
 import { AreaReport } from "@/lib/types";
 
 function getRAG(score: number) {
@@ -237,33 +238,17 @@ export function CompareClient({
 
   return (
     <div className="min-h-screen flex flex-col bg-grid">
-      {/* Header */}
-      <header className="border-b shrink-0" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-[1200px] mx-auto px-6 h-12 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Logo href="/" />
-            <span className="text-[10px] font-mono" style={{ color: "var(--border-hover)" }}>/</span>
-            <Link href="/dashboard" className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
-              Dashboard
-            </Link>
-            <span className="text-[10px] font-mono" style={{ color: "var(--border-hover)" }}>/</span>
-            <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
-              Compare
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/report"
-              className="h-7 px-3 flex items-center gap-1.5 text-[10px] font-mono font-medium uppercase tracking-wide transition-colors"
-              style={{ background: "var(--text-primary)", color: "var(--bg)" }}
-            >
-              <Plus size={11} />
-              New Report
-            </Link>
-            <UserButton />
-          </div>
-        </div>
-      </header>
+      <Navbar breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Compare" }]}>
+        <Link
+          href="/report"
+          className="h-7 px-3 flex items-center gap-1.5 text-[10px] font-mono font-medium uppercase tracking-wide transition-colors"
+          style={{ background: "var(--text-primary)", color: "var(--bg)" }}
+        >
+          <Plus size={11} />
+          New Report
+        </Link>
+        <UserButton />
+      </Navbar>
 
       <main className="flex-1 max-w-[1200px] w-full mx-auto px-6 py-8">
         <div className="mb-6">
@@ -455,13 +440,7 @@ export function CompareClient({
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t shrink-0" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-[1200px] mx-auto px-6 h-10 flex items-center justify-between">
-          <Logo size="sm" variant="footer" />
-          <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>Area intelligence, instantly.</span>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

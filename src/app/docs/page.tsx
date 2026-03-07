@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Logo } from "@/components/logo";
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
 
 export const metadata: Metadata = {
   title: "API Documentation — AreaIQ",
@@ -30,25 +31,15 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function DocsPage() {
   return (
     <div className="min-h-screen flex flex-col bg-grid">
-      {/* Header */}
-      <header className="border-b shrink-0" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-[800px] mx-auto px-6 h-12 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Logo href="/" />
-            <span className="text-[10px] font-mono" style={{ color: "var(--border-hover)" }}>/</span>
-            <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
-              API Docs
-            </span>
-          </div>
-          <Link
-            href="/pricing"
-            className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5"
-            style={{ color: "var(--neon-green)", background: "var(--neon-green-dim)" }}
-          >
-            Get API Access
-          </Link>
-        </div>
-      </header>
+      <Navbar breadcrumbs={[{ label: "API Docs" }]} maxWidth="800px">
+        <Link
+          href="/pricing"
+          className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5"
+          style={{ color: "var(--neon-green)", background: "var(--neon-green-dim)" }}
+        >
+          Get API Access
+        </Link>
+      </Navbar>
 
       <main className="flex-1 max-w-[800px] w-full mx-auto px-6 py-10">
         <div className="mb-8">
@@ -244,13 +235,7 @@ print(data["report"]["areaiq_score"])  # 72`}</CodeBlock>
         </Section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t shrink-0" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-[800px] mx-auto px-6 h-10 flex items-center justify-between">
-          <Logo size="sm" variant="footer" />
-          <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>Area intelligence, instantly.</span>
-        </div>
-      </footer>
+      <Footer maxWidth="800px" />
     </div>
   );
 }

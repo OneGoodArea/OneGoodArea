@@ -3,8 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Plus, CreditCard, Loader2, GitCompareArrows, Key, Copy, Trash2 } from "lucide-react";
-import { Logo } from "@/components/logo";
 import { UserButton } from "@clerk/nextjs";
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
 
 interface ReportSummary {
   id: string;
@@ -95,29 +96,17 @@ export function DashboardClient({ reports, plan, planName, used, limit }: Dashbo
 
   return (
     <div className="min-h-screen flex flex-col bg-grid">
-      {/* Header */}
-      <header className="border-b shrink-0" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-[1200px] mx-auto px-6 h-12 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Logo href="/" />
-            <span className="text-[10px] font-mono" style={{ color: "var(--border-hover)" }}>/</span>
-            <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
-              Dashboard
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/report"
-              className="h-7 px-3 flex items-center gap-1.5 text-[10px] font-mono font-medium uppercase tracking-wide transition-colors"
-              style={{ background: "var(--text-primary)", color: "var(--bg)" }}
-            >
-              <Plus size={11} />
-              New Report
-            </Link>
-            <UserButton />
-          </div>
-        </div>
-      </header>
+      <Navbar breadcrumbs={[{ label: "Dashboard" }]}>
+        <Link
+          href="/report"
+          className="h-7 px-3 flex items-center gap-1.5 text-[10px] font-mono font-medium uppercase tracking-wide transition-colors"
+          style={{ background: "var(--text-primary)", color: "var(--bg)" }}
+        >
+          <Plus size={11} />
+          New Report
+        </Link>
+        <UserButton />
+      </Navbar>
 
       {/* Main */}
       <main className="flex-1 max-w-[1200px] w-full mx-auto px-6 py-8">
@@ -423,13 +412,7 @@ export function DashboardClient({ reports, plan, planName, used, limit }: Dashbo
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t shrink-0" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-[1200px] mx-auto px-6 h-10 flex items-center justify-between">
-          <Logo size="sm" variant="footer" />
-          <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>Area intelligence, instantly.</span>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { ArrowRight, Check, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { Logo } from "@/components/logo";
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
 
 const plans = [
   {
@@ -80,26 +81,16 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-grid">
-      {/* Header */}
-      <header className="border-b shrink-0" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-[1200px] mx-auto px-6 h-12 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Logo href="/" />
-            <span className="text-[10px] font-mono" style={{ color: "var(--border-hover)" }}>/</span>
-            <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
-              Pricing
-            </span>
-          </div>
-          <Link
-            href={isSignedIn ? "/report" : "/sign-in"}
-            className="h-8 px-4 flex items-center gap-2 text-[11px] font-mono font-medium uppercase tracking-wide transition-colors"
-            style={{ background: "var(--text-primary)", color: "var(--bg)" }}
-          >
-            {isSignedIn ? "Go to App" : "Sign In"}
-            <ArrowRight size={12} />
-          </Link>
-        </div>
-      </header>
+      <Navbar breadcrumbs={[{ label: "Pricing" }]}>
+        <Link
+          href={isSignedIn ? "/report" : "/sign-in"}
+          className="h-8 px-4 flex items-center gap-2 text-[11px] font-mono font-medium uppercase tracking-wide transition-colors"
+          style={{ background: "var(--text-primary)", color: "var(--bg)" }}
+        >
+          {isSignedIn ? "Go to App" : "Sign In"}
+          <ArrowRight size={12} />
+        </Link>
+      </Navbar>
 
       {/* Main */}
       <main className="flex-1 max-w-[1200px] w-full mx-auto px-6 py-12">
@@ -173,13 +164,7 @@ export default function PricingPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t shrink-0" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-[1200px] mx-auto px-6 h-10 flex items-center justify-between">
-          <Logo size="sm" variant="footer" />
-          <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>Area intelligence, instantly.</span>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

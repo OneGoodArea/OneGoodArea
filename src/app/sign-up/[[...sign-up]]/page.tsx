@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useSignUp } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { Loader2, ArrowRight } from "lucide-react";
-import { Logo } from "@/components/logo";
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
 import Link from "next/link";
 
 export default function SignUpPage() {
@@ -88,12 +89,7 @@ export default function SignUpPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-grid">
-      {/* Header */}
-      <header className="border-b shrink-0" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-[1200px] mx-auto px-6 h-12 flex items-center">
-          <Logo href="/" />
-        </div>
-      </header>
+      <Navbar />
 
       {/* Main */}
       <main className="flex-1 flex items-center justify-center px-4 py-12">
@@ -249,13 +245,7 @@ export default function SignUpPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t shrink-0" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-[1200px] mx-auto px-6 h-10 flex items-center justify-between">
-          <Logo size="sm" variant="footer" />
-          <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>Area intelligence, instantly.</span>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

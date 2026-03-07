@@ -6,7 +6,8 @@ import { Search, ArrowRight, Loader2, MapPin, Activity, BarChart3, Zap } from "l
 import { UserButton } from "@clerk/nextjs";
 import { Intent } from "@/lib/types";
 import Link from "next/link";
-import { Logo } from "@/components/logo";
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
 
 const intents: { value: Intent; label: string; desc: string; icon: typeof MapPin }[] = [
   { value: "moving", label: "Moving", desc: "Evaluate for living", icon: MapPin },
@@ -163,32 +164,20 @@ export default function ReportPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-grid">
-      {/* ── Header ── */}
-      <header className="border-b shrink-0" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-[1200px] mx-auto px-6 h-12 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Logo href="/" />
-            <span className="text-[10px] font-mono" style={{ color: "var(--border-hover)" }}>/</span>
-            <span className="hidden sm:inline text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
-              Report Generator
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/dashboard"
-              className="hidden sm:block text-[10px] font-mono uppercase tracking-wider transition-colors hover:opacity-80"
-              style={{ color: "var(--text-tertiary)" }}
-            >
-              My Reports
-            </Link>
-            <div className="hidden sm:flex items-center gap-2 text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>
-              <span className="inline-block w-1.5 h-1.5 rounded-full neon-dot" style={{ color: "var(--neon-green)", background: "var(--neon-green)" }} />
-              Online
-            </div>
-            <UserButton />
-          </div>
+      <Navbar breadcrumbs={[{ label: "Report Generator", hiddenOnMobile: true }]}>
+        <Link
+          href="/dashboard"
+          className="hidden sm:block text-[10px] font-mono uppercase tracking-wider transition-colors hover:opacity-80"
+          style={{ color: "var(--text-tertiary)" }}
+        >
+          My Reports
+        </Link>
+        <div className="hidden sm:flex items-center gap-2 text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>
+          <span className="inline-block w-1.5 h-1.5 rounded-full neon-dot" style={{ color: "var(--neon-green)", background: "var(--neon-green)" }} />
+          Online
         </div>
-      </header>
+        <UserButton />
+      </Navbar>
 
       {/* ── Main ── */}
       <main className="flex-1 max-w-[1200px] w-full mx-auto px-6">
@@ -340,13 +329,7 @@ export default function ReportPage() {
         {loading && <LoadingState area={area} />}
       </main>
 
-      {/* ── Footer ── */}
-      <footer className="border-t shrink-0" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-[1200px] mx-auto px-6 h-10 flex items-center justify-between">
-          <Logo size="sm" variant="footer" />
-          <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>Area intelligence, instantly.</span>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
