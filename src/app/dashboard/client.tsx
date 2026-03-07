@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Plus, CreditCard, Loader2, GitCompareArrows } from "lucide-react";
+import { ArrowRight, Plus, CreditCard, Loader2, GitCompareArrows, Key, Copy, Trash2 } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 
 interface ReportSummary {
@@ -27,9 +27,49 @@ interface DashboardProps {
   limit: number;
 }
 
+interface ApiKeyInfo {
+  id: string;
+  key_preview: string;
+  name: string;
+  created_at: string;
+  last_used_at: string | null;
+}
+
 export function DashboardClient({ reports, plan, planName, used, limit }: DashboardProps) {
   const [portalLoading, setPortalLoading] = useState(false);
   const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [apiKeys, setApiKeys] = useState<ApiKeyInfo[] | null>(null);
+  const [newKey, setNewKey] = useState<string | null>(null);
+  const [keyLoading, setKeyLoading] = useState(false);
+  const [keysLoaded, setKeysLoaded] = useState(false);
+
+  async function loadApiKeys() {
+    if (keysLoaded) return;
+    const res = await fetch("/api/keys");
+    const data = await res.json();
+    setApiKeys(data.keys || []);
+    setKeysLoaded(true);
+  }
+
+  async function createKey() {
+    setKeyLoading(true);
+    try {
+      const res = await fetch("/api/keys", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+      const data = await res.json();
+      if (data.key) {
+        setNewKey(data.key.key);
+        setKeysLoaded(false);
+        loadApiKeys();
+      }
+    } finally {
+      setKeyLoading(false);
+    }
+  }
+
+  async function revokeKey(id: string) {
+    await fetch(`/api/keys/${id}`, { method: "DELETE" });
+    setApiKeys((prev) => prev?.filter((k) => k.id !== id) || null);
+  }
 
   function toggleCompare(id: string, e: React.MouseEvent) {
     e.preventDefault();
@@ -136,6 +176,97 @@ export function DashboardClient({ reports, plan, planName, used, limit }: Dashbo
             </div>
           </div>
         </div>
+
+        {/* API Keys Section — API plan only */}
+        {plan === "api" && (
+          <div className="border mb-6" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
+            <div className="px-5 py-2.5 border-b flex items-center justify-between" style={{ borderColor: "var(--border)" }}>
+              <div className="flex items-center gap-2">
+                <Key size={12} style={{ color: "var(--text-tertiary)" }} />
+                <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+                  API Keys
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/docs"
+                  className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5"
+                  style={{ color: "var(--text-tertiary)", background: "var(--bg-active)" }}
+                >
+                  Docs
+                </Link>
+                <button
+                  onClick={createKey}
+                  disabled={keyLoading}
+                  className="flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider px-2 py-0.5"
+                  style={{ color: "var(--neon-green)", background: "var(--neon-green-dim)" }}
+                >
+                  {keyLoading ? <Loader2 size={10} className="animate-spin" /> : <Plus size={10} />}
+                  New Key
+                </button>
+              </div>
+            </div>
+
+            {/* New key reveal */}
+            {newKey && (
+              <div className="px-5 py-3 border-b" style={{ borderColor: "var(--border)", background: "var(--bg-active)" }}>
+                <div className="text-[10px] font-mono mb-1" style={{ color: "var(--neon-amber)" }}>
+                  Save this key — it won&apos;t be shown again
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="text-[12px] font-mono flex-1" style={{ color: "var(--text-primary)" }}>{newKey}</code>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(newKey); }}
+                    className="p-1"
+                    style={{ color: "var(--text-tertiary)" }}
+                  >
+                    <Copy size={12} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Key list */}
+            <div className="px-5 py-3">
+              {!keysLoaded ? (
+                <button
+                  onClick={loadApiKeys}
+                  className="text-[11px] font-mono"
+                  style={{ color: "var(--accent)" }}
+                >
+                  Load API keys
+                </button>
+              ) : apiKeys && apiKeys.length > 0 ? (
+                <div className="space-y-2">
+                  {apiKeys.map((k) => (
+                    <div key={k.id} className="flex items-center justify-between">
+                      <div>
+                        <code className="text-[11px] font-mono" style={{ color: "var(--text-primary)" }}>{k.key_preview}</code>
+                        <span className="text-[10px] font-mono ml-2" style={{ color: "var(--text-tertiary)" }}>
+                          {new Date(k.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                        </span>
+                        {k.last_used_at && (
+                          <span className="text-[10px] font-mono ml-2" style={{ color: "var(--text-tertiary)" }}>
+                            Last used: {new Date(k.last_used_at).toLocaleDateString("en-GB")}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => revokeKey(k.id)}
+                        className="p-1 transition-colors"
+                        style={{ color: "var(--neon-red)" }}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>No API keys yet</span>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="mb-6 flex items-end justify-between">
           <div>
