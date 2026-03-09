@@ -197,13 +197,13 @@ export default function DocsPage() {
 
               <div className="border mb-6" style={{ borderColor: "var(--border)" }}>
                 <div
-                  className="grid grid-cols-[110px_70px_60px_1fr] gap-3 px-4 py-2 border-b text-[9px] font-mono uppercase tracking-wider"
+                  className="hidden sm:grid grid-cols-[110px_70px_60px_1fr] gap-3 px-4 py-2 border-b text-[9px] font-mono uppercase tracking-wider"
                   style={{ borderColor: "var(--border)", background: "var(--bg-elevated)", color: "var(--text-tertiary)" }}
                 >
                   <span>Field</span><span>Type</span><span>Required</span><span>Description</span>
                 </div>
                 <div
-                  className="grid grid-cols-[110px_70px_60px_1fr] gap-3 px-4 py-3 border-b text-[12px] font-mono"
+                  className="flex flex-col sm:grid sm:grid-cols-[110px_70px_60px_1fr] gap-1 sm:gap-3 px-4 py-3 border-b text-[12px] font-mono"
                   style={{ borderColor: "var(--border)" }}
                 >
                   <span style={{ color: "var(--text-primary)" }}>area</span>
@@ -214,7 +214,7 @@ export default function DocsPage() {
                   </span>
                 </div>
                 <div
-                  className="grid grid-cols-[110px_70px_60px_1fr] gap-3 px-4 py-3 text-[12px] font-mono"
+                  className="flex flex-col sm:grid sm:grid-cols-[110px_70px_60px_1fr] gap-1 sm:gap-3 px-4 py-3 text-[12px] font-mono"
                 >
                   <span style={{ color: "var(--text-primary)" }}>intent</span>
                   <span style={{ color: "var(--text-tertiary)" }}>string</span>
@@ -307,7 +307,7 @@ export default function DocsPage() {
                 ].map(([field, type, desc], i, arr) => (
                   <div
                     key={field}
-                    className={`grid grid-cols-[1fr_100px_1fr] gap-3 px-4 py-2 text-[11px] font-mono ${i < arr.length - 1 ? "border-b" : ""}`}
+                    className={`flex flex-col sm:grid sm:grid-cols-[1fr_100px_1fr] gap-1 sm:gap-3 px-4 py-2 text-[11px] font-mono ${i < arr.length - 1 ? "border-b" : ""}`}
                     style={{ borderColor: "var(--border)", background: field.includes(".") ? "var(--bg)" : "var(--bg-elevated)" }}
                   >
                     <span style={{ color: "var(--text-primary)", paddingLeft: field.split(".").length > 2 ? "24px" : field.includes(".") ? "12px" : "0" }}>
@@ -407,7 +407,7 @@ export default function DocsPage() {
 
               <div className="border mb-4" style={{ borderColor: "var(--border)" }}>
                 <div
-                  className="grid grid-cols-[60px_150px_1fr] gap-3 px-4 py-2 border-b text-[9px] font-mono uppercase tracking-wider"
+                  className="hidden sm:grid grid-cols-[60px_150px_1fr] gap-3 px-4 py-2 border-b text-[9px] font-mono uppercase tracking-wider"
                   style={{ borderColor: "var(--border)", background: "var(--bg-elevated)", color: "var(--text-tertiary)" }}
                 >
                   <span>Code</span><span>Status</span><span>Description</span>
@@ -421,7 +421,7 @@ export default function DocsPage() {
                 ].map(([code, status, desc, color], i, arr) => (
                   <div
                     key={code}
-                    className={`grid grid-cols-[60px_150px_1fr] gap-3 px-4 py-2.5 text-[12px] font-mono ${i < arr.length - 1 ? "border-b" : ""}`}
+                    className={`flex flex-wrap sm:grid sm:grid-cols-[60px_150px_1fr] gap-1 sm:gap-3 px-4 py-2.5 text-[12px] font-mono ${i < arr.length - 1 ? "border-b" : ""}`}
                     style={{ borderColor: "var(--border)" }}
                   >
                     <span style={{ color }}>{code}</span>
@@ -473,7 +473,7 @@ export default function DocsPage() {
                 ].map((source, i, arr) => (
                   <div
                     key={source.name}
-                    className={`grid grid-cols-[130px_130px_1fr] gap-3 px-4 py-3 ${i < arr.length - 1 ? "border-b" : ""}`}
+                    className={`flex flex-col sm:grid sm:grid-cols-[130px_130px_1fr] gap-1 sm:gap-3 px-4 py-3 ${i < arr.length - 1 ? "border-b" : ""}`}
                     style={{ borderColor: "var(--border)", background: i % 2 === 0 ? "var(--bg)" : "var(--bg-elevated)" }}
                   >
                     <span className="text-[12px] font-mono font-medium" style={{ color: "var(--neon-green)" }}>
@@ -494,7 +494,7 @@ export default function DocsPage() {
             <Section id="rate-limits" title="Rate Limits">
               <div className="border mb-4" style={{ borderColor: "var(--border)" }}>
                 <div
-                  className="grid grid-cols-[1fr_1fr_1fr] gap-3 px-4 py-2 border-b text-[9px] font-mono uppercase tracking-wider"
+                  className="hidden sm:grid grid-cols-[1fr_1fr_1fr] gap-3 px-4 py-2 border-b text-[9px] font-mono uppercase tracking-wider"
                   style={{ borderColor: "var(--border)", background: "var(--bg-elevated)", color: "var(--text-tertiary)" }}
                 >
                   <span>Limit</span><span>Value</span><span>Window</span>
@@ -506,7 +506,7 @@ export default function DocsPage() {
                 ].map(([limit, value, window], i, arr) => (
                   <div
                     key={limit}
-                    className={`grid grid-cols-[1fr_1fr_1fr] gap-3 px-4 py-2.5 text-[12px] font-mono ${i < arr.length - 1 ? "border-b" : ""}`}
+                    className={`flex flex-wrap sm:grid sm:grid-cols-[1fr_1fr_1fr] gap-1 sm:gap-3 px-4 py-2.5 text-[12px] font-mono ${i < arr.length - 1 ? "border-b" : ""}`}
                     style={{ borderColor: "var(--border)" }}
                   >
                     <span style={{ color: "var(--text-primary)" }}>{limit}</span>

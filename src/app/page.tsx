@@ -393,7 +393,7 @@ export default function Home() {
             A family moving and an investor evaluating the same postcode need completely different data. AreaIQ adapts scoring dimensions and weights to your purpose.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-px" style={{ background: "var(--border)" }}>
+          <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-px" style={{ background: "var(--border)" }}>
             {/* Intent selector */}
             <div style={{ background: "var(--bg-elevated)" }}>
               {intentData.map((intent, i) => {

@@ -42,7 +42,7 @@ export function UserButton() {
 
       {open && (
         <div
-          className="absolute right-0 top-full mt-1 w-48 border z-50"
+          className="absolute right-0 top-full mt-1 w-48 max-w-[calc(100vw-2rem)] border z-50"
           style={{ background: "var(--bg-elevated)", borderColor: "var(--border)" }}
         >
           <div className="px-3 py-2.5 border-b" style={{ borderColor: "var(--border)" }}>

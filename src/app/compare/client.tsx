@@ -311,7 +311,7 @@ export function CompareClient({
               </div>
 
               <div className="p-6">
-                <div className="grid grid-cols-2 gap-8">
+                <div className="grid grid-cols-2 gap-4 sm:gap-8">
                   {/* Area A */}
                   <div className="flex flex-col items-center text-center">
                     <MiniScoreRing score={reportA.report.areaiq_score} />
@@ -389,7 +389,7 @@ export function CompareClient({
             </div>
 
             {/* View Full Reports */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
               <Link
                 href={`/report/${reportA.id}`}
                 className="border px-4 py-3 flex items-center justify-between transition-colors hover:brightness-110"

@@ -419,8 +419,8 @@ export function ReportView({ report }: { report: AreaReport }) {
             </div>
 
             {report.sub_scores.length >= 3 && (
-              <div className="flex-1 flex justify-center">
-                <RadarChart subScores={report.sub_scores} size={240} />
+              <div className="flex-1 flex justify-center overflow-hidden">
+                <RadarChart subScores={report.sub_scores} size={200} />
               </div>
             )}
           </div>

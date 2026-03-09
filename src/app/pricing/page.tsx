@@ -195,7 +195,7 @@ export default function PricingPage() {
           <div className="border" style={{ borderColor: "var(--border)" }}>
             {/* Table header */}
             <div
-              className="hidden lg:grid grid-cols-[1fr_repeat(4,120px)] gap-4 px-5 py-3 border-b"
+              className="hidden lg:grid grid-cols-[1fr_repeat(4,120px)] gap-4 px-5 py-3 border-b overflow-x-auto"
               style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}
             >
               <span className="text-[9px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
