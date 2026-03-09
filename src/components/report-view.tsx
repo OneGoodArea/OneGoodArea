@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { ChevronDown, Download, Lock } from "lucide-react";
+import { ChevronDown, Download, Lock, Share2, Check, Copy } from "lucide-react";
 import { AreaReport } from "@/lib/types";
 import { Logo } from "@/components/logo";
 import type { PlanId } from "@/lib/stripe";
@@ -364,9 +364,32 @@ function SectionCard({ section, index, defaultOpen = false }: { section: AreaRep
 }
 
 /* ── Main Report View ── */
-export function ReportView({ report, plan = "free" }: { report: AreaReport; plan?: PlanId }) {
+export function ReportView({ report, plan = "free", reportId }: { report: AreaReport; plan?: PlanId; reportId?: string }) {
   const { color: scoreColor, glow: scoreGlow } = getRAG(report.areaiq_score);
   const [exporting, setExporting] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const reportUrl = reportId ? `https://www.area-iq.co.uk/report/${reportId}` : "";
+  const shareText = `${report.area} scored ${report.areaiq_score}/100 for ${report.intent} on AreaIQ`;
+
+  function copyLink() {
+    if (!reportUrl) return;
+    navigator.clipboard.writeText(reportUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  function shareWhatsApp() {
+    window.open(`https://wa.me/?text=${encodeURIComponent(`${shareText}\n${reportUrl}`)}`, "_blank");
+  }
+
+  function shareLinkedIn() {
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(reportUrl)}`, "_blank");
+  }
+
+  function shareX() {
+    window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(reportUrl)}`, "_blank");
+  }
 
   async function exportPDF() {
     if (exporting) return;
@@ -530,9 +553,9 @@ export function ReportView({ report, plan = "free" }: { report: AreaReport; plan
 
       {/* ── Footer ── */}
       <div className="mt-6 py-4 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-2" style={{ borderColor: "var(--border)" }}>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
           <Logo size="sm" variant="footer" />
-          <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>Intelligence Report</span>
+          <span className="text-[10px] font-mono hidden sm:inline" style={{ color: "var(--text-tertiary)" }}>Intelligence Report</span>
           {plan === "free" ? (
             <Link
               href="/pricing"
@@ -552,6 +575,43 @@ export function ReportView({ report, plan = "free" }: { report: AreaReport; plan
               <Download size={10} />
               {exporting ? "Exporting..." : "PDF"}
             </button>
+          )}
+          {reportId && (
+            <>
+              <span className="text-[10px]" style={{ color: "var(--border)" }}>|</span>
+              <button
+                onClick={copyLink}
+                className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider border transition-colors hover:opacity-80"
+                style={{ color: copied ? "var(--neon-green)" : "var(--text-tertiary)", borderColor: "var(--border)", background: "var(--bg)" }}
+              >
+                {copied ? <Check size={10} /> : <Copy size={10} />}
+                {copied ? "Copied" : "Link"}
+              </button>
+              <button
+                onClick={shareWhatsApp}
+                className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider border transition-colors hover:opacity-80"
+                style={{ color: "var(--text-tertiary)", borderColor: "var(--border)", background: "var(--bg)" }}
+              >
+                <Share2 size={10} />
+                WhatsApp
+              </button>
+              <button
+                onClick={shareLinkedIn}
+                className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider border transition-colors hover:opacity-80"
+                style={{ color: "var(--text-tertiary)", borderColor: "var(--border)", background: "var(--bg)" }}
+              >
+                <Share2 size={10} />
+                LinkedIn
+              </button>
+              <button
+                onClick={shareX}
+                className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider border transition-colors hover:opacity-80"
+                style={{ color: "var(--text-tertiary)", borderColor: "var(--border)", background: "var(--bg)" }}
+              >
+                <Share2 size={10} />
+                X
+              </button>
+            </>
           )}
         </div>
         <div className="flex items-center gap-3 flex-wrap">

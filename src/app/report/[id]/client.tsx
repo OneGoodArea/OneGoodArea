@@ -36,7 +36,7 @@ export function ReportPageClient({ report, id, plan = "free" }: { report: AreaRe
           <ArrowRight size={11} className="rotate-180" />
           New report
         </Link>
-        <ReportView report={report} plan={plan} />
+        <ReportView report={report} plan={plan} reportId={id} />
       </main>
 
       <Footer />
