@@ -91,7 +91,7 @@ You must respond with ONLY valid JSON matching this exact structure (no markdown
   "intent": "${intent}",
   "areaiq_score": ${scores.overall},
   "sub_scores": [
-${scores.dimensions.map(d => `    { "label": "${d.label}", "score": ${d.score}, "weight": ${d.weight}, "summary": "<write an actionable 1-sentence summary that explains WHY this score is ${d.score}. Use specific numbers from the data. e.g. '72 because 43 crimes/month is 36% below the area average — antisocial behaviour is the main concern'>", "reasoning": "${d.reasoning.replace(/"/g, '\\"')}" }`).join(",\n")}
+${scores.dimensions.map(d => `    { "label": "${d.label}", "score": ${d.score}, "weight": ${d.weight}, "summary": "<write an actionable 1-sentence summary that explains WHY this score is ${d.score}. Use specific numbers from the data. e.g. '72 because 43 crimes/month is 36% below the area average. Antisocial behaviour is the main concern'>", "reasoning": "${d.reasoning.replace(/"/g, '\\"')}" }`).join(",\n")}
   ],
   "summary": "<2-3 sentence executive summary of the area for this specific intent. Reference the overall score and key findings.>",
   "sections": [

@@ -602,7 +602,7 @@ export default function Home() {
             Not another postcode lookup tool
           </h2>
           <p className="text-[14px] mb-8 max-w-lg" style={{ color: "var(--text-secondary)" }}>
-            Crystal Roof, StreetCheck, PropertyData — they show you raw stats. AreaIQ scores, weighs, and explains them for your specific use case.
+            Crystal Roof, StreetCheck, and PropertyData show you raw stats. AreaIQ scores, weighs, and explains them for your specific use case.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px" style={{ background: "var(--border)" }}>
