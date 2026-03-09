@@ -890,6 +890,7 @@ export default function Home() {
           <div className="flex items-center gap-4">
             <Link href="/docs" className="text-[10px] font-mono transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>API Docs</Link>
             <Link href="/pricing" className="text-[10px] font-mono transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>Pricing</Link>
+            <Link href="/methodology" className="text-[10px] font-mono transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>Methodology</Link>
             <Link href="/help" className="text-[10px] font-mono transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>Help</Link>
             <Link href="/report" className="text-[10px] font-mono transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>Generate Report</Link>
           </div>
