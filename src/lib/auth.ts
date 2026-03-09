@@ -4,6 +4,7 @@ import GitHub from "next-auth/providers/github";
 import Credentials from "next-auth/providers/credentials";
 import { sql } from "@/lib/db";
 import { trackEvent } from "@/lib/activity";
+import { sendVerificationEmail } from "@/lib/email";
 
 async function ensureUsersTable() {
   await sql`
@@ -14,9 +15,34 @@ async function ensureUsersTable() {
       image TEXT,
       password_hash TEXT,
       provider TEXT DEFAULT 'credentials',
+      email_verified BOOLEAN DEFAULT FALSE,
       created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `;
+  // Add column if table already exists without it
+  await sql`
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE
+  `;
+}
+
+async function ensureVerificationTable() {
+  await sql`
+    CREATE TABLE IF NOT EXISTS email_verification_tokens (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      email TEXT NOT NULL,
+      token TEXT UNIQUE NOT NULL,
+      expires_at TIMESTAMPTZ NOT NULL,
+      used BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
+}
+
+function generateToken(): string {
+  const bytes = new Uint8Array(32);
+  globalThis.crypto.getRandomValues(bytes);
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
 async function hashPassword(password: string): Promise<string> {
@@ -63,9 +89,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const name = (credentials.name as string) || email.split("@")[0];
 
           await sql`
-            INSERT INTO users (id, email, name, password_hash, provider)
-            VALUES (${id}, ${email}, ${name}, ${hash}, 'credentials')
+            INSERT INTO users (id, email, name, password_hash, provider, email_verified)
+            VALUES (${id}, ${email}, ${name}, ${hash}, 'credentials', FALSE)
           `;
+
+          // Send verification email (fire-and-forget)
+          try {
+            await ensureVerificationTable();
+            const token = generateToken();
+            const tokenId = `evt_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+            const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours
+
+            await sql`
+              INSERT INTO email_verification_tokens (id, user_id, email, token, expires_at)
+              VALUES (${tokenId}, ${id}, ${email}, ${token}, ${expiresAt})
+            `;
+
+            await sendVerificationEmail(email, token);
+          } catch (e) {
+            console.error("Failed to send verification email:", e);
+          }
 
           return { id, email, name };
         }
@@ -118,8 +161,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (existing.length === 0) {
           const id = `user_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
           await sql`
-            INSERT INTO users (id, email, name, image, provider)
-            VALUES (${id}, ${user.email}, ${user.name}, ${user.image}, ${account.provider})
+            INSERT INTO users (id, email, name, image, provider, email_verified)
+            VALUES (${id}, ${user.email}, ${user.name}, ${user.image}, ${account.provider}, TRUE)
           `;
           user.id = id;
         } else {
