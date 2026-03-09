@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { ArrowRight, MapPin, TrendingUp, Building2, Search, ChevronRight, Zap } from "lucide-react";
+import { ArrowRight, MapPin, TrendingUp, Building2, Search, ChevronRight, Zap, Home as HomeIcon, Users, Briefcase } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 
@@ -560,73 +560,126 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Who Uses AreaIQ ── */}
+      <section className="border-b" style={{ borderColor: "var(--border)" }}>
+        <div className="max-w-[1200px] mx-auto px-6 py-16 md:py-20">
+          <div className="text-[10px] font-mono uppercase tracking-wider mb-2" style={{ color: "var(--text-tertiary)" }}>Who Uses AreaIQ</div>
+          <h2 className="text-[22px] md:text-[28px] font-semibold tracking-tight mb-3" style={{ color: "var(--text-primary)" }}>
+            Built for anyone making location decisions
+          </h2>
+          <p className="text-[14px] mb-8 max-w-lg" style={{ color: "var(--text-secondary)" }}>
+            From first-time buyers to property funds. Hours of research, reduced to seconds.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px" style={{ background: "var(--border)" }}>
+            {[
+              { icon: HomeIcon, title: "Home Buyers", desc: "Evaluate safety, school catchments, and commute times before choosing where to live." },
+              { icon: TrendingUp, title: "Property Investors", desc: "Compare rental yields, price growth, and regeneration potential across areas." },
+              { icon: Users, title: "Estate Agents", desc: "Create data-backed area briefings for client viewings and property listings." },
+              { icon: Briefcase, title: "Business Owners", desc: "Assess foot traffic, competition, and local spending power before opening." },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.title} className="p-5" style={{ background: "var(--bg-elevated)" }}>
+                  <Icon size={16} className="mb-3" style={{ color: "var(--accent)" }} />
+                  <div className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-primary)" }}>{item.title}</div>
+                  <div className="text-[11px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>{item.desc}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* ── Comparison Feature ── */}
       <section className="border-b" style={{ borderColor: "var(--border)" }}>
         <div className="max-w-[1200px] mx-auto px-6 py-16 md:py-20">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div>
-              <div className="text-[10px] font-mono uppercase tracking-wider mb-2" style={{ color: "var(--text-tertiary)" }}>Compare Areas</div>
-              <h2 className="text-[22px] md:text-[28px] font-semibold tracking-tight mb-4" style={{ color: "var(--text-primary)" }}>
-                Side-by-side<br />intelligence comparison
-              </h2>
-              <p className="text-[14px] leading-relaxed mb-6" style={{ color: "var(--text-secondary)" }}>
-                Deciding between two areas? Compare them directly. See which one scores higher across every dimension, with clear winner indicators and weighted breakdowns.
-              </p>
-              <Link href="/report" className="inline-flex items-center gap-2 text-[12px] font-mono font-medium" style={{ color: "var(--accent)" }}>
-                Try it free <ArrowRight size={12} />
-              </Link>
-            </div>
+          <div className="text-center mb-10">
+            <div className="text-[10px] font-mono uppercase tracking-wider mb-2" style={{ color: "var(--text-tertiary)" }}>Compare Areas</div>
+            <h2 className="text-[22px] md:text-[28px] font-semibold tracking-tight mb-3" style={{ color: "var(--text-primary)" }}>
+              Side-by-side intelligence comparison
+            </h2>
+            <p className="text-[14px] max-w-lg mx-auto" style={{ color: "var(--text-secondary)" }}>
+              Deciding between two areas? Compare them directly across every dimension, with clear winner indicators and AI-generated insights.
+            </p>
+          </div>
 
-            {/* Mock comparison illustration */}
-            <div className="border" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
-              <div className="px-4 py-2 border-b" style={{ borderColor: "var(--border)" }}>
-                <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>Area Comparison</span>
-              </div>
-              <div className="p-5">
-                <div className="grid grid-cols-2 gap-6 mb-5">
-                  <div className="text-center">
-                    <div className="text-[24px] font-mono font-bold neon-green-glow" style={{ color: "var(--neon-green)" }}>78</div>
-                    <div className="text-[11px] font-medium mt-1" style={{ color: "var(--text-primary)" }}>Clapham</div>
-                    <div className="text-[9px] font-mono" style={{ color: "var(--text-tertiary)" }}>Moving</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-[24px] font-mono font-bold neon-amber-glow" style={{ color: "var(--neon-amber)" }}>62</div>
-                    <div className="text-[11px] font-medium mt-1" style={{ color: "var(--text-primary)" }}>Brixton</div>
-                    <div className="text-[9px] font-mono" style={{ color: "var(--text-tertiary)" }}>Moving</div>
-                  </div>
+          {/* Full-width comparison card */}
+          <div className="border max-w-[800px] mx-auto" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
+            <div className="px-4 py-2.5 border-b flex items-center justify-between" style={{ borderColor: "var(--border)" }}>
+              <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>Area Comparison</span>
+              <span className="text-[9px] font-mono px-1.5 py-0.5" style={{ color: "var(--accent)", background: "var(--accent-dim)" }}>MOVING</span>
+            </div>
+            <div className="p-6">
+              {/* Score headers */}
+              <div className="grid grid-cols-2 gap-8 mb-6">
+                <div className="text-center p-4 border" style={{ borderColor: "var(--neon-green-dim)", background: "rgba(0,255,136,0.02)" }}>
+                  <div className="text-[9px] font-mono uppercase tracking-wider mb-2" style={{ color: "var(--neon-green)" }}>Winner</div>
+                  <div className="text-[36px] font-mono font-bold neon-green-glow leading-none" style={{ color: "var(--neon-green)" }}>78</div>
+                  <div className="text-[13px] font-semibold mt-2" style={{ color: "var(--text-primary)" }}>Clapham</div>
+                  <div className="text-[9px] font-mono mt-0.5" style={{ color: "var(--text-tertiary)" }}>SW4, London</div>
                 </div>
+                <div className="text-center p-4 border" style={{ borderColor: "var(--border)" }}>
+                  <div className="h-[17px] mb-2" />
+                  <div className="text-[36px] font-mono font-bold neon-amber-glow leading-none" style={{ color: "var(--neon-amber)" }}>62</div>
+                  <div className="text-[13px] font-semibold mt-2" style={{ color: "var(--text-primary)" }}>Brixton</div>
+                  <div className="text-[9px] font-mono mt-0.5" style={{ color: "var(--text-tertiary)" }}>SW2, London</div>
+                </div>
+              </div>
+
+              {/* Dimension rows */}
+              <div className="space-y-2.5">
                 {[
-                  { label: "Safety", a: 74, b: 52 },
+                  { label: "Safety & Crime", a: 74, b: 52 },
                   { label: "Schools", a: 68, b: 58 },
                   { label: "Transport", a: 82, b: 85 },
                   { label: "Amenities", a: 79, b: 72 },
-                  { label: "Cost", a: 45, b: 62 },
+                  { label: "Cost of Living", a: 45, b: 62 },
+                  { label: "Environment", a: 71, b: 54 },
                 ].map((row) => {
                   const colorA = row.a >= 70 ? "var(--neon-green)" : row.a >= 45 ? "var(--neon-amber)" : "var(--neon-red)";
                   const colorB = row.b >= 70 ? "var(--neon-green)" : row.b >= 45 ? "var(--neon-amber)" : "var(--neon-red)";
+                  const dimA = row.a >= 70 ? "var(--neon-green-dim)" : row.a >= 45 ? "var(--neon-amber-dim)" : "var(--neon-red-dim)";
+                  const dimB = row.b >= 70 ? "var(--neon-green-dim)" : row.b >= 45 ? "var(--neon-amber-dim)" : "var(--neon-red-dim)";
+                  const winner = row.a > row.b ? "a" : row.b > row.a ? "b" : "tie";
                   return (
-                    <div key={row.label} className="flex items-center gap-2 py-1.5">
-                      <span className="text-[10px] font-mono w-16 shrink-0" style={{ color: "var(--text-tertiary)" }}>{row.label}</span>
-                      <div className="flex-1 flex gap-1">
-                        <div className="flex-1 h-1" style={{ background: "var(--border)" }}>
-                          <div className="h-full" style={{ width: `${row.a}%`, background: colorA }} />
-                        </div>
-                        <div className="flex-1 h-1" style={{ background: "var(--border)" }}>
-                          <div className="h-full" style={{ width: `${row.b}%`, background: colorB }} />
+                    <div key={row.label}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-mono" style={{ color: "var(--text-secondary)" }}>{row.label}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[11px] font-mono font-semibold" style={{ color: colorA }}>{row.a}{winner === "a" && " ✓"}</span>
+                          <span className="text-[11px] font-mono font-semibold" style={{ color: colorB }}>{row.b}{winner === "b" && " ✓"}</span>
                         </div>
                       </div>
-                      <div className="flex gap-2 w-14">
-                        <span className="text-[10px] font-mono font-semibold" style={{ color: colorA }}>{row.a}</span>
-                        <span className="text-[10px] font-mono font-semibold" style={{ color: colorB }}>{row.b}</span>
+                      <div className="flex gap-1">
+                        <div className="flex-1 h-[5px]" style={{ background: dimA }}>
+                          <div className="h-full" style={{ width: `${row.a}%`, background: colorA, boxShadow: `0 0 4px ${colorA}` }} />
+                        </div>
+                        <div className="flex-1 h-[5px]" style={{ background: dimB }}>
+                          <div className="h-full" style={{ width: `${row.b}%`, background: colorB, boxShadow: `0 0 4px ${colorB}` }} />
+                        </div>
                       </div>
                     </div>
                   );
                 })}
-                <div className="mt-3 pt-3 border-t text-center" style={{ borderColor: "var(--border)" }}>
-                  <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>
-                    <span className="neon-green-glow" style={{ color: "var(--neon-green)" }}>Clapham</span> wins 3/5 dimensions
-                  </span>
-                </div>
+              </div>
+
+              {/* AI Insight */}
+              <div className="mt-5 pt-4 border-t" style={{ borderColor: "var(--border)" }}>
+                <div className="text-[9px] font-mono uppercase tracking-wider mb-1.5" style={{ color: "var(--accent)" }}>AI Insight</div>
+                <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
+                  Clapham scores higher on safety and schools, making it stronger for families. Brixton edges ahead on transport links and cost of living, offering better value for young professionals.
+                </p>
+              </div>
+
+              {/* Footer */}
+              <div className="mt-4 pt-3 border-t flex items-center justify-between" style={{ borderColor: "var(--border)" }}>
+                <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>
+                  <span className="neon-green-glow" style={{ color: "var(--neon-green)" }}>Clapham</span> wins 4/6 dimensions
+                </span>
+                <Link href="/compare" className="text-[10px] font-mono flex items-center gap-1" style={{ color: "var(--accent)" }}>
+                  Try comparison <ArrowRight size={10} />
+                </Link>
               </div>
             </div>
           </div>
