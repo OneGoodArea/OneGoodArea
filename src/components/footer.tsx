@@ -7,12 +7,18 @@ export function Footer({ maxWidth = "1200px" }: { maxWidth?: string }) {
       <div className="mx-auto px-6 h-10 flex items-center justify-between" style={{ maxWidth }}>
         <Logo size="sm" variant="footer" />
         <div className="flex items-center gap-4">
+          <Link href="/docs" className="text-[10px] font-mono transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>
+            API Docs
+          </Link>
+          <Link href="/methodology" className="text-[10px] font-mono transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>
+            Methodology
+          </Link>
+          <Link href="/pricing" className="text-[10px] font-mono transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>
+            Pricing
+          </Link>
           <Link href="/help" className="text-[10px] font-mono transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>
             Help
           </Link>
-          <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>
-            Area intelligence, instantly.
-          </span>
         </div>
       </div>
     </footer>
