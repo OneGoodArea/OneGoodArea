@@ -98,6 +98,13 @@ export function DashboardClient({ reports, plan, planName, used, limit }: Dashbo
     <div className="min-h-screen flex flex-col bg-grid">
       <Navbar breadcrumbs={[{ label: "Dashboard" }]}>
         <Link
+          href="/pricing"
+          className="h-7 px-3 flex items-center gap-1.5 text-[10px] font-mono font-medium uppercase tracking-wide transition-colors"
+          style={{ background: "var(--bg-active)", color: "var(--text-primary)", border: "1px solid var(--border)" }}
+        >
+          Pricing
+        </Link>
+        <Link
           href="/report"
           className="h-7 px-3 flex items-center gap-1.5 text-[10px] font-mono font-medium uppercase tracking-wide transition-colors"
           style={{ background: "var(--text-primary)", color: "var(--bg)" }}
