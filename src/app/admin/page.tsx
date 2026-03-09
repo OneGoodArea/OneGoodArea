@@ -5,7 +5,7 @@ import { AdminClient } from "./client";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Admin Analytics — AreaIQ",
+  title: "Admin Analytics | AreaIQ",
 };
 
 const ADMIN_EMAILS = ["ptengelmann@gmail.com"];

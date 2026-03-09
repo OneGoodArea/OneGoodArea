@@ -95,7 +95,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-mono" style={{ color: "var(--text-tertiary)" }}>Name</span>
               <span className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>
-                {session.user.name || "—"}
+                {session.user.name || "-"}
               </span>
             </div>
             <div className="flex items-center justify-between">

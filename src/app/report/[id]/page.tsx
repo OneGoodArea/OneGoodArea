@@ -34,14 +34,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const data = await getReport(id);
 
   if (!data) {
-    return { title: "Report Not Found — AreaIQ" };
+    return { title: "Report Not Found | AreaIQ" };
   }
 
   return {
-    title: `${data.area} — ${data.intent} Report | AreaIQ`,
+    title: `${data.area} | ${data.intent} Report | AreaIQ`,
     description: data.report.summary,
     openGraph: {
-      title: `${data.area} — AreaIQ Score: ${data.score}/100`,
+      title: `${data.area} | AreaIQ Score: ${data.score}/100`,
       description: data.report.summary,
       type: "article",
     },

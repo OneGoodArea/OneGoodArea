@@ -324,7 +324,7 @@ export function AdminClient({ analytics }: { analytics: Analytics }) {
                           </span>
                           {" "}{label.toLowerCase()}
                           {area && (
-                            <span style={{ color: "var(--text-primary)" }}> — {area}</span>
+                            <span style={{ color: "var(--text-primary)" }}> · {area}</span>
                           )}
                           {intent && (
                             <span className="ml-1 text-[9px] font-mono px-1 py-px" style={{ color: INTENT_COLORS[intent] || "var(--text-tertiary)", background: "var(--bg)" }}>

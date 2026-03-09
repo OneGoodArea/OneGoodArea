@@ -354,7 +354,7 @@ export function CompareClient({
                         {reportA.report.areaiq_score > reportB.report.areaiq_score ? reportA.report.area : reportB.report.area}
                       </span>
                       {" "}scores {Math.abs(reportA.report.areaiq_score - reportB.report.areaiq_score)} points higher overall
-                      {" — "}wins {Math.max(winsA, winsB)}/{subScorePairs.length} dimensions
+                      {" · "}wins {Math.max(winsA, winsB)}/{subScorePairs.length} dimensions
                     </span>
                   )}
                 </div>
@@ -470,7 +470,7 @@ function RecommendationsCard({ area, recommendations }: { area: string; recommen
     <div className="border" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
       <div className="px-4 py-2 border-b" style={{ borderColor: "var(--border)" }}>
         <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
-          {area} — Recommendations
+          {area} · Recommendations
         </span>
       </div>
       <div className="divide-y" style={{ borderColor: "var(--border)" }}>

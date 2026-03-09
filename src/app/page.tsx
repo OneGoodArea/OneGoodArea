@@ -238,14 +238,14 @@ export default function Home() {
                 </span>
               </h1>
               <p className="text-[15px] leading-relaxed mb-8 max-w-lg" style={{ color: "var(--text-secondary)" }}>
-                Enter any UK neighbourhood or postcode. Get a scored intelligence report grounded in real government data — crime stats, deprivation indices, amenities, flood risk — in seconds, not hours.
+                Enter any UK neighbourhood or postcode. Get a scored intelligence report grounded in real government data: crime stats, deprivation indices, amenities, flood risk. In seconds, not hours.
               </p>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <Link href="/report" className="h-12 px-8 flex items-center gap-2 text-[12px] font-mono font-medium uppercase tracking-wide transition-colors" style={{ background: "var(--text-primary)", color: "var(--bg)" }}>
                   Generate a Report <ArrowRight size={13} />
                 </Link>
                 <span className="text-[11px] font-mono" style={{ color: "var(--text-tertiary)" }}>
-                  Free — no card required
+                  Free, no card required
                 </span>
               </div>
             </div>
@@ -335,7 +335,7 @@ export default function Home() {
               },
               {
                 step: "03", title: "Real data is fetched",
-                desc: "5 UK APIs queried in parallel — crime, deprivation, amenities, flood risk, geocoding",
+                desc: "5 UK APIs queried in parallel: crime, deprivation, amenities, flood risk, geocoding",
                 visual: (
                   <div className="space-y-1 mt-3">
                     {["police.uk", "ONS IMD", "OpenStreetMap", "Env. Agency", "postcodes.io"].map((s, i) => (
@@ -423,7 +423,7 @@ export default function Home() {
                 <span className="text-[10px] font-mono uppercase px-1.5 py-0.5" style={{ color: "var(--accent)", background: "var(--accent-dim)" }}>{current.label}</span>
               </div>
               <div className="text-[11px] font-mono mb-5" style={{ color: "var(--text-tertiary)" }}>
-                5 weighted dimensions — score reflects suitability for this specific intent
+                5 weighted dimensions · score reflects suitability for this specific intent
               </div>
 
               <div className="flex flex-col sm:flex-row items-start gap-6">
@@ -472,7 +472,7 @@ export default function Home() {
                 Side-by-side<br />intelligence comparison
               </h2>
               <p className="text-[14px] leading-relaxed mb-6" style={{ color: "var(--text-secondary)" }}>
-                Deciding between two areas? Compare them directly — see which one scores higher across every dimension, with clear winner indicators and weighted breakdowns.
+                Deciding between two areas? Compare them directly. See which one scores higher across every dimension, with clear winner indicators and weighted breakdowns.
               </p>
               <Link href="/report" className="inline-flex items-center gap-2 text-[12px] font-mono font-medium" style={{ color: "var(--accent)" }}>
                 Try it free <ArrowRight size={12} />
@@ -668,13 +668,13 @@ export default function Home() {
             Stop Googling. Start knowing.
           </h2>
           <p className="text-[14px] mb-8 max-w-md mx-auto" style={{ color: "var(--text-secondary)" }}>
-            15 browser tabs, 3 spreadsheets, 2 hours of research — or one AreaIQ report.
+            15 browser tabs, 3 spreadsheets, 2 hours of research. Or one AreaIQ report.
           </p>
           <Link href="/report" className="inline-flex h-12 px-10 items-center gap-2 text-[12px] font-mono font-medium uppercase tracking-wide" style={{ background: "var(--text-primary)", color: "var(--bg)" }}>
             Generate Your First Report <ArrowRight size={13} />
           </Link>
           <div className="mt-4 text-[11px] font-mono" style={{ color: "var(--text-tertiary)" }}>
-            Free — 3 reports/month — no card required
+            Free · 3 reports/month · no card required
           </div>
         </div>
       </section>

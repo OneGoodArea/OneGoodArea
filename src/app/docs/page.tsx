@@ -4,7 +4,7 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 
 export const metadata: Metadata = {
-  title: "API Documentation — AreaIQ",
+  title: "API Documentation | AreaIQ",
   description: "Integrate area intelligence into your applications with the AreaIQ REST API.",
 };
 
@@ -111,7 +111,7 @@ export default function DocsPage() {
               </p>
               <div className="flex flex-wrap items-center gap-3">
                 <span className="text-[10px] font-mono px-2 py-0.5" style={{ color: "var(--neon-green)", background: "var(--neon-green-dim)" }}>
-                  v1 — Stable
+                  v1 · Stable
                 </span>
                 <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>
                   REST &bull; JSON &bull; Bearer auth &bull; HTTPS only
@@ -261,7 +261,7 @@ export default function DocsPage() {
                       <code className="text-[11px] font-mono font-semibold" style={{ color: "var(--accent)" }}>
                         {item.intent}
                       </code>
-                      <span className="text-[10px]" style={{ color: "var(--text-tertiary)" }}>— {item.desc}</span>
+                      <span className="text-[10px]" style={{ color: "var(--text-tertiary)" }}>· {item.desc}</span>
                     </div>
                     <div className="space-y-1">
                       {item.dimensions.map((d) => (
@@ -383,7 +383,7 @@ export default function DocsPage() {
     ],
     "recommendations": [
       "Consider locations east of Shoreditch High Street for 15-20% lower rents with comparable footfall",
-      "Target the lunch trade — 45,000 weekday commuters create peak demand 12:00-14:00",
+      "Target the lunch trade: 45,000 weekday commuters create peak demand 12:00-14:00",
       "Monitor the Bishopsgate Goodsyard redevelopment for potential uplift in foot traffic by 2027"
     ],
     "data_sources": [
@@ -417,7 +417,7 @@ export default function DocsPage() {
                   ["400", "Bad Request", "Missing or invalid area/intent field", "var(--neon-amber)"],
                   ["401", "Unauthorized", "Missing, invalid, or revoked API key", "var(--neon-red)"],
                   ["403", "Forbidden", "Active Business plan subscription required", "var(--neon-red)"],
-                  ["500", "Server Error", "Internal error — retry or contact support", "var(--neon-red)"],
+                  ["500", "Server Error", "Internal error. Retry or contact support", "var(--neon-red)"],
                 ].map(([code, status, desc, color], i, arr) => (
                   <div
                     key={code}
@@ -458,7 +458,7 @@ export default function DocsPage() {
                   {
                     name: "IMD 2019",
                     provider: "MHCLG via ONS ArcGIS",
-                    data: "Index of Multiple Deprivation — rank and decile by LSOA",
+                    data: "Index of Multiple Deprivation: rank and decile by LSOA",
                   },
                   {
                     name: "OpenStreetMap",
@@ -523,7 +523,7 @@ export default function DocsPage() {
             {/* SDKs */}
             <Section id="sdks" title="Code Examples">
               <p className="text-[13px] mb-4 leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                The API returns standard JSON over HTTPS. No SDK required — use any HTTP client.
+                The API returns standard JSON over HTTPS. No SDK required, use any HTTP client.
               </p>
 
               <h3 className="text-[13px] font-semibold mb-2" style={{ color: "var(--text-primary)" }}>cURL</h3>

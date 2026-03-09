@@ -5,8 +5,8 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 
 export const metadata: Metadata = {
-  title: "Help & Support — AreaIQ",
-  description: "Get help with AreaIQ — area intelligence reports, billing, API access, and more.",
+  title: "Help & Support | AreaIQ",
+  description: "Get help with AreaIQ: area intelligence reports, billing, API access, and more.",
 };
 
 const topics = [
@@ -18,7 +18,7 @@ const topics = [
       { q: "What data sources are used?", a: "Every report uses 5 live UK data sources: Postcodes.io (geocoding), Police.uk (crime data), IMD 2019 (deprivation), OpenStreetMap (amenities), and Environment Agency (flood risk)." },
       { q: "How are scores calculated?", a: "Each report scores your area across 5 dimensions, weighted by intent. For example, a 'moving' report weights Safety at 25%, Schools at 20%, Transport at 20%, Amenities at 15%, and Cost of Living at 20%." },
       { q: "What are the intent types?", a: "Moving (residential relocation), Business (commercial viability), Investing (property investment), and Research (general area profile). Each uses different scoring dimensions and weights." },
-      { q: "Can I share my reports?", a: "Yes. Every report gets a permanent URL you can share with anyone — they don't need an account to view it." },
+      { q: "Can I share my reports?", a: "Yes. Every report gets a permanent URL you can share with anyone. They don't need an account to view it." },
     ],
   },
   {
@@ -29,7 +29,7 @@ const topics = [
       { q: "What plans are available?", a: "Free (3 reports/month), Starter £29/mo (20 reports), Pro £79/mo (75 reports), and Business £249/mo (300 reports + API access)." },
       { q: "How do I upgrade?", a: "Go to the Pricing page and select your plan. Payment is handled securely via Stripe." },
       { q: "Can I cancel anytime?", a: "Yes. Cancel from your dashboard via the billing portal. You'll keep access until the end of your billing period." },
-      { q: "What happens if I hit my limit?", a: "You'll see a prompt to upgrade. Your existing reports remain accessible — you just can't generate new ones until your limit resets on the 1st of the month." },
+      { q: "What happens if I hit my limit?", a: "You'll see a prompt to upgrade. Your existing reports remain accessible, you just can't generate new ones until your limit resets on the 1st of the month." },
     ],
   },
   {
@@ -76,7 +76,7 @@ export default function HelpPage() {
             Help & Support
           </h1>
           <p className="text-[14px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-            Find answers below or reach out directly — we typically respond within 24 hours.
+            Find answers below or reach out directly. We typically respond within 24 hours.
           </p>
         </div>
 
@@ -120,7 +120,7 @@ export default function HelpPage() {
                   {topic.title}
                 </h2>
                 <span className="text-[10px] font-mono ml-1" style={{ color: "var(--text-tertiary)" }}>
-                  — {topic.desc}
+                  · {topic.desc}
                 </span>
               </div>
 

@@ -7,7 +7,7 @@ import { CompareClient } from "./client";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Compare Areas — AreaIQ",
+  title: "Compare Areas | AreaIQ",
   description: "Side-by-side area intelligence comparison.",
 };
 

@@ -85,7 +85,7 @@ function ScoreContextBar({ score }: { score: number }) {
     <div className="w-full">
       <div className="flex items-center justify-between mb-1.5">
         <span className="text-[9px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>Score Distribution</span>
-        <span className="text-[9px] font-mono" style={{ color: "var(--text-tertiary)" }}>0 — 100</span>
+        <span className="text-[9px] font-mono" style={{ color: "var(--text-tertiary)" }}>0 to 100</span>
       </div>
       <div className="relative h-2 w-full" style={{ background: "var(--border)" }}>
         {/* RAG zones */}
@@ -451,7 +451,7 @@ export function ReportView({ report }: { report: AreaReport }) {
             Detailed Analysis
           </span>
           <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>
-            — click to expand
+            · click to expand
           </span>
         </div>
         {report.sections.map((section, i) => (

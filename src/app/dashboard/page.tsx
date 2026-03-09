@@ -7,7 +7,7 @@ import { DashboardClient } from "./client";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "My Reports — AreaIQ",
+  title: "My Reports | AreaIQ",
   description: "View your generated area intelligence reports.",
 };
 

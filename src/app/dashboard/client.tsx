@@ -199,7 +199,7 @@ export function DashboardClient({ reports, plan, planName, used, limit }: Dashbo
             {newKey && (
               <div className="px-5 py-3 border-b" style={{ borderColor: "var(--border)", background: "var(--bg-active)" }}>
                 <div className="text-[10px] font-mono mb-1" style={{ color: "var(--neon-amber)" }}>
-                  Save this key — it won&apos;t be shown again
+                  Save this key. It won&apos;t be shown again
                 </div>
                 <div className="flex items-center gap-2">
                   <code className="text-[12px] font-mono flex-1" style={{ color: "var(--text-primary)" }}>{newKey}</code>
@@ -264,7 +264,7 @@ export function DashboardClient({ reports, plan, planName, used, limit }: Dashbo
             <p className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
               {reports.length} report{reports.length !== 1 ? "s" : ""} generated
               {compareIds.length > 0 && (
-                <span style={{ color: "var(--accent)" }}> — {compareIds.length}/2 selected for comparison</span>
+                <span style={{ color: "var(--accent)" }}> · {compareIds.length}/2 selected for comparison</span>
               )}
             </p>
           </div>

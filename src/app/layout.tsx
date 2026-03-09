@@ -15,18 +15,18 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.area-iq.co.uk"),
-  title: "AreaIQ — Know any area. Instantly.",
+  title: "AreaIQ | Know any area. Instantly.",
   description:
     "AI-powered area intelligence. Enter any location, get a scored, structured intelligence report in seconds.",
   openGraph: {
-    title: "AreaIQ — Know any area. Instantly.",
+    title: "AreaIQ | Know any area. Instantly.",
     description: "AI-powered UK area intelligence. Scored reports for moving, business, and investing decisions.",
     siteName: "AreaIQ",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "AreaIQ — Know any area. Instantly.",
+    title: "AreaIQ | Know any area. Instantly.",
     description: "AI-powered UK area intelligence. Scored reports for moving, business, and investing decisions.",
   },
 };
