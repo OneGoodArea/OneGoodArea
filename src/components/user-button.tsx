@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { LogOut } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
+import Link from "next/link";
 
 export function UserButton() {
   const { data: session } = useSession();
@@ -50,10 +51,19 @@ export function UserButton() {
               {session.user.email}
             </div>
           </div>
+          <Link
+            href="/settings"
+            onClick={() => setOpen(false)}
+            className="w-full px-3 py-2 flex items-center gap-2 text-[11px] font-mono transition-colors hover:brightness-110"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            <Settings size={12} />
+            Settings
+          </Link>
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="w-full px-3 py-2 flex items-center gap-2 text-[11px] font-mono transition-colors hover:brightness-110 cursor-pointer"
-            style={{ color: "var(--text-secondary)" }}
+            className="w-full px-3 py-2 flex items-center gap-2 text-[11px] font-mono transition-colors hover:brightness-110 cursor-pointer border-t"
+            style={{ color: "var(--text-secondary)", borderColor: "var(--border)" }}
           >
             <LogOut size={12} />
             Sign out
