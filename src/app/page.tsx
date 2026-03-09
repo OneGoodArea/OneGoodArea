@@ -336,6 +336,7 @@ export default function Home() {
             <Link href="/docs" className="hidden sm:block text-[11px] font-mono uppercase tracking-wide transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>API</Link>
             <Link href="/methodology" className="hidden sm:block text-[11px] font-mono uppercase tracking-wide transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>Methodology</Link>
             <Link href="/pricing" className="hidden sm:block text-[11px] font-mono uppercase tracking-wide transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>Pricing</Link>
+            <Link href="/about" className="hidden sm:block text-[11px] font-mono uppercase tracking-wide transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>About</Link>
             <Link href="/report" className="h-8 px-4 flex items-center gap-2 text-[11px] font-mono font-medium uppercase tracking-wide" style={{ background: "var(--text-primary)", color: "var(--bg)" }}>
               Launch App <ArrowRight size={12} />
             </Link>
