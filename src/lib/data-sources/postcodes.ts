@@ -10,6 +10,11 @@ interface PostcodeResult {
   parish: string;
   lsoa: string;
   msoa: string;
+  codes?: {
+    lsoa?: string;
+    msoa?: string;
+    [key: string]: string | undefined | null;
+  };
 }
 
 interface PlaceResult {
@@ -65,8 +70,8 @@ async function geocodePostcode(postcode: string): Promise<GeocodedArea | null> {
       ward: r.admin_ward || "",
       constituency: r.parliamentary_constituency || "",
       country: r.country || "",
-      lsoa: r.lsoa || "",
-      msoa: r.msoa || "",
+      lsoa: r.codes?.lsoa || r.lsoa || "",
+      msoa: r.codes?.msoa || r.msoa || "",
     };
   } catch {
     return null;
@@ -111,8 +116,8 @@ async function geocodePlace(query: string): Promise<GeocodedArea | null> {
           ward: p.admin_ward || "",
           constituency: p.parliamentary_constituency || "",
           country: p.country || r.country || "",
-          lsoa: p.lsoa || "",
-          msoa: p.msoa || "",
+          lsoa: p.codes?.lsoa || p.lsoa || "",
+          msoa: p.codes?.msoa || p.msoa || "",
         };
       }
     }

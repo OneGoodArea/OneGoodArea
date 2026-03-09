@@ -37,7 +37,7 @@ function scoreSafety(crime: CrimeSummary | null): { score: number; reasoning: st
   let baseScore = 100 * (1 - monthlyRate / (monthlyRate + 60));
 
   // Violent crime adjustment (case-insensitive lookup)
-  const violentPatterns = ["violence", "robbery"];
+  const violentPatterns = ["violen", "robbery"];
   const categoryKeys = Object.keys(crime.by_category);
   const violentCount = violentPatterns.reduce((sum, pattern) => {
     const match = categoryKeys.find(k => k.toLowerCase().includes(pattern));
