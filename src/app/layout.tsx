@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     description: "AI-powered UK area intelligence. Scored reports for moving, business, and investing decisions.",
     siteName: "AreaIQ",
     type: "website",
+    url: "https://www.area-iq.co.uk",
   },
   twitter: {
     card: "summary_large_image",
