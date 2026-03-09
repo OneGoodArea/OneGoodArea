@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Plus, CreditCard, Loader2, GitCompareArrows, Key, Copy, Trash2 } from "lucide-react";
+import { ArrowRight, Plus, CreditCard, Loader2, GitCompareArrows, Key, Copy, Trash2, Search, ArrowUpDown } from "lucide-react";
 import { UserButton } from "@/components/user-button";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
@@ -44,6 +44,34 @@ export function DashboardClient({ reports, plan, planName, used, limit }: Dashbo
   const [newKey, setNewKey] = useState<string | null>(null);
   const [keyLoading, setKeyLoading] = useState(false);
   const [keysLoaded, setKeysLoaded] = useState(false);
+  const [search, setSearch] = useState("");
+  const [intentFilter, setIntentFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"date" | "score" | "area">("date");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  const intents = Array.from(new Set(reports.map((r) => r.intent)));
+
+  const filteredReports = reports
+    .filter((r) => {
+      if (search && !r.area.toLowerCase().includes(search.toLowerCase())) return false;
+      if (intentFilter !== "all" && r.intent !== intentFilter) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === "score") cmp = a.score - b.score;
+      else if (sortBy === "area") cmp = a.area.localeCompare(b.area);
+      else cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      return sortDir === "desc" ? -cmp : cmp;
+    });
+
+  function toggleSort(col: "date" | "score" | "area") {
+    if (sortBy === col) setSortDir((d) => (d === "desc" ? "asc" : "desc"));
+    else { setSortBy(col); setSortDir("desc"); }
+  }
+
+  const avgScore = reports.length > 0 ? Math.round(reports.reduce((s, r) => s + r.score, 0) / reports.length) : 0;
+  const bestReport = reports.length > 0 ? reports.reduce((best, r) => (r.score > best.score ? r : best), reports[0]) : null;
 
   async function loadApiKeys() {
     if (keysLoaded) return;
@@ -256,13 +284,37 @@ export function DashboardClient({ reports, plan, planName, used, limit }: Dashbo
           </div>
         )}
 
-        <div className="mb-6 flex items-end justify-between">
+        {/* Stats Strip */}
+        {reports.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-px mb-6" style={{ background: "var(--border)" }}>
+            <div className="p-3" style={{ background: "var(--bg-elevated)" }}>
+              <div className="text-[9px] font-mono uppercase tracking-wider mb-1" style={{ color: "var(--text-tertiary)" }}>Total Reports</div>
+              <span className="text-[18px] font-mono font-semibold" style={{ color: "var(--text-primary)" }}>{reports.length}</span>
+            </div>
+            <div className="p-3" style={{ background: "var(--bg-elevated)" }}>
+              <div className="text-[9px] font-mono uppercase tracking-wider mb-1" style={{ color: "var(--text-tertiary)" }}>Avg Score</div>
+              <span className={`text-[18px] font-mono font-semibold ${getRAG(avgScore).glow}`} style={{ color: getRAG(avgScore).color }}>{avgScore}</span>
+            </div>
+            <div className="p-3" style={{ background: "var(--bg-elevated)" }}>
+              <div className="text-[9px] font-mono uppercase tracking-wider mb-1" style={{ color: "var(--text-tertiary)" }}>Best Area</div>
+              <span className="text-[13px] font-medium truncate block" style={{ color: "var(--neon-green)" }}>{bestReport?.area ?? "-"}</span>
+            </div>
+            <div className="p-3" style={{ background: "var(--bg-elevated)" }}>
+              <div className="text-[9px] font-mono uppercase tracking-wider mb-1" style={{ color: "var(--text-tertiary)" }}>Best Score</div>
+              <span className="text-[18px] font-mono font-semibold" style={{ color: "var(--neon-green)" }}>{bestReport?.score ?? "-"}</span>
+            </div>
+          </div>
+        )}
+
+        <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-3">
           <div>
             <h1 className="text-[22px] font-semibold tracking-tight mb-1" style={{ color: "var(--text-primary)" }}>
               My Reports
             </h1>
             <p className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
-              {reports.length} report{reports.length !== 1 ? "s" : ""} generated
+              {filteredReports.length === reports.length
+                ? `${reports.length} report${reports.length !== 1 ? "s" : ""} generated`
+                : `${filteredReports.length} of ${reports.length} reports`}
               {compareIds.length > 0 && (
                 <span style={{ color: "var(--accent)" }}> · {compareIds.length}/2 selected for comparison</span>
               )}
@@ -279,6 +331,51 @@ export function DashboardClient({ reports, plan, planName, used, limit }: Dashbo
             </Link>
           )}
         </div>
+
+        {/* Search & Filter Bar */}
+        {reports.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-4">
+            <div className="relative flex-1">
+              <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-tertiary)" }} />
+              <input
+                type="text"
+                placeholder="Search by area name..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full h-8 pl-8 pr-3 text-[11px] font-mono border outline-none transition-colors"
+                style={{ background: "var(--bg)", borderColor: "var(--border)", color: "var(--text-primary)" }}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                value={intentFilter}
+                onChange={(e) => setIntentFilter(e.target.value)}
+                className="h-8 px-3 text-[10px] font-mono uppercase tracking-wider border outline-none cursor-pointer"
+                style={{ background: "var(--bg)", borderColor: "var(--border)", color: "var(--text-secondary)" }}
+              >
+                <option value="all">All intents</option>
+                {intents.map((intent) => (
+                  <option key={intent} value={intent}>{intent}</option>
+                ))}
+              </select>
+              {(["date", "score", "area"] as const).map((col) => (
+                <button
+                  key={col}
+                  onClick={() => toggleSort(col)}
+                  className="h-8 px-2.5 flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider border transition-colors"
+                  style={{
+                    background: sortBy === col ? "var(--bg-active)" : "var(--bg)",
+                    borderColor: sortBy === col ? "var(--text-tertiary)" : "var(--border)",
+                    color: sortBy === col ? "var(--text-primary)" : "var(--text-tertiary)",
+                  }}
+                >
+                  {col}
+                  {sortBy === col && <ArrowUpDown size={9} style={{ opacity: 0.6 }} />}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {reports.length === 0 ? (
           <div
@@ -300,6 +397,18 @@ export function DashboardClient({ reports, plan, planName, used, limit }: Dashbo
               <ArrowRight size={12} />
             </Link>
           </div>
+        ) : filteredReports.length === 0 ? (
+          <div
+            className="border p-8 text-center"
+            style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}
+          >
+            <div className="text-[13px] mb-1" style={{ color: "var(--text-secondary)" }}>
+              No matching reports
+            </div>
+            <div className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>
+              Try a different search or filter.
+            </div>
+          </div>
         ) : (
           <>
           {/* Desktop table */}
@@ -317,7 +426,7 @@ export function DashboardClient({ reports, plan, planName, used, limit }: Dashbo
               <span />
             </div>
 
-            {reports.map((report) => {
+            {filteredReports.map((report) => {
               const rag = getRAG(report.score);
               const isSelected = compareIds.includes(report.id);
               return (
@@ -363,7 +472,7 @@ export function DashboardClient({ reports, plan, planName, used, limit }: Dashbo
 
           {/* Mobile card list */}
           <div className="md:hidden space-y-2">
-            {reports.map((report) => {
+            {filteredReports.map((report) => {
               const rag = getRAG(report.score);
               const isSelected = compareIds.includes(report.id);
               return (
