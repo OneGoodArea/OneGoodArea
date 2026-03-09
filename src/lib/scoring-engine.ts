@@ -36,11 +36,13 @@ function scoreSafety(crime: CrimeSummary | null): { score: number; reasoning: st
   // Sigmoid curve: 10/mo → 86, 30/mo → 67, 60/mo → 50, 100/mo → 38, 200/mo → 23
   let baseScore = 100 * (1 - monthlyRate / (monthlyRate + 60));
 
-  // Violent crime adjustment
-  const violentCategories = ["Violence And Sexual Offences", "Robbery"];
-  const violentCount = violentCategories.reduce(
-    (sum, cat) => sum + (crime.by_category[cat] || 0), 0
-  );
+  // Violent crime adjustment (case-insensitive lookup)
+  const violentPatterns = ["violence", "robbery"];
+  const categoryKeys = Object.keys(crime.by_category);
+  const violentCount = violentPatterns.reduce((sum, pattern) => {
+    const match = categoryKeys.find(k => k.toLowerCase().includes(pattern));
+    return sum + (match ? crime.by_category[match] : 0);
+  }, 0);
   const violentPct = (violentCount / crime.total_crimes) * 100;
 
   if (violentPct > 30) baseScore -= 10;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { ArrowRight, MapPin, TrendingUp, Building2, Search, ChevronRight, Zap, Home as HomeIcon, Users, Briefcase } from "lucide-react";
+import { ArrowRight, MapPin, TrendingUp, Building2, Search, ChevronRight, Zap, Home as HomeIcon, Users, Briefcase, Crosshair, Calculator, MessageSquareText, Code } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 
@@ -395,6 +395,9 @@ export default function Home() {
               <SourceBadge name="Postcodes.io" live />
             </div>
           </div>
+          <div className="mt-2 text-[9px] font-mono" style={{ color: "var(--text-tertiary)" }}>
+            Analysed at LSOA level (~1,500 residents) &middot; 1-2km radius queries &middot; Updated in real time
+          </div>
         </div>
       </section>
 
@@ -577,6 +580,53 @@ export default function Home() {
               { icon: TrendingUp, title: "Property Investors", desc: "Compare rental yields, price growth, and regeneration potential across areas." },
               { icon: Users, title: "Estate Agents", desc: "Create data-backed area briefings for client viewings and property listings." },
               { icon: Briefcase, title: "Business Owners", desc: "Assess foot traffic, competition, and local spending power before opening." },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.title} className="p-5" style={{ background: "var(--bg-elevated)" }}>
+                  <Icon size={16} className="mb-3" style={{ color: "var(--accent)" }} />
+                  <div className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-primary)" }}>{item.title}</div>
+                  <div className="text-[11px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>{item.desc}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Why AreaIQ ── */}
+      <section className="border-b" style={{ borderColor: "var(--border)" }}>
+        <div className="max-w-[1200px] mx-auto px-6 py-16 md:py-20">
+          <div className="text-[10px] font-mono uppercase tracking-wider mb-2" style={{ color: "var(--text-tertiary)" }}>Why AreaIQ</div>
+          <h2 className="text-[22px] md:text-[28px] font-semibold tracking-tight mb-3" style={{ color: "var(--text-primary)" }}>
+            Not another postcode lookup tool
+          </h2>
+          <p className="text-[14px] mb-8 max-w-lg" style={{ color: "var(--text-secondary)" }}>
+            Crystal Roof, StreetCheck, PropertyData — they show you raw stats. AreaIQ scores, weighs, and explains them for your specific use case.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px" style={{ background: "var(--border)" }}>
+            {[
+              {
+                icon: Crosshair,
+                title: "Intent-Driven Scoring",
+                desc: "Same area, different scores depending on whether you're moving, investing, or opening a business. Competitors give one generic view.",
+              },
+              {
+                icon: Calculator,
+                title: "Deterministic Methodology",
+                desc: "Scores computed from real government data using transparent formulas. Same postcode, same score, every time. Not AI guesses.",
+              },
+              {
+                icon: MessageSquareText,
+                title: "AI-Powered Narrative",
+                desc: "Data tells you the numbers. AI explains what they mean for your specific situation. Scored dimensions plus plain-English recommendations.",
+              },
+              {
+                icon: Code,
+                title: "Developer API",
+                desc: "REST API with Bearer auth. Embed area intelligence into property platforms, CRM tools, and relocation apps. No competitor offers this.",
+              },
             ].map((item) => {
               const Icon = item.icon;
               return (
