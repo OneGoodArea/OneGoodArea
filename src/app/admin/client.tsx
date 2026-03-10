@@ -4,7 +4,7 @@ import Link from "next/link";
 import { UserButton } from "@/components/user-button";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { Users, FileText, Activity, TrendingUp } from "lucide-react";
+import { Users, FileText, Activity, TrendingUp, PoundSterling, CreditCard } from "lucide-react";
 
 interface Analytics {
   totalUsers: number;
@@ -23,6 +23,12 @@ interface Analytics {
     email: string | null;
   }[];
   userGrowth: { day: string; count: number }[];
+  // Conversion funnel
+  usersWithReports: number;
+  paidUsers: number;
+  // Revenue
+  subscriptionsByPlan: { plan: string; count: number }[];
+  mrr: number;
 }
 
 const INTENT_COLORS: Record<string, string> = {
@@ -186,6 +192,192 @@ function DonutChart({ data }: { data: { intent: string; count: number }[] }) {
   );
 }
 
+/* ── Conversion Funnel ── */
+function ConversionFunnel({ totalUsers, usersWithReports, paidUsers }: {
+  totalUsers: number;
+  usersWithReports: number;
+  paidUsers: number;
+}) {
+  const steps = [
+    { label: "Signed Up", value: totalUsers, color: "var(--accent)" },
+    { label: "Generated Report", value: usersWithReports, color: "var(--neon-green)" },
+    { label: "Paid Plan", value: paidUsers, color: "var(--neon-amber)" },
+  ];
+
+  const maxVal = Math.max(totalUsers, 1);
+
+  return (
+    <div className="space-y-3">
+      {steps.map((step, i) => {
+        const widthPct = Math.max((step.value / maxVal) * 100, 6);
+        const conversionFromPrev = i > 0 && steps[i - 1].value > 0
+          ? Math.round((step.value / steps[i - 1].value) * 100)
+          : null;
+
+        return (
+          <div key={step.label}>
+            {i > 0 && conversionFromPrev !== null && (
+              <div className="flex items-center gap-2 mb-1.5 ml-1">
+                <div className="w-px h-3" style={{ background: "var(--border)" }} />
+                <span className="text-[9px] font-mono" style={{ color: "var(--text-tertiary)" }}>
+                  {conversionFromPrev}% conversion
+                </span>
+              </div>
+            )}
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-mono w-[110px] shrink-0 text-right" style={{ color: "var(--text-secondary)" }}>
+                {step.label}
+              </span>
+              <div className="flex-1 h-6 relative" style={{ background: "var(--bg)" }}>
+                <div
+                  className="h-full flex items-center transition-all duration-500"
+                  style={{ width: `${widthPct}%`, background: step.color, opacity: 0.2 }}
+                />
+                <div
+                  className="absolute inset-0 flex items-center"
+                  style={{ width: `${widthPct}%` }}
+                >
+                  <span className="text-[11px] font-mono font-bold ml-2" style={{ color: step.color }}>
+                    {step.value}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── Intent Bar Chart (horizontal) ── */
+function IntentBarChart({ data }: { data: { intent: string; count: number }[] }) {
+  const total = data.reduce((sum, d) => sum + d.count, 0);
+  if (total === 0) {
+    return (
+      <div className="flex items-center justify-center h-[120px]">
+        <span className="text-[11px] font-mono" style={{ color: "var(--text-tertiary)" }}>No data yet</span>
+      </div>
+    );
+  }
+
+  const maxCount = Math.max(...data.map(d => d.count), 1);
+
+  return (
+    <div className="space-y-2.5">
+      {data.map((d) => {
+        const widthPct = Math.max((d.count / maxCount) * 100, 4);
+        const pctOfTotal = Math.round((d.count / total) * 100);
+
+        return (
+          <div key={d.intent} className="flex items-center gap-3">
+            <span className="text-[10px] font-mono w-[70px] shrink-0 text-right capitalize" style={{ color: "var(--text-secondary)" }}>
+              {d.intent}
+            </span>
+            <div className="flex-1 h-5 relative" style={{ background: "var(--bg)" }}>
+              <div
+                className="h-full transition-all duration-500"
+                style={{
+                  width: `${widthPct}%`,
+                  background: INTENT_COLORS[d.intent] || "var(--text-tertiary)",
+                  opacity: 0.3,
+                }}
+              />
+            </div>
+            <span className="text-[11px] font-mono font-semibold w-8 text-right shrink-0" style={{ color: "var(--text-primary)" }}>
+              {d.count}
+            </span>
+            <span className="text-[9px] font-mono w-8 shrink-0" style={{ color: "var(--text-tertiary)" }}>
+              {pctOfTotal}%
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── Revenue Panel ── */
+function RevenuePanel({ subscriptionsByPlan, mrr }: {
+  subscriptionsByPlan: { plan: string; count: number }[];
+  mrr: number;
+}) {
+  const PLAN_COLORS: Record<string, string> = {
+    starter: "var(--accent)",
+    pro: "var(--neon-green)",
+    business: "var(--neon-amber)",
+  };
+
+  const PLAN_PRICES: Record<string, number> = {
+    starter: 29,
+    pro: 79,
+    business: 249,
+  };
+
+  const totalSubs = subscriptionsByPlan.reduce((sum, s) => sum + s.count, 0);
+
+  return (
+    <div className="space-y-4">
+      {/* MRR header */}
+      <div className="flex items-baseline gap-2">
+        <span className="text-[28px] font-mono font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
+          £{mrr.toLocaleString()}
+        </span>
+        <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>
+          MRR
+        </span>
+      </div>
+
+      {/* Plan breakdown */}
+      {totalSubs === 0 ? (
+        <div className="py-3">
+          <span className="text-[11px] font-mono" style={{ color: "var(--text-tertiary)" }}>No active subscriptions</span>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {["starter", "pro", "business"].map((plan) => {
+            const row = subscriptionsByPlan.find(s => s.plan === plan);
+            const count = row?.count || 0;
+            const revenue = count * (PLAN_PRICES[plan] || 0);
+
+            return (
+              <div key={plan} className="flex items-center gap-3">
+                <div className="w-2 h-2 shrink-0" style={{ background: PLAN_COLORS[plan] || "var(--text-tertiary)" }} />
+                <span className="text-[11px] font-mono capitalize w-[60px] shrink-0" style={{ color: "var(--text-secondary)" }}>
+                  {plan}
+                </span>
+                <span className="text-[11px] font-mono font-semibold" style={{ color: "var(--text-primary)" }}>
+                  {count} sub{count !== 1 ? "s" : ""}
+                </span>
+                <span className="text-[10px] font-mono ml-auto" style={{ color: "var(--text-tertiary)" }}>
+                  £{revenue}/mo
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Stacked bar */}
+      {totalSubs > 0 && (
+        <div className="flex h-2 overflow-hidden" style={{ background: "var(--bg)" }}>
+          {subscriptionsByPlan.map((s) => (
+            <div
+              key={s.plan}
+              className="h-full"
+              style={{
+                width: `${(s.count / totalSubs) * 100}%`,
+                background: PLAN_COLORS[s.plan] || "var(--text-tertiary)",
+                opacity: 0.6,
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Main Admin Dashboard ── */
 export function AdminClient({ analytics }: { analytics: Analytics }) {
   return (
@@ -210,6 +402,35 @@ export function AdminClient({ analytics }: { analytics: Analytics }) {
           <StatCard label="Active Users (Month)" value={analytics.activeUsersThisMonth} icon={Activity} />
         </div>
 
+        {/* Revenue + Funnel Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-px mb-6" style={{ background: "var(--border)" }}>
+          {/* Revenue Metrics */}
+          <div className="p-5" style={{ background: "var(--bg-elevated)" }}>
+            <div className="flex items-center gap-2 mb-4">
+              <PoundSterling size={11} style={{ color: "var(--text-tertiary)" }} />
+              <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+                Revenue
+              </span>
+            </div>
+            <RevenuePanel subscriptionsByPlan={analytics.subscriptionsByPlan} mrr={analytics.mrr} />
+          </div>
+
+          {/* Conversion Funnel */}
+          <div className="p-5" style={{ background: "var(--bg-elevated)" }}>
+            <div className="flex items-center gap-2 mb-4">
+              <CreditCard size={11} style={{ color: "var(--text-tertiary)" }} />
+              <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+                Conversion Funnel
+              </span>
+            </div>
+            <ConversionFunnel
+              totalUsers={analytics.totalUsers}
+              usersWithReports={analytics.usersWithReports}
+              paidUsers={analytics.paidUsers}
+            />
+          </div>
+        </div>
+
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-px mb-6" style={{ background: "var(--border)" }}>
           {/* Reports Per Day */}
@@ -225,14 +446,14 @@ export function AdminClient({ analytics }: { analytics: Analytics }) {
             <BarChart data={analytics.reportsPerDay} />
           </div>
 
-          {/* Intent Distribution */}
+          {/* Intent Distribution (horizontal bar chart) */}
           <div className="p-5" style={{ background: "var(--bg-elevated)" }}>
             <div className="mb-4">
               <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
-                Intent Distribution
+                Popular Intents
               </span>
             </div>
-            <DonutChart data={analytics.intentDistribution} />
+            <IntentBarChart data={analytics.intentDistribution} />
           </div>
         </div>
 
@@ -242,7 +463,7 @@ export function AdminClient({ analytics }: { analytics: Analytics }) {
           <div style={{ background: "var(--bg-elevated)" }}>
             <div className="px-5 py-3 border-b" style={{ borderColor: "var(--border)" }}>
               <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
-                Top Areas Searched
+                Most Searched Areas
               </span>
             </div>
             {analytics.topAreas.length === 0 ? (

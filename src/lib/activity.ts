@@ -49,6 +49,11 @@ export async function getAnalytics() {
     recentActivity,
     userGrowth,
     activeUsersThisMonth,
+    // Conversion funnel queries
+    usersWithReports,
+    paidUsers,
+    // Revenue / subscription breakdown
+    subscriptionsByPlan,
   ] = await Promise.all([
     sql`SELECT COUNT(*)::int as count FROM users`,
     sql`SELECT COUNT(*)::int as count FROM reports`,
@@ -86,7 +91,32 @@ export async function getAnalytics() {
       FROM reports
       WHERE created_at >= date_trunc('month', NOW())
     `,
+    // Users who have generated at least 1 report
+    sql`SELECT COUNT(DISTINCT user_id)::int as count FROM reports`,
+    // Users on a paid plan (active subscription, not free)
+    sql`
+      SELECT COUNT(*)::int as count FROM subscriptions
+      WHERE status = 'active' AND plan != 'free' AND stripe_subscription_id IS NOT NULL
+    `,
+    // Active subscriptions grouped by plan tier
+    sql`
+      SELECT plan, COUNT(*)::int as count FROM subscriptions
+      WHERE status = 'active' AND plan != 'free' AND stripe_subscription_id IS NOT NULL
+      GROUP BY plan ORDER BY count DESC
+    `,
   ]);
+
+  // MRR calculation based on plan prices
+  const planPrices: Record<string, number> = {
+    starter: 29,
+    pro: 79,
+    business: 249,
+  };
+
+  const subscriptionBreakdown = subscriptionsByPlan as { plan: string; count: number }[];
+  const mrr = subscriptionBreakdown.reduce((sum, row) => {
+    return sum + (planPrices[row.plan] || 0) * row.count;
+  }, 0);
 
   return {
     totalUsers: totalUsers[0].count as number,
@@ -105,5 +135,11 @@ export async function getAnalytics() {
       email: string | null;
     }[],
     userGrowth: userGrowth as { day: string; count: number }[],
+    // Conversion funnel
+    usersWithReports: usersWithReports[0].count as number,
+    paidUsers: paidUsers[0].count as number,
+    // Revenue
+    subscriptionsByPlan: subscriptionBreakdown,
+    mrr,
   };
 }
