@@ -22,6 +22,12 @@ export function Footer({ maxWidth = "1200px" }: { maxWidth?: string }) {
           <Link href="/help" className="text-[10px] font-mono transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>
             Help
           </Link>
+          <Link href="/terms" className="text-[10px] font-mono transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>
+            Terms
+          </Link>
+          <Link href="/privacy" className="text-[10px] font-mono transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>
+            Privacy
+          </Link>
         </div>
       </div>
     </footer>
