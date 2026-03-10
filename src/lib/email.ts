@@ -125,6 +125,14 @@ export async function sendWelcomeEmail(email: string, name: string) {
   });
 }
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 export async function sendReportEmail(email: string, reportId: string, report: AreaReport) {
   console.log(`[report-email] Sending report email to ${email} for report ${reportId}`);
 
@@ -163,7 +171,7 @@ export async function sendReportEmail(email: string, reportId: string, report: A
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
               <td style="font-family:'Courier New',monospace; font-size:11px; color:#a3a3a3;">
-                ${d.label}
+                ${escapeHtml(d.label)}
               </td>
               <td align="right" style="font-family:'Courier New',monospace; font-size:13px; font-weight:700; color:${dimColor};">
                 ${d.score}/100
@@ -196,7 +204,7 @@ export async function sendReportEmail(email: string, reportId: string, report: A
     <!-- Area + Intent -->
     <div style="margin-bottom:20px;">
       <p style="font-family:'Courier New',monospace; font-size:14px; font-weight:700; color:#ffffff; margin:0 0 4px 0;">
-        ${report.area} ${areaTypeBadge}
+        ${escapeHtml(report.area)} ${areaTypeBadge}
       </p>
       <p style="font-family:'Courier New',monospace; font-size:10px; color:#737373; margin:0; text-transform:uppercase; letter-spacing:1px;">
         ${intentLabels[report.intent] || report.intent} Analysis
@@ -228,7 +236,7 @@ export async function sendReportEmail(email: string, reportId: string, report: A
 
     <!-- Summary -->
     <p style="font-family:'Courier New',monospace; font-size:11px; color:#a3a3a3; line-height:1.6; margin:0 0 24px 0;">
-      ${summaryText}
+      ${escapeHtml(summaryText)}
     </p>
 
     <!-- CTA Button -->
@@ -252,7 +260,7 @@ export async function sendReportEmail(email: string, reportId: string, report: A
   const result = await resend.emails.send({
     from: FROM,
     to: email,
-    subject: `Your AreaIQ Report: ${report.area}`,
+    subject: `Your AreaIQ Report: ${report.area || "Area Analysis"}`,
     html: baseTemplate(content),
   });
 
