@@ -1,6 +1,7 @@
 # dependencies
 /node_modules
 LINKEDIN.md
+OVERVIEW.md
 /.pnp
 .pnp.js
 .yarn/install-state.gz
