@@ -1,9 +1,59 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { ArrowRight, MapPin, TrendingUp, Building2, Search, ChevronRight, Zap, Home as HomeIcon, Users, Briefcase, Crosshair, Calculator, MessageSquareText, Code } from "lucide-react";
+import { ArrowRight, MapPin, TrendingUp, Building2, Search, ChevronRight, Zap, Home as HomeIcon, Users, Briefcase, Crosshair, Calculator, MessageSquareText, Code, Copy, Check, Globe, Key, BarChart3, Shield } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+
+/* ── Widget Code Snippet with Copy ── */
+function WidgetCodeSnippet() {
+  const [copied, setCopied] = useState(false);
+  const snippet = `<div
+  data-areaiq-postcode="SW1A 1AA"
+  data-areaiq-intent="moving"
+></div>
+
+<script src="https://www.area-iq.co.uk/widget.js"></script>`;
+
+  function handleCopy() {
+    navigator.clipboard.writeText(snippet).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <div className="p-8 flex flex-col justify-center" style={{ background: "var(--bg)" }}>
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+          HTML
+        </span>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 text-[10px] font-mono px-2 py-1 transition-colors cursor-pointer"
+          style={{ color: copied ? "var(--neon-green)" : "var(--text-tertiary)", background: "var(--bg-active)" }}
+        >
+          {copied ? <Check size={10} /> : <Copy size={10} />}
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+      <pre
+        className="text-[12px] font-mono p-5 overflow-x-auto leading-relaxed"
+        style={{ background: "var(--bg-elevated)", color: "var(--text-secondary)", border: "1px solid var(--border)" }}
+      >
+        {snippet}
+      </pre>
+      <div className="mt-4 flex items-center gap-4">
+        <Link href="/docs#embed" className="text-[11px] font-mono flex items-center gap-1.5 transition-colors hover:opacity-80" style={{ color: "var(--neon-green)" }}>
+          Full docs <ArrowRight size={10} />
+        </Link>
+        <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>
+          Dark and light themes available
+        </span>
+      </div>
+    </div>
+  );
+}
 
 /* ── Animated Score Ring ── */
 function HeroScoreRing({ score, label, size = 100 }: { score: number; label: string; size?: number }) {
@@ -860,6 +910,172 @@ export default function Home() {
                 </Link>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Embed Widget ── */}
+      <section className="border-t" style={{ borderColor: "var(--border)" }}>
+        <div className="max-w-[1200px] mx-auto px-6 py-16 md:py-24">
+          <div className="text-center mb-12">
+            <div className="text-[10px] font-mono uppercase tracking-widest mb-3" style={{ color: "var(--neon-green)" }}>
+              Embed
+            </div>
+            <h2 className="text-[26px] md:text-[34px] font-semibold tracking-tight mb-3" style={{ color: "var(--text-primary)" }}>
+              Add area scores to any website
+            </h2>
+            <p className="text-[14px] max-w-lg mx-auto" style={{ color: "var(--text-secondary)" }}>
+              One script tag. No API key. No setup fee. Scores appear in seconds.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-px" style={{ background: "var(--border)" }}>
+            {/* Widget Preview */}
+            <div className="p-8 flex items-center justify-center" style={{ background: "var(--bg-elevated)" }}>
+              <div style={{ maxWidth: 340, width: "100%" }}>
+                {/* Static widget mockup */}
+                <div className="border overflow-hidden" style={{ borderColor: "var(--border)", borderRadius: 6, background: "var(--bg)" }}>
+                  <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "var(--border)" }}>
+                    <span className="text-[11px] font-bold tracking-wide" style={{ color: "var(--text-primary)" }}>AreaIQ</span>
+                    <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>Shoreditch, E1 6AN</span>
+                  </div>
+                  <div className="flex items-center gap-4 p-4">
+                    <div className="relative shrink-0" style={{ width: 64, height: 64 }}>
+                      <svg width="64" height="64" viewBox="0 0 64 64">
+                        <circle cx="32" cy="32" r="29" fill="none" stroke="var(--neon-green)" strokeOpacity="0.1" strokeWidth="3" />
+                        <circle cx="32" cy="32" r="29" fill="none" stroke="var(--neon-green)" strokeWidth="3"
+                          strokeDasharray={`${2 * Math.PI * 29}`}
+                          strokeDashoffset={`${2 * Math.PI * 29 * (1 - 82 / 100)}`}
+                          strokeLinecap="round"
+                          transform="rotate(-90 32 32)" />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-[20px] font-mono font-bold" style={{ color: "var(--neon-green)", lineHeight: 1 }}>82</span>
+                        <span className="text-[8px] uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>Good</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 flex-1">
+                      {[
+                        { label: "Safety", score: 76 },
+                        { label: "Transport", score: 91 },
+                        { label: "Schools", score: 74 },
+                        { label: "Amenities", score: 88 },
+                        { label: "Environment", score: 81 },
+                      ].map((d) => (
+                        <div key={d.label} className="flex items-center justify-between gap-1.5">
+                          <span className="text-[10px]" style={{ color: "var(--text-tertiary)" }}>{d.label}</span>
+                          <span className="text-[11px] font-mono font-semibold" style={{ color: d.score >= 70 ? "var(--neon-green)" : d.score >= 40 ? "var(--neon-amber)" : "var(--neon-red)" }}>
+                            {d.score}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between px-4 py-2 border-t" style={{ borderColor: "var(--border)" }}>
+                    <span className="text-[9px]" style={{ color: "var(--text-tertiary)" }}>Powered by AreaIQ</span>
+                    <span className="text-[9px] font-semibold" style={{ color: "var(--neon-green)" }}>View full report →</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Code Snippet */}
+            <WidgetCodeSnippet />
+          </div>
+        </div>
+      </section>
+
+      {/* ── B2B / Platform ── */}
+      <section className="border-t" style={{ borderColor: "var(--border)" }}>
+        <div className="max-w-[1200px] mx-auto px-6 py-16 md:py-24">
+          <div className="text-center mb-12">
+            <div className="text-[10px] font-mono uppercase tracking-widest mb-3" style={{ color: "var(--accent)" }}>
+              For platforms
+            </div>
+            <h2 className="text-[26px] md:text-[34px] font-semibold tracking-tight mb-3" style={{ color: "var(--text-primary)" }}>
+              Area intelligence for your product
+            </h2>
+            <p className="text-[14px] max-w-lg mx-auto" style={{ color: "var(--text-secondary)" }}>
+              Embed scored area data into property portals, CRMs, relocation tools, and investment platforms. REST API or drop-in widget.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px" style={{ background: "var(--border)" }}>
+            {[
+              {
+                icon: Key,
+                title: "REST API",
+                desc: "POST a postcode, get a scored report back. Full JSON response with 5 dimensions, AI narrative, and reasoning.",
+              },
+              {
+                icon: Globe,
+                title: "Embed widget",
+                desc: "One script tag on your page. No API key needed. Score card renders automatically with your postcode.",
+              },
+              {
+                icon: Shield,
+                title: "Deterministic scoring",
+                desc: "Same postcode, same intent, same scores. Every time. 16 scoring functions with transparent methodology.",
+              },
+              {
+                icon: BarChart3,
+                title: "Usage dashboard",
+                desc: "Track API calls, monitor usage by key, view 30-day trends. All self-serve from your dashboard.",
+              },
+            ].map((item) => (
+              <div key={item.title} className="p-6" style={{ background: "var(--bg-elevated)" }}>
+                <item.icon size={16} style={{ color: "var(--accent)" }} />
+                <div className="text-[13px] font-semibold mt-3 mb-2" style={{ color: "var(--text-primary)" }}>
+                  {item.title}
+                </div>
+                <div className="text-[11px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
+                  {item.desc}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-px mt-px" style={{ background: "var(--border)" }}>
+            {[
+              {
+                label: "Estate agents",
+                desc: "Show area scores on every listing. Help buyers understand the neighbourhood before they visit.",
+              },
+              {
+                label: "Property portals",
+                desc: "Enrich search results with area intelligence. Differentiate from Rightmove and Zoopla.",
+              },
+              {
+                label: "Investment platforms",
+                desc: "Screen areas at scale for yield, safety, and growth potential. 500+ reports per month.",
+              },
+            ].map((item) => (
+              <div key={item.label} className="p-5" style={{ background: "var(--bg-elevated)" }}>
+                <div className="text-[11px] font-mono font-semibold uppercase tracking-wider mb-1.5" style={{ color: "var(--neon-green)" }}>
+                  {item.label}
+                </div>
+                <div className="text-[11px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                  {item.desc}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href="/docs"
+              className="h-10 px-6 flex items-center gap-2 text-[11px] font-mono font-medium uppercase tracking-wide transition-colors"
+              style={{ background: "var(--text-primary)", color: "var(--bg)" }}
+            >
+              API Documentation <ArrowRight size={12} />
+            </Link>
+            <Link
+              href="/pricing"
+              className="h-10 px-6 flex items-center gap-2 text-[11px] font-mono font-medium uppercase tracking-wide transition-colors"
+              style={{ background: "var(--bg-active)", color: "var(--text-secondary)", border: "1px solid var(--border)" }}
+            >
+              View API Pricing <ArrowRight size={12} />
+            </Link>
           </div>
         </div>
       </section>
