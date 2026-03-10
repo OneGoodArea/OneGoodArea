@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { ApiPlayground } from "./playground";
 
 export const metadata: Metadata = {
   title: "API Documentation | AreaIQ",
@@ -50,6 +51,7 @@ function Badge({ children, color = "var(--neon-green)" }: { children: string; co
 }
 
 const NAV_ITEMS = [
+  { id: "playground", label: "Playground" },
   { id: "quickstart", label: "Quickstart" },
   { id: "authentication", label: "Authentication" },
   { id: "endpoint", label: "Endpoint" },
@@ -119,6 +121,14 @@ export default function DocsPage() {
                 </span>
               </div>
             </div>
+
+            {/* Playground */}
+            <Section id="playground" title="Try the API">
+              <p className="text-[13px] mb-4 leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                Test the AreaIQ API with real UK postcodes. No API key needed for the playground.
+              </p>
+              <ApiPlayground />
+            </Section>
 
             {/* Quickstart */}
             <Section id="quickstart" title="Quickstart">
