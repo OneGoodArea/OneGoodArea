@@ -4,9 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UserButton } from "@/components/user-button";
-import { ArrowRight, Plus, X, Share2, Copy, Check } from "lucide-react";
+import { ArrowRight, Plus, X, Share2, Copy } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { useToast } from "@/components/toast";
 import { AreaReport } from "@/lib/types";
 
 function getRAG(score: number) {
@@ -190,7 +191,7 @@ export function CompareClient({
   const router = useRouter();
   const [reportA] = useState<ReportData | null>(selectedReports[0] || null);
   const [reportB] = useState<ReportData | null>(selectedReports[1] || null);
-  const [copied, setCopied] = useState(false);
+  const toast = useToast();
 
   const needsSelection = !reportA || !reportB;
   const selectedIds = [reportA?.id, reportB?.id].filter(Boolean) as string[];
@@ -436,14 +437,13 @@ export function CompareClient({
                 onClick={() => {
                   const url = `https://www.area-iq.co.uk/compare?reports=${reportA.id},${reportB.id}`;
                   navigator.clipboard.writeText(url);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 2000);
+                  toast.success("Link copied to clipboard");
                 }}
                 className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider border transition-colors hover:opacity-80"
-                style={{ color: copied ? "var(--neon-green)" : "var(--text-tertiary)", borderColor: "var(--border)", background: "var(--bg)" }}
+                style={{ color: "var(--text-tertiary)", borderColor: "var(--border)", background: "var(--bg)" }}
               >
-                {copied ? <Check size={10} /> : <Copy size={10} />}
-                {copied ? "Copied" : "Link"}
+                <Copy size={10} />
+                Link
               </button>
               <button
                 onClick={() => {

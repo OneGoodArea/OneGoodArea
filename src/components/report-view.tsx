@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { ChevronDown, Download, Lock, Share2, Check, Copy } from "lucide-react";
+import { ChevronDown, Download, Lock, Share2, Copy } from "lucide-react";
 import { AreaReport } from "@/lib/types";
 import { Logo } from "@/components/logo";
+import { useToast } from "@/components/toast";
 import type { PlanId } from "@/lib/stripe";
 import Link from "next/link";
 
@@ -367,7 +368,7 @@ function SectionCard({ section, index, defaultOpen = false }: { section: AreaRep
 export function ReportView({ report, plan = "free", reportId }: { report: AreaReport; plan?: PlanId; reportId?: string }) {
   const { color: scoreColor, glow: scoreGlow } = getRAG(report.areaiq_score);
   const [exporting, setExporting] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const toast = useToast();
 
   const reportUrl = reportId ? `https://www.area-iq.co.uk/report/${reportId}` : "";
   const shareText = `${report.area} scored ${report.areaiq_score}/100 for ${report.intent} on AreaIQ`;
@@ -375,8 +376,7 @@ export function ReportView({ report, plan = "free", reportId }: { report: AreaRe
   function copyLink() {
     if (!reportUrl) return;
     navigator.clipboard.writeText(reportUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    toast.success("Link copied to clipboard");
   }
 
   function shareWhatsApp() {
@@ -582,10 +582,10 @@ export function ReportView({ report, plan = "free", reportId }: { report: AreaRe
               <button
                 onClick={copyLink}
                 className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider border transition-colors hover:opacity-80"
-                style={{ color: copied ? "var(--neon-green)" : "var(--text-tertiary)", borderColor: "var(--border)", background: "var(--bg)" }}
+                style={{ color: "var(--text-tertiary)", borderColor: "var(--border)", background: "var(--bg)" }}
               >
-                {copied ? <Check size={10} /> : <Copy size={10} />}
-                {copied ? "Copied" : "Link"}
+                <Copy size={10} />
+                Link
               </button>
               <button
                 onClick={shareWhatsApp}

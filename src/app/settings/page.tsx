@@ -1,13 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Loader2, Lock, ArrowRight, Check, Trash2, AlertTriangle } from "lucide-react";
+import { Loader2, Lock, ArrowRight, Check, Trash2, AlertTriangle, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { UserButton } from "@/components/user-button";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+
+interface SubscriptionInfo {
+  plan: string;
+  planName: string;
+  hasStripeSubscription: boolean;
+  cancelAt: string | null;
+}
 
 export default function SettingsPage() {
   const { data: session, status } = useSession();
@@ -24,6 +31,34 @@ export default function SettingsPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
+  // Subscription state
+  const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
+  const [subLoading, setSubLoading] = useState(true);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const [cancelSuccess, setCancelSuccess] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+
+  const fetchSubscription = useCallback(async () => {
+    try {
+      const res = await fetch("/api/settings/subscription");
+      if (res.ok) {
+        const data = await res.json();
+        setSubscription(data);
+      }
+    } catch {
+      // Silently fail, will show free plan fallback
+    } finally {
+      setSubLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchSubscription();
+    }
+  }, [session, fetchSubscription]);
+
   if (status === "loading") return null;
   if (!session?.user) {
     router.push("/sign-in");
@@ -31,6 +66,29 @@ export default function SettingsPage() {
   }
 
   const isOAuth = !session.user.email?.includes("@") ? false : true;
+
+  async function handleCancelSubscription() {
+    setCancelError(null);
+    setCancelLoading(true);
+    try {
+      const res = await fetch("/api/stripe/cancel", { method: "POST" });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setCancelError(data.error || "Failed to cancel subscription");
+        return;
+      }
+
+      setCancelSuccess(true);
+      setShowCancelConfirm(false);
+      // Refresh subscription info
+      await fetchSubscription();
+    } catch {
+      setCancelError("Something went wrong");
+    } finally {
+      setCancelLoading(false);
+    }
+  }
 
   async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault();
@@ -108,6 +166,133 @@ export default function SettingsPage() {
                 {session.user.email}
               </span>
             </div>
+          </div>
+        </div>
+
+        {/* Subscription */}
+        <div className="border mb-8" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
+          <div className="px-5 py-2.5 border-b flex items-center gap-2" style={{ borderColor: "var(--border)" }}>
+            <CreditCard size={12} style={{ color: "var(--text-tertiary)" }} />
+            <span className="text-[9px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+              Subscription
+            </span>
+          </div>
+
+          <div className="px-5 py-4">
+            {subLoading ? (
+              <div className="flex items-center gap-2 py-2">
+                <Loader2 size={13} className="animate-spin" style={{ color: "var(--text-tertiary)" }} />
+                <span className="text-[11px] font-mono" style={{ color: "var(--text-tertiary)" }}>Loading...</span>
+              </div>
+            ) : subscription && subscription.plan !== "free" ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-mono" style={{ color: "var(--text-tertiary)" }}>Plan</span>
+                  <span className="text-[12px] font-mono font-medium" style={{ color: "var(--neon-green)" }}>
+                    {subscription.planName}
+                  </span>
+                </div>
+
+                {subscription.cancelAt ? (
+                  <div className="space-y-2">
+                    <div
+                      className="flex items-center gap-2 text-[11px] font-mono px-3 py-2"
+                      style={{ color: "var(--neon-amber)", background: "rgba(245, 158, 11, 0.08)" }}
+                    >
+                      <AlertTriangle size={12} />
+                      Cancels on {new Date(subscription.cancelAt).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </div>
+                    <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
+                      You will retain access to your current plan features until this date. After that, your account will revert to the Free plan.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {cancelSuccess && (
+                      <div className="flex items-center gap-2 text-[11px] font-mono px-3 py-2" style={{ color: "var(--neon-green)", background: "var(--neon-green-dim)" }}>
+                        <Check size={12} />
+                        Subscription cancellation scheduled
+                      </div>
+                    )}
+
+                    {cancelError && (
+                      <div className="text-[11px] font-mono px-3 py-2" style={{ color: "var(--neon-red)", background: "var(--bg-active)" }}>
+                        {cancelError}
+                      </div>
+                    )}
+
+                    {!showCancelConfirm ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowCancelConfirm(true)}
+                        className="h-8 px-4 flex items-center gap-2 text-[11px] font-mono font-medium uppercase tracking-wide transition-all cursor-pointer border"
+                        style={{
+                          borderColor: "var(--border)",
+                          color: "var(--text-secondary)",
+                          background: "transparent",
+                        }}
+                      >
+                        Cancel Subscription
+                      </button>
+                    ) : (
+                      <div className="space-y-3 p-3 border" style={{ borderColor: "var(--neon-amber)", background: "rgba(245, 158, 11, 0.04)" }}>
+                        <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                          Are you sure you want to cancel? You will keep access until the end of your current billing period, then revert to the Free plan.
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={handleCancelSubscription}
+                            disabled={cancelLoading}
+                            className="h-8 px-4 flex items-center gap-2 text-[11px] font-mono font-medium uppercase tracking-wide transition-all cursor-pointer disabled:opacity-50 disabled:cursor-default"
+                            style={{ background: "var(--neon-amber)", color: "#000" }}
+                          >
+                            {cancelLoading ? (
+                              <Loader2 size={13} className="animate-spin" />
+                            ) : (
+                              "Yes, Cancel"
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowCancelConfirm(false);
+                              setCancelError(null);
+                            }}
+                            className="h-8 px-4 flex items-center text-[11px] font-mono font-medium uppercase tracking-wide transition-all cursor-pointer border"
+                            style={{ borderColor: "var(--border)", color: "var(--text-tertiary)", background: "transparent" }}
+                          >
+                            Never Mind
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-mono" style={{ color: "var(--text-tertiary)" }}>Plan</span>
+                  <span className="text-[12px] font-mono font-medium" style={{ color: "var(--text-primary)" }}>Free</span>
+                </div>
+                <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
+                  You are on the Free plan with 3 reports per month.
+                </p>
+                <Link
+                  href="/pricing"
+                  className="h-8 px-4 inline-flex items-center gap-1.5 text-[11px] font-mono font-medium uppercase tracking-wide transition-all"
+                  style={{ background: "var(--text-primary)", color: "var(--bg)" }}
+                >
+                  <ArrowRight size={11} />
+                  View Plans
+                </Link>
+              </div>
+            )}
           </div>
         </div>
 
