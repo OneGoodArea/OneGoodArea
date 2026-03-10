@@ -58,6 +58,7 @@ const NAV_ITEMS = [
   { id: "errors", label: "Errors" },
   { id: "data-sources", label: "Data Sources" },
   { id: "rate-limits", label: "Rate Limits" },
+  { id: "embed", label: "Embed Widget" },
   { id: "sdks", label: "SDKs" },
 ];
 
@@ -518,6 +519,66 @@ export default function DocsPage() {
               <p className="text-[12px]" style={{ color: "var(--text-tertiary)" }}>
                 Need higher volume? Contact <span style={{ color: "var(--text-secondary)" }}>hello@area-iq.co.uk</span> for custom enterprise limits.
               </p>
+            </Section>
+
+            {/* Embed Widget */}
+            <Section id="embed" title="Embed Widget">
+              <p className="text-[13px] mb-4 leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                Add area intelligence to any website with a single script tag. No API key required.
+                The widget is rate limited and cached, designed for public-facing pages like property listings.
+              </p>
+
+              <div className="text-[10px] font-mono uppercase tracking-wider mb-2" style={{ color: "var(--text-tertiary)" }}>
+                Basic usage
+              </div>
+              <CodeBlock lang="html">{`<!-- Add this where you want the widget to appear -->
+<div
+  data-areaiq-postcode="SW1A 1AA"
+  data-areaiq-intent="moving"
+></div>
+
+<!-- Add this before </body> -->
+<script src="https://www.area-iq.co.uk/widget.js"></script>`}</CodeBlock>
+
+              <div className="text-[10px] font-mono uppercase tracking-wider mt-6 mb-2" style={{ color: "var(--text-tertiary)" }}>
+                Attributes
+              </div>
+              <div className="border" style={{ borderColor: "var(--border)" }}>
+                {[
+                  ["data-areaiq-postcode", "Required", "UK postcode or area name"],
+                  ["data-areaiq-intent", "Optional", "moving (default), business, investing, or research"],
+                  ["data-areaiq-theme", "Optional", "dark (default) or light"],
+                ].map(([attr, req, desc], i) => (
+                  <div
+                    key={attr}
+                    className="flex items-start gap-4 px-4 py-2.5 border-b last:border-b-0"
+                    style={{ borderColor: "var(--border)", background: i % 2 === 0 ? "var(--bg)" : "var(--bg-elevated)" }}
+                  >
+                    <code className="text-[11px] font-mono shrink-0" style={{ color: "var(--neon-green)" }}>{attr}</code>
+                    <span className="text-[10px] font-mono shrink-0" style={{ color: req === "Required" ? "var(--neon-amber)" : "var(--text-tertiary)" }}>{req}</span>
+                    <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{desc}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="text-[10px] font-mono uppercase tracking-wider mt-6 mb-2" style={{ color: "var(--text-tertiary)" }}>
+                Multiple widgets on one page
+              </div>
+              <CodeBlock lang="html">{`<div data-areaiq-postcode="E1 6AN" data-areaiq-intent="investing"></div>
+<div data-areaiq-postcode="SW11 1AA" data-areaiq-intent="moving"></div>
+<div data-areaiq-postcode="M1 1AD" data-areaiq-intent="business" data-areaiq-theme="light"></div>
+
+<script src="https://www.area-iq.co.uk/widget.js"></script>`}</CodeBlock>
+
+              <div className="mt-4 p-3 border" style={{ borderColor: "var(--border)", background: "var(--bg-elevated)" }}>
+                <div className="text-[11px] font-mono font-semibold mb-1" style={{ color: "var(--accent)" }}>
+                  Rate limits
+                </div>
+                <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
+                  The widget endpoint allows 60 requests per hour per domain. Responses are cached for 24 hours,
+                  so repeated loads of the same postcode are served instantly at no cost.
+                </p>
+              </div>
             </Section>
 
             {/* SDKs */}

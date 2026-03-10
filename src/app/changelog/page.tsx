@@ -35,6 +35,12 @@ const CHANGELOG: ChangelogMonth[] = [
     entries: [
       {
         type: "feature",
+        title: "Embeddable widget",
+        description:
+          "Drop a single script tag on any page to show AreaIQ scores. No API key needed. Dark and light themes.",
+      },
+      {
+        type: "feature",
         title: "API pricing tiers: Developer, Business, Growth",
         description:
           "New API plans from £49/mo (100 reports) to £499/mo (1,500 reports). Enterprise pricing on request.",
