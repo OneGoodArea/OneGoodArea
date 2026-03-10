@@ -62,13 +62,14 @@ export async function POST(req: NextRequest) {
     const result = await generateReport(locationCheck.sanitized, intent as Intent, userId);
     trackEvent("report.generated", userId, { area, intent, reportId: result.id, score: result.report?.areaiq_score });
 
-    // Send report email (fire-and-forget)
+    // Send report email (awaited so Vercel doesn't kill the function early)
     const userEmail = session.user?.email;
-    console.log(`[report-email] User email: ${userEmail}, report exists: ${!!result.report}, id: ${result.id}`);
     if (userEmail && result.report) {
-      sendReportEmail(userEmail, result.id, result.report).catch((err) =>
-        console.error("[report-email] Failed to send:", err)
-      );
+      try {
+        await sendReportEmail(userEmail, result.id, result.report);
+      } catch (err) {
+        console.error("[report-email] Failed to send:", err);
+      }
     }
 
     return NextResponse.json(result, { headers });
