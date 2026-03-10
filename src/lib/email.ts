@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { AreaReport } from "@/lib/types";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -120,6 +121,134 @@ export async function sendWelcomeEmail(email: string, name: string) {
     from: FROM,
     to: email,
     subject: "Welcome to AreaIQ",
+    html: baseTemplate(content),
+  });
+}
+
+export async function sendReportEmail(email: string, reportId: string, report: AreaReport) {
+  const baseUrl = process.env.NEXTAUTH_URL || "https://www.area-iq.co.uk";
+  const reportUrl = `${baseUrl}/report/${reportId}`;
+
+  const score = report.areaiq_score;
+  const scoreColor = score >= 70 ? "#22c55e" : score >= 45 ? "#eab308" : "#ef4444";
+  const scoreLabel = score >= 70 ? "Strong" : score >= 45 ? "Moderate" : "Low";
+
+  const intentLabels: Record<string, string> = {
+    moving: "Moving",
+    business: "Business",
+    investing: "Investment",
+    research: "Research",
+  };
+
+  const areaTypeLabels: Record<string, string> = {
+    urban: "Urban",
+    suburban: "Suburban",
+    rural: "Rural",
+  };
+
+  // Get top 3 dimensions sorted by weight (highest weight = most important)
+  const topDimensions = [...report.sub_scores]
+    .sort((a, b) => b.weight - a.weight)
+    .slice(0, 3);
+
+  const dimensionRows = topDimensions
+    .map((d) => {
+      const dimColor = d.score >= 70 ? "#22c55e" : d.score >= 45 ? "#eab308" : "#ef4444";
+      return `
+      <tr>
+        <td style="padding:8px 0; border-bottom:1px solid #1a1a1a;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="font-family:'Courier New',monospace; font-size:11px; color:#a3a3a3;">
+                ${d.label}
+              </td>
+              <td align="right" style="font-family:'Courier New',monospace; font-size:13px; font-weight:700; color:${dimColor};">
+                ${d.score}/100
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>`;
+    })
+    .join("");
+
+  const areaTypeBadge = report.area_type
+    ? `<span style="font-family:'Courier New',monospace; font-size:9px; color:#a3a3a3; background-color:#1a1a1a; padding:3px 8px; letter-spacing:1px; text-transform:uppercase; margin-left:8px;">${areaTypeLabels[report.area_type] || report.area_type}</span>`
+    : "";
+
+  // Truncate summary to keep email concise
+  const summaryText = report.summary.length > 300
+    ? report.summary.slice(0, 297) + "..."
+    : report.summary;
+
+  const content = `
+    <h1 style="font-family:'Courier New',monospace; font-size:18px; font-weight:600; color:#ffffff; margin:0 0 4px 0;">
+      Report Ready
+    </h1>
+    <p style="font-family:'Courier New',monospace; font-size:12px; color:#737373; margin:0 0 24px 0;">
+      Your area intelligence report has been generated.
+    </p>
+
+    <!-- Area + Intent -->
+    <div style="margin-bottom:20px;">
+      <p style="font-family:'Courier New',monospace; font-size:14px; font-weight:700; color:#ffffff; margin:0 0 4px 0;">
+        ${report.area} ${areaTypeBadge}
+      </p>
+      <p style="font-family:'Courier New',monospace; font-size:10px; color:#737373; margin:0; text-transform:uppercase; letter-spacing:1px;">
+        ${intentLabels[report.intent] || report.intent} Analysis
+      </p>
+    </div>
+
+    <!-- Overall Score -->
+    <div style="background-color:#0a0a0a; border:1px solid #1a1a1a; padding:20px; margin-bottom:20px; text-align:center;">
+      <p style="font-family:'Courier New',monospace; font-size:9px; color:#a3a3a3; margin:0 0 8px 0; text-transform:uppercase; letter-spacing:2px;">
+        AreaIQ Score
+      </p>
+      <p style="font-family:'Courier New',monospace; font-size:36px; font-weight:700; color:${scoreColor}; margin:0 0 4px 0;">
+        ${score}
+      </p>
+      <p style="font-family:'Courier New',monospace; font-size:10px; color:${scoreColor}; margin:0; text-transform:uppercase; letter-spacing:1px;">
+        ${scoreLabel}
+      </p>
+    </div>
+
+    <!-- Top Dimensions -->
+    <div style="background-color:#0a0a0a; border:1px solid #1a1a1a; padding:16px; margin-bottom:20px;">
+      <p style="font-family:'Courier New',monospace; font-size:9px; color:#a3a3a3; margin:0 0 12px 0; text-transform:uppercase; letter-spacing:2px;">
+        Key Dimensions
+      </p>
+      <table width="100%" cellpadding="0" cellspacing="0">
+        ${dimensionRows}
+      </table>
+    </div>
+
+    <!-- Summary -->
+    <p style="font-family:'Courier New',monospace; font-size:11px; color:#a3a3a3; line-height:1.6; margin:0 0 24px 0;">
+      ${summaryText}
+    </p>
+
+    <!-- CTA Button -->
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+      <tr>
+        <td style="background-color:#ffffff; padding:10px 24px;">
+          <a href="${reportUrl}" style="font-family:'Courier New',monospace; font-size:12px; font-weight:600; color:#0a0a0a; text-decoration:none; letter-spacing:1px; text-transform:uppercase;">
+            View Full Report
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <div style="border-top:1px solid #1a1a1a; padding-top:16px;">
+      <p style="font-family:'Courier New',monospace; font-size:10px; color:#525252; margin:0;">
+        This report is available anytime at area-iq.co.uk.
+      </p>
+    </div>
+  `;
+
+  await resend.emails.send({
+    from: FROM,
+    to: email,
+    subject: `Your AreaIQ Report: ${report.area}`,
     html: baseTemplate(content),
   });
 }

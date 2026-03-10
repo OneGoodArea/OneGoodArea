@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { canGenerateReport } from "@/lib/usage";
 import { generateReport } from "@/lib/generate-report";
 import { trackEvent } from "@/lib/activity";
+import { sendReportEmail } from "@/lib/email";
 import { Intent } from "@/lib/types";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { validateLocationInput, validateIntent } from "@/lib/validation";
@@ -60,6 +61,15 @@ export async function POST(req: NextRequest) {
 
     const result = await generateReport(locationCheck.sanitized, intent as Intent, userId);
     trackEvent("report.generated", userId, { area, intent, reportId: result.id, score: result.report?.areaiq_score });
+
+    // Send report email (fire-and-forget)
+    const userEmail = session.user?.email;
+    if (userEmail && result.report) {
+      sendReportEmail(userEmail, result.id, result.report).catch((err) =>
+        console.error("Failed to send report email:", err)
+      );
+    }
+
     return NextResponse.json(result, { headers });
   } catch (error) {
     console.error("Report generation error:", error);
