@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { ChevronDown, Download, Lock, Share2, Copy } from "lucide-react";
+import { ChevronDown, Download, Lock, Share2, Copy, ShieldCheck } from "lucide-react";
 import { AreaReport } from "@/lib/types";
 import { Logo } from "@/components/logo";
 import { useToast } from "@/components/toast";
@@ -474,6 +474,15 @@ export function ReportView({ report, plan = "free", reportId }: { report: AreaRe
               </div>
               <div className="w-full mt-4 max-w-[200px]">
                 <ScoreContextBar score={report.areaiq_score} />
+              </div>
+              <div
+                className="mt-3 flex items-center gap-1.5 px-2.5 py-1.5"
+                style={{ background: "var(--neon-green-dim)", borderRadius: "2px" }}
+              >
+                <ShieldCheck size={11} style={{ color: "var(--neon-green)" }} />
+                <span className="text-[9px] font-mono" style={{ color: "var(--neon-green)" }}>
+                  Deterministic scores. AI explains, never sets.
+                </span>
               </div>
             </div>
 
