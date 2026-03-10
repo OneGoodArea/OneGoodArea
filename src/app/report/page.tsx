@@ -24,7 +24,7 @@ const loadingSteps = [
   { label: "Checking flood risk zones", source: "Environment Agency" },
   { label: "Classifying area type", source: "scoring engine" },
   { label: "Computing dimension scores", source: "scoring engine" },
-  { label: "Generating AI narrative", source: "Claude Sonnet" },
+  { label: "Generating AI narrative", source: "AI Engine" },
   { label: "Compiling final report", source: "AreaIQ" },
 ];
 

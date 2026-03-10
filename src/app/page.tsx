@@ -512,7 +512,7 @@ export default function Home() {
               },
               {
                 step: "04", title: "AI analyses & scores",
-                desc: "Claude synthesises all data into a weighted, actionable report",
+                desc: "Our AI Engine synthesises all data into a weighted, actionable report",
                 visual: (
                   <div className="mt-3 flex items-center gap-3">
                     <div className="relative w-10 h-10">

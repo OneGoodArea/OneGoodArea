@@ -215,8 +215,8 @@ export default function PrivacyPage() {
                 data: "Account data, report history, usage records",
               },
               {
-                name: "Anthropic (Claude API)",
-                purpose: "AI narration of report data",
+                name: "Anthropic",
+                purpose: "AI Engine narration layer",
                 data: "Area data and scores (no personal data sent)",
               },
               {

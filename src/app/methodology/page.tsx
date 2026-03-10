@@ -662,7 +662,7 @@ export default function MethodologyPage() {
                     {
                       step: "3",
                       title: "AI Narrates",
-                      desc: "Claude receives locked scores + raw data, writes the report",
+                      desc: "AI Engine receives locked scores + raw data, writes the report",
                     },
                     {
                       step: "4",
