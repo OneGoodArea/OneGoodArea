@@ -383,8 +383,8 @@ export default function Home() {
             </span>
           </div>
           <div className="flex items-center gap-4 md:gap-6">
+            <Link href="/business" className="hidden sm:block text-[11px] font-mono uppercase tracking-wide transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>Business</Link>
             <Link href="/docs" className="hidden sm:block text-[11px] font-mono uppercase tracking-wide transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>API</Link>
-            <Link href="/methodology" className="hidden sm:block text-[11px] font-mono uppercase tracking-wide transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>Methodology</Link>
             <Link href="/pricing" className="hidden sm:block text-[11px] font-mono uppercase tracking-wide transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>Pricing</Link>
             <Link href="/about" className="hidden sm:block text-[11px] font-mono uppercase tracking-wide transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>About</Link>
             <Link href="/report" className="h-8 px-4 flex items-center gap-2 text-[11px] font-mono font-medium uppercase tracking-wide" style={{ background: "var(--text-primary)", color: "var(--bg)" }}>
@@ -1106,6 +1106,7 @@ export default function Home() {
             <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>&copy; 2026</span>
           </div>
           <div className="flex items-center flex-wrap justify-center gap-x-4 gap-y-1">
+            <Link href="/business" className="text-[10px] font-mono transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>Business</Link>
             <Link href="/docs" className="text-[10px] font-mono transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>API Docs</Link>
             <Link href="/pricing" className="text-[10px] font-mono transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>Pricing</Link>
             <Link href="/methodology" className="text-[10px] font-mono transition-colors hover:opacity-80" style={{ color: "var(--text-tertiary)" }}>Methodology</Link>
