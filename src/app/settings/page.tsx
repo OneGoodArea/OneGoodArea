@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Loader2, Lock, ArrowRight, Check } from "lucide-react";
+import { Loader2, Lock, ArrowRight, Check, Trash2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { UserButton } from "@/components/user-button";
 import { Navbar } from "@/components/navbar";
@@ -19,6 +19,10 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   if (status === "loading") return null;
   if (!session?.user) {
@@ -210,6 +214,91 @@ export default function SettingsPage() {
                 )}
               </button>
             </form>
+          </div>
+        </div>
+        {/* Delete Account */}
+        <div className="border mt-8" style={{ borderColor: "var(--neon-red)", background: "var(--neon-red-dim)" }}>
+          <div className="px-5 py-2.5 border-b flex items-center gap-2" style={{ borderColor: "var(--neon-red)" }}>
+            <Trash2 size={12} style={{ color: "var(--neon-red)" }} />
+            <span className="text-[9px] font-mono uppercase tracking-wider" style={{ color: "var(--neon-red)" }}>
+              Danger Zone
+            </span>
+          </div>
+
+          <div className="px-5 py-5 space-y-4">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle size={14} className="mt-0.5 shrink-0" style={{ color: "var(--neon-red)" }} />
+              <div className="space-y-1.5">
+                <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>
+                  Delete your account permanently
+                </p>
+                <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                  This will permanently delete your account and all associated data, including your reports, API keys, and usage history. This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-mono uppercase tracking-wider mb-1.5" style={{ color: "var(--text-tertiary)" }}>
+                Type DELETE to confirm
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmation}
+                onChange={(e) => {
+                  setDeleteConfirmation(e.target.value);
+                  setDeleteError(null);
+                }}
+                className="w-full h-9 px-3 text-[12px] font-mono border outline-none transition-colors"
+                style={{
+                  background: "var(--bg)",
+                  borderColor: "var(--border)",
+                  color: "var(--text-primary)",
+                }}
+                placeholder="DELETE"
+              />
+            </div>
+
+            {deleteError && (
+              <div className="text-[11px] font-mono px-3 py-2" style={{ color: "var(--neon-red)", background: "var(--bg-active)" }}>
+                {deleteError}
+              </div>
+            )}
+
+            <button
+              type="button"
+              disabled={deleteLoading || deleteConfirmation !== "DELETE"}
+              onClick={async () => {
+                setDeleteError(null);
+                setDeleteLoading(true);
+                try {
+                  const res = await fetch("/api/settings/delete-account", {
+                    method: "DELETE",
+                  });
+                  if (!res.ok) {
+                    const data = await res.json();
+                    setDeleteError(data.error || "Failed to delete account");
+                    return;
+                  }
+                  await signOut({ callbackUrl: "/" });
+                } catch {
+                  setDeleteError("Something went wrong");
+                } finally {
+                  setDeleteLoading(false);
+                }
+              }}
+              className="h-9 px-5 flex items-center gap-2 text-[11px] font-mono font-medium uppercase tracking-wide transition-all cursor-pointer disabled:opacity-30 disabled:cursor-default"
+              style={{ background: "var(--neon-red)", color: "#fff" }}
+            >
+              {deleteLoading ? (
+                <Loader2 size={13} className="animate-spin" />
+              ) : (
+                <>
+                  <Trash2 size={12} />
+                  Delete Account
+                </>
+              )}
+            </button>
           </div>
         </div>
       </main>
