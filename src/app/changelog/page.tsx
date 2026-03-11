@@ -35,6 +35,48 @@ const CHANGELOG: ChangelogMonth[] = [
     entries: [
       {
         type: "feature",
+        title: "Saved areas watchlist",
+        description:
+          "Save areas from reports, view them on a dashboard grid, and export filtered reports as CSV.",
+      },
+      {
+        type: "improvement",
+        title: "Accessibility and security audit",
+        description:
+          "WCAG AA contrast, ARIA landmarks, 48px touch targets, and 7 security headers.",
+      },
+      {
+        type: "feature",
+        title: "Interactive API playground",
+        description:
+          "Live playground on the docs page with curated postcodes, intent selector, score visualisation, and raw JSON toggle.",
+      },
+      {
+        type: "feature",
+        title: "Password reset and email resend",
+        description:
+          "Forgot password flow with branded email and 1-hour token expiry. Resend verification from sign-up.",
+      },
+      {
+        type: "feature",
+        title: "Report deletion",
+        description:
+          "Delete reports from the dashboard with a branded confirmation modal.",
+      },
+      {
+        type: "improvement",
+        title: "Adaptive CTAs and plan badges",
+        description:
+          "Landing page CTAs adapt to session state. Pricing page badges show your current plan.",
+      },
+      {
+        type: "feature",
+        title: "B2B landing page",
+        description:
+          "Dedicated /business page with capabilities, use cases, API preview, and pricing summary.",
+      },
+      {
+        type: "feature",
         title: "Embeddable widget",
         description:
           "Drop a single script tag on any page to show AreaIQ scores. No API key needed. Dark and light themes.",
