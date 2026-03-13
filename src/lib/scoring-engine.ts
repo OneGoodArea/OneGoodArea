@@ -179,10 +179,10 @@ function scoreAmenities(amenities: AmenitiesData | null, bench: Benchmarks): { s
   return { score, reasoning };
 }
 
-function getDeprivationTotal(lsoaCode: string): { total: number; unit: string } {
-  if (lsoaCode.startsWith("W")) return { total: 1909, unit: "Welsh LSOAs" };
-  if (lsoaCode.startsWith("S")) return { total: 6976, unit: "Scottish Data Zones" };
-  return { total: 32844, unit: "LSOAs" };
+function getDeprivationContext(lsoaCode: string): { total: number; unit: string; index: string } {
+  if (lsoaCode.startsWith("W")) return { total: 1909, unit: "Welsh LSOAs", index: "WIMD 2019" };
+  if (lsoaCode.startsWith("S")) return { total: 6976, unit: "Scottish Data Zones", index: "SIMD 2020" };
+  return { total: 32844, unit: "LSOAs", index: "IMD 2019" };
 }
 
 function scoreDemographics(deprivation: DeprivationData | null): { score: number; reasoning: string } {
@@ -191,13 +191,13 @@ function scoreDemographics(deprivation: DeprivationData | null): { score: number
   }
 
   const score = clamp(deprivation.imd_decile * 9 + 5, 10, 95);
-  const { total, unit } = getDeprivationTotal(deprivation.lsoa_code);
+  const { total, unit, index } = getDeprivationContext(deprivation.lsoa_code);
   const percentile = ((deprivation.imd_rank / total) * 100).toFixed(0);
   const level = deprivation.imd_decile <= 3 ? "high deprivation"
     : deprivation.imd_decile <= 7 ? "moderate deprivation"
     : "low deprivation";
 
-  const reasoning = `IMD decile ${deprivation.imd_decile}/10 (${level}). Ranked ${deprivation.imd_rank.toLocaleString()} of ${total.toLocaleString()} ${unit} (${percentile}th percentile). LSOA: ${deprivation.lsoa_name}`;
+  const reasoning = `${index} decile ${deprivation.imd_decile}/10 (${level}). Ranked ${deprivation.imd_rank.toLocaleString()} of ${total.toLocaleString()} ${unit} (${percentile}th percentile). LSOA: ${deprivation.lsoa_name}`;
   return { score, reasoning };
 }
 
@@ -240,7 +240,8 @@ function scoreCostOfLiving(deprivation: DeprivationData | null): { score: number
     : deprivation.imd_decile >= 5 ? "moderate cost of living"
     : "more affordable area, lower housing and living costs";
 
-  const reasoning = `IMD decile ${deprivation.imd_decile}/10 as cost proxy: ${level}`;
+  const { index } = getDeprivationContext(deprivation.lsoa_code);
+  const reasoning = `${index} decile ${deprivation.imd_decile}/10 as cost proxy: ${level}`;
   return { score, reasoning };
 }
 
@@ -287,9 +288,9 @@ function scoreSpendingPower(deprivation: DeprivationData | null): { score: numbe
     : deprivation.imd_decile >= 5 ? "moderate spending power"
     : "lower spending power";
 
-  const { total } = getDeprivationTotal(deprivation.lsoa_code);
+  const { total, index } = getDeprivationContext(deprivation.lsoa_code);
   const country = deprivation.lsoa_code.startsWith("W") ? "Wales" : deprivation.lsoa_code.startsWith("S") ? "Scotland" : "England";
-  const reasoning = `IMD decile ${deprivation.imd_decile}/10 indicates ${level}. Less deprived than ${((deprivation.imd_rank / total) * 100).toFixed(0)}% of ${country}`;
+  const reasoning = `${index} decile ${deprivation.imd_decile}/10 indicates ${level}. Less deprived than ${((deprivation.imd_rank / total) * 100).toFixed(0)}% of ${country}`;
   return { score, reasoning };
 }
 
@@ -304,7 +305,8 @@ function scoreCommercialCosts(deprivation: DeprivationData | null): { score: num
     : deprivation.imd_decile >= 5 ? "moderate commercial costs"
     : "lower-cost commercial area, potentially better value";
 
-  const reasoning = `IMD decile ${deprivation.imd_decile}/10: ${level}. Commercial rents correlate with area affluence`;
+  const { index } = getDeprivationContext(deprivation.lsoa_code);
+  const reasoning = `${index} decile ${deprivation.imd_decile}/10: ${level}. Commercial rents correlate with area affluence`;
   return { score, reasoning };
 }
 
@@ -333,7 +335,8 @@ function scorePriceGrowth(deprivation: DeprivationData | null, amenities: Amenit
     : decile >= 8 ? "premium area, limited upside ceiling"
     : "emerging area, higher risk but significant growth potential";
 
-  const reasoning = `IMD decile ${decile}/10: ${outlook}. ${amenities ? `${amenities.transport_stations} transport links support appreciation` : "Transport data unavailable"}`;
+  const { index } = getDeprivationContext(deprivation.lsoa_code);
+  const reasoning = `${index} decile ${decile}/10: ${outlook}. ${amenities ? `${amenities.transport_stations} transport links support appreciation` : "Transport data unavailable"}`;
   return { score, reasoning };
 }
 
@@ -352,7 +355,8 @@ function scoreRentalYield(deprivation: DeprivationData | null, amenities: Amenit
     : decile <= 7 ? "moderate property values, balanced yield potential"
     : "higher property values, yields typically compressed";
 
-  const reasoning = `IMD decile ${decile}/10: ${level}. ${amenities ? `${amenities.total} nearby amenities support tenant demand` : ""}`;
+  const { index } = getDeprivationContext(deprivation.lsoa_code);
+  const reasoning = `${index} decile ${decile}/10: ${level}. ${amenities ? `${amenities.total} nearby amenities support tenant demand` : ""}`;
   return { score, reasoning };
 }
 
@@ -378,7 +382,8 @@ function scoreRegeneration(deprivation: DeprivationData | null, amenities: Ameni
     : decile <= 7 ? "moderate area, incremental improvement likely"
     : "already developed, limited regeneration upside";
 
-  const reasoning = `IMD decile ${decile}/10: ${outlook}. ${amenities ? `${amenities.transport_stations} transport links support development case` : ""}`;
+  const { index } = getDeprivationContext(deprivation.lsoa_code);
+  const reasoning = `${index} decile ${decile}/10: ${outlook}. ${amenities ? `${amenities.transport_stations} transport links support development case` : ""}`;
   return { score, reasoning };
 }
 
