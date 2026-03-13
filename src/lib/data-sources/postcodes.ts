@@ -40,6 +40,7 @@ export interface GeocodedArea {
   constituency: string;
   country: string;
   lsoa: string;
+  lsoa11: string;
   msoa: string;
   rural_urban: string;
   area_type: AreaType;
@@ -86,6 +87,7 @@ async function geocodePostcode(postcode: string): Promise<GeocodedArea | null> {
       constituency: r.parliamentary_constituency || "",
       country: r.country || "",
       lsoa: r.codes?.lsoa || r.lsoa || "",
+      lsoa11: r.codes?.lsoa11 || "",
       msoa: r.codes?.msoa || r.msoa || "",
       rural_urban: ruralUrban,
       area_type: classifyAreaType(ruralUrban),
@@ -135,6 +137,7 @@ async function geocodePlace(query: string): Promise<GeocodedArea | null> {
           constituency: p.parliamentary_constituency || "",
           country: p.country || r.country || "",
           lsoa: p.codes?.lsoa || p.lsoa || "",
+          lsoa11: p.codes?.lsoa11 || "",
           msoa: p.codes?.msoa || p.msoa || "",
           rural_urban: ruralUrban,
           area_type: classifyAreaType(ruralUrban),
@@ -152,6 +155,7 @@ async function geocodePlace(query: string): Promise<GeocodedArea | null> {
       constituency: "",
       country: r.country || "",
       lsoa: "",
+      lsoa11: "",
       msoa: "",
       rural_urban: "",
       area_type: "suburban",

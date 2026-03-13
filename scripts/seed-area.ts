@@ -35,12 +35,12 @@ async function main() {
   }
 
   console.log(`[seed] Geocoded: ${geo.admin_district}, ${geo.region} (${geo.area_type})`);
-  console.log(`[seed] LSOA: ${geo.lsoa}`);
+  console.log(`[seed] LSOA: ${geo.lsoa}${geo.lsoa11 ? ` (2011: ${geo.lsoa11})` : ""}`);
 
   // 2. Fetch all data sources in parallel
   const [crime, deprivation, amenities, flood] = await Promise.all([
     getCrimeData(geo.latitude, geo.longitude),
-    getDeprivationData(geo.lsoa),
+    getDeprivationData(geo.lsoa, geo.lsoa11),
     getNearbyAmenities(geo.latitude, geo.longitude),
     getFloodRisk(geo.latitude, geo.longitude),
   ]);

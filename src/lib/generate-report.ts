@@ -163,7 +163,7 @@ export async function generateReport(
   const [crime, deprivation, amenities, flood] = geo
     ? await Promise.all([
         getCrimeData(geo.latitude, geo.longitude),
-        getDeprivationData(geo.lsoa),
+        getDeprivationData(geo.lsoa, geo.lsoa11),
         getNearbyAmenities(geo.latitude, geo.longitude),
         getFloodRisk(geo.latitude, geo.longitude),
       ])

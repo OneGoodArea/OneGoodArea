@@ -179,18 +179,25 @@ function scoreAmenities(amenities: AmenitiesData | null, bench: Benchmarks): { s
   return { score, reasoning };
 }
 
+function getDeprivationTotal(lsoaCode: string): { total: number; unit: string } {
+  if (lsoaCode.startsWith("W")) return { total: 1909, unit: "Welsh LSOAs" };
+  if (lsoaCode.startsWith("S")) return { total: 6976, unit: "Scottish Data Zones" };
+  return { total: 32844, unit: "LSOAs" };
+}
+
 function scoreDemographics(deprivation: DeprivationData | null): { score: number; reasoning: string } {
   if (!deprivation) {
     return { score: 50, reasoning: "Deprivation data unavailable (non-England or data gap)" };
   }
 
   const score = clamp(deprivation.imd_decile * 9 + 5, 10, 95);
-  const percentile = ((deprivation.imd_rank / 32844) * 100).toFixed(0);
+  const { total, unit } = getDeprivationTotal(deprivation.lsoa_code);
+  const percentile = ((deprivation.imd_rank / total) * 100).toFixed(0);
   const level = deprivation.imd_decile <= 3 ? "high deprivation"
     : deprivation.imd_decile <= 7 ? "moderate deprivation"
     : "low deprivation";
 
-  const reasoning = `IMD decile ${deprivation.imd_decile}/10 (${level}). Ranked ${deprivation.imd_rank.toLocaleString()} of 32,844 LSOAs (${percentile}th percentile). LSOA: ${deprivation.lsoa_name}`;
+  const reasoning = `IMD decile ${deprivation.imd_decile}/10 (${level}). Ranked ${deprivation.imd_rank.toLocaleString()} of ${total.toLocaleString()} ${unit} (${percentile}th percentile). LSOA: ${deprivation.lsoa_name}`;
   return { score, reasoning };
 }
 
@@ -280,7 +287,9 @@ function scoreSpendingPower(deprivation: DeprivationData | null): { score: numbe
     : deprivation.imd_decile >= 5 ? "moderate spending power"
     : "lower spending power";
 
-  const reasoning = `IMD decile ${deprivation.imd_decile}/10 indicates ${level}. Less deprived than ${((deprivation.imd_rank / 32844) * 100).toFixed(0)}% of England`;
+  const { total } = getDeprivationTotal(deprivation.lsoa_code);
+  const country = deprivation.lsoa_code.startsWith("W") ? "Wales" : deprivation.lsoa_code.startsWith("S") ? "Scotland" : "England";
+  const reasoning = `IMD decile ${deprivation.imd_decile}/10 indicates ${level}. Less deprived than ${((deprivation.imd_rank / total) * 100).toFixed(0)}% of ${country}`;
   return { score, reasoning };
 }
 
