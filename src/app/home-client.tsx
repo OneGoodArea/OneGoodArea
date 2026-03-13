@@ -238,10 +238,11 @@ function HeroScoreRing({ score, label, size = 100 }: { score: number; label: str
 
 /* ── Animated Counter ── */
 function Counter({ end, suffix = "" }: { end: number; suffix?: string }) {
-  const [val, setVal] = useState(0);
+  const [val, setVal] = useState(end);
   const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
+    setVal(0);
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -262,7 +263,7 @@ function Counter({ end, suffix = "" }: { end: number; suffix?: string }) {
     return () => observer.disconnect();
   }, [end]);
 
-  return <span ref={ref}>{val}{suffix}</span>;
+  return <span ref={ref}>{val.toLocaleString()}{suffix}</span>;
 }
 
 /* ── Typing Effect ── */
