@@ -55,6 +55,7 @@ export async function getPropertyPrices(postcode: string): Promise<PropertyPrice
     const query = `
 PREFIX lrppi: <http://landregistry.data.gov.uk/def/ppi/>
 PREFIX lrcommon: <http://landregistry.data.gov.uk/def/common/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 SELECT ?price ?date ?type ?estate
 WHERE {
@@ -68,16 +69,16 @@ WHERE {
   FILTER(?date >= "${startDate}"^^xsd:date)
 }
 ORDER BY DESC(?date)
-LIMIT 500`;
+LIMIT 1500`;
 
-    const res = await fetch("https://landregistry.data.gov.uk/app/root/sparql", {
+    const res = await fetch("http://landregistry.data.gov.uk/landregistry/query", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
         Accept: "application/sparql-results+json",
       },
       body: `query=${encodeURIComponent(query)}`,
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!res.ok) return null;
