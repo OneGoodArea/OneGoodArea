@@ -78,10 +78,12 @@ const consumerFeatures = [
   { label: "6 UK data sources", values: [true, true, true] },
   { label: "All intent types", values: [true, true, true], sub: "Moving, business, investing, research" },
   { label: "Deterministic scoring", values: [true, true, true], sub: "16 functions, area-type benchmarks" },
-  { label: "Shareable report URLs", values: [true, true, true] },
-  { label: "Report history", values: [true, true, true] },
+  { label: "Share & email delivery", values: [true, true, true], sub: "WhatsApp, LinkedIn, X, direct link, email" },
+  { label: "Watchlist & CSV export", values: [true, true, true], sub: "Save areas, filter, export as CSV" },
+  { label: "Data freshness badges", values: [true, true, true], sub: "Source and age for every data point" },
   { label: "PDF export", values: [false, true, true], sub: "Download branded report as PDF" },
   { label: "Area comparison", values: [false, true, true], sub: "Side-by-side area intelligence" },
+  { label: "Property Market data", values: [false, false, true], sub: "HM Land Registry sold prices and trends" },
 ];
 
 const apiFeatures = [

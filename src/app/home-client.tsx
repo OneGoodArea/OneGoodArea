@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { ArrowRight, MapPin, TrendingUp, Building2, Search, ChevronRight, Zap, Home as HomeIcon, Users, Briefcase, Crosshair, Calculator, MessageSquareText, Code, Copy, Check, Globe, Key, BarChart3, Shield } from "lucide-react";
+import { ArrowRight, MapPin, TrendingUp, Building2, Search, ChevronRight, Zap, Home as HomeIcon, Users, Briefcase, Crosshair, Calculator, MessageSquareText, Code, Copy, Check, Globe, Key, BarChart3, Shield, FileDown, Mail, Share2, PoundSterling, Clock, Bookmark } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { FullNavbar } from "@/components/full-navbar";
@@ -72,7 +72,7 @@ function PricingSection() {
     {
       tier: "Free", price: "£0", period: "forever", reports: "3 reports / month",
       desc: "Try it out",
-      features: ["All 6 data sources", "All intent types", "Deterministic scoring", "Shareable report URLs", "Report history"],
+      features: ["All 6 data sources", "All intent types", "Deterministic scoring", "Share & email delivery", "Watchlist & CSV export"],
       cta: "Get Started", ctaStyle: { background: "var(--bg-active)", color: "var(--text-primary)" },
     },
     {
@@ -84,7 +84,7 @@ function PricingSection() {
     {
       tier: "Pro", price: "£79", period: "/mo", reports: "75 reports / month",
       desc: "For agencies and active investors",
-      features: ["Everything in Starter", "75 reports per month", "Bulk area analysis", "Email support"],
+      features: ["Everything in Starter", "75 reports per month", "Property Market data", "Email support"],
       cta: "Upgrade to Pro", ctaStyle: { background: "var(--text-primary)", color: "var(--bg)" },
       highlight: true,
     },
@@ -821,6 +821,72 @@ export default function Home() {
               return (
                 <div key={item.title} className="p-5" style={{ background: "var(--bg-elevated)" }}>
                   <Icon size={16} className="mb-3" style={{ color: "var(--accent)" }} />
+                  <div className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-primary)" }}>{item.title}</div>
+                  <div className="text-[11px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>{item.desc}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── What's In Every Report ── */}
+      <section className="border-b" style={{ borderColor: "var(--border)" }}>
+        <div className="max-w-[1200px] mx-auto px-6 py-16 md:py-20">
+          <div className="text-[10px] font-mono uppercase tracking-wider mb-2" style={{ color: "var(--text-tertiary)" }}>What You Get</div>
+          <h2 className="text-[22px] md:text-[28px] font-semibold tracking-tight mb-3" style={{ color: "var(--text-primary)" }}>
+            Every report is packed
+          </h2>
+          <p className="text-[14px] mb-8 max-w-lg" style={{ color: "var(--text-secondary)" }}>
+            Not just scores. Actionable intelligence you can export, share, and track.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px" style={{ background: "var(--border)" }}>
+            {[
+              {
+                icon: PoundSterling,
+                title: "Property Market Data",
+                desc: "Real sold prices from HM Land Registry. Median price, YoY trends, property type breakdown, tenure split, and price range.",
+                badge: "Pro+",
+              },
+              {
+                icon: FileDown,
+                title: "PDF Export",
+                desc: "Download any report as a branded PDF. Share with clients, attach to offers, or keep for records.",
+                badge: "Starter+",
+              },
+              {
+                icon: Clock,
+                title: "Data Freshness Badges",
+                desc: "Every data point is tagged with its source and age. Know exactly how current each metric is.",
+              },
+              {
+                icon: Mail,
+                title: "Email Delivery",
+                desc: "Every report is emailed to you automatically with a score summary. No need to stay on the page.",
+              },
+              {
+                icon: Share2,
+                title: "Share Anywhere",
+                desc: "One-click sharing to WhatsApp, LinkedIn, X, or copy a direct link. Every report has a unique URL.",
+              },
+              {
+                icon: Bookmark,
+                title: "Watchlist & CSV Export",
+                desc: "Save areas to your watchlist. Filter, compare, and export your saved reports as CSV.",
+              },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.title} className="p-5" style={{ background: "var(--bg-elevated)" }}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Icon size={14} style={{ color: "var(--accent)" }} />
+                    {item.badge && (
+                      <span className="text-[8px] font-mono uppercase tracking-wider px-1.5 py-0.5" style={{ color: "var(--neon-green)", background: "var(--neon-green-dim)" }}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
                   <div className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-primary)" }}>{item.title}</div>
                   <div className="text-[11px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>{item.desc}</div>
                 </div>
