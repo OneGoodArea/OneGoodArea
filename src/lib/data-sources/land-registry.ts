@@ -31,6 +31,7 @@ function formatPropertyType(uri: string): string {
     "semi-detached": "Semi-Detached",
     terraced: "Terraced",
     "flat-maisonette": "Flat",
+    otherPropertyType: "Other",
   };
   return map[type] || type;
 }
@@ -78,7 +79,7 @@ LIMIT 1500`;
         Accept: "application/sparql-results+json",
       },
       body: `query=${encodeURIComponent(query)}`,
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(30000),
     });
 
     if (!res.ok) return null;

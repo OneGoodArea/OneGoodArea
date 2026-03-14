@@ -108,14 +108,22 @@ async function geocodePlace(query: string): Promise<GeocodedArea | null> {
       }
     }
 
-    // Try place search
-    const res = await fetch(`https://api.postcodes.io/places?q=${encodeURIComponent(query)}&limit=1`);
+    // Try place search — fetch multiple results and prefer cities/towns over hamlets
+    const res = await fetch(`https://api.postcodes.io/places?q=${encodeURIComponent(query)}&limit=10`);
     if (!res.ok) return null;
 
     const data = await res.json();
     if (data.status !== 200 || !data.result || data.result.length === 0) return null;
 
-    const r: PlaceResult = data.result[0];
+    const typeRank: Record<string, number> = {
+      City: 1, Town: 2, "Section of Named Road": 3,
+      Village: 4, "Named Road": 5, "Suburban Area": 6,
+      Hamlet: 7, "Other Settlement": 8,
+    };
+    const ranked = [...data.result].sort((a: { local_type: string }, b: { local_type: string }) =>
+      (typeRank[a.local_type] ?? 9) - (typeRank[b.local_type] ?? 9)
+    );
+    const r: PlaceResult = ranked[0];
 
     // Now reverse geocode to get full postcode data
     const reverseRes = await fetch(
