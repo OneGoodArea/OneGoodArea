@@ -57,7 +57,7 @@ const AREAS: Record<string, AreaData> = {
       { label: "Investing", score: 55, slug: "investing" },
       { label: "Research", score: 47, slug: "research" },
     ],
-    dataSources: ["Police.uk", "ONS / IMD", "OpenStreetMap", "Environment Agency", "Postcodes.io"],
+    dataSources: ["Police.uk", "ONS / IMD", "OpenStreetMap", "Environment Agency", "HM Land Registry", "Postcodes.io"],
   },
   manchester: {
     name: "Manchester City Centre",
@@ -85,7 +85,7 @@ const AREAS: Record<string, AreaData> = {
       { label: "Investing", score: 59, slug: "investing" },
       { label: "Research", score: 75, slug: "research" },
     ],
-    dataSources: ["Police.uk", "OpenStreetMap", "Environment Agency", "Postcodes.io"],
+    dataSources: ["Police.uk", "ONS / IMD", "OpenStreetMap", "Environment Agency", "HM Land Registry", "Postcodes.io"],
   },
   cardiff: {
     name: "Cardiff City Centre",
@@ -113,7 +113,7 @@ const AREAS: Record<string, AreaData> = {
       { label: "Investing", score: 70, slug: "investing" },
       { label: "Research", score: 67, slug: "research" },
     ],
-    dataSources: ["Police.uk", "ONS / IMD", "OpenStreetMap", "Postcodes.io"],
+    dataSources: ["Police.uk", "ONS / IMD", "OpenStreetMap", "Environment Agency", "HM Land Registry", "Postcodes.io"],
   },
   liverpool: {
     name: "Liverpool City Centre",
@@ -140,7 +140,7 @@ const AREAS: Record<string, AreaData> = {
       { label: "Investing", score: 72, slug: "investing" },
       { label: "Research", score: 65, slug: "research" },
     ],
-    dataSources: ["Police.uk", "ONS / IMD", "OpenStreetMap", "Environment Agency", "Postcodes.io"],
+    dataSources: ["Police.uk", "ONS / IMD", "OpenStreetMap", "Environment Agency", "HM Land Registry", "Postcodes.io"],
   },
   glasgow: {
     name: "Glasgow City Centre",
@@ -167,7 +167,7 @@ const AREAS: Record<string, AreaData> = {
       { label: "Investing", score: 78, slug: "investing" },
       { label: "Research", score: 65, slug: "research" },
     ],
-    dataSources: ["ONS / IMD", "OpenStreetMap", "Postcodes.io"],
+    dataSources: ["Police.uk", "ONS / IMD", "OpenStreetMap", "Environment Agency", "HM Land Registry", "Postcodes.io"],
   },
   belfast: {
     name: "Belfast City Centre",
@@ -194,7 +194,7 @@ const AREAS: Record<string, AreaData> = {
       { label: "Investing", score: 57, slug: "investing" },
       { label: "Research", score: 68, slug: "research" },
     ],
-    dataSources: ["Police.uk", "OpenStreetMap", "Environment Agency", "Postcodes.io"],
+    dataSources: ["Police.uk", "ONS / IMD", "OpenStreetMap", "Environment Agency", "HM Land Registry", "Postcodes.io"],
   },
   edinburgh: {
     name: "Edinburgh City Centre",
@@ -221,7 +221,7 @@ const AREAS: Record<string, AreaData> = {
       { label: "Investing", score: 74, slug: "investing" },
       { label: "Research", score: 71, slug: "research" },
     ],
-    dataSources: ["ONS / IMD", "OpenStreetMap", "Environment Agency", "Postcodes.io"],
+    dataSources: ["Police.uk", "ONS / IMD", "OpenStreetMap", "Environment Agency", "HM Land Registry", "Postcodes.io"],
   },
   birmingham: {
     name: "Birmingham City Centre",
@@ -248,7 +248,7 @@ const AREAS: Record<string, AreaData> = {
       { label: "Investing", score: 74, slug: "investing" },
       { label: "Research", score: 57, slug: "research" },
     ],
-    dataSources: ["Police.uk", "ONS / IMD", "OpenStreetMap", "Environment Agency", "Postcodes.io"],
+    dataSources: ["Police.uk", "ONS / IMD", "OpenStreetMap", "Environment Agency", "HM Land Registry", "Postcodes.io"],
   },
   leeds: {
     name: "Leeds City Centre",
@@ -275,7 +275,7 @@ const AREAS: Record<string, AreaData> = {
       { label: "Investing", score: 65, slug: "investing" },
       { label: "Research", score: 44, slug: "research" },
     ],
-    dataSources: ["Police.uk", "ONS / IMD", "OpenStreetMap", "Environment Agency", "Postcodes.io"],
+    dataSources: ["Police.uk", "ONS / IMD", "OpenStreetMap", "Environment Agency", "HM Land Registry", "Postcodes.io"],
   },
   bristol: {
     name: "Bristol City Centre",
@@ -302,7 +302,7 @@ const AREAS: Record<string, AreaData> = {
       { label: "Investing", score: 51, slug: "investing" },
       { label: "Research", score: 52, slug: "research" },
     ],
-    dataSources: ["Police.uk", "OpenStreetMap", "Environment Agency", "Postcodes.io"],
+    dataSources: ["Police.uk", "ONS / IMD", "OpenStreetMap", "Environment Agency", "HM Land Registry", "Postcodes.io"],
   },
   sheffield: {
     name: "Sheffield City Centre",
@@ -329,7 +329,7 @@ const AREAS: Record<string, AreaData> = {
       { label: "Investing", score: 64, slug: "investing" },
       { label: "Research", score: 40, slug: "research" },
     ],
-    dataSources: ["Police.uk", "ONS / IMD", "OpenStreetMap", "Environment Agency", "Postcodes.io"],
+    dataSources: ["Police.uk", "ONS / IMD", "OpenStreetMap", "Environment Agency", "HM Land Registry", "Postcodes.io"],
   },
   nottingham: {
     name: "Nottingham City Centre",
@@ -356,7 +356,7 @@ const AREAS: Record<string, AreaData> = {
       { label: "Investing", score: 43, slug: "investing" },
       { label: "Research", score: 51, slug: "research" },
     ],
-    dataSources: ["Police.uk", "ONS / IMD", "OpenStreetMap", "Environment Agency", "Postcodes.io"],
+    dataSources: ["Police.uk", "ONS / IMD", "OpenStreetMap", "Environment Agency", "HM Land Registry", "Postcodes.io"],
   },
   brighton: {
       "name": "Brighton City Centre",

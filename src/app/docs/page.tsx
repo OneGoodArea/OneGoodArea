@@ -119,7 +119,7 @@ export default function DocsPage() {
               </h1>
               <p className="text-[14px] leading-relaxed mb-4" style={{ color: "var(--text-secondary)" }}>
                 Integrate UK area intelligence into your applications. Generate data-driven location reports
-                powered by 5 government and open data sources.
+                powered by 6 government and open data sources.
               </p>
               <div className="flex flex-wrap items-center gap-3">
                 <span className="text-[10px] font-mono px-2 py-0.5" style={{ color: "var(--neon-green)", background: "var(--neon-green-dim)" }}>

@@ -262,7 +262,7 @@ export default function AboutPage() {
         {/* ── Stats strip ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-px mb-20" style={{ background: "var(--border)" }}>
           {[
-            { value: 5, suffix: "", label: "Live data sources" },
+            { value: 6, suffix: "", label: "Live data sources" },
             { value: 32844, suffix: "", label: "LSOAs covered" },
             { value: 16, suffix: "", label: "Scoring functions" },
             { value: 4, suffix: "", label: "Intent profiles" },
@@ -318,7 +318,7 @@ export default function AboutPage() {
               {/* Pipeline visualization */}
               <div className="flex flex-col sm:flex-row items-stretch gap-0">
                 {[
-                  { step: "01", label: "Collect", desc: "5 government APIs queried in parallel", color: "var(--accent)" },
+                  { step: "01", label: "Collect", desc: "6 government APIs queried in parallel", color: "var(--accent)" },
                   { step: "02", label: "Classify", desc: "Area type detected: urban, suburban, or rural", color: "var(--neon-amber)" },
                   { step: "03", label: "Score", desc: "16 deterministic functions, contextual benchmarks", color: "var(--neon-green)" },
                   { step: "04", label: "Narrate", desc: "AI explains the numbers, never generates them", color: "var(--text-primary)" },
