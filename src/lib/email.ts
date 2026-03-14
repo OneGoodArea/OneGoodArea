@@ -103,7 +103,7 @@ export async function sendWelcomeEmail(email: string, name: string) {
         Free
       </p>
       <p style="font-family:'Courier New',monospace; font-size:10px; color:#737373; margin:0;">
-        3 reports per month. All 5 data sources included.
+        3 reports per month. All 6 data sources included.
       </p>
     </div>
     <table cellpadding="0" cellspacing="0">

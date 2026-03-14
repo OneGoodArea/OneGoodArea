@@ -406,7 +406,8 @@ export default function DocsPage() {
       "police.uk",
       "IMD 2019",
       "OpenStreetMap",
-      "Environment Agency"
+      "Environment Agency",
+      "HM Land Registry"
     ],
     "generated_at": "2026-03-07T12:34:56.789Z"
   }
@@ -484,6 +485,11 @@ export default function DocsPage() {
                     name: "Environment Agency",
                     provider: "Defra",
                     data: "Flood risk zones, active flood warnings and alerts",
+                  },
+                  {
+                    name: "HM Land Registry",
+                    provider: "HM Land Registry",
+                    data: "Sold prices by postcode district, property types, tenure split, YoY trends",
                   },
                 ].map((source, i, arr) => (
                   <div

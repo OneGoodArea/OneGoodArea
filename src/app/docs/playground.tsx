@@ -20,6 +20,7 @@ const LOADING_STEPS = [
   { label: "Retrieving deprivation indices", source: "IMD 2019", duration: 6000 },
   { label: "Mapping nearby amenities", source: "OpenStreetMap", duration: 8000 },
   { label: "Checking flood risk", source: "Environment Agency", duration: 5000 },
+  { label: "Querying property prices", source: "HM Land Registry", duration: 6000 },
   { label: "Computing scores", source: "Scoring Engine", duration: 4000 },
   { label: "Generating narrative", source: "AI Engine", duration: 15000 },
 ];
