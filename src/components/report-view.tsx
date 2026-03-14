@@ -570,8 +570,8 @@ export function ReportView({ report, plan = "free", reportId }: { report: AreaRe
         </div>
       </div>
 
-      {/* ── Property Market Panel ── */}
-      {report.property_data && (
+      {/* ── Property Market Panel (Pro+ / API plans) ── */}
+      {report.property_data && plan !== "free" && plan !== "starter" && (
         <div
           className="border mb-6 animate-fade-in-up"
           style={{ borderColor: "var(--border)", background: "var(--bg-elevated)", animationDelay: "250ms" }}
@@ -720,6 +720,35 @@ export function ReportView({ report, plan = "free", reportId }: { report: AreaRe
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── Property Market Teaser (free/starter) ── */}
+      {report.property_data && (plan === "free" || plan === "starter") && (
+        <Link
+          href="/pricing"
+          className="border mb-6 animate-fade-in-up block transition-colors hover:brightness-110"
+          style={{ borderColor: "var(--border)", background: "var(--bg-elevated)", animationDelay: "250ms" }}
+        >
+          <div className="px-5 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Lock size={14} style={{ color: "var(--text-tertiary)" }} />
+              <div>
+                <span className="text-[11px] font-mono font-semibold block" style={{ color: "var(--text-primary)" }}>
+                  Property Market Data
+                </span>
+                <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>
+                  Median prices, YoY trends, property types, tenure split from HM Land Registry
+                </span>
+              </div>
+            </div>
+            <span
+              className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-1"
+              style={{ color: "var(--neon-green)", background: "var(--neon-green-dim)" }}
+            >
+              Pro
+            </span>
+          </div>
+        </Link>
       )}
 
       {/* ── Sections (collapsible) ── */}
