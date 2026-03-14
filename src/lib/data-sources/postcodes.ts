@@ -128,7 +128,7 @@ async function geocodePlace(query: string): Promise<GeocodedArea | null> {
         const p = reverseData.result[0];
         const ruralUrban = p.rural_urban || "";
         return {
-          query,
+          query: p.postcode || query,
           latitude: r.latitude,
           longitude: r.longitude,
           admin_district: p.admin_district || r.district || "",
