@@ -143,3 +143,83 @@ export async function getAnalytics() {
     mrr,
   };
 }
+
+// ── Traffic analytics ──
+
+export async function getTrafficAnalytics() {
+  try {
+    // Ensure table exists (may not exist on first load)
+    await sql`
+      CREATE TABLE IF NOT EXISTS pageviews (
+        id SERIAL PRIMARY KEY,
+        path TEXT NOT NULL,
+        referrer TEXT,
+        country TEXT,
+        device TEXT,
+        session_id TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `;
+
+    const [
+      totalPageviews,
+      pageviewsToday,
+      uniqueVisitorsToday,
+      uniqueVisitors30d,
+      pageviewsPerDay,
+      topPages,
+      topReferrers,
+      deviceBreakdown,
+      topCountries,
+    ] = await Promise.all([
+      sql`SELECT COUNT(*)::int as count FROM pageviews`,
+      sql`SELECT COUNT(*)::int as count FROM pageviews WHERE created_at >= date_trunc('day', NOW())`,
+      sql`SELECT COUNT(DISTINCT session_id)::int as count FROM pageviews WHERE created_at >= date_trunc('day', NOW())`,
+      sql`SELECT COUNT(DISTINCT session_id)::int as count FROM pageviews WHERE created_at >= NOW() - INTERVAL '30 days'`,
+      sql`
+        SELECT date_trunc('day', created_at)::date as day, COUNT(*)::int as count
+        FROM pageviews
+        WHERE created_at >= NOW() - INTERVAL '30 days'
+        GROUP BY day ORDER BY day
+      `,
+      sql`
+        SELECT path, COUNT(*)::int as count
+        FROM pageviews
+        WHERE created_at >= NOW() - INTERVAL '30 days'
+        GROUP BY path ORDER BY count DESC LIMIT 15
+      `,
+      sql`
+        SELECT referrer, COUNT(*)::int as count
+        FROM pageviews
+        WHERE referrer IS NOT NULL AND created_at >= NOW() - INTERVAL '30 days'
+        GROUP BY referrer ORDER BY count DESC LIMIT 10
+      `,
+      sql`
+        SELECT device, COUNT(*)::int as count
+        FROM pageviews
+        WHERE created_at >= NOW() - INTERVAL '30 days'
+        GROUP BY device ORDER BY count DESC
+      `,
+      sql`
+        SELECT country, COUNT(*)::int as count
+        FROM pageviews
+        WHERE country IS NOT NULL AND created_at >= NOW() - INTERVAL '30 days'
+        GROUP BY country ORDER BY count DESC LIMIT 10
+      `,
+    ]);
+
+    return {
+      totalPageviews: totalPageviews[0].count as number,
+      pageviewsToday: pageviewsToday[0].count as number,
+      uniqueVisitorsToday: uniqueVisitorsToday[0].count as number,
+      uniqueVisitors30d: uniqueVisitors30d[0].count as number,
+      pageviewsPerDay: pageviewsPerDay as { day: string; count: number }[],
+      topPages: topPages as { path: string; count: number }[],
+      topReferrers: topReferrers as { referrer: string; count: number }[],
+      deviceBreakdown: deviceBreakdown as { device: string; count: number }[],
+      topCountries: topCountries as { country: string; count: number }[],
+    };
+  } catch {
+    return null;
+  }
+}

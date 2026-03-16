@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { getAnalytics } from "@/lib/activity";
+import { getAnalytics, getTrafficAnalytics } from "@/lib/activity";
 import { AdminClient } from "./client";
 import type { Metadata } from "next";
 
@@ -18,7 +18,10 @@ export default async function AdminPage() {
     redirect("/dashboard");
   }
 
-  const analytics = await getAnalytics();
+  const [analytics, traffic] = await Promise.all([
+    getAnalytics(),
+    getTrafficAnalytics(),
+  ]);
 
-  return <AdminClient analytics={analytics} />;
+  return <AdminClient analytics={analytics} traffic={traffic} />;
 }

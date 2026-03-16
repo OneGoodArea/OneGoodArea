@@ -4,7 +4,7 @@ import Link from "next/link";
 import { UserButton } from "@/components/user-button";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { Users, FileText, Activity, TrendingUp, PoundSterling, CreditCard } from "lucide-react";
+import { Users, FileText, Activity, TrendingUp, PoundSterling, CreditCard, Eye, Globe, Monitor, Smartphone, Tablet } from "lucide-react";
 
 interface Analytics {
   totalUsers: number;
@@ -30,6 +30,24 @@ interface Analytics {
   subscriptionsByPlan: { plan: string; count: number }[];
   mrr: number;
 }
+
+interface TrafficData {
+  totalPageviews: number;
+  pageviewsToday: number;
+  uniqueVisitorsToday: number;
+  uniqueVisitors30d: number;
+  pageviewsPerDay: { day: string; count: number }[];
+  topPages: { path: string; count: number }[];
+  topReferrers: { referrer: string; count: number }[];
+  deviceBreakdown: { device: string; count: number }[];
+  topCountries: { country: string; count: number }[];
+}
+
+const DEVICE_ICONS: Record<string, React.ElementType> = {
+  desktop: Monitor,
+  mobile: Smartphone,
+  tablet: Tablet,
+};
 
 const INTENT_COLORS: Record<string, string> = {
   moving: "var(--neon-green)",
@@ -383,7 +401,7 @@ function RevenuePanel({ subscriptionsByPlan, mrr }: {
 }
 
 /* ── Main Admin Dashboard ── */
-export function AdminClient({ analytics }: { analytics: Analytics }) {
+export function AdminClient({ analytics, traffic }: { analytics: Analytics; traffic: TrafficData | null }) {
   return (
     <div className="min-h-screen flex flex-col bg-grid">
       <Navbar breadcrumbs={[{ label: "Admin" }, { label: "Analytics" }]}>
@@ -460,6 +478,170 @@ export function AdminClient({ analytics }: { analytics: Analytics }) {
             <IntentBarChart data={analytics.intentDistribution} />
           </div>
         </div>
+
+        {/* ── Traffic Section ── */}
+        {traffic && (
+          <>
+            <div className="flex items-center gap-2 mb-3 mt-2">
+              <Eye size={12} style={{ color: "var(--text-tertiary)" }} />
+              <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+                Website Traffic
+              </span>
+            </div>
+
+            {/* Traffic stats row */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-px mb-6" style={{ background: "var(--border)" }}>
+              <StatCard label="Pageviews Today" value={traffic.pageviewsToday} icon={Eye} />
+              <StatCard label="Visitors Today" value={traffic.uniqueVisitorsToday} icon={Users} />
+              <StatCard label="Visitors (30d)" value={traffic.uniqueVisitors30d} icon={Globe} />
+              <StatCard label="Total Pageviews" value={traffic.totalPageviews} icon={TrendingUp} />
+            </div>
+
+            {/* Traffic charts row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-px mb-6" style={{ background: "var(--border)" }}>
+              {/* Pageviews per day */}
+              <div className="p-5" style={{ background: "var(--bg-elevated)" }}>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+                    Pageviews / Day (30d)
+                  </span>
+                  <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>
+                    {traffic.pageviewsPerDay.reduce((s, d) => s + d.count, 0)} total
+                  </span>
+                </div>
+                <BarChart data={traffic.pageviewsPerDay} />
+              </div>
+
+              {/* Device + Referrer split */}
+              <div className="p-5" style={{ background: "var(--bg-elevated)" }}>
+                <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+                  Devices (30d)
+                </span>
+                <div className="space-y-2 mt-3 mb-5">
+                  {traffic.deviceBreakdown.map((d) => {
+                    const total = traffic.deviceBreakdown.reduce((s, x) => s + x.count, 0);
+                    const pct = total > 0 ? Math.round((d.count / total) * 100) : 0;
+                    const DeviceIcon = DEVICE_ICONS[d.device] || Monitor;
+                    return (
+                      <div key={d.device} className="flex items-center gap-3">
+                        <DeviceIcon size={12} style={{ color: "var(--text-tertiary)" }} />
+                        <span className="text-[11px] font-mono capitalize w-[60px]" style={{ color: "var(--text-secondary)" }}>
+                          {d.device}
+                        </span>
+                        <div className="flex-1 h-4 relative" style={{ background: "var(--bg)" }}>
+                          <div
+                            className="h-full"
+                            style={{ width: `${pct}%`, background: "var(--accent)", opacity: 0.3 }}
+                          />
+                        </div>
+                        <span className="text-[11px] font-mono font-semibold w-8 text-right" style={{ color: "var(--text-primary)" }}>
+                          {d.count}
+                        </span>
+                        <span className="text-[9px] font-mono w-8" style={{ color: "var(--text-tertiary)" }}>
+                          {pct}%
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+                  Top Referrers
+                </span>
+                <div className="mt-2">
+                  {traffic.topReferrers.length === 0 ? (
+                    <span className="text-[11px] font-mono" style={{ color: "var(--text-tertiary)" }}>No external referrers yet</span>
+                  ) : (
+                    traffic.topReferrers.slice(0, 5).map((r) => (
+                      <div key={r.referrer} className="flex items-center justify-between py-1.5">
+                        <span className="text-[11px] font-mono truncate" style={{ color: "var(--text-secondary)" }}>
+                          {r.referrer}
+                        </span>
+                        <span className="text-[11px] font-mono font-semibold shrink-0 ml-3" style={{ color: "var(--text-primary)" }}>
+                          {r.count}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Top pages */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-px mb-6" style={{ background: "var(--border)" }}>
+              <div style={{ background: "var(--bg-elevated)" }}>
+                <div className="px-5 py-3 border-b" style={{ borderColor: "var(--border)" }}>
+                  <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+                    Top Pages (30d)
+                  </span>
+                </div>
+                {traffic.topPages.map((page, i) => {
+                  const maxCount = traffic.topPages[0]?.count || 1;
+                  const pct = (page.count / maxCount) * 100;
+                  return (
+                    <div
+                      key={page.path}
+                      className="px-5 py-2.5 flex items-center gap-3 border-b last:border-b-0"
+                      style={{ borderColor: "var(--border)" }}
+                    >
+                      <span className="text-[10px] font-mono w-5 text-right shrink-0" style={{ color: "var(--text-tertiary)" }}>
+                        {i + 1}
+                      </span>
+                      <span className="text-[11px] font-mono flex-1 truncate" style={{ color: "var(--text-primary)" }}>
+                        {page.path}
+                      </span>
+                      <div className="w-20 h-1.5 shrink-0" style={{ background: "var(--border)" }}>
+                        <div className="h-full" style={{ width: `${pct}%`, background: "var(--accent)", opacity: 0.6 }} />
+                      </div>
+                      <span className="text-[11px] font-mono font-semibold w-8 text-right shrink-0" style={{ color: "var(--text-primary)" }}>
+                        {page.count}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Top countries */}
+              <div style={{ background: "var(--bg-elevated)" }}>
+                <div className="px-5 py-3 border-b" style={{ borderColor: "var(--border)" }}>
+                  <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+                    Top Countries (30d)
+                  </span>
+                </div>
+                {traffic.topCountries.length === 0 ? (
+                  <div className="px-5 py-6 text-center">
+                    <span className="text-[11px] font-mono" style={{ color: "var(--text-tertiary)" }}>No country data yet</span>
+                  </div>
+                ) : (
+                  traffic.topCountries.map((c, i) => {
+                    const maxCount = traffic.topCountries[0]?.count || 1;
+                    const pct = (c.count / maxCount) * 100;
+                    return (
+                      <div
+                        key={c.country}
+                        className="px-5 py-2.5 flex items-center gap-3 border-b last:border-b-0"
+                        style={{ borderColor: "var(--border)" }}
+                      >
+                        <span className="text-[10px] font-mono w-5 text-right shrink-0" style={{ color: "var(--text-tertiary)" }}>
+                          {i + 1}
+                        </span>
+                        <span className="text-[11px] font-mono flex-1" style={{ color: "var(--text-primary)" }}>
+                          {c.country}
+                        </span>
+                        <div className="w-20 h-1.5 shrink-0" style={{ background: "var(--border)" }}>
+                          <div className="h-full" style={{ width: `${pct}%`, background: "var(--neon-green)", opacity: 0.6 }} />
+                        </div>
+                        <span className="text-[11px] font-mono font-semibold w-8 text-right shrink-0" style={{ color: "var(--text-primary)" }}>
+                          {c.count}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Bottom Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-px" style={{ background: "var(--border)" }}>

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SessionProvider } from "@/components/session-provider";
 import { ToastProvider } from "@/components/toast";
+import { PageviewTracker } from "@/components/pageview-tracker";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -75,6 +77,8 @@ export default function RootLayout({
           <ToastProvider>
             {children}
           </ToastProvider>
+          <PageviewTracker />
+          <Analytics />
         </body>
       </html>
     </SessionProvider>
