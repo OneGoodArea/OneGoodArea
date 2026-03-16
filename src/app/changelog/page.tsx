@@ -45,7 +45,7 @@ const CHANGELOG: ChangelogMonth[] = [
         type: "feature",
         title: "Blog",
         description:
-          "New /blog section with 5 data-driven posts covering first-time buyer areas, IMD explained, area research checklists, safest places in the UK, and London vs Manchester for property investment. SEO-optimised with JSON-LD structured data.",
+          "New /blog section with data-driven posts on UK areas, property investment, and home buying.",
       },
       {
         type: "feature",
