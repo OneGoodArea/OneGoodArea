@@ -40,7 +40,7 @@ Every score is deterministic. AI narrates the results but never generates the nu
 |--------|------|
 | [Postcodes.io](https://postcodes.io) | Geocoding, LSOA mapping, area classification |
 | [Police.uk](https://data.police.uk) | Street-level crime data, categories, trends |
-| [IMD 2019](https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019) | Deprivation indices across 32,844 LSOAs |
+| [IMD 2025](https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025) | Deprivation indices across 33,755 LSOAs |
 | [OpenStreetMap](https://www.openstreetmap.org) | Schools, transport, healthcare, shops, parks |
 | [Environment Agency](https://environment.data.gov.uk) | Flood risk zones and active warnings |
 

@@ -404,7 +404,7 @@ export default function DocsPage() {
     "data_sources": [
       "postcodes.io",
       "police.uk",
-      "IMD 2019",
+      "IMD 2025",
       "OpenStreetMap",
       "Environment Agency",
       "HM Land Registry"
@@ -472,8 +472,8 @@ export default function DocsPage() {
                     data: "Street-level crime data, 3-month rolling window, category breakdown, trends",
                   },
                   {
-                    name: "IMD 2019",
-                    provider: "MHCLG via ONS ArcGIS",
+                    name: "IMD 2025",
+                    provider: "MHCLG via ArcGIS",
                     data: "Index of Multiple Deprivation: rank and decile by LSOA",
                   },
                   {

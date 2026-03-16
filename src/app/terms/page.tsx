@@ -201,7 +201,7 @@ export default function TermsPage() {
           <p>
             AreaIQ aggregates data from publicly available UK government sources,
             including Police.uk, the Ministry of Housing, Communities and Local
-            Government (IMD 2019), Postcodes.io, OpenStreetMap, and the
+            Government (IMD 2025), Postcodes.io, OpenStreetMap, and the
             Environment Agency. Scores are computed using deterministic
             algorithms applied to this data.
           </p>

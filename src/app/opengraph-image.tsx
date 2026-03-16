@@ -58,8 +58,8 @@ export default function OGImage() {
         {/* Bottom: Stats strip */}
         <div style={{ display: "flex", alignItems: "center", gap: "40px" }}>
           {[
-            { value: "5", label: "DATA SOURCES" },
-            { value: "32,844", label: "LSOAs COVERED" },
+            { value: "6", label: "DATA SOURCES" },
+            { value: "33,755", label: "LSOAs COVERED" },
             { value: "4", label: "INTENT TYPES" },
             { value: "100%", label: "UK COVERAGE" },
           ].map((stat) => (

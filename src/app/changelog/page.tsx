@@ -43,6 +43,12 @@ const CHANGELOG: ChangelogMonth[] = [
     entries: [
       {
         type: "feature",
+        title: "IMD 2025 upgrade",
+        description:
+          "English deprivation data upgraded from IMD 2019 to IMD 2025 (published October 2025). Now covers 33,755 neighbourhoods using the latest census boundaries.",
+      },
+      {
+        type: "feature",
         title: "Blog",
         description:
           "New /blog section with data-driven posts on UK areas, property investment, and home buying.",

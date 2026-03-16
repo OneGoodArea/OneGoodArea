@@ -217,7 +217,7 @@ const milestones = [
 const dataSources = [
   { name: "Postcodes.io", desc: "Geocoding + LSOA mapping" },
   { name: "Police.uk", desc: "Street-level crime data" },
-  { name: "IMD 2019", desc: "Deprivation indices" },
+  { name: "IMD 2025", desc: "Deprivation indices" },
   { name: "OpenStreetMap", desc: "Amenities + transport" },
   { name: "Env. Agency", desc: "Flood risk zones" },
   { name: "Land Registry", desc: "Property sold prices" },
@@ -263,7 +263,7 @@ export default function AboutPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-px mb-20" style={{ background: "var(--border)" }}>
           {[
             { value: 6, suffix: "", label: "Live data sources" },
-            { value: 32844, suffix: "", label: "LSOAs covered" },
+            { value: 33755, suffix: "", label: "LSOAs covered" },
             { value: 16, suffix: "", label: "Scoring functions" },
             { value: 4, suffix: "", label: "Intent profiles" },
           ].map((s) => (

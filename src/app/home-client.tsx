@@ -348,7 +348,7 @@ function HeroTerminal() {
 
   const sources = [
     { name: "Police.uk", result: "23 crimes/month" },
-    { name: "ONS IMD 2019", result: "Decile 7 of 10" },
+    { name: "ONS IMD 2025", result: "Decile 7 of 10" },
     { name: "OpenStreetMap", result: "42 amenities nearby" },
     { name: "Env. Agency", result: "Flood risk: LOW" },
     { name: "Postcodes.io", result: "51.462°N, 0.138°W" },
@@ -577,7 +577,7 @@ export default function Home() {
             </span>
             <div className="flex flex-wrap gap-2">
               <SourceBadge name="Police.uk" live />
-              <SourceBadge name="ONS / IMD 2019" live />
+              <SourceBadge name="ONS / IMD 2025" live />
               <SourceBadge name="OpenStreetMap" live />
               <SourceBadge name="Environment Agency" live />
               <SourceBadge name="HM Land Registry" live />
@@ -735,7 +735,7 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-px -mx-6" style={{ background: "var(--border)" }}>
             {[
               { value: 6, suffix: "", label: "Live data sources" },
-              { value: 41729, suffix: "", label: "Neighbourhoods scored" },
+              { value: 42640, suffix: "", label: "Neighbourhoods scored" },
               { value: 4, suffix: "", label: "Intent types" },
               { value: 16, suffix: "", label: "Scoring dimensions" },
             ].map((stat) => (

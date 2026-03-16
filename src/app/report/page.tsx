@@ -19,7 +19,7 @@ const intents: { value: Intent; label: string; desc: string; icon: typeof MapPin
 const loadingSteps = [
   { label: "Geocoding location", source: "postcodes.io" },
   { label: "Fetching crime statistics", source: "police.uk" },
-  { label: "Retrieving deprivation indices", source: "IMD 2019" },
+  { label: "Retrieving deprivation indices", source: "IMD 2025" },
   { label: "Mapping nearby amenities", source: "OpenStreetMap" },
   { label: "Checking flood risk zones", source: "Environment Agency" },
   { label: "Querying property prices", source: "HM Land Registry" },

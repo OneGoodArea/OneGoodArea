@@ -151,7 +151,7 @@ async function seedOne(
 
   if (deprivation) {
     const ctx = deprivation.lsoa_code.startsWith("W") ? "WIMD 2019"
-      : deprivation.lsoa_code.startsWith("S") ? "SIMD 2020" : "IMD 2019";
+      : deprivation.lsoa_code.startsWith("S") ? "SIMD 2020" : "IMD 2025";
     const level = deprivation.imd_decile <= 3 ? "high" : deprivation.imd_decile <= 7 ? "moderate" : "low";
     summaryParts.push(`${ctx} decile ${deprivation.imd_decile} indicates ${level} deprivation.`);
   }

@@ -17,7 +17,7 @@ const INTENTS = ["moving", "investing", "business", "research"] as const;
 const LOADING_STEPS = [
   { label: "Resolving postcode", source: "Postcodes.io", duration: 3000 },
   { label: "Fetching crime data", source: "Police.uk", duration: 8000 },
-  { label: "Retrieving deprivation indices", source: "IMD 2019", duration: 6000 },
+  { label: "Retrieving deprivation indices", source: "IMD 2025", duration: 6000 },
   { label: "Mapping nearby amenities", source: "OpenStreetMap", duration: 8000 },
   { label: "Checking flood risk", source: "Environment Agency", duration: 5000 },
   { label: "Querying property prices", source: "HM Land Registry", duration: 6000 },

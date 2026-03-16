@@ -46,7 +46,7 @@ function buildDataFreshness(
       ? "WIMD 2019"
       : code.startsWith("S")
         ? "SIMD 2020"
-        : "IMD 2019";
+        : "IMD 2025";
     freshness.push({ source: label, period: "Official release", status: "static" });
   }
 
@@ -122,7 +122,7 @@ ${scores.dimensions.map(d => `- ${d.label}: ${d.score}/100 (weight: ${d.weight}%
   const dataSources = [
     geo ? '"postcodes.io"' : "",
     crime ? '"police.uk"' : "",
-    deprivation ? '"IMD 2019"' : "",
+    deprivation ? '"IMD 2025"' : "",
     amenities ? '"OpenStreetMap"' : "",
     flood ? '"Environment Agency"' : "",
     propertyPrices ? '"HM Land Registry"' : "",

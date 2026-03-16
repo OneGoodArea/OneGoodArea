@@ -269,7 +269,7 @@ export default function PrivacyPage() {
             ))}
           </div>
           <p className="mt-3">
-            Postcodes.io, Police.uk, the IMD 2019 dataset, OpenStreetMap, and
+            Postcodes.io, Police.uk, the IMD 2025 dataset, OpenStreetMap, and
             the Environment Agency API are queried server-side using only
             postcode or coordinate data. No personal information is sent to these
             government data sources.

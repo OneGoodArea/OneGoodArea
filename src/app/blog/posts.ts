@@ -77,7 +77,7 @@ Do your research at postcode level, not city level. Two streets in the same town
 
 ## What the IMD Measures
 
-The Index of Multiple Deprivation ranks every small area in England from most deprived to least deprived. It is published by the Ministry of Housing, Communities and Local Government, and the most recent version uses 2019 data.
+The Index of Multiple Deprivation ranks every small area in England from most deprived to least deprived. It is published by the Ministry of Housing, Communities and Local Government. The most recent version (IoD 2025) was published in October 2025, replacing the 2019 edition.
 
 Deprivation is not the same as poverty. Poverty means lacking money. Deprivation is broader. It means lacking things that are considered basic necessities in society: income, employment, education, health, housing, a safe environment, and access to services.
 
@@ -93,9 +93,9 @@ The IMD combines seven domains:
 
 ## How the Ranking Works
 
-England is divided into 32,844 small areas called Lower Layer Super Output Areas (LSOAs). Each LSOA contains roughly 1,500 people (between 1,000 and 3,000) within 400 to 1,200 households.
+England is divided into 33,755 small areas called Lower Layer Super Output Areas (LSOAs). Each LSOA contains roughly 1,500 people (between 1,000 and 3,000) within 400 to 1,200 households.
 
-Every LSOA gets a rank from 1 (most deprived) to 32,844 (least deprived). These ranks are grouped into deciles:
+Every LSOA gets a rank from 1 (most deprived) to 33,755 (least deprived). These ranks are grouped into deciles:
 
 - **Decile 1**: The most deprived 10% of areas
 - **Decile 5**: Middle of the range
@@ -120,7 +120,7 @@ The IMD has real limitations:
 - **It is relative, not absolute.** It tells you area A is more deprived than area B, but not by how much.
 - **It is area-level, not household-level.** A wealthy household can exist in a deprived LSOA, and vice versa.
 - **England, Wales, Scotland, and Northern Ireland have separate indices.** You cannot directly compare an English IMD decile with a Scottish SIMD decile. They use different methodologies.
-- **The data is from 2019.** Areas can change significantly in 6 years. New developments, transport links, or economic shifts may not be reflected.
+- **It updates infrequently.** The 2025 edition replaced 2019 data after a 6-year gap. Areas can change between releases.
 
 ## How AreaIQ Uses IMD Data
 
@@ -128,7 +128,7 @@ AreaIQ pulls IMD data for every report and uses it as one of 6 data sources. The
 
 Importantly, we do not use IMD as the sole cost indicator. Where HM Land Registry sold price data is available, we use real transaction prices instead. IMD becomes a fallback and supporting signal rather than the primary source.
 
-For Wales, we use the Welsh Index of Multiple Deprivation (WIMD 2019). For Scotland, the Scottish Index of Multiple Deprivation (SIMD 2020). Each country's index is referenced by name in your report so you know exactly which dataset is being used.
+For England, we use the IMD 2025. For Wales, we use the Welsh Index of Multiple Deprivation (WIMD 2019). For Scotland, the Scottish Index of Multiple Deprivation (SIMD 2020). Each country's index is referenced by name in your report so you know exactly which dataset is being used.
 
 ## How to Check Your Area's IMD
 

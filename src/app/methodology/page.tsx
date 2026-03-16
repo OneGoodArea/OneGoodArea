@@ -70,10 +70,10 @@ const DATA_SOURCES = [
     data: "Street-level crime incidents from the last 3 months, broken down by category (theft, violence, burglary, etc.). Includes monthly trend data for direction-of-travel analysis.",
   },
   {
-    name: "ONS / IMD 2019",
+    name: "ONS / IMD 2025",
     provider: "MHCLG via ArcGIS",
     radius: "LSOA boundary",
-    data: "Index of Multiple Deprivation. Ranks 32,844 Lower Super Output Areas across income, employment, health, education, and living environment. Decile 1 = most deprived, decile 10 = least deprived.",
+    data: "Index of Multiple Deprivation. Ranks 33,755 Lower Super Output Areas across income, employment, health, education, and living environment. Decile 1 = most deprived, decile 10 = least deprived.",
   },
   {
     name: "OpenStreetMap",

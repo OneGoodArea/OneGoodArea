@@ -183,7 +183,7 @@ function scoreAmenities(amenities: AmenitiesData | null, bench: Benchmarks): { s
 function getDeprivationContext(lsoaCode: string): { total: number; unit: string; index: string } {
   if (lsoaCode.startsWith("W")) return { total: 1909, unit: "Welsh LSOAs", index: "WIMD 2019" };
   if (lsoaCode.startsWith("S")) return { total: 6976, unit: "Scottish Data Zones", index: "SIMD 2020" };
-  return { total: 32844, unit: "LSOAs", index: "IMD 2019" };
+  return { total: 33755, unit: "LSOAs", index: "IMD 2025" };
 }
 
 function scoreDemographics(deprivation: DeprivationData | null): { score: number; reasoning: string } {
