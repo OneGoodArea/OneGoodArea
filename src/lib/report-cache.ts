@@ -1,5 +1,6 @@
 import { sql } from "@/lib/db";
 import { AreaReport } from "@/lib/types";
+import { row, rows as typedRows, CacheRow, CountRow, TotalRow, AreaHitsRow } from "@/lib/db-types";
 
 /* ── Types ── */
 
@@ -63,7 +64,7 @@ export async function getCachedReport(
     );
   }
 
-  const rows = await sql`
+  const cacheRows = await sql`
     SELECT report, area, score, created_at
     FROM report_cache
     WHERE cache_key = ${key}
@@ -71,7 +72,7 @@ export async function getCachedReport(
     LIMIT 1
   `;
 
-  if (rows.length === 0) return null;
+  if (cacheRows.length === 0) return null;
 
   // Increment hit count (fire-and-forget)
   sql`
@@ -80,12 +81,12 @@ export async function getCachedReport(
     console.error("[AreaIQ] Cache hit_count update error:", err)
   );
 
-  const row = rows[0];
+  const hit = row<CacheRow>(cacheRows[0]);
   return {
-    report: row.report as AreaReport,
-    area: row.area as string,
-    score: row.score as number,
-    created_at: row.created_at as string,
+    report: (typeof hit.report === "string" ? JSON.parse(hit.report) : hit.report) as unknown as AreaReport,
+    area: hit.area,
+    score: hit.score,
+    created_at: hit.created_at,
   };
 }
 
@@ -130,9 +131,9 @@ export async function getCacheStats(): Promise<{
   ]);
 
   return {
-    totalEntries: countResult[0].count as number,
-    totalHits: hitsResult[0].total as number,
-    topCached: topResult as Array<{ area: string; hits: number }>,
+    totalEntries: row<CountRow>(countResult[0]).count,
+    totalHits: row<TotalRow>(hitsResult[0]).total,
+    topCached: typedRows<AreaHitsRow>(topResult),
   };
 }
 

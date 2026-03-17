@@ -4,6 +4,8 @@ import { getUserPlan } from "@/lib/usage";
 import { stripe } from "@/lib/stripe";
 import { PLANS, PlanId } from "@/lib/stripe";
 import { sql } from "@/lib/db";
+import { isAppError } from "@/lib/errors";
+import { row, SubscriptionRow } from "@/lib/db-types";
 
 export async function GET() {
   try {
@@ -17,18 +19,19 @@ export async function GET() {
     const planConfig = PLANS[plan as PlanId];
 
     // Check if there's an active Stripe subscription
-    const rows = await sql`
+    const subRows = await sql`
       SELECT stripe_subscription_id FROM subscriptions
       WHERE user_id = ${userId} AND status = 'active' AND stripe_subscription_id IS NOT NULL
     `;
 
     let cancelAt: string | null = null;
-    const hasStripeSubscription = rows.length > 0 && !!rows[0].stripe_subscription_id;
+    const subRecord = subRows.length > 0 ? row<Pick<SubscriptionRow, "stripe_subscription_id">>(subRows[0]) : null;
+    const hasStripeSubscription = !!subRecord?.stripe_subscription_id;
 
     // If there's a Stripe subscription, check if it's set to cancel
-    if (hasStripeSubscription) {
+    if (hasStripeSubscription && subRecord) {
       try {
-        const sub = await stripe.subscriptions.retrieve(rows[0].stripe_subscription_id as string) as unknown as {
+        const sub = await stripe.subscriptions.retrieve(subRecord.stripe_subscription_id) as unknown as {
           cancel_at_period_end: boolean;
           current_period_end: number;
         };
@@ -48,6 +51,9 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Subscription info error:", error);
+    if (isAppError(error)) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
+    }
     return NextResponse.json({ error: "Failed to fetch subscription info" }, { status: 500 });
   }
 }

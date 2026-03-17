@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { getUserPlan } from "@/lib/usage";
 import { AreaReport } from "@/lib/types";
 import { CompareClient } from "./client";
+import { rows as typedRows } from "@/lib/db-types";
+import type { ReportRow } from "@/lib/db-types";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -31,37 +33,37 @@ interface ReportSummary {
 async function getFullReports(userId: string, ids: string[]): Promise<ReportData[]> {
   if (ids.length === 0) return [];
 
-  const rows = await sql`
+  const rawRows = await sql`
     SELECT id, area, intent, report, score, created_at
     FROM reports
     WHERE user_id = ${userId} AND id = ANY(${ids})
     ORDER BY created_at DESC
   `;
 
-  return rows.map((row) => ({
-    id: row.id as string,
-    area: row.area as string,
-    intent: row.intent as string,
+  return typedRows<ReportRow>(rawRows).map((row) => ({
+    id: row.id,
+    area: row.area,
+    intent: row.intent,
     report: (typeof row.report === "string" ? JSON.parse(row.report) : row.report) as AreaReport,
-    score: row.score as number,
-    created_at: row.created_at as string,
+    score: row.score,
+    created_at: row.created_at,
   }));
 }
 
 async function getUserReportsList(userId: string): Promise<ReportSummary[]> {
-  const rows = await sql`
+  const rawRows = await sql`
     SELECT id, area, intent, score, created_at
     FROM reports
     WHERE user_id = ${userId}
     ORDER BY created_at DESC
   `;
 
-  return rows.map((row) => ({
-    id: row.id as string,
-    area: row.area as string,
-    intent: row.intent as string,
-    score: row.score as number,
-    created_at: row.created_at as string,
+  return typedRows<ReportRow>(rawRows).map((row) => ({
+    id: row.id,
+    area: row.area,
+    intent: row.intent,
+    score: row.score,
+    created_at: row.created_at,
   }));
 }
 

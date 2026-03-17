@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { getUserPlan } from "@/lib/usage";
 import type { Metadata } from "next";
 import type { PlanId } from "@/lib/stripe";
+import { row as typedRow, ReportRow } from "@/lib/db-types";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -20,14 +21,14 @@ async function getReport(id: string) {
 
   if (rows.length === 0) return null;
 
-  const row = rows[0];
+  const r = typedRow<ReportRow>(rows[0]);
   return {
-    id: row.id as string,
-    area: row.area as string,
-    intent: row.intent as string,
-    report: (typeof row.report === "string" ? JSON.parse(row.report) : row.report) as AreaReport,
-    score: row.score as number,
-    created_at: row.created_at as string,
+    id: r.id,
+    area: r.area,
+    intent: r.intent,
+    report: (typeof r.report === "string" ? JSON.parse(r.report) : r.report) as AreaReport,
+    score: r.score,
+    created_at: r.created_at,
   };
 }
 

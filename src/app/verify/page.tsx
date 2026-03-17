@@ -1,6 +1,7 @@
 import { sql } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { sendWelcomeEmail } from "@/lib/email";
+import { row, VerificationTokenRow, UserRow } from "@/lib/db-types";
 import Link from "next/link";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
@@ -36,9 +37,9 @@ async function verifyToken(token: string): Promise<{ success: boolean; error?: s
 
     if (rows.length === 0) return { success: false, error: "Invalid verification link." };
 
-    const record = rows[0];
+    const record = row<Pick<VerificationTokenRow, "user_id" | "email" | "expires_at" | "used">>(rows[0]);
     if (record.used) return { success: false, error: "This link has already been used." };
-    if (new Date(record.expires_at as string) < new Date()) return { success: false, error: "This link has expired. Please sign up again." };
+    if (new Date(record.expires_at) < new Date()) return { success: false, error: "This link has expired. Please sign up again." };
 
     // Mark token as used
     await sql`UPDATE email_verification_tokens SET used = TRUE WHERE token = ${token}`;
@@ -49,8 +50,8 @@ async function verifyToken(token: string): Promise<{ success: boolean; error?: s
     // Send welcome email
     try {
       const userRows = await sql`SELECT name FROM users WHERE id = ${record.user_id}`;
-      const name = (userRows[0]?.name as string) || "there";
-      await sendWelcomeEmail(record.email as string, name);
+      const name = (userRows.length > 0 ? row<Pick<UserRow, "name">>(userRows[0]).name : null) || "there";
+      await sendWelcomeEmail(record.email, name);
     } catch {
       // Welcome email is best-effort
     }

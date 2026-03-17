@@ -1,16 +1,19 @@
 import { sql } from "@/lib/db";
-
-async function ensureActivityTable() {
-  await sql`
-    CREATE TABLE IF NOT EXISTS activity_events (
-      id TEXT PRIMARY KEY,
-      user_id TEXT,
-      event TEXT NOT NULL,
-      metadata JSONB DEFAULT '{}',
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    )
-  `;
-}
+import { ensureActivityTable } from "@/lib/db-schema";
+import {
+  row,
+  rows as typedRows,
+  CountRow,
+  DayCountRow,
+  AreaCountRow,
+  IntentCountRow,
+  PlanCountRow,
+  RecentActivityRow,
+  PathCountRow,
+  ReferrerCountRow,
+  DeviceCountRow,
+  CountryCountRow,
+} from "@/lib/db-types";
 
 let tableReady = false;
 
@@ -113,31 +116,24 @@ export async function getAnalytics() {
     business: 249,
   };
 
-  const subscriptionBreakdown = subscriptionsByPlan as { plan: string; count: number }[];
-  const mrr = subscriptionBreakdown.reduce((sum, row) => {
-    return sum + (planPrices[row.plan] || 0) * row.count;
+  const subscriptionBreakdown = typedRows<PlanCountRow>(subscriptionsByPlan);
+  const mrr = subscriptionBreakdown.reduce((sum, r) => {
+    return sum + (planPrices[r.plan] || 0) * r.count;
   }, 0);
 
   return {
-    totalUsers: totalUsers[0].count as number,
-    totalReports: totalReports[0].count as number,
-    reportsThisMonth: reportsThisMonth[0].count as number,
-    activeUsersThisMonth: activeUsersThisMonth[0].count as number,
-    reportsPerDay: reportsPerDay as { day: string; count: number }[],
-    topAreas: topAreas as { area: string; count: number }[],
-    intentDistribution: intentDistribution as { intent: string; count: number }[],
-    recentActivity: recentActivity as {
-      event: string;
-      user_id: string | null;
-      metadata: Record<string, unknown>;
-      created_at: string;
-      name: string | null;
-      email: string | null;
-    }[],
-    userGrowth: userGrowth as { day: string; count: number }[],
+    totalUsers: row<CountRow>(totalUsers[0]).count,
+    totalReports: row<CountRow>(totalReports[0]).count,
+    reportsThisMonth: row<CountRow>(reportsThisMonth[0]).count,
+    activeUsersThisMonth: row<CountRow>(activeUsersThisMonth[0]).count,
+    reportsPerDay: typedRows<DayCountRow>(reportsPerDay),
+    topAreas: typedRows<AreaCountRow>(topAreas),
+    intentDistribution: typedRows<IntentCountRow>(intentDistribution),
+    recentActivity: typedRows<RecentActivityRow>(recentActivity),
+    userGrowth: typedRows<DayCountRow>(userGrowth),
     // Conversion funnel
-    usersWithReports: usersWithReports[0].count as number,
-    paidUsers: paidUsers[0].count as number,
+    usersWithReports: row<CountRow>(usersWithReports[0]).count,
+    paidUsers: row<CountRow>(paidUsers[0]).count,
     // Revenue
     subscriptionsByPlan: subscriptionBreakdown,
     mrr,
@@ -209,15 +205,15 @@ export async function getTrafficAnalytics() {
     ]);
 
     return {
-      totalPageviews: totalPageviews[0].count as number,
-      pageviewsToday: pageviewsToday[0].count as number,
-      uniqueVisitorsToday: uniqueVisitorsToday[0].count as number,
-      uniqueVisitors30d: uniqueVisitors30d[0].count as number,
-      pageviewsPerDay: pageviewsPerDay as { day: string; count: number }[],
-      topPages: topPages as { path: string; count: number }[],
-      topReferrers: topReferrers as { referrer: string; count: number }[],
-      deviceBreakdown: deviceBreakdown as { device: string; count: number }[],
-      topCountries: topCountries as { country: string; count: number }[],
+      totalPageviews: row<CountRow>(totalPageviews[0]).count,
+      pageviewsToday: row<CountRow>(pageviewsToday[0]).count,
+      uniqueVisitorsToday: row<CountRow>(uniqueVisitorsToday[0]).count,
+      uniqueVisitors30d: row<CountRow>(uniqueVisitors30d[0]).count,
+      pageviewsPerDay: typedRows<DayCountRow>(pageviewsPerDay),
+      topPages: typedRows<PathCountRow>(topPages),
+      topReferrers: typedRows<ReferrerCountRow>(topReferrers),
+      deviceBreakdown: typedRows<DeviceCountRow>(deviceBreakdown),
+      topCountries: typedRows<CountryCountRow>(topCountries),
     };
   } catch {
     return null;

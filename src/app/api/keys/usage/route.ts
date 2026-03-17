@@ -3,6 +3,18 @@ import { auth } from "@/lib/auth";
 import { hasApiAccess, getUserPlan } from "@/lib/usage";
 import { PLANS, PlanId } from "@/lib/stripe";
 import { sql } from "@/lib/db";
+import { ApiKeyRow, ActivityEventRow, row, rows as typedRows } from "@/lib/db-types";
+
+/** Aggregate count returned by COUNT(*)::int queries. */
+interface CountRow { count: number; }
+
+/** Daily aggregation shape. */
+interface DayCountRow { day: string; count: number; }
+
+/** Projected shape for API key previews in this route. */
+type ApiKeyPreview = Pick<ApiKeyRow, "id" | "name" | "created_at" | "last_used_at"> & {
+  key_preview: string;
+};
 
 export async function GET() {
   const session = await auth();
@@ -76,6 +88,13 @@ export async function GET() {
       `,
     ]);
 
+    // Type the raw query results
+    const totalCount = row<CountRow>(totalRequests[0]);
+    const monthCount = row<CountRow>(requestsThisMonth[0]);
+    const dailyCounts = typedRows<DayCountRow>(requestsByDay);
+    const lastRow = lastRequest.length > 0 ? row<Pick<ActivityEventRow, "created_at">>(lastRequest[0]) : null;
+    const keys = typedRows<ApiKeyPreview>(apiKeys);
+
     // Fill in missing days with zero counts for the chart
     const dayMap = new Map<string, number>();
     const now = new Date();
@@ -85,9 +104,9 @@ export async function GET() {
       const key = d.toISOString().split("T")[0];
       dayMap.set(key, 0);
     }
-    for (const row of requestsByDay) {
-      const key = new Date(row.day as string).toISOString().split("T")[0];
-      dayMap.set(key, row.count as number);
+    for (const dc of dailyCounts) {
+      const key = new Date(dc.day).toISOString().split("T")[0];
+      dayMap.set(key, dc.count);
     }
 
     const dailyData = Array.from(dayMap.entries()).map(([day, count]) => ({
@@ -96,17 +115,17 @@ export async function GET() {
     }));
 
     return NextResponse.json({
-      totalRequests: (totalRequests[0]?.count as number) || 0,
-      requestsThisMonth: (requestsThisMonth[0]?.count as number) || 0,
+      totalRequests: totalCount.count || 0,
+      requestsThisMonth: monthCount.count || 0,
       monthlyLimit: PLANS[plan as PlanId]?.reportsPerMonth ?? 100,
       dailyData,
-      lastRequestAt: (lastRequest[0]?.created_at as string) || null,
-      keys: apiKeys.map((k) => ({
-        id: k.id as string,
-        key_preview: k.key_preview as string,
-        name: k.name as string,
-        created_at: k.created_at as string,
-        last_used_at: k.last_used_at as string | null,
+      lastRequestAt: lastRow?.created_at || null,
+      keys: keys.map((k) => ({
+        id: k.id,
+        key_preview: k.key_preview,
+        name: k.name,
+        created_at: k.created_at,
+        last_used_at: k.last_used_at,
       })),
     });
   } catch (error) {

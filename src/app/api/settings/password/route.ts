@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/crypto";
+import { isAppError } from "@/lib/errors";
+import { row, UserRow } from "@/lib/db-types";
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,7 +32,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (rows[0].provider !== "credentials" || !rows[0].password_hash) {
+    const userRecord = row<Pick<UserRow, "password_hash" | "provider">>(rows[0]);
+
+    if (userRecord.provider !== "credentials" || !userRecord.password_hash) {
       return NextResponse.json(
         { error: "Password change is only available for email/password accounts" },
         { status: 400 }
@@ -38,7 +42,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify current password
-    const { valid } = await verifyPassword(currentPassword, rows[0].password_hash as string);
+    const { valid } = await verifyPassword(currentPassword, userRecord.password_hash);
     if (!valid) {
       return NextResponse.json({ error: "Current password is incorrect" }, { status: 403 });
     }
@@ -50,6 +54,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Password change error:", error);
+    if (isAppError(error)) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
+    }
     return NextResponse.json({ error: "Failed to change password" }, { status: 500 });
   }
 }

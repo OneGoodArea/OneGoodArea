@@ -7,6 +7,7 @@ import { sendReportEmail } from "@/lib/email";
 import { Intent } from "@/lib/types";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { validateLocationInput, validateIntent } from "@/lib/validation";
+import { isAppError } from "@/lib/errors";
 
 const RATE_LIMIT_MAX = 10;
 const RATE_LIMIT_WINDOW = 60; // seconds
@@ -74,6 +75,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result, { headers });
   } catch (error) {
+    if (isAppError(error)) {
+      return NextResponse.json(
+        { error: error.message, code: error.code },
+        { status: error.statusCode }
+      );
+    }
     console.error("Report generation error:", error);
     return NextResponse.json(
       { error: "Failed to generate report" },

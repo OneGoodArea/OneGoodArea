@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getUserPlan, getMonthlyReportCount } from "@/lib/usage";
 import { PLANS } from "@/lib/stripe";
 import { DashboardClient } from "./client";
+import { rows, ReportRow, SavedAreaRow } from "@/lib/db-types";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -12,19 +13,21 @@ export const metadata: Metadata = {
 };
 
 async function getUserReports(userId: string) {
-  const rows = await sql`
+  const result = await sql`
     SELECT id, area, intent, score, created_at
     FROM reports
     WHERE user_id = ${userId}
     ORDER BY created_at DESC
   `;
 
-  return rows.map((row) => ({
-    id: row.id as string,
-    area: row.area as string,
-    intent: row.intent as string,
-    score: row.score as number,
-    created_at: row.created_at as string,
+  const typed = rows<ReportRow>(result);
+
+  return typed.map((row) => ({
+    id: row.id,
+    area: row.area,
+    intent: row.intent,
+    score: row.score,
+    created_at: row.created_at,
   }));
 }
 
@@ -41,18 +44,19 @@ async function getSavedAreas(userId: string) {
         UNIQUE(user_id, postcode)
       )
     `;
-    const rows = await sql`
+    const result = await sql`
       SELECT id, postcode, label, intent, created_at
       FROM saved_areas
       WHERE user_id = ${userId}
       ORDER BY created_at DESC
     `;
-    return rows.map((row) => ({
-      id: row.id as string,
-      postcode: row.postcode as string,
-      label: (row.label as string) || "",
-      intent: (row.intent as string) || null,
-      created_at: row.created_at as string,
+    const typed = rows<SavedAreaRow>(result);
+    return typed.map((row) => ({
+      id: row.id,
+      postcode: row.postcode,
+      label: row.label || "",
+      intent: row.intent || null,
+      created_at: row.created_at,
     }));
   } catch {
     return [];

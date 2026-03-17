@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { sql } from "@/lib/db";
+import { isAppError } from "@/lib/errors";
 
 export async function DELETE() {
   try {
@@ -25,6 +26,9 @@ export async function DELETE() {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Account deletion error:", error);
+    if (isAppError(error)) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
+    }
     return NextResponse.json({ error: "Failed to delete account" }, { status: 500 });
   }
 }

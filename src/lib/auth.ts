@@ -6,20 +6,14 @@ import { sql } from "@/lib/db";
 import { trackEvent } from "@/lib/activity";
 import { sendVerificationEmail } from "@/lib/email";
 import { hashPassword, verifyPassword, generateToken } from "@/lib/crypto";
-import { ensureUsersTable } from "@/lib/db-schema";
+import { ensureUsersTable, ensureVerificationTable } from "@/lib/db-schema";
+import { row, UserRow } from "@/lib/db-types";
 
-async function ensureVerificationTable() {
-  await sql`
-    CREATE TABLE IF NOT EXISTS email_verification_tokens (
-      id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      email TEXT NOT NULL,
-      token TEXT UNIQUE NOT NULL,
-      expires_at TIMESTAMPTZ NOT NULL,
-      used BOOLEAN DEFAULT FALSE,
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    )
-  `;
+let _authTablesReady = false;
+async function ensureAuthTables() {
+  if (_authTablesReady) return;
+  await Promise.all([ensureUsersTable(), ensureVerificationTable()]);
+  _authTablesReady = true;
 }
 
 
@@ -43,7 +37,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        await ensureUsersTable();
+        await ensureAuthTables();
 
         const email = credentials.email as string;
         const password = credentials.password as string;
@@ -65,7 +59,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           // Send verification email (fire-and-forget)
           try {
-            await ensureVerificationTable();
+            await ensureAuthTables();
             const token = generateToken();
             const tokenId = `evt_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
             const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours
@@ -84,26 +78,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         // Sign in
-        const rows = await sql`
+        const signInRows = await sql`
           SELECT id, email, name, image, password_hash FROM users
           WHERE email = ${email} AND provider = 'credentials'
         `;
-        if (rows.length === 0 || !rows[0].password_hash) return null;
+        if (signInRows.length === 0 || !signInRows[0].password_hash) return null;
 
-        const { valid, needsRehash } = await verifyPassword(password, rows[0].password_hash as string);
+        const foundUser = row<UserRow>(signInRows[0]);
+
+        const { valid, needsRehash } = await verifyPassword(password, foundUser.password_hash!);
         if (!valid) return null;
 
         // Transparently upgrade legacy SHA-256 hashes to PBKDF2
         if (needsRehash) {
           const newHash = await hashPassword(password);
-          sql`UPDATE users SET password_hash = ${newHash} WHERE id = ${rows[0].id}`.catch(() => {});
+          sql`UPDATE users SET password_hash = ${newHash} WHERE id = ${foundUser.id}`.catch(() => {});
         }
 
         return {
-          id: rows[0].id as string,
-          email: rows[0].email as string,
-          name: rows[0].name as string | null,
-          image: rows[0].image as string | null,
+          id: foundUser.id,
+          email: foundUser.email,
+          name: foundUser.name,
+          image: foundUser.image,
         };
       },
     }),
@@ -133,7 +129,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async signIn({ user, account }) {
       if (account?.provider === "google" || account?.provider === "github") {
-        await ensureUsersTable();
+        await ensureAuthTables();
 
         const existing = await sql`SELECT id FROM users WHERE email = ${user.email}`;
 
@@ -145,11 +141,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           `;
           user.id = id;
         } else {
-          user.id = existing[0].id as string;
+          const existingUser = row<Pick<UserRow, "id">>(existing[0]);
+          user.id = existingUser.id;
           // Update name/image if changed
           await sql`
             UPDATE users SET name = ${user.name}, image = ${user.image}
-            WHERE id = ${existing[0].id}
+            WHERE id = ${existingUser.id}
           `;
         }
       }

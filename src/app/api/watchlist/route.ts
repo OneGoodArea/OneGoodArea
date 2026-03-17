@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { ensureWatchlistTable } from "@/lib/db-schema";
 
+let _watchlistReady = false;
 async function ensureTable() {
-  await sql`
-    CREATE TABLE IF NOT EXISTS saved_areas (
-      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-      user_id TEXT NOT NULL,
-      postcode TEXT NOT NULL,
-      label TEXT NOT NULL DEFAULT '',
-      intent TEXT,
-      created_at TIMESTAMPTZ DEFAULT now(),
-      UNIQUE(user_id, postcode)
-    )
-  `;
+  if (_watchlistReady) return;
+  await ensureWatchlistTable();
+  _watchlistReady = true;
 }
 
 export async function GET() {

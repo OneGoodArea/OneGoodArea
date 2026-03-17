@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { sql } from "@/lib/db";
 import { trackEvent } from "@/lib/activity";
+import { row, SubscriptionRow } from "@/lib/db-types";
+import { isAppError } from "@/lib/errors";
 
 export async function POST() {
   try {
@@ -26,8 +28,9 @@ export async function POST() {
       );
     }
 
-    const subscriptionId = rows[0].stripe_subscription_id as string;
-    const plan = rows[0].plan as string;
+    const sub = row<Pick<SubscriptionRow, "stripe_subscription_id" | "plan">>(rows[0]);
+    const subscriptionId = sub.stripe_subscription_id;
+    const plan = sub.plan;
 
     // Check if already set to cancel at period end
     const currentSub = await stripe.subscriptions.retrieve(subscriptionId) as unknown as {
@@ -61,6 +64,9 @@ export async function POST() {
       message: "Subscription will be cancelled at the end of the billing period",
     });
   } catch (error) {
+    if (isAppError(error)) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
+    }
     console.error("Cancel subscription error:", error);
     return NextResponse.json(
       { error: "Failed to cancel subscription" },

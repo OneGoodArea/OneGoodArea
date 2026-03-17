@@ -3,17 +3,13 @@ import { stripe } from "@/lib/stripe";
 import { sql } from "@/lib/db";
 import { trackEvent } from "@/lib/activity";
 import Stripe from "stripe";
+import { ensureWebhookEventsTable } from "@/lib/db-schema";
 
-async function ensureWebhookEventsTable() {
-  await sql`
-    CREATE TABLE IF NOT EXISTS webhook_events (
-      id TEXT PRIMARY KEY,
-      type TEXT NOT NULL,
-      processed_at TIMESTAMPTZ DEFAULT NOW(),
-      status TEXT DEFAULT 'processed',
-      error TEXT
-    )
-  `;
+let _webhookTableReady = false;
+async function ensureWebhookTable() {
+  if (_webhookTableReady) return;
+  await ensureWebhookTable();
+  _webhookTableReady = true;
 }
 
 async function isEventAlreadyProcessed(eventId: string): Promise<boolean> {
@@ -61,7 +57,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Ensure table exists, check idempotency, and trigger opportunistic cleanup
-  await ensureWebhookEventsTable();
+  await ensureWebhookTable();
 
   if (await isEventAlreadyProcessed(event.id)) {
     console.log(`[stripe-webhook] Skipping already-processed event ${event.id} (${event.type})`);

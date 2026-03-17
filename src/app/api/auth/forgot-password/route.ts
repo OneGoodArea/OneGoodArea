@@ -2,19 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { sendPasswordResetEmail } from "@/lib/email";
 import { generateToken } from "@/lib/crypto";
+import { ensurePasswordResetTable } from "@/lib/db-schema";
+import { isAppError } from "@/lib/errors";
 
+let _resetTableReady = false;
 async function ensureTable() {
-  await sql`
-    CREATE TABLE IF NOT EXISTS password_reset_tokens (
-      id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      email TEXT NOT NULL,
-      token TEXT UNIQUE NOT NULL,
-      expires_at TIMESTAMPTZ NOT NULL,
-      used BOOLEAN DEFAULT FALSE,
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    )
-  `;
+  if (_resetTableReady) return;
+  await ensurePasswordResetTable();
+  _resetTableReady = true;
 }
 
 export async function POST(req: NextRequest) {
@@ -72,6 +67,9 @@ export async function POST(req: NextRequest) {
     return successResponse;
   } catch (error) {
     console.error("[forgot-password] Error:", error);
+    if (isAppError(error)) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
+    }
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }

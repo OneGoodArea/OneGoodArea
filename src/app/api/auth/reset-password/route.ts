@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { hashPassword } from "@/lib/crypto";
+import { isAppError } from "@/lib/errors";
+import { row, PasswordResetTokenRow } from "@/lib/db-types";
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,13 +25,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
     }
 
-    const record = rows[0];
+    const record = row<Pick<PasswordResetTokenRow, "user_id" | "email" | "expires_at" | "used">>(rows[0]);
 
     if (record.used) {
       return NextResponse.json({ error: "This reset link has already been used" }, { status: 400 });
     }
 
-    if (new Date(record.expires_at as string) < new Date()) {
+    if (new Date(record.expires_at) < new Date()) {
       return NextResponse.json({ error: "This reset link has expired. Please request a new one." }, { status: 400 });
     }
 
@@ -43,6 +45,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("[reset-password] Error:", error);
+    if (isAppError(error)) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
+    }
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }

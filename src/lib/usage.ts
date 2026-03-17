@@ -1,11 +1,17 @@
 import { sql } from "@/lib/db";
 import { PLANS, PlanId, API_PLANS } from "@/lib/stripe";
+import { UserRow, SubscriptionRow, row } from "@/lib/db-types";
+
+/** Aggregate count returned by COUNT(*)::int queries. */
+interface CountRow { count: number; }
 
 const SUPERUSER_EMAILS = ["ptengelmann@gmail.com"];
 
 async function isSuperuser(userId: string): Promise<boolean> {
   const rows = await sql`SELECT email FROM users WHERE id = ${userId}`;
-  return rows.length > 0 && SUPERUSER_EMAILS.includes(rows[0].email as string);
+  if (rows.length === 0) return false;
+  const user = row<Pick<UserRow, "email">>(rows[0]);
+  return SUPERUSER_EMAILS.includes(user.email);
 }
 
 export async function getUserPlan(userId: string): Promise<PlanId> {
@@ -16,7 +22,8 @@ export async function getUserPlan(userId: string): Promise<PlanId> {
     WHERE user_id = ${userId} AND status = 'active'
   `;
   if (rows.length === 0) return "free";
-  return rows[0].plan as PlanId;
+  const sub = row<Pick<SubscriptionRow, "plan">>(rows[0]);
+  return sub.plan as PlanId;
 }
 
 export async function hasApiAccess(userId: string): Promise<boolean> {
@@ -31,7 +38,7 @@ export async function getMonthlyReportCount(userId: string): Promise<number> {
     WHERE user_id = ${userId}
     AND created_at >= date_trunc('month', NOW())
   `;
-  return rows[0].count;
+  return row<CountRow>(rows[0]).count;
 }
 
 export async function canGenerateReport(userId: string): Promise<{
@@ -60,5 +67,6 @@ export async function getStripeCustomerId(userId: string): Promise<string | null
     WHERE user_id = ${userId}
   `;
   if (rows.length === 0) return null;
-  return rows[0].stripe_customer_id as string;
+  const sub = row<Pick<SubscriptionRow, "stripe_customer_id">>(rows[0]);
+  return sub.stripe_customer_id;
 }

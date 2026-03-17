@@ -1,21 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
+import { ensurePageviewTable } from "@/lib/db-schema";
 
 let tableReady = false;
 
-async function ensurePageviewTable() {
+async function ensureTable() {
   if (tableReady) return;
-  await sql`
-    CREATE TABLE IF NOT EXISTS pageviews (
-      id SERIAL PRIMARY KEY,
-      path TEXT NOT NULL,
-      referrer TEXT,
-      country TEXT,
-      device TEXT,
-      session_id TEXT,
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    )
-  `;
+  await ensurePageviewTable();
   await sql`CREATE INDEX IF NOT EXISTS idx_pageviews_created ON pageviews (created_at)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_pageviews_path ON pageviews (path)`;
   tableReady = true;
@@ -33,7 +24,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    await ensurePageviewTable();
+    await ensureTable();
 
     // Simple device detection from user-agent
     const ua = req.headers.get("user-agent") || "";
