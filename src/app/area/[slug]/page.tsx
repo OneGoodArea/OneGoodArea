@@ -365,7 +365,7 @@ const AREAS: Record<string, AreaData> = {
       "areaType": "suburban",
       "overallScore": 62,
       "population": "~230,000 (city)",
-      "avgPropertyPrice": "Â£420,000",
+      "avgPropertyPrice": "£420,000",
       "summary": "Brighton City Centre scores 62/100 overall. Transport links include 4 rail stations and 28 bus stops. 918 amenities nearby including 29 schools and 659 food/drink venues. Crime: 3,882 incidents over 3 months (1294/month), with violent crime at 30%. IMD 2019 decile 2 indicates high deprivation. Investing intent scores highest at 78/100.",
       "dimensions": [
           {
@@ -445,7 +445,7 @@ const AREAS: Record<string, AreaData> = {
       "areaType": "suburban",
       "overallScore": 57,
       "population": "~260,000 (city)",
-      "avgPropertyPrice": "Â£230,000",
+      "avgPropertyPrice": "£230,000",
       "summary": "Southampton City Centre scores 57/100 overall. Transport links include 2 rail stations and 46 bus stops. 517 amenities nearby including 19 schools and 270 food/drink venues. Crime: 3,042 incidents over 3 months (1014/month), with violent crime at 38%. Moving intent scores highest at 61/100.",
       "dimensions": [
           {
@@ -524,7 +524,7 @@ const AREAS: Record<string, AreaData> = {
       "areaType": "suburban",
       "overallScore": 54,
       "population": "~215,000 (city)",
-      "avgPropertyPrice": "Â£220,000",
+      "avgPropertyPrice": "£220,000",
       "summary": "Portsmouth City Centre scores 54/100 overall. Transport links include 3 rail stations and 25 bus stops. 336 amenities nearby including 25 schools and 167 food/drink venues. Crime: 2,532 incidents over 3 months (844/month), with violent crime at 42%. IMD 2019 decile 1 indicates high deprivation. Investing intent scores highest at 74/100.",
       "dimensions": [
           {
@@ -604,7 +604,7 @@ const AREAS: Record<string, AreaData> = {
       "areaType": "suburban",
       "overallScore": 50,
       "population": "~175,000 (city)",
-      "avgPropertyPrice": "Â£340,000",
+      "avgPropertyPrice": "£340,000",
       "summary": "Reading Town Centre scores 50/100 overall. Transport links include 2 rail stations and 55 bus stops. 486 amenities nearby including 27 schools and 252 food/drink venues. Crime: 2,233 incidents over 3 months (744/month), with violent crime at 33%. IMD 2019 decile 4 indicates moderate deprivation. Investing intent scores highest at 73/100.",
       "dimensions": [
           {
@@ -684,7 +684,7 @@ const AREAS: Record<string, AreaData> = {
       "areaType": "suburban",
       "overallScore": 49,
       "population": "~100,000 (city)",
-      "avgPropertyPrice": "Â£420,000",
+      "avgPropertyPrice": "£420,000",
       "summary": "Bath City Centre scores 49/100 overall. Transport links include 2 rail stations and 51 bus stops. 557 amenities nearby including 29 schools and 348 food/drink venues. Crime: 1,542 incidents over 3 months (514/month), with violent crime at 33%. IMD 2019 decile 5 indicates moderate deprivation. Investing intent scores highest at 69/100.",
       "dimensions": [
           {
@@ -764,7 +764,7 @@ const AREAS: Record<string, AreaData> = {
       "areaType": "suburban",
       "overallScore": 58,
       "population": "~130,000 (city)",
-      "avgPropertyPrice": "Â£300,000",
+      "avgPropertyPrice": "£300,000",
       "summary": "Exeter City Centre scores 58/100 overall. Transport links include 5 rail stations and 21 bus stops. 437 amenities nearby including 30 schools and 213 food/drink venues. Crime: 1,840 incidents over 3 months (613/month), with violent crime at 40%. Moving intent scores highest at 64/100.",
       "dimensions": [
           {
@@ -843,7 +843,7 @@ const AREAS: Record<string, AreaData> = {
       "areaType": "suburban",
       "overallScore": 51,
       "population": "~265,000 (city)",
-      "avgPropertyPrice": "Â£210,000",
+      "avgPropertyPrice": "£210,000",
       "summary": "Plymouth City Centre scores 51/100 overall. Transport links include 1 rail station and 43 bus stops. 658 amenities nearby including 24 schools and 280 food/drink venues. Crime: 2,916 incidents over 3 months (972/month), with violent crime at 41%. IMD 2019 decile 2 indicates high deprivation. Investing intent scores highest at 68/100.",
       "dimensions": [
           {
@@ -923,7 +923,7 @@ const AREAS: Record<string, AreaData> = {
       "areaType": "suburban",
       "overallScore": 50,
       "population": "~145,000 (city)",
-      "avgPropertyPrice": "Â£500,000",
+      "avgPropertyPrice": "£500,000",
       "summary": "Cambridge City Centre scores 50/100 overall. Transport links include 1 rail station and 17 bus stops. 671 amenities nearby including 83 schools and 231 food/drink venues. Crime: 1,846 incidents over 3 months (615/month), with violent crime at 27%. IMD 2019 decile 5 indicates moderate deprivation. Investing intent scores highest at 66/100.",
       "dimensions": [
           {
@@ -1003,7 +1003,7 @@ const AREAS: Record<string, AreaData> = {
       "areaType": "suburban",
       "overallScore": 48,
       "population": "~145,000 (city)",
-      "avgPropertyPrice": "Â£250,000",
+      "avgPropertyPrice": "£250,000",
       "summary": "Norwich City Centre scores 48/100 overall. Transport links include 1 rail station and 44 bus stops. 551 amenities nearby including 30 schools and 306 food/drink venues. Crime: 2,227 incidents over 3 months (742/month), with violent crime at 32%. IMD 2019 decile 3 indicates high deprivation. Investing intent scores highest at 65/100.",
       "dimensions": [
           {
@@ -1083,7 +1083,7 @@ const AREAS: Record<string, AreaData> = {
       "areaType": "suburban",
       "overallScore": 47,
       "population": "~370,000 (city)",
-      "avgPropertyPrice": "Â£210,000",
+      "avgPropertyPrice": "£210,000",
       "summary": "Leicester City Centre scores 47/100 overall. Transport links include 2 rail stations and 29 bus stops. 564 amenities nearby including 33 schools and 308 food/drink venues. Crime: 4,427 incidents over 3 months (1476/month), with violent crime at 32%. Moving intent scores highest at 61/100.",
       "dimensions": [
           {
@@ -1162,7 +1162,7 @@ const AREAS: Record<string, AreaData> = {
       "areaType": "suburban",
       "overallScore": 39,
       "population": "~260,000 (city)",
-      "avgPropertyPrice": "Â£180,000",
+      "avgPropertyPrice": "£180,000",
       "summary": "Derby City Centre scores 39/100 overall. Transport links include 1 rail station and 25 bus stops. 560 amenities nearby including 41 schools and 298 food/drink venues. Crime: 3,685 incidents over 3 months (1228/month), with violent crime at 40%. IMD 2019 decile 1 indicates high deprivation. Moving intent scores highest at 66/100.",
       "dimensions": [
           {
@@ -1242,7 +1242,7 @@ const AREAS: Record<string, AreaData> = {
       "areaType": "suburban",
       "overallScore": 60,
       "population": "~265,000 (city)",
-      "avgPropertyPrice": "Â£170,000",
+      "avgPropertyPrice": "£170,000",
       "summary": "Wolverhampton City Centre scores 60/100 overall. Transport links include 1 rail station and 49 bus stops. 382 amenities nearby including 18 schools and 153 food/drink venues. Crime: 1,817 incidents over 3 months (606/month), with violent crime at 42%.",
       "dimensions": [
           {
@@ -1321,7 +1321,7 @@ const AREAS: Record<string, AreaData> = {
       "areaType": "suburban",
       "overallScore": 45,
       "population": "~145,000 (city)",
-      "avgPropertyPrice": "Â£155,000",
+      "avgPropertyPrice": "£155,000",
       "summary": "Preston City Centre scores 45/100 overall. Transport links include 1 rail station and 19 bus stops. 327 amenities nearby including 25 schools and 181 food/drink venues. Crime: 2,348 incidents over 3 months (783/month), with violent crime at 31%. IMD 2019 decile 4 indicates moderate deprivation. Investing intent scores highest at 69/100.",
       "dimensions": [
           {
@@ -1401,7 +1401,7 @@ const AREAS: Record<string, AreaData> = {
       "areaType": "suburban",
       "overallScore": 61,
       "population": "~300,000 (city)",
-      "avgPropertyPrice": "Â£185,000",
+      "avgPropertyPrice": "£185,000",
       "summary": "Newcastle City Centre scores 61/100 overall. Transport links include 9 rail stations and 41 bus stops. 513 amenities nearby including 21 schools and 308 food/drink venues. Crime: 3,624 incidents over 3 months (1208/month), with violent crime at 33%. IMD 2019 decile 6 indicates moderate deprivation. Investing intent scores highest at 70/100.",
       "dimensions": [
           {
@@ -1481,7 +1481,7 @@ const AREAS: Record<string, AreaData> = {
       "areaType": "suburban",
       "overallScore": 49,
       "population": "~175,000 (city)",
-      "avgPropertyPrice": "Â£120,000",
+      "avgPropertyPrice": "£120,000",
       "summary": "Sunderland City Centre scores 49/100 overall. Transport links include 6 rail stations and 54 bus stops. 287 amenities nearby including 19 schools and 141 food/drink venues. Crime: 2,043 incidents over 3 months (681/month), with violent crime at 31%. IMD 2019 decile 1 indicates high deprivation. Investing intent scores highest at 72/100.",
       "dimensions": [
           {
@@ -1561,7 +1561,7 @@ const AREAS: Record<string, AreaData> = {
       "areaType": "suburban",
       "overallScore": 39,
       "population": "~260,000 (city)",
-      "avgPropertyPrice": "Â£130,000",
+      "avgPropertyPrice": "£130,000",
       "summary": "Hull City Centre scores 39/100 overall. Transport links include 1 rail station and 31 bus stops. 291 amenities nearby including 10 schools and 184 food/drink venues. Crime: 1,467 incidents over 3 months (489/month), with violent crime at 38%. IMD 2019 decile 2 indicates high deprivation. Investing intent scores highest at 65/100.",
       "dimensions": [
           {
@@ -1641,7 +1641,7 @@ const AREAS: Record<string, AreaData> = {
       "areaType": "suburban",
       "overallScore": 51,
       "population": "~210,000 (city)",
-      "avgPropertyPrice": "Â£330,000",
+      "avgPropertyPrice": "£330,000",
       "summary": "York City Centre scores 51/100 overall. Transport links include 2 rail stations and 42 bus stops. 2152 amenities nearby including 39 schools and 416 food/drink venues. Crime: 2,226 incidents over 3 months (742/month), with violent crime at 34%. IMD 2019 decile 7 indicates moderate deprivation. Investing intent scores highest at 65/100.",
       "dimensions": [
           {
@@ -1721,7 +1721,7 @@ const AREAS: Record<string, AreaData> = {
       "areaType": "suburban",
       "overallScore": 55,
       "population": "~245,000 (city)",
-      "avgPropertyPrice": "Â£180,000",
+      "avgPropertyPrice": "£180,000",
       "summary": "Swansea City Centre scores 55/100 overall. Transport links include 1 rail station and 46 bus stops. 420 amenities nearby including 18 schools and 223 food/drink venues. Crime: 1,833 incidents over 3 months (611/month), with violent crime at 38%. WIMD 2019 decile 1 indicates high deprivation. Investing intent scores highest at 70/100.",
       "dimensions": [
           {
@@ -1801,7 +1801,7 @@ const AREAS: Record<string, AreaData> = {
       "areaType": "suburban",
       "overallScore": 56,
       "population": "~370,000 (city)",
-      "avgPropertyPrice": "Â£200,000",
+      "avgPropertyPrice": "£200,000",
       "summary": "Coventry City Centre scores 56/100 overall. Transport links include 1 rail station and 62 bus stops. 459 amenities nearby including 33 schools and 189 food/drink venues. Crime: 2,798 incidents over 3 months (933/month), with violent crime at 43%. Business intent scores highest at 58/100.",
       "dimensions": [
           {
@@ -1880,7 +1880,7 @@ const AREAS: Record<string, AreaData> = {
       "areaType": "suburban",
       "overallScore": 53,
       "population": "~260,000 (city)",
-      "avgPropertyPrice": "Â£140,000",
+      "avgPropertyPrice": "£140,000",
       "summary": "Stoke-on-Trent City Centre scores 53/100 overall. Transport links include 1 rail station and 16 bus stops. 166 amenities nearby including 16 schools and 57 food/drink venues. Crime: 1,953 incidents over 3 months (651/month), with violent crime at 33%. IMD 2019 decile 3 indicates high deprivation. Investing intent scores highest at 67/100.",
       "dimensions": [
           {
