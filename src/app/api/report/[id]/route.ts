@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 
 export async function GET(
   _req: NextRequest,
@@ -35,7 +36,7 @@ export async function GET(
       created_at: row.created_at,
     });
   } catch (error) {
-    console.error("Report fetch error:", error);
+    logger.error("Report fetch error:", error);
     return NextResponse.json({ error: "Failed to fetch report" }, { status: 500 });
   }
 }
@@ -65,7 +66,7 @@ export async function DELETE(
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Report delete error:", error);
+    logger.error("Report delete error:", error);
     return NextResponse.json({ error: "Failed to delete report" }, { status: 500 });
   }
 }

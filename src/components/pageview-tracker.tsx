@@ -2,12 +2,13 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
+import { generateId } from "@/lib/id";
 
 function getSessionId(): string {
   if (typeof window === "undefined") return "";
   let id = sessionStorage.getItem("aiq-sid");
   if (!id) {
-    id = `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    id = generateId("s", 8);
     sessionStorage.setItem("aiq-sid", id);
   }
   return id;

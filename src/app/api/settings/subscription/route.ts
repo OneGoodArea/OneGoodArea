@@ -6,6 +6,7 @@ import { PLANS, PlanId } from "@/lib/stripe";
 import { sql } from "@/lib/db";
 import { isAppError } from "@/lib/errors";
 import { row, SubscriptionRow } from "@/lib/db-types";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -50,7 +51,7 @@ export async function GET() {
       cancelAt,
     });
   } catch (error) {
-    console.error("Subscription info error:", error);
+    logger.error("Subscription info error:", error);
     if (isAppError(error)) {
       return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
     }

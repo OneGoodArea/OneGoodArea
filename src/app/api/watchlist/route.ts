@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { ensureWatchlistTable } from "@/lib/db-schema";
+import { logger } from "@/lib/logger";
 
 let _watchlistReady = false;
 async function ensureTable() {
@@ -29,7 +30,7 @@ export async function GET() {
 
     return NextResponse.json({ areas: rows });
   } catch (error) {
-    console.error("Watchlist fetch error:", error);
+    logger.error("Watchlist fetch error:", error);
     return NextResponse.json({ error: "Failed to fetch watchlist" }, { status: 500 });
   }
 }
@@ -66,7 +67,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ area: rows[0] }, { status: 201 });
   } catch (error) {
-    console.error("Watchlist add error:", error);
+    logger.error("Watchlist add error:", error);
     return NextResponse.json({ error: "Failed to save area" }, { status: 500 });
   }
 }

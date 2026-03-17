@@ -4,6 +4,7 @@ import { hasApiAccess, getUserPlan } from "@/lib/usage";
 import { PLANS, PlanId } from "@/lib/stripe";
 import { sql } from "@/lib/db";
 import { ApiKeyRow, ActivityEventRow, row, rows as typedRows } from "@/lib/db-types";
+import { logger } from "@/lib/logger";
 
 /** Aggregate count returned by COUNT(*)::int queries. */
 interface CountRow { count: number; }
@@ -129,7 +130,7 @@ export async function GET() {
       })),
     });
   } catch (error) {
-    console.error("[API Usage] Error:", error);
+    logger.error("[API Usage] Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch usage data" },
       { status: 500 }

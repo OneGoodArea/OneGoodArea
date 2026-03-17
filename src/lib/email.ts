@@ -1,9 +1,9 @@
 import { Resend } from "resend";
 import { AreaReport } from "@/lib/types";
+import { logger } from "@/lib/logger";
+import { APP_URL, EMAIL_FROM } from "@/lib/config";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-
-const FROM = "AreaIQ <noreply@area-iq.co.uk>";
 
 function baseTemplate(content: string): string {
   return `<!DOCTYPE html>
@@ -48,7 +48,7 @@ function baseTemplate(content: string): string {
 }
 
 export async function sendVerificationEmail(email: string, token: string) {
-  const verifyUrl = `${process.env.NEXTAUTH_URL || "https://www.area-iq.co.uk"}/verify?token=${token}`;
+  const verifyUrl = `${APP_URL}/verify?token=${token}`;
 
   const content = `
     <h1 style="font-family:'Courier New',monospace; font-size:18px; font-weight:600; color:#ffffff; margin:0 0 8px 0;">
@@ -80,7 +80,7 @@ export async function sendVerificationEmail(email: string, token: string) {
   `;
 
   await resend.emails.send({
-    from: FROM,
+    from: EMAIL_FROM,
     to: email,
     subject: "Verify your email | AreaIQ",
     html: baseTemplate(content),
@@ -118,7 +118,7 @@ export async function sendWelcomeEmail(email: string, name: string) {
   `;
 
   await resend.emails.send({
-    from: FROM,
+    from: EMAIL_FROM,
     to: email,
     subject: "Welcome to AreaIQ",
     html: baseTemplate(content),
@@ -126,7 +126,7 @@ export async function sendWelcomeEmail(email: string, name: string) {
 }
 
 export async function sendPasswordResetEmail(email: string, token: string) {
-  const resetUrl = `${process.env.NEXTAUTH_URL || "https://www.area-iq.co.uk"}/reset-password?token=${token}`;
+  const resetUrl = `${APP_URL}/reset-password?token=${token}`;
 
   const content = `
     <h1 style="font-family:'Courier New',monospace; font-size:18px; font-weight:600; color:#ffffff; margin:0 0 8px 0;">
@@ -158,7 +158,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
   `;
 
   await resend.emails.send({
-    from: FROM,
+    from: EMAIL_FROM,
     to: email,
     subject: "Reset your password | AreaIQ",
     html: baseTemplate(content),
@@ -174,7 +174,7 @@ function escapeHtml(text: string): string {
 }
 
 export async function sendReportEmail(email: string, reportId: string, report: AreaReport) {
-  console.log(`[report-email] Sending report email to ${email} for report ${reportId}`);
+  logger.info(`[report-email] Sending report email to ${email} for report ${reportId}`);
 
   const baseUrl = process.env.NEXTAUTH_URL || "https://www.area-iq.co.uk";
   const reportUrl = `${baseUrl}/report/${reportId}`;
@@ -298,11 +298,11 @@ export async function sendReportEmail(email: string, reportId: string, report: A
   `;
 
   const result = await resend.emails.send({
-    from: FROM,
+    from: EMAIL_FROM,
     to: email,
     subject: `Your AreaIQ Report: ${report.area || "Area Analysis"}`,
     html: baseTemplate(content),
   });
 
-  console.log(`[report-email] Sent successfully:`, result);
+  logger.info(`[report-email] Sent successfully:`, result);
 }

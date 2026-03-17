@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Home, RotateCcw } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { logger } from "@/lib/logger";
 
 export default function Error({
   error,
@@ -14,7 +15,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[AreaIQ] Unhandled error:", error);
+    logger.error("[AreaIQ] Unhandled error:", error);
   }, [error]);
 
   return (

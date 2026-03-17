@@ -8,6 +8,8 @@ import { sendVerificationEmail } from "@/lib/email";
 import { hashPassword, verifyPassword, generateToken } from "@/lib/crypto";
 import { ensureUsersTable, ensureVerificationTable } from "@/lib/db-schema";
 import { row, UserRow } from "@/lib/db-types";
+import { generateId } from "@/lib/id";
+import { logger } from "@/lib/logger";
 
 let _authTablesReady = false;
 async function ensureAuthTables() {
@@ -48,7 +50,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const existing = await sql`SELECT id FROM users WHERE email = ${email}`;
           if (existing.length > 0) return null;
 
-          const id = `user_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+          const id = generateId("user");
           const name = (credentials.name as string) || email.split("@")[0];
           const hash = await hashPassword(password);
 
@@ -61,7 +63,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           try {
             await ensureAuthTables();
             const token = generateToken();
-            const tokenId = `evt_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+            const tokenId = generateId("evt");
             const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours
 
             await sql`
@@ -71,7 +73,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
             await sendVerificationEmail(email, token);
           } catch (e) {
-            console.error("Failed to send verification email:", e);
+            logger.error("Failed to send verification email:", e);
           }
 
           return { id, email, name };
@@ -134,7 +136,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const existing = await sql`SELECT id FROM users WHERE email = ${user.email}`;
 
         if (existing.length === 0) {
-          const id = `user_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+          const id = generateId("user");
           await sql`
             INSERT INTO users (id, email, name, image, provider, email_verified)
             VALUES (${id}, ${user.email}, ${user.name}, ${user.image}, ${account.provider}, TRUE)

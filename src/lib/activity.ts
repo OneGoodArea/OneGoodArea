@@ -1,5 +1,8 @@
 import { sql } from "@/lib/db";
 import { ensureActivityTable } from "@/lib/db-schema";
+import { generateId } from "@/lib/id";
+import { logger } from "@/lib/logger";
+import { PLAN_PRICES_GBP } from "@/lib/config";
 import {
   row,
   rows as typedRows,
@@ -28,14 +31,14 @@ export async function trackEvent(
       tableReady = true;
     }
 
-    const id = `evt_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const id = generateId("evt");
     await sql`
       INSERT INTO activity_events (id, user_id, event, metadata)
       VALUES (${id}, ${userId || null}, ${event}, ${JSON.stringify(metadata || {})})
     `;
   } catch (error) {
     // Activity tracking should never break the main request
-    console.error("Activity tracking error:", error);
+    logger.error("Activity tracking error:", error);
   }
 }
 
@@ -110,11 +113,7 @@ export async function getAnalytics() {
   ]);
 
   // MRR calculation based on plan prices
-  const planPrices: Record<string, number> = {
-    starter: 29,
-    pro: 79,
-    business: 249,
-  };
+  const planPrices = PLAN_PRICES_GBP;
 
   const subscriptionBreakdown = typedRows<PlanCountRow>(subscriptionsByPlan);
   const mrr = subscriptionBreakdown.reduce((sum, r) => {

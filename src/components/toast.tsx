@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useState, useRef, useEffect } from "react";
 import { X } from "lucide-react";
+import { generateId } from "@/lib/id";
 
 type ToastType = "success" | "error" | "info";
 
@@ -49,7 +50,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const addToast = useCallback(
     (type: ToastType, message: string) => {
-      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const id = generateId("toast", 8);
       const toast: Toast = { id, type, message, exiting: false };
 
       setToasts((prev) => {

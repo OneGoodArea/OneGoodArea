@@ -1,21 +1,15 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { withAuthParams } from "@/lib/with-auth";
 import { revokeApiKey } from "@/lib/api-keys";
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export const DELETE = withAuthParams<{ id: string }>(
+  async (_req: NextRequest, { userId, params }) => {
+    const revoked = await revokeApiKey(userId, params.id);
 
-  const { id } = await params;
-  const revoked = await revokeApiKey(userId, id);
+    if (!revoked) {
+      return NextResponse.json({ error: "Key not found" }, { status: 404 });
+    }
 
-  if (!revoked) {
-    return NextResponse.json({ error: "Key not found" }, { status: 404 });
+    return NextResponse.json({ success: true });
   }
-
-  return NextResponse.json({ success: true });
-}
+);

@@ -1,6 +1,7 @@
 import { sql } from "@/lib/db";
 import { AreaReport } from "@/lib/types";
 import { row, rows as typedRows, CacheRow, CountRow, TotalRow, AreaHitsRow } from "@/lib/db-types";
+import { logger } from "@/lib/logger";
 
 /* ── Types ── */
 
@@ -60,7 +61,7 @@ export async function getCachedReport(
   // Opportunistic cleanup: ~1 in 50 requests
   if (Math.random() < 0.02) {
     cleanupExpiredCache(48).catch((err) =>
-      console.error("[AreaIQ] Cache cleanup error:", err)
+      logger.error("[AreaIQ] Cache cleanup error:", err)
     );
   }
 
@@ -78,7 +79,7 @@ export async function getCachedReport(
   sql`
     UPDATE report_cache SET hit_count = hit_count + 1 WHERE cache_key = ${key}
   `.catch((err) =>
-    console.error("[AreaIQ] Cache hit_count update error:", err)
+    logger.error("[AreaIQ] Cache hit_count update error:", err)
   );
 
   const hit = row<CacheRow>(cacheRows[0]);
@@ -150,7 +151,7 @@ export async function cleanupExpiredCache(
 
   const deleted = result.length;
   if (deleted > 0) {
-    console.log(`[AreaIQ] Cache cleanup: removed ${deleted} expired entries`);
+    logger.info(`[AreaIQ] Cache cleanup: removed ${deleted} expired entries`);
   }
   return deleted;
 }

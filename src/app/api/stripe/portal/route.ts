@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { getStripeCustomerId } from "@/lib/usage";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: portalSession.url });
   } catch (error) {
-    console.error("Portal error:", error);
+    logger.error("Portal error:", error);
     return NextResponse.json({ error: "Failed to create portal" }, { status: 500 });
   }
 }

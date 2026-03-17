@@ -6,6 +6,7 @@ import { AreaReport } from "@/lib/types";
 import { Logo } from "@/components/logo";
 import { useToast } from "@/components/toast";
 import type { PlanId } from "@/lib/stripe";
+import { logger } from "@/lib/logger";
 import Link from "next/link";
 import { getRAG } from "@/lib/rag";
 
@@ -395,7 +396,7 @@ export function ReportView({ report, plan = "free", reportId }: { report: AreaRe
       const { exportReportPDF } = await import("@/lib/pdf-export");
       exportReportPDF(report);
     } catch (err) {
-      console.error("[AreaIQ] PDF export failed:", err);
+      logger.error("[AreaIQ] PDF export failed:", err);
     } finally {
       setExporting(false);
     }

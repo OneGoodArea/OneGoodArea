@@ -3,6 +3,7 @@ import { sql } from "@/lib/db";
 import { hashPassword } from "@/lib/crypto";
 import { isAppError } from "@/lib/errors";
 import { row, PasswordResetTokenRow } from "@/lib/db-types";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
   try {
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("[reset-password] Error:", error);
+    logger.error("[reset-password] Error:", error);
     if (isAppError(error)) {
       return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
     }

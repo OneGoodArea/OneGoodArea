@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 
 export async function DELETE(
   _req: NextRequest,
@@ -27,7 +28,7 @@ export async function DELETE(
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Watchlist delete error:", error);
+    logger.error("Watchlist delete error:", error);
     return NextResponse.json({ error: "Failed to remove area" }, { status: 500 });
   }
 }

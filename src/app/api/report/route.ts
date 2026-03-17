@@ -8,9 +8,8 @@ import { Intent } from "@/lib/types";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { validateLocationInput, validateIntent } from "@/lib/validation";
 import { isAppError } from "@/lib/errors";
-
-const RATE_LIMIT_MAX = 10;
-const RATE_LIMIT_WINDOW = 60; // seconds
+import { logger } from "@/lib/logger";
+import { RATE_LIMITS } from "@/lib/config";
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,10 +21,10 @@ export async function POST(req: NextRequest) {
 
     // Rate limit by user ID
     const rl = await rateLimit(`report:${userId}`, {
-      max: RATE_LIMIT_MAX,
-      windowSeconds: RATE_LIMIT_WINDOW,
+      max: RATE_LIMITS.report.max,
+      windowSeconds: RATE_LIMITS.report.windowSeconds,
     });
-    const headers = rateLimitHeaders(RATE_LIMIT_MAX, rl);
+    const headers = rateLimitHeaders(RATE_LIMITS.report.max, rl);
 
     if (!rl.success) {
       return NextResponse.json(
@@ -69,7 +68,7 @@ export async function POST(req: NextRequest) {
       try {
         await sendReportEmail(userEmail, result.id, result.report);
       } catch (err) {
-        console.error("[report-email] Failed to send:", err);
+        logger.error("[report-email] Failed to send:", err);
       }
     }
 
@@ -81,7 +80,7 @@ export async function POST(req: NextRequest) {
         { status: error.statusCode }
       );
     }
-    console.error("Report generation error:", error);
+    logger.error("Report generation error:", error);
     return NextResponse.json(
       { error: "Failed to generate report" },
       { status: 500 }

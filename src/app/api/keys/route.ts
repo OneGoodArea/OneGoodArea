@@ -1,22 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { withAuth } from "@/lib/with-auth";
 import { hasApiAccess } from "@/lib/usage";
 import { createApiKey, listApiKeys } from "@/lib/api-keys";
 
-export async function GET() {
-  const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
+export const GET = withAuth(async (_req, { userId }) => {
   const keys = await listApiKeys(userId);
   return NextResponse.json({ keys });
-}
+});
 
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
+export const POST = withAuth(async (req: NextRequest, { userId }) => {
   const apiAllowed = await hasApiAccess(userId);
   if (!apiAllowed) {
     return NextResponse.json(
@@ -30,4 +22,4 @@ export async function POST(req: NextRequest) {
 
   const key = await createApiKey(userId, name);
   return NextResponse.json({ key });
-}
+});

@@ -11,9 +11,11 @@ import { computeScores, ComputedScores } from "@/lib/scoring-engine";
 import { AreaReport, Intent, DataFreshness } from "@/lib/types";
 import { ensureReportCacheTable, getCachedReport, setCachedReport } from "@/lib/report-cache";
 import { trackEvent } from "@/lib/activity";
+import { generateId } from "@/lib/id";
+import { logger } from "@/lib/logger";
 
-function generateId(): string {
-  return `rpt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+function generateReportId(): string {
+  return generateId("rpt", 8);
 }
 
 function buildDataFreshness(
@@ -203,11 +205,11 @@ export async function generateReport(
 
   const cached = await getCachedReport(area, intent);
   if (cached) {
-    console.log(`[AreaIQ] Cache HIT for ${area} (${intent})`);
+    logger.info(`[AreaIQ] Cache HIT for ${area} (${intent})`);
     trackEvent("report.cache_hit", userId, { area, intent });
 
     // Save to user's reports table so it appears in their dashboard
-    const id = generateId();
+    const id = generateReportId();
     await sql`
       INSERT INTO reports (id, area, intent, report, score, user_id)
       VALUES (${id}, ${cached.area}, ${intent}, ${JSON.stringify(cached.report)}, ${cached.score}, ${userId})
@@ -216,7 +218,7 @@ export async function generateReport(
     return { id, report: cached.report };
   }
 
-  console.log(`[AreaIQ] Cache MISS for ${area} (${intent}), generating fresh report`);
+  logger.info(`[AreaIQ] Cache MISS for ${area} (${intent}), generating fresh report`);
   trackEvent("report.cache_miss", userId, { area, intent });
 
   /* ── 1. Geocode ── */
@@ -234,7 +236,7 @@ export async function generateReport(
       ])
     : [null, null, null, null, null, null];
 
-  console.log(
+  logger.info(
     `[AreaIQ] Data fetched for "${area}": geo=${!!geo}, crime=${crime?.total_crimes ?? 0}, imd=${deprivation?.imd_rank ?? "n/a"}, amenities=${amenities?.total ?? 0}, flood_areas=${flood?.flood_areas_nearby ?? 0}, property=${propertyPrices ? `£${propertyPrices.median_price.toLocaleString()} (${propertyPrices.transaction_count} txns)` : "n/a"}, ofsted=${ofsted ? `${ofsted.total_rated} schools` : "n/a"}`
   );
 
@@ -242,7 +244,7 @@ export async function generateReport(
   const areaType = geo?.area_type ?? "suburban";
   const scores = computeScores(intent, crime, deprivation, amenities, flood, areaType, propertyPrices, ofsted);
 
-  console.log(
+  logger.info(
     `[AreaIQ] Scores computed for "${area}" (${intent}, ${areaType}): overall=${scores.overall}, dimensions=[${scores.dimensions.map(d => `${d.label}:${d.score}`).join(", ")}]`
   );
 
@@ -315,7 +317,7 @@ export async function generateReport(
   }
 
   /* ── 5. Save ── */
-  const id = generateId();
+  const id = generateReportId();
 
   await sql`
     INSERT INTO reports (id, area, intent, report, score, user_id)
@@ -324,7 +326,7 @@ export async function generateReport(
 
   /* ── 6. Cache the result for future requests ── */
   setCachedReport(area, intent, report, report.areaiq_score).catch((err) =>
-    console.error("[AreaIQ] Failed to cache report:", err)
+    logger.error("[AreaIQ] Failed to cache report:", err)
   );
 
   return { id, report };

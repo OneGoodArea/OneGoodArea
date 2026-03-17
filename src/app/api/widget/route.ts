@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCachedReport } from "@/lib/report-cache";
 import { rateLimit } from "@/lib/rate-limit";
 import { validateLocationInput, validateIntent } from "@/lib/validation";
+import { logger } from "@/lib/logger";
 
 const WIDGET_RATE_LIMIT = 60; // requests per window
 const WIDGET_WINDOW = 3600; // 1 hour
@@ -96,7 +97,7 @@ export async function GET(req: NextRequest) {
       { status: 404, headers }
     );
   } catch (error) {
-    console.error("[widget] Error:", error);
+    logger.error("[widget] Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch area data" },
       { status: 500, headers }

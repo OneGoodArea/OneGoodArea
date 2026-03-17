@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { sendVerificationEmail } from "@/lib/email";
 import { generateToken } from "@/lib/crypto";
+import { logger } from "@/lib/logger";
+import { generateId } from "@/lib/id";
 
 export async function POST(req: NextRequest) {
   try {
@@ -42,7 +44,7 @@ export async function POST(req: NextRequest) {
 
     // Create new token (24 hour expiry)
     const token = generateToken();
-    const tokenId = `evt_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const tokenId = generateId("evt");
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
     await sql`
@@ -54,7 +56,7 @@ export async function POST(req: NextRequest) {
 
     return successResponse;
   } catch (error) {
-    console.error("[resend-verification] Error:", error);
+    logger.error("[resend-verification] Error:", error);
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }

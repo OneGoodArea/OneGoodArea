@@ -4,6 +4,8 @@ import { stripe, PLANS, PlanId } from "@/lib/stripe";
 import { trackEvent } from "@/lib/activity";
 import { sql } from "@/lib/db";
 import { row, SubscriptionRow } from "@/lib/db-types";
+import { generateId } from "@/lib/id";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,7 +36,7 @@ export async function POST(req: NextRequest) {
         subRow = row<Pick<SubscriptionRow, "stripe_customer_id" | "stripe_subscription_id">>(subRows[0]);
       }
     } catch (dbErr) {
-      console.error("Checkout: DB lookup failed for user", userId, dbErr);
+      logger.error("Checkout: DB lookup failed for user", userId, dbErr);
       return NextResponse.json({ error: "Database error. Please try again." }, { status: 500 });
     }
 
@@ -65,7 +67,7 @@ export async function POST(req: NextRequest) {
         // If subscription exists but is cancelled/past_due, fall through to new checkout
       } catch (err) {
         // Subscription doesn't exist in Stripe (stale test-mode data), fall through
-        console.warn("Checkout: stale subscription", existingSubId, "- falling through to new checkout:", err);
+        logger.warn("Checkout: stale subscription", existingSubId, "- falling through to new checkout:", err);
       }
     }
 
@@ -75,7 +77,7 @@ export async function POST(req: NextRequest) {
         const cust = await stripe.customers.retrieve(customerId);
         if (cust.deleted) customerId = null;
       } catch {
-        console.warn("Checkout: stale customer", customerId, "- creating new customer");
+        logger.warn("Checkout: stale customer", customerId, "- creating new customer");
         customerId = null;
       }
     }
@@ -89,18 +91,18 @@ export async function POST(req: NextRequest) {
         });
         customerId = customer.id;
       } catch (stripeErr) {
-        console.error("Checkout: Stripe customer creation failed", stripeErr);
+        logger.error("Checkout: Stripe customer creation failed", stripeErr);
         return NextResponse.json({ error: "Payment service error. Please try again." }, { status: 500 });
       }
 
       try {
         await sql`
           INSERT INTO subscriptions (id, user_id, stripe_customer_id, plan, status)
-          VALUES (${`sub_${Date.now()}`}, ${userId}, ${customerId}, 'free', 'active')
+          VALUES (${generateId("sub")}, ${userId}, ${customerId}, 'free', 'active')
           ON CONFLICT (user_id) DO UPDATE SET stripe_customer_id = ${customerId}
         `;
       } catch (dbErr) {
-        console.error("Checkout: subscription upsert failed for user", userId, dbErr);
+        logger.error("Checkout: subscription upsert failed for user", userId, dbErr);
         return NextResponse.json({ error: "Database error. Please try again." }, { status: 500 });
       }
     }
@@ -118,14 +120,14 @@ export async function POST(req: NextRequest) {
         metadata: { user_id: userId, plan },
       });
     } catch (stripeErr) {
-      console.error("Checkout: session creation failed for plan", plan, "priceId", planConfig.priceId, stripeErr);
+      logger.error("Checkout: session creation failed for plan", plan, "priceId", planConfig.priceId, stripeErr);
       return NextResponse.json({ error: "Failed to start checkout. Please try again." }, { status: 500 });
     }
 
     trackEvent("plan.upgrade.started", userId, { plan });
     return NextResponse.json({ url: checkoutSession.url });
   } catch (error) {
-    console.error("Checkout: unexpected error:", error);
+    logger.error("Checkout: unexpected error:", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }

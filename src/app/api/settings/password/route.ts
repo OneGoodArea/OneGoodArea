@@ -4,6 +4,7 @@ import { sql } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/crypto";
 import { isAppError } from "@/lib/errors";
 import { row, UserRow } from "@/lib/db-types";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
   try {
@@ -53,7 +54,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Password change error:", error);
+    logger.error("Password change error:", error);
     if (isAppError(error)) {
       return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
     }

@@ -4,6 +4,8 @@ import { sendPasswordResetEmail } from "@/lib/email";
 import { generateToken } from "@/lib/crypto";
 import { ensurePasswordResetTable } from "@/lib/db-schema";
 import { isAppError } from "@/lib/errors";
+import { logger } from "@/lib/logger";
+import { generateId } from "@/lib/id";
 
 let _resetTableReady = false;
 async function ensureTable() {
@@ -54,7 +56,7 @@ export async function POST(req: NextRequest) {
 
     // Create new token (1 hour expiry)
     const token = generateToken();
-    const tokenId = `prt_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const tokenId = generateId("prt");
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
     await sql`
@@ -66,7 +68,7 @@ export async function POST(req: NextRequest) {
 
     return successResponse;
   } catch (error) {
-    console.error("[forgot-password] Error:", error);
+    logger.error("[forgot-password] Error:", error);
     if (isAppError(error)) {
       return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
     }

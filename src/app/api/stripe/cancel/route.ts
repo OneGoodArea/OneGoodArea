@@ -5,6 +5,7 @@ import { sql } from "@/lib/db";
 import { trackEvent } from "@/lib/activity";
 import { row, SubscriptionRow } from "@/lib/db-types";
 import { isAppError } from "@/lib/errors";
+import { logger } from "@/lib/logger";
 
 export async function POST() {
   try {
@@ -67,7 +68,7 @@ export async function POST() {
     if (isAppError(error)) {
       return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
     }
-    console.error("Cancel subscription error:", error);
+    logger.error("Cancel subscription error:", error);
     return NextResponse.json(
       { error: "Failed to cancel subscription" },
       { status: 500 }

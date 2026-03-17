@@ -1,11 +1,10 @@
 import { sql } from "@/lib/db";
 import { PLANS, PlanId, API_PLANS } from "@/lib/stripe";
 import { UserRow, SubscriptionRow, row } from "@/lib/db-types";
+import { SUPERUSER_EMAILS } from "@/lib/config";
 
 /** Aggregate count returned by COUNT(*)::int queries. */
 interface CountRow { count: number; }
-
-const SUPERUSER_EMAILS = ["ptengelmann@gmail.com"];
 
 async function isSuperuser(userId: string): Promise<boolean> {
   const rows = await sql`SELECT email FROM users WHERE id = ${userId}`;

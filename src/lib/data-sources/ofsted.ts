@@ -1,4 +1,5 @@
 import { sql } from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 /* ── Types ── */
 
@@ -131,7 +132,7 @@ export async function getOfstedSchools(
       inspectorate: "Ofsted",
     };
   } catch (err) {
-    console.error("[AreaIQ] Ofsted lookup failed:", err);
+    logger.error("[AreaIQ] Ofsted lookup failed:", err);
     return null;
   }
 }

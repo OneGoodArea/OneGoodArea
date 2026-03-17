@@ -1,5 +1,6 @@
 import { sql } from "@/lib/db";
 import { ensureApiKeysTable } from "@/lib/db-schema";
+import { generateId } from "@/lib/id";
 import { ApiKeyRow, rows, row } from "@/lib/db-types";
 import crypto from "crypto";
 
@@ -17,7 +18,7 @@ async function ensureTable() {
 
 export async function createApiKey(userId: string, name: string = "Default"): Promise<{ id: string; key: string; name: string }> {
   await ensureTable();
-  const id = `key_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  const id = generateId("key");
   const key = `aiq_${crypto.randomBytes(24).toString("hex")}`;
 
   await sql`

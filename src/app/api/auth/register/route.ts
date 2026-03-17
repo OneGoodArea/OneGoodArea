@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { sendVerificationEmail } from "@/lib/email";
 import { hashPassword, generateToken } from "@/lib/crypto";
+import { generateId } from "@/lib/id";
+import { logger } from "@/lib/logger";
+import { RATE_LIMITS } from "@/lib/config";
+import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { ensureUsersTable, ensureVerificationTable } from "@/lib/db-schema";
 import { isAppError } from "@/lib/errors";
 import { row, UserRow } from "@/lib/db-types";
@@ -15,6 +19,16 @@ async function ensureRegisterTables() {
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limit by IP to prevent spam signups
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const rl = await rateLimit(`register:${ip}`, RATE_LIMITS.authRegister);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "Too many attempts. Please try again later." },
+        { status: 429, headers: rateLimitHeaders(RATE_LIMITS.authRegister.max, rl) }
+      );
+    }
+
     const { email, password } = await req.json();
 
     if (!email || typeof email !== "string") {
@@ -44,7 +58,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create user
-    const id = `user_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const id = generateId("user");
     const name = sanitized.split("@")[0];
     const hash = await hashPassword(password);
 
@@ -57,7 +71,7 @@ export async function POST(req: NextRequest) {
     try {
       await ensureRegisterTables();
       const token = generateToken();
-      const tokenId = `evt_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+      const tokenId = generateId("evt");
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
       await sql`
@@ -67,12 +81,12 @@ export async function POST(req: NextRequest) {
 
       await sendVerificationEmail(sanitized, token);
     } catch (e) {
-      console.error("Failed to send verification email:", e);
+      logger.error("Failed to send verification email:", e);
     }
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("[register] Error:", error);
+    logger.error("Register error:", error);
     if (isAppError(error)) {
       return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
     }
