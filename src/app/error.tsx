@@ -6,6 +6,7 @@ import { Home, RotateCcw } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { logger } from "@/lib/logger";
+import * as Sentry from "@sentry/nextjs";
 
 export default function Error({
   error,
@@ -16,6 +17,7 @@ export default function Error({
 }) {
   useEffect(() => {
     logger.error("[AreaIQ] Unhandled error:", error);
+    Sentry.captureException(error);
   }, [error]);
 
   return (

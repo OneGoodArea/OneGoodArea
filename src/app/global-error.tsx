@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { logger } from "@/lib/logger";
+import * as Sentry from "@sentry/nextjs";
 
 export default function GlobalError({
   error,
@@ -12,6 +13,7 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     logger.error("[AreaIQ] Global error:", error);
+    Sentry.captureException(error);
   }, [error]);
 
   return (
