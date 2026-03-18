@@ -6,6 +6,7 @@ import { trackEvent } from "@/lib/activity";
 import { row, SubscriptionRow } from "@/lib/db-types";
 import { isAppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
+import { asSubscription } from "@/lib/stripe-types";
 
 export async function POST() {
   try {
@@ -34,10 +35,9 @@ export async function POST() {
     const plan = sub.plan;
 
     // Check if already set to cancel at period end
-    const currentSub = await stripe.subscriptions.retrieve(subscriptionId) as unknown as {
-      cancel_at_period_end: boolean;
-      current_period_end: number;
-    };
+    const currentSub = asSubscription(
+      await stripe.subscriptions.retrieve(subscriptionId)
+    );
     if (currentSub.cancel_at_period_end) {
       return NextResponse.json(
         {
@@ -49,11 +49,11 @@ export async function POST() {
     }
 
     // Cancel at end of billing period (not immediate)
-    const updatedSub = await stripe.subscriptions.update(subscriptionId, {
-      cancel_at_period_end: true,
-    }) as unknown as {
-      current_period_end: number;
-    };
+    const updatedSub = asSubscription(
+      await stripe.subscriptions.update(subscriptionId, {
+        cancel_at_period_end: true,
+      })
+    );
 
     const cancelAt = new Date(updatedSub.current_period_end * 1000).toISOString();
 

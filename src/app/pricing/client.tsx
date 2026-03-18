@@ -328,7 +328,7 @@ export default function PricingPage() {
           const apiPlans = ["developer", "business", "growth"];
           if (apiPlans.includes(data.plan)) setTab("api");
         }
-      }).catch(() => {});
+      }).catch(() => { setCurrentPlan("free"); });
     }
   }, [isSignedIn]);
 

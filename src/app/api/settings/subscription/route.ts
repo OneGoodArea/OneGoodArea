@@ -7,6 +7,7 @@ import { sql } from "@/lib/db";
 import { isAppError } from "@/lib/errors";
 import { row, SubscriptionRow } from "@/lib/db-types";
 import { logger } from "@/lib/logger";
+import { asSubscription } from "@/lib/stripe-types";
 
 export async function GET() {
   try {
@@ -32,10 +33,9 @@ export async function GET() {
     // If there's a Stripe subscription, check if it's set to cancel
     if (hasStripeSubscription && subRecord) {
       try {
-        const sub = await stripe.subscriptions.retrieve(subRecord.stripe_subscription_id) as unknown as {
-          cancel_at_period_end: boolean;
-          current_period_end: number;
-        };
+        const sub = asSubscription(
+          await stripe.subscriptions.retrieve(subRecord.stripe_subscription_id)
+        );
         if (sub.cancel_at_period_end && sub.current_period_end) {
           cancelAt = new Date(sub.current_period_end * 1000).toISOString();
         }

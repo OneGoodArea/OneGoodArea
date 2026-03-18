@@ -6,6 +6,7 @@ import Stripe from "stripe";
 import { ensureWebhookEventsTable } from "@/lib/db-schema";
 import { logger } from "@/lib/logger";
 import { generateId } from "@/lib/id";
+import { asSubscription } from "@/lib/stripe-types";
 
 let _webhookTableReady = false;
 async function ensureWebhookTable() {
@@ -82,13 +83,9 @@ export async function POST(req: NextRequest) {
 
         if (clerkUserId && plan) trackEvent("plan.upgraded", clerkUserId, { plan });
         if (clerkUserId && plan && session.subscription) {
-          const sub = await stripe.subscriptions.retrieve(
-            session.subscription as string
-          ) as unknown as {
-            id: string;
-            current_period_start: number;
-            current_period_end: number;
-          };
+          const sub = asSubscription(
+            await stripe.subscriptions.retrieve(session.subscription as string)
+          );
 
           await sql`
             INSERT INTO subscriptions (id, user_id, stripe_customer_id, stripe_subscription_id, plan, status, current_period_start, current_period_end)
@@ -115,12 +112,7 @@ export async function POST(req: NextRequest) {
       }
 
       case "customer.subscription.updated": {
-        const sub = event.data.object as unknown as {
-          customer: string;
-          status: string;
-          current_period_start: number;
-          current_period_end: number;
-        };
+        const sub = asSubscription(event.data.object);
 
         await sql`
           UPDATE subscriptions SET
@@ -134,7 +126,7 @@ export async function POST(req: NextRequest) {
       }
 
       case "customer.subscription.deleted": {
-        const sub = event.data.object as unknown as { customer: string };
+        const sub = asSubscription(event.data.object);
 
         await sql`
           UPDATE subscriptions SET

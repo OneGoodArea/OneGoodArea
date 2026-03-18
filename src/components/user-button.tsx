@@ -25,7 +25,7 @@ export function UserButton() {
       fetch("/api/usage")
         .then((r) => (r.ok ? r.json() : null))
         .then((d) => { if (d?.plan) setPlan(d.plan); })
-        .catch(() => {});
+        .catch(() => { setPlan("free"); });
     }
   }, [session]);
 

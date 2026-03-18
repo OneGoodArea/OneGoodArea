@@ -84,7 +84,7 @@ export async function getCachedReport(
 
   const hit = row<CacheRow>(cacheRows[0]);
   return {
-    report: (typeof hit.report === "string" ? JSON.parse(hit.report) : hit.report) as unknown as AreaReport,
+    report: (typeof hit.report === "string" ? JSON.parse(hit.report) : hit.report) as AreaReport,
     area: hit.area,
     score: hit.score,
     created_at: hit.created_at,
