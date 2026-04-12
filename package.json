@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "stop": "pkill -f 'next dev' || echo 'No dev server running'",
-    "lint": "eslint",
+    "lint": "eslint src/",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

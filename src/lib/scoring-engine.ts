@@ -390,7 +390,7 @@ function scorePriceGrowth(deprivation: DeprivationData | null, amenities: Amenit
   if (propertyPrices && propertyPrices.price_change_pct !== null) {
     const change = propertyPrices.price_change_pct;
     // Map real YoY change to score: -10% -> 20, 0% -> 50, +5% -> 70, +10% -> 85
-    let baseScore = 50 + change * 4;
+    const baseScore = 50 + change * 4;
     const transportBoost = amenities ? Math.min(amenities.transport_stations * 3, 10) : 0;
     const score = clamp(Math.round(baseScore + transportBoost), 10, 90);
 
@@ -437,7 +437,7 @@ function scoreRentalYield(deprivation: DeprivationData | null, amenities: Amenit
     const ratio = propertyPrices.median_price / nationalMedian;
     // Cheaper areas relative to national median = higher yield potential
     // ratio 0.5 -> score ~80, ratio 1.0 -> score ~55, ratio 2.0 -> score ~25
-    let baseScore = 90 - ratio * 35;
+    const baseScore = 90 - ratio * 35;
     const demandFactor = amenities ? Math.min((amenities.transport_stations * 3 + amenities.total * 0.3), 15) : 0;
     const score = clamp(Math.round(baseScore + demandFactor), 10, 90);
 
