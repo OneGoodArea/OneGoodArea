@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { validateLocationInput, validateIntent } from "./validation";
+import { validateLocationInput, validateIntent } from "../lib/validation";
 
 describe("validateLocationInput", () => {
   it("accepts valid UK locations", () => {

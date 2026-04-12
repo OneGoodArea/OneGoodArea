@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { asSubscription, asCheckoutSession } from "./stripe-types";
+import { asSubscription, asCheckoutSession } from "../lib/stripe-types";
 
 describe("stripe-types", () => {
   describe("asSubscription", () => {

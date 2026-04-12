@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { hashPassword, verifyPassword, generateToken } from "./crypto";
+import { hashPassword, verifyPassword, generateToken } from "../lib/crypto";
 
 describe("crypto", () => {
   describe("hashPassword + verifyPassword", () => {

@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { computeScores } from "./scoring-engine";
-import type { CrimeSummary } from "./data-sources/police";
-import type { DeprivationData } from "./data-sources/deprivation";
-import type { AmenitiesData } from "./data-sources/openstreetmap";
-import type { FloodRiskData } from "./data-sources/flood";
-import type { PropertyPriceData } from "./data-sources/land-registry";
-import type { OfstedData } from "./data-sources/ofsted";
+import { computeScores } from "../lib/scoring-engine";
+import type { CrimeSummary } from "../lib/data-sources/police";
+import type { DeprivationData } from "../lib/data-sources/deprivation";
+import type { AmenitiesData } from "../lib/data-sources/openstreetmap";
+import type { FloodRiskData } from "../lib/data-sources/flood";
+import type { PropertyPriceData } from "../lib/data-sources/land-registry";
+import type { OfstedData } from "../lib/data-sources/ofsted";
 
 /* ── Test fixtures ── */
 

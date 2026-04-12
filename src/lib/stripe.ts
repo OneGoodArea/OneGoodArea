@@ -1,7 +1,30 @@
 import Stripe from "stripe";
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  typescript: true,
+let stripeClient: Stripe | null = null;
+
+function getStripeClient() {
+  if (stripeClient) {
+    return stripeClient;
+  }
+
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    throw new Error("Neither apiKey nor config.authenticator provided");
+  }
+
+  stripeClient = new Stripe(secretKey, { typescript: true });
+  return stripeClient;
+}
+
+export const stripe = new Proxy({} as Stripe, {
+  get(_target, prop, _receiver) {
+    const client = getStripeClient() as unknown as Record<PropertyKey, unknown>;
+    const value = client[prop];
+    if (typeof value === "function") {
+      return (value as (...args: unknown[]) => unknown).bind(client);
+    }
+    return value;
+  },
 });
 
 export const PLANS = {

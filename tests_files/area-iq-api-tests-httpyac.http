@@ -1,0 +1,123 @@
+# AreaIQ API Tests for httpyac
+# Compatible with httpyac CLI tool
+# Run with: httpyac send tests_files/area-iq-api-tests-httpyac.http --all
+
+@baseUrl = http://localhost:3000
+
+### Health Check
+GET {{baseUrl}}/api/health
+
+### Sign In with Credentials
+POST {{baseUrl}}/api/auth/signin/credentials
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "testpassword123",
+  "redirect": false
+}
+
+### Generate Report - Moving Intent (will fail without auth)
+POST {{baseUrl}}/api/report
+Content-Type: application/json
+
+{
+  "area": "SW1A 1AA",
+  "intent": "moving"
+}
+
+### Generate Report via API - Invalid API Key
+POST {{baseUrl}}/api/v1/report
+Content-Type: application/json
+Authorization: Bearer invalid-api-key
+
+{
+  "area": "SW1A 1AA",
+  "intent": "moving"
+}
+
+### Get Settings - Unauthorized
+GET {{baseUrl}}/api/settings
+
+### Invalid Endpoint
+GET {{baseUrl}}/api/invalid-endpoint
+
+### ============================================================================
+### AUTHENTICATION TESTS
+### ============================================================================
+
+### Sign Up
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "newuser@example.com",
+  "password": "securepassword123",
+  "name": "Test User"
+}
+
+### Forgot Password
+POST {{baseUrl}}/api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "test@example.com"
+}
+
+### ============================================================================
+### REPORT GENERATION TESTS
+### ============================================================================
+
+### Report with Invalid Location
+POST {{baseUrl}}/api/report
+Content-Type: application/json
+
+{
+  "area": "Invalid Location 123",
+  "intent": "moving"
+}
+
+### Report with Business Intent
+POST {{baseUrl}}/api/report
+Content-Type: application/json
+
+{
+  "area": "Shoreditch, London",
+  "intent": "business"
+}
+
+### ============================================================================
+### API V1 TESTS (API Key Required)
+### ============================================================================
+
+### API Report - Free Plan (expect 403)
+POST {{baseUrl}}/api/v1/report
+Content-Type: application/json
+Authorization: Bearer aiq_test_free_key
+
+{
+  "area": "SW1A 1AA",
+  "intent": "moving"
+}
+
+### ============================================================================
+### ERROR TESTING
+### ============================================================================
+
+### Method Not Allowed
+GET {{baseUrl}}/api/report
+
+### Malformed JSON
+POST {{baseUrl}}/api/report
+Content-Type: application/json
+
+{
+  "area": "SW1A 1AA",
+  "intent": "moving"
+  // missing comma
+
+### Empty Request Body
+POST {{baseUrl}}/api/report
+Content-Type: application/json
+
+{}

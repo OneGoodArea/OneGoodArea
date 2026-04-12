@@ -12,7 +12,7 @@ PRODUCT.md
 
 # testing
 /coverage
-
+/test_reports
 # next.js
 /.next/
 /out/
