@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="httpyac" tests="0" errors="0" disabled="0" failures="0" time="1.292">
+  <testsuite name="Health Check" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.120">
+    <properties>
+      <property name="title" value="Health Check"/>
+      <property name="line" value="7"/>
+      <property name="timestamp" value="2026-04-12T18:40:59.706Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="Sign In with Credentials" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.100">
+    <properties>
+      <property name="title" value="Sign In with Credentials"/>
+      <property name="line" value="10"/>
+      <property name="timestamp" value="2026-04-12T18:40:59.826Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="Generate Report - Moving Intent (will fail without auth)" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.081">
+    <properties>
+      <property name="title" value="Generate Report - Moving Intent (will fail without auth)"/>
+      <property name="line" value="20"/>
+      <property name="timestamp" value="2026-04-12T18:40:59.926Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="Generate Report via API - Invalid API Key" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.099">
+    <properties>
+      <property name="title" value="Generate Report via API - Invalid API Key"/>
+      <property name="line" value="29"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.008Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="Get Settings - Unauthorized" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.089">
+    <properties>
+      <property name="title" value="Get Settings - Unauthorized"/>
+      <property name="line" value="39"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.107Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="Invalid Endpoint" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.084">
+    <properties>
+      <property name="title" value="Invalid Endpoint"/>
+      <property name="line" value="42"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.196Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="============================================================================" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.000">
+    <properties>
+      <property name="title" value="============================================================================"/>
+      <property name="line" value="45"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.280Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="AUTHENTICATION TESTS" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.000">
+    <properties>
+      <property name="title" value="AUTHENTICATION TESTS"/>
+      <property name="line" value="46"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.280Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="============================================================================" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.000">
+    <properties>
+      <property name="title" value="============================================================================"/>
+      <property name="line" value="47"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.280Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="Sign Up" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.105">
+    <properties>
+      <property name="title" value="Sign Up"/>
+      <property name="line" value="49"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.280Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="Forgot Password" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.079">
+    <properties>
+      <property name="title" value="Forgot Password"/>
+      <property name="line" value="59"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.385Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="============================================================================" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.000">
+    <properties>
+      <property name="title" value="============================================================================"/>
+      <property name="line" value="67"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.465Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="REPORT GENERATION TESTS" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.000">
+    <properties>
+      <property name="title" value="REPORT GENERATION TESTS"/>
+      <property name="line" value="68"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.465Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="============================================================================" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.000">
+    <properties>
+      <property name="title" value="============================================================================"/>
+      <property name="line" value="69"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.465Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="Report with Invalid Location" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.093">
+    <properties>
+      <property name="title" value="Report with Invalid Location"/>
+      <property name="line" value="71"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.465Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="Report with Business Intent" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.073">
+    <properties>
+      <property name="title" value="Report with Business Intent"/>
+      <property name="line" value="80"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.558Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="============================================================================" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.000">
+    <properties>
+      <property name="title" value="============================================================================"/>
+      <property name="line" value="89"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.631Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="API V1 TESTS (API Key Required)" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.000">
+    <properties>
+      <property name="title" value="API V1 TESTS (API Key Required)"/>
+      <property name="line" value="90"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.631Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="============================================================================" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.000">
+    <properties>
+      <property name="title" value="============================================================================"/>
+      <property name="line" value="91"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.631Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="API Report - Free Plan (expect 403)" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.096">
+    <properties>
+      <property name="title" value="API Report - Free Plan (expect 403)"/>
+      <property name="line" value="93"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.631Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="============================================================================" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.000">
+    <properties>
+      <property name="title" value="============================================================================"/>
+      <property name="line" value="103"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.728Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="ERROR TESTING" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.000">
+    <properties>
+      <property name="title" value="ERROR TESTING"/>
+      <property name="line" value="104"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.728Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="============================================================================" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.000">
+    <properties>
+      <property name="title" value="============================================================================"/>
+      <property name="line" value="105"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.728Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="Method Not Allowed" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.077">
+    <properties>
+      <property name="title" value="Method Not Allowed"/>
+      <property name="line" value="107"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.728Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="Malformed JSON" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.122">
+    <properties>
+      <property name="title" value="Malformed JSON"/>
+      <property name="line" value="110"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.805Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+  <testsuite name="Empty Request Body" tests="0" errors="0" failures="0" skipped="0" package="tests_files/area-iq-api-tests-httpyac.http" time="0.076">
+    <properties>
+      <property name="title" value="Empty Request Body"/>
+      <property name="line" value="119"/>
+      <property name="timestamp" value="2026-04-12T18:41:00.926Z"/>
+      <property name="file" value="tests_files/area-iq-api-tests-httpyac.http"/>
+    </properties>
+  </testsuite>
+</testsuites>

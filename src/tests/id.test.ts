@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { generateId } from "./id";
+import { generateId } from "../lib/id";
 
 describe("generateId", () => {
   it("returns a string with the correct prefix", () => {

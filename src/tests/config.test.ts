@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { SUPERUSER_EMAILS, RATE_LIMITS, PLAN_PRICES_GBP, EMAIL_FROM } from "./config";
+import { SUPERUSER_EMAILS, RATE_LIMITS, PLAN_PRICES_GBP, EMAIL_FROM } from "../lib/config";
 
 // Mock Stripe SDK so importing stripe.ts doesn't require a real API key
 vi.mock("stripe", () => ({
@@ -8,7 +8,7 @@ vi.mock("stripe", () => ({
   },
 }));
 
-import { PLANS } from "./stripe";
+import { PLANS } from "../lib/stripe";
 
 describe("config", () => {
   describe("SUPERUSER_EMAILS", () => {

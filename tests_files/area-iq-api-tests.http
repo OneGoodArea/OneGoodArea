@@ -1,0 +1,453 @@
+# AreaIQ API Testing Suite
+# This file contains HTTP requests for testing AreaIQ API endpoints
+# Use with VS Code REST Client extension or similar HTTP client
+
+@baseUrl = http://localhost:3000
+# For production testing, change to:
+# @baseUrl = https://www.area-iq.co.uk
+
+# Test user credentials (create test accounts first)
+@testEmail = test@example.com
+@testPassword = testpassword123
+@adminEmail = admin@example.com
+
+# API Keys (generate these in the app first)
+@apiKeyFree = aiq_test_free_key
+@apiKeyDeveloper = aiq_test_developer_key
+@apiKeyBusiness = aiq_test_business_key
+
+# Session tokens (will be set after authentication)
+@sessionToken =
+
+### ============================================================================
+### HEALTH CHECK
+### ============================================================================
+
+### Health Check
+GET {{baseUrl}}/api/health
+
+### ============================================================================
+### AUTHENTICATION ENDPOINTS (NextAuth)
+### ============================================================================
+
+### Sign In with Credentials
+POST {{baseUrl}}/api/auth/signin/credentials
+Content-Type: application/json
+
+{
+  "email": "{{testEmail}}",
+  "password": "{{testPassword}}",
+  "redirect": false
+}
+
+### Sign Up
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "newuser@example.com",
+  "password": "securepassword123",
+  "name": "Test User"
+}
+
+### Forgot Password
+POST {{baseUrl}}/api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "{{testEmail}}"
+}
+
+### Reset Password
+POST {{baseUrl}}/api/auth/reset-password
+Content-Type: application/json
+
+{
+  "token": "reset-token-here",
+  "password": "newsecurepassword123"
+}
+
+### Resend Verification Email
+POST {{baseUrl}}/api/auth/resend-verification
+Content-Type: application/json
+
+{
+  "email": "{{testEmail}}"
+}
+
+### ============================================================================
+### REPORT GENERATION (Authenticated Users)
+### ============================================================================
+
+### Generate Report - Moving Intent
+POST {{baseUrl}}/api/report
+Content-Type: application/json
+Authorization: Bearer {{sessionToken}}
+
+{
+  "area": "SW1A 1AA",
+  "intent": "moving"
+}
+
+### Generate Report - Business Intent
+POST {{baseUrl}}/api/report
+Content-Type: application/json
+Authorization: Bearer {{sessionToken}}
+
+{
+  "area": "Shoreditch, London",
+  "intent": "business"
+}
+
+### Generate Report - Investing Intent
+POST {{baseUrl}}/api/report
+Content-Type: application/json
+Authorization: Bearer {{sessionToken}}
+
+{
+  "area": "M1 1AE",
+  "intent": "investing"
+}
+
+### Generate Report - Research Intent
+POST {{baseUrl}}/api/report
+Content-Type: application/json
+Authorization: Bearer {{sessionToken}}
+
+{
+  "area": "Manchester City Centre",
+  "intent": "research"
+}
+
+### Generate Report - Invalid Location
+POST {{baseUrl}}/api/report
+Content-Type: application/json
+Authorization: Bearer {{sessionToken}}
+
+{
+  "area": "Invalid Location 123",
+  "intent": "moving"
+}
+
+### Generate Report - Rate Limited (expect 429)
+POST {{baseUrl}}/api/report
+Content-Type: application/json
+Authorization: Bearer {{sessionToken}}
+
+{
+  "area": "B1 1AA",
+  "intent": "moving"
+}
+
+### ============================================================================
+### API V1 REPORTS (API Key Authentication)
+### ============================================================================
+
+### Generate Report via API - Free Plan (expect 403)
+POST {{baseUrl}}/api/v1/report
+Content-Type: application/json
+Authorization: Bearer {{apiKeyFree}}
+
+{
+  "area": "SW1A 1AA",
+  "intent": "moving"
+}
+
+### Generate Report via API - Developer Plan
+POST {{baseUrl}}/api/v1/report
+Content-Type: application/json
+Authorization: Bearer {{apiKeyDeveloper}}
+
+{
+  "area": "SW1A 1AA",
+  "intent": "moving"
+}
+
+### Generate Report via API - Business Plan
+POST {{baseUrl}}/api/v1/report
+Content-Type: application/json
+Authorization: Bearer {{apiKeyBusiness}}
+
+{
+  "area": "Shoreditch, London",
+  "intent": "business"
+}
+
+### Generate Report via API - Invalid API Key (expect 401)
+POST {{baseUrl}}/api/v1/report
+Content-Type: application/json
+Authorization: Bearer invalid-api-key
+
+{
+  "area": "SW1A 1AA",
+  "intent": "moving"
+}
+
+### Generate Report via API - No API Key (expect 401)
+POST {{baseUrl}}/api/v1/report
+Content-Type: application/json
+
+{
+  "area": "SW1A 1AA",
+  "intent": "moving"
+}
+
+### ============================================================================
+### SETTINGS ENDPOINTS
+### ============================================================================
+
+### Get User Settings
+GET {{baseUrl}}/api/settings
+Authorization: Bearer {{sessionToken}}
+
+### Update Password
+POST {{baseUrl}}/api/settings/password
+Content-Type: application/json
+Authorization: Bearer {{sessionToken}}
+
+{
+  "currentPassword": "{{testPassword}}",
+  "newPassword": "newsecurepassword123"
+}
+
+### Get Subscription Info
+GET {{baseUrl}}/api/settings/subscription
+Authorization: Bearer {{sessionToken}}
+
+### Cancel Subscription
+POST {{baseUrl}}/api/settings/cancel-subscription
+Content-Type: application/json
+Authorization: Bearer {{sessionToken}}
+
+{
+  "reason": "Testing cancellation flow"
+}
+
+### Delete Account
+DELETE {{baseUrl}}/api/settings/account
+Content-Type: application/json
+Authorization: Bearer {{sessionToken}}
+
+{
+  "confirmation": "DELETE_MY_ACCOUNT"
+}
+
+### ============================================================================
+### API KEYS MANAGEMENT
+### ============================================================================
+
+### Generate API Key
+POST {{baseUrl}}/api/keys
+Content-Type: application/json
+Authorization: Bearer {{sessionToken}}
+
+{
+  "name": "Test API Key"
+}
+
+### List API Keys
+GET {{baseUrl}}/api/keys
+Authorization: Bearer {{sessionToken}}
+
+### Revoke API Key
+DELETE {{baseUrl}}/api/keys
+Content-Type: application/json
+Authorization: Bearer {{sessionToken}}
+
+{
+  "keyId": "api-key-id-here"
+}
+
+### ============================================================================
+### USAGE TRACKING
+### ============================================================================
+
+### Get Usage Stats
+GET {{baseUrl}}/api/usage
+Authorization: Bearer {{sessionToken}}
+
+### ============================================================================
+### WATCHLIST MANAGEMENT
+### ============================================================================
+
+### Add to Watchlist
+POST {{baseUrl}}/api/watchlist
+Content-Type: application/json
+Authorization: Bearer {{sessionToken}}
+
+{
+  "postcode": "SW1A 1AA",
+  "label": "Test Area",
+  "intent": "moving"
+}
+
+### Get Watchlist
+GET {{baseUrl}}/api/watchlist
+Authorization: Bearer {{sessionToken}}
+
+### Remove from Watchlist
+DELETE {{baseUrl}}/api/watchlist
+Content-Type: application/json
+Authorization: Bearer {{sessionToken}}
+
+{
+  "postcode": "SW1A 1AA"
+}
+
+### ============================================================================
+### STRIPE WEBHOOKS (for testing payment flows)
+### ============================================================================
+
+### Stripe Webhook - Subscription Created
+POST {{baseUrl}}/api/stripe/webhook
+Content-Type: application/json
+Stripe-Signature: t=1234567890,v1=test-signature
+
+{
+  "id": "evt_test_webhook",
+  "object": "event",
+  "api_version": "2020-08-27",
+  "created": 1234567890,
+  "data": {
+    "object": {
+      "id": "sub_test_subscription",
+      "object": "subscription",
+      "status": "active",
+      "customer": "cus_test_customer",
+      "items": {
+        "data": [{
+          "price": {
+            "id": "price_developer_monthly"
+          }
+        }]
+      }
+    }
+  },
+  "livemode": false,
+  "pending_webhooks": 1,
+  "request": {
+    "id": "req_test_request",
+    "idempotency_key": null
+  },
+  "type": "customer.subscription.created"
+}
+
+### ============================================================================
+### ADMIN ENDPOINTS (Admin Only)
+### ============================================================================
+
+### Get Admin Analytics
+GET {{baseUrl}}/api/admin/analytics
+Authorization: Bearer {{sessionToken}}
+
+### Get Traffic Analytics
+GET {{baseUrl}}/api/admin/traffic
+Authorization: Bearer {{sessionToken}}
+
+### ============================================================================
+### WIDGET ENDPOINTS
+### ============================================================================
+
+### Get Widget Data
+GET {{baseUrl}}/api/widget?area=SW1A%201AA&intent=moving
+
+### ============================================================================
+### TRACK EVENT (Analytics)
+### ============================================================================
+
+### Track User Event
+POST {{baseUrl}}/api/track
+Content-Type: application/json
+Authorization: Bearer {{sessionToken}}
+
+{
+  "event": "report_generated",
+  "properties": {
+    "area": "SW1A 1AA",
+    "intent": "moving",
+    "score": 75
+  }
+}
+
+### ============================================================================
+### ERROR TESTING
+### ============================================================================
+
+### Invalid Endpoint
+GET {{baseUrl}}/api/invalid-endpoint
+
+### Method Not Allowed
+GET {{baseUrl}}/api/report
+
+### Unauthorized Access
+GET {{baseUrl}}/api/settings
+# No authorization header
+
+### ============================================================================
+### LOAD TESTING SCENARIOS
+### ============================================================================
+
+### Rapid Report Generation (for rate limit testing)
+POST {{baseUrl}}/api/report
+Content-Type: application/json
+Authorization: Bearer {{sessionToken}}
+
+{
+  "area": "SW1A 1AA",
+  "intent": "moving"
+}
+
+### Multiple API Calls (for rate limit testing)
+POST {{baseUrl}}/api/v1/report
+Content-Type: application/json
+Authorization: Bearer {{apiKeyDeveloper}}
+
+{
+  "area": "M1 1AE",
+  "intent": "business"
+}
+
+### ============================================================================
+### EDGE CASES
+### ============================================================================
+
+### Report with Special Characters
+POST {{baseUrl}}/api/report
+Content-Type: application/json
+Authorization: Bearer {{sessionToken}}
+
+{
+  "area": "St. John's Wood, London",
+  "intent": "moving"
+}
+
+### Report with Very Long Area Name
+POST {{baseUrl}}/api/report
+Content-Type: application/json
+Authorization: Bearer {{sessionToken}}
+
+{
+  "area": "This is a very long area name that might cause issues with database field lengths or validation rules in the system",
+  "intent": "research"
+}
+
+### Report with Empty Intent
+POST {{baseUrl}}/api/report
+Content-Type: application/json
+Authorization: Bearer {{sessionToken}}
+
+{
+  "area": "SW1A 1AA",
+  "intent": ""
+}
+
+### ============================================================================
+### CORS TESTING
+### ============================================================================
+
+### Preflight CORS Request
+OPTIONS {{baseUrl}}/api/report
+Origin: https://example.com
+Access-Control-Request-Method: POST
+Access-Control-Request-Headers: Content-Type,Authorization</content>
+<parameter name="filePath">/home/narister/projetos/AreaIQ-/api-tests.http
