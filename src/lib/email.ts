@@ -3,7 +3,22 @@ import { AreaReport } from "@/lib/types";
 import { logger } from "@/lib/logger";
 import { APP_URL, EMAIL_FROM } from "@/lib/config";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resendClient: Resend | null = null;
+
+function getResendClient() {
+  if (resendClient) {
+    return resendClient;
+  }
+
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('Missing API key. Pass it to the constructor `new Resend("re_123")`');
+  }
+
+  resendClient = new Resend(apiKey);
+  return resendClient;
+}
 
 function baseTemplate(content: string): string {
   return `<!DOCTYPE html>
@@ -79,7 +94,7 @@ export async function sendVerificationEmail(email: string, token: string) {
     </div>
   `;
 
-  await resend.emails.send({
+  await getResendClient().emails.send({
     from: EMAIL_FROM,
     to: email,
     subject: "Verify your email | AreaIQ",
@@ -117,7 +132,7 @@ export async function sendWelcomeEmail(email: string, name: string) {
     </table>
   `;
 
-  await resend.emails.send({
+  await getResendClient().emails.send({
     from: EMAIL_FROM,
     to: email,
     subject: "Welcome to AreaIQ",
@@ -157,7 +172,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
     </div>
   `;
 
-  await resend.emails.send({
+  await getResendClient().emails.send({
     from: EMAIL_FROM,
     to: email,
     subject: "Reset your password | AreaIQ",
@@ -297,7 +312,7 @@ export async function sendReportEmail(email: string, reportId: string, report: A
     </div>
   `;
 
-  const result = await resend.emails.send({
+  const result = await getResendClient().emails.send({
     from: EMAIL_FROM,
     to: email,
     subject: `Your AreaIQ Report: ${report.area || "Area Analysis"}`,
