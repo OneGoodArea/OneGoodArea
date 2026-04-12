@@ -21,11 +21,12 @@ export default defineConfig({
         "src/tests/**",
         "node_modules/**"
       ],
-      all: true,
-      lines: 70,
-      functions: 70,
-      branches: 60,
-      statements: 70,
+      thresholds: {
+        lines: 70,
+        functions: 70,
+        branches: 60,
+        statements: 70,
+      },
     },
   },
 });
