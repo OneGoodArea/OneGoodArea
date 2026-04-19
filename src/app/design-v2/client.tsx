@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
+import SAMPLE_REPORTS_JSON from "./sample-reports.json";
 
 /* ═══════════════════════════════════════════════════════════════
    OneGoodArea — Design V2 Hero
@@ -177,6 +178,31 @@ function computeScore(intentId: IntentId): number {
   return Math.round(total / 100);
 }
 
+/* ─────── Real seeded reports — 4 cities × 4 intents, fetched from live APIs
+   See scripts/seed-design-v2.ts for the generator. ─────── */
+
+type RealDim = { label: string; score: number; weight: number; reasoning: string };
+type RealIntentReport = { overall: number; dimensions: RealDim[]; summary: string };
+type RealLocationReport = {
+  key: string; display: string; postcode: string;
+  region: string; areaType: string; lsoa: string;
+  intents: Record<string, RealIntentReport>;
+};
+const SAMPLE_REPORTS = SAMPLE_REPORTS_JSON as Record<string, RealLocationReport>;
+
+function resolveSampleKey(raw: string): string | null {
+  const q = raw.trim().toUpperCase().replace(/\s+/g, "");
+  const m: Record<string, string> = {
+    MANCHESTER: "manchester",
+    CLAPHAM: "clapham",
+    SW40LG: "clapham",
+    EDINBURGH: "edinburgh",
+    BRISTOL: "bristol",
+    BS14DJ: "bristol",
+  };
+  return m[q] || null;
+}
+
 /* ─────── Root ─────── */
 
 export default function DesignV2Client() {
@@ -215,6 +241,7 @@ export default function DesignV2Client() {
         intent={intent}
         intentId={intentId}
         shown={showReport && !!resolved}
+        raw={raw}
       />
     </div>
   );
@@ -1323,13 +1350,45 @@ const SampleReport = forwardRef<
     intent: (typeof INTENTS)[number];
     intentId: IntentId;
     shown: boolean;
+    raw: string;
   }
->(function SampleReport({ resolved, intent, intentId, shown }, ref) {
-  const weights = INTENT_WEIGHTS[intentId];
-  const score = computeScore(intentId);
+>(function SampleReport({ resolved, intent, intentId, shown, raw }, ref) {
+  // Look up real seeded data first, fall back to mock if no match.
+  const sampleKey = raw ? resolveSampleKey(raw) : null;
+  const realLoc = sampleKey ? SAMPLE_REPORTS[sampleKey] : undefined;
+  const realReport = realLoc?.intents?.[intentId];
+  const isReal = !!realReport;
+
+  const score = realReport?.overall ?? computeScore(intentId);
   const label = INTENT_LABELS[intentId];
-  const narrative = resolved ? INTENT_NARRATIVES[intentId](resolved.display) : "";
-  const recs = INTENT_RECS[intentId];
+  const narrative = realReport?.summary
+    ?? (resolved ? INTENT_NARRATIVES[intentId](resolved.display) : "");
+
+  // Build a unified dimension list from real or mock data.
+  type UniDim = { key: string; label: string; score: number; weight: number; detail: string };
+  const allDims: UniDim[] = realReport
+    ? realReport.dimensions.map((d, i) => ({
+        key: `real-${i}`,
+        label: d.label,
+        score: d.score,
+        weight: d.weight,
+        detail: d.reasoning,
+      }))
+    : SAMPLE_DIMS.map((d) => ({
+        key: d.key,
+        label: d.label,
+        score: d.score,
+        weight: INTENT_WEIGHTS[intentId][d.key] || 0,
+        detail: d.detail,
+      }));
+
+  // Teaser: only the 3 highest-weighted dimensions (drop zero-weight first).
+  const rankedDims = allDims
+    .slice()
+    .filter((d) => d.weight > 0)
+    .sort((a, b) => b.weight - a.weight);
+  const topDims = rankedDims.slice(0, 3);
+  const hiddenCount = allDims.length - topDims.length;
 
   function rag(s: number) {
     if (s >= 70) return "var(--ink)";
@@ -1371,15 +1430,17 @@ const SampleReport = forwardRef<
             }}>
               <span style={{
                 width: 6, height: 6, borderRadius: "50%",
-                background: "var(--ink)",
+                background: isReal ? "var(--ink)" : "#B59A2A",
               }} />
-              Report · {resolved.display.toLowerCase()} · scored for {intent.verb}
+              {isReal ? "Snapshot" : "Preview"} · {resolved.display.toLowerCase()} · scored for {intent.verb}
             </div>
             <div style={{
               fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-4)",
               letterSpacing: "0.1em", textTransform: "uppercase",
             }}>
-              engine run · 2.6s · 7/7 sources
+              {isReal
+                ? `engine run · live · ${realLoc?.lsoa ?? "LSOA"}`
+                : "demo numbers · sign up for live"}
             </div>
           </div>
 
@@ -1449,49 +1510,105 @@ const SampleReport = forwardRef<
                 {narrative}
               </p>
 
-              {/* Recommendations */}
+              {/* Locked / CTA block — the teaser reveal */}
               <div style={{
-                border: "1px solid var(--signal-dim)",
-                background: "#FBFDF0",
-                borderRadius: 12, padding: "16px 20px",
+                border: "1px solid var(--ink-deep)",
+                background: "var(--ink-deep)",
+                borderRadius: 14, padding: "22px 24px",
+                position: "relative", overflow: "hidden",
               }}>
+                {/* subtle chartreuse rule */}
                 <div style={{
-                  fontFamily: "var(--mono)", fontSize: 10,
-                  color: "var(--ink)", letterSpacing: "0.14em", textTransform: "uppercase",
-                  marginBottom: 12,
+                  position: "absolute", top: 0, left: 0, right: 0, height: 3,
+                  background: "var(--signal)",
+                }} />
+
+                <div style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  marginBottom: 14,
                 }}>
-                  Actions · 3
+                  <span style={{
+                    fontFamily: "var(--mono)", fontSize: 10,
+                    color: "var(--signal)", letterSpacing: "0.18em",
+                    textTransform: "uppercase", fontWeight: 500,
+                  }}>
+                    Next in the full report
+                  </span>
+                  <span style={{
+                    fontFamily: "var(--mono)", fontSize: 9,
+                    color: "rgba(246,249,244,0.38)",
+                    letterSpacing: "0.1em",
+                  }}>
+                    locked
+                  </span>
                 </div>
-                {recs.map((r, i) => (
-                  <div
-                    key={`rec-${intentId}-${i}`}
-                    style={{
-                      display: "flex", alignItems: "baseline", gap: 12,
-                      marginBottom: i < 2 ? 10 : 0,
-                      animation: `aiq-fade-up 420ms cubic-bezier(0.16,1,0.3,1) ${i * 80}ms both`,
-                    }}
-                  >
-                    <span style={{
-                      fontFamily: "var(--mono)", fontSize: 10, fontWeight: 600,
-                      color: "var(--ink)", letterSpacing: "0.08em", flexShrink: 0,
-                      minWidth: 22,
+
+                <ul style={{
+                  listStyle: "none", padding: 0, margin: "0 0 20px",
+                  display: "grid", gap: 8,
+                }}>
+                  {[
+                    `${hiddenCount} more dimension${hiddenCount === 1 ? "" : "s"} scored against 7 datasets`,
+                    "Custom Claude recommendations for your situation",
+                    "5-year trend data and comparable postcodes",
+                    "Downloadable PDF + shareable permalink",
+                  ].map((bullet) => (
+                    <li key={bullet} style={{
+                      display: "grid", gridTemplateColumns: "16px 1fr", gap: 10,
+                      alignItems: "baseline",
+                      fontFamily: "var(--sans)", fontSize: 14,
+                      color: "rgba(246,249,244,0.82)", letterSpacing: "-0.005em",
+                      lineHeight: 1.45,
                     }}>
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <span style={{ fontSize: 14, color: "var(--text-2)", lineHeight: 1.55 }}>
-                      {r}
-                    </span>
-                  </div>
-                ))}
+                      <span style={{
+                        color: "var(--signal)", fontFamily: "var(--mono)",
+                        fontSize: 12, transform: "translateY(-0.1em)",
+                      }}>↳</span>
+                      <span>{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <a
+                  href="/signup"
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 8,
+                    fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600,
+                    color: "var(--signal-ink)", background: "var(--signal)",
+                    border: "1px solid var(--ink-deep)",
+                    borderRadius: 999, padding: "11px 20px",
+                    textDecoration: "none", letterSpacing: "-0.005em",
+                    transition: "transform 140ms cubic-bezier(0.16,1,0.3,1), box-shadow 140ms",
+                    boxShadow: "0 1px 0 rgba(6,42,30,0.04)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                    e.currentTarget.style.boxShadow = "0 10px 24px rgba(212,243,58,0.30)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 1px 0 rgba(6,42,30,0.04)";
+                  }}
+                >
+                  Get the full report →
+                </a>
+                <span style={{
+                  marginLeft: 14,
+                  fontFamily: "var(--mono)", fontSize: 10,
+                  color: "rgba(246,249,244,0.48)",
+                  letterSpacing: "0.06em",
+                }}>
+                  3 free / month · no card
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Dimensions */}
+          {/* Dimensions — snapshot: top 3 by weight only */}
           <div style={{
             border: "1px solid var(--border)",
             borderRadius: 16, background: "var(--bg)",
-            padding: "20px 28px 12px",
+            padding: "20px 28px 16px",
             marginBottom: 24,
           }}>
             <div style={{
@@ -1502,93 +1619,93 @@ const SampleReport = forwardRef<
                 fontFamily: "var(--mono)", fontSize: 10,
                 color: "var(--ink)", letterSpacing: "0.14em", textTransform: "uppercase",
               }}>
-                Dimensions · 5 · re-weighted for {intent.verb}
+                Top 3 dimensions · weighted for {intent.verb}
               </div>
               <div style={{
                 fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-4)",
                 letterSpacing: "0.08em",
               }}>
-                weights shift with intent →
+                +{hiddenCount} more in full report
               </div>
             </div>
 
-            {SAMPLE_DIMS.map((d, i) => {
-              const w = weights[d.key] || 0;
-              const wasZero = w === 0;
-              return (
-                <div key={d.key} style={{
-                  display: "grid",
-                  gridTemplateColumns: "180px 60px 1fr 80px 56px",
-                  alignItems: "center", gap: 18,
-                  padding: "14px 0",
-                  borderBottom: i < SAMPLE_DIMS.length - 1 ? "1px solid var(--border-dim)" : "none",
-                  opacity: wasZero ? 0.45 : 1,
-                  transition: "opacity 420ms",
-                }}>
-                  <div>
-                    <div style={{
-                      fontSize: 14, fontWeight: 500, color: "var(--ink-deep)",
-                      letterSpacing: "-0.005em",
-                    }}>{d.label}</div>
-                    <div style={{
-                      fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-4)",
-                      marginTop: 2, letterSpacing: "0.04em",
-                    }}>{d.src}</div>
-                  </div>
-                  {/* Weight pill */}
-                  <div
-                    key={`w-${d.key}-${intentId}`}
-                    style={{
-                      fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
-                      color: wasZero ? "var(--text-4)" : "var(--ink)",
-                      background: wasZero ? "var(--bg-off)" : "var(--signal-dim)",
-                      border: `1px solid ${wasZero ? "var(--border)" : "#D4E3A0"}`,
-                      padding: "3px 8px", borderRadius: 999,
-                      textAlign: "center", letterSpacing: "0.02em",
-                      animation: "aiq-fade-up 360ms cubic-bezier(0.16,1,0.3,1) both",
-                    }}
-                  >
-                    w{w}%
-                  </div>
-                  <div>
-                    <div style={{
-                      height: 6, background: "var(--border-dim)",
-                      borderRadius: 3, overflow: "hidden", position: "relative",
-                    }}>
-                      <div style={{
-                        height: "100%", width: `${d.score}%`,
-                        background: ragBar(d.score), borderRadius: 3,
-                        transition: "width 600ms cubic-bezier(0.16,1,0.3,1)",
-                      }} />
-                      {/* weight-contribution overlay */}
-                      <div style={{
-                        position: "absolute", top: 0, left: 0,
-                        height: "100%", width: `${d.score * (w / 100)}%`,
-                        background: "repeating-linear-gradient(45deg, transparent 0 3px, rgba(6,42,30,0.14) 3px 4px)",
-                        transition: "width 600ms cubic-bezier(0.16,1,0.3,1)",
-                      }} />
-                    </div>
-                    <div style={{
-                      fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-4)",
-                      marginTop: 5, letterSpacing: "0.01em",
-                    }}>{d.detail}</div>
-                  </div>
+            {topDims.map((d, i) => (
+              <div key={d.key} style={{
+                display: "grid",
+                gridTemplateColumns: "200px 56px 1fr 56px",
+                alignItems: "center", gap: 18,
+                padding: "14px 0",
+                borderBottom: i < topDims.length - 1 ? "1px solid var(--border-dim)" : "none",
+              }}>
+                <div>
                   <div style={{
-                    fontFamily: "var(--mono)", fontSize: 11, color: "var(--text-3)",
-                    textAlign: "right", letterSpacing: "0.04em",
-                  }}>
-                    contributes {((d.score * w) / 100).toFixed(1)}
-                  </div>
+                    fontSize: 14, fontWeight: 500, color: "var(--ink-deep)",
+                    letterSpacing: "-0.005em",
+                  }}>{d.label}</div>
                   <div style={{
-                    fontFamily: "var(--display)", fontSize: 22, fontWeight: 400,
-                    color: rag(d.score), textAlign: "right", letterSpacing: "-0.02em",
-                    fontVariantNumeric: "tabular-nums",
-                  }}>
-                    {d.score}
-                  </div>
+                    fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-4)",
+                    marginTop: 2, letterSpacing: "0.04em",
+                  }}>contributes {((d.score * d.weight) / 100).toFixed(1)} / 100</div>
                 </div>
-              );
-            })}
+
+                <div
+                  key={`w-${d.key}-${intentId}`}
+                  style={{
+                    fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
+                    color: "var(--ink)",
+                    background: "var(--signal-dim)",
+                    border: "1px solid #D4E3A0",
+                    padding: "3px 8px", borderRadius: 999,
+                    textAlign: "center", letterSpacing: "0.02em",
+                    animation: "aiq-fade-up 360ms cubic-bezier(0.16,1,0.3,1) both",
+                  }}
+                >
+                  w{d.weight}%
+                </div>
+
+                <div>
+                  <div style={{
+                    height: 6, background: "var(--border-dim)",
+                    borderRadius: 3, overflow: "hidden", position: "relative",
+                  }}>
+                    <div style={{
+                      height: "100%", width: `${d.score}%`,
+                      background: ragBar(d.score), borderRadius: 3,
+                      transition: "width 600ms cubic-bezier(0.16,1,0.3,1)",
+                    }} />
+                  </div>
+                  <div style={{
+                    fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-4)",
+                    marginTop: 5, letterSpacing: "0.01em",
+                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  }}>{d.detail}</div>
+                </div>
+
+                <div style={{
+                  fontFamily: "var(--display)", fontSize: 24, fontWeight: 400,
+                  color: rag(d.score), textAlign: "right", letterSpacing: "-0.02em",
+                  fontVariantNumeric: "tabular-nums",
+                }}>
+                  {d.score}
+                </div>
+              </div>
+            ))}
+
+            {/* Locked rows hint */}
+            <div style={{
+              marginTop: 12, padding: "14px 0 4px",
+              borderTop: "1px dashed var(--border)",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              fontFamily: "var(--mono)", fontSize: 10,
+              color: "var(--text-4)", letterSpacing: "0.08em",
+              textTransform: "uppercase",
+            }}>
+              <span>+ {hiddenCount} more dimensions locked</span>
+              <a href="/signup" style={{
+                color: "var(--ink)", textDecoration: "none",
+                borderBottom: "1px solid var(--signal)", paddingBottom: 1,
+              }}>unlock →</a>
+            </div>
           </div>
 
           {/* Footer row */}
