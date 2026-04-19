@@ -359,14 +359,12 @@ function Styles() {
           grid-template-columns: minmax(0, 1fr) 48px !important;
           grid-template-areas:
             "label score"
-            "bar   bar"
-            "detail detail" !important;
+            "bar   bar" !important;
           gap: 6px 12px !important;
         }
         .aiq-dim-row > :nth-child(1) { grid-area: label; }
-        .aiq-dim-row > :nth-child(2) { display: none !important; } /* weight pill hidden on tiny screens */
-        .aiq-dim-row > :nth-child(3) { grid-area: bar; }
-        .aiq-dim-row > :nth-child(4) { grid-area: score; }
+        .aiq-dim-row > :nth-child(2) { grid-area: bar; }
+        .aiq-dim-row > :nth-child(3) { grid-area: score; }
       }
     `}</style>
   );
@@ -1257,15 +1255,23 @@ function UKMap({
             <line x1={pin.x} y1={pin.y - 12} x2={pin.x} y2={pin.y - 5} stroke="var(--ink-deep)" strokeWidth="0.9" />
             <line x1={pin.x} y1={pin.y + 5} x2={pin.x} y2={pin.y + 12} stroke="var(--ink-deep)" strokeWidth="0.9" />
             <circle cx={pin.x} cy={pin.y} r="4" fill="var(--signal)" stroke="var(--ink-deep)" strokeWidth="1.1" />
-            <g transform={`translate(${pin.x + 10}, ${pin.y - 12})`}>
-              <rect x="0" y="-8" rx="3" ry="3"
-                width={resolved!.display.length * 5.4 + 14} height="14"
-                fill="var(--ink-deep)"
-              />
-              <text x="7" y="2" fontFamily="var(--mono)" fontSize="8" fill="var(--signal)" letterSpacing="0.5">
-                {resolved!.display.toUpperCase()}
-              </text>
-            </g>
+            {(() => {
+              const labelText = resolved!.display.toUpperCase();
+              const labelW = labelText.length * 5.4 + 14;
+              const flipLeft = pin.x > VB_W * 0.58;
+              const labelOffsetX = flipLeft ? -labelW - 10 : 10;
+              return (
+                <g transform={`translate(${pin.x + labelOffsetX}, ${pin.y - 12})`}>
+                  <rect x="0" y="-8" rx="3" ry="3"
+                    width={labelW} height="14"
+                    fill="var(--ink-deep)"
+                  />
+                  <text x="7" y="2" fontFamily="var(--mono)" fontSize="8" fill="var(--signal)" letterSpacing="0.5">
+                    {labelText}
+                  </text>
+                </g>
+              );
+            })()}
           </g>
         )}
       </svg>
@@ -1667,8 +1673,8 @@ const SampleReport = forwardRef<
             {topDims.map((d, i) => (
               <div key={d.key} className="aiq-dim-row" style={{
                 display: "grid",
-                gridTemplateColumns: "minmax(140px, 200px) 54px minmax(0, 1fr) 48px",
-                alignItems: "center", gap: 18,
+                gridTemplateColumns: "minmax(180px, 240px) minmax(0, 1fr) 48px",
+                alignItems: "center", gap: 20,
                 padding: "14px 0",
                 borderBottom: i < topDims.length - 1 ? "1px solid var(--border-dim)" : "none",
               }}>
@@ -1677,25 +1683,19 @@ const SampleReport = forwardRef<
                     fontSize: 14, fontWeight: 500, color: "var(--ink-deep)",
                     letterSpacing: "-0.005em",
                   }}>{d.label}</div>
-                  <div style={{
-                    fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-4)",
-                    marginTop: 2, letterSpacing: "0.04em",
-                  }}>contributes {((d.score * d.weight) / 100).toFixed(1)} / 100</div>
-                </div>
-
-                <div
-                  key={`w-${d.key}-${intentId}`}
-                  style={{
-                    fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
-                    color: "var(--ink)",
-                    background: "var(--signal-dim)",
-                    border: "1px solid #D4E3A0",
-                    padding: "3px 8px", borderRadius: 999,
-                    textAlign: "center", letterSpacing: "0.02em",
-                    animation: "aiq-fade-up 360ms cubic-bezier(0.16,1,0.3,1) both",
-                  }}
-                >
-                  w{d.weight}%
+                  <div
+                    key={`w-${d.key}-${intentId}`}
+                    style={{
+                      fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-3)",
+                      marginTop: 3, letterSpacing: "0.04em",
+                      animation: "aiq-fade-up 360ms cubic-bezier(0.16,1,0.3,1) both",
+                    }}
+                  >
+                    <span style={{
+                      color: "var(--ink)", fontWeight: 600,
+                    }}>{d.weight}% weight</span>
+                    {" "}for {intent.verb}
+                  </div>
                 </div>
 
                 <div style={{ minWidth: 0, overflow: "hidden" }}>
