@@ -313,6 +313,61 @@ function Styles() {
         0%   { width: 0%; }
         100% { width: 100%; }
       }
+
+      /* ─── Responsive ─────────────────────────────────────── */
+      /* Tablet / narrow desktop: stack the hero columns */
+      @media (max-width: 960px) {
+        .aiq-hero-grid {
+          grid-template-columns: 1fr !important;
+          gap: 48px !important;
+          padding: 32px 28px 40px !important;
+        }
+        .aiq-engine {
+          position: static !important;
+        }
+        .aiq-map {
+          max-width: 520px;
+          margin: 0 auto;
+        }
+      }
+
+      /* Mobile: single column, smaller text, nav compacts */
+      @media (max-width: 720px) {
+        .aiq-nav-links {
+          display: none !important;
+        }
+        .aiq-headline {
+          margin-top: 20px !important;
+        }
+        .aiq-for-line {
+          white-space: normal !important;
+        }
+        .aiq-report-grid {
+          grid-template-columns: 1fr !important;
+          gap: 28px !important;
+          padding: 24px !important;
+        }
+      }
+
+      /* Small phones: tighten everything */
+      @media (max-width: 480px) {
+        .aiq-hero-grid {
+          padding: 24px 20px 36px !important;
+          gap: 40px !important;
+        }
+        .aiq-dim-row {
+          grid-template-columns: minmax(0, 1fr) 48px !important;
+          grid-template-areas:
+            "label score"
+            "bar   bar"
+            "detail detail" !important;
+          gap: 6px 12px !important;
+        }
+        .aiq-dim-row > :nth-child(1) { grid-area: label; }
+        .aiq-dim-row > :nth-child(2) { display: none !important; } /* weight pill hidden on tiny screens */
+        .aiq-dim-row > :nth-child(3) { grid-area: bar; }
+        .aiq-dim-row > :nth-child(4) { grid-area: score; }
+      }
     `}</style>
   );
 }
@@ -375,7 +430,7 @@ function Nav() {
 
         <div style={{ flex: 1 }} />
 
-        <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
+        <div className="aiq-nav-links" style={{ display: "flex", alignItems: "center", gap: 28 }}>
           {["How it works", "API", "Pricing", "Blog"].map((l) => (
             <a key={l} href="#" style={linkStyle}
               onMouseEnter={(e) => (e.currentTarget.style.color = "var(--ink)")}
@@ -462,12 +517,12 @@ function Hero({
         }} />
       </div>
 
-      <div style={{
-        maxWidth: 1240, margin: "0 auto", padding: "40px 40px 48px",
+      <div className="aiq-hero-grid" style={{
+        maxWidth: 1320, margin: "0 auto", padding: "40px 48px 48px",
         position: "relative", zIndex: 1,
         display: "grid",
-        gridTemplateColumns: "minmax(0, 1fr) 360px",
-        gap: 72,
+        gridTemplateColumns: "minmax(0, 1.1fr) minmax(0, 0.9fr)",
+        gap: 88,
         alignItems: "start",
       }}>
         {/* ── Left: inline-sentence hero ── */}
@@ -475,10 +530,10 @@ function Hero({
           <Eyebrow />
 
           {/* The sentence — two explicit lines, no ch-based wrap */}
-          <h1 style={{
+          <h1 className="aiq-headline" style={{
             fontFamily: "var(--display)",
             fontWeight: 400,
-            fontSize: "clamp(3rem, 5.8vw, 5rem)",
+            fontSize: "clamp(2.6rem, 5.4vw, 4.8rem)",
             lineHeight: 1.06,
             letterSpacing: "-0.025em",
             color: "var(--ink-deep)",
@@ -496,7 +551,7 @@ function Hero({
                 resolved={resolved}
               />
             </span>
-            <span style={{ display: "block", whiteSpace: "nowrap" }}>
+            <span className="aiq-for-line" style={{ display: "block", whiteSpace: "nowrap" }}>
               for{" "}
               <span style={{
                 color: "var(--ink)", fontStyle: "italic",
@@ -911,70 +966,51 @@ function EnginePanel({
   }, [resolved?.display]);
 
   return (
-    <aside style={{
+    <aside className="aiq-engine" style={{
       position: "sticky", top: 92,
-      border: "1px solid var(--border)",
-      borderRadius: 16, overflow: "hidden",
-      background: "var(--bg)",
-      boxShadow: "0 1px 0 rgba(6,42,30,0.02), 0 12px 40px rgba(6,42,30,0.05)",
+      display: "flex", flexDirection: "column", gap: 20,
       animation: "aiq-fade-up 900ms cubic-bezier(0.16,1,0.3,1) 420ms both",
     }}>
-      {/* Header */}
+      {/* Status line — loose, no panel */}
       <div style={{
-        padding: "12px 16px",
-        borderBottom: "1px solid var(--border)",
-        background: "var(--bg-off)",
         display: "flex", alignItems: "center", justifyContent: "space-between",
+        fontFamily: "var(--mono)", fontSize: 10,
+        color: "var(--text-3)", letterSpacing: "0.14em", textTransform: "uppercase",
       }}>
-        <span style={{
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-          color: "var(--ink)", letterSpacing: "0.14em", textTransform: "uppercase",
-        }}>Engine</span>
-        <span style={{
-          fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-3)",
-          letterSpacing: "0.08em",
-        }}>
-          {resolved ? "querying…" : "idle"}
+        <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{
+            width: 6, height: 6, borderRadius: "50%",
+            background: resolved ? "var(--signal)" : "var(--border)",
+            border: "1px solid var(--ink-deep)",
+            animation: resolved ? "aiq-pulse-dot 1.4s ease-in-out infinite" : "none",
+          }} />
+          Engine · {resolved ? "querying…" : "idle"}
+        </span>
+        <span style={{ color: "var(--text-4)" }}>
+          7 datasets · for {intent.verb}
         </span>
       </div>
 
-      {/* Map */}
+      {/* Map — no card */}
       <UKMap resolved={resolved} onPick={onPick} />
 
-      {/* Source tape */}
-      <div style={{ padding: "14px 16px 8px" }}>
-        <div style={{
-          display: "flex", alignItems: "baseline", justifyContent: "space-between",
-          marginBottom: 10,
-        }}>
-          <span style={{
-            fontFamily: "var(--mono)", fontSize: 9, color: "var(--text-4)",
-            textTransform: "uppercase", letterSpacing: "0.12em",
-          }}>Datasets · 7</span>
-          <span style={{
-            fontFamily: "var(--mono)", fontSize: 9, color: "var(--text-4)",
-            letterSpacing: "0.06em",
-          }}>
-            for {intent.verb}
-          </span>
-        </div>
+      {/* Source tape — loose rows */}
+      <div style={{ paddingTop: 8 }}>
         {SOURCES.map((s, i) => (
           <SourceRow key={`${s.key}-${runId}`} source={s} index={i} active={!!resolved} />
         ))}
       </div>
 
-      {/* Footer */}
+      {/* Footer line — loose */}
       <div style={{
-        padding: "10px 16px",
-        borderTop: "1px solid var(--border)",
-        background: "var(--bg-off)",
         display: "flex", justifyContent: "space-between", alignItems: "center",
+        paddingTop: 4,
       }}>
         <span style={{
           fontFamily: "var(--mono)", fontSize: 9,
           color: "var(--text-3)", letterSpacing: "0.08em",
         }}>
-          {resolved ? `LSOA lookup → ${resolved.display}` : "awaiting input"}
+          {resolved ? `LSOA → ${resolved.display.toUpperCase()}` : "awaiting input"}
         </span>
         <span style={{
           fontFamily: "var(--mono)", fontSize: 9, fontWeight: 500,
@@ -1074,22 +1110,21 @@ function UKMap({
   }
 
   return (
-    <div style={{
+    <div className="aiq-map" style={{
       position: "relative",
       width: "100%",
       aspectRatio: `${VB_W}/${VB_H}`,
-      background:
-        "linear-gradient(180deg, #FDFEFB 0%, #F6F9F4 100%)",
-      borderBottom: "1px solid var(--border)",
       overflow: "hidden",
     }}>
-      {/* Very subtle grid wash */}
+      {/* Very subtle grid wash — floats, no card */}
       <div style={{
-        position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.5,
+        position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.4,
         backgroundImage:
           "linear-gradient(to right, rgba(10,77,58,0.04) 1px, transparent 1px)," +
           "linear-gradient(to bottom, rgba(10,77,58,0.04) 1px, transparent 1px)",
         backgroundSize: "28px 28px",
+        maskImage: "radial-gradient(circle at center, black 40%, transparent 80%)",
+        WebkitMaskImage: "radial-gradient(circle at center, black 40%, transparent 80%)",
       }} />
 
       <svg
@@ -1457,9 +1492,9 @@ const SampleReport = forwardRef<
           </h2>
 
           {/* Score + Narrative grid */}
-          <div style={{
+          <div className="aiq-report-grid" style={{
             display: "grid",
-            gridTemplateColumns: "260px 1fr",
+            gridTemplateColumns: "260px minmax(0, 1fr)",
             gap: 48, alignItems: "start",
             border: "1px solid var(--border)",
             borderRadius: 20,
@@ -1630,14 +1665,14 @@ const SampleReport = forwardRef<
             </div>
 
             {topDims.map((d, i) => (
-              <div key={d.key} style={{
+              <div key={d.key} className="aiq-dim-row" style={{
                 display: "grid",
-                gridTemplateColumns: "200px 56px 1fr 56px",
+                gridTemplateColumns: "minmax(140px, 200px) 54px minmax(0, 1fr) 48px",
                 alignItems: "center", gap: 18,
                 padding: "14px 0",
                 borderBottom: i < topDims.length - 1 ? "1px solid var(--border-dim)" : "none",
               }}>
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <div style={{
                     fontSize: 14, fontWeight: 500, color: "var(--ink-deep)",
                     letterSpacing: "-0.005em",
@@ -1663,7 +1698,7 @@ const SampleReport = forwardRef<
                   w{d.weight}%
                 </div>
 
-                <div>
+                <div style={{ minWidth: 0, overflow: "hidden" }}>
                   <div style={{
                     height: 6, background: "var(--border-dim)",
                     borderRadius: 3, overflow: "hidden", position: "relative",
@@ -1678,6 +1713,7 @@ const SampleReport = forwardRef<
                     fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-4)",
                     marginTop: 5, letterSpacing: "0.01em",
                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                    maxWidth: "100%",
                   }}>{d.detail}</div>
                 </div>
 
