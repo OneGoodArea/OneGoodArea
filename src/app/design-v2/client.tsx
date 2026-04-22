@@ -4,9 +4,9 @@ import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
 import SAMPLE_REPORTS_JSON from "./sample-reports.json";
 
 /* ═══════════════════════════════════════════════════════════════
-   OneGoodArea — Design V2 Hero
+   OneGoodArea — Design V2
    Forest green + signal chartreuse + white
-   Instrument Serif (display) · Inter Tight (body) · JetBrains Mono
+   Fraunces (display) · Inter (body) · Geist Mono (labels)
    ═══════════════════════════════════════════════════════════════ */
 
 /* ─────── Domain data ─────── */
@@ -243,6 +243,9 @@ export default function DesignV2Client() {
         shown={showReport && !!resolved}
         raw={raw}
       />
+      <HowItWorks />
+      <IntentsSection />
+      <AudiencesSection />
     </div>
   );
 }
@@ -252,7 +255,7 @@ export default function DesignV2Client() {
 function Styles() {
   return (
     <style jsx global>{`
-      @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap');
 
       .aiq {
         /* Ink — forest green primary */
@@ -275,9 +278,9 @@ function Styles() {
         --text-3:     #6E8278;
         --text-4:     #9CAFA5;
 
-        --display: 'Instrument Serif', 'Times New Roman', serif;
-        --sans:    'Inter Tight', -apple-system, system-ui, sans-serif;
-        --mono:    'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+        --display: 'Fraunces', 'Times New Roman', serif;
+        --sans:    'Inter', -apple-system, system-ui, sans-serif;
+        --mono:    'Geist Mono', ui-monospace, 'SF Mono', monospace;
 
         background: var(--bg);
         color: var(--text);
@@ -313,6 +316,10 @@ function Styles() {
         0%   { width: 0%; }
         100% { width: 100%; }
       }
+      @keyframes aiq-rotate-in {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
 
       /* ─── Responsive ─────────────────────────────────────── */
       /* Tablet / narrow desktop: stack the hero columns */
@@ -346,6 +353,60 @@ function Styles() {
           grid-template-columns: 1fr !important;
           gap: 28px !important;
           padding: 24px !important;
+        }
+      }
+
+      /* Who + Why 2-col: stack on narrow viewports */
+      @media (max-width: 820px) {
+        .aiq-who-why-grid {
+          grid-template-columns: 1fr !important;
+          gap: 48px !important;
+        }
+        .aiq-who-why-divider { display: none !important; }
+        .aiq-who-col {
+          padding-right: 0 !important;
+          padding-bottom: 40px !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+        .aiq-why-col {
+          padding-left: 0 !important;
+          padding-top: 8px !important;
+        }
+      }
+
+      /* Intents section: collapse to 2 cols on tablet, 1 on mobile */
+      @media (max-width: 880px) {
+        .aiq-intents-grid {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aiq-intent-col:nth-child(2) { border-right: none !important; }
+        .aiq-intent-col:nth-child(1),
+        .aiq-intent-col:nth-child(2) { border-bottom: 1px solid var(--border) !important; }
+      }
+      @media (max-width: 560px) {
+        .aiq-intents-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-intent-col { border-right: none !important; border-bottom: 1px solid var(--border) !important; }
+        .aiq-intent-col:last-child { border-bottom: none !important; }
+      }
+
+
+      /* How It Works zigzag: rows collapse on narrow viewports */
+      @media (max-width: 820px) {
+        .aiq-hiw-row {
+          grid-template-columns: 1fr !important;
+          gap: 28px !important;
+          padding: 24px 0 !important;
+        }
+        .aiq-hiw-row > *:nth-child(1) {
+          order: 1 !important;
+        }
+        .aiq-hiw-row > *:nth-child(2) {
+          order: 2 !important;
+        }
+        .aiq-hiw-connector {
+          padding: 4px 0 !important;
         }
       }
 
@@ -429,11 +490,16 @@ function Nav() {
         <div style={{ flex: 1 }} />
 
         <div className="aiq-nav-links" style={{ display: "flex", alignItems: "center", gap: 28 }}>
-          {["How it works", "API", "Pricing", "Blog"].map((l) => (
-            <a key={l} href="#" style={linkStyle}
+          {[
+            { label: "How it works", href: "#how-it-works" },
+            { label: "API", href: "#" },
+            { label: "Pricing", href: "#" },
+            { label: "Blog", href: "#" },
+          ].map((l) => (
+            <a key={l.label} href={l.href} style={linkStyle}
               onMouseEnter={(e) => (e.currentTarget.style.color = "var(--ink)")}
               onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-2)")}
-            >{l}</a>
+            >{l.label}</a>
           ))}
         </div>
 
@@ -479,182 +545,285 @@ function Hero({
   intent: (typeof INTENTS)[number];
   onRun: () => void;
 }) {
-  const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const placeholders = useMemo(() => [
-    "Manchester", "SW4 0LG", "Bristol", "EH1 1BB", "Clapham", "M1 1AE",
-  ], []);
-
-  useEffect(() => {
-    if (raw) return;
-    const t = setInterval(() => setPlaceholderIdx((i) => (i + 1) % placeholders.length), 2100);
-    return () => clearInterval(t);
-  }, [raw, placeholders.length]);
-
   useEffect(() => {
     const t = setTimeout(() => inputRef.current?.focus(), 500);
     return () => clearTimeout(t);
   }, []);
 
-  const ghost = !raw ? placeholders[placeholderIdx] : "";
-
   return (
     <section style={{
       position: "relative",
       background: "var(--bg)",
+      borderBottom: "1px solid var(--border)",
     }}>
-      {/* Ambient chartreuse wash — clipped to hero only */}
+      {/* Ambient chartreuse wash — centered */}
       <div style={{
         position: "absolute", inset: 0, overflow: "hidden",
         pointerEvents: "none", zIndex: 0,
       }}>
         <div style={{
-          position: "absolute", top: -220, right: -180, width: 640, height: 640,
-          background: "radial-gradient(circle at center, rgba(212,243,58,0.35) 0%, rgba(212,243,58,0) 65%)",
+          position: "absolute", top: -260, left: "50%",
+          transform: "translateX(-50%)",
+          width: 960, height: 740,
+          background: "radial-gradient(ellipse at center, rgba(212,243,58,0.22) 0%, rgba(212,243,58,0) 58%)",
         }} />
       </div>
 
-      <div className="aiq-hero-grid" style={{
-        maxWidth: 1320, margin: "0 auto", padding: "40px 48px 48px",
+      <div style={{
+        maxWidth: 780, margin: "0 auto",
+        padding: "112px 40px 112px",
         position: "relative", zIndex: 1,
-        display: "grid",
-        gridTemplateColumns: "minmax(0, 1.1fr) minmax(0, 0.9fr)",
-        gap: 88,
-        alignItems: "start",
+        textAlign: "center",
       }}>
-        {/* ── Left: inline-sentence hero ── */}
-        <div style={{ position: "relative", paddingTop: 24 }}>
-          <Eyebrow />
+        <HeroEyebrow />
 
-          {/* The sentence — two explicit lines, no ch-based wrap */}
-          <h1 className="aiq-headline" style={{
-            fontFamily: "var(--display)",
-            fontWeight: 400,
-            fontSize: "clamp(2.6rem, 5.4vw, 4.8rem)",
-            lineHeight: 1.06,
-            letterSpacing: "-0.025em",
-            color: "var(--ink-deep)",
-            margin: "28px 0 36px",
-            animation: "aiq-fade-up 900ms cubic-bezier(0.16,1,0.3,1) 60ms both",
-          }}>
-            <span style={{ display: "block" }}>
-              Score{" "}
-              <InlineInput
-                ref={inputRef}
-                value={raw}
-                onChange={setRaw}
-                onSubmit={onRun}
-                ghost={ghost}
-                resolved={resolved}
-              />
-            </span>
-            <span className="aiq-for-line" style={{ display: "block", whiteSpace: "nowrap" }}>
-              for{" "}
-              <span style={{
-                color: "var(--ink)", fontStyle: "italic",
-                borderBottom: "2px solid var(--signal)",
-                paddingBottom: 2,
-              }}>
-                {intent.verb}
-              </span>
-              <span style={{ color: "var(--ink-deep)" }}>.</span>
-            </span>
-          </h1>
+        <h1 style={{
+          fontFamily: "var(--display)", fontWeight: 400,
+          fontSize: "clamp(2.6rem, 5.4vw, 4.6rem)",
+          lineHeight: 1.03, letterSpacing: "-0.025em",
+          color: "var(--ink-deep)",
+          margin: "28px 0 0",
+          animation: "aiq-fade-up 800ms cubic-bezier(0.16,1,0.3,1) both",
+        }}>
+          An intelligence report for{" "}
+          <span style={{
+            fontStyle: "italic", color: "var(--ink)",
+            borderBottom: "3px solid var(--signal)", paddingBottom: 2,
+          }}>every UK postcode</span>.
+        </h1>
 
-          {/* Intent strip — always visible, editorial tabs */}
-          <IntentStrip intentId={intentId} onPick={setIntentId} />
+        <p style={{
+          fontFamily: "var(--sans)", fontSize: 19, lineHeight: 1.55,
+          color: "var(--text-2)", letterSpacing: "-0.005em",
+          margin: "24px auto 40px",
+          maxWidth: "34em",
+          animation: "aiq-fade-up 800ms cubic-bezier(0.16,1,0.3,1) 100ms both",
+        }}>
+          Type a place. Pick why you're looking. Seven public datasets do the rest.
+        </p>
 
-          {/* Meaning line */}
-          <p style={{
-            fontFamily: "var(--sans)",
-            fontSize: 17, lineHeight: 1.6, color: "var(--text-2)",
-            maxWidth: "52ch", letterSpacing: "-0.008em", margin: "0 0 32px",
-            animation: "aiq-fade-up 900ms cubic-bezier(0.16,1,0.3,1) 180ms both",
-          }}>
-            Type a UK postcode, city or town. OneGoodArea queries seven government datasets,
-            weights them for <em style={{ fontFamily: "var(--display)", fontWeight: 400, color: "var(--ink)" }}>{intent.noun}</em>,
-            and narrates the result.
-          </p>
-
-          {/* Action row */}
+        {/* Form — centered */}
+        <div style={{
+          display: "flex", justifyContent: "center",
+          gap: 10, flexWrap: "wrap",
+          animation: "aiq-fade-up 800ms cubic-bezier(0.16,1,0.3,1) 180ms both",
+        }}>
           <div style={{
-            display: "flex", alignItems: "center", gap: 14, marginBottom: 28,
-            animation: "aiq-fade-up 900ms cubic-bezier(0.16,1,0.3,1) 260ms both",
+            position: "relative", width: "100%", maxWidth: 360,
+            border: `1px solid ${resolved ? "var(--ink)" : "var(--border)"}`,
+            borderRadius: 8,
+            background: "var(--bg)",
+            transition: "border-color 160ms",
           }}>
-            <button
-              disabled={!resolved}
-              onClick={onRun}
+            <input
+              ref={inputRef}
+              value={raw}
+              onChange={(e) => setRaw(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && resolved) onRun(); }}
+              placeholder="e.g. Manchester, SW4 0LG"
               style={{
-                fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600,
-                color: resolved ? "var(--signal-ink)" : "var(--text-4)",
-                background: resolved ? "var(--signal)" : "var(--bg-off)",
-                border: `1px solid ${resolved ? "var(--ink-deep)" : "var(--border)"}`,
-                borderRadius: 999, padding: "11px 22px",
-                cursor: resolved ? "pointer" : "not-allowed",
-                transition: "all 180ms cubic-bezier(0.16,1,0.3,1)",
-                boxShadow: resolved ? "0 1px 0 rgba(6,42,30,0.04)" : "none",
-                letterSpacing: "-0.005em",
+                width: "100%",
+                fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500,
+                color: "var(--ink-deep)", letterSpacing: "-0.01em",
+                padding: "14px 18px", border: "none", outline: "none",
+                borderRadius: 8, background: "transparent",
+                textAlign: "left",
               }}
-              onMouseEnter={(e) => {
-                if (!resolved) return;
-                e.currentTarget.style.transform = "translateY(-1px)";
-                e.currentTarget.style.boxShadow = "0 8px 20px rgba(6,42,30,0.14)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = resolved ? "0 1px 0 rgba(6,42,30,0.04)" : "none";
-              }}
-            >
-              Run the engine →
-            </button>
-            <span style={{
-              fontFamily: "var(--mono)", fontSize: 11, color: "var(--text-3)",
-              letterSpacing: "0.01em",
-            }}>
-              3 free reports / month · no card
-            </span>
+            />
           </div>
-
-          {/* Try row */}
-          <div style={{
-            display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
-            animation: "aiq-fade-up 900ms cubic-bezier(0.16,1,0.3,1) 340ms both",
-          }}>
-            <span style={{
-              fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-4)",
-              textTransform: "uppercase", letterSpacing: "0.12em",
-            }}>Try</span>
-            {["Manchester", "SW4 0LG", "Edinburgh", "Clapham", "BS1 4DJ"].map((s) => (
-              <button key={s} onClick={() => setRaw(s)} style={{
-                fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-                color: "var(--ink)", background: "transparent",
-                border: "1px solid var(--border)", borderRadius: 6,
-                padding: "4px 10px", cursor: "pointer",
-                transition: "all 140ms",
-              }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "var(--ink-deep)";
-                  e.currentTarget.style.color = "var(--signal)";
-                  e.currentTarget.style.borderColor = "var(--ink-deep)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.color = "var(--ink)";
-                  e.currentTarget.style.borderColor = "var(--border)";
-                }}
-              >{s}</button>
-            ))}
-          </div>
-
-          {/* Pull-quote — fills the vertical gap, shows the product's voice */}
-          <PullQuote intent={intent} />
+          <button
+            disabled={!resolved}
+            onClick={onRun}
+            style={{
+              fontFamily: "var(--sans)", fontSize: 15, fontWeight: 600,
+              color: resolved ? "var(--signal-ink)" : "var(--text-4)",
+              background: resolved ? "var(--signal)" : "var(--bg-off)",
+              border: `1px solid ${resolved ? "var(--ink-deep)" : "var(--border)"}`,
+              borderRadius: 8, padding: "0 24px",
+              cursor: resolved ? "pointer" : "not-allowed",
+              letterSpacing: "-0.005em",
+              display: "inline-flex", alignItems: "center", gap: 8,
+              transition: "all 180ms cubic-bezier(0.16,1,0.3,1)",
+              minHeight: 48,
+            }}
+            onMouseEnter={(e) => {
+              if (!resolved) return;
+              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.boxShadow = "0 8px 20px rgba(6,42,30,0.14)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          >
+            Get report
+            <span style={{ fontSize: 16 }}>→</span>
+          </button>
         </div>
 
-        {/* ── Right: the engine panel (map + live source tape) ── */}
-        <EnginePanel resolved={resolved} intent={intent} onPick={setRaw} />
+        {/* Intent tabs — centered */}
+        <div style={{
+          marginTop: 28,
+          animation: "aiq-fade-up 800ms cubic-bezier(0.16,1,0.3,1) 260ms both",
+        }}>
+          <div style={{
+            fontFamily: "var(--mono)", fontSize: 10,
+            letterSpacing: "0.24em", textTransform: "uppercase",
+            color: "var(--text-3)", marginBottom: 12,
+          }}>Pick why you're looking</div>
+          <div style={{
+            display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap",
+          }}>
+            {INTENTS.map((it) => {
+              const active = it.id === intentId;
+              return (
+                <button
+                  key={it.id}
+                  onClick={() => setIntentId(it.id)}
+                  style={{
+                    fontFamily: "var(--sans)", fontSize: 13, fontWeight: 500,
+                    color: active ? "var(--signal)" : "var(--text-2)",
+                    background: active ? "var(--ink-deep)" : "transparent",
+                    border: `1px solid ${active ? "var(--ink-deep)" : "var(--border)"}`,
+                    borderRadius: 999, padding: "7px 16px",
+                    cursor: "pointer",
+                    letterSpacing: "-0.005em",
+                    transition: "all 160ms",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!active) e.currentTarget.style.color = "var(--ink-deep)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) e.currentTarget.style.color = "var(--text-2)";
+                  }}
+                >
+                  {it.verb}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
       </div>
     </section>
+  );
+}
+
+/* ─────── Hero pieces ─────── */
+
+function HeroEyebrow() {
+  return (
+    <div style={{
+      fontFamily: "var(--mono)", fontSize: 11,
+      letterSpacing: "0.22em", textTransform: "uppercase",
+      color: "var(--text-3)",
+      display: "inline-flex", alignItems: "center", gap: 10,
+      animation: "aiq-fade-up 700ms cubic-bezier(0.16,1,0.3,1) both",
+    }}>
+      <span style={{
+        width: 6, height: 6, borderRadius: 999,
+        background: "var(--signal)",
+        boxShadow: "0 0 0 4px rgba(212,243,58,0.22)",
+        animation: "aiq-pulse-dot 1800ms ease-in-out infinite",
+      }} />
+      <span>UK area intelligence</span>
+    </div>
+  );
+}
+
+function HeroForm({
+  inputRef, raw, setRaw, resolved, onRun,
+}: {
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  raw: string;
+  setRaw: (v: string) => void;
+  resolved: { lat: number; lng: number; display: string } | null;
+  onRun: () => void;
+}) {
+  return (
+    <div style={{
+      animation: "aiq-fade-up 800ms cubic-bezier(0.16,1,0.3,1) 180ms both",
+    }}>
+      <div style={{
+        display: "flex", alignItems: "stretch",
+        gap: 10, maxWidth: 520,
+      }}>
+        <div style={{
+          flex: 1, position: "relative",
+          border: `1px solid ${resolved ? "var(--ink)" : "var(--border)"}`,
+          borderRadius: 8,
+          background: "var(--bg)",
+          transition: "border-color 160ms",
+        }}>
+          <input
+            ref={inputRef}
+            value={raw}
+            onChange={(e) => setRaw(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && resolved) onRun();
+            }}
+            placeholder="e.g. Manchester, SW4 0LG, Bristol"
+            style={{
+              width: "100%",
+              fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500,
+              color: "var(--ink-deep)", letterSpacing: "-0.01em",
+              padding: "14px 16px", border: "none", outline: "none",
+              borderRadius: 8, background: "transparent",
+            }}
+          />
+          {resolved && (
+            <span style={{
+              position: "absolute", right: 14, top: "50%",
+              transform: "translateY(-50%)",
+              fontFamily: "var(--mono)", fontSize: 10,
+              color: "var(--ink)", fontWeight: 500,
+              letterSpacing: "0.1em", textTransform: "uppercase",
+              display: "inline-flex", alignItems: "center", gap: 6,
+            }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2.5 6.2l2.3 2.3 4.8-4.8" stroke="var(--ink)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              found
+            </span>
+          )}
+        </div>
+        <button
+          disabled={!resolved}
+          onClick={onRun}
+          style={{
+            fontFamily: "var(--sans)", fontSize: 15, fontWeight: 600,
+            color: resolved ? "var(--signal-ink)" : "var(--text-4)",
+            background: resolved ? "var(--signal)" : "var(--bg-off)",
+            border: `1px solid ${resolved ? "var(--ink-deep)" : "var(--border)"}`,
+            borderRadius: 8, padding: "0 22px",
+            cursor: resolved ? "pointer" : "not-allowed",
+            letterSpacing: "-0.005em",
+            display: "inline-flex", alignItems: "center", gap: 8,
+            transition: "all 180ms cubic-bezier(0.16,1,0.3,1)",
+          }}
+          onMouseEnter={(e) => {
+            if (!resolved) return;
+            e.currentTarget.style.transform = "translateY(-1px)";
+            e.currentTarget.style.boxShadow = "0 8px 20px rgba(6,42,30,0.14)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow = "none";
+          }}
+        >
+          Get report
+          <span style={{ fontSize: 16 }}>→</span>
+        </button>
+      </div>
+      <div style={{
+        fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-3)",
+        letterSpacing: "0.14em", textTransform: "uppercase",
+        marginTop: 10,
+      }}>
+        3 free reports / month · no card required
+      </div>
+    </div>
   );
 }
 
@@ -1537,7 +1706,7 @@ const SampleReport = forwardRef<
                 color: "var(--ink)", letterSpacing: "0.14em", textTransform: "uppercase",
                 marginBottom: 14,
               }}>
-                Narrative · Claude Sonnet
+                Narrative · areaiq engine
               </div>
               <p
                 key={`nar-${intentId}-${resolved.display}`}
@@ -1590,7 +1759,7 @@ const SampleReport = forwardRef<
                 }}>
                   {[
                     `${hiddenCount} more dimension${hiddenCount === 1 ? "" : "s"} scored against 7 datasets`,
-                    "Custom Claude recommendations for your situation",
+                    "Tailored recommendations for your situation",
                     "5-year trend data and comparable postcodes",
                     "Downloadable PDF + shareable permalink",
                   ].map((bullet) => (
@@ -1862,3 +2031,1726 @@ function ScoreRing({ score, intentId }: { score: number; intentId: IntentId }) {
     </div>
   );
 }
+
+/* ─────── HeroReportCard — illustrative sample output in the hero ─────── */
+/* This is what the user gets when they run the engine. Static by design —
+   it's a preview, not a live report. Real live report lives downstream. */
+
+const HERO_CARD_DIMS = [
+  { label: "Safety & Crime",      score: 80, weight: 25 },
+  { label: "Schools & Education", score: 95, weight: 20 },
+  { label: "Transport & Commute", score: 95, weight: 20 },
+  { label: "Daily Amenities",     score: 95, weight: 15 },
+  { label: "Cost of Living",      score: 58, weight: 20 },
+];
+
+function HeroReportCard({
+  intent, resolved,
+}: {
+  intent: (typeof INTENTS)[number];
+  resolved: { lat: number; lng: number; display: string } | null;
+}) {
+  const displayName = resolved?.display || "Manchester";
+  return (
+    <aside style={{
+      position: "relative",
+      animation: "aiq-fade-up 900ms cubic-bezier(0.16,1,0.3,1) 200ms both",
+    }}>
+      {/* Paper underlay — gives it a printed-report feel */}
+      <div style={{
+        position: "absolute", inset: 0,
+        transform: "translate(10px, 12px) rotate(0.6deg)",
+        background: "var(--bg-off)",
+        border: "1px solid var(--border)",
+        borderRadius: 6,
+        zIndex: 0,
+      }} />
+      <div style={{
+        position: "absolute", inset: 0,
+        transform: "translate(5px, 6px) rotate(0.2deg)",
+        background: "var(--bg)",
+        border: "1px solid var(--border)",
+        borderRadius: 6,
+        zIndex: 1,
+      }} />
+
+      <article style={{
+        position: "relative", zIndex: 2,
+        background: "var(--bg)",
+        border: "1px solid var(--ink-deep)",
+        borderRadius: 6,
+        padding: "26px 30px 24px",
+        boxShadow: "0 18px 40px rgba(6,42,30,0.08), 0 2px 6px rgba(6,42,30,0.04)",
+      }}>
+        {/* Header strip */}
+        <div style={{
+          display: "flex", justifyContent: "space-between", alignItems: "baseline",
+          gap: 10, flexWrap: "wrap",
+          paddingBottom: 14,
+          borderBottom: "1px solid var(--border)",
+        }}>
+          <div style={{
+            fontFamily: "var(--mono)", fontSize: 10,
+            letterSpacing: "0.22em", textTransform: "uppercase",
+            color: "var(--ink)",
+            display: "inline-flex", alignItems: "center", gap: 8,
+          }}>
+            <Mark size={14} />
+            OneGoodArea report
+          </div>
+          <div style={{
+            fontFamily: "var(--mono)", fontSize: 9,
+            letterSpacing: "0.18em", textTransform: "uppercase",
+            color: "var(--text-3)",
+          }}>preview · sample</div>
+        </div>
+
+        {/* Area + intent */}
+        <div style={{
+          fontFamily: "var(--mono)", fontSize: 10,
+          letterSpacing: "0.18em", textTransform: "uppercase",
+          color: "var(--text-3)",
+          margin: "18px 0 8px",
+        }}>
+          {displayName} · scored for <span style={{ color: "var(--ink)", fontWeight: 500 }}>{intent.verb}</span>
+        </div>
+
+        {/* Verdict + score */}
+        <div style={{
+          display: "flex", alignItems: "flex-end", justifyContent: "space-between",
+          gap: 16, margin: "0 0 22px",
+        }}>
+          <h3 style={{
+            fontFamily: "var(--display)", fontWeight: 400,
+            fontStyle: "italic",
+            fontSize: "clamp(1.8rem, 3vw, 2.3rem)", lineHeight: 1.05,
+            letterSpacing: "-0.02em", color: "var(--ink-deep)", margin: 0,
+          }}>
+            Strong fit<span style={{ borderBottom: "3px solid var(--signal)", paddingBottom: 2 }}>.</span>
+          </h3>
+          <div style={{
+            fontFamily: "var(--display)", fontWeight: 400,
+            fontSize: "clamp(2.6rem, 4vw, 3.4rem)", lineHeight: 1,
+            color: "var(--ink-deep)", letterSpacing: "-0.03em",
+            fontVariantNumeric: "tabular-nums",
+          }}>
+            84<span style={{
+              fontSize: "0.38em", color: "var(--text-3)",
+              fontFamily: "var(--mono)", marginLeft: 4,
+            }}>/ 100</span>
+          </div>
+        </div>
+
+        {/* Dimension bars */}
+        <div style={{
+          borderTop: "1px dashed var(--border)",
+          paddingTop: 14, marginBottom: 18,
+        }}>
+          {HERO_CARD_DIMS.map((d, i) => (
+            <HeroCardDim key={d.label} dim={d} index={i} />
+          ))}
+        </div>
+
+        {/* Narrative preview */}
+        <div style={{
+          fontFamily: "var(--display)", fontStyle: "italic", fontWeight: 400,
+          fontSize: 15.5, lineHeight: 1.55,
+          color: "var(--ink-deep)", letterSpacing: "-0.005em",
+          position: "relative", paddingLeft: 22,
+          margin: "0 0 18px",
+        }}>
+          <span style={{
+            position: "absolute", left: 0, top: -6,
+            fontSize: 38, color: "var(--signal)",
+            fontFamily: "var(--display)", lineHeight: 1,
+          }}>&ldquo;</span>
+          Manchester does what a move needs — exceptional transport, abundant
+          amenities, and safety that reads strong for a city core.
+        </div>
+
+        {/* Footer — trust strip */}
+        <div style={{
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+          gap: 12, flexWrap: "wrap",
+          paddingTop: 14, borderTop: "1px solid var(--border)",
+          fontFamily: "var(--mono)", fontSize: 9,
+          letterSpacing: "0.18em", textTransform: "uppercase",
+          color: "var(--text-3)",
+        }}>
+          <span>7 public datasets · LSOA precision</span>
+          <span style={{ color: "var(--ink)" }}>numbers locked</span>
+        </div>
+      </article>
+
+      {/* Small caption under the card */}
+      <div style={{
+        fontFamily: "var(--mono)", fontSize: 10,
+        letterSpacing: "0.16em", textTransform: "uppercase",
+        color: "var(--text-3)", textAlign: "center",
+        marginTop: 22,
+      }}>
+        sample · type a real postcode to generate yours
+      </div>
+    </aside>
+  );
+}
+
+function HeroCardDim({
+  dim, index,
+}: {
+  dim: (typeof HERO_CARD_DIMS)[number];
+  index: number;
+}) {
+  const rag = dim.score >= 70 ? "var(--ink)" : dim.score >= 45 ? "#E2C94A" : "#E97451";
+  return (
+    <div style={{
+      display: "grid",
+      gridTemplateColumns: "minmax(0, 1fr) 80px 36px 42px",
+      gap: 12, alignItems: "center",
+      padding: "6px 0",
+    }}>
+      <div style={{
+        fontFamily: "var(--sans)", fontSize: 13, fontWeight: 500,
+        color: "var(--ink-deep)", letterSpacing: "-0.005em",
+        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+      }}>{dim.label}</div>
+      <div style={{
+        position: "relative", height: 4,
+        background: "var(--border-dim)", borderRadius: 999, overflow: "hidden",
+      }}>
+        <div style={{
+          position: "absolute", inset: 0,
+          width: `${dim.score}%`,
+          background: rag,
+          borderRadius: 999,
+          animation: `aiq-fade-up 700ms cubic-bezier(0.16,1,0.3,1) ${600 + index * 80}ms both`,
+        }} />
+      </div>
+      <div style={{
+        fontFamily: "var(--display)", fontSize: 17, color: "var(--ink-deep)",
+        fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em",
+        textAlign: "right",
+      }}>{dim.score}</div>
+      <div style={{
+        fontFamily: "var(--mono)", fontSize: 9,
+        color: "var(--ink-deep)", fontWeight: 600,
+        background: "var(--signal-dim)",
+        padding: "2px 4px", borderRadius: 2,
+        textAlign: "center", letterSpacing: "0.02em",
+      }}>{dim.weight}%</div>
+    </div>
+  );
+}
+
+/* ─────── How It Works — interactive step player ─────── */
+
+type HIWStepId = "input" | "intent" | "datasets" | "report";
+
+const HIW_STEPS: {
+  id: HIWStepId;
+  number: string;
+  short: string;
+  title: string;
+  blurb: string;
+}[] = [
+  {
+    id: "input",
+    number: "01",
+    short: "Locate",
+    title: "Type a place.",
+    blurb: "A UK postcode, a city, or a town. Autocomplete pins the exact neighbourhood before anything else runs.",
+  },
+  {
+    id: "intent",
+    number: "02",
+    short: "Intent",
+    title: "Pick why you're looking.",
+    blurb: "Moving home, opening a business, property investing, or market research. Each reads the same area through a different lens.",
+  },
+  {
+    id: "datasets",
+    number: "03",
+    short: "Evidence",
+    title: "We gather the evidence.",
+    blurb: "Crime, schools, transport, amenities, deprivation, property prices, flood risk. All public, all at once.",
+  },
+  {
+    id: "report",
+    number: "04",
+    short: "Report",
+    title: "Out comes a report.",
+    blurb: "A score, five weighted dimensions with plain-English reasoning, a narrative read, and specific recommendations.",
+  },
+];
+
+function HowItWorks() {
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    if (!expanded) return;
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === "Escape") setExpanded(false); };
+    window.addEventListener("keydown", handleEsc);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", handleEsc);
+      document.body.style.overflow = prev;
+    };
+  }, [expanded]);
+
+  return (
+    <>
+      <section id="how-it-works" style={{
+        background: "var(--bg-off)",
+        borderTop: "1px solid var(--border)",
+        padding: "96px 0 112px",
+      }}>
+        <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 40px" }}>
+          <div style={{ textAlign: "center", maxWidth: 680, margin: "0 auto 64px" }}>
+            <div style={{
+              fontFamily: "var(--mono)", fontSize: 11,
+              letterSpacing: "0.22em", textTransform: "uppercase",
+              color: "var(--text-3)", marginBottom: 18,
+            }}>How it works</div>
+            <h2 style={{
+              fontFamily: "var(--display)", fontWeight: 400,
+              fontSize: "clamp(1.9rem, 3.6vw, 2.8rem)",
+              lineHeight: 1.08, letterSpacing: "-0.02em",
+              color: "var(--ink-deep)", margin: 0,
+            }}>
+              A postcode to a{" "}
+              <span style={{
+                fontStyle: "italic", color: "var(--ink)",
+                borderBottom: "3px solid var(--signal)", paddingBottom: 2,
+              }}>full read</span>, in four steps.
+            </h2>
+          </div>
+          <div>
+            {HIW_STEPS.map((step, i) => (
+              <HIWRow
+                key={step.id}
+                step={step}
+                index={i}
+                last={i === HIW_STEPS.length - 1}
+                onExpandReport={() => setExpanded(true)}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {expanded && <ExpandedReportModal onClose={() => setExpanded(false)} />}
+    </>
+  );
+}
+
+function HIWRow({
+  step, index, last, onExpandReport,
+}: {
+  step: (typeof HIW_STEPS)[number];
+  index: number;
+  last: boolean;
+  onExpandReport: () => void;
+}) {
+  const reverse = index % 2 === 1;
+  const copy = (
+    <div>
+      <div style={{
+        fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
+        letterSpacing: "0.22em", color: "var(--ink)",
+        marginBottom: 14, textTransform: "uppercase",
+      }}>Step {step.number}</div>
+      <h3 style={{
+        fontFamily: "var(--display)", fontWeight: 400,
+        fontSize: "clamp(1.55rem, 2.4vw, 2rem)", lineHeight: 1.12,
+        letterSpacing: "-0.02em", color: "var(--ink-deep)", margin: 0,
+      }}>
+        {step.title}
+      </h3>
+      <p style={{
+        fontFamily: "var(--sans)", fontSize: 15.5, lineHeight: 1.6,
+        color: "var(--text-2)", letterSpacing: "-0.003em",
+        margin: "16px 0 0", maxWidth: "36ch",
+      }}>
+        {step.blurb}
+      </p>
+    </div>
+  );
+  const ui = (
+    <div style={{
+      display: "flex", alignItems: "center", justifyContent: "center",
+      flexDirection: "column", gap: 14,
+    }}>
+      {step.id === "input" && <HIWPanelInput />}
+      {step.id === "intent" && <HIWPanelIntent />}
+      {step.id === "datasets" && <HIWPanelDatasets />}
+      {step.id === "report" && <HIWPanelReport onExpand={onExpandReport} />}
+    </div>
+  );
+
+  return (
+    <>
+      <div className="aiq-hiw-row" style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: 64,
+        alignItems: "center",
+        padding: "36px 0",
+      }}>
+        {reverse ? (<>{ui}{copy}</>) : (<>{copy}{ui}</>)}
+      </div>
+      {!last && <HIWConnector />}
+    </>
+  );
+}
+
+function HIWConnector() {
+  return (
+    <div className="aiq-hiw-connector" style={{
+      display: "flex", justifyContent: "center", alignItems: "center",
+      padding: "8px 0",
+    }}>
+      <div style={{
+        width: 1, height: 48, background: "var(--border)",
+        position: "relative",
+      }}>
+        <span style={{
+          position: "absolute", left: "50%", top: "50%",
+          transform: "translate(-50%, -50%)",
+          width: 9, height: 9, borderRadius: 999,
+          background: "var(--signal)",
+          boxShadow: "0 0 0 4px var(--bg-off)",
+        }} />
+      </div>
+    </div>
+  );
+}
+
+function HIWPanelInput() {
+  return (
+    <div style={{ width: "100%", maxWidth: 420 }}>
+      <div style={{
+        position: "relative",
+        border: "1.5px solid var(--ink)",
+        borderRadius: 10,
+        background: "var(--bg)",
+        padding: "18px 20px",
+        fontFamily: "var(--sans)", fontSize: 17, fontWeight: 500,
+        color: "var(--ink-deep)",
+        boxShadow: "0 4px 14px rgba(6,42,30,0.06)",
+      }}>
+        Manchester
+        <span style={{
+          width: 2, height: 18, background: "var(--signal)",
+          marginLeft: 3, display: "inline-block", verticalAlign: "text-bottom",
+          animation: "aiq-caret 1000ms steps(2) infinite",
+        }} />
+        <div style={{
+          position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)",
+          display: "inline-flex", alignItems: "center", gap: 6,
+          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
+          color: "var(--ink)", letterSpacing: "0.14em", textTransform: "uppercase",
+        }}>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M2.5 6.2l2.3 2.3 4.8-4.8" stroke="var(--ink)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          found
+        </div>
+      </div>
+      <div style={{
+        marginTop: 14,
+        display: "flex", alignItems: "center", gap: 10,
+        fontFamily: "var(--mono)", fontSize: 10,
+        letterSpacing: "0.18em", textTransform: "uppercase",
+        color: "var(--text-3)",
+      }}>
+        <span style={{ width: 14, height: 1, background: "var(--ink)", display: "inline-block" }} />
+        North West · urban · neighbourhood pinned
+      </div>
+    </div>
+  );
+}
+
+const HIW_INTENT_ITEMS = [
+  { id: "moving",     number: "01", verb: "moving home" },
+  { id: "business",   number: "02", verb: "opening a business" },
+  { id: "investing",  number: "03", verb: "property investing" },
+  { id: "research",   number: "04", verb: "market research" },
+];
+
+function HIWPanelIntent() {
+  return (
+    <div style={{ width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", gap: 10 }}>
+      {HIW_INTENT_ITEMS.map((it) => {
+        const active = it.id === "moving";
+        return (
+          <div key={it.id} style={{
+            border: `1px solid ${active ? "var(--ink-deep)" : "var(--border)"}`,
+            background: active ? "var(--ink-deep)" : "var(--bg)",
+            borderRadius: 999,
+            padding: "10px 18px",
+            display: "flex", alignItems: "center", gap: 12,
+            transition: "all 200ms",
+          }}>
+            <span style={{
+              fontFamily: "var(--mono)", fontSize: 10,
+              color: active ? "rgba(212,243,58,0.55)" : "var(--text-3)",
+              letterSpacing: "0.18em",
+            }}>{it.number}</span>
+            <span style={{
+              fontFamily: "var(--display)", fontStyle: "italic",
+              fontSize: 16, fontWeight: 400,
+              color: active ? "var(--signal)" : "var(--text-2)",
+              letterSpacing: "-0.01em",
+            }}>{it.verb}</span>
+            {active && (
+              <span style={{
+                marginLeft: "auto",
+                fontFamily: "var(--mono)", fontSize: 9,
+                color: "rgba(212,243,58,0.7)",
+                letterSpacing: "0.2em", textTransform: "uppercase",
+              }}>active</span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function HIWPanelDatasets() {
+  const [running, setRunning] = useState(false);
+  useEffect(() => {
+    setRunning(false);
+    const t = setTimeout(() => setRunning(true), 120);
+    return () => clearTimeout(t);
+  }, []);
+  const sources = [
+    { name: "Crime",       latency: 380 },
+    { name: "Deprivation", latency: 90  },
+    { name: "Amenities",   latency: 620 },
+    { name: "Flood risk",  latency: 210 },
+    { name: "Property",    latency: 450 },
+    { name: "Schools",     latency: 180 },
+  ];
+  const max = 620;
+  return (
+    <div style={{ width: "100%", maxWidth: 440 }}>
+      {sources.map((s, i) => {
+        const w = (s.latency / max) * 100;
+        const delay = 60 + i * 40;
+        return (
+          <div key={s.name} style={{
+            display: "grid",
+            gridTemplateColumns: "100px 1fr 20px",
+            gap: 14, alignItems: "center",
+            padding: "9px 0",
+            borderBottom: i < sources.length - 1 ? "1px solid var(--border-dim)" : "none",
+          }}>
+            <div style={{
+              fontFamily: "var(--sans)", fontSize: 13, fontWeight: 500,
+              color: "var(--ink-deep)", letterSpacing: "-0.005em",
+            }}>{s.name}</div>
+            <div style={{
+              position: "relative", height: 4,
+              background: "var(--border-dim)", borderRadius: 999, overflow: "hidden",
+            }}>
+              <div style={{
+                position: "absolute", inset: 0,
+                width: running ? `${w}%` : "0%",
+                background: "var(--ink)",
+                transition: `width 900ms cubic-bezier(0.22,0.61,0.36,1) ${delay}ms`,
+                borderRadius: 999,
+              }} />
+            </div>
+            <div style={{
+              fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
+              color: "var(--ink)",
+              opacity: running ? 1 : 0,
+              transition: `opacity 200ms ${delay + 900}ms`,
+              textAlign: "right",
+            }}>✓</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function HIWPanelReport({ onExpand }: { onExpand?: () => void }) {
+  const dims: { label: string; score: number }[] = [
+    { label: "Safety & Crime",      score: 80 },
+    { label: "Schools & Education", score: 95 },
+    { label: "Transport & Commute", score: 95 },
+    { label: "Daily Amenities",     score: 95 },
+    { label: "Cost of Living",      score: 58 },
+  ];
+  return (
+    <div style={{
+      width: "100%", maxWidth: 420,
+      background: "var(--bg)",
+      border: "1px solid var(--ink-deep)",
+      borderRadius: 6,
+      padding: "22px 24px",
+      boxShadow: "0 14px 34px rgba(6,42,30,0.08), 0 2px 6px rgba(6,42,30,0.04)",
+    }}>
+      <div style={{
+        display: "flex", justifyContent: "space-between",
+        alignItems: "baseline",
+        paddingBottom: 12,
+        borderBottom: "1px solid var(--border)",
+      }}>
+        <span style={{
+          fontFamily: "var(--mono)", fontSize: 9,
+          letterSpacing: "0.2em", textTransform: "uppercase",
+          color: "var(--text-3)",
+        }}>Manchester · moving home</span>
+        <span style={{
+          fontFamily: "var(--display)", fontSize: 28, lineHeight: 1,
+          color: "var(--ink-deep)", fontVariantNumeric: "tabular-nums",
+          letterSpacing: "-0.03em", fontWeight: 400,
+        }}>
+          84<span style={{
+            fontSize: 11, color: "var(--text-3)",
+            fontFamily: "var(--mono)", marginLeft: 3,
+          }}>/100</span>
+        </span>
+      </div>
+      <h4 style={{
+        fontFamily: "var(--display)", fontStyle: "italic", fontWeight: 400,
+        fontSize: 20, lineHeight: 1.15, letterSpacing: "-0.015em",
+        color: "var(--ink-deep)",
+        margin: "16px 0 14px",
+      }}>
+        Strong fit<span style={{ borderBottom: "2px solid var(--signal)", paddingBottom: 1 }}>.</span>
+      </h4>
+      {dims.map((d) => {
+        const rag = d.score >= 70 ? "var(--ink)" : d.score >= 45 ? "#E2C94A" : "#E97451";
+        return (
+          <div key={d.label} style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr) 70px 26px",
+            gap: 10, alignItems: "center",
+            padding: "5px 0",
+          }}>
+            <div style={{
+              fontFamily: "var(--sans)", fontSize: 12, fontWeight: 500,
+              color: "var(--ink-deep)", letterSpacing: "-0.005em",
+              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+            }}>{d.label}</div>
+            <div style={{
+              height: 3, background: "var(--border-dim)",
+              borderRadius: 999, overflow: "hidden",
+            }}>
+              <div style={{ width: `${d.score}%`, height: "100%", background: rag, borderRadius: 999 }} />
+            </div>
+            <div style={{
+              fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
+              color: "var(--ink-deep)", textAlign: "right",
+              fontVariantNumeric: "tabular-nums",
+            }}>{d.score}</div>
+          </div>
+        );
+      })}
+      {onExpand && (
+        <button
+          onClick={onExpand}
+          style={{
+            marginTop: 14, paddingTop: 12,
+            borderTop: "1px dashed var(--border)",
+            width: "100%", background: "transparent", border: "none",
+            cursor: "pointer", textAlign: "left",
+            fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
+            letterSpacing: "0.18em", textTransform: "uppercase",
+            color: "var(--ink)",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            gap: 8,
+            transition: "color 160ms",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "var(--ink-deep)")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "var(--ink)")}
+        >
+          <span>See the full report</span>
+          <span style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            color: "var(--ink-deep)",
+          }}>
+            expand
+            <span style={{
+              width: 20, height: 20, borderRadius: 2,
+              background: "var(--signal)",
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              color: "var(--ink-deep)", fontSize: 11,
+            }}>↗</span>
+          </span>
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ─────── Expanded Report Modal — full anatomy behind Step 4 expand ─────── */
+
+function ExpandedReportModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      style={{
+        position: "fixed", inset: 0,
+        background: "rgba(6,42,30,0.62)",
+        backdropFilter: "blur(6px)",
+        WebkitBackdropFilter: "blur(6px)",
+        zIndex: 100,
+        overflow: "auto",
+        padding: "40px 20px",
+        animation: "aiq-fade-up 260ms cubic-bezier(0.16,1,0.3,1)",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          position: "relative",
+          maxWidth: 860, margin: "0 auto",
+        }}
+      >
+        {/* Close */}
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          style={{
+            position: "absolute", top: -40, right: 0,
+            background: "transparent", border: "none", cursor: "pointer",
+            fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
+            letterSpacing: "0.22em", textTransform: "uppercase",
+            color: "var(--signal)",
+            display: "inline-flex", alignItems: "center", gap: 10,
+          }}
+        >
+          close
+          <span style={{
+            width: 22, height: 22, borderRadius: 2,
+            border: "1px solid var(--signal)",
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            fontSize: 13,
+          }}>×</span>
+        </button>
+
+        <article style={{
+          background: "var(--bg)",
+          border: "1px solid var(--ink-deep)",
+          borderRadius: 6,
+          boxShadow: "0 40px 80px rgba(6,42,30,0.35), 0 6px 14px rgba(6,42,30,0.12)",
+          overflow: "hidden",
+        }}>
+          <IRHeader />
+          <IRSummary />
+          <IRScoreBlock />
+          <IRPropertyMarket />
+          <IRNarrativeBlock />
+          <IRSchools />
+          <IRRecommendations />
+          <IRFooter />
+        </article>
+      </div>
+    </div>
+  );
+}
+
+/* ─────── Intents section — pure explanation of the four lenses ─────── */
+
+const INTENTS_DATA: {
+  id: string;
+  number: string;
+  verb: string;
+  lede: string;
+  dims: string[];
+}[] = [
+  {
+    id: "moving",
+    number: "01",
+    verb: "moving home",
+    lede: "What a buyer or renter needs to know about a neighbourhood before they commit to a viewing or a tenancy.",
+    dims: [
+      "Safety & Crime",
+      "Schools & Education",
+      "Transport & Commute",
+      "Daily Amenities",
+      "Cost of Living",
+    ],
+  },
+  {
+    id: "business",
+    number: "02",
+    verb: "opening a business",
+    lede: "What an operator needs before they sign a lease — footfall, competition, and the cost of holding the space.",
+    dims: [
+      "Foot Traffic & Demand",
+      "Competition Density",
+      "Transport & Access",
+      "Local Spending Power",
+      "Commercial Costs",
+    ],
+  },
+  {
+    id: "investing",
+    number: "03",
+    verb: "property investing",
+    lede: "What a capital allocator weighs when sizing up a buy-to-let or a development opportunity.",
+    dims: [
+      "Price Growth",
+      "Rental Yield",
+      "Regeneration",
+      "Tenant Demand",
+      "Risk Factors",
+    ],
+  },
+  {
+    id: "research",
+    number: "04",
+    verb: "market research",
+    lede: "The balanced, neutral read for analysts, agents, and journalists writing about an area.",
+    dims: [
+      "Safety & Crime",
+      "Transport Links",
+      "Amenities & Services",
+      "Demographics",
+      "Environment & Quality",
+    ],
+  },
+];
+
+function IntentsSection() {
+  return (
+    <section id="intents" style={{
+      background: "var(--bg)",
+      borderTop: "1px solid var(--border)",
+      padding: "104px 0 120px",
+    }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 40px" }}>
+        <div style={{ textAlign: "center", maxWidth: 720, margin: "0 auto 56px" }}>
+          <div style={{
+            fontFamily: "var(--mono)", fontSize: 11,
+            letterSpacing: "0.22em", textTransform: "uppercase",
+            color: "var(--text-3)", marginBottom: 18,
+          }}>The intents</div>
+          <h2 style={{
+            fontFamily: "var(--display)", fontWeight: 400,
+            fontSize: "clamp(1.9rem, 3.6vw, 2.8rem)",
+            lineHeight: 1.08, letterSpacing: "-0.02em",
+            color: "var(--ink-deep)", margin: 0,
+          }}>
+            Four readings for{" "}
+            <span style={{
+              fontStyle: "italic", color: "var(--ink)",
+              borderBottom: "3px solid var(--signal)", paddingBottom: 2,
+            }}>four situations</span>.
+          </h2>
+          <p style={{
+            fontFamily: "var(--sans)", fontSize: 16.5, lineHeight: 1.55,
+            color: "var(--text-2)", letterSpacing: "-0.003em",
+            margin: "20px auto 0", maxWidth: "54ch",
+          }}>
+            Each intent replaces the dimensions and reweights the data. Pick the lens
+            that matches what you're doing — the engine does the rest.
+          </p>
+        </div>
+
+        <div className="aiq-intents-grid" style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+          border: "1px solid var(--border)",
+          borderRadius: 4,
+          overflow: "hidden",
+          background: "var(--bg)",
+        }}>
+          {INTENTS_DATA.map((it, i) => (
+            <IntentColumn
+              key={it.id}
+              intent={it}
+              last={i === INTENTS_DATA.length - 1}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function IntentColumn({
+  intent, last,
+}: {
+  intent: (typeof INTENTS_DATA)[number];
+  last: boolean;
+}) {
+  return (
+    <div className="aiq-intent-col" style={{
+      padding: "30px 24px 34px",
+      borderRight: last ? "none" : "1px solid var(--border)",
+      display: "flex", flexDirection: "column",
+    }}>
+      <div style={{
+        fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
+        letterSpacing: "0.22em", color: "var(--ink)",
+      }}>{intent.number}</div>
+
+      <h3 style={{
+        fontFamily: "var(--display)", fontStyle: "italic", fontWeight: 400,
+        fontSize: 23, lineHeight: 1.15, letterSpacing: "-0.015em",
+        color: "var(--ink-deep)", margin: "8px 0 18px",
+      }}>
+        {intent.verb}
+      </h3>
+
+      <p style={{
+        fontFamily: "var(--sans)", fontSize: 14, lineHeight: 1.55,
+        color: "var(--text-2)", letterSpacing: "-0.003em",
+        margin: "0 0 24px", minHeight: 88,
+      }}>
+        {intent.lede}
+      </p>
+
+      <div style={{
+        paddingTop: 18,
+        borderTop: "1px dashed var(--border)",
+      }}>
+        <div style={{
+          fontFamily: "var(--mono)", fontSize: 9, fontWeight: 500,
+          letterSpacing: "0.22em", textTransform: "uppercase",
+          color: "var(--text-3)", marginBottom: 12,
+        }}>Scored on</div>
+        <ul style={{
+          listStyle: "none", padding: 0, margin: 0,
+          display: "flex", flexDirection: "column", gap: 7,
+        }}>
+          {intent.dims.map((d) => (
+            <li key={d} style={{
+              fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 500,
+              color: "var(--ink-deep)", letterSpacing: "-0.003em",
+              display: "flex", alignItems: "center", gap: 10,
+            }}>
+              <span style={{
+                width: 4, height: 4, borderRadius: 999,
+                background: "var(--signal)", flexShrink: 0,
+              }} />
+              {d}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+/* ─────── Who uses it & why — rotating marquee ─────── */
+
+type IconName =
+  | "buyer" | "renter" | "investor" | "agent" | "operator" | "researcher"
+  | "data" | "intent" | "read" | "map" | "api";
+
+const AUDIENCE_PAIRS: { audience: string; reason: string }[] = [
+  { audience: "buyers",      reason: "See the street before the viewing." },
+  { audience: "renters",     reason: "Know the neighbourhood before the tenancy." },
+  { audience: "investors",   reason: "Yield, growth, and risk on one page." },
+  { audience: "agents",      reason: "Real data for client briefs, not blurb." },
+  { audience: "operators",   reason: "Footfall and competition, before the lease." },
+  { audience: "researchers", reason: "Comparables. LSOA-level. Cited, reproducible." },
+];
+
+function AiqIcon({ name, size = 26 }: { name: IconName; size?: number }) {
+  const s = size;
+  const common: React.SVGProps<SVGSVGElement> = {
+    width: s, height: s, viewBox: "0 0 28 28", fill: "none",
+    stroke: "var(--ink)", strokeWidth: 1.5,
+    strokeLinecap: "round", strokeLinejoin: "round",
+  };
+  const accent = "var(--signal)";
+  switch (name) {
+    case "buyer":
+      return (
+        <svg {...common}>
+          <path d="M4 14 L14 5 L24 14 V23 H4 Z" />
+          <rect x="11.5" y="16" width="5" height="7" fill={accent} stroke="none" />
+          <rect x="11.5" y="16" width="5" height="7" />
+        </svg>
+      );
+    case "renter":
+      return (
+        <svg {...common}>
+          <circle cx="10" cy="14" r="4.2" />
+          <circle cx="10" cy="14" r="1" fill="var(--ink)" stroke="none" />
+          <path d="M14.2 14 L23.5 14" />
+          <path d="M20 14 L20 17.5" />
+          <path d="M17 14 L17 16.5" />
+          <circle cx="22" cy="14" r="1.2" fill={accent} stroke="none" />
+        </svg>
+      );
+    case "investor":
+      return (
+        <svg {...common}>
+          <path d="M4 22 L10 14 L14 18 L22 6" />
+          <path d="M16 6 H22 V12" />
+          <circle cx="22" cy="6" r="1.2" fill={accent} stroke="none" />
+        </svg>
+      );
+    case "agent":
+      return (
+        <svg {...common}>
+          <path d="M4 6 H24 V18 H15 L10 22 V18 H4 Z" />
+          <circle cx="10" cy="12" r="1" fill={accent} stroke="none" />
+          <circle cx="14" cy="12" r="1" fill="var(--ink)" stroke="none" />
+          <circle cx="18" cy="12" r="1" fill="var(--ink)" stroke="none" />
+        </svg>
+      );
+    case "operator":
+      return (
+        <svg {...common}>
+          <path d="M4 9 L14 5 L24 9 V24 H4 Z" />
+          <path d="M4 12 H24" />
+          <path d="M11 24 V16 H17 V24" />
+          <rect x="11" y="16" width="6" height="2" fill={accent} stroke="none" />
+        </svg>
+      );
+    case "researcher":
+      return (
+        <svg {...common}>
+          <rect x="6" y="4" width="16" height="20" rx="1" />
+          <path d="M9 10 H19" />
+          <path d="M9 14 H19" />
+          <path d="M9 18 H15" />
+          <circle cx="17" cy="18" r="1.4" fill={accent} stroke="none" />
+        </svg>
+      );
+    case "data":
+      return (
+        <svg {...common}>
+          <circle cx="14" cy="14" r="9" />
+          <path d="M10 14.3 L13 17.3 L19 11" stroke={accent} strokeWidth="2.2" />
+        </svg>
+      );
+    case "intent":
+      return (
+        <svg {...common}>
+          <circle cx="14" cy="14" r="9" />
+          <circle cx="14" cy="14" r="5" />
+          <circle cx="14" cy="14" r="1.6" fill={accent} stroke="none" />
+        </svg>
+      );
+    case "read":
+      return (
+        <svg {...common}>
+          <path d="M4 7 L14 9 L24 7 V22 L14 20 L4 22 Z" />
+          <path d="M14 9 V20" />
+          <path d="M7 11 L11 11.8" />
+          <path d="M7 14 L11 14.8" />
+          <path d="M17 11.8 L21 11" stroke={accent} />
+          <path d="M17 14.8 L21 14" stroke={accent} />
+        </svg>
+      );
+    case "map":
+      return (
+        <svg {...common}>
+          <path d="M14 4 C9.5 4 6 7 6 11.5 C6 17.5 14 24 14 24 S22 17.5 22 11.5 C22 7 18.5 4 14 4 Z" />
+          <circle cx="14" cy="11.5" r="2.4" fill={accent} stroke="none" />
+        </svg>
+      );
+    case "api":
+      return (
+        <svg {...common}>
+          <path d="M10 4 C7 4 7.5 8 7.5 11 C7.5 12.8 5.5 14 5.5 14 C5.5 14 7.5 15.2 7.5 17 C7.5 20 7 24 10 24" />
+          <path d="M18 4 C21 4 20.5 8 20.5 11 C20.5 12.8 22.5 14 22.5 14 C22.5 14 20.5 15.2 20.5 17 C20.5 20 21 24 18 24" />
+          <circle cx="14" cy="14" r="1.6" fill={accent} stroke="none" />
+        </svg>
+      );
+  }
+}
+
+const WHO_ITEMS: { icon: IconName; title: string; body: string }[] = [
+  { icon: "buyer",    title: "Home Buyers",       body: "Evaluate safety, school catchments, and commute times before choosing where to live." },
+  { icon: "investor", title: "Property Investors", body: "Compare rental yields, price growth, and regeneration potential across areas." },
+  { icon: "agent",    title: "Estate Agents",     body: "Create data-backed area briefings for client viewings and property listings." },
+  { icon: "operator", title: "Business Owners",   body: "Assess foot traffic, competition, and local spending power before opening." },
+];
+
+const WHY_ITEMS: { icon: IconName; title: string; body: string }[] = [
+  { icon: "intent", title: "Intent-driven scoring",   body: "Same area, different scores for moving, investing, or opening a business. Most tools give you one generic view." },
+  { icon: "data",   title: "Transparent methodology", body: "Scores computed from real public data using transparent formulas. Same postcode, same score, every time." },
+  { icon: "read",   title: "AI that reads the data",  body: "Numbers tell you what. Our engine explains why — plain English, tailored to your situation, with specific recommendations." },
+  { icon: "api",    title: "Developer API",           body: "A REST API with Bearer auth. Embed area intelligence into property platforms, CRM tools, and relocation apps." },
+];
+
+function AudiencesSection() {
+  return (
+    <section id="who-uses-it" style={{
+      background: "var(--bg-off)",
+      borderTop: "1px solid var(--border)",
+      padding: "104px 0 120px",
+    }}>
+      <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 40px" }}>
+        <div style={{ textAlign: "center", marginBottom: 64 }}>
+          <div style={{
+            fontFamily: "var(--mono)", fontSize: 11,
+            letterSpacing: "0.22em", textTransform: "uppercase",
+            color: "var(--text-3)",
+          }}>Who uses it · why use it</div>
+        </div>
+
+        <div className="aiq-who-why-grid" style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 0,
+          position: "relative",
+        }}>
+          <div className="aiq-who-why-divider" style={{
+            position: "absolute",
+            left: "50%", top: 0, bottom: 0,
+            width: 1, background: "var(--border)",
+          }} />
+
+          <div className="aiq-who-col" style={{ paddingRight: 56 }}>
+            <h3 style={{
+              fontFamily: "var(--display)", fontWeight: 400,
+              fontSize: "clamp(1.8rem, 3vw, 2.4rem)",
+              lineHeight: 1.08, letterSpacing: "-0.02em",
+              color: "var(--ink-deep)", margin: 0,
+            }}>
+              Who uses{" "}
+              <span style={{
+                fontStyle: "italic", color: "var(--ink)",
+                borderBottom: "3px solid var(--signal)", paddingBottom: 2,
+              }}>it</span>.
+            </h3>
+            <p style={{
+              fontFamily: "var(--sans)", fontSize: 16, lineHeight: 1.55,
+              color: "var(--text-2)", letterSpacing: "-0.003em",
+              margin: "14px 0 0", maxWidth: "38ch",
+            }}>
+              Built for anyone making a location decision — from first-time buyers to property funds. Hours of research, in seconds.
+            </p>
+
+            <div style={{
+              marginTop: 32, paddingTop: 4,
+            }}>
+              {WHO_ITEMS.map((item, i) => (
+                <WhoWhyItem key={item.title} item={item} first={i === 0} />
+              ))}
+            </div>
+          </div>
+
+          <div className="aiq-why-col" style={{ paddingLeft: 56 }}>
+            <h3 style={{
+              fontFamily: "var(--display)", fontWeight: 400,
+              fontSize: "clamp(1.8rem, 3vw, 2.4rem)",
+              lineHeight: 1.08, letterSpacing: "-0.02em",
+              color: "var(--ink-deep)", margin: 0,
+            }}>
+              Why use{" "}
+              <span style={{
+                fontStyle: "italic", color: "var(--ink)",
+                borderBottom: "3px solid var(--signal)", paddingBottom: 2,
+              }}>it</span>.
+            </h3>
+            <p style={{
+              fontFamily: "var(--sans)", fontSize: 16, lineHeight: 1.55,
+              color: "var(--text-2)", letterSpacing: "-0.003em",
+              margin: "14px 0 0", maxWidth: "38ch",
+            }}>
+              Not another postcode lookup. We score, weigh, and explain — for your specific use case.
+            </p>
+
+            <div style={{
+              marginTop: 32, paddingTop: 4,
+            }}>
+              {WHY_ITEMS.map((item, i) => (
+                <WhoWhyItem key={item.title} item={item} first={i === 0} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function WhoWhyItem({
+  item, first,
+}: {
+  item: { icon: IconName; title: string; body: string };
+  first: boolean;
+}) {
+  return (
+    <div style={{
+      padding: "20px 0",
+      borderTop: first ? "1px solid var(--border)" : "1px solid var(--border-dim)",
+      display: "grid",
+      gridTemplateColumns: "34px 1fr",
+      gap: 18,
+      alignItems: "start",
+    }}>
+      <div style={{
+        paddingTop: 2,
+      }}>
+        <AiqIcon name={item.icon} size={24} />
+      </div>
+      <div>
+        <h4 style={{
+          fontFamily: "var(--display)", fontWeight: 500,
+          fontSize: 18, lineHeight: 1.2, letterSpacing: "-0.015em",
+          color: "var(--ink-deep)", margin: 0,
+        }}>{item.title}</h4>
+        <p style={{
+          fontFamily: "var(--sans)", fontSize: 14.5, lineHeight: 1.55,
+          color: "var(--text-2)", letterSpacing: "-0.003em",
+          margin: "6px 0 0",
+        }}>{item.body}</p>
+      </div>
+    </div>
+  );
+}
+
+/* ─────── Inside a report — full anatomy of what the product outputs ─────── */
+
+function InsideReport() {
+  return (
+    <section style={{
+      background: "var(--bg)",
+      borderTop: "1px solid var(--border)",
+      padding: "104px 0 120px",
+    }}>
+      <div style={{ maxWidth: 940, margin: "0 auto", padding: "0 40px" }}>
+        {/* Heading */}
+        <div style={{ textAlign: "center", maxWidth: 720, margin: "0 auto 56px" }}>
+          <div style={{
+            fontFamily: "var(--mono)", fontSize: 11,
+            letterSpacing: "0.22em", textTransform: "uppercase",
+            color: "var(--text-3)", marginBottom: 18,
+          }}>What's in a report</div>
+          <h2 style={{
+            fontFamily: "var(--display)", fontWeight: 400,
+            fontSize: "clamp(1.9rem, 3.6vw, 2.8rem)",
+            lineHeight: 1.08, letterSpacing: "-0.02em",
+            color: "var(--ink-deep)", margin: 0,
+          }}>
+            Score, story,{" "}
+            <span style={{
+              fontStyle: "italic", color: "var(--ink)",
+              borderBottom: "3px solid var(--signal)", paddingBottom: 2,
+            }}>evidence</span>,{" "}
+            next steps.
+          </h2>
+          <p style={{
+            fontFamily: "var(--sans)", fontSize: 16.5, lineHeight: 1.55,
+            color: "var(--text-2)", letterSpacing: "-0.003em",
+            margin: "20px auto 0", maxWidth: "48ch",
+          }}>
+            A narrated read written for your intent — property market, schools,
+            crime trends, and specific recommendations. Not a scorecard.
+          </p>
+        </div>
+
+        {/* Report mockup — full anatomy */}
+        <article style={{
+          background: "var(--bg)",
+          border: "1px solid var(--ink-deep)",
+          borderRadius: 6,
+          boxShadow: "0 30px 70px rgba(6,42,30,0.12), 0 6px 14px rgba(6,42,30,0.05)",
+          overflow: "hidden",
+        }}>
+          <IRHeader />
+          <IRSummary />
+          <IRScoreBlock />
+          <IRPropertyMarket />
+          <IRNarrativeBlock />
+          <IRSchools />
+          <IRRecommendations />
+          <IRFooter />
+        </article>
+      </div>
+    </section>
+  );
+}
+
+/* ── Inside Report sub-components ── */
+
+const IR_DIMS = [
+  { label: "Safety & Crime",      score: 80, weight: 25, reason: "10 crimes / 90d · 3 per month · low for urban" },
+  { label: "Schools & Education", score: 95, weight: 20, reason: "25 schools within 1.5km · Ofsted indexed" },
+  { label: "Transport & Commute", score: 95, weight: 20, reason: "6 rail + 43 bus stops within 2km" },
+  { label: "Daily Amenities",     score: 95, weight: 15, reason: "3,579 within 1km · 593 food · 167 parks" },
+  { label: "Cost of Living",      score: 58, weight: 20, reason: "IMD 2025 decile 5 · mid-market band" },
+];
+
+function IRHeader() {
+  return (
+    <div style={{
+      display: "flex", justifyContent: "space-between", alignItems: "center",
+      gap: 14, flexWrap: "wrap",
+      padding: "16px 28px",
+      background: "var(--bg-off)",
+      borderBottom: "1px solid var(--border)",
+      fontFamily: "var(--mono)", fontSize: 10,
+      letterSpacing: "0.22em", textTransform: "uppercase",
+    }}>
+      <span style={{ color: "var(--ink)", display: "inline-flex", alignItems: "center", gap: 10 }}>
+        <Mark size={14} />
+        OneGoodArea report
+      </span>
+      <span style={{ color: "var(--text-3)" }}>22 Apr 2026 · full sample</span>
+    </div>
+  );
+}
+
+function IRSummary() {
+  return (
+    <div style={{ padding: "32px 40px 28px" }}>
+      <div style={{
+        fontFamily: "var(--mono)", fontSize: 10,
+        letterSpacing: "0.22em", textTransform: "uppercase",
+        color: "var(--text-3)", marginBottom: 14,
+      }}>
+        Manchester · M1 1AE · scored for{" "}
+        <span style={{ color: "var(--ink)", fontWeight: 500 }}>moving home</span>
+      </div>
+      <h3 style={{
+        fontFamily: "var(--display)", fontStyle: "italic", fontWeight: 400,
+        fontSize: "clamp(1.9rem, 3.4vw, 2.6rem)", lineHeight: 1.08,
+        letterSpacing: "-0.02em", color: "var(--ink-deep)", margin: 0,
+      }}>
+        Strong fit<span style={{ borderBottom: "3px solid var(--signal)", paddingBottom: 2 }}>.</span>
+      </h3>
+      <p style={{
+        fontFamily: "var(--sans)", fontSize: 16.5, lineHeight: 1.6,
+        color: "var(--ink-deep)", letterSpacing: "-0.003em",
+        margin: "18px 0 0", maxWidth: "62ch",
+      }}>
+        Manchester does what a move home needs. Transport is exceptional,{" "}
+        <IRMark>3,579 amenities within a kilometre</IRMark>, and safety reads strong
+        for a city core. The trade-off is cost — you're paying mid-market for
+        genuine urban convenience.
+      </p>
+    </div>
+  );
+}
+
+function IRMark({ children }: { children: React.ReactNode }) {
+  return (
+    <span style={{
+      background: "var(--signal-dim)",
+      padding: "1px 5px", borderRadius: 2,
+      fontWeight: 600, fontSize: "0.96em",
+      letterSpacing: "-0.005em",
+      whiteSpace: "nowrap",
+    }}>{children}</span>
+  );
+}
+
+function IRSectionHead({ eyebrow, title, meta }: { eyebrow: string; title: string; meta?: string }) {
+  return (
+    <div style={{
+      display: "flex", justifyContent: "space-between", alignItems: "baseline",
+      gap: 16, flexWrap: "wrap", marginBottom: 18,
+    }}>
+      <div>
+        <div style={{
+          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
+          letterSpacing: "0.22em", textTransform: "uppercase",
+          color: "var(--ink)", marginBottom: 6,
+        }}>{eyebrow}</div>
+        <h4 style={{
+          fontFamily: "var(--display)", fontWeight: 400,
+          fontSize: 22, lineHeight: 1.12, letterSpacing: "-0.015em",
+          color: "var(--ink-deep)", margin: 0,
+        }}>{title}</h4>
+      </div>
+      {meta && (
+        <div style={{
+          fontFamily: "var(--mono)", fontSize: 10,
+          letterSpacing: "0.18em", textTransform: "uppercase",
+          color: "var(--text-3)",
+        }}>{meta}</div>
+      )}
+    </div>
+  );
+}
+
+function IRScoreBlock() {
+  return (
+    <div style={{
+      padding: "28px 40px 32px",
+      borderTop: "1px dashed var(--border)",
+      display: "grid",
+      gridTemplateColumns: "minmax(0, 220px) minmax(0, 1fr)",
+      gap: 40, alignItems: "center",
+    }}>
+      {/* Score ring */}
+      <div style={{
+        position: "relative", width: 180, height: 180, justifySelf: "center",
+      }}>
+        <svg width="180" height="180" viewBox="0 0 180 180">
+          <circle cx="90" cy="90" r="78" fill="none" stroke="var(--border-dim)" strokeWidth="8" />
+          <circle
+            cx="90" cy="90" r="78" fill="none"
+            stroke="var(--ink)" strokeWidth="8"
+            strokeDasharray={`${(84 / 100) * 490} 490`}
+            strokeLinecap="round"
+            transform="rotate(-90 90 90)"
+          />
+          <circle
+            cx="90" cy="90" r="78" fill="none"
+            stroke="var(--signal)" strokeWidth="3"
+            strokeDasharray={`${(84 / 100) * 490} 490`}
+            strokeLinecap="round"
+            transform="rotate(-90 90 90)"
+            style={{ opacity: 0.7 }}
+          />
+        </svg>
+        <div style={{
+          position: "absolute", inset: 0,
+          display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+        }}>
+          <div style={{
+            fontFamily: "var(--display)", fontSize: 54, lineHeight: 1,
+            color: "var(--ink-deep)", letterSpacing: "-0.04em",
+            fontVariantNumeric: "tabular-nums",
+          }}>84</div>
+          <div style={{
+            fontFamily: "var(--mono)", fontSize: 9,
+            letterSpacing: "0.22em", textTransform: "uppercase",
+            color: "var(--text-3)", marginTop: 4,
+          }}>of 100</div>
+        </div>
+      </div>
+
+      {/* Dimensions */}
+      <div>
+        <div style={{
+          fontFamily: "var(--mono)", fontSize: 10,
+          letterSpacing: "0.22em", textTransform: "uppercase",
+          color: "var(--ink)", marginBottom: 12, fontWeight: 500,
+        }}>Five weighted dimensions</div>
+        {IR_DIMS.map((d, i) => {
+          const rag = d.score >= 70 ? "var(--ink)" : d.score >= 45 ? "#E2C94A" : "#E97451";
+          return (
+            <div key={d.label} style={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr) 80px 32px 40px",
+              gap: 12, alignItems: "center",
+              padding: "6px 0",
+              borderBottom: i < IR_DIMS.length - 1 ? "1px solid var(--border-dim)" : "none",
+            }}>
+              <div>
+                <div style={{
+                  fontFamily: "var(--sans)", fontSize: 13, fontWeight: 500,
+                  color: "var(--ink-deep)",
+                }}>{d.label}</div>
+                <div style={{
+                  fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-3)",
+                  marginTop: 2, letterSpacing: "0.02em",
+                }}>{d.reason}</div>
+              </div>
+              <div style={{
+                height: 4, background: "var(--border-dim)",
+                borderRadius: 999, overflow: "hidden",
+              }}>
+                <div style={{ width: `${d.score}%`, height: "100%", background: rag, borderRadius: 999 }} />
+              </div>
+              <div style={{
+                fontFamily: "var(--mono)", fontSize: 12, fontWeight: 500,
+                color: "var(--ink-deep)", textAlign: "right",
+                fontVariantNumeric: "tabular-nums",
+              }}>{d.score}</div>
+              <div style={{
+                fontFamily: "var(--mono)", fontSize: 9, fontWeight: 600,
+                color: "var(--ink-deep)", background: "var(--signal-dim)",
+                padding: "2px 5px", borderRadius: 2,
+                textAlign: "center", letterSpacing: "0.04em",
+              }}>w{d.weight}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function IRPropertyMarket() {
+  const stats = [
+    { label: "Median price",    value: "£245k",  detail: "last 24 months" },
+    { label: "YoY change",      value: "+4.2%",  detail: "versus previous 12" },
+    { label: "Transactions",    value: "124",    detail: "in the outcode" },
+    { label: "Most common",     value: "Terrace", detail: "£198k median" },
+  ];
+  return (
+    <div style={{
+      padding: "28px 40px",
+      borderTop: "1px dashed var(--border)",
+    }}>
+      <IRSectionHead
+        eyebrow="Property market"
+        title="Where the money sits."
+        meta="HM Land Registry · 24mo"
+      />
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+        gap: 20,
+      }}>
+        {stats.map((s) => (
+          <div key={s.label}>
+            <div style={{
+              fontFamily: "var(--display)", fontWeight: 400,
+              fontSize: 26, lineHeight: 1, letterSpacing: "-0.025em",
+              color: "var(--ink-deep)", fontVariantNumeric: "tabular-nums",
+            }}>{s.value}</div>
+            <div style={{
+              fontFamily: "var(--mono)", fontSize: 9,
+              letterSpacing: "0.18em", textTransform: "uppercase",
+              color: "var(--ink)", marginTop: 8, fontWeight: 500,
+            }}>{s.label}</div>
+            <div style={{
+              fontFamily: "var(--sans)", fontSize: 12, color: "var(--text-3)",
+              marginTop: 3, letterSpacing: "-0.003em",
+            }}>{s.detail}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function IRNarrativeBlock() {
+  return (
+    <div style={{
+      padding: "28px 40px",
+      borderTop: "1px dashed var(--border)",
+    }}>
+      <IRSectionHead eyebrow="Transport & amenities" title="A thirty-minute city." />
+      <p style={{
+        fontFamily: "var(--sans)", fontSize: 15.5, lineHeight: 1.65,
+        color: "var(--ink-deep)", letterSpacing: "-0.003em",
+        margin: 0, maxWidth: "64ch",
+      }}>
+        The area sits on top of <IRMark>6 rail and tube stations</IRMark> within 2km —
+        Ardwick, Piccadilly, Oxford Road — and <IRMark>43 bus stops inside 500 metres</IRMark>.
+        Combined with <IRMark>3,579 daily amenities in a kilometre</IRMark> (593 food,
+        167 parks, 42 healthcare), most of the city is inside a half-hour commute on
+        foot or on transit. For a move home, this is rare density outside of Zone 1-2 London.
+      </p>
+      <div style={{
+        fontFamily: "var(--mono)", fontSize: 10,
+        letterSpacing: "0.18em", textTransform: "uppercase",
+        color: "var(--text-3)", marginTop: 14,
+      }}>
+        3 more sections in the full report →
+      </div>
+    </div>
+  );
+}
+
+function IRSchools() {
+  const ratings = [
+    { label: "Outstanding", count: 5, color: "var(--ink)" },
+    { label: "Good",        count: 14, color: "var(--ink)" },
+    { label: "Requires imp.", count: 2, color: "#E2C94A" },
+    { label: "Inadequate",  count: 0, color: "#E97451" },
+  ];
+  const total = ratings.reduce((s, r) => s + r.count, 0);
+  const topSchools = [
+    { name: "Manchester Academy",       rating: "Outstanding", distance: "0.6km" },
+    { name: "Chorlton High School",     rating: "Good",        distance: "1.1km" },
+    { name: "St Augustine's RC Primary", rating: "Good",       distance: "1.4km" },
+  ];
+  return (
+    <div style={{
+      padding: "28px 40px",
+      borderTop: "1px dashed var(--border)",
+    }}>
+      <IRSectionHead
+        eyebrow="Nearby schools"
+        title="Twenty-one rated schools within 1.5km."
+        meta="Ofsted"
+      />
+      {/* Distribution bar */}
+      <div style={{
+        display: "flex", height: 10, borderRadius: 2,
+        overflow: "hidden", background: "var(--border-dim)",
+        marginBottom: 12,
+      }}>
+        {ratings.map((r) => (
+          r.count > 0 && (
+            <div key={r.label} style={{
+              width: `${(r.count / total) * 100}%`,
+              background: r.color,
+              opacity: r.label === "Good" ? 0.75 : r.label === "Outstanding" ? 1 : 0.8,
+            }} />
+          )
+        ))}
+      </div>
+      <div style={{
+        display: "flex", gap: 16, flexWrap: "wrap",
+        fontFamily: "var(--mono)", fontSize: 10,
+        letterSpacing: "0.14em", textTransform: "uppercase",
+        color: "var(--text-3)",
+        marginBottom: 16,
+      }}>
+        {ratings.map((r) => (
+          <span key={r.label} style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+          }}>
+            <span style={{
+              width: 8, height: 8, borderRadius: 2, background: r.color,
+              opacity: r.label === "Good" ? 0.75 : r.label === "Outstanding" ? 1 : 0.8,
+            }} />
+            {r.label} · {r.count}
+          </span>
+        ))}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {topSchools.map((s) => (
+          <div key={s.name} style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr) minmax(0, 120px) 60px",
+            gap: 14, alignItems: "baseline",
+            padding: "6px 0",
+            borderBottom: "1px solid var(--border-dim)",
+            fontFamily: "var(--sans)", fontSize: 13,
+            color: "var(--ink-deep)",
+          }}>
+            <div style={{ fontWeight: 500 }}>{s.name}</div>
+            <div style={{
+              fontFamily: "var(--mono)", fontSize: 10,
+              letterSpacing: "0.12em", color: "var(--ink)",
+              textTransform: "uppercase", fontWeight: 500,
+            }}>{s.rating}</div>
+            <div style={{
+              fontFamily: "var(--mono)", fontSize: 11,
+              color: "var(--text-3)", textAlign: "right",
+              fontVariantNumeric: "tabular-nums",
+            }}>{s.distance}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function IRRecommendations() {
+  const recs = [
+    {
+      n: "01",
+      title: "Target terrace or 2-bed flats in the £180–260k band.",
+      detail: "Best match for local median. Detached at £412k sits above budget for most first-move buyers.",
+    },
+    {
+      n: "02",
+      title: "Prioritise Chorlton, Didsbury, or Ancoats for school catchment.",
+      detail: "Three Outstanding-rated primaries sit within a 1.5km radius of the city core.",
+    },
+    {
+      n: "03",
+      title: "Check the flood overlay before committing on the River Mersey corridor.",
+      detail: "Ten flood zones within 3km cluster along the Mersey and Irwell. Mostly low-risk, but insurance premiums vary.",
+    },
+  ];
+  return (
+    <div style={{
+      padding: "28px 40px",
+      borderTop: "1px dashed var(--border)",
+    }}>
+      <IRSectionHead eyebrow="What to do next" title="Three concrete moves." />
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {recs.map((r) => (
+          <div key={r.n} style={{
+            display: "grid",
+            gridTemplateColumns: "34px minmax(0, 1fr)",
+            gap: 14, alignItems: "baseline",
+          }}>
+            <div style={{
+              fontFamily: "var(--display)", fontStyle: "italic",
+              fontSize: 20, lineHeight: 1, color: "var(--ink)",
+              letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums",
+              paddingTop: 2,
+            }}>{r.n}</div>
+            <div>
+              <div style={{
+                fontFamily: "var(--display)", fontWeight: 400,
+                fontSize: 17, lineHeight: 1.3, letterSpacing: "-0.015em",
+                color: "var(--ink-deep)",
+              }}>{r.title}</div>
+              <div style={{
+                fontFamily: "var(--sans)", fontSize: 13.5, lineHeight: 1.55,
+                color: "var(--text-2)", letterSpacing: "-0.003em",
+                marginTop: 4,
+              }}>{r.detail}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function IRFooter() {
+  const sources = [
+    "Police.uk", "IMD 2025", "OpenStreetMap",
+    "Environment Agency", "HM Land Registry", "Ofsted", "Postcodes.io",
+  ];
+  const actions = [
+    { label: "PDF export",       icon: "↓" },
+    { label: "Shareable link",   icon: "↗" },
+    { label: "Save to watchlist", icon: "★" },
+  ];
+  return (
+    <div style={{
+      padding: "22px 40px 26px",
+      borderTop: "1px solid var(--border)",
+      background: "var(--bg-off)",
+    }}>
+      <div style={{
+        display: "flex", gap: 10, flexWrap: "wrap",
+        marginBottom: 14,
+      }}>
+        {sources.map((s) => (
+          <span key={s} style={{
+            fontFamily: "var(--mono)", fontSize: 9, fontWeight: 500,
+            letterSpacing: "0.14em", textTransform: "uppercase",
+            color: "var(--text-2)", background: "var(--bg)",
+            border: "1px solid var(--border)",
+            padding: "4px 8px", borderRadius: 2,
+          }}>{s}</span>
+        ))}
+      </div>
+      <div style={{
+        display: "flex", gap: 16, flexWrap: "wrap",
+        justifyContent: "space-between", alignItems: "center",
+      }}>
+        <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+          {actions.map((a) => (
+            <span key={a.label} style={{
+              fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
+              letterSpacing: "0.18em", textTransform: "uppercase",
+              color: "var(--ink)",
+              display: "inline-flex", alignItems: "center", gap: 6,
+            }}>
+              <span style={{
+                width: 18, height: 18, borderRadius: 2,
+                background: "var(--signal-dim)",
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                color: "var(--ink-deep)", fontSize: 11,
+              }}>{a.icon}</span>
+              {a.label}
+            </span>
+          ))}
+        </div>
+        <span style={{
+          fontFamily: "var(--mono)", fontSize: 9,
+          letterSpacing: "0.18em", textTransform: "uppercase",
+          color: "var(--text-3)",
+        }}>ref · 84 of 100 · Manchester · moving home</span>
+      </div>
+    </div>
+  );
+}
+
