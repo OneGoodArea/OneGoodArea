@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Mark } from "./mark";
+import { Wordmark } from "./wordmark";
 
 /* Footer — IA mirrors the live product footer (Areas · Business · API ·
    Methodology · Pricing · About · Blog · Changelog · Help · Terms · Privacy)
@@ -12,7 +12,7 @@ import { Mark } from "./mark";
 export function Footer() {
   const productLinks: { label: string; href: string }[] = [
     { label: "Areas",        href: "/area/london" },
-    { label: "Methodology",  href: "/methodology" },
+    { label: "Methodology",  href: "/design-v2/methodology" },
     { label: "Changelog",    href: "/changelog" },
     { label: "Blog",         href: "/blog" },
   ];
@@ -27,8 +27,8 @@ export function Footer() {
     { label: "Contact", href: "mailto:hello@area-iq.co.uk" },
   ];
   const legalLinks: { label: string; href: string }[] = [
-    { label: "Terms",   href: "/terms" },
-    { label: "Privacy", href: "/privacy" },
+    { label: "Terms",   href: "/design-v2/terms" },
+    { label: "Privacy", href: "/design-v2/privacy" },
   ];
   const socialLinks: { label: string; href: string }[] = [
     { label: "Email",    href: "mailto:hello@area-iq.co.uk" },
@@ -51,22 +51,9 @@ export function Footer() {
           marginBottom: 84,
         }}>
           <div className="aiq-footer-brand">
-            <Link href="/design-v2" style={{
-              textDecoration: "none", display: "inline-flex",
-              alignItems: "center", gap: 11, marginBottom: 24,
-            }}>
-              <Mark size={24} />
-              <span style={{
-                fontFamily: "var(--display)", fontSize: 26, fontWeight: 400,
-                letterSpacing: "-0.02em", color: "var(--ink-deep)", lineHeight: 1,
-              }}>
-                One<span style={{
-                  fontStyle: "italic", color: "var(--ink)",
-                  borderBottom: "2px solid var(--signal)",
-                  margin: "0 1px", paddingBottom: 1,
-                }}>Good</span>Area
-              </span>
-            </Link>
+            <div style={{ marginBottom: 24 }}>
+              <Wordmark href="/design-v2" size={26} />
+            </div>
             <p style={{
               fontFamily: "var(--display)", fontSize: 19, fontWeight: 400,
               fontStyle: "italic", lineHeight: 1.32,

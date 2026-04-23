@@ -221,6 +221,30 @@ export function Styles() {
         .aiq-tier-grid > *:last-child { border-bottom: none !important; }
       }
 
+      /* Auth shell — two-column stacks on mobile */
+      @media (max-width: 880px) {
+        .aiq-auth-shell {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-auth-brand {
+          min-height: auto !important;
+          padding: 40px 32px 48px !important;
+          border-right: none !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+      }
+
+      /* Legal shell — sidebar collapses */
+      @media (max-width: 900px) {
+        .aiq-legal-wrap {
+          grid-template-columns: 1fr !important;
+          gap: 32px !important;
+        }
+        .aiq-legal-sidebar {
+          position: static !important;
+        }
+      }
+
       /* Methodology + Docs — sidebar collapses on narrow, tables wrap */
       @media (max-width: 900px) {
         .aiq-meth-wrap,

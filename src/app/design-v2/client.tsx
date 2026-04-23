@@ -1509,7 +1509,7 @@ const SampleReport = forwardRef<
                 </ul>
 
                 <a
-                  href="/signup"
+                  href="/design-v2/sign-up"
                   style={{
                     display: "inline-flex", alignItems: "center", gap: 8,
                     fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600,
@@ -1635,7 +1635,7 @@ const SampleReport = forwardRef<
               textTransform: "uppercase",
             }}>
               <span>+ {hiddenCount} more dimensions locked</span>
-              <a href="/signup" style={{
+              <a href="/design-v2/sign-up" style={{
                 color: "var(--ink)", textDecoration: "none",
                 borderBottom: "1px solid var(--signal)", paddingBottom: 1,
               }}>unlock →</a>
@@ -3655,7 +3655,7 @@ function FBWidgetPanel() {
                 color: "var(--ink)",
                 display: "inline-flex", alignItems: "center", gap: 7,
               }}>
-                <Mark size={14} /> AreaIQ · for moving
+                <Mark size={14} /> OneGoodArea · for moving
               </div>
               <span style={{
                 fontFamily: "var(--mono)", fontSize: 9,

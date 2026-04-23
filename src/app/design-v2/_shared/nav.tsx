@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Mark } from "./mark";
+import { Wordmark } from "./wordmark";
 
 /* Nav — structure mirrors the live product nav (Business · API · Pricing ·
    About · Theme · Dashboard/Sign In). Dressed in the design-v2 language:
@@ -40,23 +40,7 @@ export function Nav() {
         maxWidth: 1240, margin: "0 auto", padding: "0 40px",
         height: 64, display: "flex", alignItems: "center", gap: 24,
       }}>
-        <Link href="/design-v2" style={{
-          textDecoration: "none", display: "flex", alignItems: "center", gap: 10,
-        }}>
-          <Mark size={22} />
-          <span style={{
-            fontFamily: "var(--display)", fontSize: 22, fontWeight: 400,
-            letterSpacing: "-0.02em", color: "var(--ink-deep)", lineHeight: 1,
-          }}>
-            One<span style={{
-              fontStyle: "italic",
-              color: "var(--ink)",
-              borderBottom: "2px solid var(--signal)",
-              margin: "0 1px",
-              paddingBottom: 1,
-            }}>Good</span>Area
-          </span>
-        </Link>
+        <Wordmark href="/design-v2" size={22} />
         <span className="aiq-nav-beta" style={{
           fontFamily: "var(--mono)", fontSize: 9, fontWeight: 500,
           letterSpacing: "0.22em", textTransform: "uppercase",
@@ -93,7 +77,7 @@ export function Nav() {
         }} />
 
         <Link
-          href={isSignedIn ? "/dashboard" : "/sign-in"}
+          href={isSignedIn ? "/dashboard" : "/design-v2/sign-in"}
           style={{
             fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
             letterSpacing: "0.14em", textTransform: "uppercase",

@@ -96,7 +96,7 @@ export default function PricingClient() {
   async function handleUpgrade(planId: PlanId) {
     if (planId === "free" || loading) return;
     if (!isSignedIn) {
-      window.location.href = `/sign-in?callbackUrl=/design-v2/pricing`;
+      window.location.href = `/design-v2/sign-in?callbackUrl=/design-v2/pricing`;
       return;
     }
     setLoading(planId);
