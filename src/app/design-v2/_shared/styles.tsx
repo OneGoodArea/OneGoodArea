@@ -71,6 +71,10 @@ export function Styles() {
         from { opacity: 0; transform: translateY(10px); }
         to   { opacity: 1; transform: translateY(0); }
       }
+      @keyframes aiq-spin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+      }
 
       /* ─── Responsive ─────────────────────────────────────── */
       /* Tablet / narrow desktop: stack the hero columns */
@@ -215,6 +219,34 @@ export function Styles() {
         }
         .aiq-tier-grid > * { border-right: none !important; border-bottom: 1px solid var(--border) !important; }
         .aiq-tier-grid > *:last-child { border-bottom: none !important; }
+      }
+
+      /* Pricing page — plan grid + feature table */
+      @media (max-width: 900px) {
+        .aiq-plan-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-plan-grid > * {
+          border-right: none !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+        .aiq-plan-grid > *:last-child { border-bottom: none !important; }
+      }
+      @media (max-width: 880px) {
+        .aiq-feature-table .aiq-feat-row {
+          grid-template-columns: 1fr !important;
+          gap: 14px !important;
+          padding: 22px 22px !important;
+        }
+        .aiq-feature-table .aiq-feat-head {
+          display: none !important;
+        }
+        .aiq-feature-table .aiq-feat-row > *:not(:first-child) {
+          display: inline-flex !important;
+          align-items: center;
+          justify-content: flex-start !important;
+          gap: 10px;
+        }
       }
 
       /* Small phones: tighten everything */
