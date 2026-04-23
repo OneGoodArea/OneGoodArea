@@ -221,6 +221,26 @@ export function Styles() {
         .aiq-tier-grid > *:last-child { border-bottom: none !important; }
       }
 
+      /* About page — two-column gap grid, builder row, stats strip */
+      @media (max-width: 820px) {
+        .aiq-gap-grid {
+          grid-template-columns: 1fr !important;
+          gap: 48px !important;
+        }
+        .aiq-builder-row {
+          grid-template-columns: 1fr !important;
+          gap: 24px !important;
+        }
+      }
+      @media (max-width: 620px) {
+        .aiq-stats-strip {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aiq-stats-strip > *:nth-child(2) { border-right: none !important; }
+        .aiq-stats-strip > *:nth-child(1),
+        .aiq-stats-strip > *:nth-child(2) { border-bottom: 1px solid var(--border) !important; }
+      }
+
       /* Pricing page — plan grid + feature table */
       @media (max-width: 900px) {
         .aiq-plan-grid {
