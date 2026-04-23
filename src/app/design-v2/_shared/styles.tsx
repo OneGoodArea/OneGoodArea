@@ -221,6 +221,42 @@ export function Styles() {
         .aiq-tier-grid > *:last-child { border-bottom: none !important; }
       }
 
+      /* Methodology + Docs — sidebar collapses on narrow, tables wrap */
+      @media (max-width: 900px) {
+        .aiq-meth-wrap,
+        .aiq-docs-wrap {
+          grid-template-columns: 1fr !important;
+          gap: 32px !important;
+        }
+        .aiq-meth-sidebar,
+        .aiq-docs-sidebar {
+          position: static !important;
+        }
+        .aiq-intent-cards {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-quickstart-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-quickstart-grid > * {
+          border-right: none !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+        .aiq-quickstart-grid > *:last-child { border-bottom: none !important; }
+        .aiq-rl-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-rl-grid > * {
+          border-right: none !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+        .aiq-rl-grid > *:last-child { border-bottom: none !important; }
+        .aiq-field-table > * {
+          grid-template-columns: 1fr !important;
+          gap: 6px !important;
+        }
+      }
+
       /* About page — two-column gap grid, builder row, stats strip */
       @media (max-width: 820px) {
         .aiq-gap-grid {
