@@ -2,6 +2,11 @@
 
 import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
 import SAMPLE_REPORTS_JSON from "./sample-reports.json";
+import { Styles } from "./_shared/styles";
+import { Mark } from "./_shared/mark";
+import { Nav } from "./_shared/nav";
+import { Footer } from "./_shared/footer";
+import { AiqIcon, type IconName } from "./_shared/icons";
 
 /* ═══════════════════════════════════════════════════════════════
    OneGoodArea — Design V2
@@ -246,286 +251,10 @@ export default function DesignV2Client() {
       <HowItWorks />
       <IntentsSection />
       <AudiencesSection />
+      <ForBusinessesSection />
+      <FinalCTA />
+      <Footer />
     </div>
-  );
-}
-
-/* ─────── Global styles (brand tokens) ─────── */
-
-function Styles() {
-  return (
-    <style jsx global>{`
-      @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap');
-
-      .aiq {
-        /* Ink — forest green primary */
-        --ink:        #0A4D3A;
-        --ink-deep:   #062A1E;
-        --ink-soft:   #1C5E4A;
-        /* Signal — chartreuse (the alive accent) */
-        --signal:     #D4F33A;
-        --signal-ink: #1A2600;
-        --signal-dim: #E9F69E;
-        /* Surface */
-        --bg:         #FFFFFF;
-        --bg-off:     #F6F9F4;
-        --bg-ink:     #062A1E;
-        /* Line + text */
-        --border:     #E4EAE3;
-        --border-dim: #F0F3EE;
-        --text:       #0B2018;
-        --text-2:     #445A51;
-        --text-3:     #6E8278;
-        --text-4:     #9CAFA5;
-
-        --display: 'Fraunces', 'Times New Roman', serif;
-        --sans:    'Inter', -apple-system, system-ui, sans-serif;
-        --mono:    'Geist Mono', ui-monospace, 'SF Mono', monospace;
-
-        background: var(--bg);
-        color: var(--text);
-        font-family: var(--sans);
-        -webkit-font-smoothing: antialiased;
-        text-rendering: optimizeLegibility;
-      }
-
-      .aiq *::selection { background: var(--signal); color: var(--signal-ink); }
-      html { scroll-behavior: smooth; }
-
-      @keyframes aiq-fade-up {
-        from { opacity: 0; transform: translateY(14px); }
-        to   { opacity: 1; transform: translateY(0); }
-      }
-      @keyframes aiq-pulse-dot {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50%      { opacity: 0.35; transform: scale(0.85); }
-      }
-      @keyframes aiq-ring-pulse {
-        0%   { transform: scale(0.6); opacity: 0.9; }
-        100% { transform: scale(3.2); opacity: 0; }
-      }
-      @keyframes aiq-caret {
-        0%, 49%   { opacity: 1; }
-        50%, 100% { opacity: 0; }
-      }
-      @keyframes aiq-scan {
-        from { background-position: 0 0; }
-        to   { background-position: 0 22px; }
-      }
-      @keyframes aiq-source-run {
-        0%   { width: 0%; }
-        100% { width: 100%; }
-      }
-      @keyframes aiq-rotate-in {
-        from { opacity: 0; transform: translateY(10px); }
-        to   { opacity: 1; transform: translateY(0); }
-      }
-
-      /* ─── Responsive ─────────────────────────────────────── */
-      /* Tablet / narrow desktop: stack the hero columns */
-      @media (max-width: 960px) {
-        .aiq-hero-grid {
-          grid-template-columns: 1fr !important;
-          gap: 48px !important;
-          padding: 32px 28px 40px !important;
-        }
-        .aiq-engine {
-          position: static !important;
-        }
-        .aiq-map {
-          max-width: 520px;
-          margin: 0 auto;
-        }
-      }
-
-      /* Mobile: single column, smaller text, nav compacts */
-      @media (max-width: 720px) {
-        .aiq-nav-links {
-          display: none !important;
-        }
-        .aiq-headline {
-          margin-top: 20px !important;
-        }
-        .aiq-for-line {
-          white-space: normal !important;
-        }
-        .aiq-report-grid {
-          grid-template-columns: 1fr !important;
-          gap: 28px !important;
-          padding: 24px !important;
-        }
-      }
-
-      /* Who + Why 2-col: stack on narrow viewports */
-      @media (max-width: 820px) {
-        .aiq-who-why-grid {
-          grid-template-columns: 1fr !important;
-          gap: 48px !important;
-        }
-        .aiq-who-why-divider { display: none !important; }
-        .aiq-who-col {
-          padding-right: 0 !important;
-          padding-bottom: 40px !important;
-          border-bottom: 1px solid var(--border) !important;
-        }
-        .aiq-why-col {
-          padding-left: 0 !important;
-          padding-top: 8px !important;
-        }
-      }
-
-      /* Intents section: collapse to 2 cols on tablet, 1 on mobile */
-      @media (max-width: 880px) {
-        .aiq-intents-grid {
-          grid-template-columns: repeat(2, 1fr) !important;
-        }
-        .aiq-intent-col:nth-child(2) { border-right: none !important; }
-        .aiq-intent-col:nth-child(1),
-        .aiq-intent-col:nth-child(2) { border-bottom: 1px solid var(--border) !important; }
-      }
-      @media (max-width: 560px) {
-        .aiq-intents-grid {
-          grid-template-columns: 1fr !important;
-        }
-        .aiq-intent-col { border-right: none !important; border-bottom: 1px solid var(--border) !important; }
-        .aiq-intent-col:last-child { border-bottom: none !important; }
-      }
-
-
-      /* How It Works zigzag: rows collapse on narrow viewports */
-      @media (max-width: 820px) {
-        .aiq-hiw-row {
-          grid-template-columns: 1fr !important;
-          gap: 28px !important;
-          padding: 24px 0 !important;
-        }
-        .aiq-hiw-row > *:nth-child(1) {
-          order: 1 !important;
-        }
-        .aiq-hiw-row > *:nth-child(2) {
-          order: 2 !important;
-        }
-        .aiq-hiw-connector {
-          padding: 4px 0 !important;
-        }
-      }
-
-      /* Small phones: tighten everything */
-      @media (max-width: 480px) {
-        .aiq-hero-grid {
-          padding: 24px 20px 36px !important;
-          gap: 40px !important;
-        }
-        .aiq-dim-row {
-          grid-template-columns: minmax(0, 1fr) 48px !important;
-          grid-template-areas:
-            "label score"
-            "bar   bar" !important;
-          gap: 6px 12px !important;
-        }
-        .aiq-dim-row > :nth-child(1) { grid-area: label; }
-        .aiq-dim-row > :nth-child(2) { grid-area: bar; }
-        .aiq-dim-row > :nth-child(3) { grid-area: score; }
-      }
-    `}</style>
-  );
-}
-
-/* ─────── Logo mark ─────── */
-
-function Mark({ size = 22 }: { size?: number }) {
-  // Concentric rings + offset dot — "the area locked in"
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <circle cx="12" cy="12" r="10" stroke="var(--ink)" strokeWidth="1.3" />
-      <circle cx="12" cy="12" r="5.5" stroke="var(--ink)" strokeWidth="1.3" />
-      <circle cx="15.4" cy="9.2" r="2.1" fill="var(--signal)" stroke="var(--ink-deep)" strokeWidth="1.1" />
-    </svg>
-  );
-}
-
-/* ─────── Nav ─────── */
-
-function Nav() {
-  const [scrolled, setScrolled] = useState(false);
-  useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 8);
-    window.addEventListener("scroll", fn, { passive: true });
-    return () => window.removeEventListener("scroll", fn);
-  }, []);
-
-  const linkStyle: React.CSSProperties = {
-    fontSize: 13, color: "var(--text-2)", textDecoration: "none",
-    fontWeight: 500, letterSpacing: "-0.005em", transition: "color 120ms",
-  };
-
-  return (
-    <nav style={{
-      position: "sticky", top: 0, zIndex: 50,
-      background: scrolled ? "rgba(255,255,255,0.82)" : "transparent",
-      backdropFilter: scrolled ? "blur(14px) saturate(160%)" : "none",
-      borderBottom: `1px solid ${scrolled ? "var(--border)" : "transparent"}`,
-      transition: "all 220ms ease",
-    }}>
-      <div style={{
-        maxWidth: 1240, margin: "0 auto", padding: "0 40px",
-        height: 64, display: "flex", alignItems: "center", gap: 32,
-      }}>
-        <a href="/design-v2" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10 }}>
-          <Mark size={22} />
-          <span style={{
-            fontFamily: "var(--display)", fontSize: 22, fontWeight: 400,
-            letterSpacing: "-0.02em", color: "var(--ink-deep)", lineHeight: 1,
-          }}>
-            One<span style={{
-              fontStyle: "italic",
-              color: "var(--ink)",
-              borderBottom: "2px solid var(--signal)",
-              margin: "0 1px",
-              paddingBottom: 1,
-            }}>Good</span>Area
-          </span>
-        </a>
-
-        <div style={{ flex: 1 }} />
-
-        <div className="aiq-nav-links" style={{ display: "flex", alignItems: "center", gap: 28 }}>
-          {[
-            { label: "How it works", href: "#how-it-works" },
-            { label: "API", href: "#" },
-            { label: "Pricing", href: "#" },
-            { label: "Blog", href: "#" },
-          ].map((l) => (
-            <a key={l.label} href={l.href} style={linkStyle}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--ink)")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-2)")}
-            >{l.label}</a>
-          ))}
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-          <a href="#" style={linkStyle}>Sign in</a>
-          <a href="#" style={{
-            fontSize: 13, fontWeight: 600, color: "var(--signal-ink)",
-            background: "var(--signal)", padding: "9px 16px",
-            borderRadius: 999, textDecoration: "none",
-            border: "1px solid var(--ink-deep)",
-            letterSpacing: "-0.005em",
-            transition: "transform 140ms cubic-bezier(0.16,1,0.3,1), box-shadow 140ms",
-            boxShadow: "0 1px 0 rgba(6,42,30,0.04)",
-          }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-1px)";
-              e.currentTarget.style.boxShadow = "0 6px 16px rgba(6,42,30,0.12)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 1px 0 rgba(6,42,30,0.04)";
-            }}
-          >Get an area report</a>
-        </div>
-      </div>
-    </nav>
   );
 }
 
@@ -2943,128 +2672,7 @@ function IntentColumn({
   );
 }
 
-/* ─────── Who uses it & why — rotating marquee ─────── */
-
-type IconName =
-  | "buyer" | "renter" | "investor" | "agent" | "operator" | "researcher"
-  | "data" | "intent" | "read" | "map" | "api";
-
-const AUDIENCE_PAIRS: { audience: string; reason: string }[] = [
-  { audience: "buyers",      reason: "See the street before the viewing." },
-  { audience: "renters",     reason: "Know the neighbourhood before the tenancy." },
-  { audience: "investors",   reason: "Yield, growth, and risk on one page." },
-  { audience: "agents",      reason: "Real data for client briefs, not blurb." },
-  { audience: "operators",   reason: "Footfall and competition, before the lease." },
-  { audience: "researchers", reason: "Comparables. LSOA-level. Cited, reproducible." },
-];
-
-function AiqIcon({ name, size = 26 }: { name: IconName; size?: number }) {
-  const s = size;
-  const common: React.SVGProps<SVGSVGElement> = {
-    width: s, height: s, viewBox: "0 0 28 28", fill: "none",
-    stroke: "var(--ink)", strokeWidth: 1.5,
-    strokeLinecap: "round", strokeLinejoin: "round",
-  };
-  const accent = "var(--signal)";
-  switch (name) {
-    case "buyer":
-      return (
-        <svg {...common}>
-          <path d="M4 14 L14 5 L24 14 V23 H4 Z" />
-          <rect x="11.5" y="16" width="5" height="7" fill={accent} stroke="none" />
-          <rect x="11.5" y="16" width="5" height="7" />
-        </svg>
-      );
-    case "renter":
-      return (
-        <svg {...common}>
-          <circle cx="10" cy="14" r="4.2" />
-          <circle cx="10" cy="14" r="1" fill="var(--ink)" stroke="none" />
-          <path d="M14.2 14 L23.5 14" />
-          <path d="M20 14 L20 17.5" />
-          <path d="M17 14 L17 16.5" />
-          <circle cx="22" cy="14" r="1.2" fill={accent} stroke="none" />
-        </svg>
-      );
-    case "investor":
-      return (
-        <svg {...common}>
-          <path d="M4 22 L10 14 L14 18 L22 6" />
-          <path d="M16 6 H22 V12" />
-          <circle cx="22" cy="6" r="1.2" fill={accent} stroke="none" />
-        </svg>
-      );
-    case "agent":
-      return (
-        <svg {...common}>
-          <path d="M4 6 H24 V18 H15 L10 22 V18 H4 Z" />
-          <circle cx="10" cy="12" r="1" fill={accent} stroke="none" />
-          <circle cx="14" cy="12" r="1" fill="var(--ink)" stroke="none" />
-          <circle cx="18" cy="12" r="1" fill="var(--ink)" stroke="none" />
-        </svg>
-      );
-    case "operator":
-      return (
-        <svg {...common}>
-          <path d="M4 9 L14 5 L24 9 V24 H4 Z" />
-          <path d="M4 12 H24" />
-          <path d="M11 24 V16 H17 V24" />
-          <rect x="11" y="16" width="6" height="2" fill={accent} stroke="none" />
-        </svg>
-      );
-    case "researcher":
-      return (
-        <svg {...common}>
-          <rect x="6" y="4" width="16" height="20" rx="1" />
-          <path d="M9 10 H19" />
-          <path d="M9 14 H19" />
-          <path d="M9 18 H15" />
-          <circle cx="17" cy="18" r="1.4" fill={accent} stroke="none" />
-        </svg>
-      );
-    case "data":
-      return (
-        <svg {...common}>
-          <circle cx="14" cy="14" r="9" />
-          <path d="M10 14.3 L13 17.3 L19 11" stroke={accent} strokeWidth="2.2" />
-        </svg>
-      );
-    case "intent":
-      return (
-        <svg {...common}>
-          <circle cx="14" cy="14" r="9" />
-          <circle cx="14" cy="14" r="5" />
-          <circle cx="14" cy="14" r="1.6" fill={accent} stroke="none" />
-        </svg>
-      );
-    case "read":
-      return (
-        <svg {...common}>
-          <path d="M4 7 L14 9 L24 7 V22 L14 20 L4 22 Z" />
-          <path d="M14 9 V20" />
-          <path d="M7 11 L11 11.8" />
-          <path d="M7 14 L11 14.8" />
-          <path d="M17 11.8 L21 11" stroke={accent} />
-          <path d="M17 14.8 L21 14" stroke={accent} />
-        </svg>
-      );
-    case "map":
-      return (
-        <svg {...common}>
-          <path d="M14 4 C9.5 4 6 7 6 11.5 C6 17.5 14 24 14 24 S22 17.5 22 11.5 C22 7 18.5 4 14 4 Z" />
-          <circle cx="14" cy="11.5" r="2.4" fill={accent} stroke="none" />
-        </svg>
-      );
-    case "api":
-      return (
-        <svg {...common}>
-          <path d="M10 4 C7 4 7.5 8 7.5 11 C7.5 12.8 5.5 14 5.5 14 C5.5 14 7.5 15.2 7.5 17 C7.5 20 7 24 10 24" />
-          <path d="M18 4 C21 4 20.5 8 20.5 11 C20.5 12.8 22.5 14 22.5 14 C22.5 14 20.5 15.2 20.5 17 C20.5 20 21 24 18 24" />
-          <circle cx="14" cy="14" r="1.6" fill={accent} stroke="none" />
-        </svg>
-      );
-  }
-}
+/* ─────── Who uses it & why ─────── */
 
 const WHO_ITEMS: { icon: IconName; title: string; body: string }[] = [
   { icon: "buyer",    title: "Home Buyers",       body: "Evaluate safety, school catchments, and commute times before choosing where to live." },
@@ -3751,6 +3359,464 @@ function IRFooter() {
         }}>ref · 84 of 100 · Manchester · moving home</span>
       </div>
     </div>
+  );
+}
+
+/* ─────── For businesses — REST API + embeddable widget ─────── */
+
+function ForBusinessesSection() {
+  return (
+    <section id="embed-it" style={{
+      background: "var(--ink-deep)",
+      borderTop: "1px solid var(--ink)",
+      padding: "104px 0 120px",
+    }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 40px" }}>
+        <div style={{ textAlign: "center", maxWidth: 700, margin: "0 auto 80px" }}>
+          <div style={{
+            fontFamily: "var(--mono)", fontSize: 11,
+            letterSpacing: "0.22em", textTransform: "uppercase",
+            color: "var(--signal)", marginBottom: 22,
+            display: "inline-flex", alignItems: "center", gap: 9,
+          }}>
+            <span style={{
+              width: 6, height: 6, borderRadius: "50%",
+              background: "var(--signal)",
+              animation: "aiq-pulse-dot 2s ease-in-out infinite",
+            }} />
+            For businesses
+          </div>
+          <h2 style={{
+            fontFamily: "var(--display)", fontWeight: 400,
+            fontSize: "clamp(1.9rem, 3.6vw, 2.8rem)",
+            lineHeight: 1.08, letterSpacing: "-0.02em",
+            color: "#F4F8F2", margin: 0,
+          }}>
+            The same engine,{" "}
+            <span style={{
+              fontStyle: "italic", color: "#F4F8F2",
+              borderBottom: "3px solid var(--signal)", paddingBottom: 2,
+            }}>inside your product</span>.
+          </h2>
+          <p style={{
+            fontFamily: "var(--sans)", fontSize: 17, lineHeight: 1.55,
+            color: "#A7BFB4", letterSpacing: "-0.003em",
+            margin: "26px auto 0", maxWidth: "56ch",
+          }}>
+            Ship area intelligence in under fifty lines. A REST API and a drop-in widget, both returning the same read.
+          </p>
+        </div>
+
+        <FBRow
+          reverse={false}
+          number="01"
+          eyebrow="REST API"
+          title="Bearer auth. JSON out."
+          body="Call any UK postcode with an intent. Get scores, dimensions, reasoning, and source citations back as structured JSON. Same payload that renders on this site."
+          bullets={[
+            "Four intents. Five weighted dimensions per intent",
+            "Source attribution on every dimension",
+            "Tiered plans from free to enterprise",
+          ]}
+          visual={<FBApiPanel />}
+        />
+
+        <div aria-hidden style={{
+          height: 1, background: "rgba(212,243,58,0.16)",
+          margin: "72px 0", position: "relative",
+        }}>
+          <span style={{
+            position: "absolute", left: "50%", top: -5,
+            width: 10, height: 10, borderRadius: "50%",
+            background: "var(--signal)",
+            transform: "translateX(-50%)",
+            boxShadow: "0 0 0 4px var(--ink-deep)",
+          }} />
+        </div>
+
+        <FBRow
+          reverse
+          number="02"
+          eyebrow="Drop-in widget"
+          title="One script tag. Zero backend."
+          body="For property platforms, relocation apps, and CRM tools. Drop a single tag next to a listing and show the area read in context."
+          bullets={[
+            "Light or dark theme, or matched to your brand",
+            "Responsive from 280px upwards. No layout shift",
+            "Same engine, same data, same narrative",
+          ]}
+          visual={<FBWidgetPanel />}
+        />
+      </div>
+    </section>
+  );
+}
+
+function FBRow({
+  reverse, number, eyebrow, title, body, bullets, visual,
+}: {
+  reverse: boolean;
+  number: string;
+  eyebrow: string;
+  title: string;
+  body: string;
+  bullets: string[];
+  visual: React.ReactNode;
+}) {
+  const copy = (
+    <div>
+      <div style={{
+        fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
+        letterSpacing: "0.22em", color: "var(--signal)",
+        marginBottom: 14, textTransform: "uppercase",
+      }}>{number} · {eyebrow}</div>
+      <h3 style={{
+        fontFamily: "var(--display)", fontWeight: 400,
+        fontSize: "clamp(1.55rem, 2.4vw, 2rem)", lineHeight: 1.12,
+        letterSpacing: "-0.018em", color: "#F4F8F2", margin: 0,
+      }}>{title}</h3>
+      <p style={{
+        fontFamily: "var(--sans)", fontSize: 15.5, lineHeight: 1.6,
+        color: "#A7BFB4", letterSpacing: "-0.003em",
+        margin: "18px 0 0", maxWidth: "46ch",
+      }}>{body}</p>
+      <ul style={{ listStyle: "none", padding: 0, margin: "28px 0 0" }}>
+        {bullets.map((b, i) => (
+          <li key={i} style={{
+            fontFamily: "var(--sans)", fontSize: 14, lineHeight: 1.5,
+            color: "#C2D5CA", padding: "11px 0",
+            borderTop: i === 0
+              ? "1px solid rgba(255,255,255,0.10)"
+              : "1px solid rgba(255,255,255,0.06)",
+            display: "grid", gridTemplateColumns: "14px 1fr", gap: 12, alignItems: "start",
+          }}>
+            <span aria-hidden style={{
+              width: 5, height: 5, borderRadius: "50%",
+              background: "var(--signal)", marginTop: 8,
+            }} />
+            <span>{b}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+  return (
+    <div className="aiq-hiw-row" style={{
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 64,
+      alignItems: "center",
+      padding: "4px 0",
+    }}>
+      {reverse ? <>{visual}{copy}</> : <>{copy}{visual}</>}
+    </div>
+  );
+}
+
+function FBApiPanel() {
+  return (
+    <div style={{
+      background: "#04201A",
+      border: "1px solid rgba(212,243,58,0.18)",
+      borderRadius: 4,
+      overflow: "hidden",
+      boxShadow: "0 24px 44px -22px rgba(0,0,0,0.55)",
+    }}>
+      <div style={{
+        padding: "11px 16px",
+        background: "rgba(0,0,0,0.28)",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        display: "flex", alignItems: "center", gap: 10,
+      }}>
+        <div style={{ display: "flex", gap: 6 }}>
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "rgba(255,255,255,0.14)" }} />
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "rgba(255,255,255,0.14)" }} />
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "rgba(255,255,255,0.14)" }} />
+        </div>
+        <span style={{
+          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
+          letterSpacing: "0.16em", textTransform: "uppercase",
+          color: "var(--signal)", marginLeft: 10,
+          display: "inline-flex", alignItems: "center", gap: 6,
+        }}>
+          <span style={{
+            width: 5, height: 5, borderRadius: "50%",
+            background: "var(--signal)",
+            animation: "aiq-pulse-dot 2s ease-in-out infinite",
+          }} />
+          Live
+        </span>
+        <span style={{
+          fontFamily: "var(--mono)", fontSize: 10.5,
+          color: "rgba(255,255,255,0.4)", marginLeft: "auto",
+        }}>POST /v1/score</span>
+      </div>
+      <pre style={{
+        margin: 0, padding: "20px 22px 22px",
+        fontFamily: "var(--mono)", fontSize: 12.5, lineHeight: 1.75,
+        color: "#C2D5CA",
+        whiteSpace: "pre", overflowX: "auto",
+      }}>
+{`$ curl https://api.area-iq.co.uk/v1/score \\
+  -H `}<span style={{color:"var(--signal-dim)"}}>{`"Authorization: Bearer aiq_live_••••"`}</span>{` \\
+  -H `}<span style={{color:"var(--signal-dim)"}}>{`"Content-Type: application/json"`}</span>{` \\
+  -d `}<span style={{color:"var(--signal-dim)"}}>{`'{ "postcode": "M1 1AD", "intent": "moving" }'`}</span>{`
+
+`}<span style={{color:"rgba(255,255,255,0.34)"}}>{`# 200 OK`}</span>{`
+{
+  `}<span style={{color:"#8DC3A8"}}>{`"area"`}</span>{`:       `}<span style={{color:"var(--signal-dim)"}}>{`"Manchester, M1"`}</span>{`,
+  `}<span style={{color:"#8DC3A8"}}>{`"intent"`}</span>{`:     `}<span style={{color:"var(--signal-dim)"}}>{`"moving"`}</span>{`,
+  `}<span style={{color:"#8DC3A8"}}>{`"verdict"`}</span>{`:    `}<span style={{color:"var(--signal-dim)"}}>{`"Strong fit"`}</span>{`,
+  `}<span style={{color:"#8DC3A8"}}>{`"score"`}</span>{`:      `}<span style={{color:"var(--signal)"}}>{`84`}</span>{`,
+  `}<span style={{color:"#8DC3A8"}}>{`"dimensions"`}</span>{`: [ … ],
+  `}<span style={{color:"#8DC3A8"}}>{`"narrative"`}</span>{`:  `}<span style={{color:"var(--signal-dim)"}}>{`"Manchester's M1 is …"`}</span>{`,
+  `}<span style={{color:"#8DC3A8"}}>{`"sources"`}</span>{`:    [ 7 ]
+}`}
+      </pre>
+    </div>
+  );
+}
+
+function FBWidgetPanel() {
+  const dims: { l: string; s: number }[] = [
+    { l: "Safety",    s: 72 },
+    { l: "Transport", s: 91 },
+    { l: "Amenities", s: 88 },
+    { l: "Schools",   s: 81 },
+    { l: "Cost",      s: 78 },
+  ];
+  return (
+    <div style={{
+      background: "#FFFFFF",
+      border: "1px solid rgba(212,243,58,0.22)",
+      borderRadius: 4,
+      overflow: "hidden",
+      boxShadow: "0 24px 44px -22px rgba(0,0,0,0.55)",
+    }}>
+      <div style={{
+        padding: "10px 14px",
+        background: "#F2F4F0",
+        borderBottom: "1px solid rgba(0,0,0,0.06)",
+        display: "flex", alignItems: "center", gap: 10,
+      }}>
+        <div style={{ display: "flex", gap: 6 }}>
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#D0D5D0" }} />
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#D0D5D0" }} />
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#D0D5D0" }} />
+        </div>
+        <span style={{
+          flex: 1, marginLeft: 10,
+          fontFamily: "var(--mono)", fontSize: 10.5,
+          color: "var(--text-3)",
+          background: "#FFFFFF",
+          border: "1px solid var(--border)",
+          padding: "4px 10px", borderRadius: 3,
+          overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis",
+        }}>realestate.co.uk/listing/manchester-m1-apartments</span>
+      </div>
+
+      <div style={{ padding: "22px 22px 18px", background: "var(--bg-off)" }}>
+        <div style={{
+          fontFamily: "var(--display)", fontSize: 17, fontWeight: 500,
+          color: "var(--ink-deep)", letterSpacing: "-0.01em",
+          margin: "0 0 4px",
+        }}>2-Bed Apartment · M1 1AD</div>
+        <div style={{
+          fontFamily: "var(--sans)", fontSize: 12.5,
+          color: "var(--text-3)", marginBottom: 14,
+        }}>Northern Quarter, Manchester · £1,450 pcm</div>
+        <div style={{
+          height: 60, background: "var(--border-dim)",
+          borderRadius: 2, marginBottom: 16,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontFamily: "var(--mono)", fontSize: 9, color: "var(--text-4)",
+          letterSpacing: "0.2em", textTransform: "uppercase",
+        }}>listing photos</div>
+
+        <div style={{
+          background: "#FFFFFF",
+          border: "1px solid var(--border)",
+          borderRadius: 3,
+          overflow: "hidden",
+          position: "relative",
+        }}>
+          <div aria-hidden style={{
+            position: "absolute", top: 0, left: 0, right: 0,
+            height: 2, background: "var(--signal)",
+          }} />
+          <div style={{ padding: "16px 18px" }}>
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              marginBottom: 12,
+            }}>
+              <div style={{
+                fontFamily: "var(--mono)", fontSize: 9, fontWeight: 500,
+                letterSpacing: "0.2em", textTransform: "uppercase",
+                color: "var(--ink)",
+                display: "inline-flex", alignItems: "center", gap: 7,
+              }}>
+                <Mark size={14} /> AreaIQ · for moving
+              </div>
+              <span style={{
+                fontFamily: "var(--mono)", fontSize: 9,
+                color: "var(--text-3)", letterSpacing: "0.08em",
+              }}>M1 1AD</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 14 }}>
+              <div style={{
+                fontFamily: "var(--display)", fontSize: 36, fontWeight: 500,
+                color: "var(--ink-deep)", letterSpacing: "-0.02em",
+                lineHeight: 1,
+              }}>84</div>
+              <div>
+                <div style={{
+                  fontFamily: "var(--sans)", fontSize: 12, fontWeight: 600,
+                  color: "var(--ink-deep)", letterSpacing: "-0.003em",
+                }}>Strong fit</div>
+                <div style={{
+                  fontFamily: "var(--mono)", fontSize: 9,
+                  letterSpacing: "0.14em", textTransform: "uppercase",
+                  color: "var(--text-3)",
+                }}>out of 100</div>
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+              {dims.map((d) => (
+                <div key={d.l} style={{
+                  display: "grid", gridTemplateColumns: "74px 1fr 24px",
+                  gap: 10, alignItems: "center",
+                }}>
+                  <span style={{
+                    fontFamily: "var(--mono)", fontSize: 9, fontWeight: 500,
+                    color: "var(--text-2)",
+                    letterSpacing: "0.06em",
+                  }}>{d.l}</span>
+                  <div style={{
+                    height: 3, background: "var(--border-dim)",
+                    overflow: "hidden", borderRadius: 2,
+                  }}>
+                    <div style={{
+                      height: "100%", width: `${d.s}%`,
+                      background: d.s >= 85 ? "var(--signal)" : "var(--ink)",
+                    }} />
+                  </div>
+                  <span style={{
+                    fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
+                    color: "var(--ink)", textAlign: "right",
+                  }}>{d.s}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{
+        padding: "14px 18px",
+        background: "#04201A",
+        borderTop: "1px solid rgba(212,243,58,0.18)",
+        fontFamily: "var(--mono)", fontSize: 11.5, lineHeight: 1.5,
+        color: "#C2D5CA",
+        overflowX: "auto",
+        whiteSpace: "nowrap",
+      }}>
+        <span style={{color:"rgba(255,255,255,0.36)"}}>{`<`}</span><span style={{color:"var(--signal-dim)"}}>{`area-iq`}</span>{` `}
+        <span style={{color:"#8DC3A8"}}>postcode</span>=<span style={{color:"var(--signal-dim)"}}>{`"M1 1AD"`}</span>{` `}
+        <span style={{color:"#8DC3A8"}}>intent</span>=<span style={{color:"var(--signal-dim)"}}>{`"moving"`}</span>{` `}
+        <span style={{color:"rgba(255,255,255,0.36)"}}>{`/>`}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ─────── Final CTA — one last call to the hero form ─────── */
+
+function FinalCTA() {
+  function scrollToTop(e: React.MouseEvent) {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  return (
+    <section id="start" style={{
+      background: "var(--bg)",
+      borderTop: "1px solid var(--border)",
+      padding: "112px 0 128px",
+    }}>
+      <div style={{ maxWidth: 760, margin: "0 auto", padding: "0 40px", textAlign: "center" }}>
+        <div style={{
+          fontFamily: "var(--mono)", fontSize: 11,
+          letterSpacing: "0.22em", textTransform: "uppercase",
+          color: "var(--ink)", marginBottom: 22,
+          display: "inline-flex", alignItems: "center", gap: 8,
+        }}>
+          <span style={{
+            width: 6, height: 6, borderRadius: "50%",
+            background: "var(--signal)",
+            animation: "aiq-pulse-dot 2s ease-in-out infinite",
+          }} />
+          Start
+        </div>
+        <h2 style={{
+          fontFamily: "var(--display)", fontWeight: 400,
+          fontSize: "clamp(2.1rem, 4.4vw, 3.4rem)",
+          lineHeight: 1.04, letterSpacing: "-0.025em",
+          color: "var(--ink-deep)", margin: 0,
+        }}>
+          One postcode.{" "}
+          <span style={{
+            fontStyle: "italic", color: "var(--ink)",
+            borderBottom: "3px solid var(--signal)", paddingBottom: 2,
+          }}>The full read</span>.
+        </h2>
+        <p style={{
+          fontFamily: "var(--sans)", fontSize: 17, lineHeight: 1.5,
+          color: "var(--text-2)", letterSpacing: "-0.003em",
+          margin: "28px auto 0", maxWidth: "50ch",
+        }}>
+          Type a UK place, pick why you&apos;re looking, and get the intelligence report in seconds.
+        </p>
+        <div style={{
+          display: "flex", gap: 12, justifyContent: "center",
+          marginTop: 40, flexWrap: "wrap",
+        }}>
+          <a href="#" onClick={scrollToTop} style={{
+            fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600,
+            letterSpacing: "-0.005em",
+            color: "var(--ink-deep)", background: "var(--signal)",
+            padding: "14px 24px", borderRadius: 3,
+            textDecoration: "none",
+            display: "inline-flex", alignItems: "center", gap: 9,
+            transition: "transform 140ms ease, box-shadow 140ms ease",
+            boxShadow: "0 6px 18px -8px rgba(212,243,58,0.55)",
+          }}>
+            Try a postcode
+            <span aria-hidden>→</span>
+          </a>
+          <a href="#embed-it" style={{
+            fontFamily: "var(--sans)", fontSize: 14, fontWeight: 500,
+            letterSpacing: "-0.005em",
+            color: "var(--ink)", background: "transparent",
+            border: "1px solid var(--border)",
+            padding: "13px 22px", borderRadius: 3,
+            textDecoration: "none",
+            display: "inline-flex", alignItems: "center", gap: 8,
+            transition: "border-color 140ms, background 140ms",
+          }}>
+            See the API
+            <span aria-hidden style={{ color: "var(--text-3)" }}>→</span>
+          </a>
+        </div>
+        <div style={{
+          marginTop: 56, paddingTop: 22,
+          borderTop: "1px solid var(--border-dim)",
+          fontFamily: "var(--mono)", fontSize: 10,
+          letterSpacing: "0.22em", textTransform: "uppercase",
+          color: "var(--text-3)",
+        }}>
+          42,640 UK neighbourhoods · free to try · any UK postcode
+        </div>
+      </div>
+    </section>
   );
 }
 
