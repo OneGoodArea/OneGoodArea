@@ -327,15 +327,33 @@ function PasswordChange() {
           }}>Password updated.</div>
         )}
 
-        <PrimaryCta disabled={loading} onClick={() => { /* form handles submit */ }}>
-          <button type="submit" disabled={loading} style={{
-            all: "unset",
-            display: "inline-flex", alignItems: "center", gap: 9, cursor: loading ? "default" : "pointer",
-          }}>
-            {loading ? "Updating…" : "Update password"}
-            {!loading && <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>}
-          </button>
-        </PrimaryCta>
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
+            letterSpacing: "0.14em", textTransform: "uppercase",
+            color: "var(--signal-ink)", background: "var(--signal)",
+            padding: "10px 18px", borderRadius: 999,
+            border: "1px solid var(--ink-deep)",
+            display: "inline-flex", alignItems: "center", gap: 9,
+            cursor: loading ? "default" : "pointer",
+            opacity: loading ? 0.5 : 1,
+            transition: "transform 140ms cubic-bezier(0.16,1,0.3,1), box-shadow 140ms",
+          }}
+          onMouseEnter={(e) => {
+            if (loading) return;
+            e.currentTarget.style.transform = "translateY(-1px)";
+            e.currentTarget.style.boxShadow = "0 6px 14px rgba(6,42,30,0.12)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow = "none";
+          }}
+        >
+          {loading ? "Updating…" : "Update password"}
+          {!loading && <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>}
+        </button>
       </form>
     </AppCard>
   );
