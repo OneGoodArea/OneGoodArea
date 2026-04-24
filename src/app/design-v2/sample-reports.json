@@ -1,0 +1,618 @@
+{
+  "manchester": {
+    "key": "manchester",
+    "display": "Manchester",
+    "postcode": "M1 1AE",
+    "region": "North West",
+    "areaType": "suburban",
+    "lsoa": "E01034129",
+    "intents": {
+      "moving": {
+        "overall": 84,
+        "dimensions": [
+          {
+            "label": "Safety & Crime",
+            "score": 80,
+            "weight": 25,
+            "reasoning": "10 crimes over 3 months (3/month). most common: Violent Crime (80%). violent crime: 80% of total. trend: rising"
+          },
+          {
+            "label": "Schools & Education",
+            "score": 95,
+            "weight": 20,
+            "reasoning": "25 schools and educational facilities within 1.5km"
+          },
+          {
+            "label": "Transport & Commute",
+            "score": 95,
+            "weight": 20,
+            "reasoning": "6 rail/tube stations within 2km. 43 bus stops within 500m. nearby: Ardwick station, Manchester Piccadilly station, Manchester Oxford Road station"
+          },
+          {
+            "label": "Daily Amenities",
+            "score": 95,
+            "weight": 15,
+            "reasoning": "3579 amenities nearby: 25 schools, 593 food/drink, 42 healthcare, 52 shops, 2818 parks/leisure"
+          },
+          {
+            "label": "Cost of Living",
+            "score": 58,
+            "weight": 20,
+            "reasoning": "IMD 2025 decile 5/10 as cost proxy: moderate cost of living"
+          }
+        ],
+        "summary": "Manchester scores 84/100. 3579 amenities within 1km including 25 schools, 593 food/drink, 6 rail/tube stations. 10 crimes over 3 months (3/mo). IMD 2025 decile 5."
+      },
+      "business": {
+        "overall": 64,
+        "dimensions": [
+          {
+            "label": "Foot Traffic & Demand",
+            "score": 95,
+            "weight": 30,
+            "reasoning": "6 transit stations and 43 bus stops drive footfall. 645 retail/food venues indicate a busy commercial area"
+          },
+          {
+            "label": "Competition Density",
+            "score": 10,
+            "weight": 20,
+            "reasoning": "645 competing food/retail venues within 1km. high competition, differentiation essential"
+          },
+          {
+            "label": "Transport & Access",
+            "score": 95,
+            "weight": 15,
+            "reasoning": "6 rail/tube stations within 2km. 43 bus stops within 500m. nearby: Ardwick station, Manchester Piccadilly station, Manchester Oxford Road station"
+          },
+          {
+            "label": "Local Spending Power",
+            "score": 53,
+            "weight": 20,
+            "reasoning": "IMD 2025 decile 5/10 indicates moderate spending power. Less deprived than 46% of England"
+          },
+          {
+            "label": "Commercial Costs",
+            "score": 59,
+            "weight": 15,
+            "reasoning": "IMD 2025 decile 5/10: moderate commercial costs. Commercial rents correlate with area affluence"
+          }
+        ],
+        "summary": "Manchester scores 64/100. 3579 amenities within 1km including 25 schools, 593 food/drink, 6 rail/tube stations. 10 crimes over 3 months (3/mo). IMD 2025 decile 5."
+      },
+      "investing": {
+        "overall": 77,
+        "dimensions": [
+          {
+            "label": "Price Growth",
+            "score": 90,
+            "weight": 25,
+            "reasoning": "IMD 2025 decile 5/10: mid-range area with strong growth potential. 6 transport links support appreciation"
+          },
+          {
+            "label": "Rental Yield",
+            "score": 72,
+            "weight": 25,
+            "reasoning": "IMD 2025 decile 5/10: moderate property values, balanced yield potential. 3579 nearby amenities support tenant demand"
+          },
+          {
+            "label": "Regeneration & Infrastructure",
+            "score": 70,
+            "weight": 20,
+            "reasoning": "IMD 2025 decile 5/10: moderate area, incremental improvement likely. 6 transport links support development case"
+          },
+          {
+            "label": "Tenant Demand",
+            "score": 95,
+            "weight": 15,
+            "reasoning": "6 stations and 43 bus stops create commuter demand. 3579 local amenities support liveability"
+          },
+          {
+            "label": "Risk Factors",
+            "score": 58,
+            "weight": 15,
+            "reasoning": "3 crimes/month nearby. 10 flood risk zones within 3km"
+          }
+        ],
+        "summary": "Manchester scores 77/100. 3579 amenities within 1km including 25 schools, 593 food/drink, 6 rail/tube stations. 10 crimes over 3 months (3/mo). IMD 2025 decile 5."
+      },
+      "research": {
+        "overall": 73,
+        "dimensions": [
+          {
+            "label": "Safety & Crime",
+            "score": 80,
+            "weight": 20,
+            "reasoning": "10 crimes over 3 months (3/month). most common: Violent Crime (80%). violent crime: 80% of total. trend: rising"
+          },
+          {
+            "label": "Transport Links",
+            "score": 95,
+            "weight": 20,
+            "reasoning": "6 rail/tube stations within 2km. 43 bus stops within 500m. nearby: Ardwick station, Manchester Piccadilly station, Manchester Oxford Road station"
+          },
+          {
+            "label": "Amenities & Services",
+            "score": 95,
+            "weight": 20,
+            "reasoning": "3579 amenities nearby: 25 schools, 593 food/drink, 42 healthcare, 52 shops, 2818 parks/leisure"
+          },
+          {
+            "label": "Demographics & Economy",
+            "score": 50,
+            "weight": 20,
+            "reasoning": "IMD 2025 decile 5/10 (moderate deprivation). Ranked 15,371 of 33,755 LSOAs (46th percentile). LSOA: Manchester 055F"
+          },
+          {
+            "label": "Environment & Quality",
+            "score": 45,
+            "weight": 20,
+            "reasoning": "10 flood risk zones within 3km. near: River Mersey, River Irwell, River Medlock. no active warnings. 2818 parks/green spaces nearby"
+          }
+        ],
+        "summary": "Manchester scores 73/100. 3579 amenities within 1km including 25 schools, 593 food/drink, 6 rail/tube stations. 10 crimes over 3 months (3/mo). IMD 2025 decile 5."
+      }
+    }
+  },
+  "clapham": {
+    "key": "clapham",
+    "display": "Clapham",
+    "postcode": "SW4 0LG",
+    "region": "London",
+    "areaType": "suburban",
+    "lsoa": "E01003039",
+    "intents": {
+      "moving": {
+        "overall": 58,
+        "dimensions": [
+          {
+            "label": "Safety & Crime",
+            "score": 5,
+            "weight": 25,
+            "reasoning": "2948 crimes over 3 months (983/month). most common: Violent Crime (23%). violent crime: 27% of total. trend: stable"
+          },
+          {
+            "label": "Schools & Education",
+            "score": 95,
+            "weight": 20,
+            "reasoning": "43 schools and educational facilities within 1.5km"
+          },
+          {
+            "label": "Transport & Commute",
+            "score": 85,
+            "weight": 20,
+            "reasoning": "13 rail/tube stations within 2km. 21 bus stops within 500m. nearby: Clapham North station, Brixton station, Clapham South station"
+          },
+          {
+            "label": "Daily Amenities",
+            "score": 95,
+            "weight": 15,
+            "reasoning": "474 amenities nearby: 43 schools, 166 food/drink, 31 healthcare, 33 shops, 167 parks/leisure"
+          },
+          {
+            "label": "Cost of Living",
+            "score": 34,
+            "weight": 20,
+            "reasoning": "IMD 2025 decile 8/10 as cost proxy: affluent area, higher living costs expected"
+          }
+        ],
+        "summary": "Clapham scores 58/100. 474 amenities within 1km including 43 schools, 166 food/drink, 13 rail/tube stations. 2,948 crimes over 3 months (983/mo). IMD 2025 decile 8."
+      },
+      "business": {
+        "overall": 64,
+        "dimensions": [
+          {
+            "label": "Foot Traffic & Demand",
+            "score": 95,
+            "weight": 30,
+            "reasoning": "13 transit stations and 21 bus stops drive footfall. 199 retail/food venues indicate a busy commercial area"
+          },
+          {
+            "label": "Competition Density",
+            "score": 10,
+            "weight": 20,
+            "reasoning": "199 competing food/retail venues within 1km. high competition, differentiation essential"
+          },
+          {
+            "label": "Transport & Access",
+            "score": 85,
+            "weight": 15,
+            "reasoning": "13 rail/tube stations within 2km. 21 bus stops within 500m. nearby: Clapham North station, Brixton station, Clapham South station"
+          },
+          {
+            "label": "Local Spending Power",
+            "score": 80,
+            "weight": 20,
+            "reasoning": "IMD 2025 decile 8/10 indicates high spending power. Less deprived than 74% of England"
+          },
+          {
+            "label": "Commercial Costs",
+            "score": 32,
+            "weight": 15,
+            "reasoning": "IMD 2025 decile 8/10: premium area, higher commercial rents expected. Commercial rents correlate with area affluence"
+          }
+        ],
+        "summary": "Clapham scores 64/100. 474 amenities within 1km including 43 schools, 166 food/drink, 13 rail/tube stations. 2,948 crimes over 3 months (983/mo). IMD 2025 decile 8."
+      },
+      "investing": {
+        "overall": 55,
+        "dimensions": [
+          {
+            "label": "Price Growth",
+            "score": 65,
+            "weight": 25,
+            "reasoning": "IMD 2025 decile 8/10: premium area, limited upside ceiling. 13 transport links support appreciation"
+          },
+          {
+            "label": "Rental Yield",
+            "score": 51,
+            "weight": 25,
+            "reasoning": "IMD 2025 decile 8/10: higher property values, yields typically compressed. 474 nearby amenities support tenant demand"
+          },
+          {
+            "label": "Regeneration & Infrastructure",
+            "score": 50,
+            "weight": 20,
+            "reasoning": "IMD 2025 decile 8/10: already developed, limited regeneration upside. 13 transport links support development case"
+          },
+          {
+            "label": "Tenant Demand",
+            "score": 95,
+            "weight": 15,
+            "reasoning": "13 stations and 21 bus stops create commuter demand. 474 local amenities support liveability"
+          },
+          {
+            "label": "Risk Factors",
+            "score": 10,
+            "weight": 15,
+            "reasoning": "983 crimes/month nearby. 18 flood risk zones within 3km. 1 active flood warning"
+          }
+        ],
+        "summary": "Clapham scores 55/100. 474 amenities within 1km including 43 schools, 166 food/drink, 13 rail/tube stations. 2,948 crimes over 3 months (983/mo). IMD 2025 decile 8."
+      },
+      "research": {
+        "overall": 53,
+        "dimensions": [
+          {
+            "label": "Safety & Crime",
+            "score": 5,
+            "weight": 20,
+            "reasoning": "2948 crimes over 3 months (983/month). most common: Violent Crime (23%). violent crime: 27% of total. trend: stable"
+          },
+          {
+            "label": "Transport Links",
+            "score": 85,
+            "weight": 20,
+            "reasoning": "13 rail/tube stations within 2km. 21 bus stops within 500m. nearby: Clapham North station, Brixton station, Clapham South station"
+          },
+          {
+            "label": "Amenities & Services",
+            "score": 95,
+            "weight": 20,
+            "reasoning": "474 amenities nearby: 43 schools, 166 food/drink, 31 healthcare, 33 shops, 167 parks/leisure"
+          },
+          {
+            "label": "Demographics & Economy",
+            "score": 77,
+            "weight": 20,
+            "reasoning": "IMD 2025 decile 8/10 (low deprivation). Ranked 25,105 of 33,755 LSOAs (74th percentile). LSOA: Lambeth 013C"
+          },
+          {
+            "label": "Environment & Quality",
+            "score": 5,
+            "weight": 20,
+            "reasoning": "18 flood risk zones within 3km. near: River Thames, River Wandle, Groundwater. 1 active flood warning. 167 parks/green spaces nearby"
+          }
+        ],
+        "summary": "Clapham scores 53/100. 474 amenities within 1km including 43 schools, 166 food/drink, 13 rail/tube stations. 2,948 crimes over 3 months (983/mo). IMD 2025 decile 8."
+      }
+    }
+  },
+  "edinburgh": {
+    "key": "edinburgh",
+    "display": "Edinburgh",
+    "postcode": "EH1 1BB",
+    "region": "City of Edinburgh",
+    "areaType": "suburban",
+    "lsoa": "S01014713",
+    "intents": {
+      "moving": {
+        "overall": 73,
+        "dimensions": [
+          {
+            "label": "Safety & Crime",
+            "score": 50,
+            "weight": 25,
+            "reasoning": "Crime data unavailable for this location"
+          },
+          {
+            "label": "Schools & Education",
+            "score": 95,
+            "weight": 20,
+            "reasoning": "45 schools and educational facilities within 1.5km"
+          },
+          {
+            "label": "Transport & Commute",
+            "score": 80,
+            "weight": 20,
+            "reasoning": "2 rail/tube stations within 2km. 81 bus stops within 500m"
+          },
+          {
+            "label": "Daily Amenities",
+            "score": 95,
+            "weight": 15,
+            "reasoning": "4839 amenities nearby: 45 schools, 780 food/drink, 95 healthcare, 51 shops, 3785 parks/leisure"
+          },
+          {
+            "label": "Cost of Living",
+            "score": 58,
+            "weight": 20,
+            "reasoning": "SIMD 2020 decile 5/10 as cost proxy: moderate cost of living"
+          }
+        ],
+        "summary": "Edinburgh scores 73/100. 4839 amenities within 1km including 45 schools, 780 food/drink, 2 rail/tube stations. SIMD 2020 decile 5."
+      },
+      "business": {
+        "overall": 62,
+        "dimensions": [
+          {
+            "label": "Foot Traffic & Demand",
+            "score": 95,
+            "weight": 30,
+            "reasoning": "2 transit stations and 81 bus stops drive footfall. 831 retail/food venues indicate a busy commercial area"
+          },
+          {
+            "label": "Competition Density",
+            "score": 10,
+            "weight": 20,
+            "reasoning": "831 competing food/retail venues within 1km. high competition, differentiation essential"
+          },
+          {
+            "label": "Transport & Access",
+            "score": 80,
+            "weight": 15,
+            "reasoning": "2 rail/tube stations within 2km. 81 bus stops within 500m"
+          },
+          {
+            "label": "Local Spending Power",
+            "score": 53,
+            "weight": 20,
+            "reasoning": "SIMD 2020 decile 5/10 indicates moderate spending power. Less deprived than 47% of Scotland"
+          },
+          {
+            "label": "Commercial Costs",
+            "score": 59,
+            "weight": 15,
+            "reasoning": "SIMD 2020 decile 5/10: moderate commercial costs. Commercial rents correlate with area affluence"
+          }
+        ],
+        "summary": "Edinburgh scores 62/100. 4839 amenities within 1km including 45 schools, 780 food/drink, 2 rail/tube stations. SIMD 2020 decile 5."
+      },
+      "investing": {
+        "overall": 78,
+        "dimensions": [
+          {
+            "label": "Price Growth",
+            "score": 90,
+            "weight": 25,
+            "reasoning": "SIMD 2020 decile 5/10: mid-range area with strong growth potential. 2 transport links support appreciation"
+          },
+          {
+            "label": "Rental Yield",
+            "score": 72,
+            "weight": 25,
+            "reasoning": "SIMD 2020 decile 5/10: moderate property values, balanced yield potential. 4839 nearby amenities support tenant demand"
+          },
+          {
+            "label": "Regeneration & Infrastructure",
+            "score": 62,
+            "weight": 20,
+            "reasoning": "SIMD 2020 decile 5/10: moderate area, incremental improvement likely. 2 transport links support development case"
+          },
+          {
+            "label": "Tenant Demand",
+            "score": 95,
+            "weight": 15,
+            "reasoning": "2 stations and 81 bus stops create commuter demand. 4839 local amenities support liveability"
+          },
+          {
+            "label": "Risk Factors",
+            "score": 73,
+            "weight": 15,
+            "reasoning": "0 flood risk zones within 3km"
+          }
+        ],
+        "summary": "Edinburgh scores 78/100. 4839 amenities within 1km including 45 schools, 780 food/drink, 2 rail/tube stations. SIMD 2020 decile 5."
+      },
+      "research": {
+        "overall": 74,
+        "dimensions": [
+          {
+            "label": "Safety & Crime",
+            "score": 50,
+            "weight": 20,
+            "reasoning": "Crime data unavailable for this location"
+          },
+          {
+            "label": "Transport Links",
+            "score": 80,
+            "weight": 20,
+            "reasoning": "2 rail/tube stations within 2km. 81 bus stops within 500m"
+          },
+          {
+            "label": "Amenities & Services",
+            "score": 95,
+            "weight": 20,
+            "reasoning": "4839 amenities nearby: 45 schools, 780 food/drink, 95 healthcare, 51 shops, 3785 parks/leisure"
+          },
+          {
+            "label": "Demographics & Economy",
+            "score": 50,
+            "weight": 20,
+            "reasoning": "SIMD 2020 decile 5/10 (moderate deprivation). Ranked 3,285 of 6,976 Scottish Data Zones (47th percentile). LSOA: Old Town, Princes Street and Leith Street - 03"
+          },
+          {
+            "label": "Environment & Quality",
+            "score": 95,
+            "weight": 20,
+            "reasoning": "No flood risk zones within 3km. no active warnings. 3785 parks/green spaces nearby"
+          }
+        ],
+        "summary": "Edinburgh scores 74/100. 4839 amenities within 1km including 45 schools, 780 food/drink, 2 rail/tube stations. SIMD 2020 decile 5."
+      }
+    }
+  },
+  "bristol": {
+    "key": "bristol",
+    "display": "Bristol",
+    "postcode": "BS1 4DJ",
+    "region": "South West",
+    "areaType": "suburban",
+    "lsoa": "E01033909",
+    "intents": {
+      "moving": {
+        "overall": 62,
+        "dimensions": [
+          {
+            "label": "Safety & Crime",
+            "score": 5,
+            "weight": 25,
+            "reasoning": "5572 crimes over 3 months (1857/month). most common: Violent Crime (30%). violent crime: 33% of total. trend: falling"
+          },
+          {
+            "label": "Schools & Education",
+            "score": 95,
+            "weight": 20,
+            "reasoning": "57 schools and educational facilities within 1.5km"
+          },
+          {
+            "label": "Transport & Commute",
+            "score": 95,
+            "weight": 20,
+            "reasoning": "8 rail/tube stations within 2km. 21 bus stops within 500m. nearby: Montpelier station, Clifton Down station, Bedminster station"
+          },
+          {
+            "label": "Daily Amenities",
+            "score": 95,
+            "weight": 15,
+            "reasoning": "974 amenities nearby: 57 schools, 539 food/drink, 74 healthcare, 37 shops, 238 parks/leisure"
+          },
+          {
+            "label": "Cost of Living",
+            "score": 42,
+            "weight": 20,
+            "reasoning": "IMD 2025 decile 7/10 as cost proxy: moderate cost of living"
+          }
+        ],
+        "summary": "Bristol scores 62/100. 974 amenities within 1km including 57 schools, 539 food/drink, 8 rail/tube stations. 5,572 crimes over 3 months (1857/mo). IMD 2025 decile 7."
+      },
+      "business": {
+        "overall": 65,
+        "dimensions": [
+          {
+            "label": "Foot Traffic & Demand",
+            "score": 95,
+            "weight": 30,
+            "reasoning": "8 transit stations and 21 bus stops drive footfall. 576 retail/food venues indicate a busy commercial area"
+          },
+          {
+            "label": "Competition Density",
+            "score": 10,
+            "weight": 20,
+            "reasoning": "576 competing food/retail venues within 1km. high competition, differentiation essential"
+          },
+          {
+            "label": "Transport & Access",
+            "score": 95,
+            "weight": 15,
+            "reasoning": "8 rail/tube stations within 2km. 21 bus stops within 500m. nearby: Montpelier station, Clifton Down station, Bedminster station"
+          },
+          {
+            "label": "Local Spending Power",
+            "score": 71,
+            "weight": 20,
+            "reasoning": "IMD 2025 decile 7/10 indicates moderate spending power. Less deprived than 65% of England"
+          },
+          {
+            "label": "Commercial Costs",
+            "score": 41,
+            "weight": 15,
+            "reasoning": "IMD 2025 decile 7/10: moderate commercial costs. Commercial rents correlate with area affluence"
+          }
+        ],
+        "summary": "Bristol scores 65/100. 974 amenities within 1km including 57 schools, 539 food/drink, 8 rail/tube stations. 5,572 crimes over 3 months (1857/mo). IMD 2025 decile 7."
+      },
+      "investing": {
+        "overall": 67,
+        "dimensions": [
+          {
+            "label": "Price Growth",
+            "score": 90,
+            "weight": 25,
+            "reasoning": "IMD 2025 decile 7/10: mid-range area with strong growth potential. 8 transport links support appreciation"
+          },
+          {
+            "label": "Rental Yield",
+            "score": 58,
+            "weight": 25,
+            "reasoning": "IMD 2025 decile 7/10: moderate property values, balanced yield potential. 974 nearby amenities support tenant demand"
+          },
+          {
+            "label": "Regeneration & Infrastructure",
+            "score": 70,
+            "weight": 20,
+            "reasoning": "IMD 2025 decile 7/10: moderate area, incremental improvement likely. 8 transport links support development case"
+          },
+          {
+            "label": "Tenant Demand",
+            "score": 95,
+            "weight": 15,
+            "reasoning": "8 stations and 21 bus stops create commuter demand. 974 local amenities support liveability"
+          },
+          {
+            "label": "Risk Factors",
+            "score": 10,
+            "weight": 15,
+            "reasoning": "1857 crimes/month nearby. 15 flood risk zones within 3km"
+          }
+        ],
+        "summary": "Bristol scores 67/100. 974 amenities within 1km including 57 schools, 539 food/drink, 8 rail/tube stations. 5,572 crimes over 3 months (1857/mo). IMD 2025 decile 7."
+      },
+      "research": {
+        "overall": 56,
+        "dimensions": [
+          {
+            "label": "Safety & Crime",
+            "score": 5,
+            "weight": 20,
+            "reasoning": "5572 crimes over 3 months (1857/month). most common: Violent Crime (30%). violent crime: 33% of total. trend: falling"
+          },
+          {
+            "label": "Transport Links",
+            "score": 95,
+            "weight": 20,
+            "reasoning": "8 rail/tube stations within 2km. 21 bus stops within 500m. nearby: Montpelier station, Clifton Down station, Bedminster station"
+          },
+          {
+            "label": "Amenities & Services",
+            "score": 95,
+            "weight": 20,
+            "reasoning": "974 amenities nearby: 57 schools, 539 food/drink, 74 healthcare, 37 shops, 238 parks/leisure"
+          },
+          {
+            "label": "Demographics & Economy",
+            "score": 68,
+            "weight": 20,
+            "reasoning": "IMD 2025 decile 7/10 (moderate deprivation). Ranked 21,797 of 33,755 LSOAs (65th percentile). LSOA: Bristol 061C"
+          },
+          {
+            "label": "Environment & Quality",
+            "score": 15,
+            "weight": 20,
+            "reasoning": "15 flood risk zones within 3km. near: Bristol Frome, Brislington Brook, Bristol River Avon, River Boyd, By Brook, Brislington Brook. no active warnings. 238 parks/green spaces nearby"
+          }
+        ],
+        "summary": "Bristol scores 56/100. 974 amenities within 1km including 57 schools, 539 food/drink, 8 rail/tube stations. 5,572 crimes over 3 months (1857/mo). IMD 2025 decile 7."
+      }
+    }
+  }
+}

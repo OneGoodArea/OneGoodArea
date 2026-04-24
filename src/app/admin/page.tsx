@@ -1,11 +1,11 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getAnalytics, getTrafficAnalytics } from "@/lib/activity";
-import { AdminClient } from "./client";
+import AdminClient from "@/app/design-v2/admin/client";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Admin Analytics | AreaIQ",
+  title: "Admin Analytics | OneGoodArea",
 };
 
 const ADMIN_EMAILS = ["ptengelmann@gmail.com"];

@@ -18,20 +18,20 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.area-iq.co.uk"),
-  title: "AreaIQ | Know any area. Instantly.",
+  title: "OneGoodArea | Know any UK area.",
   description:
-    "AI-powered area intelligence. Enter any location, get a scored, structured intelligence report in seconds.",
+    "UK area intelligence. Enter any postcode, pick your intent, get a scored report in seconds.",
   openGraph: {
-    title: "AreaIQ | Know any area. Instantly.",
-    description: "AI-powered UK area intelligence. Scored reports for moving, business, and investing decisions.",
-    siteName: "AreaIQ",
+    title: "OneGoodArea | Know any UK area.",
+    description: "UK area intelligence. Scored reports for moving, business, investing, and research.",
+    siteName: "OneGoodArea",
     type: "website",
     url: "https://www.area-iq.co.uk",
   },
   twitter: {
     card: "summary_large_image",
-    title: "AreaIQ | Know any area. Instantly.",
-    description: "AI-powered UK area intelligence. Scored reports for moving, business, and investing decisions.",
+    title: "OneGoodArea | Know any UK area.",
+    description: "UK area intelligence. Scored reports for moving, business, investing, and research.",
   },
 };
 
@@ -42,7 +42,7 @@ export default function RootLayout({
 }>) {
   return (
     <SessionProvider>
-      <html lang="en" className="dark" suppressHydrationWarning>
+      <html lang="en" suppressHydrationWarning>
         <head>
           <script
             dangerouslySetInnerHTML={{
@@ -56,11 +56,11 @@ export default function RootLayout({
               __html: JSON.stringify({
                 "@context": "https://schema.org",
                 "@type": "WebApplication",
-                name: "AreaIQ",
+                name: "OneGoodArea",
                 url: "https://www.area-iq.co.uk",
                 applicationCategory: "BusinessApplication",
                 operatingSystem: "Web",
-                description: "AI-powered UK area intelligence. Scored reports for moving, business, and investing decisions.",
+                description: "UK area intelligence. Scored reports for moving, business, investing, and research.",
                 offers: {
                   "@type": "AggregateOffer",
                   lowPrice: "0",
@@ -77,10 +77,10 @@ export default function RootLayout({
               __html: JSON.stringify({
                 "@context": "https://schema.org",
                 "@type": "Organization",
-                name: "AreaIQ",
+                name: "OneGoodArea",
                 url: "https://www.area-iq.co.uk",
                 logo: "https://www.area-iq.co.uk/favicon.ico",
-                description: "AI-powered UK area intelligence platform. Scored reports for moving, business, and investing decisions.",
+                description: "UK area intelligence platform. Scored reports for moving, business, investing, and research.",
                 contactPoint: {
                   "@type": "ContactPoint",
                   contactType: "customer service",

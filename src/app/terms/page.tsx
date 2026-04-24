@@ -5,16 +5,16 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | AreaIQ",
-  description: "Terms of Service for AreaIQ, the UK area intelligence platform. Covers account usage, subscriptions, API access, data accuracy, and governing law.",
+  title: "Terms of Service | OneGoodArea",
+  description: "Terms of Service for OneGoodArea, the UK area intelligence platform. Covers account usage, subscriptions, API access, data accuracy, and governing law.",
   openGraph: {
-    title: "Terms of Service | AreaIQ",
-    description: "Terms of Service for AreaIQ, the UK area intelligence platform.",
+    title: "Terms of Service | OneGoodArea",
+    description: "Terms of Service for OneGoodArea, the UK area intelligence platform.",
     type: "article",
     url: "https://www.area-iq.co.uk/terms",
     images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
   },
-  twitter: { card: "summary_large_image", title: "Terms of Service | AreaIQ" },
+  twitter: { card: "summary_large_image", title: "Terms of Service | OneGoodArea" },
   alternates: { canonical: "https://www.area-iq.co.uk/terms" },
 };
 
@@ -78,7 +78,7 @@ export default function TermsPage() {
             className="text-[13px] leading-relaxed"
             style={{ color: "var(--text-secondary)" }}
           >
-            These terms govern your use of AreaIQ. By creating an account or
+            These terms govern your use of OneGoodArea. By creating an account or
             using the service, you agree to be bound by them. Please read them
             carefully.
           </p>
@@ -92,8 +92,8 @@ export default function TermsPage() {
 
         <Section title="1. Acceptance of Terms">
           <p>
-            By accessing or using AreaIQ (&quot;the Service&quot;), operated by
-            AreaIQ (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;), a
+            By accessing or using OneGoodArea (&quot;the Service&quot;), operated by
+            OneGoodArea (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;), a
             sole trader registered in the United Kingdom, you agree to these
             Terms of Service. If you do not agree, you must not use the Service.
           </p>
@@ -106,7 +106,7 @@ export default function TermsPage() {
 
         <Section title="2. Account Registration">
           <p>
-            To use AreaIQ, you must create an account using Google OAuth or email
+            To use OneGoodArea, you must create an account using Google OAuth or email
             and password. You are responsible for maintaining the confidentiality
             of your account credentials and for all activity that occurs under
             your account.
@@ -121,7 +121,7 @@ export default function TermsPage() {
 
         <Section title="3. Subscriptions and Payments">
           <p>
-            AreaIQ offers web report plans (Free at £0/month for 3 reports,
+            OneGoodArea offers web report plans (Free at £0/month for 3 reports,
             Starter at £29/month for 20 reports, Pro at £79/month for 75 reports)
             and API plans (Developer at £49/month for 100 reports, Business at
             £249/month for 500 reports, Growth at £499/month for 1,500 reports).
@@ -185,12 +185,12 @@ export default function TermsPage() {
 
         <Section title="6. Intellectual Property">
           <p>
-            All content, design, code, and branding on AreaIQ are owned by
-            AreaIQ. You may not copy, modify, distribute, or reverse-engineer
+            All content, design, code, and branding on OneGoodArea are owned by
+            OneGoodArea. You may not copy, modify, distribute, or reverse-engineer
             any part of the Service without written permission.
           </p>
           <p>
-            Reports generated through AreaIQ are licensed to you for personal or
+            Reports generated through OneGoodArea are licensed to you for personal or
             internal business use. You may share individual reports via their
             permanent URLs. You may not bulk-reproduce, resell, or redistribute
             report data as a competing product or dataset.
@@ -199,7 +199,7 @@ export default function TermsPage() {
 
         <Section title="7. Data Accuracy and Disclaimer">
           <p>
-            AreaIQ aggregates data from publicly available UK government sources,
+            OneGoodArea aggregates data from publicly available UK government sources,
             including Police.uk, the Ministry of Housing, Communities and Local
             Government (IMD 2025), Postcodes.io, OpenStreetMap, and the
             Environment Agency. Scores are computed using deterministic
@@ -211,7 +211,7 @@ export default function TermsPage() {
             </strong>{" "}
             They do not constitute professional advice, property valuations,
             investment recommendations, or any form of regulated financial
-            guidance. You should not rely solely on AreaIQ reports when making
+            guidance. You should not rely solely on OneGoodArea reports when making
             property, business, or investment decisions.
           </p>
           <p>
@@ -255,7 +255,7 @@ export default function TermsPage() {
 
         <Section title="10. Limitation of Liability">
           <p>
-            To the maximum extent permitted by law, AreaIQ and its operator
+            To the maximum extent permitted by law, OneGoodArea and its operator
             shall not be liable for any indirect, incidental, special,
             consequential, or punitive damages, including but not limited to loss
             of profits, data, or business opportunities, arising out of or

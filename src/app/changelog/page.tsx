@@ -111,7 +111,7 @@ const CHANGELOG: ChangelogMonth[] = [
         type: "feature",
         title: "Embeddable widget",
         description:
-          "Drop a single script tag on any page to show AreaIQ scores. No API key needed.",
+          "Drop a single script tag on any page to show OneGoodArea scores. No API key needed.",
       },
       {
         type: "feature",
@@ -329,7 +329,7 @@ export default function ChangelogPage() {
             className="text-[13px]"
             style={{ color: "var(--text-secondary)" }}
           >
-            New features, fixes, and improvements shipped to AreaIQ.
+            New features, fixes, and improvements shipped to OneGoodArea.
           </p>
           <div className="flex items-center gap-3 mt-3">
             <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>

@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# design-v2 build artefacts — large topojson fetched once, SVG paths inlined in client.tsx
+scripts/world-*.json
+scripts/uk-paths.json
+
+# claude code local state
+.claude/

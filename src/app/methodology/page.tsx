@@ -10,16 +10,16 @@ import { AiSection } from "./ai-section";
 import { OverallScoreSection, ScoreScaleSection } from "./overall-score-section";
 
 export const metadata: Metadata = {
-  title: "Scoring Methodology | AreaIQ",
-  description: "How AreaIQ scores areas: transparent, deterministic formulas applied to 7 live UK data sources. Same postcode, same score, every time.",
+  title: "Scoring Methodology | OneGoodArea",
+  description: "How OneGoodArea scores areas: transparent, deterministic formulas applied to 7 live UK data sources. Same postcode, same score, every time.",
   openGraph: {
-    title: "Scoring Methodology | AreaIQ",
+    title: "Scoring Methodology | OneGoodArea",
     description: "Transparent, deterministic scoring applied to 7 live UK data sources. Same postcode, same score, every time.",
     type: "article",
     url: "https://www.area-iq.co.uk/methodology",
     images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
   },
-  twitter: { card: "summary_large_image", title: "Scoring Methodology | AreaIQ", description: "Transparent, deterministic scoring applied to 7 live UK data sources." },
+  twitter: { card: "summary_large_image", title: "Scoring Methodology | OneGoodArea", description: "Transparent, deterministic scoring applied to 7 live UK data sources." },
   alternates: { canonical: "https://www.area-iq.co.uk/methodology" },
 };
 
@@ -80,7 +80,7 @@ export default function MethodologyPage() {
                 className="text-[28px] font-semibold tracking-tight mb-2"
                 style={{ color: "var(--text-primary)" }}
               >
-                How AreaIQ Scores Areas
+                How OneGoodArea Scores Areas
               </h1>
               <p
                 className="text-[14px] leading-relaxed mb-4"
