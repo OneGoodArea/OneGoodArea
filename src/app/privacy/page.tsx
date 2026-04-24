@@ -5,16 +5,16 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | AreaIQ",
-  description: "Privacy Policy for AreaIQ. Learn how we collect, use, and protect your personal data in compliance with GDPR and UK data protection law.",
+  title: "Privacy Policy | OneGoodArea",
+  description: "Privacy Policy for OneGoodArea. Learn how we collect, use, and protect your personal data in compliance with GDPR and UK data protection law.",
   openGraph: {
-    title: "Privacy Policy | AreaIQ",
-    description: "How AreaIQ collects, uses, and protects your personal data. GDPR compliant.",
+    title: "Privacy Policy | OneGoodArea",
+    description: "How OneGoodArea collects, uses, and protects your personal data. GDPR compliant.",
     type: "article",
     url: "https://www.area-iq.co.uk/privacy",
     images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
   },
-  twitter: { card: "summary_large_image", title: "Privacy Policy | AreaIQ" },
+  twitter: { card: "summary_large_image", title: "Privacy Policy | OneGoodArea" },
   alternates: { canonical: "https://www.area-iq.co.uk/privacy" },
 };
 
@@ -78,7 +78,7 @@ export default function PrivacyPage() {
             className="text-[13px] leading-relaxed"
             style={{ color: "var(--text-secondary)" }}
           >
-            This policy explains what personal data AreaIQ collects, how we use
+            This policy explains what personal data OneGoodArea collects, how we use
             it, and your rights under the UK General Data Protection Regulation
             (UK GDPR) and the Data Protection Act 2018.
           </p>
@@ -92,7 +92,7 @@ export default function PrivacyPage() {
 
         <Section title="1. Data Controller">
           <p>
-            AreaIQ is operated as a sole trader based in the
+            OneGoodArea is operated as a sole trader based in the
             United Kingdom. For data protection enquiries, contact us at{" "}
             <a
               href="mailto:hello@area-iq.co.uk"
@@ -278,7 +278,7 @@ export default function PrivacyPage() {
 
         <Section title="5. Cookies and Session Data">
           <p>
-            AreaIQ uses a single session cookie managed by NextAuth.js. This
+            OneGoodArea uses a single session cookie managed by NextAuth.js. This
             cookie is essential for authentication and does not track you across
             other websites. It contains a signed JWT token with your user ID and
             session expiry.
@@ -425,7 +425,7 @@ export default function PrivacyPage() {
 
         <Section title="10. Children's Privacy">
           <p>
-            AreaIQ is not directed at individuals under the age of 16. We do not
+            OneGoodArea is not directed at individuals under the age of 16. We do not
             knowingly collect personal data from children. If we become aware
             that a user is under 16, we will delete their account and associated
             data promptly.

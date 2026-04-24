@@ -3,12 +3,12 @@ import { sql } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { getUserPlan, getMonthlyReportCount } from "@/lib/usage";
 import { PLANS } from "@/lib/stripe";
-import { DashboardClient } from "./client";
+import DashboardClient from "@/app/design-v2/dashboard/client";
 import { rows, ReportRow, SavedAreaRow } from "@/lib/db-types";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "My Reports | AreaIQ",
+  title: "My Reports | OneGoodArea",
   description: "View your generated area intelligence reports.",
 };
 

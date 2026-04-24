@@ -6,16 +6,16 @@ import { Footer } from "@/components/footer";
 import { BLOG_POSTS } from "./posts";
 
 export const metadata: Metadata = {
-  title: "Blog | AreaIQ",
+  title: "Blog | OneGoodArea",
   description: "Area intelligence insights, UK property data analysis, and guides for home buyers, investors, and agents. Powered by real government data.",
   openGraph: {
-    title: "Blog | AreaIQ",
+    title: "Blog | OneGoodArea",
     description: "Area intelligence insights, UK property data analysis, and guides.",
     type: "website",
     url: "https://www.area-iq.co.uk/blog",
     images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
   },
-  twitter: { card: "summary_large_image", title: "Blog | AreaIQ", description: "Area intelligence insights, UK property data analysis, and guides." },
+  twitter: { card: "summary_large_image", title: "Blog | OneGoodArea", description: "Area intelligence insights, UK property data analysis, and guides." },
   alternates: { canonical: "https://www.area-iq.co.uk/blog" },
 };
 

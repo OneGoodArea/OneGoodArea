@@ -3,13 +3,13 @@ import { sql } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { getUserPlan } from "@/lib/usage";
 import { AreaReport } from "@/lib/types";
-import { CompareClient } from "./client";
+import CompareClient from "@/app/design-v2/compare/client";
 import { rows as typedRows } from "@/lib/db-types";
 import type { ReportRow } from "@/lib/db-types";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Compare Areas | AreaIQ",
+  title: "Compare Areas | OneGoodArea",
   description: "Side-by-side area intelligence comparison.",
 };
 
@@ -89,8 +89,8 @@ export default async function ComparePage({
 
   return (
     <CompareClient
-      selectedReports={selectedReports}
-      allReports={allReports}
+      selected={selectedReports}
+      all={allReports}
     />
   );
 }

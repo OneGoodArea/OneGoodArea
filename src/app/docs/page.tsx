@@ -5,16 +5,16 @@ import { Footer } from "@/components/footer";
 import { ApiPlayground } from "./playground";
 
 export const metadata: Metadata = {
-  title: "API Documentation | AreaIQ",
-  description: "Integrate area intelligence into your applications with the AreaIQ REST API. RESTful endpoints, bearer auth, JSON responses.",
+  title: "API Documentation | OneGoodArea",
+  description: "Integrate area intelligence into your applications with the OneGoodArea REST API. RESTful endpoints, bearer auth, JSON responses.",
   openGraph: {
-    title: "API Documentation | AreaIQ",
-    description: "Integrate area intelligence into your applications with the AreaIQ REST API.",
+    title: "API Documentation | OneGoodArea",
+    description: "Integrate area intelligence into your applications with the OneGoodArea REST API.",
     type: "article",
     url: "https://www.area-iq.co.uk/docs",
     images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
   },
-  twitter: { card: "summary_large_image", title: "API Documentation | AreaIQ", description: "Integrate area intelligence into your applications with the AreaIQ REST API." },
+  twitter: { card: "summary_large_image", title: "API Documentation | OneGoodArea", description: "Integrate area intelligence into your applications with the OneGoodArea REST API." },
   alternates: { canonical: "https://www.area-iq.co.uk/docs" },
 };
 
@@ -115,7 +115,7 @@ export default function DocsPage() {
             {/* Hero */}
             <div className="mb-12">
               <h1 className="text-[28px] font-semibold tracking-tight mb-2" style={{ color: "var(--text-primary)" }}>
-                AreaIQ API
+                OneGoodArea API
               </h1>
               <p className="text-[14px] leading-relaxed mb-4" style={{ color: "var(--text-secondary)" }}>
                 Integrate UK area intelligence into your applications. Generate data-driven location reports
@@ -134,7 +134,7 @@ export default function DocsPage() {
             {/* Playground */}
             <Section id="playground" title="Try the API">
               <p className="text-[13px] mb-4 leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                Test the AreaIQ API with real UK postcodes. No API key needed for the playground.
+                Test the OneGoodArea API with real UK postcodes. No API key needed for the playground.
               </p>
               <ApiPlayground />
             </Section>

@@ -30,11 +30,11 @@ function VerifyInner() {
   const searchParams = useSearchParams();
   const state = (searchParams.get("state") || "success") as "success" | "failure";
 
+  const isDev = process.env.NODE_ENV !== "production";
   return (
     <AuthShell>
       {state === "success" ? <SuccessState /> : <FailureState />}
-
-      <PreviewToggle current={state} />
+      {isDev && <PreviewToggle current={state} />}
     </AuthShell>
   );
 }
