@@ -100,7 +100,7 @@ function Hero() {
             </p>
 
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-              <Link href="/design-v2/pricing" style={{
+              <Link href="/pricing" style={{
                 fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
                 letterSpacing: "0.14em", textTransform: "uppercase",
                 color: "var(--signal-ink)", background: "var(--signal)",
@@ -312,11 +312,11 @@ function ApiPreview() {
           marginTop: 40, display: "flex", gap: 32, flexWrap: "wrap",
           alignItems: "center",
         }}>
-          <Link href="/design-v2/docs" style={linkInline}>
+          <Link href="/docs" style={linkInline}>
             Read the API docs
             <span aria-hidden>→</span>
           </Link>
-          <Link href="/design-v2/docs#embed" style={{ ...linkInline, color: "var(--text-2)" }}>
+          <Link href="/docs#embed" style={{ ...linkInline, color: "var(--text-2)" }}>
             Drop-in widget
             <span aria-hidden>→</span>
           </Link>
@@ -694,7 +694,7 @@ function FinalCta() {
           Create an account, subscribe to a plan, generate a key, start building. Under two minutes, no sales call.
         </p>
         <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href="/design-v2/pricing" style={{
+          <Link href="/pricing" style={{
             fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
             letterSpacing: "0.14em", textTransform: "uppercase",
             color: "var(--signal-ink)", background: "var(--signal)",

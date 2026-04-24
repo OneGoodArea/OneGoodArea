@@ -30,7 +30,7 @@ export default function CompareClient({ selected, all }: {
       <AppShell
         title="Compare areas"
         subtitle="Pick two reports to see the scores side by side."
-        actions={<GhostCta href="/design-v2/dashboard">← Dashboard</GhostCta>}
+        actions={<GhostCta href="/dashboard">← Dashboard</GhostCta>}
       >
         <div style={{ padding: "28px 40px 64px", display: "flex", flexDirection: "column", gap: 22, maxWidth: 1100 }}>
           <Picker selected={selected} all={all} />
@@ -60,7 +60,7 @@ function Picker({ selected, all }: { selected: Report[]; all: Summary[] }) {
         ? [current[1], id]  // drop oldest, add new
         : [...current, id];
     const qs = next.length > 0 ? `?reports=${next.join(",")}` : "";
-    router.push(`/design-v2/compare${qs}`);
+    router.push(`/compare${qs}`);
   }
 
   function scrollToComparison() {
@@ -118,7 +118,7 @@ function Picker({ selected, all }: { selected: Report[]; all: Summary[] }) {
           )}
           {selected.length > 0 && (
             <button
-              onClick={() => router.push("/design-v2/compare")}
+              onClick={() => router.push("/compare")}
               style={{
                 fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
                 letterSpacing: "0.18em", textTransform: "uppercase",
@@ -141,7 +141,7 @@ function Picker({ selected, all }: { selected: Report[]; all: Summary[] }) {
             fontFamily: "var(--sans)", fontSize: 14,
             color: "var(--text-2)", margin: "0 auto 14px", maxWidth: "44ch",
           }}>Generate two reports, then come back here.</p>
-          <GhostCta href="/design-v2/report">Generate a report</GhostCta>
+          <GhostCta href="/report">Generate a report</GhostCta>
         </div>
       ) : (
         <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>

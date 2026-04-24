@@ -380,7 +380,7 @@ function DataSources() {
             letterSpacing: "0.18em", textTransform: "uppercase",
             color: "var(--text-3)",
           }}>
-            Want the detail? See <Link href="/design-v2" style={{ color: "var(--ink-deep)", textDecoration: "underline" }}>the methodology page</Link>.
+            Want the detail? See <Link href="/" style={{ color: "var(--ink-deep)", textDecoration: "underline" }}>the methodology page</Link>.
           </span>
         </div>
       </div>
@@ -625,7 +625,7 @@ function FinalCta() {
           Score, data, reasoning, recommendations. All in one report. Three a month are free.
         </p>
         <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href="/design-v2" style={{
+          <Link href="/" style={{
             fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
             letterSpacing: "0.14em", textTransform: "uppercase",
             color: "var(--signal-ink)", background: "var(--signal)",
@@ -640,7 +640,7 @@ function FinalCta() {
             Try a postcode
             <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
           </Link>
-          <Link href="/design-v2/pricing" style={{
+          <Link href="/pricing" style={{
             fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
             letterSpacing: "0.14em", textTransform: "uppercase",
             color: "rgba(255,255,255,0.88)", background: "transparent",

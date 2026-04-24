@@ -279,9 +279,9 @@ function LegalFoot() {
           </div>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <Link href="/design-v2/terms" style={pillLink}>Terms</Link>
-          <Link href="/design-v2/privacy" style={pillLink}>Privacy</Link>
-          <Link href="/design-v2/help" style={pillLink}>Help</Link>
+          <Link href="/terms" style={pillLink}>Terms</Link>
+          <Link href="/privacy" style={pillLink}>Privacy</Link>
+          <Link href="/help" style={pillLink}>Help</Link>
         </div>
       </div>
     </section>

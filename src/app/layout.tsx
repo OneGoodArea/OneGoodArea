@@ -1,19 +1,37 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, Inter, Geist_Mono } from "next/font/google";
 import { SessionProvider } from "@/components/session-provider";
 import { ToastProvider } from "@/components/toast";
 import { PageviewTracker } from "@/components/pageview-tracker";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+/* Fonts loaded via next/font/google so they ship self-hosted, with
+   <link rel="preload"> emitted in <head>. This kills the FOUC that
+   the previous @import inside Styles.tsx caused on every refresh.
+   The CSS vars below are consumed by the design-v2 Styles component
+   via var(--display) / var(--sans) / var(--mono). */
+
+const fraunces = Fraunces({
+  variable: "--font-display",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
+
+const inter = Inter({
+  variable: "--font-sans",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+  variable: "--font-mono",
   subsets: ["latin"],
+  weight: ["400", "500"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -91,7 +109,7 @@ export default function RootLayout({
           />
         </head>
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          className={`${fraunces.variable} ${inter.variable} ${geistMono.variable} antialiased`}
         >
           <ToastProvider>
             {children}

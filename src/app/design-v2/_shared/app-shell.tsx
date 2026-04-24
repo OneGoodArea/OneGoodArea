@@ -17,15 +17,15 @@ import { AiqIcon, type IconName } from "./icons";
 type NavItem = { href: string; label: string; icon: IconName; exact?: boolean };
 
 const PRIMARY: NavItem[] = [
-  { href: "/design-v2/dashboard",  label: "Dashboard",  icon: "dash",       exact: true },
-  { href: "/design-v2/dashboard",  label: "Reports",    icon: "read" },
-  { href: "/design-v2/report",     label: "New report", icon: "map" },
-  { href: "/design-v2/compare",    label: "Compare",    icon: "compare" },
+  { href: "/dashboard",  label: "Dashboard",  icon: "dash",       exact: true },
+  { href: "/dashboard",  label: "Reports",    icon: "read" },
+  { href: "/report",     label: "New report", icon: "map" },
+  { href: "/compare",    label: "Compare",    icon: "compare" },
 ];
 
 const SECONDARY: NavItem[] = [
-  { href: "/design-v2/api-usage",  label: "API + usage", icon: "api" },
-  { href: "/design-v2/settings",   label: "Settings",    icon: "key" },
+  { href: "/api-usage",  label: "API + usage", icon: "api" },
+  { href: "/settings",   label: "Settings",    icon: "key" },
 ];
 
 export function AppShell({
@@ -116,7 +116,7 @@ function MobileTopbar({ title, onMenu }: { title?: string; onMenu: () => void })
           <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
       </button>
-      <Wordmark href="/design-v2/dashboard" size={18} />
+      <Wordmark href="/dashboard" size={18} />
       {title && (
         <>
           <span aria-hidden style={{
@@ -164,7 +164,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
         marginBottom: 34, position: "relative", zIndex: 1,
         display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
       }}>
-        <Wordmark href="/design-v2/dashboard" size={20} tone="dark" />
+        <Wordmark href="/dashboard" size={20} tone="dark" />
         <button
           type="button"
           onClick={onClose}
@@ -463,10 +463,10 @@ function UserChip({ name, email }: { name: string | null; email: string | null }
               overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
             }}>{email}</div>
           )}
-          <MenuLink href="/design-v2/settings" label="Settings" onClick={() => setOpen(false)} />
-          <MenuLink href="/design-v2/help"     label="Help"     onClick={() => setOpen(false)} />
+          <MenuLink href="/settings" label="Settings" onClick={() => setOpen(false)} />
+          <MenuLink href="/help"     label="Help"     onClick={() => setOpen(false)} />
           <button
-            onClick={() => { signOut({ callbackUrl: "/design-v2" }); }}
+            onClick={() => { signOut({ callbackUrl: "/" }); }}
             style={{
               width: "100%", textAlign: "left",
               padding: "10px 14px",

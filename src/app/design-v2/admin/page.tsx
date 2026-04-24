@@ -15,7 +15,7 @@ export default async function DesignV2AdminPage() {
   const session = await auth();
   const email = session?.user?.email;
   if (!email || !ADMIN_EMAILS.includes(email)) {
-    redirect("/design-v2/dashboard");
+    redirect("/dashboard");
   }
 
   const [analytics, traffic] = await Promise.all([

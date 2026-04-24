@@ -11,7 +11,7 @@ import { AppShell, AppCard, PrimaryCta, GhostCta } from "../_shared/app-shell";
    OneGoodArea · Design V2 · /api-usage
    API keys + monthly usage + daily bar chart + last-request time.
    Real endpoint preserved: /api/keys/usage.
-   Non-API users redirected to /design-v2/pricing.
+   Non-API users redirected to /pricing.
    ═══════════════════════════════════════════════════════════════ */
 
 type DailyData = { day: string; count: number };
@@ -39,7 +39,7 @@ export default function ApiUsageClient() {
     try {
       const res = await fetch("/api/keys/usage");
       if (res.status === 403) {
-        router.push("/design-v2/pricing");
+        router.push("/pricing");
         return;
       }
       if (!res.ok) { setError("Failed to load usage data"); return; }
@@ -54,7 +54,7 @@ export default function ApiUsageClient() {
   }, [session, fetchUsage]);
 
   if (status === "loading") return <><Styles /><AppShell title="API usage"><div style={{ padding: 40 }} /></AppShell></>;
-  if (!session?.user) { router.push("/design-v2/sign-in?callbackUrl=/design-v2/api-usage"); return null; }
+  if (!session?.user) { router.push("/sign-in?callbackUrl=/api-usage"); return null; }
 
   return (
     <>
@@ -63,7 +63,7 @@ export default function ApiUsageClient() {
         title="API usage"
         subtitle="Monthly quota, daily traffic, and your keys."
         actions={
-          <GhostCta href="/design-v2/docs">Read the docs</GhostCta>
+          <GhostCta href="/docs">Read the docs</GhostCta>
         }
       >
         <div style={{ padding: "28px 40px 64px", display: "flex", flexDirection: "column", gap: 22 }}>
@@ -230,9 +230,9 @@ function Content({ data }: { data: UsageData }) {
         gridTemplateColumns: "repeat(3, 1fr)",
         gap: 14,
       }}>
-        <QuickCard href="/design-v2/docs" title="API docs" body="Quickstart, auth, request/response, rate limits." />
-        <QuickCard href="/design-v2/docs#widget" title="Widget docs" body="Drop a script tag, render a score card. No API key on the client." />
-        <QuickCard href="/design-v2/pricing" title="Upgrade plan" body="Growth for 1,500 reports/mo. Enterprise for more." />
+        <QuickCard href="/docs" title="API docs" body="Quickstart, auth, request/response, rate limits." />
+        <QuickCard href="/docs#widget" title="Widget docs" body="Drop a script tag, render a score card. No API key on the client." />
+        <QuickCard href="/pricing" title="Upgrade plan" body="Growth for 1,500 reports/mo. Enterprise for more." />
       </div>
     </>
   );

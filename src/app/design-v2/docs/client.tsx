@@ -218,7 +218,7 @@ function Sidebar() {
         }}>
           API access requires a Developer, Business, or Growth plan.
         </p>
-        <Link href="/design-v2/pricing" style={{
+        <Link href="/pricing" style={{
           fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
           letterSpacing: "0.16em", textTransform: "uppercase",
           color: "var(--ink-deep)", textDecoration: "none",
@@ -1122,7 +1122,7 @@ function FinalCta() {
           Developer plan starts at £49/mo for 100 reports. Cached hits and widget embeds are free on top.
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href="/design-v2/pricing" style={{
+          <Link href="/pricing" style={{
             fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
             letterSpacing: "0.14em", textTransform: "uppercase",
             color: "var(--signal-ink)", background: "var(--signal)",

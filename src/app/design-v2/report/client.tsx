@@ -11,7 +11,7 @@ import { AiqIcon, type IconName } from "../_shared/icons";
 /* ═══════════════════════════════════════════════════════════════
    OneGoodArea · Design V2 · /report (generator)
    Form with area + intent selector, then a live-looking pipeline
-   loading state, then redirect to /design-v2/report/[id].
+   loading state, then redirect to /report/[id].
    Real endpoints preserved: /api/usage, /api/report.
    ═══════════════════════════════════════════════════════════════ */
 
@@ -60,7 +60,7 @@ export default function ReportGeneratorClient() {
     return <><Styles /><AppShell title="New report"><div style={{ padding: 40 }} /></AppShell></>;
   }
   if (status === "unauthenticated") {
-    router.push("/design-v2/sign-in?callbackUrl=/design-v2/report");
+    router.push("/sign-in?callbackUrl=/report");
     return null;
   }
 
@@ -92,7 +92,7 @@ export default function ReportGeneratorClient() {
       }
       if (!res.ok) throw new Error("fail");
       const data = await res.json();
-      router.push(`/design-v2/report/${data.id}`);
+      router.push(`/report/${data.id}`);
     } catch {
       setError("Failed to generate report. Please try again.");
       setLoading(false);
@@ -105,7 +105,7 @@ export default function ReportGeneratorClient() {
       <AppShell
         title="New report"
         subtitle={loading ? "Fetching live data. This takes 15-45 seconds." : "Enter a postcode or place name. Pick why you're looking."}
-        actions={!loading && <GhostCta href="/design-v2/dashboard">← My reports</GhostCta>}
+        actions={!loading && <GhostCta href="/dashboard">← My reports</GhostCta>}
       >
         <div style={{
           padding: "28px 40px 64px",
@@ -170,7 +170,7 @@ function GeneratorForm({
           }}>
             You&apos;ve used all {usage?.limit} reports this month. Upgrade to keep going.
           </p>
-          <PrimaryCta href="/design-v2/pricing">See plans</PrimaryCta>
+          <PrimaryCta href="/pricing">See plans</PrimaryCta>
         </div>
       )}
 

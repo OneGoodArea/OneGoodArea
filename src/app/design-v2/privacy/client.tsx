@@ -213,7 +213,7 @@ export default function PrivacyClient() {
         </LegalP>
         <LegalP>
           See also our{" "}
-          <Link href="/design-v2/terms" style={{ color: "var(--ink-deep)", textDecoration: "underline" }}>Terms of Service</Link>
+          <Link href="/terms" style={{ color: "var(--ink-deep)", textDecoration: "underline" }}>Terms of Service</Link>
           {" "}for the full terms governing use of the platform.
         </LegalP>
       </LegalSection>

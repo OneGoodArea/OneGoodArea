@@ -78,7 +78,7 @@ export default function TermsClient() {
         </LegalP>
         <LegalP>
           API usage counts towards your monthly report credit allowance, with the exception of cache hits (24-hour window) which are free. Full API documentation is available at{" "}
-          <Link href="/design-v2/docs" style={{ color: "var(--ink-deep)", textDecoration: "underline" }}>/docs</Link>.
+          <Link href="/docs" style={{ color: "var(--ink-deep)", textDecoration: "underline" }}>/docs</Link>.
         </LegalP>
       </LegalSection>
 
@@ -142,7 +142,7 @@ export default function TermsClient() {
         </LegalP>
         <LegalP>
           See also our{" "}
-          <Link href="/design-v2/privacy" style={{ color: "var(--ink-deep)", textDecoration: "underline" }}>Privacy Policy</Link>
+          <Link href="/privacy" style={{ color: "var(--ink-deep)", textDecoration: "underline" }}>Privacy Policy</Link>
           {" "}for details on how we handle your data.
         </LegalP>
       </LegalSection>

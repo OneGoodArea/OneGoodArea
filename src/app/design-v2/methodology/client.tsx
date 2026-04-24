@@ -837,7 +837,7 @@ function FinalCta() {
           Run a free report for any UK postcode. Read the numbers, read the reasoning, decide.
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href="/design-v2" style={{
+          <Link href="/" style={{
             fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
             letterSpacing: "0.16em", textTransform: "uppercase",
             color: "var(--signal-ink)", background: "var(--signal)",
@@ -852,7 +852,7 @@ function FinalCta() {
             Try a postcode
             <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
           </Link>
-          <Link href="/design-v2/docs" style={{
+          <Link href="/docs" style={{
             fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
             letterSpacing: "0.16em", textTransform: "uppercase",
             color: "var(--ink)", background: "transparent",

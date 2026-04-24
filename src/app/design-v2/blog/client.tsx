@@ -97,7 +97,7 @@ function Featured({ post }: { post: BlogPost }) {
     }}>
       <div style={{ maxWidth: 1000, margin: "0 auto", padding: "0 40px" }}>
         <Link
-          href={`/design-v2/blog/${post.slug}`}
+          href={`/blog/${post.slug}`}
           onMouseEnter={() => setHover(true)}
           onMouseLeave={() => setHover(false)}
           style={{
@@ -229,7 +229,7 @@ function PostRow({ post, isLast }: { post: BlogPost; isLast: boolean }) {
   const [hover, setHover] = useState(false);
   return (
     <Link
-      href={`/design-v2/blog/${post.slug}`}
+      href={`/blog/${post.slug}`}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
@@ -333,7 +333,7 @@ function FinalCta() {
         }}>
           Every post is built from the same public data as the reports. Same engine, same citations, just in long form.
         </p>
-        <Link href="/design-v2" style={{
+        <Link href="/" style={{
           fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
           letterSpacing: "0.16em", textTransform: "uppercase",
           color: "var(--signal-ink)", background: "var(--signal)",

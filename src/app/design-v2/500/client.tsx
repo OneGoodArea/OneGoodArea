@@ -9,10 +9,10 @@ export default function ErrorClient() {
       title={<>Our engine <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>tripped.</em></>}
       sub="Something on our side went wrong while reading the postcode. We've logged it. Try again in a moment, or head back to a known route."
       primaryCta={{ label: "Try again", onClick: () => window.location.reload() }}
-      secondaryCta={{ label: "Go home", href: "/design-v2" }}
+      secondaryCta={{ label: "Go home", href: "/" }}
       quickLinks={[
-        { label: "Dashboard", href: "/design-v2" },
-        { label: "Help",      href: "/design-v2/help" },
+        { label: "Dashboard", href: "/" },
+        { label: "Help",      href: "/help" },
         { label: "Contact",   href: "mailto:hello@area-iq.co.uk" },
       ]}
     />

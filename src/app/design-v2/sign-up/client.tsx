@@ -63,7 +63,7 @@ export default function SignUpClient() {
   };
 
   const handleOAuth = async (provider: "google" | "github") => {
-    try { await signIn(provider, { callbackUrl: "/design-v2/dashboard" }); }
+    try { await signIn(provider, { callbackUrl: "/dashboard" }); }
     catch { setError("OAuth error. Please try again."); }
   };
 
@@ -142,7 +142,7 @@ export default function SignUpClient() {
             </button>
 
             <div>
-              <Link href="/design-v2/sign-in" style={{
+              <Link href="/sign-in" style={{
                 fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
                 letterSpacing: "0.14em", textTransform: "uppercase",
                 color: "var(--signal-ink)", background: "var(--signal)",
@@ -214,7 +214,7 @@ export default function SignUpClient() {
 
         <AuthFooterLink
           label="Already have an account?"
-          href="/design-v2/sign-in"
+          href="/sign-in"
           linkLabel="Sign in"
         />
 
@@ -225,12 +225,12 @@ export default function SignUpClient() {
           color: "var(--text-3)",
         }}>
           By signing up, you agree to our{" "}
-          <Link href="/design-v2/terms" style={{
+          <Link href="/terms" style={{
             color: "var(--text-2)", textDecoration: "none",
             borderBottom: "1px solid var(--border)",
           }}>Terms</Link>
           {" "}and{" "}
-          <Link href="/design-v2/privacy" style={{
+          <Link href="/privacy" style={{
             color: "var(--text-2)", textDecoration: "none",
             borderBottom: "1px solid var(--border)",
           }}>Privacy Policy</Link>.

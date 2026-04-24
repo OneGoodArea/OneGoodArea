@@ -76,7 +76,7 @@ function ResetForm() {
             title={<>Invalid <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>reset link.</em></>}
             sub="This password reset link is missing a token, has expired, or has already been used."
           />
-          <Link href="/design-v2/forgot-password" style={{
+          <Link href="/forgot-password" style={{
             fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
             letterSpacing: "0.14em", textTransform: "uppercase",
             color: "var(--signal-ink)", background: "var(--signal)",
@@ -106,7 +106,7 @@ function ResetForm() {
             title={<>Password <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>updated.</em></>}
             sub="You can now sign in with your new password."
           />
-          <Link href="/design-v2/sign-in" style={{
+          <Link href="/sign-in" style={{
             fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
             letterSpacing: "0.14em", textTransform: "uppercase",
             color: "var(--signal-ink)", background: "var(--signal)",

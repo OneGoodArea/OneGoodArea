@@ -6,7 +6,10 @@
 export function Styles() {
   return (
     <style jsx global>{`
-      @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap');
+      /* Fonts are loaded via next/font/google in src/app/layout.tsx and
+         exposed as CSS vars on <body> (--font-display / --font-sans /
+         --font-mono). No @import here - that caused FOUC. The .aiq
+         tokens below alias those vars under their semantic names. */
 
       .aiq {
         /* Ink · forest green primary */
@@ -29,9 +32,9 @@ export function Styles() {
         --text-3:     #6E8278;
         --text-4:     #9CAFA5;
 
-        --display: 'Fraunces', 'Times New Roman', serif;
-        --sans:    'Inter', -apple-system, system-ui, sans-serif;
-        --mono:    'Geist Mono', ui-monospace, 'SF Mono', monospace;
+        --display: var(--font-display), 'Fraunces', 'Times New Roman', serif;
+        --sans:    var(--font-sans), 'Inter', -apple-system, system-ui, sans-serif;
+        --mono:    var(--font-mono), 'Geist Mono', ui-monospace, 'SF Mono', monospace;
 
         background: var(--bg);
         color: var(--text);

@@ -53,11 +53,11 @@ function SuccessState() {
         sub="Your account is ready. Sign in to score your first postcode. Three reports a month are on us."
       />
       <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-        <Link href="/design-v2/sign-in" style={primaryCta}>
+        <Link href="/sign-in" style={primaryCta}>
           Sign in
           <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
         </Link>
-        <Link href="/design-v2" style={ghostCta}>
+        <Link href="/" style={ghostCta}>
           Explore first
         </Link>
       </div>
@@ -80,7 +80,7 @@ function FailureState() {
         sub="This verification link is invalid, has expired, or has already been used. Create your account again to get a fresh link."
       />
       <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-        <Link href="/design-v2/sign-up" style={primaryCta}>
+        <Link href="/sign-up" style={primaryCta}>
           Sign up again
           <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
         </Link>

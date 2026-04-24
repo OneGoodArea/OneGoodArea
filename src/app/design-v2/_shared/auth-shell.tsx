@@ -51,7 +51,7 @@ function BrandPanel() {
       }} />
 
       <div style={{ position: "relative", zIndex: 1, alignSelf: "flex-start" }}>
-        <Wordmark href="/design-v2" size={24} />
+        <Wordmark href="/" size={24} />
       </div>
 
       <div style={{ position: "relative", zIndex: 1, maxWidth: 480 }}>
@@ -95,7 +95,7 @@ function BrandPanel() {
         letterSpacing: "0.2em", textTransform: "uppercase",
         color: "var(--text-3)",
       }}>
-        <Link href="/design-v2" style={{
+        <Link href="/" style={{
           color: "var(--ink-deep)", textDecoration: "none",
           display: "inline-flex", alignItems: "center", gap: 8,
           borderBottom: "1px solid var(--ink-deep)", paddingBottom: 2,
@@ -103,10 +103,10 @@ function BrandPanel() {
           ← Back to site
         </Link>
         <span aria-hidden style={{ width: 1, height: 10, background: "var(--border)" }} />
-        <Link href="/design-v2/pricing" style={{
+        <Link href="/pricing" style={{
           color: "var(--text-2)", textDecoration: "none",
         }}>Pricing</Link>
-        <Link href="/design-v2/about" style={{
+        <Link href="/about" style={{
           color: "var(--text-2)", textDecoration: "none",
         }}>About</Link>
       </div>

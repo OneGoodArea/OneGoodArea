@@ -624,7 +624,7 @@ function Cta({ area }: { area: AreaData }) {
           {area.lockedSections.length} sections of detailed analysis, data-backed reasoning for every score, and {area.lockedRecommendations} personalised recommendations. Built from {area.dataSources.length} live UK data sources.
         </p>
         <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href={`/design-v2/sign-up?postcode=${encodeURIComponent(area.postcode)}`} style={{
+          <Link href={`/sign-up?postcode=${encodeURIComponent(area.postcode)}`} style={{
             fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
             letterSpacing: "0.14em", textTransform: "uppercase",
             color: "var(--signal-ink)", background: "var(--signal)",
@@ -635,7 +635,7 @@ function Cta({ area }: { area: AreaData }) {
             Generate full report
             <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
           </Link>
-          <Link href="/design-v2/pricing" style={{
+          <Link href="/pricing" style={{
             fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
             letterSpacing: "0.14em", textTransform: "uppercase",
             color: "rgba(255,255,255,0.88)", background: "transparent",
@@ -686,7 +686,7 @@ function Related({ items }: { items: Related[] }) {
             const tone = ragTone(a.overallScore);
             const fg  = tone === "strong" ? "var(--ink-deep)" : tone === "moderate" ? "#6E5300" : "#A01B00";
             return (
-              <Link key={a.slug} href={`/design-v2/area/${a.slug}`} style={{
+              <Link key={a.slug} href={`/area/${a.slug}`} style={{
                 border: "1px solid var(--border)",
                 background: "var(--bg)",
                 padding: "14px 16px",

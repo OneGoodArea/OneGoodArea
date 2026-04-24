@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Changelog | AreaIQ",
-  description: "Product updates, new features, and improvements to AreaIQ. See what we ship, month by month.",
+  title: "Changelog | OneGoodArea",
+  description: "Product updates, new features, and improvements to OneGoodArea. See what we ship, month by month.",
   openGraph: {
-    title: "Changelog | AreaIQ",
-    description: "Product updates, new features, and improvements to AreaIQ.",
+    title: "Changelog | OneGoodArea",
+    description: "Product updates, new features, and improvements to OneGoodArea.",
     type: "article",
     url: "https://www.area-iq.co.uk/changelog",
     images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
   },
-  twitter: { card: "summary_large_image", title: "Changelog | AreaIQ", description: "Product updates, new features, and improvements to AreaIQ." },
+  twitter: { card: "summary_large_image", title: "Changelog | OneGoodArea", description: "Product updates, new features, and improvements to OneGoodArea." },
   alternates: { canonical: "https://www.area-iq.co.uk/changelog" },
 };
 

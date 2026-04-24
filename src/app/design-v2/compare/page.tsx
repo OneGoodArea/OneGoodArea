@@ -46,9 +46,9 @@ export default async function DesignV2ComparePage({
 }) {
   const session = await auth();
   const userId = session?.user?.id;
-  if (!userId) redirect("/design-v2/sign-in?callbackUrl=/design-v2/compare");
+  if (!userId) redirect("/sign-in?callbackUrl=/compare");
   const plan = await getUserPlan(userId);
-  if (plan === "free") redirect("/design-v2/pricing");
+  if (plan === "free") redirect("/pricing");
 
   const params = await searchParams;
   const reportIds = params.reports?.split(",").filter(Boolean) || [];

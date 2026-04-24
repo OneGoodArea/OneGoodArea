@@ -96,7 +96,7 @@ export default function PricingClient() {
   async function handleUpgrade(planId: PlanId) {
     if (planId === "free" || loading) return;
     if (!isSignedIn) {
-      window.location.href = `/design-v2/sign-in?callbackUrl=/design-v2/pricing`;
+      window.location.href = `/sign-in?callbackUrl=/pricing`;
       return;
     }
     setLoading(planId);
@@ -821,7 +821,7 @@ function FinalCta({ isSignedIn }: { isSignedIn: boolean }) {
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
           <Link
-            href={isSignedIn ? "/design-v2" : "/sign-up"}
+            href={isSignedIn ? "/" : "/sign-up"}
             style={{
               fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
               letterSpacing: "0.16em", textTransform: "uppercase",
@@ -838,7 +838,7 @@ function FinalCta({ isSignedIn }: { isSignedIn: boolean }) {
             <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
           </Link>
           <Link
-            href="/design-v2/business"
+            href="/business"
             style={{
               fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
               letterSpacing: "0.16em", textTransform: "uppercase",

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "API Usage | AreaIQ",
+  title: "API Usage | OneGoodArea",
   robots: { index: false, follow: false },
 };
 

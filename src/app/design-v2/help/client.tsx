@@ -356,15 +356,15 @@ function FinalCta() {
           letterSpacing: "0.16em", textTransform: "uppercase",
           color: "var(--text-3)",
         }}>
-          <Link href="/design-v2/methodology" style={{ color: "var(--text-2)", textDecoration: "none", borderBottom: "1px solid var(--border)", paddingBottom: 2 }}>
+          <Link href="/methodology" style={{ color: "var(--text-2)", textDecoration: "none", borderBottom: "1px solid var(--border)", paddingBottom: 2 }}>
             Methodology
           </Link>
           <span aria-hidden style={{ margin: "0 10px" }}>·</span>
-          <Link href="/design-v2/docs" style={{ color: "var(--text-2)", textDecoration: "none", borderBottom: "1px solid var(--border)", paddingBottom: 2 }}>
+          <Link href="/docs" style={{ color: "var(--text-2)", textDecoration: "none", borderBottom: "1px solid var(--border)", paddingBottom: 2 }}>
             API docs
           </Link>
           <span aria-hidden style={{ margin: "0 10px" }}>·</span>
-          <Link href="/design-v2/pricing" style={{ color: "var(--text-2)", textDecoration: "none", borderBottom: "1px solid var(--border)", paddingBottom: 2 }}>
+          <Link href="/pricing" style={{ color: "var(--text-2)", textDecoration: "none", borderBottom: "1px solid var(--border)", paddingBottom: 2 }}>
             Pricing
           </Link>
         </div>

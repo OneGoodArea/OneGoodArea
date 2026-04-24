@@ -144,7 +144,7 @@ function ReportActions({ id, report, score, onToast }: {
         )}
       </div>
 
-      <GhostCta href="/design-v2/dashboard">← Reports</GhostCta>
+      <GhostCta href="/dashboard">← Reports</GhostCta>
     </div>
   );
 }

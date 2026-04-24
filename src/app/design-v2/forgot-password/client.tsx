@@ -96,7 +96,7 @@ export default function ForgotPasswordClient() {
               Link expires in 1 hour · Check your spam folder
             </div>
 
-            <Link href="/design-v2/sign-in" style={{
+            <Link href="/sign-in" style={{
               fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
               letterSpacing: "0.14em", textTransform: "uppercase",
               color: "var(--signal-ink)", background: "var(--signal)",
@@ -146,7 +146,7 @@ export default function ForgotPasswordClient() {
         <div style={{
           marginTop: 28, textAlign: "center",
         }}>
-          <Link href="/design-v2/sign-in" style={{
+          <Link href="/sign-in" style={{
             fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
             letterSpacing: "0.16em", textTransform: "uppercase",
             color: "var(--text-2)", textDecoration: "none",

@@ -50,7 +50,7 @@ export default function SettingsClient() {
     );
   }
   if (!session?.user) {
-    router.push("/design-v2/sign-in?callbackUrl=/design-v2/settings");
+    router.push("/sign-in?callbackUrl=/settings");
     return null;
   }
 
@@ -175,7 +175,7 @@ function Subscription({ sub, loading, onRefresh }: {
             </div>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               {isFree ? (
-                <PrimaryCta href="/design-v2/pricing">Upgrade plan</PrimaryCta>
+                <PrimaryCta href="/pricing">Upgrade plan</PrimaryCta>
               ) : (
                 <>
                   <GhostCta onClick={openPortal}>
@@ -412,7 +412,7 @@ function DangerZone() {
         setError(data.error || "Failed to delete account");
         return;
       }
-      await signOut({ callbackUrl: "/design-v2" });
+      await signOut({ callbackUrl: "/" });
     } catch { setError("Something went wrong"); }
     finally { setLoading(false); }
   }

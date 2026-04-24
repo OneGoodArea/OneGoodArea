@@ -11,28 +11,28 @@ import { Wordmark } from "./wordmark";
 
 export function Footer() {
   const productLinks: { label: string; href: string }[] = [
-    { label: "Areas",        href: "/design-v2/area/london" },
-    { label: "Methodology",  href: "/design-v2/methodology" },
-    { label: "Changelog",    href: "/design-v2/changelog" },
-    { label: "Blog",         href: "/design-v2/blog" },
+    { label: "Areas",        href: "/area/london" },
+    { label: "Methodology",  href: "/methodology" },
+    { label: "Changelog",    href: "/changelog" },
+    { label: "Blog",         href: "/blog" },
   ];
   const businessLinks: { label: string; href: string }[] = [
-    { label: "For business", href: "/design-v2/business" },
-    { label: "API",          href: "/design-v2/docs" },
-    { label: "Pricing",      href: "/design-v2/pricing" },
+    { label: "For business", href: "/business" },
+    { label: "API",          href: "/docs" },
+    { label: "Pricing",      href: "/pricing" },
   ];
   const companyLinks: { label: string; href: string }[] = [
-    { label: "About",   href: "/design-v2/about" },
-    { label: "Help",    href: "/design-v2/help" },
+    { label: "About",   href: "/about" },
+    { label: "Help",    href: "/help" },
     { label: "Contact", href: "mailto:hello@area-iq.co.uk" },
   ];
   const legalLinks: { label: string; href: string }[] = [
-    { label: "Terms",   href: "/design-v2/terms" },
-    { label: "Privacy", href: "/design-v2/privacy" },
+    { label: "Terms",   href: "/terms" },
+    { label: "Privacy", href: "/privacy" },
   ];
   const socialLinks: { label: string; href: string }[] = [
     { label: "Email",    href: "mailto:hello@area-iq.co.uk" },
-    { label: "GitHub",   href: "https://github.com/ptengelmann/AreaIQ-" },
+    { label: "GitHub",   href: "https://github.com/OneGoodArea/OneGoodArea" },
     { label: "LinkedIn", href: "#" },
     { label: "X",        href: "#" },
   ];
@@ -52,7 +52,7 @@ export function Footer() {
         }}>
           <div className="aiq-footer-brand">
             <div style={{ marginBottom: 24 }}>
-              <Wordmark href="/design-v2" size={26} />
+              <Wordmark href="/" size={26} />
             </div>
             <p style={{
               fontFamily: "var(--display)", fontSize: 19, fontWeight: 400,
@@ -62,7 +62,7 @@ export function Footer() {
             }}>
               An intelligence report for every UK postcode.
             </p>
-            <Link href="/design-v2" style={{
+            <Link href="/" style={{
               fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
               letterSpacing: "0.2em", textTransform: "uppercase",
               color: "var(--ink-deep)", textDecoration: "none",

@@ -1509,7 +1509,7 @@ const SampleReport = forwardRef<
                 </ul>
 
                 <a
-                  href="/design-v2/sign-up"
+                  href="/sign-up"
                   style={{
                     display: "inline-flex", alignItems: "center", gap: 8,
                     fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600,
@@ -1635,7 +1635,7 @@ const SampleReport = forwardRef<
               textTransform: "uppercase",
             }}>
               <span>+ {hiddenCount} more dimensions locked</span>
-              <a href="/design-v2/sign-up" style={{
+              <a href="/sign-up" style={{
                 color: "var(--ink)", textDecoration: "none",
                 borderBottom: "1px solid var(--signal)", paddingBottom: 1,
               }}>unlock →</a>

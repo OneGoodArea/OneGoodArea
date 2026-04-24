@@ -52,7 +52,7 @@ async function getSavedAreas(userId: string) {
 export default async function DesignV2DashboardPage() {
   const session = await auth();
   const userId = session?.user?.id;
-  if (!userId) redirect("/design-v2/sign-in?callbackUrl=/design-v2/dashboard");
+  if (!userId) redirect("/sign-in?callbackUrl=/dashboard");
 
   const [reports, plan, used, savedAreas] = await Promise.all([
     getUserReports(userId),

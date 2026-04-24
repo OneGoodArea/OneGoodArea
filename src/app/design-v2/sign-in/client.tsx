@@ -24,7 +24,7 @@ export default function SignInClient() {
 function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/design-v2/dashboard";
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
 
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
@@ -81,7 +81,7 @@ function SignInForm() {
         <FormField
           label="Password"
           rightLabel={
-            <Link href="/design-v2/forgot-password" style={{
+            <Link href="/forgot-password" style={{
               fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
               letterSpacing: "0.18em", textTransform: "uppercase",
               color: "var(--ink)", textDecoration: "none",
@@ -112,7 +112,7 @@ function SignInForm() {
 
       <AuthFooterLink
         label="New here?"
-        href="/design-v2/sign-up"
+        href="/sign-up"
         linkLabel="Create an account"
       />
     </AuthShell>

@@ -35,7 +35,7 @@ export default function DashboardClient(props: Props) {
         title="Dashboard"
         subtitle="Your reports, watchlist, and usage."
         actions={
-          <PrimaryCta href="/design-v2/report">
+          <PrimaryCta href="/report">
             New report
             <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
           </PrimaryCta>
@@ -182,7 +182,7 @@ function UsageStrip({ plan, planName, isApiPlan, used, limit, onBilling, billing
         </div>
         <div style={{ marginTop: 2 }}>
           {plan === "free" ? (
-            <PrimaryCta href="/design-v2/pricing">Upgrade plan</PrimaryCta>
+            <PrimaryCta href="/pricing">Upgrade plan</PrimaryCta>
           ) : (
             <button
               onClick={onBilling}
@@ -638,7 +638,7 @@ function ReportRow({ report, isLast, onDelete }: {
         transition: "background 140ms ease",
       }}
     >
-      <Link href={`/design-v2/report/${report.id}`} style={{
+      <Link href={`/report/${report.id}`} style={{
         fontFamily: "var(--display)", fontSize: 15, fontWeight: 500,
         letterSpacing: "-0.008em",
         color: "var(--ink-deep)", textDecoration: "none",
@@ -742,7 +742,7 @@ function EmptyState({ hasReports }: { hasReports: boolean }) {
           : "Generate your first report. Three are free every month."}
       </p>
       {!hasReports && (
-        <PrimaryCta href="/design-v2/report">
+        <PrimaryCta href="/report">
           Generate a report
           <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
         </PrimaryCta>

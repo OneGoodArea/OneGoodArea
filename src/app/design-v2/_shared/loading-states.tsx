@@ -6,9 +6,9 @@ import { AppShell } from "./app-shell";
 
 /* Loading states - shared skeleton primitives in design-v2 language.
    All loaders use the brand tokens (chartreuse pulse, cream/dark-adapt
-   surfaces, Fraunces mute). Used by /design-v2/ * /loading.tsx files. */
+   surfaces, Fraunces mute). Used by / * /loading.tsx files. */
 
-/* Global /design-v2/loading.tsx fallback - a minimal centred pulse.
+/* Global /loading.tsx fallback - a minimal centred pulse.
    Next.js uses this while a route segment streams if there's no closer
    loading.tsx. Keeps the marketing nav/footer out since it's a global
    fallback. */
@@ -29,7 +29,7 @@ export function PageLoader({ label = "Loading" }: { label?: string }) {
 }
 
 /* App-shell loader - renders the full sidebar chrome with a pulse in
-   the main area. Used by /design-v2/dashboard/loading.tsx etc so the
+   the main area. Used by /dashboard/loading.tsx etc so the
    sidebar doesn't flicker during route transitions. */
 export function AppLoader({ title, label = "Loading" }: {
   title?: string; label?: string;

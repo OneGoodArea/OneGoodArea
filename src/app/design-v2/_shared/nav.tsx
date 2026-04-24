@@ -13,10 +13,10 @@ import { ThemeDot } from "./theme-dot";
    <=720px (matches the existing rule hiding the desktop links). */
 
 const LINKS: { label: string; href: string }[] = [
-  { label: "Business", href: "/design-v2/business" },
-  { label: "API",      href: "/design-v2/docs" },
-  { label: "Pricing",  href: "/design-v2/pricing" },
-  { label: "About",    href: "/design-v2/about" },
+  { label: "Business", href: "/business" },
+  { label: "API",      href: "/docs" },
+  { label: "Pricing",  href: "/pricing" },
+  { label: "About",    href: "/about" },
 ];
 
 export function Nav() {
@@ -45,7 +45,7 @@ export function Nav() {
     };
   }, [drawerOpen]);
 
-  const ctaHref = isSignedIn ? "/design-v2/dashboard" : "/design-v2/sign-in";
+  const ctaHref = isSignedIn ? "/dashboard" : "/sign-in";
   const ctaLabel = isSignedIn ? "Dashboard" : "Sign In";
 
   return (
@@ -63,7 +63,7 @@ export function Nav() {
           maxWidth: 1240, margin: "0 auto", padding: "0 40px",
           height: 64, display: "flex", alignItems: "center", gap: 24,
         }}>
-          <Wordmark href="/design-v2" size={22} />
+          <Wordmark href="/" size={22} />
           <span className="aiq-nav-beta" style={{
             fontFamily: "var(--mono)", fontSize: 9, fontWeight: 500,
             letterSpacing: "0.22em", textTransform: "uppercase",
@@ -163,7 +163,7 @@ export function Nav() {
           display: "flex", alignItems: "center", justifyContent: "space-between",
           marginBottom: 24,
         }}>
-          <Wordmark href="/design-v2" size={20} />
+          <Wordmark href="/" size={20} />
           <button
             type="button"
             onClick={() => setDrawerOpen(false)}

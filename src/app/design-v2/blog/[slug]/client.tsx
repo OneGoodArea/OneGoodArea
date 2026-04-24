@@ -59,7 +59,7 @@ function Header({ post }: { post: BlogPost }) {
           display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap",
           marginBottom: 24,
         }}>
-          <Link href="/design-v2/blog" style={{
+          <Link href="/blog" style={{
             fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
             letterSpacing: "0.2em", textTransform: "uppercase",
             color: "var(--text-2)", textDecoration: "none",
@@ -300,7 +300,7 @@ function PostCta() {
           Seven live data sources. Reproducible scoring. Written narrative. Three free reports per month, no card required.
         </p>
         <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href="/design-v2/sign-up" style={{
+          <Link href="/sign-up" style={{
             fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
             letterSpacing: "0.14em", textTransform: "uppercase",
             color: "var(--signal-ink)", background: "var(--signal)",
@@ -311,7 +311,7 @@ function PostCta() {
             Start free
             <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
           </Link>
-          <Link href="/design-v2/pricing" style={{
+          <Link href="/pricing" style={{
             fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
             letterSpacing: "0.14em", textTransform: "uppercase",
             color: "var(--ink)", background: "transparent",
@@ -344,7 +344,7 @@ function PostNav({ prev, next }: { prev: BlogPost | null; next: BlogPost | null 
           {next ? <PrevNextCard post={next} direction="next" /> : <div />}
         </div>
         <div style={{ textAlign: "center" }}>
-          <Link href="/design-v2/blog" style={{
+          <Link href="/blog" style={{
             fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
             letterSpacing: "0.18em", textTransform: "uppercase",
             color: "var(--text-2)", textDecoration: "none",
@@ -366,7 +366,7 @@ function PrevNextCard({ post, direction }: {
   const isPrev = direction === "prev";
   return (
     <Link
-      href={`/design-v2/blog/${post.slug}`}
+      href={`/blog/${post.slug}`}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
