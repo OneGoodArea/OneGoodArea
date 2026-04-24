@@ -245,6 +245,33 @@ export function Styles() {
         }
       }
 
+      /* Methodology · pipeline + AI split stack on narrow */
+      @media (max-width: 880px) {
+        .aiq-pipeline {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aiq-pipeline > *:nth-child(2) { border-right: none !important; }
+        .aiq-pipeline > *:nth-child(1),
+        .aiq-pipeline > *:nth-child(2) { border-bottom: 1px solid var(--border) !important; }
+        .aiq-ai-split {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-ai-split > *:first-child {
+          border-right: none !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+      }
+      @media (max-width: 520px) {
+        .aiq-pipeline {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-pipeline > * {
+          border-right: none !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+        .aiq-pipeline > *:last-child { border-bottom: none !important; }
+      }
+
       /* Methodology + Docs · sidebar collapses on narrow, tables wrap */
       @media (max-width: 900px) {
         .aiq-meth-wrap,

@@ -8,20 +8,19 @@ import { Footer } from "../_shared/footer";
 import { AiqIcon, type IconName } from "../_shared/icons";
 
 /* ═══════════════════════════════════════════════════════════════
-   OneGoodArea — Design V2 · /methodology
-   Long-form reference page. Sticky sidebar scrollspy + editorial
-   content sections.
+   OneGoodArea · Design V2 · /methodology
+   Long-form reference page. Content mirrors the live site:
+   data sources, intent types, scoring functions (named, not exposed),
+   role of AI, overall score, score scale (RAG).
    ═══════════════════════════════════════════════════════════════ */
 
 const SECTIONS: { id: string; label: string }[] = [
-  { id: "overview",        label: "Overview" },
-  { id: "data-sources",    label: "Data sources" },
-  { id: "intents",         label: "Intent weighting" },
-  { id: "scoring",         label: "Scoring functions" },
-  { id: "narrative",       label: "The narrative layer" },
-  { id: "overall",         label: "The overall score" },
-  { id: "scale",           label: "Score scale" },
-  { id: "freshness",       label: "Freshness + cache" },
+  { id: "data-sources", label: "Data sources" },
+  { id: "intents",      label: "Intent types" },
+  { id: "scoring",      label: "Scoring functions" },
+  { id: "ai-role",      label: "Role of AI" },
+  { id: "overall",      label: "Overall score" },
+  { id: "scale",        label: "Score scale" },
 ];
 
 export default function MethodologyClient() {
@@ -74,7 +73,7 @@ function Hero() {
             background: "var(--signal)",
             animation: "aiq-pulse-dot 1.6s ease-in-out infinite",
           }} />
-          Methodology · Version 1
+          Methodology
         </div>
         <h1 style={{
           fontFamily: "var(--display)", fontWeight: 400,
@@ -82,11 +81,11 @@ function Hero() {
           letterSpacing: "-0.02em", color: "var(--ink-deep)",
           margin: "0 0 20px", maxWidth: "22ch",
         }}>
-          How we score{" "}
+          How OneGoodArea{" "}
           <span style={{
             fontStyle: "italic", color: "var(--ink)",
             borderBottom: "3px solid var(--signal)", paddingBottom: 2,
-          }}>every UK postcode.</span>
+          }}>scores an area.</span>
         </h1>
         <p style={{
           fontFamily: "var(--sans)", fontSize: 17, fontWeight: 400,
@@ -94,14 +93,14 @@ function Hero() {
           letterSpacing: "-0.005em",
           margin: 0, maxWidth: "62ch",
         }}>
-          Every score comes from real public data using the same formulas every time. This page is the written record — the exact sources, the exact weights, the exact role of the written narrative, and the exact shape of the number you end up with.
+          Every score is built from real data. Same postcode, same answer. This page is the plain-English record of what the engine reads, what it weighs, and what the AI layer is (and isn&apos;t) allowed to do.
         </p>
       </div>
     </section>
   );
 }
 
-/* ─────── Body: sticky sidebar + editorial content ─────── */
+/* ─────── Body: sidebar + content ─────── */
 
 function Body() {
   return (
@@ -118,24 +117,20 @@ function Body() {
       }}>
         <Sidebar />
         <div style={{ minWidth: 0 }}>
-          <Overview />
           <DataSources />
-          <Intents />
-          <Scoring />
-          <Narrative />
-          <Overall />
-          <Scale />
-          <Freshness />
+          <IntentTypes />
+          <ScoringFunctions />
+          <RoleOfAi />
+          <OverallScore />
+          <ScoreScale />
         </div>
       </div>
     </section>
   );
 }
 
-/* Sticky sidebar with scrollspy — chartreuse underline on active. */
 function Sidebar() {
   const [active, setActive] = useState<string>(SECTIONS[0].id);
-
   useEffect(() => {
     const obs = new IntersectionObserver(
       (entries) => {
@@ -176,7 +171,6 @@ function Sidebar() {
                 color: isActive ? "var(--ink-deep)" : "var(--text-2)",
                 textDecoration: "none",
                 padding: "6px 0 7px",
-                position: "relative",
                 transition: "color 140ms ease",
                 borderBottom: isActive ? "2px solid var(--signal)" : "2px solid transparent",
               }}>
@@ -190,7 +184,7 @@ function Sidebar() {
   );
 }
 
-/* ─────── Section wrapper ─────── */
+/* ─────── Section primitives ─────── */
 
 function SectionBlock({ id, eyebrow, title, children }: {
   id: string; eyebrow: string; title: React.ReactNode; children: React.ReactNode;
@@ -217,7 +211,7 @@ function SectionBlock({ id, eyebrow, title, children }: {
         fontFamily: "var(--display)", fontWeight: 400,
         fontSize: "clamp(28px, 3.2vw, 40px)", lineHeight: 1.08,
         letterSpacing: "-0.016em", color: "var(--ink-deep)",
-        margin: "0 0 24px", maxWidth: "28ch",
+        margin: "0 0 24px", maxWidth: "30ch",
       }}>
         {title}
       </h2>
@@ -237,38 +231,18 @@ function P({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ─────── Overview ─────── */
-
-function Overview() {
-  return (
-    <SectionBlock
-      id="overview"
-      eyebrow="Overview"
-      title={<>Public data, <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>reproducible formulas</em>, written reasoning.</>}
-    >
-      <P>
-        The engine reads seven public datasets, classifies the area as urban, suburban, or rural, runs five deterministic scoring functions against that context, and returns one overall score plus five weighted dimensions — all keyed to one of four intents.
-      </P>
-      <P>
-        A separate layer writes the narrative and recommendations on top of those numbers. That layer never invents the score; it explains it.
-      </P>
-      <P>
-        Everything below is the exact procedure. Same postcode and same intent will always give you the same score. Cached responses are byte-identical.
-      </P>
-    </SectionBlock>
-  );
-}
-
 /* ─────── Data sources ─────── */
 
-const DS: { icon: IconName; name: string; provider: string; use: string }[] = [
-  { icon: "map",        name: "Postcodes.io",        provider: "ONS / Royal Mail",        use: "Geocoding + ward, LSOA, constituency, region, country." },
-  { icon: "support",    name: "Police.uk",           provider: "Home Office",             use: "Street-level crime, 12 months rolling, category breakdown." },
-  { icon: "researcher", name: "IMD 2025",            provider: "MHCLG via ArcGIS",        use: "Index of Multiple Deprivation: rank + decile by LSOA. WIMD (Wales), SIMD (Scotland)." },
-  { icon: "operator",   name: "OpenStreetMap",       provider: "Overpass API",            use: "Schools, shops, cafés, healthcare, parks, bus stops, stations within 0.5–2km." },
-  { icon: "intent",     name: "Environment Agency",  provider: "Defra",                   use: "Flood-risk zone + active flood warnings." },
-  { icon: "investor",   name: "HM Land Registry",    provider: "HM Land Registry SPARQL", use: "Sold prices by postcode district, property types, YoY change, transaction counts." },
-  { icon: "read",       name: "Ofsted",              provider: "Department for Education",use: "School inspection ratings within 1.5km. England today; Scotland / Wales planned." },
+const DATA_SOURCES: {
+  icon: IconName; name: string; provider: string; radius: string; data: string;
+}[] = [
+  { icon: "map",        name: "Postcodes.io",       provider: "ONS / Royal Mail",       radius: "Point lookup",       data: "Geocoding (latitude/longitude), LSOA code and name, local authority, ward, constituency, and region. Acts as the entry point for all other lookups." },
+  { icon: "support",    name: "Police.uk",          provider: "Home Office",            radius: "1 mile",             data: "Street-level crime incidents from the last 3 months, broken down by category (theft, violence, burglary, and so on). Includes monthly trend data for direction-of-travel analysis." },
+  { icon: "researcher", name: "ONS / IMD 2025",     provider: "MHCLG via ArcGIS",       radius: "LSOA boundary",      data: "Index of Multiple Deprivation. Ranks 33,755 Lower Super Output Areas across income, employment, health, education, and living environment. Decile 1 = most deprived, decile 10 = least deprived." },
+  { icon: "operator",   name: "OpenStreetMap",      provider: "Overpass API",           radius: "500m to 2km",        data: "Nearby amenities: schools within 1.5km, food and shops within 1km, transport stations within 2km, bus stops within 500m, parks and healthcare facilities." },
+  { icon: "intent",     name: "Environment Agency", provider: "Defra",                  radius: "3km / 5km",          data: "Flood risk zones within 3km, active flood warnings within 5km, and identified rivers at risk. Data is fetched live per request." },
+  { icon: "investor",   name: "HM Land Registry",   provider: "Price Paid Data",        radius: "Postcode district",  data: "Actual sold prices from the last 12 months via SPARQL query. Median and mean prices, year-on-year change, property type breakdown (detached, semi, terraced, flat), tenure split, and price range." },
+  { icon: "read",       name: "Ofsted",             provider: "Department for Education", radius: "1.5km",            data: "School inspection ratings (Outstanding, Good, Requires Improvement, Inadequate). England only." },
 ];
 
 function DataSources() {
@@ -276,42 +250,55 @@ function DataSources() {
     <SectionBlock
       id="data-sources"
       eyebrow="Data sources"
-      title={<>Seven public datasets. <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>No private feeds.</em></>}
+      title={<>Seven public sources, <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>one report.</em></>}
     >
       <P>
-        Every fact in a report traces back to one of seven sources below. Response payloads include a <Code>data_freshness</Code> block with source + period + status so you can cite with confidence.
+        Every report is built from seven live UK government and open data sources, fetched in parallel at the time of request. No cached data. No estimates. No surveys.
       </P>
       <div style={{
         marginTop: 28,
         border: "1px solid var(--border)", background: "var(--bg)",
       }}>
-        {DS.map((d, i) => (
-          <div key={d.name} style={{
-            display: "grid",
-            gridTemplateColumns: "56px 220px 1fr",
-            gap: 24, alignItems: "center",
-            padding: "18px 22px",
-            borderBottom: i === DS.length - 1 ? "none" : "1px solid var(--border-dim)",
+        {DATA_SOURCES.map((s, i) => (
+          <div key={s.name} style={{
+            padding: "22px 24px",
+            borderBottom: i === DATA_SOURCES.length - 1 ? "none" : "1px solid var(--border-dim)",
             background: i % 2 === 0 ? "var(--bg)" : "var(--bg-off)",
+            display: "grid",
+            gridTemplateColumns: "44px 1fr",
+            gap: 18, alignItems: "flex-start",
           }}>
-            <AiqIcon name={d.icon} size={22} />
+            <div style={{ paddingTop: 2 }}>
+              <AiqIcon name={s.icon} size={22} />
+            </div>
             <div>
               <div style={{
-                fontFamily: "var(--display)", fontSize: 17, fontWeight: 500,
-                letterSpacing: "-0.012em", color: "var(--ink-deep)",
-                lineHeight: 1.2, marginBottom: 2,
-              }}>{d.name}</div>
-              <div style={{
-                fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-                letterSpacing: "0.14em", textTransform: "uppercase",
-                color: "var(--text-3)",
-              }}>{d.provider}</div>
+                display: "flex", alignItems: "center", gap: 12,
+                flexWrap: "wrap", marginBottom: 6,
+              }}>
+                <span style={{
+                  fontFamily: "var(--display)", fontSize: 18, fontWeight: 500,
+                  letterSpacing: "-0.012em", color: "var(--ink-deep)",
+                }}>{s.name}</span>
+                <span style={{
+                  fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
+                  letterSpacing: "0.14em", textTransform: "uppercase",
+                  color: "var(--text-3)",
+                }}>{s.provider}</span>
+                <span style={{
+                  fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
+                  letterSpacing: "0.2em", textTransform: "uppercase",
+                  color: "var(--ink)", background: "var(--signal-dim)",
+                  padding: "3px 8px", borderRadius: 2,
+                }}>{s.radius}</span>
+              </div>
+              <p style={{
+                fontFamily: "var(--sans)", fontSize: 14.5, fontWeight: 400,
+                lineHeight: 1.55, color: "var(--text-2)",
+                letterSpacing: "-0.003em",
+                margin: 0, maxWidth: "66ch",
+              }}>{s.data}</p>
             </div>
-            <div style={{
-              fontFamily: "var(--sans)", fontSize: 14, fontWeight: 400,
-              lineHeight: 1.55, color: "var(--text-2)",
-              letterSpacing: "-0.003em",
-            }}>{d.use}</div>
           </div>
         ))}
       </div>
@@ -319,93 +306,65 @@ function DataSources() {
   );
 }
 
-/* ─────── Intent weighting ─────── */
+/* ─────── Intent types ─────── */
 
-const INTENTS: { code: string; label: string; desc: string; dims: { label: string; weight: number }[] }[] = [
-  { code: "moving",    label: "Moving home",        desc: "What a buyer or renter needs before a viewing or tenancy.",
-    dims: [
-      { label: "Safety & Crime",      weight: 25 },
-      { label: "Schools & Education", weight: 20 },
-      { label: "Transport & Commute", weight: 20 },
-      { label: "Daily Amenities",     weight: 15 },
-      { label: "Cost of Living",      weight: 20 },
-    ] },
-  { code: "business",  label: "Opening a business", desc: "What an operator weighs before signing a lease.",
-    dims: [
-      { label: "Foot Traffic & Demand", weight: 30 },
-      { label: "Competition Density",   weight: 20 },
-      { label: "Transport & Access",    weight: 15 },
-      { label: "Local Spending Power",  weight: 20 },
-      { label: "Commercial Costs",      weight: 15 },
-    ] },
-  { code: "investing", label: "Property investing", desc: "The buy-to-let or development read.",
-    dims: [
-      { label: "Price Growth",               weight: 25 },
-      { label: "Rental Yield",               weight: 25 },
-      { label: "Regeneration & Infrastructure", weight: 20 },
-      { label: "Tenant Demand",              weight: 15 },
-      { label: "Risk Factors",               weight: 15 },
-    ] },
-  { code: "research",  label: "Research / profile", desc: "The balanced neutral read for analysts and journalists.",
-    dims: [
-      { label: "Safety & Crime",          weight: 20 },
-      { label: "Transport Links",         weight: 20 },
-      { label: "Amenities & Services",    weight: 20 },
-      { label: "Demographics & Economy",  weight: 20 },
-      { label: "Environment & Quality",   weight: 20 },
-    ] },
+const INTENTS: { code: string; label: string; desc: string; dimensions: string[] }[] = [
+  { code: "moving",    label: "Moving",    desc: "Residential relocation", dimensions: ["Safety", "Schools", "Transport", "Amenities", "Cost of Living"] },
+  { code: "business",  label: "Business",  desc: "Commercial viability",   dimensions: ["Foot Traffic", "Competition", "Transport", "Spending Power", "Commercial Costs"] },
+  { code: "investing", label: "Investing", desc: "Property investment",    dimensions: ["Price Growth", "Rental Yield", "Regeneration", "Tenant Demand", "Risk Factors"] },
+  { code: "research",  label: "Research",  desc: "General area profile",   dimensions: ["Safety", "Transport", "Amenities", "Demographics", "Environment"] },
 ];
 
-function Intents() {
+function IntentTypes() {
   return (
     <SectionBlock
       id="intents"
-      eyebrow="Intent weighting"
-      title={<>Four intents. <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>Five dimensions each.</em></>}
+      eyebrow="Intent types + dimension weights"
+      title={<>Four intents. <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>Different priorities.</em></>}
     >
       <P>
-        A great area for a family is not the same as a great area for a coffee shop. The engine keeps the data identical but reweights the five dimensions per intent — and renames them to match the decision the reader is actually making.
+        The intent determines which dimensions are scored and how they are weighted. Different use cases care about different things. Moving prioritises safety and schools. Business prioritises foot traffic and spending power.
       </P>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginTop: 28 }}
-           className="aiq-intent-cards">
+      <P>
+        Weights are calibrated internally and are not published.
+      </P>
+      <div className="aiq-intent-cards" style={{
+        display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginTop: 32,
+      }}>
         {INTENTS.map((it) => (
           <div key={it.code} style={{
             border: "1px solid var(--border)",
-            padding: "22px 22px 18px",
+            padding: "22px 22px 20px",
             background: "var(--bg)",
           }}>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 8 }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 14 }}>
               <code style={{
                 fontFamily: "var(--mono)", fontSize: 12, fontWeight: 500,
                 letterSpacing: "0.04em",
                 color: "var(--signal-ink)", background: "var(--signal)",
-                padding: "2px 8px", borderRadius: 2,
+                padding: "3px 9px", borderRadius: 2,
               }}>{it.code}</code>
               <span style={{
                 fontFamily: "var(--display)", fontSize: 18, fontWeight: 500,
                 color: "var(--ink-deep)", letterSpacing: "-0.012em",
               }}>{it.label}</span>
+              <span style={{
+                fontFamily: "var(--mono)", fontSize: 10.5,
+                color: "var(--text-3)", letterSpacing: "0.04em",
+              }}>· {it.desc}</span>
             </div>
-            <p style={{
-              fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 400,
-              lineHeight: 1.5, color: "var(--text-2)",
-              margin: "0 0 14px",
-            }}>{it.desc}</p>
-            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              {it.dims.map((d) => (
-                <li key={d.label} style={{
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+              {it.dimensions.map((d) => (
+                <li key={d} style={{
                   display: "flex", alignItems: "center", gap: 10,
-                  padding: "6px 0",
-                  borderBottom: "1px dashed var(--border-dim)",
+                  fontFamily: "var(--mono)", fontSize: 12, fontWeight: 500,
+                  color: "var(--text)", letterSpacing: "0.02em",
                 }}>
-                  <span style={{
-                    fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 400,
-                    color: "var(--ink-deep)", flex: 1,
-                  }}>{d.label}</span>
-                  <span style={{
-                    fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-                    letterSpacing: "0.04em", color: "var(--ink)",
-                  }}>{d.weight}%</span>
+                  <span aria-hidden style={{
+                    width: 5, height: 5, borderRadius: 5,
+                    background: "var(--signal)", opacity: 0.7,
+                  }} />
+                  {d}
                 </li>
               ))}
             </ul>
@@ -416,160 +375,434 @@ function Intents() {
   );
 }
 
-/* ─────── Scoring ─────── */
+/* ─────── Scoring functions ─────── */
 
-function Scoring() {
+const CORE_FNS: { label: string; intents: string; icon: IconName; body: string }[] = [
+  { label: "Safety",          intents: "Moving · Research",             icon: "support",    body: "Uses the last 3 months of police.uk crime data. Rising crime is penalised, falling crime is rewarded, and violent crime concentration is weighted appropriately." },
+  { label: "Transport",       intents: "Moving · Business · Research",  icon: "map",        body: "Rail and bus connectivity combined into a single accessibility score. Benchmarked against area type so rural postcodes are judged against other rural postcodes." },
+  { label: "Schools",         intents: "Moving",                         icon: "read",       body: "School and educational facility density nearby, with a diminishing returns curve. One good school matters more than many middling ones." },
+  { label: "Amenities",       intents: "Moving · Research",             icon: "operator",   body: "Weighted composite across education, food and drink, healthcare, retail, and green spaces. Each category normalised against area-type benchmarks." },
+  { label: "Demographics",    intents: "Research",                       icon: "researcher", body: "Official deprivation indices (IMD for England, WIMD for Wales, SIMD for Scotland). Maps decile ranking to a score that reflects the socioeconomic profile of the neighbourhood." },
+  { label: "Environment",     intents: "Moving · Research",             icon: "intent",     body: "Combines flood risk zones, active flood warnings, and green space availability. Areas with no flood risk and good park access score highest." },
+  { label: "Cost of Living",  intents: "Moving",                         icon: "investor",   body: "Uses Land Registry sold prices as the primary input. Scored as a ratio of local median to national median. Falls back to deprivation data when price data is unavailable." },
+];
+
+const BIZ_FNS: { label: string; body: string }[] = [
+  { label: "Foot Traffic",      body: "Transport connectivity combined with commercial activity density. Strong rail, bus, and retail presence indicates higher natural footfall." },
+  { label: "Competition",       body: "Measures commercial saturation nearby. Lower density scores higher. Useful for identifying underserved areas with unmet demand." },
+  { label: "Spending Power",    body: "Derived from deprivation indices as a proxy for local disposable income. Correlates with footfall quality, not just volume." },
+  { label: "Commercial Costs",  body: "Uses Land Registry property values as a proxy for commercial rents and overheads. Higher local property prices mean higher commercial costs." },
+];
+
+const INV_FNS: { label: string; body: string }[] = [
+  { label: "Price Growth",   body: "Real year-on-year price changes from Land Registry. Moderate growth scores highest, sharp declines and flat markets score lower." },
+  { label: "Rental Yield",   body: "Uses Land Registry median prices as the yield denominator. Adjusts upward for strong local amenities and transport that drive tenant demand." },
+  { label: "Regeneration",   body: "Development potential. Higher-deprivation areas with good transport links score highest. Already-developed premium areas score lower." },
+  { label: "Tenant Demand",  body: "Composite of transport connectivity, local amenities, bus coverage, and commercial activity." },
+  { label: "Risk Factors",   body: "Crime and environmental risk combined into a single downside metric. Active flood warnings or elevated crime see significant reductions." },
+];
+
+function ScoringFunctions() {
   return (
     <SectionBlock
       id="scoring"
       eyebrow="Scoring functions"
-      title={<>From raw data to <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>a number 0–100.</em></>}
+      title={<>How each dimension becomes <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>a number.</em></>}
     >
       <P>
-        Each dimension runs a scoring function that takes raw public data, classifies the area against its own category (urban / suburban / rural), and returns a clamped score between 0 and 100. The code lives in <Code>src/lib/scoring-engine.ts</Code>.
+        Each dimension has a dedicated scoring function. Inputs go in, a number between 0 and 100 comes out. No randomness. No AI-generated numbers. Below is a plain-English breakdown of what each function considers.
       </P>
+
+      <SubHead eyebrow="Core dimensions" />
+      <FunctionList items={CORE_FNS.map((f) => ({
+        icon: f.icon, title: f.label, tag: f.intents, body: f.body,
+      }))} />
+
+      <SubHead eyebrow="Business intent · derived dimensions" />
       <P>
-        The function is pure — no randomness, no network calls inside the scoring layer itself. By the time the scorer runs, every external API has already returned and the inputs are in hand. This is what makes the score reproducible.
+        Business reports use derived scores that combine transport, amenity, and deprivation data into commercially relevant metrics.
       </P>
+      <FunctionList items={BIZ_FNS.map((f) => ({
+        icon: "gauge" as IconName, title: f.label, body: f.body,
+      }))} />
+
+      <SubHead eyebrow="Investing intent · derived dimensions" />
       <P>
-        Benchmarks are area-type-aware. A London high street and a Lake District lane both get "fair" scores, not an unfair head-to-head. The underlying shape of each function is a normalised distance from the category benchmark, shifted to keep most areas in the middle of the scale rather than bunching at 50.
+        Investing reports combine deprivation data, transport connectivity, crime statistics, and flood risk into investment-focused metrics.
       </P>
+      <FunctionList items={INV_FNS.map((f) => ({
+        icon: "investor" as IconName, title: f.label, body: f.body,
+      }))} />
     </SectionBlock>
   );
 }
 
-/* ─────── Narrative ─────── */
+function SubHead({ eyebrow }: { eyebrow: string }) {
+  return (
+    <div style={{
+      fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
+      letterSpacing: "0.22em", textTransform: "uppercase",
+      color: "var(--text-3)",
+      marginTop: 28, marginBottom: 14,
+    }}>{eyebrow}</div>
+  );
+}
 
-function Narrative() {
+function FunctionList({ items }: {
+  items: { icon: IconName; title: string; tag?: string; body: string }[];
+}) {
+  return (
+    <div style={{
+      border: "1px solid var(--border)", background: "var(--bg)",
+      marginBottom: 20,
+    }}>
+      {items.map((it, i) => (
+        <div key={it.title + i} style={{
+          padding: "20px 22px",
+          borderBottom: i === items.length - 1 ? "none" : "1px solid var(--border-dim)",
+          background: i % 2 === 0 ? "var(--bg)" : "var(--bg-off)",
+          display: "grid",
+          gridTemplateColumns: "40px 1fr",
+          gap: 16, alignItems: "flex-start",
+        }}>
+          <div style={{ paddingTop: 2 }}>
+            <AiqIcon name={it.icon} size={20} />
+          </div>
+          <div>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 12,
+              flexWrap: "wrap", marginBottom: 6,
+            }}>
+              <span style={{
+                fontFamily: "var(--display)", fontSize: 17, fontWeight: 500,
+                letterSpacing: "-0.012em", color: "var(--ink-deep)",
+              }}>{it.title}</span>
+              {it.tag && (
+                <span style={{
+                  fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
+                  letterSpacing: "0.18em", textTransform: "uppercase",
+                  color: "var(--text-3)",
+                  border: "1px solid var(--border)",
+                  padding: "3px 7px", borderRadius: 2,
+                }}>{it.tag}</span>
+              )}
+            </div>
+            <p style={{
+              fontFamily: "var(--sans)", fontSize: 14, fontWeight: 400,
+              lineHeight: 1.58, color: "var(--text-2)",
+              letterSpacing: "-0.003em",
+              margin: 0, maxWidth: "64ch",
+            }}>{it.body}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ─────── Role of AI ─────── */
+
+const PIPELINE: { step: string; title: string; body: string }[] = [
+  { step: "01", title: "Fetch data",       body: "Seven APIs queried in parallel for the target location." },
+  { step: "02", title: "Compute scores",   body: "Every dimension scored from 0 to 100 by its own function." },
+  { step: "03", title: "AI narrates",      body: "The AI engine receives the scores and the raw data, and writes the report." },
+  { step: "04", title: "Numbers protected", body: "Any AI-generated numbers are replaced server-side with the computed scores before the report is saved." },
+];
+
+const AI_DOES = [
+  "Writes the executive summary",
+  "Authors the detailed analysis sections",
+  "Generates actionable recommendations",
+  "Interprets raw data points in context",
+  "Explains what the scores mean for your use case",
+];
+
+const AI_DOES_NOT = [
+  "Sets or modifies any numerical score",
+  "Chooses dimension weights",
+  "Invents data points or statistics",
+  "Overrides the scoring engine",
+  "Influences the overall OneGoodArea score",
+];
+
+function RoleOfAi() {
   return (
     <SectionBlock
-      id="narrative"
-      eyebrow="The narrative layer"
-      title={<>Numbers describe. Words <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>explain.</em></>}
+      id="ai-role"
+      eyebrow="Role of AI"
+      title={<>What our AI engine <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>does (and doesn&apos;t).</em></>}
     >
       <P>
-        After the scoring engine runs, a language model writes the summary, the per-dimension reasoning, and the recommendations. Its inputs are the numbers, the data citations, and the intent. Its outputs are plain English — cited facts, never invented ones.
+        The numbers on a report are computed. The words around them are written. Those are two different jobs, and our AI engine only does the second one.
       </P>
-      <P>
-        If the numbers are absent, the narrative is absent. If the crime figure says 72, the narrative cannot claim the area is unsafe. The language layer is a commentator on the score, not a voice of its own.
-      </P>
-      <P>
-        Because the narrative layer is generative, the exact wording can vary if you request a fresh report for the same postcode. The numbers do not. The cache stores the entire response — subsequent hits inside 24 hours return byte-identical prose.
-      </P>
+
+      <SubHead eyebrow="The pipeline" />
+      <div className="aiq-pipeline" style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(4, 1fr)",
+        gap: 0, border: "1px solid var(--border)",
+        marginBottom: 24,
+      }}>
+        {PIPELINE.map((s, i) => (
+          <div key={s.step} style={{
+            padding: "22px 20px",
+            borderRight: i < 3 ? "1px solid var(--border)" : "none",
+            background: "var(--bg)",
+          }}>
+            <div style={{
+              fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
+              letterSpacing: "0.22em", color: "var(--text-3)",
+              marginBottom: 10,
+            }}>{s.step}</div>
+            <div style={{
+              fontFamily: "var(--display)", fontSize: 17, fontWeight: 500,
+              letterSpacing: "-0.012em", color: "var(--ink-deep)",
+              marginBottom: 6,
+            }}>{s.title}</div>
+            <p style={{
+              fontFamily: "var(--sans)", fontSize: 13, fontWeight: 400,
+              lineHeight: 1.5, color: "var(--text-2)",
+              margin: 0,
+            }}>{s.body}</p>
+          </div>
+        ))}
+      </div>
+
+      <SubHead eyebrow="AI does / AI doesn't" />
+      <div className="aiq-ai-split" style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: 0, border: "1px solid var(--border)",
+      }}>
+        <div style={{
+          padding: "22px 24px",
+          borderRight: "1px solid var(--border)",
+          background: "var(--bg)",
+        }}>
+          <div style={{
+            fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
+            letterSpacing: "0.22em", textTransform: "uppercase",
+            color: "var(--ink)", marginBottom: 14,
+            display: "inline-flex", alignItems: "center", gap: 8,
+          }}>
+            <span aria-hidden style={{
+              width: 6, height: 6, borderRadius: 6, background: "var(--signal)",
+            }} />
+            AI does
+          </div>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 9 }}>
+            {AI_DOES.map((item) => (
+              <li key={item} style={{
+                display: "flex", alignItems: "flex-start", gap: 10,
+                fontFamily: "var(--sans)", fontSize: 14,
+                color: "var(--text-2)", lineHeight: 1.5,
+              }}>
+                <span aria-hidden style={{
+                  flexShrink: 0, marginTop: 6,
+                  width: 10, height: 2, background: "var(--signal)",
+                  borderRadius: 1,
+                }} />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div style={{
+          padding: "22px 24px",
+          background: "var(--bg-off)",
+        }}>
+          <div style={{
+            fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
+            letterSpacing: "0.22em", textTransform: "uppercase",
+            color: "#b42318", marginBottom: 14,
+            display: "inline-flex", alignItems: "center", gap: 8,
+          }}>
+            <span aria-hidden style={{
+              width: 6, height: 6, borderRadius: 6, background: "#b42318",
+            }} />
+            AI doesn&apos;t
+          </div>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 9 }}>
+            {AI_DOES_NOT.map((item) => (
+              <li key={item} style={{
+                display: "flex", alignItems: "flex-start", gap: 10,
+                fontFamily: "var(--sans)", fontSize: 14,
+                color: "var(--text-2)", lineHeight: 1.5,
+              }}>
+                <span aria-hidden style={{
+                  flexShrink: 0, marginTop: 6,
+                  width: 10, height: 2, background: "#b42318",
+                  opacity: 0.6, borderRadius: 1,
+                }} />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <div style={{
+        marginTop: 22,
+        background: "var(--signal-dim)",
+        border: "1px solid var(--ink)",
+        padding: "16px 20px", borderRadius: 4,
+      }}>
+        <div style={{
+          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
+          letterSpacing: "0.22em", textTransform: "uppercase",
+          color: "var(--ink-deep)", marginBottom: 6,
+        }}>Numbers protected server-side</div>
+        <p style={{
+          fontFamily: "var(--sans)", fontSize: 14, fontWeight: 400,
+          lineHeight: 1.5, color: "var(--ink-deep)",
+          margin: 0,
+        }}>
+          Even if the AI model returns different numbers in its response, the server replaces them with the pre-computed scores before the report is saved. The numbers you see are always the output of the scoring engine.
+        </p>
+      </div>
     </SectionBlock>
   );
 }
 
 /* ─────── Overall score ─────── */
 
-function Overall() {
+function OverallScore() {
   return (
     <SectionBlock
       id="overall"
-      eyebrow="The overall score"
-      title={<>Weighted average. <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>Clamped 0–100.</em></>}
+      eyebrow="Overall score"
+      title={<>One number, <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>keyed to your intent.</em></>}
     >
       <P>
-        The top-line <Code>areaiq_score</Code> is the weighted average of the five dimensions for the chosen intent. Weights always sum to 100.
+        The overall OneGoodArea score is a weighted average of all dimension scores for the selected intent. Each dimension contributes proportionally to its internally calibrated weight. The result is a single 0 to 100 number representing how well the area suits your stated purpose.
       </P>
       <div style={{
-        background: "var(--ink-deep)", color: "rgba(255,255,255,0.88)",
-        padding: "18px 22px", borderRadius: 4,
-        fontFamily: "var(--mono)", fontSize: 13, lineHeight: 1.7,
-        marginTop: 14, marginBottom: 18,
+        border: "1px solid var(--border)",
+        padding: "22px 24px",
+        background: "var(--bg)",
+        marginTop: 8,
       }}>
-        <span style={{ color: "var(--signal)" }}>areaiq_score</span> = Σ ( dim<sub>i</sub>.score × dim<sub>i</sub>.weight ) / 100
+        <div style={{
+          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
+          letterSpacing: "0.22em", textTransform: "uppercase",
+          color: "var(--text-3)", marginBottom: 14,
+        }}>
+          How it works
+        </div>
+        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+          {[
+            "Each dimension is scored independently from 0 to 100.",
+            "Dimensions are weighted according to the selected intent.",
+            "The weighted scores are combined into a single overall score.",
+            "The same postcode with the same data always produces the same number.",
+          ].map((item) => (
+            <li key={item} style={{
+              display: "flex", alignItems: "flex-start", gap: 12,
+              fontFamily: "var(--sans)", fontSize: 14.5, fontWeight: 400,
+              color: "var(--text-2)", lineHeight: 1.55,
+            }}>
+              <span aria-hidden style={{
+                flexShrink: 0, marginTop: 7,
+                width: 12, height: 2, background: "var(--signal)",
+                borderRadius: 1,
+              }} />
+              {item}
+            </li>
+          ))}
+        </ul>
       </div>
-      <P>
-        All scores are clamped to the 0–100 range after rounding to the nearest integer. Two reports on the same postcode + intent will always round to the same integer — there is no drift from the language layer because the language layer never touches the number.
-      </P>
     </SectionBlock>
   );
 }
 
-/* ─────── Score scale ─────── */
+/* ─────── Score scale (RAG) ─────── */
 
-const BANDS: { range: string; label: string; note: string }[] = [
-  { range: "90 – 100", label: "Exceptional", note: "Top-tier fit for the chosen intent. Rare, and usually visible on the street." },
-  { range: "75 – 89",  label: "Strong",      note: "A confident yes. Some trade-offs, but they're manageable within the intent." },
-  { range: "60 – 74",  label: "Fair",        note: "Mixed — strengths in some dimensions, genuine weaknesses in others. Read the reasoning." },
-  { range: "45 – 59",  label: "Cautious",    note: "More weaknesses than strengths. Needs a specific reason to proceed." },
-  { range: "0 – 44",   label: "Low fit",     note: "Benchmarks aren't there. This doesn't mean bad — it means not for this intent." },
+const BANDS: { range: string; label: string; tone: "strong" | "moderate" | "weak"; note: string }[] = [
+  { range: "70 – 100", label: "Strong",   tone: "strong",
+    note: "The area performs well in this dimension. A strong foundation with no major concerns. For overall scores, this indicates a highly suitable location for your stated intent." },
+  { range: "45 – 69",  label: "Moderate", tone: "moderate",
+    note: "The area is adequate but has room for improvement. Some trade-offs to consider. Worth investigating further before making decisions." },
+  { range: "0 – 44",   label: "Weak",     tone: "weak",
+    note: "The area underperforms in this dimension. Significant challenges identified. Does not necessarily disqualify the area, but indicates a specific weakness worth understanding." },
 ];
 
-function Scale() {
+function ScoreScale() {
   return (
     <SectionBlock
       id="scale"
       eyebrow="Score scale"
-      title={<>What the <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>numbers mean.</em></>}
+      title={<>Green, amber, red. <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>Three bands.</em></>}
     >
       <P>
-        The scale is intent-relative. A 72 for "opening a business" does not mean the same thing as a 72 for "moving home" — they're computed against different benchmarks, on different dimensions, with different weights.
+        Scores are colour-coded using a Red / Amber / Green system across every report. This applies to both dimension scores and the overall OneGoodArea score.
       </P>
-      <div style={{ marginTop: 28, border: "1px solid var(--border)" }}>
-        {BANDS.map((b, i) => (
-          <div key={b.range} style={{
-            display: "grid",
-            gridTemplateColumns: "140px 160px 1fr",
-            gap: 20, alignItems: "center",
-            padding: "18px 22px",
-            borderBottom: i === BANDS.length - 1 ? "none" : "1px solid var(--border-dim)",
-            background: i % 2 === 0 ? "var(--bg)" : "var(--bg-off)",
-          }}>
-            <div style={{
-              fontFamily: "var(--display)", fontSize: 18, fontWeight: 500,
-              letterSpacing: "-0.012em", color: "var(--ink-deep)",
-            }}>{b.range}</div>
-            <div style={{
-              fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-              letterSpacing: "0.2em", textTransform: "uppercase",
-              color: "var(--ink)",
-            }}>{b.label}</div>
-            <div style={{
-              fontFamily: "var(--sans)", fontSize: 14, fontWeight: 400,
-              lineHeight: 1.5, color: "var(--text-2)",
-            }}>{b.note}</div>
-          </div>
-        ))}
+      <div style={{
+        marginTop: 20,
+        border: "1px solid var(--border)", background: "var(--bg)",
+      }}>
+        {BANDS.map((b, i) => {
+          const bg    = b.tone === "strong"   ? "var(--signal-dim)" : b.tone === "moderate" ? "#FFF4D1" : "#FFE8E2";
+          const fg    = b.tone === "strong"   ? "var(--ink-deep)"   : b.tone === "moderate" ? "#6E5300" : "#A01B00";
+          const dotBg = b.tone === "strong"   ? "var(--ink)"        : b.tone === "moderate" ? "#D49900" : "#D13A1E";
+          return (
+            <div key={b.label} style={{
+              padding: "22px 24px",
+              borderBottom: i === BANDS.length - 1 ? "none" : "1px solid var(--border-dim)",
+              display: "grid",
+              gridTemplateColumns: "170px 1fr",
+              gap: 20, alignItems: "start",
+            }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <span style={{
+                  fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
+                  letterSpacing: "0.06em",
+                  color: fg, background: bg,
+                  padding: "4px 10px", borderRadius: 2,
+                  alignSelf: "flex-start",
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                }}>
+                  <span aria-hidden style={{
+                    width: 6, height: 6, borderRadius: 6, background: dotBg,
+                  }} />
+                  {b.range}
+                </span>
+                <span style={{
+                  fontFamily: "var(--display)", fontSize: 20, fontWeight: 500,
+                  letterSpacing: "-0.012em",
+                  color: fg,
+                }}>{b.label}</span>
+              </div>
+              <p style={{
+                fontFamily: "var(--sans)", fontSize: 14.5, fontWeight: 400,
+                lineHeight: 1.55, color: "var(--text-2)",
+                letterSpacing: "-0.003em",
+                margin: 0, maxWidth: "66ch",
+              }}>{b.note}</p>
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{
+        marginTop: 22,
+        border: "1px solid var(--border)",
+        background: "var(--bg-off)",
+        padding: "16px 20px", borderRadius: 4,
+      }}>
+        <div style={{
+          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
+          letterSpacing: "0.22em", textTransform: "uppercase",
+          color: "var(--text-3)", marginBottom: 6,
+        }}>A note on interpretation</div>
+        <p style={{
+          fontFamily: "var(--sans)", fontSize: 14, fontWeight: 400,
+          lineHeight: 1.55, color: "var(--text-2)",
+          margin: 0,
+        }}>
+          A low score in one dimension does not make an area unsuitable. Context matters. A business location with a low competition score (meaning heavy saturation) might still succeed with strong differentiation. Read the narrative sections alongside the numbers.
+        </p>
       </div>
     </SectionBlock>
-  );
-}
-
-/* ─────── Freshness + cache ─────── */
-
-function Freshness() {
-  return (
-    <SectionBlock
-      id="freshness"
-      eyebrow="Freshness + cache"
-      title={<>What&apos;s live, what&apos;s <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>cached.</em></>}
-    >
-      <P>
-        When a postcode + intent combination has not been scored in the past 24 hours, the engine fetches all seven data sources in parallel, runs the scorer, writes the narrative, stores the report, and returns it.
-      </P>
-      <P>
-        Repeat queries for the same postcode + intent inside 24 hours come from the cache. They are byte-identical. API cache hits do not count against your monthly quota; the embeddable widget is cache-only by design, so embeds never hit your quota.
-      </P>
-      <P>
-        Every response includes a <Code>data_freshness</Code> array: per source, the period read, and the status (<Code>live</Code>, <Code>recent</Code>, or <Code>static</Code>). If you need to audit a specific claim in a report, the <Code>data_sources</Code> array names every dataset that contributed to it.
-      </P>
-    </SectionBlock>
-  );
-}
-
-/* ─────── Inline code element ─────── */
-
-function Code({ children }: { children: React.ReactNode }) {
-  return (
-    <code style={{
-      fontFamily: "var(--mono)", fontSize: 12.5, fontWeight: 500,
-      background: "var(--bg-off)",
-      border: "1px solid var(--border)",
-      padding: "1px 6px", borderRadius: 2,
-      color: "var(--ink-deep)",
-    }}>{children}</code>
   );
 }
 
@@ -601,7 +834,7 @@ function FinalCta() {
           lineHeight: 1.5, color: "var(--text-2)",
           margin: "0 auto 30px", maxWidth: "52ch",
         }}>
-          Run a free report for any UK postcode. Read the numbers; read the reasoning; decide.
+          Run a free report for any UK postcode. Read the numbers, read the reasoning, decide.
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
           <Link href="/design-v2" style={{
