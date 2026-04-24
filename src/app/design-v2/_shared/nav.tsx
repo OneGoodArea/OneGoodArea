@@ -77,7 +77,7 @@ export function Nav() {
         }} />
 
         <Link
-          href={isSignedIn ? "/dashboard" : "/design-v2/sign-in"}
+          href={isSignedIn ? "/design-v2/dashboard" : "/design-v2/sign-in"}
           style={{
             fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
             letterSpacing: "0.14em", textTransform: "uppercase",

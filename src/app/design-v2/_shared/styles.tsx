@@ -245,6 +245,93 @@ export function Styles() {
         }
       }
 
+      /* App shell · sidebar stacks on narrow, page grids collapse */
+      @media (max-width: 960px) {
+        .aiq-app-shell {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-app-sidebar {
+          position: static !important;
+          height: auto !important;
+          border-right: none !important;
+          border-bottom: 1px solid var(--border) !important;
+          padding: 18px 20px !important;
+        }
+      }
+      @media (max-width: 820px) {
+        .aiq-dash-usage {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-dash-usage > *:first-child {
+          border-right: none !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+        .aiq-dash-stats {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aiq-dash-stats > *:nth-child(2) { border-right: none !important; }
+        .aiq-dash-stats > *:nth-child(1),
+        .aiq-dash-stats > *:nth-child(2) { border-bottom: 1px solid var(--border) !important; }
+        .aiq-watchlist {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aiq-watchlist > *:nth-child(2n) { border-right: none !important; }
+        .aiq-reports-head,
+        .aiq-reports-row {
+          grid-template-columns: 1fr 80px 40px !important;
+          gap: 10px !important;
+        }
+        .aiq-reports-head > *:nth-child(2),
+        .aiq-reports-head > *:nth-child(4),
+        .aiq-reports-row > *:nth-child(2),
+        .aiq-reports-row > *:nth-child(4) { display: none !important; }
+        .aiq-usage-stats {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-usage-stats > * {
+          border-right: none !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+        .aiq-usage-stats > *:last-child { border-bottom: none !important; }
+        .aiq-usage-quick {
+          grid-template-columns: 1fr !important;
+        }
+      }
+      @media (max-width: 560px) {
+        .aiq-watchlist {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-watchlist > * { border-right: none !important; }
+      }
+
+      /* Report + Compare · layout grids */
+      @media (max-width: 900px) {
+        .aiq-report-intents {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aiq-report-hero {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-report-hero > *:last-child {
+          border-left: none !important;
+          border-top: 1px solid rgba(255,255,255,0.08) !important;
+        }
+        .aiq-property-stats,
+        .aiq-schools-breakdown {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aiq-compare-heads,
+        .aiq-compare-summaries,
+        .aiq-compare-bars {
+          grid-template-columns: 1fr !important;
+        }
+      }
+      @media (max-width: 540px) {
+        .aiq-report-intents {
+          grid-template-columns: 1fr !important;
+        }
+      }
+
       /* Area page · hero + dim grid + intent grid + related grid */
       @media (max-width: 820px) {
         .aiq-area-hero {
