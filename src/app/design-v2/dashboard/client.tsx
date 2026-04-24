@@ -86,14 +86,14 @@ function Body({ reports: initialReports, plan, planName, used, limit, savedAreas
                   onBilling={openBillingPortal} billingLoading={portalLoading} />
 
       {stats && (
-        <div style={{
+        <div className="aiq-dash-stats" style={{
           display: "grid",
           gridTemplateColumns: "repeat(4, 1fr)",
           gap: 0,
           border: "1px solid var(--border)",
           background: "var(--bg)",
           borderRadius: 4, overflow: "hidden",
-        }} className="aiq-dash-stats">
+        }}>
           <StatCell label="Total reports"  value={reports.length} />
           <StatCell label="Average score"  value={stats.avg}      accent={appRag(stats.avg).tone} />
           <StatCell label="Best area"      value={
@@ -128,7 +128,7 @@ function UsageStrip({ plan, planName, isApiPlan, used, limit, onBilling, billing
   const rag = pct >= 90 ? "#FFB8A8" : pct >= 70 ? "#FFE07A" : "var(--signal)";
 
   return (
-    <div style={{
+    <div className="aiq-dash-usage" style={{
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 0,
@@ -137,7 +137,7 @@ function UsageStrip({ plan, planName, isApiPlan, used, limit, onBilling, billing
       overflow: "hidden",
       position: "relative",
       boxShadow: "0 20px 50px -28px rgba(6,42,30,0.35)",
-    }} className="aiq-dash-usage">
+    }}>
       {/* Chartreuse wash */}
       <div aria-hidden style={{
         position: "absolute", top: -120, right: -80,
@@ -564,7 +564,7 @@ function ReportsTable({ reports, onDelete }: {
 
       {/* Header row */}
       {filtered.length > 0 && (
-        <div style={{
+        <div className="aiq-reports-head" style={{
           display: "grid",
           gridTemplateColumns: "1fr 120px 80px 120px 40px",
           gap: 14, padding: "10px 22px",
@@ -573,7 +573,7 @@ function ReportsTable({ reports, onDelete }: {
           fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
           letterSpacing: "0.22em", textTransform: "uppercase",
           color: "var(--text-3)",
-        }} className="aiq-reports-head">
+        }}>
           <SortHeader label="Area"     active={sortBy === "area"}   dir={sortDir} onClick={() => toggleSort("area")} />
           <span>Intent</span>
           <SortHeader label="Score"    active={sortBy === "score"}  dir={sortDir} onClick={() => toggleSort("score")} />
@@ -624,6 +624,7 @@ function ReportRow({ report, isLast, onDelete }: {
 
   return (
     <li
+      className="aiq-reports-row"
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
@@ -636,7 +637,6 @@ function ReportRow({ report, isLast, onDelete }: {
         background: hover ? "var(--bg-off)" : "var(--bg)",
         transition: "background 140ms ease",
       }}
-      className="aiq-reports-row"
     >
       <Link href={`/design-v2/report/${report.id}`} style={{
         fontFamily: "var(--display)", fontSize: 15, fontWeight: 500,

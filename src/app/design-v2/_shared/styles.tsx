@@ -162,6 +162,50 @@ export function Styles() {
           gap: 28px !important;
           padding: 24px !important;
         }
+        .aiq-nav-cta-label {
+          display: none !important;
+        }
+      }
+
+      /* Marketing nav · hamburger visible only on mobile, drawer slides in
+         from the right with all links + theme + CTA. */
+      @media (min-width: 721px) {
+        .aiq-nav-mobile-btn { display: none !important; }
+        .aiq-nav-drawer { display: none !important; }
+        .aiq-nav-backdrop { display: none !important; }
+      }
+      @media (max-width: 720px) {
+        .aiq-nav-mobile-btn {
+          display: inline-flex !important;
+        }
+        .aiq-nav-drawer {
+          position: fixed;
+          top: 0; right: 0; bottom: 0;
+          width: 320px; max-width: 88vw;
+          background: var(--bg);
+          border-left: 1px solid var(--border);
+          z-index: 60;
+          transform: translateX(100%);
+          transition: transform 260ms cubic-bezier(0.16,1,0.3,1);
+          display: flex !important;
+          flex-direction: column;
+          padding: 20px 22px 24px;
+          overflow-y: auto;
+        }
+        .aiq-nav-drawer.aiq-drawer-open {
+          transform: translateX(0);
+          box-shadow: -20px 0 48px -8px rgba(6,42,30,0.35);
+        }
+        .aiq-nav-backdrop {
+          position: fixed; inset: 0;
+          background: rgba(6,42,30,0.48);
+          backdrop-filter: blur(2px);
+          z-index: 55;
+          animation: aiq-fade-up 200ms ease;
+        }
+        .aiq-nav-cta-desktop {
+          display: none !important;
+        }
       }
 
       @media (max-width: 520px) {
@@ -256,6 +300,22 @@ export function Styles() {
         }
         .aiq-audiences-grid > *:nth-child(odd) { border-right: none !important; }
         .aiq-audiences-grid > *:not(:last-child) { border-bottom: 1px solid var(--border) !important; }
+        .aiq-capability-row {
+          grid-template-columns: 48px 1fr !important;
+          gap: 20px !important;
+        }
+        .aiq-capability-row > *:nth-child(3) {
+          grid-column: 1 / -1;
+        }
+      }
+      @media (max-width: 520px) {
+        .aiq-capability-row {
+          grid-template-columns: 1fr !important;
+          gap: 14px !important;
+        }
+        .aiq-capability-row > *:nth-child(3) {
+          grid-column: auto;
+        }
       }
       @media (max-width: 820px) {
         .aiq-tier-grid {
@@ -297,17 +357,50 @@ export function Styles() {
         }
       }
 
-      /* App shell · sidebar stacks on narrow, page grids collapse */
+      /* App shell · desktop keeps the 240px sidebar. Mobile (≤960px) turns
+         the sidebar into an off-canvas drawer and surfaces a top-bar with
+         a hamburger + the current title. Drawer slides from the left. */
+      @media (min-width: 961px) {
+        .aiq-mobile-topbar { display: none !important; }
+        .aiq-mobile-backdrop { display: none !important; }
+      }
       @media (max-width: 960px) {
         .aiq-app-shell {
           grid-template-columns: 1fr !important;
         }
         .aiq-app-sidebar {
-          position: static !important;
-          height: auto !important;
-          border-right: none !important;
-          border-bottom: 1px solid var(--border) !important;
-          padding: 18px 20px !important;
+          position: fixed !important;
+          top: 0; left: 0; bottom: 0;
+          width: 280px !important;
+          height: 100vh !important;
+          max-width: 84vw;
+          transform: translateX(-100%);
+          transition: transform 260ms cubic-bezier(0.16,1,0.3,1);
+          z-index: 60;
+          border-right: 1px solid var(--ink-deep) !important;
+          padding: 20px 18px 20px !important;
+        }
+        .aiq-app-sidebar.aiq-sidebar-open {
+          transform: translateX(0);
+          box-shadow: 20px 0 48px -8px rgba(6,42,30,0.35);
+        }
+        .aiq-sidebar-close {
+          display: inline-flex !important;
+        }
+        .aiq-mobile-backdrop {
+          position: fixed; inset: 0;
+          background: rgba(6,42,30,0.48);
+          backdrop-filter: blur(2px);
+          z-index: 55;
+          animation: aiq-fade-up 200ms ease;
+        }
+        .aiq-mobile-topbar {
+          display: flex !important;
+          position: sticky; top: 0; z-index: 40;
+          align-items: center; gap: 12px;
+          padding: 12px 16px;
+          background: var(--bg);
+          border-bottom: 1px solid var(--border);
         }
       }
       @media (max-width: 820px) {
@@ -574,6 +667,81 @@ export function Styles() {
         .aiq-dim-row > :nth-child(1) { grid-area: label; }
         .aiq-dim-row > :nth-child(2) { grid-area: bar; }
         .aiq-dim-row > :nth-child(3) { grid-area: score; }
+      }
+
+      /* ─── Mobile polish (≤520px) · pad reduction + typography scaling ───
+         Inline styles serialize to CSS text in the DOM "style" attribute.
+         Attribute selector trims common 40px gutters to 20px so text doesn't
+         run edge-to-edge on narrow phones. Also scales hero h1 + lead p. */
+      @media (max-width: 520px) {
+        .aiq [style*="padding: 0 40px"],
+        .aiq [style*="padding: 0px 40px"],
+        .aiq [style*="padding:0 40px"],
+        .aiq [style*="padding: 112px 40px"],
+        .aiq [style*="padding: 96px 40px"],
+        .aiq [style*="padding: 80px 40px"],
+        .aiq [style*="padding: 64px 40px"],
+        .aiq [style*="padding: 48px 40px"],
+        .aiq [style*="padding: 40px 40px"],
+        .aiq [style*="padding: 30px 40px"],
+        .aiq [style*="padding: 26px 40px"],
+        .aiq [style*="padding: 24px 40px"] {
+          padding-left: 20px !important;
+          padding-right: 20px !important;
+        }
+        /* Hero + large display headlines · clamp already helps but add a
+           safety-net ceiling for fixed-size h1s on narrow phones. */
+        .aiq h1 {
+          font-size: clamp(1.9rem, 9vw, 3rem) !important;
+          line-height: 1.08 !important;
+          letter-spacing: -0.02em !important;
+        }
+        /* Long-form paragraph text · default body sizing is 17-19 which runs
+           too wide on narrow phones. Shrink to 15-16 for readability. */
+        .aiq p {
+          font-size: clamp(14px, 4.2vw, 17px);
+        }
+        /* Touch target floor for buttons and nav links */
+        .aiq button,
+        .aiq a[role="button"] {
+          min-height: 40px;
+        }
+        /* Sticky page headers · reduce padding on app shell header */
+        .aiq-app-main header {
+          padding: 20px 20px 18px !important;
+        }
+      }
+
+      /* Prevent horizontal scroll from unexpectedly wide children (svg
+         overflows, absolutely-positioned decorations etc). Applies only
+         when the viewport is narrower than the design's min-comfort. */
+      @media (max-width: 720px) {
+        .aiq, .aiq main, .aiq section {
+          overflow-x: hidden;
+        }
+      }
+
+      /* Expanded-report modal · all subsections inside .aiq-ir-article use
+         "Xpx 40px Ypx" inline padding. On mobile, shrink horizontal gutter,
+         stack the score-block grid, and collapse the 4-col property stats
+         to a 2x2 grid. */
+      @media (max-width: 620px) {
+        .aiq-ir-article > * {
+          padding-left: 20px !important;
+          padding-right: 20px !important;
+        }
+        .aiq-ir-score {
+          grid-template-columns: 1fr !important;
+          gap: 24px !important;
+        }
+        .aiq-ir-score > div:first-child {
+          justify-self: center;
+        }
+        /* 4-col stats grids inside the modal → 2x2 */
+        .aiq-ir-article [style*="repeat(4, minmax(0, 1fr))"] {
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          gap: 20px 16px !important;
+        }
       }
     `}</style>
   );

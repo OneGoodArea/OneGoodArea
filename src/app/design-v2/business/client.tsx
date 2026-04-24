@@ -227,7 +227,7 @@ function StatsStrip() {
       background: "var(--bg)",
     }}>
       <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 40px" }}>
-        <div style={{
+        <div className="aiq-stats-strip" style={{
           display: "grid",
           gridTemplateColumns: `repeat(${STATS.length}, 1fr)`,
           gap: 0,
@@ -448,7 +448,7 @@ function Capabilities() {
 
         <div style={{ marginTop: 64 }}>
           {CAPABILITIES.map((c, i) => (
-            <div key={c.title} style={{
+            <div key={c.title} className="aiq-capability-row" style={{
               display: "grid",
               gridTemplateColumns: "48px 220px 1fr",
               gap: 32, alignItems: "start",

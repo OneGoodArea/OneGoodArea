@@ -36,6 +36,22 @@ export function AppShell({
   actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setDrawerOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [drawerOpen]);
+
   return (
     <div className="aiq aiq-app-shell" style={{
       minHeight: "100vh",
@@ -43,13 +59,21 @@ export function AppShell({
       gridTemplateColumns: "240px 1fr",
       background: "var(--bg-off)",
     }}>
-      <Sidebar />
+      <Sidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      {drawerOpen && (
+        <div
+          className="aiq-mobile-backdrop"
+          onClick={() => setDrawerOpen(false)}
+          aria-hidden
+        />
+      )}
       <main className="aiq-app-main" style={{
         minHeight: "100vh",
         background: "var(--bg-off)",
         display: "flex", flexDirection: "column",
         position: "relative",
       }}>
+        <MobileTopbar title={title} onMenu={() => setDrawerOpen(true)} />
         {/* Ambient chartreuse wash at top of every app page */}
         <div aria-hidden style={{
           position: "absolute", top: -200, right: -140,
@@ -68,20 +92,66 @@ export function AppShell({
   );
 }
 
+/* Mobile top-bar - hidden on desktop via CSS (.aiq-mobile-topbar). Shows the
+   hamburger, OneGoodArea mini wordmark, and the current page title so the
+   user always knows where they are while the sidebar is off-canvas. */
+function MobileTopbar({ title, onMenu }: { title?: string; onMenu: () => void }) {
+  return (
+    <div className="aiq-mobile-topbar" style={{ display: "none" }}>
+      <button
+        type="button"
+        onClick={onMenu}
+        aria-label="Open navigation"
+        style={{
+          width: 40, height: 40, padding: 0,
+          display: "inline-flex", alignItems: "center", justifyContent: "center",
+          border: "1px solid var(--border)",
+          background: "var(--bg-off)",
+          borderRadius: 4, cursor: "pointer",
+          color: "var(--ink-deep)",
+          flexShrink: 0,
+        }}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      </button>
+      <Wordmark href="/design-v2/dashboard" size={18} />
+      {title && (
+        <>
+          <span aria-hidden style={{
+            width: 1, height: 16, background: "var(--border)",
+            margin: "0 4px",
+          }} />
+          <span style={{
+            fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
+            letterSpacing: "0.18em", textTransform: "uppercase",
+            color: "var(--text-2)",
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          }}>{title}</span>
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ─────── Sidebar ─────── */
 
-function Sidebar() {
+function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { data: session } = useSession();
   return (
-    <aside className="aiq-app-sidebar" style={{
-      background: "var(--bg-ink)",
-      borderRight: "1px solid var(--ink-deep)",
-      padding: "26px 20px 22px",
-      display: "flex", flexDirection: "column",
-      position: "sticky", top: 0, height: "100vh",
-      color: "#FFFFFF",
-      overflow: "hidden",
-    }}>
+    <aside
+      className={`aiq-app-sidebar${open ? " aiq-sidebar-open" : ""}`}
+      style={{
+        background: "var(--bg-ink)",
+        borderRight: "1px solid var(--ink-deep)",
+        padding: "26px 20px 22px",
+        display: "flex", flexDirection: "column",
+        position: "sticky", top: 0, height: "100vh",
+        color: "#FFFFFF",
+        overflow: "hidden",
+      }}
+    >
       {/* Soft chartreuse glow in the corner */}
       <div aria-hidden style={{
         position: "absolute", top: -120, right: -80,
@@ -92,14 +162,35 @@ function Sidebar() {
 
       <div style={{
         marginBottom: 34, position: "relative", zIndex: 1,
+        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
       }}>
         <Wordmark href="/design-v2/dashboard" size={20} tone="dark" />
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close navigation"
+          className="aiq-sidebar-close"
+          style={{
+            display: "none",
+            width: 34, height: 34, padding: 0,
+            alignItems: "center", justifyContent: "center",
+            border: "1px solid rgba(255,255,255,0.18)",
+            background: "rgba(255,255,255,0.05)",
+            borderRadius: 4, cursor: "pointer",
+            color: "#FFFFFF",
+            flexShrink: 0,
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </button>
       </div>
 
-      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", flex: 1 }}>
-        <NavGroup label="Main" items={PRIMARY} />
+      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", flex: 1, overflowY: "auto" }}>
+        <NavGroup label="Main" items={PRIMARY} onItemClick={onClose} />
         <div style={{ height: 22 }} />
-        <NavGroup label="Account" items={SECONDARY} />
+        <NavGroup label="Account" items={SECONDARY} onItemClick={onClose} />
 
         <div style={{ flex: 1 }} />
 
@@ -110,7 +201,7 @@ function Sidebar() {
   );
 }
 
-function NavGroup({ label, items }: { label: string; items: NavItem[] }) {
+function NavGroup({ label, items, onItemClick }: { label: string; items: NavItem[]; onItemClick?: () => void }) {
   const pathname = usePathname();
   return (
     <div>
@@ -126,7 +217,7 @@ function NavGroup({ label, items }: { label: string; items: NavItem[] }) {
             : pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <li key={item.label}>
-              <NavLink item={item} active={active} />
+              <NavLink item={item} active={active} onClick={onItemClick} />
             </li>
           );
         })}
@@ -135,11 +226,12 @@ function NavGroup({ label, items }: { label: string; items: NavItem[] }) {
   );
 }
 
-function NavLink({ item, active }: { item: NavItem; active: boolean }) {
+function NavLink({ item, active, onClick }: { item: NavItem; active: boolean; onClick?: () => void }) {
   const [hover, setHover] = useState(false);
   return (
     <Link
       href={item.href}
+      onClick={onClick}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{

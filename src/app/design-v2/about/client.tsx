@@ -275,7 +275,7 @@ function Principles() {
         />
         <div style={{ marginTop: 64 }}>
           {PRINCIPLES.map((p, i) => (
-            <div key={p.title} style={{
+            <div key={p.title} className="aiq-capability-row" style={{
               display: "grid",
               gridTemplateColumns: "56px 240px 1fr",
               gap: 32, alignItems: "start",
@@ -340,7 +340,7 @@ function DataSources() {
           border: "1px solid var(--border)", background: "var(--bg)",
         }}>
           {SOURCES.map((s, i) => (
-            <div key={s.name} style={{
+            <div key={s.name} className="aiq-capability-row" style={{
               display: "grid",
               gridTemplateColumns: "56px 260px 1fr",
               gap: 28, alignItems: "center",

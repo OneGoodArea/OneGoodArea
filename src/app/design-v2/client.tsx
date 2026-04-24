@@ -2466,7 +2466,7 @@ function ExpandedReportModal({ onClose }: { onClose: () => void }) {
           }}>×</span>
         </button>
 
-        <article style={{
+        <article className="aiq-ir-article" style={{
           background: "var(--bg)",
           border: "1px solid var(--ink-deep)",
           borderRadius: 6,
@@ -2984,7 +2984,7 @@ function IRSectionHead({ eyebrow, title, meta }: { eyebrow: string; title: strin
 
 function IRScoreBlock() {
   return (
-    <div style={{
+    <div className="aiq-ir-score" style={{
       padding: "28px 40px 32px",
       borderTop: "1px dashed var(--border)",
       display: "grid",

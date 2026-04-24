@@ -311,14 +311,14 @@ function HeroBlock({ report, score, rag }: {
 }) {
   return (
     <AppCard noPad>
-      <div style={{
+      <div className="aiq-report-hero" style={{
         display: "grid",
         gridTemplateColumns: "1fr 220px",
         gap: 0,
         background: "var(--bg-ink)",
         color: "#FFFFFF",
         position: "relative", overflow: "hidden",
-      }} className="aiq-report-hero">
+      }}>
         <div aria-hidden style={{
           position: "absolute", top: -140, right: -100,
           width: 480, height: 480,
