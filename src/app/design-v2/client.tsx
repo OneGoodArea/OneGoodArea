@@ -400,7 +400,7 @@ function Hero({
             fontFamily: "var(--mono)", fontSize: 10,
             letterSpacing: "0.24em", textTransform: "uppercase",
             color: "var(--text-3)", marginBottom: 12,
-          }}>Pick why you're looking</div>
+          }}>Pick your intent</div>
           <div style={{
             display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap",
           }}>
