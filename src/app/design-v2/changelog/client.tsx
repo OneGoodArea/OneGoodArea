@@ -19,6 +19,16 @@ type Month = { month: string; entries: Entry[] };
 
 const CHANGELOG: Month[] = [
   {
+    month: "April 2026",
+    entries: [
+      { type: "feature",     title: "A new home. Full design overhaul.",              description: "New look for every page: Fraunces serif headlines, warm cream surfaces, chartreuse signal accents. Home, reports, dashboard, pricing, docs, blog, and settings rebuilt top to bottom." },
+      { type: "feature",     title: "Mobile, properly.",                              description: "Every route now works on a phone. Hamburger nav, off-canvas sidebar, tables that collapse sensibly, readable type down to 375px." },
+      { type: "feature",     title: "Loading, error, and 404 states in brand.",       description: "Skeleton loaders, error recovery, and not-found pages that match the rest of the site. No more ugly flash between page transitions." },
+      { type: "improvement", title: "Clearer authentication flow.",                    description: "Sign-in lands you on your dashboard. The post-sign-in redirect respects where you were heading." },
+      { type: "improvement", title: "Dark mode, audited.",                             description: "Dark-theme tokens rewired so every page reads cleanly in low light. Dashboard, reports, docs, and embedded widgets all tested on both themes." },
+    ],
+  },
+  {
     month: "March 2026",
     entries: [
       { type: "feature", title: "Ofsted school inspection ratings", description: "Reports now include Ofsted ratings for nearby schools in England. Each school shown with its rating and distance. School quality factors into the Schools and Education score. Visible on reports and in PDF exports." },
