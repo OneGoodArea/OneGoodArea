@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Styles } from "../_shared/styles";
@@ -13,6 +13,17 @@ type Summary = { id: string; area: string; intent: string; score: number; create
 export default function CompareClient({ selected, all }: {
   selected: Report[]; all: Summary[];
 }) {
+  const comparisonRef = useRef<HTMLDivElement>(null);
+  const prevCountRef = useRef(selected.length);
+
+  useEffect(() => {
+    // Auto-scroll to the comparison once a second report lands.
+    if (selected.length === 2 && prevCountRef.current < 2 && comparisonRef.current) {
+      comparisonRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    prevCountRef.current = selected.length;
+  }, [selected.length]);
+
   return (
     <>
       <Styles />
@@ -23,7 +34,11 @@ export default function CompareClient({ selected, all }: {
       >
         <div style={{ padding: "28px 40px 64px", display: "flex", flexDirection: "column", gap: 22, maxWidth: 1100 }}>
           <Picker selected={selected} all={all} />
-          {selected.length === 2 && <SideBySide a={selected[0]} b={selected[1]} />}
+          {selected.length === 2 && (
+            <div ref={comparisonRef} data-aiq-comparison-anchor>
+              <SideBySide a={selected[0]} b={selected[1]} />
+            </div>
+          )}
           {selected.length === 1 && <OneSelected report={selected[0]} />}
           {selected.length === 0 && <EmptyCompare />}
         </div>
@@ -35,6 +50,7 @@ export default function CompareClient({ selected, all }: {
 function Picker({ selected, all }: { selected: Report[]; all: Summary[] }) {
   const router = useRouter();
   const selectedIds = new Set(selected.map((r) => r.id));
+  const ready = selected.length === 2;
 
   function toggle(id: string) {
     const current = [...selectedIds];
@@ -47,32 +63,72 @@ function Picker({ selected, all }: { selected: Report[]; all: Summary[] }) {
     router.push(`/design-v2/compare${qs}`);
   }
 
+  function scrollToComparison() {
+    const el = document.querySelector("[data-aiq-comparison-anchor]");
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   return (
-    <AppCard title={`Select two · ${selected.length}/2 picked`} noPad>
+    <AppCard title={ready ? "Comparing 2 reports below" : `Select two · ${selected.length}/2 picked`} noPad>
       <div style={{
         padding: "14px 22px",
         borderBottom: "1px solid var(--border)",
         display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap",
+        background: ready ? "var(--signal-dim)" : "transparent",
+        transition: "background 180ms ease",
       }}>
         <div style={{
           fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-          letterSpacing: "0.14em", color: "var(--text-2)",
+          letterSpacing: "0.14em", color: ready ? "var(--ink-deep)" : "var(--text-2)",
+          display: "inline-flex", alignItems: "center", gap: 8,
         }}>
-          Tap a report to add or remove.
+          {ready && (
+            <span aria-hidden style={{
+              width: 14, height: 14, borderRadius: 14,
+              background: "var(--signal)",
+              border: "1px solid var(--ink-deep)",
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+            }}>
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="M5 12 L10 17 L19 8" stroke="var(--signal-ink)" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              </svg>
+            </span>
+          )}
+          {ready
+            ? "Ready. Scroll down to see the side-by-side."
+            : "Tap a report to add or remove."}
         </div>
-        {selected.length > 0 && (
-          <button
-            onClick={() => router.push("/design-v2/compare")}
-            style={{
-              marginLeft: "auto",
-              fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-              letterSpacing: "0.18em", textTransform: "uppercase",
-              color: "var(--text-2)", background: "transparent",
-              border: "1px solid var(--border)",
-              padding: "5px 10px", borderRadius: 2, cursor: "pointer",
-            }}
-          >Clear</button>
-        )}
+        <div style={{ marginLeft: "auto", display: "inline-flex", gap: 8, alignItems: "center" }}>
+          {ready && (
+            <button
+              onClick={scrollToComparison}
+              style={{
+                fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
+                letterSpacing: "0.14em", textTransform: "uppercase",
+                color: "var(--signal-ink)", background: "var(--signal)",
+                border: "1px solid var(--ink-deep)",
+                padding: "6px 12px", borderRadius: 999, cursor: "pointer",
+                display: "inline-flex", alignItems: "center", gap: 8,
+              }}
+            >
+              See comparison
+              <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>↓</span>
+            </button>
+          )}
+          {selected.length > 0 && (
+            <button
+              onClick={() => router.push("/design-v2/compare")}
+              style={{
+                fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
+                letterSpacing: "0.18em", textTransform: "uppercase",
+                color: "var(--text-2)", background: "transparent",
+                border: "1px solid var(--border)",
+                padding: "5px 10px", borderRadius: 2, cursor: "pointer",
+              }}
+            >Clear</button>
+          )}
+        </div>
       </div>
 
       {all.length === 0 ? (
