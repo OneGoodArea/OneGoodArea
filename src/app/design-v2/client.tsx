@@ -3586,7 +3586,7 @@ function FBWidgetPanel() {
     { l: "Cost",      s: 78 },
   ];
   return (
-    <div style={{
+    <div className="aiq-force-light" style={{
       background: "#FFFFFF",
       border: "1px solid rgba(212,243,58,0.22)",
       borderRadius: 4,

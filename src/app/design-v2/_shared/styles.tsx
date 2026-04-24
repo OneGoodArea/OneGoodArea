@@ -69,6 +69,28 @@ export function Styles() {
       .aiq-nav-scrolled { background: rgba(255,255,255,0.86); }
       [data-theme="dark"] .aiq-nav-scrolled { background: rgba(10,23,19,0.86); }
 
+      /* .aiq-force-light · lock tokens to light-theme values for mock
+         surfaces that should always look the same regardless of theme
+         (embedded widget preview, listing-page illustration, etc.) */
+      .aiq .aiq-force-light,
+      [data-theme="dark"] .aiq .aiq-force-light {
+        --ink:        #0A4D3A;
+        --ink-deep:   #062A1E;
+        --ink-soft:   #1C5E4A;
+        --signal:     #D4F33A;
+        --signal-ink: #1A2600;
+        --signal-dim: #E9F69E;
+        --bg:         #FFFFFF;
+        --bg-off:     #F6F9F4;
+        --bg-ink:     #062A1E;
+        --border:     #E4EAE3;
+        --border-dim: #F0F3EE;
+        --text:       #0B2018;
+        --text-2:     #445A51;
+        --text-3:     #6E8278;
+        --text-4:     #9CAFA5;
+      }
+
       @keyframes aiq-fade-up {
         from { opacity: 0; transform: translateY(14px); }
         to   { opacity: 1; transform: translateY(0); }
