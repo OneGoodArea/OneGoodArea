@@ -52,7 +52,7 @@ export function Styles() {
         --signal-dim: #2E4310;
         --bg:         #0A1713;
         --bg-off:     #0F201A;
-        --bg-ink:     #000A05;
+        --bg-ink:     #062A1E;  /* same as light · dark panels stay consistent across themes */
         --border:     #1F2E28;
         --border-dim: #172520;
         --text:       #E4EAE3;

@@ -3516,7 +3516,7 @@ function FBRow({
 function FBApiPanel() {
   return (
     <div style={{
-      background: "#04201A",
+      background: "var(--bg-ink)",
       border: "1px solid rgba(212,243,58,0.18)",
       borderRadius: 4,
       overflow: "hidden",
@@ -3713,7 +3713,7 @@ function FBWidgetPanel() {
 
       <div style={{
         padding: "14px 18px",
-        background: "#04201A",
+        background: "var(--bg-ink)",
         borderTop: "1px solid rgba(212,243,58,0.18)",
         fontFamily: "var(--mono)", fontSize: 11.5, lineHeight: 1.5,
         color: "#C2D5CA",

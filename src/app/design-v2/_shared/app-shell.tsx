@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Wordmark } from "./wordmark";
+import { ThemeDot } from "./theme-dot";
 import { AiqIcon, type IconName } from "./icons";
 
 /* ═══════════════════════════════════════════════════════════════
@@ -90,8 +91,12 @@ function Sidebar() {
         pointerEvents: "none",
       }} />
 
-      <div style={{ marginBottom: 34, position: "relative", zIndex: 1 }}>
+      <div style={{
+        marginBottom: 34, position: "relative", zIndex: 1,
+        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
+      }}>
         <Wordmark href="/design-v2/dashboard" size={20} tone="dark" />
+        <ThemeDot tone="dark" />
       </div>
 
       <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", flex: 1 }}>
