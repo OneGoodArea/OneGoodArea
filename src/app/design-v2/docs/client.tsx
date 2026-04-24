@@ -8,7 +8,7 @@ import { Footer } from "../_shared/footer";
 import { AiqIcon, type IconName } from "../_shared/icons";
 
 /* ═══════════════════════════════════════════════════════════════
-   OneGoodArea — Design V2 · /docs
+   OneGoodArea · Design V2 · /docs
    REST API + widget reference. Sticky sidebar scrollspy, dark code
    blocks with chartreuse accents, language tabs on examples.
    ═══════════════════════════════════════════════════════════════ */
@@ -96,7 +96,7 @@ function Hero() {
           letterSpacing: "-0.005em",
           margin: 0, maxWidth: "62ch",
         }}>
-          REST endpoint, Bearer token auth, JSON in and out. Every response is cached for 24 hours — cached hits don&apos;t count against your quota.
+          REST endpoint, Bearer token auth, JSON in and out. Every response is cached for 24 hours. Cached hits don&apos;t count against your quota.
         </p>
         <div style={{
           marginTop: 28, display: "flex", gap: 22, flexWrap: "wrap",
@@ -505,7 +505,7 @@ function Authentication() {
           lineHeight: 1.55, color: "var(--ink-deep)",
           margin: 0,
         }}>
-          Keys carry full account access. Do not ship them in client-side code or public repositories. If a key is exposed, revoke it from the dashboard — revocation is instant.
+          Keys carry full account access. Do not ship them in client-side code or public repositories. If a key is exposed, revoke it from the dashboard. Revocation is instant.
         </p>
       </div>
     </Block>
@@ -684,10 +684,10 @@ const RESPONSE_FIELDS: { path: string; type: string; desc: string }[] = [
   { path: "id",                             type: "string",      desc: "Unique report ID. Prefixed rpt_." },
   { path: "report.area",                    type: "string",      desc: "Normalised area name." },
   { path: "report.intent",                  type: "string",      desc: "Intent type used for scoring." },
-  { path: "report.area_type",               type: "string",      desc: "urban | suburban | rural — benchmark category." },
+  { path: "report.area_type",               type: "string",      desc: "urban | suburban | rural. Benchmark category." },
   { path: "report.areaiq_score",            type: "number",      desc: "Overall weighted score 0–100 (integer)." },
   { path: "report.sub_scores[]",            type: "SubScore[]",  desc: "Exactly five dimensions keyed to the intent." },
-  { path: "report.sub_scores[].label",      type: "string",      desc: "Dimension name — varies per intent." },
+  { path: "report.sub_scores[].label",      type: "string",      desc: "Dimension name. Varies per intent." },
   { path: "report.sub_scores[].score",      type: "number",      desc: "Dimension score 0–100 (integer)." },
   { path: "report.sub_scores[].weight",     type: "number",      desc: "Relative weight. Sums to 100 across all five." },
   { path: "report.sub_scores[].reasoning",  type: "string",      desc: "Data-backed explanation for this score." },
@@ -823,7 +823,7 @@ function RateLimits() {
         The API allows 30 requests per minute per key, tracked as a sliding window. Every response carries <IC>X-RateLimit-Limit</IC>, <IC>X-RateLimit-Remaining</IC>, and <IC>X-RateLimit-Reset</IC> headers. 429 responses include a <IC>Retry-After</IC> header.
       </P>
       <P>
-        The embeddable widget has its own ceiling — 60 requests per hour per origin, cache-only — so public embeds on your property listings never consume API quota.
+        The embeddable widget has its own ceiling: 60 requests per hour per origin, cache-only, so public embeds on your property listings never consume API quota.
       </P>
       <div style={{
         display: "grid", gridTemplateColumns: "repeat(3, 1fr)",
@@ -950,7 +950,7 @@ function Widget() {
       title={<>One script tag. <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>No API key on the client.</em></>}
     >
       <P>
-        The widget renders a score card on any page. It reads from the 24-hour cache only — embed traffic never hits live compute, so your quota stays intact.
+        The widget renders a score card on any page. It reads from the 24-hour cache only, so embed traffic never hits live compute and your quota stays intact.
       </P>
       <h3 style={{
         fontFamily: "var(--display)", fontSize: 18, fontWeight: 500,

@@ -9,7 +9,7 @@ import { Footer } from "../_shared/footer";
 import { AiqIcon, type IconName } from "../_shared/icons";
 
 /* ═══════════════════════════════════════════════════════════════
-   OneGoodArea — Design V2 · /pricing
+   OneGoodArea · Design V2 · /pricing
    Two audiences (web reports / API access), shared visual system.
    Preserves Stripe checkout wiring + session-aware CTAs.
    ═══════════════════════════════════════════════════════════════ */
@@ -206,7 +206,7 @@ function Hero() {
           letterSpacing: "-0.005em",
           margin: "0 auto", maxWidth: "58ch",
         }}>
-          Every plan ships the seven public datasets, four intent modes, the written narrative, and the watchlist. Your price is your quota — nothing more.
+          Every plan ships the seven public datasets, four intent modes, the written narrative, and the watchlist. Your price is your quota, nothing more.
         </p>
       </div>
     </section>
@@ -675,15 +675,15 @@ const FAQS: { q: string; a: string }[] = [
   { q: "What counts as a report?",
     a: "One postcode scored for one intent. If you run the same postcode under two intents, that's two reports. Repeat queries of the same postcode+intent inside 24 hours come from the cache and don't count." },
   { q: "Can I change plans?",
-    a: "Any time. Upgrades prorate immediately, downgrades take effect at the end of the billing cycle. Cancelling stops renewal — you keep access until the cycle ends." },
+    a: "Any time. Upgrades prorate immediately, downgrades take effect at the end of the billing cycle. Cancelling stops renewal, and you keep access until the cycle ends." },
   { q: "What happens if I hit the limit?",
-    a: "You'll see a clear \"upgrade to continue\" message. Nothing breaks, no overage charges — your next report waits for the next cycle or a plan change." },
+    a: "You'll see a clear \"upgrade to continue\" message. Nothing breaks, no overage charges. Your next report waits for the next cycle or a plan change." },
   { q: "Do cached API responses count?",
     a: "No. Cache hits on the 24-hour window are free. Your quota only decrements on live computations. Embeds via the widget never hit your quota (widget is cache-only by design)." },
   { q: "Is my payment information secure?",
     a: "All billing is handled by Stripe. We never see or store your card. Cancel, upgrade, and manage payment methods from the billing portal linked inside the app." },
   { q: "Can I get a refund?",
-    a: "We refund unused portions on a case-by-case basis — drop us a line within 14 days of a charge and we'll sort it. No dark patterns." },
+    a: "We refund unused portions on a case-by-case basis. Drop us a line within 14 days of a charge and we'll sort it. No dark patterns." },
 ];
 
 function Faq() {

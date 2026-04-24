@@ -9,11 +9,11 @@ export function Styles() {
       @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap');
 
       .aiq {
-        /* Ink — forest green primary */
+        /* Ink · forest green primary */
         --ink:        #0A4D3A;
         --ink-deep:   #062A1E;
         --ink-soft:   #1C5E4A;
-        /* Signal — chartreuse (the alive accent) */
+        /* Signal · chartreuse (the alive accent) */
         --signal:     #D4F33A;
         --signal-ink: #1A2600;
         --signal-dim: #E9F69E;
@@ -194,7 +194,7 @@ export function Styles() {
         }
       }
 
-      /* Business page — API preview, audiences, pricing strip */
+      /* Business page · API preview, audiences, pricing strip */
       @media (max-width: 900px) {
         .aiq-api-grid {
           grid-template-columns: 1fr !important;
@@ -221,7 +221,7 @@ export function Styles() {
         .aiq-tier-grid > *:last-child { border-bottom: none !important; }
       }
 
-      /* Auth shell — two-column stacks on mobile */
+      /* Auth shell · two-column stacks on mobile */
       @media (max-width: 880px) {
         .aiq-auth-shell {
           grid-template-columns: 1fr !important;
@@ -234,7 +234,7 @@ export function Styles() {
         }
       }
 
-      /* Legal shell — sidebar collapses */
+      /* Legal shell · sidebar collapses */
       @media (max-width: 900px) {
         .aiq-legal-wrap {
           grid-template-columns: 1fr !important;
@@ -245,7 +245,7 @@ export function Styles() {
         }
       }
 
-      /* Methodology + Docs — sidebar collapses on narrow, tables wrap */
+      /* Methodology + Docs · sidebar collapses on narrow, tables wrap */
       @media (max-width: 900px) {
         .aiq-meth-wrap,
         .aiq-docs-wrap {
@@ -281,7 +281,7 @@ export function Styles() {
         }
       }
 
-      /* About page — two-column gap grid, builder row, stats strip */
+      /* About page · two-column gap grid, builder row, stats strip */
       @media (max-width: 820px) {
         .aiq-gap-grid {
           grid-template-columns: 1fr !important;
@@ -301,7 +301,7 @@ export function Styles() {
         .aiq-stats-strip > *:nth-child(2) { border-bottom: 1px solid var(--border) !important; }
       }
 
-      /* Pricing page — plan grid + feature table */
+      /* Pricing page · plan grid + feature table */
       @media (max-width: 900px) {
         .aiq-plan-grid {
           grid-template-columns: 1fr !important;

@@ -3,7 +3,7 @@ import MethodologyClient from "./client";
 
 export const metadata: Metadata = {
   title: "Methodology | OneGoodArea (Design V2)",
-  description: "Design V2 preview — how OneGoodArea scores UK postcodes.",
+  description: "Design V2 preview: how OneGoodArea scores UK postcodes.",
   robots: { index: false, follow: false },
 };
 

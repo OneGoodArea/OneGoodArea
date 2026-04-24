@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Wordmark } from "./wordmark";
 
-/* Footer — IA mirrors the live product footer (Areas · Business · API ·
+/* Footer · IA mirrors the live product footer (Areas · Business · API ·
    Methodology · Pricing · About · Blog · Changelog · Help · Terms · Privacy)
    grouped into three editorial columns. Visual language matches the nav:
    Fraunces wordmark, mono small-caps headers, chartreuse slide-in underline. */

@@ -8,7 +8,7 @@ import { Footer } from "../_shared/footer";
 import { AiqIcon, type IconName } from "../_shared/icons";
 
 /* ═══════════════════════════════════════════════════════════════
-   OneGoodArea — Design V2 · /about
+   OneGoodArea · Design V2 · /about
    Editorial story page: the gap, principles, data, timeline, builder.
    ═══════════════════════════════════════════════════════════════ */
 
@@ -173,7 +173,7 @@ function TheGap() {
               letterSpacing: "-0.003em",
               margin: "0 0 14px", maxWidth: "50ch",
             }}>
-              Every listings site shows you the house. Most of them will even give you a rough school catchment and a bus stop. Fewer than a handful score the area — and the ones that do score it the same way for everyone: buyer, investor, or business owner reading the same number.
+              Every listings site shows you the house. Most of them will even give you a rough school catchment and a bus stop. Fewer than a handful score the area, and the ones that do score it the same way for everyone: buyer, investor, or business owner reading the same number.
             </p>
             <p style={{
               fontFamily: "var(--sans)", fontSize: 15.5, fontWeight: 400,
@@ -181,7 +181,7 @@ function TheGap() {
               letterSpacing: "-0.003em",
               margin: 0, maxWidth: "50ch",
             }}>
-              Paid data tools existed, but they were wholesale — spreadsheets the size of a phone book, priced for consultancies, without any effort to help a reader reach a decision.
+              Paid data tools existed, but they were wholesale. Spreadsheets the size of a phone book, priced for consultancies, without any effort to help a reader reach a decision.
             </p>
           </div>
           <div>
@@ -196,7 +196,7 @@ function TheGap() {
               letterSpacing: "-0.003em",
               margin: "0 0 14px", maxWidth: "50ch",
             }}>
-              One place where a postcode goes in and a proper read comes out — scored against what the reader is actually deciding, citing the data it used, and written the way a friend would explain it.
+              One place where a postcode goes in and a proper read comes out. Scored against what the reader is actually deciding, citing the data it used, and written the way a friend would explain it.
             </p>
             <p style={{
               fontFamily: "var(--sans)", fontSize: 15.5, fontWeight: 400,
@@ -204,7 +204,7 @@ function TheGap() {
               letterSpacing: "-0.003em",
               margin: 0, maxWidth: "50ch",
             }}>
-              A score a buyer could trust. A score a developer could embed. Same postcode, same answer every time — even when four different people ask for four different reasons.
+              A score a buyer could trust. A score a developer could embed. Same postcode, same answer every time, even when four different people ask for four different reasons.
             </p>
           </div>
         </div>
@@ -252,13 +252,13 @@ function SectionHead({ eyebrow, title, sub }: {
   );
 }
 
-/* ─────── Principles — editorial rows with bespoke icons ─────── */
+/* ─────── Principles · editorial rows with bespoke icons ─────── */
 
 const PRINCIPLES: { icon: IconName; title: string; body: string }[] = [
   { icon: "data",    title: "Transparent by default",       body: "Every score shows the data behind it. If a neighbourhood scores 72 for safety, the report tells you which crimes, over which months, and how the rate compares to other urban areas. Nothing important is hidden behind a footnote." },
-  { icon: "repeat",  title: "Same postcode, same answer",   body: "Scores come from public data using the same formulas every time. Two readers querying the same postcode for the same intent see the same number. The narrative explains the number — it never invents it." },
-  { icon: "intent",  title: "Intent changes the weighting", body: "A great area to move to isn't the same as a great area to open a coffee shop. We rebalance the five dimensions per intent — safety and schools weigh heaviest when you're moving, footfall and spending power when you're trading." },
-  { icon: "map",     title: "Context before comparison",    body: "A village with one school is not the same as a city with one school. We classify every postcode as urban, suburban, or rural and benchmark it against its own category — no unfair comparisons between a London high street and a Lake District lane." },
+  { icon: "repeat",  title: "Same postcode, same answer",   body: "Scores come from public data using the same formulas every time. Two readers querying the same postcode for the same intent see the same number. The narrative explains the number. It never invents it." },
+  { icon: "intent",  title: "Intent changes the weighting", body: "A great area to move to isn't the same as a great area to open a coffee shop. We rebalance the five dimensions per intent. Safety and schools weigh heaviest when you're moving, footfall and spending power when you're trading." },
+  { icon: "map",     title: "Context before comparison",    body: "A village with one school is not the same as a city with one school. We classify every postcode as urban, suburban, or rural and benchmark it against its own category. No unfair comparisons between a London high street and a Lake District lane." },
 ];
 
 function Principles() {
@@ -310,14 +310,14 @@ function Principles() {
   );
 }
 
-/* ─────── Data sources — editorial list ─────── */
+/* ─────── Data sources · editorial list ─────── */
 
 const SOURCES: { icon: IconName; name: string; role: string; detail: string }[] = [
-  { icon: "map",        name: "Postcodes.io",          role: "Geocoding + LSOA lookup",       detail: "The front door — every postcode resolved to coordinates, LSOA, and MSOA so every downstream query knows exactly where it's looking." },
+  { icon: "map",        name: "Postcodes.io",          role: "Geocoding + LSOA lookup",       detail: "The front door. Every postcode resolved to coordinates, LSOA, and MSOA so every downstream query knows exactly where it's looking." },
   { icon: "support",    name: "Police.uk",             role: "Street-level crime",            detail: "12 months of incidents by category and street, used to score safety per intent and cite specific figures in the narrative." },
   { icon: "researcher", name: "IMD 2025",              role: "Deprivation indices",           detail: "The Ministry of Housing, Communities and Local Government's 2025 release for England, with WIMD (Wales) and SIMD (Scotland) for full UK coverage." },
   { icon: "operator",   name: "OpenStreetMap",         role: "Amenities and transport",       detail: "Schools, GP surgeries, shops, cafés, parks, bus stops, and train stations within 0.5–2km radii. Volunteer-maintained, surprisingly current." },
-  { icon: "investor",   name: "HM Land Registry",      role: "Property sold prices",          detail: "Real transactions — median sold price, year-on-year change, transaction counts, and property-type breakdowns. No asking prices, no estate-agent optimism." },
+  { icon: "investor",   name: "HM Land Registry",      role: "Property sold prices",          detail: "Real transactions. Median sold price, year-on-year change, transaction counts, and property-type breakdowns. No asking prices, no estate-agent optimism." },
   { icon: "intent",     name: "Environment Agency",    role: "Flood risk",                    detail: "Flood-zone classification and live flood-warning data. Lives in the Environment & Quality dimension, surfaced as a citation when the zone is 2 or 3." },
   { icon: "read",       name: "Ofsted",                role: "School inspections (England)",  detail: "Inspection ratings seeded locally, queried by coordinates for schools within 1.5km. Scotland (Education Scotland) and Wales (Estyn) planned." },
 ];
@@ -394,7 +394,7 @@ const MILESTONES: { date: string; label: string; body: string }[] = [
   { date: "January 2025",  label: "Idea validated",  body: "Ran into the same question for the fourth time in a row: is this area any good? Checked every tool available. Answer: not really, not for this intent." },
   { date: "February 2025", label: "First prototype", body: "Seven public datasets wired in parallel. Narrative generated from the numbers, not from thin air." },
   { date: "March 2025",    label: "Scoring engine",  body: "Swapped AI-generated scores for deterministic formulas. The narrative stayed AI-written, but the numbers became reproducible." },
-  { date: "March 2025",    label: "Public launch",   body: "Went live at area-iq.co.uk. Stripe checkout, API keys, Ofsted integration, watchlist — the lot." },
+  { date: "March 2025",    label: "Public launch",   body: "Went live at area-iq.co.uk. Stripe checkout, API keys, Ofsted integration, watchlist. The lot." },
   { date: "April 2026",    label: "Design V2",       body: "OneGoodArea rebrand. Cleaner type system, editorial voice, the engine finally gets a page that does it justice." },
 ];
 
@@ -458,7 +458,7 @@ function Timeline() {
   );
 }
 
-/* ─────── Builder — Pedro bio ─────── */
+/* ─────── Builder · Pedro bio ─────── */
 
 function Builder() {
   return (
@@ -525,7 +525,7 @@ function Builder() {
               letterSpacing: "-0.003em",
               margin: 0, maxWidth: "56ch",
             }}>
-              OneGoodArea is the tool I wanted on the other side of those decisions. Every feature exists because it solves a problem I had myself — no vanity metrics, no filler.
+              OneGoodArea is the tool I wanted on the other side of those decisions. Every feature exists because it solves a problem I had myself. No vanity metrics, no filler.
             </p>
           </div>
         </div>
@@ -622,7 +622,7 @@ function FinalCta() {
           lineHeight: 1.55, color: "rgba(255,255,255,0.64)",
           margin: "0 auto 36px", maxWidth: "50ch",
         }}>
-          Score, data, reasoning, recommendations — all in one report. Three a month are free.
+          Score, data, reasoning, recommendations. All in one report. Three a month are free.
         </p>
         <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
           <Link href="/design-v2" style={{

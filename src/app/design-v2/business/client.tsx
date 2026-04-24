@@ -8,7 +8,7 @@ import { Footer } from "../_shared/footer";
 import { AiqIcon, type IconName } from "../_shared/icons";
 
 /* ═══════════════════════════════════════════════════════════════
-   OneGoodArea — Design V2 · /business
+   OneGoodArea · Design V2 · /business
    Same design language as the home page. B2B marketing page:
    hero + stats + API preview + capabilities + audiences + pricing + CTA
    ═══════════════════════════════════════════════════════════════ */
@@ -152,7 +152,7 @@ function Hero() {
   );
 }
 
-/* Compact code card in the hero — a teaser for the API preview below.
+/* Compact code card in the hero · a teaser for the API preview below.
    Uses chartreuse syntax highlights, not terminal-green. */
 function HeroCodeCard() {
   return (
@@ -256,7 +256,7 @@ function StatsStrip() {
   );
 }
 
-/* ─────── API preview — long form ─────── */
+/* ─────── API preview · long form ─────── */
 
 const REQUEST_SNIPPET = `curl -X POST https://www.area-iq.co.uk/api/v1/report \\
   -H "Authorization: Bearer aiq_your_key" \\
@@ -422,15 +422,15 @@ function SectionHead({ eyebrow, title, sub }: {
   );
 }
 
-/* ─────── Capabilities — editorial list with AiqIcons ─────── */
+/* ─────── Capabilities · editorial list with AiqIcons ─────── */
 
 const CAPABILITIES: { icon: IconName; title: string; body: string }[] = [
   { icon: "api",        title: "REST API",            body: "POST a postcode and an intent. Back comes an overall score, five weighted dimensions with reasoning, a narrative, recommendations, and cited data. Bearer-token auth, 30 requests a minute, JSON in and out." },
-  { icon: "map",        title: "Drop-in widget",      body: "Single-origin script for any page — no API key on the client. Reads from the 24-hour cache so embed traffic never hits live pricing. CORS-enabled, 60 requests an hour per origin." },
-  { icon: "intent",     title: "Four intent modes",   body: "Moving, opening a business, investing, and research. Same postcode, different scores — the engine reweights five dimensions to match what the reader is actually deciding. Moving weighs Safety 25% · Schools 20% · Transport 20% · Amenities 15% · Cost 20%. Business rewrites the lot." },
+  { icon: "map",        title: "Drop-in widget",      body: "Single-origin script for any page. No API key on the client. Reads from the 24-hour cache so embed traffic never hits live pricing. CORS-enabled, 60 requests an hour per origin." },
+  { icon: "intent",     title: "Four intent modes",   body: "Moving, opening a business, investing, and research. Same postcode, different scores. The engine reweights five dimensions to match what the reader is actually deciding. Moving weighs Safety 25% · Schools 20% · Transport 20% · Amenities 15% · Cost 20%. Business rewrites the lot." },
   { icon: "data",       title: "Seven public datasets", body: "Postcodes.io, Police.uk (12 months of street-level incidents), IMD 2025, OpenStreetMap (amenities, transport, schools), HM Land Registry, Environment Agency flood risk, and Ofsted inspections. Every response carries a data_freshness block so you know exactly what was read and when." },
-  { icon: "read",       title: "Plain-English read",  body: "Numbers tell you what. The narrative explains why. Specific facts cited inline: median sold price, YoY change, crime rate per intent, flood zone, nearest Outstanding school within 1.5km. No vague copy — every claim is grounded in one of the datasets above." },
-  { icon: "researcher", title: "Self-serve dashboard",body: "Manage keys, monitor calls, view a 30-day trend. Cached hits don't count against your quota, so embed traffic is effectively free. Billing and quota live with the account — no procurement loop to use the product." },
+  { icon: "read",       title: "Plain-English read",  body: "Numbers tell you what. The narrative explains why. Specific facts cited inline: median sold price, YoY change, crime rate per intent, flood zone, nearest Outstanding school within 1.5km. No vague copy. Every claim is grounded in one of the datasets above." },
+  { icon: "researcher", title: "Self-serve dashboard",body: "Manage keys, monitor calls, view a 30-day trend. Cached hits don't count against your quota, so embed traffic is effectively free. Billing and quota live with the account. No procurement loop to use the product." },
 ];
 
 function Capabilities() {
@@ -484,7 +484,7 @@ function Capabilities() {
   );
 }
 
-/* ─────── Audiences — who this is for ─────── */
+/* ─────── Audiences · who this is for ─────── */
 
 const B2B_AUDIENCES: { icon: IconName; title: string; body: string; tag: string }[] = [
   { icon: "buyer",    title: "Property portals",     tag: "API or widget",  body: "Add area scores to every listing page. Give buyers objective data on safety, transport, schools, and amenities before they book a viewing." },

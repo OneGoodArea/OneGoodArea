@@ -3,7 +3,7 @@ import DesignV2Client from "./client";
 
 export const metadata: Metadata = {
   title: "OneGoodArea | Design V2 Preview",
-  description: "Design V2 preview — OneGoodArea hero iteration",
+  description: "Design V2 preview: OneGoodArea hero iteration",
   robots: { index: false, follow: false },
 };
 

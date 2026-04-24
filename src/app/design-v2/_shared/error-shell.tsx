@@ -8,7 +8,7 @@ import { Footer } from "./footer";
 import { Mark } from "./mark";
 
 /* ═══════════════════════════════════════════════════════════════
-   ErrorShell — bespoke error page layout for 404 / 500 / generic.
+   ErrorShell · bespoke error page layout for 404 / 500 / generic.
    Massive Fraunces error number with italic chartreuse digit.
    ═══════════════════════════════════════════════════════════════ */
 

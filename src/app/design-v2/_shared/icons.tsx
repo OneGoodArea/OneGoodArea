@@ -1,4 +1,4 @@
-/* AiqIcon — bespoke 11-icon set for design-v2. 28×28 viewBox, 1.5px forest
+/* AiqIcon · bespoke 11-icon set for design-v2. 28×28 viewBox, 1.5px forest
    stroke, chartreuse accent dot. Use this for ALL design-v2 marketing pages;
    do not import Lucide or any other icon library in design-v2. */
 
@@ -116,7 +116,7 @@ export function AiqIcon({ name, size = 26 }: { name: IconName; size?: number }) 
         </svg>
       );
     case "repeat":
-      // two opposed curved arrows — same answer every time
+      // two opposed curved arrows · same answer every time
       return (
         <svg {...common}>
           <path d="M7 9 A 8 8 0 0 1 21 9" />
@@ -137,7 +137,7 @@ export function AiqIcon({ name, size = 26 }: { name: IconName; size?: number }) 
         </svg>
       );
     case "watchlist":
-      // star outline with chartreuse centre — saved area
+      // star outline with chartreuse centre · saved area
       return (
         <svg {...common}>
           <path d="M14 4 L16.4 10.3 L23 11.2 L18 15.6 L19.3 22.2 L14 18.8 L8.7 22.2 L10 15.6 L5 11.2 L11.6 10.3 Z" />
@@ -145,7 +145,7 @@ export function AiqIcon({ name, size = 26 }: { name: IconName; size?: number }) 
         </svg>
       );
     case "fresh":
-      // clock with chartreuse tick at 12 — data freshness
+      // clock with chartreuse tick at 12 · data freshness
       return (
         <svg {...common}>
           <circle cx="14" cy="14" r="9" />
@@ -179,7 +179,7 @@ export function AiqIcon({ name, size = 26 }: { name: IconName; size?: number }) 
         </svg>
       );
     case "key":
-      // keyhead + stem + teeth — API key management
+      // keyhead + stem + teeth · API key management
       return (
         <svg {...common}>
           <circle cx="9" cy="11" r="4" />
@@ -190,7 +190,7 @@ export function AiqIcon({ name, size = 26 }: { name: IconName; size?: number }) 
         </svg>
       );
     case "gauge":
-      // semicircle + chartreuse needle — rate limit
+      // semicircle + chartreuse needle · rate limit
       return (
         <svg {...common}>
           <path d="M5 18 A 9 9 0 0 1 23 18" />
@@ -202,7 +202,7 @@ export function AiqIcon({ name, size = 26 }: { name: IconName; size?: number }) 
         </svg>
       );
     case "cache":
-      // database cylinder, top disk chartreuse-tinted — response cache
+      // database cylinder, top disk chartreuse-tinted · response cache
       return (
         <svg {...common}>
           <ellipse cx="14" cy="7" rx="8" ry="2.3" fill={accent} fillOpacity="0.22" />
@@ -212,7 +212,7 @@ export function AiqIcon({ name, size = 26 }: { name: IconName; size?: number }) 
         </svg>
       );
     case "dash":
-      // ascending bars, tallest chartreuse — usage dashboard
+      // ascending bars, tallest chartreuse · usage dashboard
       return (
         <svg {...common}>
           <path d="M4 23 H24" />
@@ -222,7 +222,7 @@ export function AiqIcon({ name, size = 26 }: { name: IconName; size?: number }) 
         </svg>
       );
     case "widget":
-      // outer page + inner chartreuse widget block — drop-in widget
+      // outer page + inner chartreuse widget block · drop-in widget
       return (
         <svg {...common}>
           <rect x="4" y="5" width="20" height="18" rx="0.8" />
@@ -233,7 +233,7 @@ export function AiqIcon({ name, size = 26 }: { name: IconName; size?: number }) 
         </svg>
       );
     case "support":
-      // circle with chartreuse star — priority support
+      // circle with chartreuse star · priority support
       return (
         <svg {...common}>
           <circle cx="14" cy="14" r="9" />

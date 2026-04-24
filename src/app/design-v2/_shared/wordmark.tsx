@@ -5,12 +5,12 @@ import Link from "next/link";
 import { Mark } from "./mark";
 
 /* ═══════════════════════════════════════════════════════════════
-   Wordmark — single source of truth for the OneGoodArea logo.
+   Wordmark · single source of truth for the OneGoodArea logo.
    - Same proportions, same typography, same italic+chartreuse
      accent on "Good" everywhere.
    - `size` scales Mark + font proportionally.
    - `tone` only changes when the surface demands it:
-       "light" (default): forest-ink on white / cream — the norm.
+       "light" (default): forest-ink on white / cream · the norm.
        "dark":  white ink on ink-deep / dark backgrounds.
    - `href` wraps the mark in a Link when provided; otherwise
      renders a plain span so it can sit inside other links.

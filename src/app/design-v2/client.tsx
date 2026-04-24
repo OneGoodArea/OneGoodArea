@@ -9,7 +9,7 @@ import { Footer } from "./_shared/footer";
 import { AiqIcon, type IconName } from "./_shared/icons";
 
 /* ═══════════════════════════════════════════════════════════════
-   OneGoodArea — Design V2
+   OneGoodArea · Design V2
    Forest green + signal chartreuse + white
    Fraunces (display) · Inter (body) · Geist Mono (labels)
    ═══════════════════════════════════════════════════════════════ */
@@ -18,7 +18,7 @@ import { AiqIcon, type IconName } from "./_shared/icons";
 
 /* Real UK + Ireland outlines extracted from Natural Earth 50m world-atlas.
    See scripts/extract-uk.js. Coordinates are already projected into a
-   320×360 SVG viewBox using the bounds below — do not change one without
+   320×360 SVG viewBox using the bounds below · do not change one without
    re-running the extract script. */
 const MAP_VB = { w: 320, h: 360 };
 const UK_BOUNDS = { minLat: 49.7, maxLat: 60.9, minLng: -10.9, maxLng: 2.2 };
@@ -124,7 +124,7 @@ const SOURCES = [
 
 /* ─────── Scoring model (sample numbers, real weights) ─────── */
 
-// Same baseline dimensions for every area — swap to real scoring later.
+// Same baseline dimensions for every area · swap to real scoring later.
 const SAMPLE_DIMS: Array<{ key: string; label: string; score: number; detail: string; src: string }> = [
   { key: "safety",    label: "Safety & Crime",        score: 72, detail: "84 crimes/12mo; violent 8%; trend falling",          src: "Police.uk" },
   { key: "schools",   label: "Schools & Education",   score: 68, detail: "4 of 5 nearby schools Good or Outstanding",          src: "Ofsted" },
@@ -148,10 +148,10 @@ const INTENT_LABELS: Record<IntentId, string> = {
 };
 
 const INTENT_NARRATIVES: Record<IntentId, (loc: string) => string> = {
-  moving:   (loc) => `${loc} is a strong fit for families moving in. Four of five nearby schools are rated Good or Outstanding by Ofsted. Northern Line access gives 20-minute commutes to Westminster. Main trade-off is cost — median sale price sits roughly 14% above the London median.`,
-  business: (loc) => `${loc} has solid footfall and amenity density for a retail or hospitality business. 143 amenities within 1km, four stations within 2km. Rent and leasehold prices are the constraint — expect a 25%+ premium vs outer-borough equivalents. Falling crime trend supports evening trade.`,
+  moving:   (loc) => `${loc} is a strong fit for families moving in. Four of five nearby schools are rated Good or Outstanding by Ofsted. Northern Line access gives 20-minute commutes to Westminster. Main trade-off is cost. Median sale price sits roughly 14% above the London median.`,
+  business: (loc) => `${loc} has solid footfall and amenity density for a retail or hospitality business. 143 amenities within 1km, four stations within 2km. Rent and leasehold prices are the constraint. Expect a 25%+ premium vs outer-borough equivalents. Falling crime trend supports evening trade.`,
   invest:   (loc) => `${loc} offers limited yield at current prices. Median sale £625k, median rent £2,100/mo = ~4% gross yield, below the 5.5% London average. Capital growth has been steady at 3-4% YoY over five years. A lower-yield, lower-risk hold rather than a value play.`,
-  research: (loc) => `${loc} sits in the upper quartile for transport and amenities, median for safety, below-median for affordability. IMD 2025 decile 6 — relatively deprived on income but less so on crime and education. Useful benchmark for comparing inner-London neighbourhoods.`,
+  research: (loc) => `${loc} sits in the upper quartile for transport and amenities, median for safety, below-median for affordability. IMD 2025 decile 6: relatively deprived on income but less so on crime and education. Useful benchmark for comparing inner-London neighbourhoods.`,
 };
 
 const INTENT_RECS: Record<IntentId, string[]> = {
@@ -163,7 +163,7 @@ const INTENT_RECS: Record<IntentId, string[]> = {
   business: [
     "Target corners with proven foot traffic (high street / park junction).",
     "Budget £80-120/sqft leasehold; expect 6-month fit-out.",
-    "Evening licence viable — crime trend and residential density support.",
+    "Evening licence viable. Crime trend and residential density support.",
   ],
   invest: [
     "Consider 1-bed units over family homes for best gross yield.",
@@ -173,7 +173,7 @@ const INTENT_RECS: Record<IntentId, string[]> = {
   research: [
     "Benchmark against two adjacent postcodes to normalise IMD context.",
     "Pull 5-year trend data for crime + prices before drawing conclusions.",
-    "Use LSOA-level data where possible — ward-level aggregates hide variance.",
+    "Use LSOA-level data where possible. Ward-level aggregates hide variance.",
   ],
 };
 
@@ -183,7 +183,7 @@ function computeScore(intentId: IntentId): number {
   return Math.round(total / 100);
 }
 
-/* ─────── Real seeded reports — 4 cities × 4 intents, fetched from live APIs
+/* ─────── Real seeded reports · 4 cities × 4 intents, fetched from live APIs
    See scripts/seed-design-v2.ts for the generator. ─────── */
 
 type RealDim = { label: string; score: number; weight: number; reasoning: string };
@@ -286,7 +286,7 @@ function Hero({
       background: "var(--bg)",
       borderBottom: "1px solid var(--border)",
     }}>
-      {/* Ambient chartreuse wash — centered */}
+      {/* Ambient chartreuse wash · centered */}
       <div style={{
         position: "absolute", inset: 0, overflow: "hidden",
         pointerEvents: "none", zIndex: 0,
@@ -332,7 +332,7 @@ function Hero({
           Type a place. Pick why you're looking. Seven public datasets do the rest.
         </p>
 
-        {/* Form — centered */}
+        {/* Form · centered */}
         <div style={{
           display: "flex", justifyContent: "center",
           gap: 10, flexWrap: "wrap",
@@ -391,7 +391,7 @@ function Hero({
           </button>
         </div>
 
-        {/* Intent tabs — centered */}
+        {/* Intent tabs · centered */}
         <div style={{
           marginTop: 28,
           animation: "aiq-fade-up 800ms cubic-bezier(0.16,1,0.3,1) 260ms both",
@@ -556,11 +556,11 @@ function HeroForm({
   );
 }
 
-/* ─────── PullQuote — editorial sample of engine voice ─────── */
+/* ─────── PullQuote · editorial sample of engine voice ─────── */
 
 const PULLQUOTES: Record<IntentId, { body: string; meta: string }> = {
   moving: {
-    body: "Strong fit for families. Four of five nearby schools are rated Good or Outstanding. The trade-off is cost — roughly 14% above the London median.",
+    body: "Strong fit for families. Four of five nearby schools are rated Good or Outstanding. The trade-off is cost: roughly 14% above the London median.",
     meta: "SW4 0LG · scored for moving home · 71 / 100",
   },
   business: {
@@ -568,11 +568,11 @@ const PULLQUOTES: Record<IntentId, { body: string; meta: string }> = {
     meta: "SW4 0LG · scored for opening a business · 73 / 100",
   },
   invest: {
-    body: "Limited yield at current prices — median sale £625k, median rent £2,100/mo gives ~4% gross, below London average. A low-risk hold rather than a value play.",
+    body: "Limited yield at current prices. Median sale £625k, median rent £2,100/mo gives ~4% gross, below London average. A low-risk hold rather than a value play.",
     meta: "SW4 0LG · scored for property investing · 61 / 100",
   },
   research: {
-    body: "Upper quartile for transport and amenities, median for safety, below-median for affordability. IMD 2025 decile 6 — useful benchmark for inner-London neighbourhoods.",
+    body: "Upper quartile for transport and amenities, median for safety, below-median for affordability. IMD 2025 decile 6: useful benchmark for inner-London neighbourhoods.",
     meta: "SW4 0LG · scored for market research · 71 / 100",
   },
 };
@@ -634,7 +634,7 @@ function PullQuote({ intent }: { intent: (typeof INTENTS)[number] }) {
   );
 }
 
-/* ─────── Eyebrow — tiny status line, no pill ─────── */
+/* ─────── Eyebrow · tiny status line, no pill ─────── */
 
 function Eyebrow() {
   return (
@@ -685,7 +685,7 @@ const InlineInput = forwardRef<
         position: "relative", display: "inline-block",
         verticalAlign: "baseline",
       }}>
-        {/* Sizer — invisible, measures width */}
+        {/* Sizer · invisible, measures width */}
         <span
           ref={sizerRef}
           aria-hidden
@@ -726,7 +726,7 @@ const InlineInput = forwardRef<
           }}
         />
 
-        {/* Ghost placeholder (italic, faded) — shown only when empty */}
+        {/* Ghost placeholder (italic, faded) · shown only when empty */}
         {!value && (
           <span
             aria-hidden
@@ -742,7 +742,7 @@ const InlineInput = forwardRef<
           </span>
         )}
 
-        {/* Resolved chip — little confirmation that we know where this is */}
+        {/* Resolved chip · little confirmation that we know where this is */}
         {resolved && (
           <span style={{
             position: "absolute", right: -10, top: "-1.2em",
@@ -763,7 +763,7 @@ const InlineInput = forwardRef<
 );
 InlineInput.displayName = "InlineInput";
 
-/* ─────── Intent strip — horizontal tab row, always visible ─────── */
+/* ─────── Intent strip · horizontal tab row, always visible ─────── */
 
 function IntentStrip({
   intentId, onPick,
@@ -846,7 +846,7 @@ function IntentStrip({
 }
 
 
-/* ─────── Engine panel — map + source tape ─────── */
+/* ─────── Engine panel · map + source tape ─────── */
 
 function EnginePanel({
   resolved, intent, onPick,
@@ -867,7 +867,7 @@ function EnginePanel({
       display: "flex", flexDirection: "column", gap: 20,
       animation: "aiq-fade-up 900ms cubic-bezier(0.16,1,0.3,1) 420ms both",
     }}>
-      {/* Status line — loose, no panel */}
+      {/* Status line · loose, no panel */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
         fontFamily: "var(--mono)", fontSize: 10,
@@ -887,17 +887,17 @@ function EnginePanel({
         </span>
       </div>
 
-      {/* Map — no card */}
+      {/* Map · no card */}
       <UKMap resolved={resolved} onPick={onPick} />
 
-      {/* Source tape — loose rows */}
+      {/* Source tape · loose rows */}
       <div style={{ paddingTop: 8 }}>
         {SOURCES.map((s, i) => (
           <SourceRow key={`${s.key}-${runId}`} source={s} index={i} active={!!resolved} />
         ))}
       </div>
 
-      {/* Footer line — loose */}
+      {/* Footer line · loose */}
       <div style={{
         display: "flex", justifyContent: "space-between", alignItems: "center",
         paddingTop: 4,
@@ -920,7 +920,7 @@ function EnginePanel({
   );
 }
 
-/* ─────── UK map — real Natural Earth coastline + interactions ─────── */
+/* ─────── UK map · real Natural Earth coastline + interactions ─────── */
 
 // Featured cities to render as hoverable markers.
 const MAP_CITIES: Array<{
@@ -1012,7 +1012,7 @@ function UKMap({
       aspectRatio: `${VB_W}/${VB_H}`,
       overflow: "hidden",
     }}>
-      {/* Very subtle grid wash — floats, no card */}
+      {/* Very subtle grid wash · floats, no card */}
       <div style={{
         position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.4,
         backgroundImage:
@@ -1046,7 +1046,7 @@ function UKMap({
           </linearGradient>
         </defs>
 
-        {/* Ireland — neutral tone, non-interactive */}
+        {/* Ireland · neutral tone, non-interactive */}
         <path
           d={IE_PATH}
           fill="#E4EAE3"
@@ -1063,7 +1063,7 @@ function UKMap({
           IE
         </text>
 
-        {/* UK — main body, forest fill */}
+        {/* UK · main body, forest fill */}
         <g filter="url(#uk-shadow)" opacity="0.12">
           <path d={UK_PATH} fill="#0A4D3A" />
         </g>
@@ -1112,7 +1112,7 @@ function UKMap({
                 stroke="var(--ink-deep)" strokeWidth="0.8"
                 style={{ transition: "r 180ms cubic-bezier(0.16,1,0.3,1)" }}
               />
-              {/* Label — only on hover */}
+              {/* Label · only on hover */}
               {isHover && (
                 <g transform={`translate(${x + 8}, ${y - 10})`} pointerEvents="none">
                   <rect x="0" y="-8" rx="3" ry="3"
@@ -1280,7 +1280,7 @@ function SourceRow({
   );
 }
 
-/* ─────── Sample Report — revealed when "Run the engine" is pressed ─────── */
+/* ─────── Sample Report · revealed when "Run the engine" is pressed ─────── */
 
 const SampleReport = forwardRef<
   HTMLElement,
@@ -1449,7 +1449,7 @@ const SampleReport = forwardRef<
                 {narrative}
               </p>
 
-              {/* Locked / CTA block — the teaser reveal */}
+              {/* Locked / CTA block · the teaser reveal */}
               <div style={{
                 border: "1px solid var(--ink-deep)",
                 background: "var(--ink-deep)",
@@ -1543,7 +1543,7 @@ const SampleReport = forwardRef<
             </div>
           </div>
 
-          {/* Dimensions — snapshot: top 3 by weight only */}
+          {/* Dimensions · snapshot: top 3 by weight only */}
           <div style={{
             border: "1px solid var(--border)",
             borderRadius: 16, background: "var(--bg)",
@@ -1761,8 +1761,8 @@ function ScoreRing({ score, intentId }: { score: number; intentId: IntentId }) {
   );
 }
 
-/* ─────── HeroReportCard — illustrative sample output in the hero ─────── */
-/* This is what the user gets when they run the engine. Static by design —
+/* ─────── HeroReportCard · illustrative sample output in the hero ─────── */
+/* This is what the user gets when they run the engine. Static by design:
    it's a preview, not a live report. Real live report lives downstream. */
 
 const HERO_CARD_DIMS = [
@@ -1785,7 +1785,7 @@ function HeroReportCard({
       position: "relative",
       animation: "aiq-fade-up 900ms cubic-bezier(0.16,1,0.3,1) 200ms both",
     }}>
-      {/* Paper underlay — gives it a printed-report feel */}
+      {/* Paper underlay · gives it a printed-report feel */}
       <div style={{
         position: "absolute", inset: 0,
         transform: "translate(10px, 12px) rotate(0.6deg)",
@@ -1893,11 +1893,11 @@ function HeroReportCard({
             fontSize: 38, color: "var(--signal)",
             fontFamily: "var(--display)", lineHeight: 1,
           }}>&ldquo;</span>
-          Manchester does what a move needs — exceptional transport, abundant
+          Manchester does what a move needs: exceptional transport, abundant
           amenities, and safety that reads strong for a city core.
         </div>
 
-        {/* Footer — trust strip */}
+        {/* Footer · trust strip */}
         <div style={{
           display: "flex", justifyContent: "space-between", alignItems: "center",
           gap: 12, flexWrap: "wrap",
@@ -1971,7 +1971,7 @@ function HeroCardDim({
   );
 }
 
-/* ─────── How It Works — interactive step player ─────── */
+/* ─────── How It Works · interactive step player ─────── */
 
 type HIWStepId = "input" | "intent" | "datasets" | "report";
 
@@ -2418,7 +2418,7 @@ function HIWPanelReport({ onExpand }: { onExpand?: () => void }) {
   );
 }
 
-/* ─────── Expanded Report Modal — full anatomy behind Step 4 expand ─────── */
+/* ─────── Expanded Report Modal · full anatomy behind Step 4 expand ─────── */
 
 function ExpandedReportModal({ onClose }: { onClose: () => void }) {
   return (
@@ -2487,7 +2487,7 @@ function ExpandedReportModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-/* ─────── Intents section — pure explanation of the four lenses ─────── */
+/* ─────── Intents section · pure explanation of the four lenses ─────── */
 
 const INTENTS_DATA: {
   id: string;
@@ -2513,7 +2513,7 @@ const INTENTS_DATA: {
     id: "business",
     number: "02",
     verb: "opening a business",
-    lede: "What an operator needs before they sign a lease — footfall, competition, and the cost of holding the space.",
+    lede: "What an operator needs before they sign a lease: footfall, competition, and the cost of holding the space.",
     dims: [
       "Foot Traffic & Demand",
       "Competition Density",
@@ -2582,7 +2582,7 @@ function IntentsSection() {
             margin: "20px auto 0", maxWidth: "54ch",
           }}>
             Each intent replaces the dimensions and reweights the data. Pick the lens
-            that matches what you're doing — the engine does the rest.
+            that matches what you're doing. The engine does the rest.
           </p>
         </div>
 
@@ -2684,7 +2684,7 @@ const WHO_ITEMS: { icon: IconName; title: string; body: string }[] = [
 const WHY_ITEMS: { icon: IconName; title: string; body: string }[] = [
   { icon: "intent", title: "Intent-driven scoring",   body: "Same area, different scores for moving, investing, or opening a business. Most tools give you one generic view." },
   { icon: "data",   title: "Transparent methodology", body: "Scores computed from real public data using transparent formulas. Same postcode, same score, every time." },
-  { icon: "read",   title: "AI that reads the data",  body: "Numbers tell you what. Our engine explains why — plain English, tailored to your situation, with specific recommendations." },
+  { icon: "read",   title: "AI that reads the data",  body: "Numbers tell you what. Our engine explains why: plain English, tailored to your situation, with specific recommendations." },
   { icon: "api",    title: "Developer API",           body: "A REST API with Bearer auth. Embed area intelligence into property platforms, CRM tools, and relocation apps." },
 ];
 
@@ -2734,7 +2734,7 @@ function AudiencesSection() {
               color: "var(--text-2)", letterSpacing: "-0.003em",
               margin: "14px 0 0", maxWidth: "38ch",
             }}>
-              Built for anyone making a location decision — from first-time buyers to property funds. Hours of research, in seconds.
+              Built for anyone making a location decision, from first-time buyers to property funds. Hours of research, in seconds.
             </p>
 
             <div style={{
@@ -2764,7 +2764,7 @@ function AudiencesSection() {
               color: "var(--text-2)", letterSpacing: "-0.003em",
               margin: "14px 0 0", maxWidth: "38ch",
             }}>
-              Not another postcode lookup. We score, weigh, and explain — for your specific use case.
+              Not another postcode lookup. We score, weigh, and explain. For your specific use case.
             </p>
 
             <div style={{
@@ -2817,7 +2817,7 @@ function WhoWhyItem({
   );
 }
 
-/* ─────── Inside a report — full anatomy of what the product outputs ─────── */
+/* ─────── Inside a report · full anatomy of what the product outputs ─────── */
 
 function InsideReport() {
   return (
@@ -2852,12 +2852,12 @@ function InsideReport() {
             color: "var(--text-2)", letterSpacing: "-0.003em",
             margin: "20px auto 0", maxWidth: "48ch",
           }}>
-            A narrated read written for your intent — property market, schools,
+            A narrated read written for your intent: property market, schools,
             crime trends, and specific recommendations. Not a scorecard.
           </p>
         </div>
 
-        {/* Report mockup — full anatomy */}
+        {/* Report mockup · full anatomy */}
         <article style={{
           background: "var(--bg)",
           border: "1px solid var(--ink-deep)",
@@ -2934,7 +2934,7 @@ function IRSummary() {
       }}>
         Manchester does what a move home needs. Transport is exceptional,{" "}
         <IRMark>3,579 amenities within a kilometre</IRMark>, and safety reads strong
-        for a city core. The trade-off is cost — you're paying mid-market for
+        for a city core. The trade-off is cost. You're paying mid-market for
         genuine urban convenience.
       </p>
     </div>
@@ -3140,8 +3140,8 @@ function IRNarrativeBlock() {
         color: "var(--ink-deep)", letterSpacing: "-0.003em",
         margin: 0, maxWidth: "64ch",
       }}>
-        The area sits on top of <IRMark>6 rail and tube stations</IRMark> within 2km —
-        Ardwick, Piccadilly, Oxford Road — and <IRMark>43 bus stops inside 500 metres</IRMark>.
+        The area sits on top of <IRMark>6 rail and tube stations</IRMark> within 2km
+        (Ardwick, Piccadilly, Oxford Road) plus <IRMark>43 bus stops inside 500 metres</IRMark>.
         Combined with <IRMark>3,579 daily amenities in a kilometre</IRMark> (593 food,
         167 parks, 42 healthcare), most of the city is inside a half-hour commute on
         foot or on transit. For a move home, this is rare density outside of Zone 1-2 London.
@@ -3362,7 +3362,7 @@ function IRFooter() {
   );
 }
 
-/* ─────── For businesses — REST API + embeddable widget ─────── */
+/* ─────── For businesses · REST API + embeddable widget ─────── */
 
 function ForBusinessesSection() {
   return (
@@ -3729,7 +3729,7 @@ function FBWidgetPanel() {
   );
 }
 
-/* ─────── Final CTA — one last call to the hero form ─────── */
+/* ─────── Final CTA · one last call to the hero form ─────── */
 
 function FinalCTA() {
   function scrollToTop(e: React.MouseEvent) {

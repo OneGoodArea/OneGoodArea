@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Wordmark } from "./wordmark";
 
-/* Nav — structure mirrors the live product nav (Business · API · Pricing ·
+/* Nav · structure mirrors the live product nav (Business · API · Pricing ·
    About · Theme · Dashboard/Sign In). Dressed in the design-v2 language:
    Fraunces wordmark, mono small-caps links, chartreuse slide-in underline on
    hover, bespoke theme dot, hairline dividers. */

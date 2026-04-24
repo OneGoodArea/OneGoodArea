@@ -1,4 +1,4 @@
-/* Logo mark — concentric rings + offset chartreuse dot ("the area locked in").
+/* Logo mark · concentric rings + offset chartreuse dot ("the area locked in").
    Used in the Wordmark component. Accepts an optional tone for dark surfaces. */
 
 type MarkProps = { size?: number; tone?: "light" | "dark" };

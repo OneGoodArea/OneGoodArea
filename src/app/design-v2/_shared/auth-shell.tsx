@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Wordmark } from "./wordmark";
 
 /* ═══════════════════════════════════════════════════════════════
-   AuthShell — two-column auth layout for design-v2 preview.
+   AuthShell · two-column auth layout for design-v2 preview.
    Left: bespoke brand panel (wordmark, italic Fraunces pitch, back link).
    Right: form card on hairline border, white bg.
    Exports shell + primitives used across sign-in/up, reset, verify.

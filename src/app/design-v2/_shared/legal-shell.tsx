@@ -7,7 +7,7 @@ import { Nav } from "./nav";
 import { Footer } from "./footer";
 
 /* ═══════════════════════════════════════════════════════════════
-   LegalShell — long-form legal/policy layout with sticky sidebar
+   LegalShell · long-form legal/policy layout with sticky sidebar
    scrollspy TOC. Shared across /terms and /privacy.
    ═══════════════════════════════════════════════════════════════ */
 

@@ -3,7 +3,7 @@ import PricingClient from "./client";
 
 export const metadata: Metadata = {
   title: "Pricing | OneGoodArea (Design V2)",
-  description: "Design V2 preview — OneGoodArea pricing for web reports and API access.",
+  description: "Design V2 preview: OneGoodArea pricing for web reports and API access.",
   robots: { index: false, follow: false },
 };
 
