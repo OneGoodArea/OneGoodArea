@@ -245,6 +245,45 @@ export function Styles() {
         }
       }
 
+      /* Area page · hero + dim grid + intent grid + related grid */
+      @media (max-width: 820px) {
+        .aiq-area-hero {
+          grid-template-columns: 1fr !important;
+          gap: 36px !important;
+        }
+        .aiq-score-ring {
+          align-self: flex-start;
+        }
+        .aiq-dim-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-intent-scores {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aiq-intent-scores > *:nth-child(2) { border-right: none !important; }
+        .aiq-intent-scores > *:nth-child(1),
+        .aiq-intent-scores > *:nth-child(2) { border-bottom: 1px solid var(--border) !important; }
+        .aiq-related-grid {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aiq-post-nav {
+          grid-template-columns: 1fr !important;
+        }
+      }
+      @media (max-width: 520px) {
+        .aiq-intent-scores {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-intent-scores > * {
+          border-right: none !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+        .aiq-intent-scores > *:last-child { border-bottom: none !important; }
+        .aiq-related-grid {
+          grid-template-columns: 1fr !important;
+        }
+      }
+
       /* Methodology · pipeline + AI split stack on narrow */
       @media (max-width: 880px) {
         .aiq-pipeline {

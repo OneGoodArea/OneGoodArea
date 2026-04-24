@@ -11,10 +11,10 @@ import { Wordmark } from "./wordmark";
 
 export function Footer() {
   const productLinks: { label: string; href: string }[] = [
-    { label: "Areas",        href: "/area/london" },
+    { label: "Areas",        href: "/design-v2/area/london" },
     { label: "Methodology",  href: "/design-v2/methodology" },
-    { label: "Changelog",    href: "/changelog" },
-    { label: "Blog",         href: "/blog" },
+    { label: "Changelog",    href: "/design-v2/changelog" },
+    { label: "Blog",         href: "/design-v2/blog" },
   ];
   const businessLinks: { label: string; href: string }[] = [
     { label: "For business", href: "/design-v2/business" },
@@ -23,7 +23,7 @@ export function Footer() {
   ];
   const companyLinks: { label: string; href: string }[] = [
     { label: "About",   href: "/design-v2/about" },
-    { label: "Help",    href: "/help" },
+    { label: "Help",    href: "/design-v2/help" },
     { label: "Contact", href: "mailto:hello@area-iq.co.uk" },
   ];
   const legalLinks: { label: string; href: string }[] = [
