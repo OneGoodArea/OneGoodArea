@@ -485,7 +485,7 @@ function EnterpriseCallout() {
     }}>
       <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 40px" }}>
         <div style={{
-          background: "var(--ink-deep)", color: "#FFFFFF",
+          background: "var(--bg-ink)", color: "#FFFFFF",
           padding: "34px 40px",
           display: "flex", alignItems: "center", justifyContent: "space-between",
           gap: 28, flexWrap: "wrap",

@@ -199,7 +199,7 @@ function CompareHead({ report, rag, border }: {
     <div style={{
       padding: "24px 26px",
       borderLeft: border === "left" ? "1px solid var(--border)" : "none",
-      background: "var(--ink-deep)",
+      background: "var(--bg-ink)",
       color: "#FFFFFF",
       position: "relative", overflow: "hidden",
     }}>

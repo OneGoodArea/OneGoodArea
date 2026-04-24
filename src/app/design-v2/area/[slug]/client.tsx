@@ -581,7 +581,7 @@ function Cta({ area }: { area: AreaData }) {
   return (
     <div style={{
       border: "1px solid var(--border)",
-      background: "var(--ink-deep)",
+      background: "var(--bg-ink)",
       padding: "40px 32px",
       position: "relative", overflow: "hidden",
     }}>

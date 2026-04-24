@@ -315,7 +315,7 @@ function HeroBlock({ report, score, rag }: {
         display: "grid",
         gridTemplateColumns: "1fr 220px",
         gap: 0,
-        background: "var(--ink-deep)",
+        background: "var(--bg-ink)",
         color: "#FFFFFF",
         position: "relative", overflow: "hidden",
       }} className="aiq-report-hero">

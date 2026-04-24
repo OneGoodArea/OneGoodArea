@@ -64,6 +64,11 @@ export function Styles() {
       .aiq *::selection { background: var(--signal); color: var(--signal-ink); }
       html { scroll-behavior: smooth; }
 
+      /* Theme-aware nav scroll overlay */
+      .aiq-nav-top { background: transparent; }
+      .aiq-nav-scrolled { background: rgba(255,255,255,0.86); }
+      [data-theme="dark"] .aiq-nav-scrolled { background: rgba(10,23,19,0.86); }
+
       @keyframes aiq-fade-up {
         from { opacity: 0; transform: translateY(14px); }
         to   { opacity: 1; transform: translateY(0); }

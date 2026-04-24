@@ -132,7 +132,7 @@ function UsageStrip({ plan, planName, isApiPlan, used, limit, onBilling, billing
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 0,
-      background: "var(--ink-deep)",
+      background: "var(--bg-ink)",
       borderRadius: 4,
       overflow: "hidden",
       position: "relative",

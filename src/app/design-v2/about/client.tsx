@@ -577,7 +577,7 @@ function Mission() {
 function FinalCta() {
   return (
     <section style={{
-      background: "var(--ink-deep)",
+      background: "var(--bg-ink)",
       padding: "120px 0 140px",
       position: "relative", overflow: "hidden",
     }}>

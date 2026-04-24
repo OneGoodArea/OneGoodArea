@@ -300,7 +300,7 @@ function CodeBlock({ lang, snippet, copyable = true }: {
   const [copied, setCopied] = useState(false);
   return (
     <div style={{
-      background: "var(--ink-deep)", borderRadius: 6,
+      background: "var(--bg-ink)", borderRadius: 6,
       padding: "16px 20px 20px",
       position: "relative", overflow: "hidden",
       marginBottom: 16,
@@ -354,7 +354,7 @@ function TabbedCode({ tabs }: {
   const active = tabs[idx];
   return (
     <div style={{
-      background: "var(--ink-deep)", borderRadius: 6,
+      background: "var(--bg-ink)", borderRadius: 6,
       padding: "14px 20px 20px", overflow: "hidden",
       marginBottom: 16,
     }}>
@@ -1086,7 +1086,7 @@ function CodeExamples() {
 function FinalCta() {
   return (
     <section style={{
-      background: "var(--ink-deep)",
+      background: "var(--bg-ink)",
       padding: "100px 0 120px",
       position: "relative", overflow: "hidden",
     }}>

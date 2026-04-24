@@ -24,7 +24,7 @@ export default function SignInClient() {
 function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/report";
+  const callbackUrl = searchParams.get("callbackUrl") || "/design-v2/dashboard";
 
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");

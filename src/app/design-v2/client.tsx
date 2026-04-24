@@ -413,7 +413,7 @@ function Hero({
                   style={{
                     fontFamily: "var(--sans)", fontSize: 13, fontWeight: 500,
                     color: active ? "var(--signal)" : "var(--text-2)",
-                    background: active ? "var(--ink-deep)" : "transparent",
+                    background: active ? "var(--bg-ink)" : "transparent",
                     border: `1px solid ${active ? "var(--ink-deep)" : "var(--border)"}`,
                     borderRadius: 999, padding: "7px 16px",
                     cursor: "pointer",
@@ -807,7 +807,7 @@ function IntentStrip({
                 display: "inline-flex", alignItems: "baseline", gap: 7,
                 padding: "6px 12px 8px",
                 border: "none",
-                background: active ? "var(--ink-deep)" : "transparent",
+                background: active ? "var(--bg-ink)" : "transparent",
                 borderRadius: 3,
                 cursor: "pointer",
                 color: active ? "var(--signal)" : "var(--text-3)",
@@ -1452,7 +1452,7 @@ const SampleReport = forwardRef<
               {/* Locked / CTA block · the teaser reveal */}
               <div style={{
                 border: "1px solid var(--ink-deep)",
-                background: "var(--ink-deep)",
+                background: "var(--bg-ink)",
                 borderRadius: 14, padding: "22px 24px",
                 position: "relative", overflow: "hidden",
               }}>
@@ -2215,7 +2215,7 @@ function HIWPanelIntent() {
         return (
           <div key={it.id} style={{
             border: `1px solid ${active ? "var(--ink-deep)" : "var(--border)"}`,
-            background: active ? "var(--ink-deep)" : "var(--bg)",
+            background: active ? "var(--bg-ink)" : "var(--bg)",
             borderRadius: 999,
             padding: "10px 18px",
             display: "flex", alignItems: "center", gap: 12,
@@ -3367,7 +3367,7 @@ function IRFooter() {
 function ForBusinessesSection() {
   return (
     <section id="embed-it" style={{
-      background: "var(--ink-deep)",
+      background: "var(--bg-ink)",
       borderTop: "1px solid var(--ink)",
       padding: "104px 0 120px",
     }}>

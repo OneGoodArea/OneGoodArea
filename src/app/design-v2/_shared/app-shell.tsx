@@ -74,7 +74,7 @@ function Sidebar() {
   const { data: session } = useSession();
   return (
     <aside className="aiq-app-sidebar" style={{
-      background: "var(--ink-deep)",
+      background: "var(--bg-ink)",
       borderRight: "1px solid var(--ink-deep)",
       padding: "26px 20px 22px",
       display: "flex", flexDirection: "column",

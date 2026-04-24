@@ -157,7 +157,7 @@ function Hero() {
 function HeroCodeCard() {
   return (
     <div style={{
-      background: "var(--ink-deep)", borderRadius: 6,
+      background: "var(--bg-ink)", borderRadius: 6,
       padding: "22px 24px 24px",
       boxShadow: "0 24px 60px -20px rgba(6,42,30,0.28)",
       position: "relative", overflow: "hidden",
@@ -340,7 +340,7 @@ function CodeBlock({ label, snippet, copyable }: {
   const [copied, setCopied] = useState(false);
   return (
     <div style={{
-      background: "var(--ink-deep)", borderRadius: 6,
+      background: "var(--bg-ink)", borderRadius: 6,
       padding: "18px 22px 24px",
       position: "relative", overflow: "hidden",
     }}>
@@ -646,7 +646,7 @@ function PricingStrip() {
 function FinalCta() {
   return (
     <section style={{
-      background: "var(--ink-deep)",
+      background: "var(--bg-ink)",
       padding: "120px 0 140px",
       position: "relative", overflow: "hidden",
     }}>

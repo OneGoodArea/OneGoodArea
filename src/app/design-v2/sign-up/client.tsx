@@ -63,7 +63,7 @@ export default function SignUpClient() {
   };
 
   const handleOAuth = async (provider: "google" | "github") => {
-    try { await signIn(provider, { callbackUrl: "/report" }); }
+    try { await signIn(provider, { callbackUrl: "/design-v2/dashboard" }); }
     catch { setError("OAuth error. Please try again."); }
   };
 

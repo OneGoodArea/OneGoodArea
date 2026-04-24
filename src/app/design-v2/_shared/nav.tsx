@@ -29,13 +29,15 @@ export function Nav() {
   ];
 
   return (
-    <nav style={{
-      position: "sticky", top: 0, zIndex: 50,
-      background: scrolled ? "rgba(255,255,255,0.86)" : "transparent",
-      backdropFilter: scrolled ? "blur(14px) saturate(160%)" : "none",
-      borderBottom: `1px solid ${scrolled ? "var(--border)" : "transparent"}`,
-      transition: "all 220ms ease",
-    }}>
+    <nav
+      className={scrolled ? "aiq-nav-scrolled" : "aiq-nav-top"}
+      style={{
+        position: "sticky", top: 0, zIndex: 50,
+        backdropFilter: scrolled ? "blur(14px) saturate(160%)" : "none",
+        borderBottom: `1px solid ${scrolled ? "var(--border)" : "transparent"}`,
+        transition: "all 220ms ease",
+      }}
+    >
       <div className="aiq-nav-row" style={{
         maxWidth: 1240, margin: "0 auto", padding: "0 40px",
         height: 64, display: "flex", alignItems: "center", gap: 24,
