@@ -40,6 +40,27 @@ export function Styles() {
         text-rendering: optimizeLegibility;
       }
 
+      /* Dark theme · flips all tokens when data-theme="dark" is on <html>.
+         Chartreuse stays (it's brand signal on both). Surfaces go dark-forest,
+         text vars go light. Components reading from these vars adapt. */
+      [data-theme="dark"] .aiq {
+        --ink:        #C4F5D4;
+        --ink-deep:   #F5F8F6;
+        --ink-soft:   #8FB8A5;
+        --signal:     #D4F33A;
+        --signal-ink: #1A2600;
+        --signal-dim: #2E4310;
+        --bg:         #0A1713;
+        --bg-off:     #0F201A;
+        --bg-ink:     #000A05;
+        --border:     #1F2E28;
+        --border-dim: #172520;
+        --text:       #E4EAE3;
+        --text-2:     #A8B8B0;
+        --text-3:     #7D908A;
+        --text-4:     #556864;
+      }
+
       .aiq *::selection { background: var(--signal); color: var(--signal-ink); }
       html { scroll-behavior: smooth; }
 
@@ -302,6 +323,30 @@ export function Styles() {
           grid-template-columns: 1fr !important;
         }
         .aiq-watchlist > * { border-right: none !important; }
+      }
+
+      /* Admin · collapse multi-col grids */
+      @media (max-width: 900px) {
+        .aiq-admin-kpi {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aiq-admin-kpi > *:nth-child(2) { border-right: none !important; }
+        .aiq-admin-kpi > *:nth-child(1),
+        .aiq-admin-kpi > *:nth-child(2) { border-bottom: 1px solid var(--border) !important; }
+        .aiq-admin-2col,
+        .aiq-admin-3col {
+          grid-template-columns: 1fr !important;
+        }
+      }
+      @media (max-width: 540px) {
+        .aiq-admin-kpi {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-admin-kpi > * {
+          border-right: none !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+        .aiq-admin-kpi > *:last-child { border-bottom: none !important; }
       }
 
       /* Report + Compare · layout grids */

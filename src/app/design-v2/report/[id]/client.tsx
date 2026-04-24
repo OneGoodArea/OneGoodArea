@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { Styles } from "../../_shared/styles";
 import { AppShell, AppCard, appRag, GhostCta } from "../../_shared/app-shell";
@@ -22,6 +22,13 @@ type Props = {
 
 export default function ReportViewClient({ id, report, score, createdAt }: Props) {
   const rag = appRag(score);
+  const [toast, setToast] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
+
+  function flash(kind: "ok" | "err", msg: string) {
+    setToast({ kind, msg });
+    setTimeout(() => setToast(null), 2400);
+  }
+
   return (
     <>
       <Styles />
@@ -29,13 +36,11 @@ export default function ReportViewClient({ id, report, score, createdAt }: Props
         title={report.area}
         subtitle={`${report.intent} · generated ${formatDate(createdAt)}`}
         actions={
-          <>
-            <GhostCta href="/design-v2/dashboard">← Reports</GhostCta>
-            <GhostCta href="/design-v2/report">New report</GhostCta>
-          </>
+          <ReportActions id={id} report={report} score={score} onToast={flash} />
         }
       >
         <div style={{ padding: "28px 40px 64px", display: "flex", flexDirection: "column", gap: 22 }}>
+          {toast && <Toast kind={toast.kind} msg={toast.msg} />}
           <HeroBlock report={report} score={score} rag={rag} />
           <Dimensions subScores={report.sub_scores} />
           <SummaryBlock summary={report.summary} />
@@ -47,6 +52,254 @@ export default function ReportViewClient({ id, report, score, createdAt }: Props
         </div>
       </AppShell>
     </>
+  );
+}
+
+/* ─────── Action bar: share · PDF · watchlist ─────── */
+
+function ReportActions({ id, report, score, onToast }: {
+  id: string; report: AreaReport; score: number;
+  onToast: (kind: "ok" | "err", msg: string) => void;
+}) {
+  const [shareOpen, setShareOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const shareUrl = typeof window !== "undefined"
+    ? `${window.location.origin}/report/${id}`
+    : `https://www.area-iq.co.uk/report/${id}`;
+  const shareText = `${report.area} scored ${score}/100 for ${report.intent} on OneGoodArea`;
+
+  function copyLink() {
+    if (typeof navigator === "undefined") return;
+    navigator.clipboard.writeText(shareUrl);
+    onToast("ok", "Link copied");
+    setShareOpen(false);
+  }
+
+  function openSocial(url: string) {
+    window.open(url, "_blank", "noopener,noreferrer");
+    setShareOpen(false);
+  }
+
+  async function exportPDF() {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const { exportReportPDF } = await import("@/lib/pdf-export");
+      exportReportPDF(report);
+      onToast("ok", "PDF downloaded");
+    } catch {
+      onToast("err", "PDF export failed");
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function saveToWatchlist() {
+    if (saving || saved) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/watchlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postcode: report.area, label: "", intent: report.intent }),
+      });
+      if (res.ok) { setSaved(true); onToast("ok", "Saved to watchlist"); }
+      else if (res.status === 409) { setSaved(true); onToast("ok", "Already in watchlist"); }
+      else { onToast("err", "Could not save"); }
+    } catch {
+      onToast("err", "Network error");
+    } finally { setSaving(false); }
+  }
+
+  return (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", position: "relative" }}>
+      <ActionBtn
+        onClick={saveToWatchlist}
+        disabled={saving || saved}
+        tone={saved ? "active" : "ghost"}
+      >
+        <BookmarkIcon filled={saved} />
+        {saved ? "Saved" : saving ? "Saving…" : "Save area"}
+      </ActionBtn>
+
+      <ActionBtn onClick={exportPDF} disabled={exporting} tone="ghost">
+        <DownloadIcon />
+        {exporting ? "Preparing…" : "PDF"}
+      </ActionBtn>
+
+      <div style={{ position: "relative" }}>
+        <ActionBtn onClick={() => setShareOpen(!shareOpen)} tone="ghost">
+          <ShareIcon />
+          Share
+        </ActionBtn>
+        {shareOpen && (
+          <ShareMenu
+            shareUrl={shareUrl} shareText={shareText}
+            onCopy={copyLink} onSocial={openSocial}
+            onClose={() => setShareOpen(false)}
+          />
+        )}
+      </div>
+
+      <GhostCta href="/design-v2/dashboard">← Reports</GhostCta>
+    </div>
+  );
+}
+
+function ActionBtn({ children, onClick, disabled, tone }: {
+  children: React.ReactNode; onClick: () => void; disabled?: boolean; tone: "ghost" | "active";
+}) {
+  const isActive = tone === "active";
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
+        letterSpacing: "0.14em", textTransform: "uppercase",
+        color: isActive ? "var(--signal-ink)" : "var(--ink)",
+        background: isActive ? "var(--signal)" : "var(--bg)",
+        padding: "10px 16px", borderRadius: 999,
+        border: `1px solid ${isActive ? "var(--ink-deep)" : "var(--border)"}`,
+        display: "inline-flex", alignItems: "center", gap: 7,
+        cursor: disabled ? "default" : "pointer",
+        opacity: disabled ? 0.55 : 1,
+        transition: "border-color 140ms ease, background 140ms ease",
+      }}
+      onMouseEnter={(e) => {
+        if (disabled || isActive) return;
+        e.currentTarget.style.borderColor = "var(--ink)";
+        e.currentTarget.style.background = "var(--bg-off)";
+      }}
+      onMouseLeave={(e) => {
+        if (disabled || isActive) return;
+        e.currentTarget.style.borderColor = "var(--border)";
+        e.currentTarget.style.background = "var(--bg)";
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ShareMenu({ shareUrl, shareText, onCopy, onSocial, onClose }: {
+  shareUrl: string; shareText: string;
+  onCopy: () => void; onSocial: (url: string) => void; onClose: () => void;
+}) {
+  const waUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}`;
+  const liUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+  const xUrl  = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+
+  return (
+    <>
+      <div
+        aria-hidden
+        onClick={onClose}
+        style={{
+          position: "fixed", inset: 0, zIndex: 30,
+        }}
+      />
+      <div style={{
+        position: "absolute", top: "calc(100% + 6px)", right: 0,
+        zIndex: 31, minWidth: 220,
+        background: "var(--bg)",
+        border: "1px solid var(--border)",
+        borderRadius: 4,
+        boxShadow: "0 16px 36px -10px rgba(6,42,30,0.18)",
+        overflow: "hidden",
+      }}>
+        <ShareItem label="WhatsApp"    onClick={() => onSocial(waUrl)} />
+        <ShareItem label="LinkedIn"    onClick={() => onSocial(liUrl)} />
+        <ShareItem label="X (Twitter)" onClick={() => onSocial(xUrl)} />
+        <div style={{ borderTop: "1px solid var(--border-dim)" }} />
+        <ShareItem label="Copy link" onClick={onCopy} primary />
+      </div>
+    </>
+  );
+}
+
+function ShareItem({ label, onClick, primary }: {
+  label: string; onClick: () => void; primary?: boolean;
+}) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        width: "100%", textAlign: "left",
+        padding: "11px 16px",
+        fontFamily: primary ? "var(--mono)" : "var(--sans)",
+        fontSize: primary ? 10.5 : 13.5,
+        letterSpacing: primary ? "0.18em" : "-0.003em",
+        textTransform: primary ? "uppercase" : "none",
+        color: primary ? "var(--ink-deep)" : "var(--ink-deep)",
+        background: hover ? "var(--signal-dim)" : "transparent",
+        border: "none", cursor: "pointer",
+        fontWeight: primary ? 600 : 500,
+        transition: "background 140ms ease",
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+function Toast({ kind, msg }: { kind: "ok" | "err"; msg: string }) {
+  const fg = kind === "ok" ? "var(--ink-deep)" : "#A01B00";
+  const bg = kind === "ok" ? "var(--signal-dim)" : "rgba(239,68,68,0.08)";
+  const border = kind === "ok" ? "var(--ink-deep)" : "rgba(239,68,68,0.3)";
+  return (
+    <div style={{
+      position: "fixed", top: 24, right: 24, zIndex: 60,
+      padding: "10px 14px",
+      background: bg,
+      border: `1px solid ${border}`,
+      borderRadius: 4,
+      fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
+      letterSpacing: "0.12em", textTransform: "uppercase",
+      color: fg,
+      display: "inline-flex", alignItems: "center", gap: 9,
+      boxShadow: "0 12px 28px -10px rgba(6,42,30,0.22)",
+      animation: "aiq-fade-up 220ms ease",
+    }}>
+      <span aria-hidden style={{
+        width: 6, height: 6, borderRadius: 6,
+        background: kind === "ok" ? "var(--signal)" : "#D13A1E",
+      }} />
+      {msg}
+    </div>
+  );
+}
+
+/* ─────── Icons ─────── */
+
+function BookmarkIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} aria-hidden>
+      <path d="M6 4 H18 V22 L12 17 L6 22 Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" fill={filled ? "currentColor" : "none"} />
+    </svg>
+  );
+}
+function DownloadIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M12 4 V15 M6 11 L12 17 L18 11 M4 21 H20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function ShareIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="6" cy="12" r="2.5" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="18" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="18" cy="19" r="2.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M8.2 11 L15.8 6.5 M8.2 13 L15.8 17.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
   );
 }
 
