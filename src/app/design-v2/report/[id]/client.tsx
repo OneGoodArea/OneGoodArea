@@ -202,7 +202,7 @@ function ShareMenu({ shareUrl, shareText, onCopy, onSocial, onClose }: {
           position: "fixed", inset: 0, zIndex: 30,
         }}
       />
-      <div style={{
+      <div className="aiq-share-menu" style={{
         position: "absolute", top: "calc(100% + 6px)", right: 0,
         zIndex: 31, minWidth: 220,
         background: "var(--bg)",

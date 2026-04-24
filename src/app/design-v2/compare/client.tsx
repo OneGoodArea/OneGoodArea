@@ -98,6 +98,7 @@ function Picker({ selected, all }: { selected: Report[]; all: Summary[] }) {
               }}>
                 <button
                   onClick={() => toggle(r.id)}
+                  className="aiq-compare-picker-row"
                   style={{
                     width: "100%", textAlign: "left",
                     padding: "13px 22px",

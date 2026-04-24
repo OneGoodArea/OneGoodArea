@@ -462,6 +462,15 @@ export function Styles() {
           grid-template-columns: 1fr !important;
         }
       }
+      /* Admin intent-distribution bars: 4-col layout → tighten the fixed
+         columns on phones so the 1fr bar still has room to render. */
+      @media (max-width: 480px) {
+        .aiq-admin-bar-row {
+          grid-template-columns: 60px minmax(0, 1fr) 40px 36px !important;
+          gap: 8px !important;
+          font-size: 11px;
+        }
+      }
       @media (max-width: 540px) {
         .aiq-admin-kpi {
           grid-template-columns: 1fr !important;
@@ -498,6 +507,37 @@ export function Styles() {
       @media (max-width: 540px) {
         .aiq-report-intents {
           grid-template-columns: 1fr !important;
+        }
+      }
+      /* Compare picker row · 5-col table on desktop collapses to checkbox +
+         area + score (3 col) on tablet, then fully stacks on phones with
+         metadata below the area name. */
+      @media (max-width: 820px) {
+        .aiq-compare-picker-row {
+          grid-template-columns: 24px minmax(0, 1fr) 80px !important;
+          gap: 12px !important;
+        }
+        .aiq-compare-picker-row > *:nth-child(3) { display: none !important; }
+        .aiq-compare-picker-row > *:nth-child(5) { display: none !important; }
+      }
+      @media (max-width: 480px) {
+        .aiq-compare-picker-row {
+          grid-template-columns: 20px minmax(0, 1fr) 60px !important;
+          padding-left: 16px !important;
+          padding-right: 16px !important;
+          gap: 10px !important;
+        }
+      }
+      /* Report [id] share menu · right:0 pushes the 220px-wide dropdown off
+         a 375px screen. On mobile, anchor it to the left so it lands
+         inside the viewport and span near-full width. */
+      @media (max-width: 480px) {
+        .aiq-share-menu {
+          right: auto !important;
+          left: 0 !important;
+          min-width: 0 !important;
+          width: calc(100vw - 40px) !important;
+          max-width: 280px;
         }
       }
 

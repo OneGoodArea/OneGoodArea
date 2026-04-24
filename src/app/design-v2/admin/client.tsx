@@ -344,7 +344,7 @@ function IntentBars({ data }: { data: { intent: string; count: number }[] }) {
         const widthPct = Math.max((d.count / max) * 100, 4);
         const pctOfTotal = Math.round((d.count / total) * 100);
         return (
-          <li key={d.intent} style={{
+          <li key={d.intent} className="aiq-admin-bar-row" style={{
             display: "grid",
             gridTemplateColumns: "80px 1fr 50px 40px",
             gap: 12, alignItems: "center",
