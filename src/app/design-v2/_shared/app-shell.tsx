@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Wordmark } from "./wordmark";
-import { ThemeDot } from "./theme-dot";
 import { AiqIcon, type IconName } from "./icons";
 
 /* ═══════════════════════════════════════════════════════════════
@@ -93,10 +92,8 @@ function Sidebar() {
 
       <div style={{
         marginBottom: 34, position: "relative", zIndex: 1,
-        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
       }}>
         <Wordmark href="/design-v2/dashboard" size={20} tone="dark" />
-        <ThemeDot tone="dark" />
       </div>
 
       <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", flex: 1 }}>
@@ -106,6 +103,7 @@ function Sidebar() {
 
         <div style={{ flex: 1 }} />
 
+        <SidebarThemeRow />
         <UserChip name={session?.user?.name || null} email={session?.user?.email || null} />
       </div>
     </aside>
@@ -226,6 +224,89 @@ function NavIconDark({ name, active }: { name: IconName; active: boolean }) {
       // Fallback: a simple dot
       return <svg {...common}><circle cx="14" cy="14" r="5" /></svg>;
   }
+}
+
+/* Labeled theme switcher row · sits in the sidebar above the user chip.
+   Clearly visible even if the small ThemeDot was being missed. */
+function SidebarThemeRow() {
+  const [theme, setTheme] = useState<"dark" | "light">("light");
+  const [mounted, setMounted] = useState(false);
+  const [hover, setHover] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const stored =
+      (typeof window !== "undefined" && localStorage.getItem("aiq-theme")) ||
+      document.documentElement.getAttribute("data-theme") ||
+      "light";
+    setTheme(stored === "dark" ? "dark" : "light");
+  }, []);
+
+  function toggle() {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem("aiq-theme", next); } catch {}
+  }
+
+  if (!mounted) return <div style={{ height: 42, marginBottom: 8 }} />;
+
+  const isDark = theme === "dark";
+  const nextLabel = isDark ? "Light" : "Dark";
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        gap: 11, padding: "9px 12px 9px 10px",
+        marginBottom: 8,
+        background: hover ? "rgba(212,243,58,0.1)" : "rgba(255,255,255,0.04)",
+        border: `1px solid ${hover ? "rgba(212,243,58,0.35)" : "rgba(255,255,255,0.1)"}`,
+        borderRadius: 4, cursor: "pointer",
+        color: hover ? "var(--signal)" : "rgba(255,255,255,0.82)",
+        fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
+        letterSpacing: "0.16em", textTransform: "uppercase",
+        transition: "background 140ms ease, border-color 140ms ease, color 140ms ease",
+      }}
+    >
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+        <span aria-hidden style={{
+          width: 22, height: 22, flexShrink: 0,
+          border: `1px solid ${hover ? "rgba(212,243,58,0.45)" : "rgba(255,255,255,0.18)"}`,
+          borderRadius: 3,
+          display: "inline-flex", alignItems: "center", justifyContent: "center",
+          background: hover ? "rgba(212,243,58,0.18)" : "transparent",
+          color: "currentColor",
+        }}>
+          {isDark ? (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.6" />
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+                stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
+          ) : (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"
+                stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+            </svg>
+          )}
+        </span>
+        <span>Theme</span>
+      </span>
+      <span style={{
+        fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 600,
+        letterSpacing: "0.2em", color: "var(--signal)",
+        display: "inline-flex", alignItems: "center", gap: 4,
+      }}>
+        {nextLabel}
+        <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 11 }}>→</span>
+      </span>
+    </button>
+  );
 }
 
 function UserChip({ name, email }: { name: string | null; email: string | null }) {
