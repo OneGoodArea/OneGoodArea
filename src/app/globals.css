@@ -1,12 +1,8 @@
 @import "tailwindcss";
 
-/* Fonts are loaded via next/font/google in src/app/layout.tsx and
-   set as --font-display, --font-sans, --font-mono on <body>. The
-   .aiq design tokens in design-v2/_shared/styles.tsx alias them
-   under --display, --sans, --mono with system fallbacks. No need
-   for a Tailwind @theme block — orphaned legacy files referencing
-   the `font-sans` Tailwind class fall back to the default sans
-   stack, but nothing rendered actually uses that class. */
+/* Google Fonts loaded via a <link> tag in src/app/layout.tsx's <head>
+   (matches live site exactly). Tailwind 4 / Turbopack strips
+   @import url() statements from CSS files, so it has to be a link tag. */
 
 :root {
   --bg: #09090b;
@@ -91,7 +87,7 @@ html[data-theme="dark"] {
 }
 
 body {
-  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
@@ -278,9 +274,9 @@ input:focus, select:focus {
         --text-3:     #6E8278;
         --text-4:     #9CAFA5;
 
-        --display: var(--font-display), 'Fraunces', 'Times New Roman', serif;
-        --sans:    var(--font-sans), 'Inter', -apple-system, system-ui, sans-serif;
-        --mono:    var(--font-mono), 'Geist Mono', ui-monospace, 'SF Mono', monospace;
+        --display: 'Fraunces', 'Times New Roman', serif;
+        --sans:    'Inter', -apple-system, system-ui, sans-serif;
+        --mono:    'Geist Mono', ui-monospace, 'SF Mono', monospace;
 
         background: var(--bg);
         color: var(--text);
