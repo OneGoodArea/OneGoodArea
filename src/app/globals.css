@@ -1,11 +1,12 @@
 @import "tailwindcss";
 
-/* Font vars are emitted by next/font/google in src/app/layout.tsx
-   directly onto <body>. No indirection needed. */
-@theme inline {
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
-}
+/* Fonts are loaded via next/font/google in src/app/layout.tsx and
+   set as --font-display, --font-sans, --font-mono on <body>. The
+   .aiq design tokens in design-v2/_shared/styles.tsx alias them
+   under --display, --sans, --mono with system fallbacks. No need
+   for a Tailwind @theme block — orphaned legacy files referencing
+   the `font-sans` Tailwind class fall back to the default sans
+   stack, but nothing rendered actually uses that class. */
 
 :root {
   --bg: #09090b;
@@ -243,3 +244,791 @@ input:focus, select:focus {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--border-active);
 }
+
+
+/* ════════════════════════════════════════════════════════════════
+   OneGoodArea design-v2 tokens, animations, responsive rules.
+   Migrated here from _shared/styles.tsx so they ship in the static
+   CSS bundle (loaded in <head> before paint) instead of via
+   styled-jsx (which only injects after React hydration → FOUC).
+   ════════════════════════════════════════════════════════════════ */
+      /* Fonts are loaded via next/font/google in src/app/layout.tsx and
+         exposed as CSS vars on <body> (--font-display / --font-sans /
+         --font-mono). No @import here - that caused FOUC. The .aiq
+         tokens below alias those vars under their semantic names. */
+
+      .aiq {
+        /* Ink · forest green primary */
+        --ink:        #0A4D3A;
+        --ink-deep:   #062A1E;
+        --ink-soft:   #1C5E4A;
+        /* Signal · chartreuse (the alive accent) */
+        --signal:     #D4F33A;
+        --signal-ink: #1A2600;
+        --signal-dim: #E9F69E;
+        /* Surface */
+        --bg:         #FFFFFF;
+        --bg-off:     #F6F9F4;
+        --bg-ink:     #062A1E;
+        /* Line + text */
+        --border:     #E4EAE3;
+        --border-dim: #F0F3EE;
+        --text:       #0B2018;
+        --text-2:     #445A51;
+        --text-3:     #6E8278;
+        --text-4:     #9CAFA5;
+
+        --display: var(--font-display), 'Fraunces', 'Times New Roman', serif;
+        --sans:    var(--font-sans), 'Inter', -apple-system, system-ui, sans-serif;
+        --mono:    var(--font-mono), 'Geist Mono', ui-monospace, 'SF Mono', monospace;
+
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--sans);
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+
+      /* Dark theme · flips all tokens when data-theme="dark" is on <html>.
+         Chartreuse stays (it's brand signal on both). Surfaces go dark-forest,
+         text vars go light. Components reading from these vars adapt. */
+      [data-theme="dark"] .aiq {
+        --ink:        #C4F5D4;
+        --ink-deep:   #F5F8F6;
+        --ink-soft:   #8FB8A5;
+        --signal:     #D4F33A;
+        --signal-ink: #1A2600;
+        --signal-dim: #2E4310;
+        --bg:         #0A1713;
+        --bg-off:     #0F201A;
+        --bg-ink:     #062A1E;  /* same as light · dark panels stay consistent across themes */
+        --border:     #1F2E28;
+        --border-dim: #172520;
+        --text:       #E4EAE3;
+        --text-2:     #A8B8B0;
+        --text-3:     #7D908A;
+        --text-4:     #556864;
+      }
+
+      .aiq *::selection { background: var(--signal); color: var(--signal-ink); }
+      html { scroll-behavior: smooth; }
+
+      /* Theme-aware nav scroll overlay */
+      .aiq-nav-top { background: transparent; }
+      .aiq-nav-scrolled { background: rgba(255,255,255,0.86); }
+      [data-theme="dark"] .aiq-nav-scrolled { background: rgba(10,23,19,0.86); }
+
+      /* .aiq-force-light · lock tokens to light-theme values for mock
+         surfaces that should always look the same regardless of theme
+         (embedded widget preview, listing-page illustration, etc.) */
+      .aiq .aiq-force-light,
+      [data-theme="dark"] .aiq .aiq-force-light {
+        --ink:        #0A4D3A;
+        --ink-deep:   #062A1E;
+        --ink-soft:   #1C5E4A;
+        --signal:     #D4F33A;
+        --signal-ink: #1A2600;
+        --signal-dim: #E9F69E;
+        --bg:         #FFFFFF;
+        --bg-off:     #F6F9F4;
+        --bg-ink:     #062A1E;
+        --border:     #E4EAE3;
+        --border-dim: #F0F3EE;
+        --text:       #0B2018;
+        --text-2:     #445A51;
+        --text-3:     #6E8278;
+        --text-4:     #9CAFA5;
+      }
+
+      @keyframes aiq-fade-up {
+        from { opacity: 0; transform: translateY(14px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes aiq-pulse-dot {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50%      { opacity: 0.35; transform: scale(0.85); }
+      }
+      @keyframes aiq-ring-pulse {
+        0%   { transform: scale(0.6); opacity: 0.9; }
+        100% { transform: scale(3.2); opacity: 0; }
+      }
+      @keyframes aiq-caret {
+        0%, 49%   { opacity: 1; }
+        50%, 100% { opacity: 0; }
+      }
+      @keyframes aiq-scan {
+        from { background-position: 0 0; }
+        to   { background-position: 0 22px; }
+      }
+      @keyframes aiq-source-run {
+        0%   { width: 0%; }
+        100% { width: 100%; }
+      }
+      @keyframes aiq-rotate-in {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes aiq-spin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+      }
+      @keyframes aiq-skeleton {
+        0%   { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+
+      /* ─── Responsive ─────────────────────────────────────── */
+      /* Tablet / narrow desktop: stack the hero columns */
+      @media (max-width: 960px) {
+        .aiq-hero-grid {
+          grid-template-columns: 1fr !important;
+          gap: 48px !important;
+          padding: 32px 28px 40px !important;
+        }
+        .aiq-engine {
+          position: static !important;
+        }
+        .aiq-map {
+          max-width: 520px;
+          margin: 0 auto;
+        }
+      }
+
+      /* Mobile: single column, smaller text, nav compacts */
+      @media (max-width: 720px) {
+        .aiq-nav-links,
+        .aiq-nav-div {
+          display: none !important;
+        }
+        .aiq-headline {
+          margin-top: 20px !important;
+        }
+        .aiq-for-line {
+          white-space: normal !important;
+        }
+        .aiq-report-grid {
+          grid-template-columns: 1fr !important;
+          gap: 28px !important;
+          padding: 24px !important;
+        }
+        .aiq-nav-cta-label {
+          display: none !important;
+        }
+      }
+
+      /* Marketing nav · hamburger visible only on mobile, drawer slides in
+         from the right with all links + theme + CTA. */
+      @media (min-width: 721px) {
+        .aiq-nav-mobile-btn { display: none !important; }
+        .aiq-nav-drawer { display: none !important; }
+        .aiq-nav-backdrop { display: none !important; }
+      }
+      @media (max-width: 720px) {
+        .aiq-nav-mobile-btn {
+          display: inline-flex !important;
+        }
+        .aiq-nav-drawer {
+          position: fixed;
+          top: 0; right: 0; bottom: 0;
+          width: 320px; max-width: 88vw;
+          background: var(--bg);
+          border-left: 1px solid var(--border);
+          z-index: 60;
+          transform: translateX(100%);
+          transition: transform 260ms cubic-bezier(0.16,1,0.3,1);
+          display: flex !important;
+          flex-direction: column;
+          padding: 20px 22px 24px;
+          overflow-y: auto;
+        }
+        .aiq-nav-drawer.aiq-drawer-open {
+          transform: translateX(0);
+          box-shadow: -20px 0 48px -8px rgba(6,42,30,0.35);
+        }
+        .aiq-nav-backdrop {
+          position: fixed; inset: 0;
+          background: rgba(6,42,30,0.48);
+          backdrop-filter: blur(2px);
+          z-index: 55;
+          animation: aiq-fade-up 200ms ease;
+        }
+        .aiq-nav-cta-desktop {
+          display: none !important;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .aiq-nav-beta { display: none !important; }
+      }
+
+      /* Who + Why 2-col: stack on narrow viewports */
+      @media (max-width: 820px) {
+        .aiq-who-why-grid {
+          grid-template-columns: 1fr !important;
+          gap: 48px !important;
+        }
+        .aiq-who-why-divider { display: none !important; }
+        .aiq-who-col {
+          padding-right: 0 !important;
+          padding-bottom: 40px !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+        .aiq-why-col {
+          padding-left: 0 !important;
+          padding-top: 8px !important;
+        }
+      }
+
+      /* Intents section: collapse to 2 cols on tablet, 1 on mobile */
+      @media (max-width: 880px) {
+        .aiq-intents-grid {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aiq-intent-col:nth-child(2) { border-right: none !important; }
+        .aiq-intent-col:nth-child(1),
+        .aiq-intent-col:nth-child(2) { border-bottom: 1px solid var(--border) !important; }
+      }
+      @media (max-width: 560px) {
+        .aiq-intents-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-intent-col { border-right: none !important; border-bottom: 1px solid var(--border) !important; }
+        .aiq-intent-col:last-child { border-bottom: none !important; }
+      }
+
+
+      /* How It Works zigzag: rows collapse on narrow viewports */
+      @media (max-width: 820px) {
+        .aiq-hiw-row {
+          grid-template-columns: 1fr !important;
+          gap: 28px !important;
+          padding: 24px 0 !important;
+        }
+        .aiq-hiw-row > *:nth-child(1) {
+          order: 1 !important;
+        }
+        .aiq-hiw-row > *:nth-child(2) {
+          order: 2 !important;
+        }
+        .aiq-hiw-connector {
+          padding: 4px 0 !important;
+        }
+      }
+
+      /* Footer: collapse to single column on narrow viewports */
+      @media (max-width: 820px) {
+        .aiq-footer-top {
+          grid-template-columns: 1fr 1fr !important;
+          gap: 48px !important;
+          margin-bottom: 56px !important;
+        }
+        .aiq-footer-brand {
+          grid-column: 1 / -1 !important;
+          margin-bottom: 8px !important;
+        }
+      }
+      @media (max-width: 520px) {
+        .aiq-footer-top {
+          grid-template-columns: 1fr !important;
+          gap: 40px !important;
+        }
+        .aiq-footer-bottom {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+          gap: 14px !important;
+        }
+      }
+
+      /* Business page · API preview, audiences, pricing strip */
+      @media (max-width: 900px) {
+        .aiq-api-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-audiences-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-audiences-grid > *:nth-child(odd) { border-right: none !important; }
+        .aiq-audiences-grid > *:not(:last-child) { border-bottom: 1px solid var(--border) !important; }
+        .aiq-capability-row {
+          grid-template-columns: 48px 1fr !important;
+          gap: 20px !important;
+        }
+        .aiq-capability-row > *:nth-child(3) {
+          grid-column: 1 / -1;
+        }
+      }
+      @media (max-width: 520px) {
+        .aiq-capability-row {
+          grid-template-columns: 1fr !important;
+          gap: 14px !important;
+        }
+        .aiq-capability-row > *:nth-child(3) {
+          grid-column: auto;
+        }
+      }
+      @media (max-width: 820px) {
+        .aiq-tier-grid {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aiq-tier-grid > *:nth-child(2) { border-right: none !important; }
+        .aiq-tier-grid > *:nth-child(1),
+        .aiq-tier-grid > *:nth-child(2) { border-bottom: 1px solid var(--border) !important; }
+      }
+      @media (max-width: 520px) {
+        .aiq-tier-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-tier-grid > * { border-right: none !important; border-bottom: 1px solid var(--border) !important; }
+        .aiq-tier-grid > *:last-child { border-bottom: none !important; }
+      }
+
+      /* Auth shell · two-column stacks on mobile */
+      @media (max-width: 880px) {
+        .aiq-auth-shell {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-auth-brand {
+          min-height: auto !important;
+          padding: 40px 32px 48px !important;
+          border-right: none !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+      }
+
+      /* Legal shell · sidebar collapses */
+      @media (max-width: 900px) {
+        .aiq-legal-wrap {
+          grid-template-columns: 1fr !important;
+          gap: 32px !important;
+        }
+        .aiq-legal-sidebar {
+          position: static !important;
+        }
+      }
+
+      /* App shell · desktop keeps the 240px sidebar. Mobile (≤960px) turns
+         the sidebar into an off-canvas drawer and surfaces a top-bar with
+         a hamburger + the current title. Drawer slides from the left. */
+      @media (min-width: 961px) {
+        .aiq-mobile-topbar { display: none !important; }
+        .aiq-mobile-backdrop { display: none !important; }
+      }
+      @media (max-width: 960px) {
+        .aiq-app-shell {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-app-sidebar {
+          position: fixed !important;
+          top: 0; left: 0; bottom: 0;
+          width: 280px !important;
+          height: 100vh !important;
+          max-width: 84vw;
+          transform: translateX(-100%);
+          transition: transform 260ms cubic-bezier(0.16,1,0.3,1);
+          z-index: 60;
+          border-right: 1px solid var(--ink-deep) !important;
+          padding: 20px 18px 20px !important;
+        }
+        .aiq-app-sidebar.aiq-sidebar-open {
+          transform: translateX(0);
+          box-shadow: 20px 0 48px -8px rgba(6,42,30,0.35);
+        }
+        .aiq-sidebar-close {
+          display: inline-flex !important;
+        }
+        .aiq-mobile-backdrop {
+          position: fixed; inset: 0;
+          background: rgba(6,42,30,0.48);
+          backdrop-filter: blur(2px);
+          z-index: 55;
+          animation: aiq-fade-up 200ms ease;
+        }
+        .aiq-mobile-topbar {
+          display: flex !important;
+          position: sticky; top: 0; z-index: 40;
+          align-items: center; gap: 12px;
+          padding: 12px 16px;
+          background: var(--bg);
+          border-bottom: 1px solid var(--border);
+        }
+      }
+      @media (max-width: 820px) {
+        .aiq-dash-usage {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-dash-usage > *:first-child {
+          border-right: none !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+        .aiq-dash-stats {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aiq-dash-stats > *:nth-child(2) { border-right: none !important; }
+        .aiq-dash-stats > *:nth-child(1),
+        .aiq-dash-stats > *:nth-child(2) { border-bottom: 1px solid var(--border) !important; }
+        .aiq-watchlist {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aiq-watchlist > *:nth-child(2n) { border-right: none !important; }
+        .aiq-reports-head,
+        .aiq-reports-row {
+          grid-template-columns: 1fr 80px 40px !important;
+          gap: 10px !important;
+        }
+        .aiq-reports-head > *:nth-child(2),
+        .aiq-reports-head > *:nth-child(4),
+        .aiq-reports-row > *:nth-child(2),
+        .aiq-reports-row > *:nth-child(4) { display: none !important; }
+        .aiq-usage-stats {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-usage-stats > * {
+          border-right: none !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+        .aiq-usage-stats > *:last-child { border-bottom: none !important; }
+        .aiq-usage-quick {
+          grid-template-columns: 1fr !important;
+        }
+      }
+      @media (max-width: 560px) {
+        .aiq-watchlist {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-watchlist > * { border-right: none !important; }
+      }
+
+      /* Admin · collapse multi-col grids */
+      @media (max-width: 900px) {
+        .aiq-admin-kpi {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aiq-admin-kpi > *:nth-child(2) { border-right: none !important; }
+        .aiq-admin-kpi > *:nth-child(1),
+        .aiq-admin-kpi > *:nth-child(2) { border-bottom: 1px solid var(--border) !important; }
+        .aiq-admin-2col,
+        .aiq-admin-3col {
+          grid-template-columns: 1fr !important;
+        }
+      }
+      /* Admin intent-distribution bars: 4-col layout → tighten the fixed
+         columns on phones so the 1fr bar still has room to render. */
+      @media (max-width: 480px) {
+        .aiq-admin-bar-row {
+          grid-template-columns: 60px minmax(0, 1fr) 40px 36px !important;
+          gap: 8px !important;
+          font-size: 11px;
+        }
+      }
+      @media (max-width: 540px) {
+        .aiq-admin-kpi {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-admin-kpi > * {
+          border-right: none !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+        .aiq-admin-kpi > *:last-child { border-bottom: none !important; }
+      }
+
+      /* Report + Compare · layout grids */
+      @media (max-width: 900px) {
+        .aiq-report-intents {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aiq-report-hero {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-report-hero > *:last-child {
+          border-left: none !important;
+          border-top: 1px solid rgba(255,255,255,0.08) !important;
+        }
+        .aiq-property-stats,
+        .aiq-schools-breakdown {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aiq-compare-heads,
+        .aiq-compare-summaries,
+        .aiq-compare-bars {
+          grid-template-columns: 1fr !important;
+        }
+      }
+      @media (max-width: 540px) {
+        .aiq-report-intents {
+          grid-template-columns: 1fr !important;
+        }
+      }
+      /* Compare picker row · 5-col table on desktop collapses to checkbox +
+         area + score (3 col) on tablet, then fully stacks on phones with
+         metadata below the area name. */
+      @media (max-width: 820px) {
+        .aiq-compare-picker-row {
+          grid-template-columns: 24px minmax(0, 1fr) 80px !important;
+          gap: 12px !important;
+        }
+        .aiq-compare-picker-row > *:nth-child(3) { display: none !important; }
+        .aiq-compare-picker-row > *:nth-child(5) { display: none !important; }
+      }
+      @media (max-width: 480px) {
+        .aiq-compare-picker-row {
+          grid-template-columns: 20px minmax(0, 1fr) 60px !important;
+          padding-left: 16px !important;
+          padding-right: 16px !important;
+          gap: 10px !important;
+        }
+      }
+      /* Report [id] share menu · right:0 pushes the 220px-wide dropdown off
+         a 375px screen. On mobile, anchor it to the left so it lands
+         inside the viewport and span near-full width. */
+      @media (max-width: 480px) {
+        .aiq-share-menu {
+          right: auto !important;
+          left: 0 !important;
+          min-width: 0 !important;
+          width: calc(100vw - 40px) !important;
+          max-width: 280px;
+        }
+      }
+
+      /* Area page · hero + dim grid + intent grid + related grid */
+      @media (max-width: 820px) {
+        .aiq-area-hero {
+          grid-template-columns: 1fr !important;
+          gap: 36px !important;
+        }
+        .aiq-score-ring {
+          align-self: flex-start;
+        }
+        .aiq-dim-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-intent-scores {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aiq-intent-scores > *:nth-child(2) { border-right: none !important; }
+        .aiq-intent-scores > *:nth-child(1),
+        .aiq-intent-scores > *:nth-child(2) { border-bottom: 1px solid var(--border) !important; }
+        .aiq-related-grid {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aiq-post-nav {
+          grid-template-columns: 1fr !important;
+        }
+      }
+      @media (max-width: 520px) {
+        .aiq-intent-scores {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-intent-scores > * {
+          border-right: none !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+        .aiq-intent-scores > *:last-child { border-bottom: none !important; }
+        .aiq-related-grid {
+          grid-template-columns: 1fr !important;
+        }
+      }
+
+      /* Methodology · pipeline + AI split stack on narrow */
+      @media (max-width: 880px) {
+        .aiq-pipeline {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aiq-pipeline > *:nth-child(2) { border-right: none !important; }
+        .aiq-pipeline > *:nth-child(1),
+        .aiq-pipeline > *:nth-child(2) { border-bottom: 1px solid var(--border) !important; }
+        .aiq-ai-split {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-ai-split > *:first-child {
+          border-right: none !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+      }
+      @media (max-width: 520px) {
+        .aiq-pipeline {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-pipeline > * {
+          border-right: none !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+        .aiq-pipeline > *:last-child { border-bottom: none !important; }
+      }
+
+      /* Methodology + Docs · sidebar collapses on narrow, tables wrap */
+      @media (max-width: 900px) {
+        .aiq-meth-wrap,
+        .aiq-docs-wrap {
+          grid-template-columns: 1fr !important;
+          gap: 32px !important;
+        }
+        .aiq-meth-sidebar,
+        .aiq-docs-sidebar {
+          position: static !important;
+        }
+        .aiq-intent-cards {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-quickstart-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-quickstart-grid > * {
+          border-right: none !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+        .aiq-quickstart-grid > *:last-child { border-bottom: none !important; }
+        .aiq-rl-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-rl-grid > * {
+          border-right: none !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+        .aiq-rl-grid > *:last-child { border-bottom: none !important; }
+        .aiq-field-table > * {
+          grid-template-columns: 1fr !important;
+          gap: 6px !important;
+        }
+      }
+
+      /* About page · two-column gap grid, builder row, stats strip */
+      @media (max-width: 820px) {
+        .aiq-gap-grid {
+          grid-template-columns: 1fr !important;
+          gap: 48px !important;
+        }
+        .aiq-builder-row {
+          grid-template-columns: 1fr !important;
+          gap: 24px !important;
+        }
+      }
+      @media (max-width: 620px) {
+        .aiq-stats-strip {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aiq-stats-strip > *:nth-child(2) { border-right: none !important; }
+        .aiq-stats-strip > *:nth-child(1),
+        .aiq-stats-strip > *:nth-child(2) { border-bottom: 1px solid var(--border) !important; }
+      }
+
+      /* Pricing page · plan grid + feature table */
+      @media (max-width: 900px) {
+        .aiq-plan-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-plan-grid > * {
+          border-right: none !important;
+          border-bottom: 1px solid var(--border) !important;
+        }
+        .aiq-plan-grid > *:last-child { border-bottom: none !important; }
+      }
+      @media (max-width: 880px) {
+        .aiq-feature-table .aiq-feat-row {
+          grid-template-columns: 1fr !important;
+          gap: 14px !important;
+          padding: 22px 22px !important;
+        }
+        .aiq-feature-table .aiq-feat-head {
+          display: none !important;
+        }
+        .aiq-feature-table .aiq-feat-row > *:not(:first-child) {
+          display: inline-flex !important;
+          align-items: center;
+          justify-content: flex-start !important;
+          gap: 10px;
+        }
+      }
+
+      /* Small phones: tighten everything */
+      @media (max-width: 480px) {
+        .aiq-hero-grid {
+          padding: 24px 20px 36px !important;
+          gap: 40px !important;
+        }
+        .aiq-dim-row {
+          grid-template-columns: minmax(0, 1fr) 48px !important;
+          grid-template-areas:
+            "label score"
+            "bar   bar" !important;
+          gap: 6px 12px !important;
+        }
+        .aiq-dim-row > :nth-child(1) { grid-area: label; }
+        .aiq-dim-row > :nth-child(2) { grid-area: bar; }
+        .aiq-dim-row > :nth-child(3) { grid-area: score; }
+      }
+
+      /* ─── Mobile polish (≤520px) · pad reduction + typography scaling ───
+         Inline styles serialize to CSS text in the DOM "style" attribute.
+         Attribute selector trims common 40px gutters to 20px so text doesn't
+         run edge-to-edge on narrow phones. Also scales hero h1 + lead p. */
+      @media (max-width: 520px) {
+        .aiq [style*="padding: 0 40px"],
+        .aiq [style*="padding: 0px 40px"],
+        .aiq [style*="padding:0 40px"],
+        .aiq [style*="padding: 112px 40px"],
+        .aiq [style*="padding: 96px 40px"],
+        .aiq [style*="padding: 80px 40px"],
+        .aiq [style*="padding: 64px 40px"],
+        .aiq [style*="padding: 48px 40px"],
+        .aiq [style*="padding: 40px 40px"],
+        .aiq [style*="padding: 30px 40px"],
+        .aiq [style*="padding: 26px 40px"],
+        .aiq [style*="padding: 24px 40px"] {
+          padding-left: 20px !important;
+          padding-right: 20px !important;
+        }
+        /* Hero + large display headlines · clamp already helps but add a
+           safety-net ceiling for fixed-size h1s on narrow phones. */
+        .aiq h1 {
+          font-size: clamp(1.9rem, 9vw, 3rem) !important;
+          line-height: 1.08 !important;
+          letter-spacing: -0.02em !important;
+        }
+        /* Long-form paragraph text · default body sizing is 17-19 which runs
+           too wide on narrow phones. Shrink to 15-16 for readability. */
+        .aiq p {
+          font-size: clamp(14px, 4.2vw, 17px);
+        }
+        /* Touch target floor for buttons and nav links */
+        .aiq button,
+        .aiq a[role="button"] {
+          min-height: 40px;
+        }
+        /* Sticky page headers · reduce padding on app shell header */
+        .aiq-app-main header {
+          padding: 20px 20px 18px !important;
+        }
+      }
+
+      /* Prevent horizontal scroll from unexpectedly wide children (svg
+         overflows, absolutely-positioned decorations etc). Applies only
+         when the viewport is narrower than the design's min-comfort. */
+      @media (max-width: 720px) {
+        .aiq, .aiq main, .aiq section {
+          overflow-x: hidden;
+        }
+      }
+
+      /* Expanded-report modal · all subsections inside .aiq-ir-article use
+         "Xpx 40px Ypx" inline padding. On mobile, shrink horizontal gutter,
+         stack the score-block grid, and collapse the 4-col property stats
+         to a 2x2 grid. */
+      @media (max-width: 620px) {
+        .aiq-ir-article > * {
+          padding-left: 20px !important;
+          padding-right: 20px !important;
+        }
+        .aiq-ir-score {
+          grid-template-columns: 1fr !important;
+          gap: 24px !important;
+        }
+        .aiq-ir-score > div:first-child {
+          justify-self: center;
+        }
+        /* 4-col stats grids inside the modal → 2x2 */
+        .aiq-ir-article [style*="repeat(4, minmax(0, 1fr))"] {
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          gap: 20px 16px !important;
+        }
+      }
