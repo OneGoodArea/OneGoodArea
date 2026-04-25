@@ -64,7 +64,7 @@ export default function RootLayout({
         <head>
           <script
             dangerouslySetInnerHTML={{
-              __html: `(function(){try{var t=localStorage.getItem("aiq-theme");if(t==="light"){document.documentElement.setAttribute("data-theme","light")}}catch(e){}})()`,
+              __html: `(function(){try{var t=localStorage.getItem("aiq-theme");if(t==="dark"||t==="light"){document.documentElement.setAttribute("data-theme",t)}}catch(e){}})()`,
             }}
           />
           <meta name="msvalidate.01" content="PENDING" />
