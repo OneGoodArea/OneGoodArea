@@ -1,24 +1,30 @@
 import { jsPDF } from "jspdf";
 import { AreaReport } from "@/lib/types";
 
-/* ── Brand Colors ── */
+/* OneGoodArea brand palette in PDF colour space.
+   bg = cream surface, ink = forest green, signal = chartreuse,
+   border = hairline. RAG = forest, dark amber, dark red. */
 const COLORS = {
-  bg: [9, 9, 11] as [number, number, number],
-  bgElevated: [15, 15, 18] as [number, number, number],
-  border: [28, 28, 34] as [number, number, number],
-  textPrimary: [228, 228, 232] as [number, number, number],
-  textSecondary: [161, 161, 170] as [number, number, number],
-  textTertiary: [113, 113, 122] as [number, number, number],
-  accent: [59, 130, 246] as [number, number, number],
-  neonGreen: [0, 255, 136] as [number, number, number],
-  neonAmber: [255, 187, 51] as [number, number, number],
-  neonRed: [255, 68, 68] as [number, number, number],
+  bg:           [246, 249, 244] as [number, number, number], // #F6F9F4 cream
+  bgElevated:   [240, 243, 238] as [number, number, number], // #F0F3EE
+  border:       [228, 234, 227] as [number, number, number], // #E4EAE3
+  ink:          [10,  77,  58 ] as [number, number, number], // #0A4D3A forest
+  inkDeep:      [6,   42,  30 ] as [number, number, number], // #062A1E
+  textPrimary:  [11,  32,  24 ] as [number, number, number], // #0B2018
+  textSecondary:[68,  90,  81 ] as [number, number, number], // #445A51
+  textTertiary: [110, 130, 120] as [number, number, number], // #6E8278
+  signal:       [212, 243, 58 ] as [number, number, number], // #D4F33A chartreuse
+  signalInk:    [26,  38,  0  ] as [number, number, number], // #1A2600
+  signalDim:    [233, 246, 158] as [number, number, number], // #E9F69E
+  ragStrong:    [10,  77,  58 ] as [number, number, number], // forest green
+  ragModerate:  [184, 134, 11 ] as [number, number, number], // dark amber
+  ragWeak:      [160, 27,  0  ] as [number, number, number], // dark red
 };
 
 function getRAGColor(score: number): [number, number, number] {
-  if (score >= 70) return COLORS.neonGreen;
-  if (score >= 45) return COLORS.neonAmber;
-  return COLORS.neonRed;
+  if (score >= 70) return COLORS.ragStrong;
+  if (score >= 45) return COLORS.ragModerate;
+  return COLORS.ragWeak;
 }
 
 function getRAGLabel(score: number): string {
@@ -59,8 +65,8 @@ function drawPageBg(pdf: jsPDF) {
 function drawPageFooter(pdf: jsPDF) {
   pdf.setFontSize(7);
   setColor(pdf, COLORS.textTertiary);
-  pdf.text("AREAIQ", 20, 290);
-  setColor(pdf, COLORS.neonGreen);
+  pdf.text("ONEGOODAREA", 20, 290);
+  setColor(pdf, COLORS.ink);
   pdf.text("area-iq.co.uk", 190, 290, { align: "right" });
 }
 
@@ -82,14 +88,22 @@ export function exportReportPDF(report: AreaReport) {
   setFillColor(pdf, COLORS.bgElevated);
   pdf.rect(0, 0, 210, 40, "F");
 
-  // Logo
+  // OneGoodArea wordmark (italic accent on "Good" simulated by colour shift)
   pdf.setFontSize(18);
   pdf.setFont("helvetica", "bold");
-  setColor(pdf, COLORS.textPrimary);
-  pdf.text("AREA", 20, 18);
-  const areaWidth = pdf.getTextWidth("AREA");
-  setColor(pdf, COLORS.neonGreen);
-  pdf.text("IQ", 20 + areaWidth, 18);
+  setColor(pdf, COLORS.inkDeep);
+  pdf.text("One", 20, 18);
+  const onew = pdf.getTextWidth("One");
+  pdf.setFont("helvetica", "bolditalic");
+  setColor(pdf, COLORS.ink);
+  pdf.text("Good", 20 + onew, 18);
+  const goodw = pdf.getTextWidth("Good");
+  pdf.setFont("helvetica", "bold");
+  setColor(pdf, COLORS.inkDeep);
+  pdf.text("Area", 20 + onew + goodw, 18);
+  // Chartreuse underline under "Good"
+  setFillColor(pdf, COLORS.signal);
+  pdf.rect(20 + onew, 19.5, goodw, 0.7, "F");
 
   // Intent + area type badges
   pdf.setFontSize(8);
@@ -97,20 +111,20 @@ export function exportReportPDF(report: AreaReport) {
   const areaTypeText = report.area_type ? report.area_type.toUpperCase() : "";
   let badgeX = 190;
 
-  // Intent badge
+  // Intent badge (chartreuse pill)
   const intentBadgeW = pdf.getTextWidth(intentText) + 8;
   badgeX -= intentBadgeW;
-  setFillColor(pdf, [20, 30, 50]);
+  setFillColor(pdf, COLORS.signal);
   pdf.roundedRect(badgeX, 11, intentBadgeW, 10, 1, 1, "F");
-  setColor(pdf, COLORS.accent);
+  setColor(pdf, COLORS.signalInk);
   pdf.text(intentText, badgeX + 4, 17.5);
 
-  // Area type badge
+  // Area type badge (hairline ghost)
   if (areaTypeText) {
     const areaTypeBadgeW = pdf.getTextWidth(areaTypeText) + 8;
     badgeX -= areaTypeBadgeW + 3;
-    setFillColor(pdf, [25, 25, 30]);
-    pdf.roundedRect(badgeX, 11, areaTypeBadgeW, 10, 1, 1, "F");
+    setFillColor(pdf, COLORS.bg);
+    pdf.roundedRect(badgeX, 11, areaTypeBadgeW, 10, 1, 1, "FD");
     setColor(pdf, COLORS.textSecondary);
     pdf.text(areaTypeText, badgeX + 4, 17.5);
   }
@@ -245,7 +259,7 @@ export function exportReportPDF(report: AreaReport) {
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "bold");
       if (pmStats[i].label === "YOY CHANGE" && pm.price_change_pct !== null) {
-        setColor(pdf, pm.price_change_pct >= 0 ? COLORS.neonGreen : COLORS.neonRed);
+        setColor(pdf, pm.price_change_pct >= 0 ? COLORS.ragStrong : COLORS.ragWeak);
       } else {
         setColor(pdf, COLORS.textPrimary);
       }
@@ -310,10 +324,10 @@ export function exportReportPDF(report: AreaReport) {
       let bx = barX;
 
       const ratingColors: Record<string, [number, number, number]> = {
-        "Outstanding": COLORS.neonGreen,
-        "Good": COLORS.accent,
-        "Requires Improvement": COLORS.neonAmber,
-        "Inadequate": COLORS.neonRed,
+        "Outstanding": COLORS.ragStrong,
+        "Good": COLORS.ink,
+        "Requires Improvement": COLORS.ragModerate,
+        "Inadequate": COLORS.ragWeak,
       };
 
       for (const [rating, count] of breakdown) {
@@ -345,10 +359,10 @@ export function exportReportPDF(report: AreaReport) {
       y = checkPageBreak(pdf, y, 8);
 
       const ratingColor =
-        school.rating === "Outstanding" ? COLORS.neonGreen :
-        school.rating === "Good" ? COLORS.accent :
-        school.rating === "Requires Improvement" ? COLORS.neonAmber :
-        school.rating === "Inadequate" ? COLORS.neonRed :
+        school.rating === "Outstanding" ? COLORS.ragStrong :
+        school.rating === "Good" ? COLORS.ink :
+        school.rating === "Requires Improvement" ? COLORS.ragModerate :
+        school.rating === "Inadequate" ? COLORS.ragWeak :
         COLORS.textTertiary;
 
       pdf.setFontSize(7.5);
@@ -437,12 +451,12 @@ export function exportReportPDF(report: AreaReport) {
     for (let i = 0; i < report.recommendations.length; i++) {
       y = checkPageBreak(pdf, y, 15);
 
-      // Number badge
-      setFillColor(pdf, [20, 30, 50]);
+      // Number badge (chartreuse)
+      setFillColor(pdf, COLORS.signal);
       pdf.rect(20, y - 3, 6, 6, "F");
       pdf.setFontSize(7);
       pdf.setFont("helvetica", "bold");
-      setColor(pdf, COLORS.accent);
+      setColor(pdf, COLORS.signalInk);
       pdf.text(String(i + 1), 23, y + 1, { align: "center" });
 
       // Text
@@ -468,7 +482,7 @@ export function exportReportPDF(report: AreaReport) {
   setColor(pdf, COLORS.textTertiary);
   pdf.text("Sources: ", 20, y);
   if (report.data_sources) {
-    setColor(pdf, COLORS.neonGreen);
+    setColor(pdf, COLORS.ink);
     pdf.text(report.data_sources.join("  |  "), 20 + pdf.getTextWidth("Sources: "), y);
   }
 
@@ -480,6 +494,6 @@ export function exportReportPDF(report: AreaReport) {
   }
 
   // Save
-  const filename = `AreaIQ-${report.area.replace(/[^a-zA-Z0-9]/g, "-")}-${report.intent}.pdf`;
+  const filename = `OneGoodArea-${report.area.replace(/[^a-zA-Z0-9]/g, "-")}-${report.intent}.pdf`;
   pdf.save(filename);
 }

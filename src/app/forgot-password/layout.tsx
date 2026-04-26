@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Forgot Password | AreaIQ",
+  title: "Forgot Password | OneGoodArea",
   robots: { index: false, follow: false },
 };
 

@@ -6,19 +6,41 @@ import { APP_URL, EMAIL_FROM } from "@/lib/config";
 let resendClient: Resend | null = null;
 
 function getResendClient() {
-  if (resendClient) {
-    return resendClient;
-  }
-
+  if (resendClient) return resendClient;
   const apiKey = process.env.RESEND_API_KEY;
-
   if (!apiKey) {
     throw new Error('Missing API key. Pass it to the constructor `new Resend("re_123")`');
   }
-
   resendClient = new Resend(apiKey);
   return resendClient;
 }
+
+/* ────────────────────────────────────────────────────────────
+   OneGoodArea email templates.
+   Cream surface, forest-ink text, chartreuse accent.
+   Email clients limit CSS to inline styles + a small set of
+   properties; no flex, no @import, no custom fonts. We use
+   system-stack fonts (Georgia for serif, system sans-serif).
+   ──────────────────────────────────────────────────────────── */
+
+const COLORS = {
+  ink: "#0A4D3A",
+  inkDeep: "#062A1E",
+  signal: "#D4F33A",
+  signalInk: "#1A2600",
+  signalDim: "#E9F69E",
+  bg: "#F6F9F4",
+  card: "#FFFFFF",
+  border: "#E4EAE3",
+  borderDim: "#F0F3EE",
+  text: "#0B2018",
+  text2: "#445A51",
+  text3: "#6E8278",
+};
+
+const FONT_SERIF = "Georgia, 'Times New Roman', serif";
+const FONT_SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+const FONT_MONO = "ui-monospace, 'SF Mono', 'Menlo', 'Consolas', monospace";
 
 function baseTemplate(content: string): string {
   return `<!DOCTYPE html>
@@ -27,29 +49,27 @@ function baseTemplate(content: string): string {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin:0; padding:0; background-color:#0a0a0a; font-family:'Courier New',monospace;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a0a0a; padding:40px 20px;">
+<body style="margin:0; padding:0; background-color:${COLORS.bg}; font-family:${FONT_SANS};">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${COLORS.bg}; padding:48px 20px;">
     <tr>
       <td align="center">
-        <table width="480" cellpadding="0" cellspacing="0" style="max-width:480px; width:100%;">
-          <!-- Logo -->
+        <table width="520" cellpadding="0" cellspacing="0" style="max-width:520px; width:100%;">
+          <!-- Wordmark -->
           <tr>
-            <td style="padding-bottom:32px;">
-              <span style="font-family:'Courier New',monospace; font-size:14px; font-weight:700; letter-spacing:2px; color:#ffffff;">
-                AREA<span style="color:#3b82f6;">IQ</span>
-              </span>
+            <td style="padding-bottom:28px;">
+              <span style="font-family:${FONT_SERIF}; font-size:22px; font-weight:500; letter-spacing:-0.5px; color:${COLORS.inkDeep};">One<span style="font-style:italic; color:${COLORS.ink}; border-bottom:2px solid ${COLORS.signal}; padding-bottom:1px;">Good</span>Area</span>
             </td>
           </tr>
-          <!-- Content -->
+          <!-- Card -->
           <tr>
-            <td style="background-color:#111111; border:1px solid #1a1a1a; padding:32px;">
+            <td style="background-color:${COLORS.card}; border:1px solid ${COLORS.border}; border-radius:6px; padding:36px;">
               ${content}
             </td>
           </tr>
           <!-- Footer -->
           <tr>
-            <td style="padding-top:24px; text-align:center;">
-              <span style="font-family:'Courier New',monospace; font-size:10px; color:#525252;">
+            <td style="padding-top:22px; text-align:center;">
+              <span style="font-family:${FONT_MONO}; font-size:11px; color:${COLORS.text3}; letter-spacing:1.5px; text-transform:uppercase;">
                 area-iq.co.uk
               </span>
             </td>
@@ -62,122 +82,24 @@ function baseTemplate(content: string): string {
 </html>`;
 }
 
-export async function sendVerificationEmail(email: string, token: string) {
-  const verifyUrl = `${APP_URL}/verify?token=${token}`;
-
-  const content = `
-    <h1 style="font-family:'Courier New',monospace; font-size:18px; font-weight:600; color:#ffffff; margin:0 0 8px 0;">
-      Verify your email
-    </h1>
-    <p style="font-family:'Courier New',monospace; font-size:12px; color:#737373; margin:0 0 24px 0;">
-      Click the button below to verify your email address and activate your account.
-    </p>
-    <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
-      <tr>
-        <td style="background-color:#ffffff; padding:10px 24px;">
-          <a href="${verifyUrl}" style="font-family:'Courier New',monospace; font-size:12px; font-weight:600; color:#0a0a0a; text-decoration:none; letter-spacing:1px; text-transform:uppercase;">
-            Verify Email
-          </a>
-        </td>
-      </tr>
-    </table>
-    <p style="font-family:'Courier New',monospace; font-size:10px; color:#525252; margin:0 0 16px 0;">
-      Or copy this link:
-    </p>
-    <p style="font-family:'Courier New',monospace; font-size:10px; color:#3b82f6; word-break:break-all; margin:0 0 24px 0;">
-      ${verifyUrl}
-    </p>
-    <div style="border-top:1px solid #1a1a1a; padding-top:16px;">
-      <p style="font-family:'Courier New',monospace; font-size:10px; color:#525252; margin:0;">
-        This link expires in 24 hours. If you didn't create an account, ignore this email.
-      </p>
-    </div>
-  `;
-
-  await getResendClient().emails.send({
-    from: EMAIL_FROM,
-    to: email,
-    subject: "Verify your email | AreaIQ",
-    html: baseTemplate(content),
-  });
+function ctaButton(label: string, href: string): string {
+  return `<table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+    <tr>
+      <td style="background-color:${COLORS.signal}; border:1px solid ${COLORS.inkDeep}; border-radius:999px; padding:12px 22px;">
+        <a href="${href}" style="font-family:${FONT_MONO}; font-size:12px; font-weight:500; color:${COLORS.signalInk}; text-decoration:none; letter-spacing:1.5px; text-transform:uppercase;">${label} &rarr;</a>
+      </td>
+    </tr>
+  </table>`;
 }
 
-export async function sendWelcomeEmail(email: string, name: string) {
-  const content = `
-    <h1 style="font-family:'Courier New',monospace; font-size:18px; font-weight:600; color:#ffffff; margin:0 0 8px 0;">
-      Welcome to AreaIQ
-    </h1>
-    <p style="font-family:'Courier New',monospace; font-size:12px; color:#737373; margin:0 0 24px 0;">
-      ${name}, your account is verified and ready to go.
-    </p>
-    <div style="background-color:#0a0a0a; border:1px solid #1a1a1a; padding:16px; margin-bottom:24px;">
-      <p style="font-family:'Courier New',monospace; font-size:11px; color:#22c55e; margin:0 0 4px 0; text-transform:uppercase; letter-spacing:1px;">
-        Your plan
-      </p>
-      <p style="font-family:'Courier New',monospace; font-size:16px; font-weight:700; color:#ffffff; margin:0 0 4px 0;">
-        Free
-      </p>
-      <p style="font-family:'Courier New',monospace; font-size:10px; color:#737373; margin:0;">
-        3 reports per month. All 7 data sources included.
-      </p>
-    </div>
-    <table cellpadding="0" cellspacing="0">
-      <tr>
-        <td style="background-color:#ffffff; padding:10px 24px;">
-          <a href="https://www.area-iq.co.uk/report" style="font-family:'Courier New',monospace; font-size:12px; font-weight:600; color:#0a0a0a; text-decoration:none; letter-spacing:1px; text-transform:uppercase;">
-            Generate Your First Report
-          </a>
-        </td>
-      </tr>
-    </table>
-  `;
-
-  await getResendClient().emails.send({
-    from: EMAIL_FROM,
-    to: email,
-    subject: "Welcome to AreaIQ",
-    html: baseTemplate(content),
-  });
-}
-
-export async function sendPasswordResetEmail(email: string, token: string) {
-  const resetUrl = `${APP_URL}/reset-password?token=${token}`;
-
-  const content = `
-    <h1 style="font-family:'Courier New',monospace; font-size:18px; font-weight:600; color:#ffffff; margin:0 0 8px 0;">
-      Reset your password
-    </h1>
-    <p style="font-family:'Courier New',monospace; font-size:12px; color:#737373; margin:0 0 24px 0;">
-      We received a request to reset your password. Click the button below to choose a new one.
-    </p>
-    <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
-      <tr>
-        <td style="background-color:#ffffff; padding:10px 24px;">
-          <a href="${resetUrl}" style="font-family:'Courier New',monospace; font-size:12px; font-weight:600; color:#0a0a0a; text-decoration:none; letter-spacing:1px; text-transform:uppercase;">
-            Reset Password
-          </a>
-        </td>
-      </tr>
-    </table>
-    <p style="font-family:'Courier New',monospace; font-size:10px; color:#525252; margin:0 0 16px 0;">
-      Or copy this link:
-    </p>
-    <p style="font-family:'Courier New',monospace; font-size:10px; color:#3b82f6; word-break:break-all; margin:0 0 24px 0;">
-      ${resetUrl}
-    </p>
-    <div style="border-top:1px solid #1a1a1a; padding-top:16px;">
-      <p style="font-family:'Courier New',monospace; font-size:10px; color:#525252; margin:0;">
-        This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email.
-      </p>
-    </div>
-  `;
-
-  await getResendClient().emails.send({
-    from: EMAIL_FROM,
-    to: email,
-    subject: "Reset your password | AreaIQ",
-    html: baseTemplate(content),
-  });
+function ghostButton(label: string, href: string): string {
+  return `<table cellpadding="0" cellspacing="0">
+    <tr>
+      <td style="background-color:transparent; border:1px solid ${COLORS.border}; border-radius:999px; padding:12px 22px;">
+        <a href="${href}" style="font-family:${FONT_MONO}; font-size:12px; font-weight:500; color:${COLORS.ink}; text-decoration:none; letter-spacing:1.5px; text-transform:uppercase;">${label}</a>
+      </td>
+    </tr>
+  </table>`;
 }
 
 function escapeHtml(text: string): string {
@@ -188,6 +110,101 @@ function escapeHtml(text: string): string {
     .replace(/"/g, "&quot;");
 }
 
+export async function sendVerificationEmail(email: string, token: string) {
+  const verifyUrl = `${APP_URL}/verify?token=${token}`;
+
+  const content = `
+    <h1 style="font-family:${FONT_SERIF}; font-size:26px; font-weight:400; letter-spacing:-0.5px; color:${COLORS.inkDeep}; margin:0 0 10px 0; line-height:1.15;">
+      Verify your <em style="font-style:italic; color:${COLORS.ink}; border-bottom:2px solid ${COLORS.signal}; padding-bottom:1px;">email</em>.
+    </h1>
+    <p style="font-family:${FONT_SANS}; font-size:15px; line-height:1.55; color:${COLORS.text2}; margin:0 0 26px 0;">
+      Click the button below to confirm your email address and activate your OneGoodArea account.
+    </p>
+    ${ctaButton("Verify email", verifyUrl)}
+    <p style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text3}; margin:0 0 8px 0; letter-spacing:1.5px; text-transform:uppercase;">
+      Or paste this link
+    </p>
+    <p style="font-family:${FONT_MONO}; font-size:11px; color:${COLORS.ink}; word-break:break-all; margin:0 0 26px 0;">
+      ${verifyUrl}
+    </p>
+    <div style="border-top:1px solid ${COLORS.borderDim}; padding-top:18px;">
+      <p style="font-family:${FONT_SANS}; font-size:13px; color:${COLORS.text3}; margin:0; line-height:1.5;">
+        This link expires in 24 hours. If you didn&apos;t create an account, ignore this email.
+      </p>
+    </div>
+  `;
+
+  await getResendClient().emails.send({
+    from: EMAIL_FROM,
+    to: email,
+    subject: "Verify your email | OneGoodArea",
+    html: baseTemplate(content),
+  });
+}
+
+export async function sendWelcomeEmail(email: string, name: string) {
+  const safeName = escapeHtml(name);
+  const content = `
+    <h1 style="font-family:${FONT_SERIF}; font-size:26px; font-weight:400; letter-spacing:-0.5px; color:${COLORS.inkDeep}; margin:0 0 10px 0; line-height:1.15;">
+      Welcome to <em style="font-style:italic; color:${COLORS.ink}; border-bottom:2px solid ${COLORS.signal}; padding-bottom:1px;">OneGoodArea</em>.
+    </h1>
+    <p style="font-family:${FONT_SANS}; font-size:15px; line-height:1.55; color:${COLORS.text2}; margin:0 0 24px 0;">
+      ${safeName}, your account is verified. Three reports a month are on us. Run your first one whenever you&apos;re ready.
+    </p>
+    <div style="background-color:${COLORS.bg}; border:1px solid ${COLORS.border}; border-radius:4px; padding:18px 20px; margin-bottom:24px;">
+      <p style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text3}; margin:0 0 6px 0; text-transform:uppercase; letter-spacing:2px;">
+        Your plan
+      </p>
+      <p style="font-family:${FONT_SERIF}; font-size:22px; font-weight:500; color:${COLORS.inkDeep}; margin:0 0 4px 0;">
+        Free
+      </p>
+      <p style="font-family:${FONT_SANS}; font-size:13px; color:${COLORS.text2}; margin:0; line-height:1.5;">
+        3 reports per month. All seven public datasets. No card needed.
+      </p>
+    </div>
+    ${ctaButton("Generate your first report", "https://www.area-iq.co.uk/report")}
+  `;
+
+  await getResendClient().emails.send({
+    from: EMAIL_FROM,
+    to: email,
+    subject: "Welcome to OneGoodArea",
+    html: baseTemplate(content),
+  });
+}
+
+export async function sendPasswordResetEmail(email: string, token: string) {
+  const resetUrl = `${APP_URL}/reset-password?token=${token}`;
+
+  const content = `
+    <h1 style="font-family:${FONT_SERIF}; font-size:26px; font-weight:400; letter-spacing:-0.5px; color:${COLORS.inkDeep}; margin:0 0 10px 0; line-height:1.15;">
+      Reset your <em style="font-style:italic; color:${COLORS.ink}; border-bottom:2px solid ${COLORS.signal}; padding-bottom:1px;">password</em>.
+    </h1>
+    <p style="font-family:${FONT_SANS}; font-size:15px; line-height:1.55; color:${COLORS.text2}; margin:0 0 26px 0;">
+      We received a request to reset your password. Click the button below to choose a new one.
+    </p>
+    ${ctaButton("Reset password", resetUrl)}
+    <p style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text3}; margin:0 0 8px 0; letter-spacing:1.5px; text-transform:uppercase;">
+      Or paste this link
+    </p>
+    <p style="font-family:${FONT_MONO}; font-size:11px; color:${COLORS.ink}; word-break:break-all; margin:0 0 26px 0;">
+      ${resetUrl}
+    </p>
+    <div style="border-top:1px solid ${COLORS.borderDim}; padding-top:18px;">
+      <p style="font-family:${FONT_SANS}; font-size:13px; color:${COLORS.text3}; margin:0; line-height:1.5;">
+        This link expires in 1 hour. If you didn&apos;t request a password reset, ignore this email.
+      </p>
+    </div>
+  `;
+
+  await getResendClient().emails.send({
+    from: EMAIL_FROM,
+    to: email,
+    subject: "Reset your password | OneGoodArea",
+    html: baseTemplate(content),
+  });
+}
+
 export async function sendReportEmail(email: string, reportId: string, report: AreaReport) {
   logger.info(`[report-email] Sending report email to ${email} for report ${reportId}`);
 
@@ -195,23 +212,20 @@ export async function sendReportEmail(email: string, reportId: string, report: A
   const reportUrl = `${baseUrl}/report/${reportId}`;
 
   const score = report.areaiq_score ?? 0;
-  const scoreColor = score >= 70 ? "#22c55e" : score >= 45 ? "#eab308" : "#ef4444";
-  const scoreLabel = score >= 70 ? "Strong" : score >= 45 ? "Moderate" : "Low";
+  const scoreColor = score >= 70 ? COLORS.ink : score >= 45 ? "#B8860B" : "#A01B00";
+  const scoreLabel = score >= 70 ? "Strong fit" : score >= 45 ? "Moderate fit" : "Weak fit";
 
   const intentLabels: Record<string, string> = {
-    moving: "Moving",
-    business: "Business",
-    investing: "Investment",
-    research: "Research",
+    moving: "Moving home",
+    business: "Opening a business",
+    investing: "Property investing",
+    research: "Market research",
   };
 
   const areaTypeLabels: Record<string, string> = {
-    urban: "Urban",
-    suburban: "Suburban",
-    rural: "Rural",
+    urban: "Urban", suburban: "Suburban", rural: "Rural",
   };
 
-  // Get top 3 dimensions sorted by weight (highest weight = most important)
   const subScores = Array.isArray(report.sub_scores) ? report.sub_scores : [];
   const topDimensions = [...subScores]
     .sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
@@ -219,17 +233,17 @@ export async function sendReportEmail(email: string, reportId: string, report: A
 
   const dimensionRows = topDimensions
     .map((d) => {
-      const dimColor = d.score >= 70 ? "#22c55e" : d.score >= 45 ? "#eab308" : "#ef4444";
+      const dimColor = d.score >= 70 ? COLORS.ink : d.score >= 45 ? "#B8860B" : "#A01B00";
       return `
       <tr>
-        <td style="padding:8px 0; border-bottom:1px solid #1a1a1a;">
+        <td style="padding:10px 0; border-bottom:1px solid ${COLORS.borderDim};">
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
-              <td style="font-family:'Courier New',monospace; font-size:11px; color:#a3a3a3;">
+              <td style="font-family:${FONT_SANS}; font-size:14px; color:${COLORS.text}; font-weight:500;">
                 ${escapeHtml(d.label)}
               </td>
-              <td align="right" style="font-family:'Courier New',monospace; font-size:13px; font-weight:700; color:${dimColor};">
-                ${d.score}/100
+              <td align="right" style="font-family:${FONT_MONO}; font-size:14px; font-weight:600; color:${dimColor};">
+                ${d.score}<span style="color:${COLORS.text3}; font-weight:400;"> / 100</span>
               </td>
             </tr>
           </table>
@@ -239,75 +253,52 @@ export async function sendReportEmail(email: string, reportId: string, report: A
     .join("");
 
   const areaTypeBadge = report.area_type
-    ? `<span style="font-family:'Courier New',monospace; font-size:9px; color:#a3a3a3; background-color:#1a1a1a; padding:3px 8px; letter-spacing:1px; text-transform:uppercase; margin-left:8px;">${areaTypeLabels[report.area_type] || report.area_type}</span>`
+    ? `<span style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text2}; background-color:${COLORS.bg}; border:1px solid ${COLORS.border}; padding:3px 8px; border-radius:2px; letter-spacing:1.5px; text-transform:uppercase; margin-left:8px;">${areaTypeLabels[report.area_type] || report.area_type}</span>`
     : "";
 
-  // Truncate summary to keep email concise
   const summary = report.summary || "Your report is ready. Click below to view the full analysis.";
-  const summaryText = summary.length > 300
-    ? summary.slice(0, 297) + "..."
-    : summary;
+  const summaryText = summary.length > 320 ? summary.slice(0, 317) + "..." : summary;
 
   const content = `
-    <h1 style="font-family:'Courier New',monospace; font-size:18px; font-weight:600; color:#ffffff; margin:0 0 4px 0;">
-      Report Ready
-    </h1>
-    <p style="font-family:'Courier New',monospace; font-size:12px; color:#737373; margin:0 0 24px 0;">
-      Your area intelligence report has been generated.
+    <p style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text3}; margin:0 0 14px 0; text-transform:uppercase; letter-spacing:2px;">
+      Report ready &middot; ${intentLabels[report.intent] || report.intent}
     </p>
-
-    <!-- Area + Intent -->
-    <div style="margin-bottom:20px;">
-      <p style="font-family:'Courier New',monospace; font-size:14px; font-weight:700; color:#ffffff; margin:0 0 4px 0;">
-        ${escapeHtml(report.area)} ${areaTypeBadge}
-      </p>
-      <p style="font-family:'Courier New',monospace; font-size:10px; color:#737373; margin:0; text-transform:uppercase; letter-spacing:1px;">
-        ${intentLabels[report.intent] || report.intent} Analysis
-      </p>
-    </div>
+    <h1 style="font-family:${FONT_SERIF}; font-size:30px; font-weight:400; letter-spacing:-0.6px; color:${COLORS.inkDeep}; margin:0 0 6px 0; line-height:1.1;">
+      ${escapeHtml(report.area)}
+    </h1>
+    <p style="margin:0 0 24px 0;">${areaTypeBadge}</p>
 
     <!-- Overall Score -->
-    <div style="background-color:#0a0a0a; border:1px solid #1a1a1a; padding:20px; margin-bottom:20px; text-align:center;">
-      <p style="font-family:'Courier New',monospace; font-size:9px; color:#a3a3a3; margin:0 0 8px 0; text-transform:uppercase; letter-spacing:2px;">
-        AreaIQ Score
+    <div style="background-color:${COLORS.bg}; border:1px solid ${COLORS.border}; border-radius:6px; padding:24px; margin-bottom:22px; text-align:center;">
+      <p style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text3}; margin:0 0 10px 0; text-transform:uppercase; letter-spacing:2px;">
+        Overall score
       </p>
-      <p style="font-family:'Courier New',monospace; font-size:36px; font-weight:700; color:${scoreColor}; margin:0 0 4px 0;">
+      <p style="font-family:${FONT_SERIF}; font-size:54px; font-weight:500; color:${scoreColor}; margin:0; line-height:1; letter-spacing:-2px;">
         ${score}
       </p>
-      <p style="font-family:'Courier New',monospace; font-size:10px; color:${scoreColor}; margin:0; text-transform:uppercase; letter-spacing:1px;">
+      <p style="font-family:${FONT_MONO}; font-size:11px; color:${scoreColor}; margin:8px 0 0 0; letter-spacing:2px; text-transform:uppercase;">
         ${scoreLabel}
       </p>
     </div>
 
     <!-- Top Dimensions -->
-    <div style="background-color:#0a0a0a; border:1px solid #1a1a1a; padding:16px; margin-bottom:20px;">
-      <p style="font-family:'Courier New',monospace; font-size:9px; color:#a3a3a3; margin:0 0 12px 0; text-transform:uppercase; letter-spacing:2px;">
-        Key Dimensions
-      </p>
-      <table width="100%" cellpadding="0" cellspacing="0">
-        ${dimensionRows}
-      </table>
-    </div>
+    <p style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text3}; margin:0 0 10px 0; text-transform:uppercase; letter-spacing:2px;">
+      Top dimensions
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+      ${dimensionRows}
+    </table>
 
     <!-- Summary -->
-    <p style="font-family:'Courier New',monospace; font-size:11px; color:#a3a3a3; line-height:1.6; margin:0 0 24px 0;">
+    <p style="font-family:${FONT_SANS}; font-size:14.5px; color:${COLORS.text}; line-height:1.6; margin:0 0 28px 0;">
       ${escapeHtml(summaryText)}
     </p>
 
-    <!-- CTA Button -->
-    <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
-      <tr>
-        <td style="background-color:#ffffff; padding:10px 24px;">
-          <a href="${reportUrl}" style="font-family:'Courier New',monospace; font-size:12px; font-weight:600; color:#0a0a0a; text-decoration:none; letter-spacing:1px; text-transform:uppercase;">
-            View Full Report
-          </a>
-        </td>
-      </tr>
-    </table>
+    ${ctaButton("View full report", reportUrl)}
 
-    <div style="border-top:1px solid #1a1a1a; padding-top:16px;">
-      <p style="font-family:'Courier New',monospace; font-size:10px; color:#525252; margin:0;">
-        This report is available anytime at area-iq.co.uk.
+    <div style="border-top:1px solid ${COLORS.borderDim}; padding-top:18px;">
+      <p style="font-family:${FONT_SANS}; font-size:13px; color:${COLORS.text3}; margin:0; line-height:1.5;">
+        Your report is saved to your dashboard at OneGoodArea.
       </p>
     </div>
   `;
@@ -315,7 +306,7 @@ export async function sendReportEmail(email: string, reportId: string, report: A
   const result = await getResendClient().emails.send({
     from: EMAIL_FROM,
     to: email,
-    subject: `Your AreaIQ Report: ${report.area || "Area Analysis"}`,
+    subject: `Your OneGoodArea report: ${report.area || "Area Analysis"}`,
     html: baseTemplate(content),
   });
 

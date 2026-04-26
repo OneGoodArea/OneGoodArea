@@ -4,6 +4,10 @@ import { useEffect } from "react";
 import { logger } from "@/lib/logger";
 import * as Sentry from "@sentry/nextjs";
 
+/* Global error boundary. Renders its own <html>/<body> because this fires
+   when the root layout itself fails to render. Must be styled inline - no
+   imports from the design-v2 Styles component, no layout context. */
+
 export default function GlobalError({
   error,
   reset,
@@ -12,177 +16,109 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    logger.error("[AreaIQ] Global error:", error);
+    logger.error("[OneGoodArea] Global error:", error);
     Sentry.captureException(error);
   }, [error]);
 
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body
         style={{
           margin: 0,
-          backgroundColor: "#09090b",
-          color: "#e4e4e8",
+          backgroundColor: "#FFFFFF",
+          color: "#0B2018",
           fontFamily:
-            '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+            "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           minHeight: "100vh",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
+          padding: "0 20px",
         }}
       >
-        <div style={{ width: "100%", maxWidth: 520, padding: "0 24px" }}>
-          {/* Terminal window */}
+        <div style={{ width: "100%", maxWidth: 540, textAlign: "center" }}>
           <div
             style={{
-              borderRadius: 8,
-              border: "1px solid #1c1c22",
-              background: "#0f0f12",
-              overflow: "hidden",
+              fontFamily: "'Geist Mono', ui-monospace, monospace",
+              fontSize: 10.5,
+              fontWeight: 500,
+              letterSpacing: "0.24em",
+              textTransform: "uppercase",
+              color: "#445A51",
+              marginBottom: 22,
             }}
           >
-            {/* Title bar */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "0 16px",
-                height: 36,
-                borderBottom: "1px solid #1c1c22",
-              }}
-            >
-              <div style={{ display: "flex", gap: 6 }}>
-                <div
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: "50%",
-                    background: "#ff3344",
-                  }}
-                />
-                <div
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: "50%",
-                    background: "#ffaa00",
-                  }}
-                />
-                <div
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: "50%",
-                    background: "#00ff88",
-                  }}
-                />
-              </div>
-              <span
-                style={{
-                  marginLeft: 8,
-                  fontSize: 10,
-                  fontFamily: "monospace",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                  color: "#5a5a66",
-                }}
-              >
-                area-iq / critical-error
-              </span>
-            </div>
-
-            {/* Body */}
-            <div style={{ padding: 20 }}>
-              <div
-                style={{
-                  fontFamily: "monospace",
-                  fontSize: 11,
-                  display: "flex",
-                  gap: 8,
-                  marginBottom: 12,
-                }}
-              >
-                <span style={{ color: "#00ff88" }}>$</span>
-                <span style={{ color: "#8a8a96" }}>
-                  system --health-check
-                </span>
-              </div>
-
-              <div
-                style={{
-                  fontFamily: "monospace",
-                  fontSize: 11,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 4,
-                }}
-              >
-                <div style={{ display: "flex", gap: 8 }}>
-                  <span style={{ color: "#ff3344" }}>ERR</span>
-                  <span style={{ color: "#8a8a96" }}>
-                    A critical error occurred
-                  </span>
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <span style={{ color: "#ff3344" }}>ERR</span>
-                  <span style={{ color: "#8a8a96" }}>
-                    Application layout failed to render
-                  </span>
-                </div>
-                {error.digest && (
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <span style={{ color: "#5a5a66" }}>REF</span>
-                    <span style={{ color: "#5a5a66" }}>
-                      Digest: {error.digest}
-                    </span>
-                  </div>
-                )}
-                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                  <span style={{ color: "#ffaa00" }}>WARN</span>
-                  <span style={{ color: "#8a8a96" }}>
-                    Please reload the page. If this persists, contact support.
-                  </span>
-                </div>
-              </div>
-            </div>
+            Status · HTTP 500
           </div>
 
-          {/* Heading */}
-          <div style={{ marginTop: 32, textAlign: "center" }}>
-            <h1
-              style={{
-                fontFamily: "monospace",
-                fontSize: 64,
-                fontWeight: 700,
-                lineHeight: 1,
-                letterSpacing: "-0.02em",
-                color: "#ff3344",
-                textShadow:
-                  "0 0 6px rgba(255,51,68,0.15), 0 0 20px rgba(255,51,68,0.08)",
-                margin: 0,
-              }}
-            >
-              500
-            </h1>
-            <p
-              style={{
-                marginTop: 8,
-                fontSize: 13,
-                color: "#8a8a96",
-              }}
-            >
-              Something went wrong.
-            </p>
-          </div>
-
-          {/* Actions */}
           <div
             style={{
-              marginTop: 32,
+              fontFamily: "'Fraunces', Georgia, serif",
+              fontSize: "clamp(96px, 14vw, 160px)",
+              fontWeight: 400,
+              lineHeight: 0.92,
+              letterSpacing: "-0.04em",
+              color: "#062A1E",
+              margin: "0 0 18px",
+            }}
+          >
+            5
+            <span
+              style={{
+                fontStyle: "italic",
+                color: "#0A4D3A",
+                position: "relative",
+                display: "inline-block",
+              }}
+            >
+              0
+              <span
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  left: "8%",
+                  right: "8%",
+                  bottom: "12%",
+                  height: 10,
+                  background: "#D4F33A",
+                  opacity: 0.88,
+                  zIndex: -1,
+                }}
+              />
+            </span>
+            0
+          </div>
+
+          <h1
+            style={{
+              fontFamily: "'Fraunces', Georgia, serif",
+              fontSize: "clamp(24px, 3.2vw, 34px)",
+              fontWeight: 400,
+              lineHeight: 1.1,
+              letterSpacing: "-0.016em",
+              color: "#062A1E",
+              margin: "10px 0 14px",
+            }}
+          >
+            The page didn&apos;t load.
+          </h1>
+
+          <p
+            style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 15,
+              lineHeight: 1.55,
+              color: "#445A51",
+              margin: "0 auto 28px",
+              maxWidth: "46ch",
+            }}
+          >
+            A critical error prevented the app shell from rendering. Try
+            reloading. If this keeps happening, drop us a note.
+          </p>
+
+          <div
+            style={{
               display: "flex",
               gap: 12,
               justifyContent: "center",
@@ -190,47 +126,61 @@ export default function GlobalError({
             }}
           >
             <button
+              type="button"
               onClick={() => reset()}
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                padding: "0 20px",
-                height: 40,
-                borderRadius: 6,
-                fontSize: 12,
+                fontFamily: "'Geist Mono', monospace",
+                fontSize: 11,
                 fontWeight: 500,
-                border: "none",
-                background: "#00ff88",
-                color: "#09090b",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: "#1A2600",
+                background: "#D4F33A",
+                padding: "13px 22px",
+                borderRadius: 999,
+                border: "1px solid #062A1E",
                 cursor: "pointer",
               }}
             >
-              Reload
+              Try again
             </button>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
             <a
               href="/"
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                padding: "0 20px",
-                height: 40,
-                borderRadius: 6,
-                fontSize: 12,
+                fontFamily: "'Geist Mono', monospace",
+                fontSize: 11,
                 fontWeight: 500,
-                border: "1px solid #2a2a32",
-                background: "#0f0f12",
-                color: "#e4e4e8",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: "#0A4D3A",
+                background: "transparent",
+                padding: "13px 22px",
+                borderRadius: 999,
+                border: "1px solid #E4EAE3",
                 textDecoration: "none",
-                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
               }}
             >
-              Go Home
+              Go home
             </a>
           </div>
+
+          {error.digest && (
+            <div
+              style={{
+                marginTop: 32,
+                fontFamily: "'Geist Mono', monospace",
+                fontSize: 10,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: "#6E8278",
+              }}
+            >
+              Ref · {error.digest}
+            </div>
+          )}
         </div>
       </body>
     </html>

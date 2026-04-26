@@ -1,8 +1,8 @@
-# AreaIQ
+# OneGoodArea
 
-**Transparent, intent-driven area intelligence for the UK.**
+**An intelligence report for every UK postcode.**
 
-Score any UK location using real government data. No guesswork, no paywalled PDFs, no vague ratings. Just structured intelligence that helps you make better decisions about where to live, invest, or open a business.
+Type a place. Pick why you're looking. Seven public datasets do the rest. OneGoodArea scores 42,640 UK neighbourhoods across four intents (moving home, opening a business, property investing, market research) and renders the full picture in a single editorial report.
 
 **Live at [area-iq.co.uk](https://www.area-iq.co.uk)**
 
@@ -10,130 +10,188 @@ Score any UK location using real government data. No guesswork, no paywalled PDF
 
 ## What it does
 
-Enter a UK postcode or area name, choose your intent (moving, investing, business, or research), and get a fully scored report powered by 5 live government data sources.
-
-Every score is deterministic. AI narrates the results but never generates the numbers.
+Enter a UK postcode or area name, pick your intent, and get a fully scored report sourced from seven live UK datasets. Every dimension is computed from real numbers using fixed formulas, then narrated by the engine. The same inputs always produce the same scores.
 
 ## What makes it different
 
-- **Deterministic scoring.** 16 scoring functions compute every number from real data using fixed formulas. Same postcode, same scores. Every time.
-- **Intent-driven.** "Good for a family" and "good for a restaurant" are completely different questions. The engine weights dimensions differently based on your goal.
-- **Context-aware.** A village with one school is well-served. A city with one school is not. The system auto-detects area type (urban, suburban, rural) and benchmarks accordingly.
-- **Transparent.** Every score shows the data behind it. No black boxes.
+- **Intent-driven scoring.** "Good for raising a family" and "good for opening a coffee shop" weight different dimensions of the same area. Four intents, five dimensions each, weights summing to 100.
+- **Reproducible numbers.** Scoring formulas are deterministic. Same postcode, same intent, same scores. Narrative prose varies; the maths does not.
+- **Context-aware benchmarks.** A village with one school is well served. A city with one school is not. Reports auto-classify the area as urban, suburban, or rural and benchmark against the right peer group.
+- **Transparent.** Every dimension shows the data, the source, and the freshness window behind it. No black boxes, no proprietary indices, no vague star ratings.
 
 ## Tech stack
 
-| Layer | Tech |
-|-------|------|
-| Framework | Next.js 16, React 19, TypeScript |
-| Styling | Tailwind 4, Geist fonts |
-| Database | Neon Postgres |
-| Auth | NextAuth v5 (Google OAuth, credentials) |
-| Payments | Stripe (4-tier credit model) |
-| AI | Claude Sonnet API (narration only) |
-| Email | Resend (verification, report delivery) |
-| Hosting | Vercel (CI/CD from main) |
+| Layer        | Tech |
+|--------------|------|
+| Framework    | Next.js 16, React 19, TypeScript |
+| Styling      | Tailwind 4, design tokens scoped to `.aiq` wrapper, `globals.css` |
+| Typography   | Fraunces (display), Inter (body), Geist Mono (labels) |
+| Database     | Neon Postgres |
+| Auth         | NextAuth v5 (Google OAuth + credentials, PBKDF2-SHA256) |
+| Payments     | Stripe (consumer plans + API plans, webhook idempotency) |
+| AI           | Anthropic Claude (narration only, never scoring) |
+| Email        | Resend (verification, report delivery, password reset) |
+| Errors       | Sentry (client + server + edge) |
+| CI/CD        | GitHub Actions, Vercel auto-deploy from `main` |
 
 ## Data sources
 
-| Source | Data |
-|--------|------|
+| Source | Coverage |
+|--------|----------|
 | [Postcodes.io](https://postcodes.io) | Geocoding, LSOA mapping, area classification |
-| [Police.uk](https://data.police.uk) | Street-level crime data, categories, trends |
-| [IMD 2025](https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025) | Deprivation indices across 33,755 LSOAs |
-| [OpenStreetMap](https://www.openstreetmap.org) | Schools, transport, healthcare, shops, parks |
+| [Police.uk](https://data.police.uk) | Street-level crime, 12 months rolling, by category |
+| [IMD 2025 / WIMD 2019 / SIMD 2020](https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025) | Deprivation indices, 33,755 LSOAs (England, Wales, Scotland) |
+| [OpenStreetMap (Overpass)](https://www.openstreetmap.org) | Schools, transport, healthcare, retail, parks, amenities |
 | [Environment Agency](https://environment.data.gov.uk) | Flood risk zones and active warnings |
+| [HM Land Registry](https://landregistry.data.gov.uk) | Price Paid SPARQL, real sold prices, YoY change, transaction volume |
+| [Ofsted](https://www.gov.uk/government/organisations/ofsted) | School inspection ratings, 19,770 English schools, quality-weighted |
 
-All data is fetched in real time. No caching, no stale datasets.
+Estyn (Wales) and Education Scotland integration planned.
+
+Reports are cached server-side for 24 hours per `area:intent` pair; identical requests return the same report without re-fetching upstream APIs.
 
 ## Architecture
 
 ```
 User input
   → Geocode (Postcodes.io)
-  → Fetch data in parallel (5 APIs)
+  → Fetch in parallel from 7 sources
   → Classify area type (urban / suburban / rural)
-  → Compute scores (16 deterministic functions, contextual benchmarks)
-  → AI narrates the pre-computed scores (Claude Sonnet)
-  → Scored report with full transparency
+  → Score 5 dimensions for the chosen intent (deterministic, weights sum to 100)
+  → Narrate with Claude (numbers passed in, never recomputed)
+  → Cache for 24h, persist to Postgres
+  → Render report (web), email (Resend), or JSON (REST API)
 ```
 
-The scoring engine (`src/lib/scoring-engine.ts`) contains 16 scoring functions, 4 intent compositions, and 3 area-type benchmark profiles. Scores are enforced server-side after AI generation, so the AI can never override computed values.
+Scoring lives in `src/lib/scoring-engine.ts`. Five scoring functions per intent across four intents, plus three area-type benchmark profiles. Scores are enforced server-side after AI generation, so the model can never override computed values.
 
 ## Features
 
-- **Report generation** with real-time data from 5 government APIs
-- **Deterministic scoring engine** with 16 functions and 4 intent profiles
-- **Area-type benchmarks** (urban, suburban, rural) to eliminate bias
-- **Side-by-side comparison** of two areas
-- **PDF export** with branded dark design
-- **Email report delivery** after generation
-- **Social sharing** (WhatsApp, LinkedIn, X, copy link)
-- **REST API** with Bearer auth, rate limiting, API key management
-- **API usage dashboard** with 30-day request chart
-- **Stripe payments** with 4-tier credit-based pricing
-- **Admin analytics** with conversion funnels and MRR tracking
-- **GDPR-compliant auth** with Google OAuth and email verification
-- **Input validation** and sanitisation against injection
-- **Error boundaries** with branded terminal-style error pages
-- **SEO** with sitemap, robots.txt, JSON-LD structured data, dynamic OG images
-- **Onboarding flow** for new users with suggested postcodes
+**Reports**
+- Four intents (moving, business, investing, research), five weighted dimensions each
+- Property Market panel (median price, YoY, transaction volume, price by property type)
+- Schools panel (Ofsted distribution + top-rated schools, quality-weighted)
+- Side-by-side area comparison
+- PDF export (branded layout)
+- Email delivery via Resend
+- Watchlist + CSV export
+- Social sharing (WhatsApp, LinkedIn, X, copy link)
+- Dynamic OG images per report and per area page
+
+**Public surfaces**
+- 32 programmatic SEO area pages with real engine output
+- Editorial blog with JSON-LD
+- Methodology, changelog, help, business, pricing, docs, about
+
+**Developer platform**
+- REST API with Bearer auth (`aiq_<48-hex>`), PBKDF2-hashed keys
+- Embeddable widget (`/api/widget`, cache-only, CORS, rate-limited per origin)
+- API usage dashboard with 30-day chart
+- Interactive playground in `/docs`
+
+**Account + billing**
+- NextAuth v5 (Google OAuth + credentials)
+- Email verification, password reset, account deletion
+- Stripe checkout, webhook, customer portal, plan changes with proration
+- Adaptive CTAs based on plan state
+
+**Admin**
+- Traffic analytics (pageviews, devices, countries, referrers)
+- Conversion funnels, MRR tracking, activity feed
+
+**Platform**
+- Dark / light theme with `data-theme` token swap, persistent via localStorage
+- 24h report cache (Postgres `report_cache`)
+- Sliding-window rate limiter (Neon-backed)
+- Sentry error monitoring
+- GitHub Actions CI (lint, typecheck, build, test)
+- Health endpoint at `/api/health`
 
 ## Project structure
 
 ```
 src/
 ├── app/
-│   ├── page.tsx                    # Landing page
-│   ├── report/                     # Report generator + SSR report pages
-│   ├── dashboard/                  # User report history
-│   ├── compare/                    # Side-by-side area comparison
-│   ├── api-usage/                  # API usage dashboard (Business)
-│   ├── admin/                      # Admin analytics
-│   ├── pricing/                    # Pricing page
-│   ├── docs/                       # API documentation
-│   ├── methodology/                # Scoring methodology
-│   ├── about/                      # About page
-│   ├── settings/                   # User settings
-│   ├── sign-in/ & sign-up/        # Auth pages
-│   ├── terms/ & privacy/          # Legal pages
+│   ├── page.tsx                    Landing page
+│   ├── layout.tsx                  Root layout, fonts, theme-restore script
+│   ├── report/                     Generator + SSR report pages
+│   ├── dashboard/                  User report history
+│   ├── compare/                    Side-by-side area comparison
+│   ├── api-usage/                  API key management + usage charts
+│   ├── admin/                      Admin analytics
+│   ├── pricing/                    Pricing
+│   ├── docs/                       API documentation
+│   ├── methodology/                Scoring methodology
+│   ├── about/                      About
+│   ├── blog/                       Blog index + post template
+│   ├── area/[slug]/                Programmatic SEO area pages
+│   ├── changelog/                  Release history
+│   ├── help/                       FAQ + contact
+│   ├── settings/                   Account + subscription
+│   ├── sign-in/ & sign-up/         Auth (NextAuth v5 catch-all routes)
+│   ├── forgot-password/            Password reset flow
+│   ├── verify/                     Email verification
+│   ├── terms/ & privacy/           Legal
+│   ├── design-v2/                  Internal preview namespace (noindex, rollback)
+│   ├── design-v2/_shared/          Shared marketing components (nav, footer, styles, icons)
 │   ├── api/
-│   │   ├── report/                 # Report generation endpoint
-│   │   ├── v1/report/              # Public REST API
-│   │   ├── keys/                   # API key management
-│   │   ├── stripe/                 # Checkout, webhook, portal, cancel
-│   │   ├── settings/               # Password, delete account, subscription
-│   │   └── auth/                   # NextAuth handler
-│   ├── error.tsx                   # Error boundary
-│   ├── not-found.tsx               # Custom 404
-│   └── globals.css                 # Design system
+│   │   ├── report/                 Report generation
+│   │   ├── v1/report/              Public REST API
+│   │   ├── widget/                 Embeddable widget endpoint (cache-only)
+│   │   ├── keys/                   API key CRUD
+│   │   ├── stripe/                 Checkout, webhook, portal, cancel
+│   │   ├── settings/               Password, delete, subscription
+│   │   ├── watchlist/              Watchlist CRUD
+│   │   ├── auth/                   NextAuth handler
+│   │   ├── track/                  Pageview tracking
+│   │   └── health/                 Health probe
+│   ├── error.tsx                   Error boundary
+│   ├── not-found.tsx               404
+│   ├── opengraph-image.tsx         Default OG
+│   ├── icon.tsx                    Favicon (concentric rings + chartreuse pin)
+│   └── globals.css                 Design tokens (loaded in head, no FOUC)
 ├── lib/
-│   ├── scoring-engine.ts           # 16 deterministic scoring functions
-│   ├── generate-report.ts          # Data fetch → score → AI narrate
-│   ├── data-sources/               # Postcodes, Police, IMD, OSM, Flood
-│   ├── auth.ts                     # NextAuth config
-│   ├── db.ts                       # Neon Postgres client
-│   ├── stripe.ts                   # Stripe client + plan config
-│   ├── usage.ts                    # Usage tracking
-│   ├── email.ts                    # Resend email templates
-│   ├── rate-limit.ts               # Sliding window rate limiter
-│   ├── validation.ts               # Input sanitisation
-│   ├── pdf-export.ts               # Programmatic PDF generation
-│   ├── api-keys.ts                 # API key CRUD
-│   └── activity.ts                 # Event tracking + analytics
-└── components/
-    ├── navbar.tsx                   # Shared navbar
-    ├── footer.tsx                   # Shared footer
-    ├── report-view.tsx              # Report display component
-    ├── user-button.tsx              # Auth dropdown
-    └── toast.tsx                    # Toast notification system
+│   ├── scoring-engine.ts           Scoring functions, intent compositions, benchmarks
+│   ├── generate-report.ts          Fetch → score → narrate pipeline
+│   ├── data-sources/               Postcodes, Police, Deprivation, OSM, Flood, Land Registry, Ofsted
+│   ├── auth.ts                     NextAuth config
+│   ├── db.ts                       Neon client
+│   ├── db-schema.ts                Table definitions, ensureTable guards
+│   ├── db-types.ts                 Typed row helpers
+│   ├── stripe.ts                   Stripe client, plan config
+│   ├── stripe-types.ts             Type-safe casts
+│   ├── crypto.ts                   PBKDF2-SHA256 (Edge-compatible)
+│   ├── config.ts                   Centralised env config
+│   ├── logger.ts                   Structured logger
+│   ├── with-auth.ts                Auth wrapper for API routes
+│   ├── errors.ts                   AppError + isAppError
+│   ├── id.ts                       generateId helper
+│   ├── usage.ts                    Usage + quota tracking
+│   ├── email.ts                    Resend templates (OneGoodArea brand)
+│   ├── rate-limit.ts               Sliding window (Neon-backed)
+│   ├── validation.ts               Input sanitisation
+│   ├── pdf-export.ts               Programmatic PDF
+│   ├── api-keys.ts                 API key CRUD
+│   ├── activity.ts                 Event tracking
+│   └── rag.ts                      Score → RAG band mapping
+├── components/
+│   ├── full-navbar.tsx             Pre-rebrand navbar (kept for legacy refs)
+│   ├── footer.tsx                  Pre-rebrand footer (kept for legacy refs)
+│   ├── score-ring.tsx              Shared primitives
+│   ├── stat-card.tsx
+│   ├── terminal-card.tsx
+│   ├── pageview-tracker.tsx
+│   └── (etc.)
+└── instrumentation.ts              Sentry init
 ```
+
+The marketing surface (nav, footer, design tokens, icon set) lives in `src/app/design-v2/_shared/`. Every public route renders a v2 client; the bare `/design-v2/*` preview routes are kept noindex as a rollback path.
 
 ## Local development
 
 ```bash
-git clone https://github.com/ptengelmann/AreaIQ-.git
-cd AreaIQ-
+git clone https://github.com/OneGoodArea/OneGoodArea.git
+cd OneGoodArea
 npm install
 ```
 
@@ -144,6 +202,7 @@ Create `.env.local`:
 AUTH_SECRET=
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
+NEXTAUTH_URL=http://localhost:3000
 
 # Database
 DATABASE_URL=
@@ -159,13 +218,19 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 # Email
 RESEND_API_KEY=
 
-# App
-NEXTAUTH_URL=http://localhost:3000
+# Errors (optional in dev)
+NEXT_PUBLIC_SENTRY_DSN=
 ```
 
 ```bash
 npm run dev
 ```
+
+Tests: `npm test` (Vitest, 60+ unit + integration tests across scoring engine, validation, stripe-types, crypto, config, id).
+
+Typecheck: `npx tsc --noEmit`.
+
+Build: `npx next build`.
 
 ## Licence
 

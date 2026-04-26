@@ -36,7 +36,7 @@ The North consistently offers the best combination of affordability and liveabil
 
 ## Midlands: The Commuter Sweet Spot
 
-**Sandwell** has grown rapidly as a first-time buyer area thanks to proximity to Birmingham's job market. Average prices remain well below Birmingham city centre, while the Metro and rail network provides quick access to the urban core. AreaIQ scores for Sandwell typically show strong transport and amenity ratings against a moderate cost of living.
+**Sandwell** has grown rapidly as a first-time buyer area thanks to proximity to Birmingham's job market. Average prices remain well below Birmingham city centre, while the Metro and rail network provides quick access to the urban core. OneGoodArea scores for Sandwell typically show strong transport and amenity ratings against a moderate cost of living.
 
 **Stoke-on-Trent** offers some of England's lowest entry prices with improving infrastructure. The city is positioning itself as a satellite for Manchester commuters, with rail times under an hour.
 
@@ -58,7 +58,7 @@ Price is step one. After that, score the area across the dimensions that matter 
 4. **Amenities**: Healthcare, shops, and green spaces within a reasonable radius directly affect daily quality of life.
 5. **Cost of living**: The IMD deprivation decile gives you a proxy for overall affordability of an area, not just house prices.
 
-AreaIQ scores all of these dimensions automatically for any UK postcode, weighted by your intent (moving, investing, business, or research). Three free reports per month, no card required.
+OneGoodArea scores all of these dimensions automatically for any UK postcode, weighted by your intent (moving, investing, business, or research). Three free reports per month, no card required.
 
 ## The Bottom Line
 
@@ -122,9 +122,9 @@ The IMD has real limitations:
 - **England, Wales, Scotland, and Northern Ireland have separate indices.** You cannot directly compare an English IMD decile with a Scottish SIMD decile. They use different methodologies.
 - **It updates infrequently.** The 2025 edition replaced 2019 data after a 6-year gap. Areas can change between releases.
 
-## How AreaIQ Uses IMD Data
+## How OneGoodArea Uses IMD Data
 
-AreaIQ pulls IMD data for every report and uses it as one of 7 data sources. The deprivation decile feeds into the Cost of Living dimension (for Moving intent), Spending Power (for Business intent), and several investing dimensions.
+OneGoodArea pulls IMD data for every report and uses it as one of 7 data sources. The deprivation decile feeds into the Cost of Living dimension (for Moving intent), Spending Power (for Business intent), and several investing dimensions.
 
 Importantly, we do not use IMD as the sole cost indicator. Where HM Land Registry sold price data is available, we use real transaction prices instead. IMD becomes a fallback and supporting signal rather than the primary source.
 
@@ -132,7 +132,7 @@ For England, we use the IMD 2025. For Wales, we use the Welsh Index of Multiple 
 
 ## How to Check Your Area's IMD
 
-You can look up any postcode's IMD data through the government's official tool, or generate an AreaIQ report which will show you the decile alongside crime, transport, schools, amenities, and environmental data. The value is not in the IMD number alone. It is in how it compares to the other dimensions for the same area.`,
+You can look up any postcode's IMD data through the government's official tool, or generate a OneGoodArea report which will show you the decile alongside crime, transport, schools, amenities, and environmental data. The value is not in the IMD number alone. It is in how it compares to the other dimensions for the same area.`,
   },
   {
     slug: "how-to-research-area-before-buying-uk",
@@ -211,7 +211,7 @@ Rightmove and Zoopla show asking prices. What people actually pay is often diffe
 - **Property type breakdown**: Detached, semi, terraced, and flats all have different trajectories
 - **Tenure split**: Freehold vs leasehold ratio tells you about the housing stock
 
-AreaIQ pulls this data automatically from the Land Registry SPARQL API and shows it in the Property Market panel on Pro reports.
+OneGoodArea pulls this data automatically from the Land Registry SPARQL API and shows it in the Property Market panel on Pro reports.
 
 ## 7. Deprivation: The Number Nobody Checks
 
@@ -239,7 +239,7 @@ What you see at 2pm on a Tuesday is not what you get at 11pm on a Saturday.
 
 ## The Shortcut
 
-Checking all of this manually takes hours per area. If you are comparing multiple locations, it becomes a full-time job. AreaIQ automates the data collection across 7 government sources (crime, deprivation, amenities, transport, school inspections, flood risk, and property prices) and scores each area on the dimensions that matter for your specific intent, whether you are moving, investing, or opening a business. Three free reports per month at area-iq.co.uk.`,
+Checking all of this manually takes hours per area. If you are comparing multiple locations, it becomes a full-time job. OneGoodArea automates the data collection across 7 government sources (crime, deprivation, amenities, transport, school inspections, flood risk, and property prices) and scores each area on the dimensions that matter for your specific intent, whether you are moving, investing, or opening a business. Three free reports per month at area-iq.co.uk.`,
   },
   {
     slug: "safest-places-to-live-uk-2026",
@@ -252,7 +252,7 @@ Checking all of this manually takes hours per area. If you are comparing multipl
 
 ## How We Measured Safety
 
-AreaIQ's safety scoring uses a sigmoid curve applied to monthly crime rates, with adjustments for violent crime proportion and trend direction. A city with 10 crimes per month scores around 86. At 60 per month, the score drops to 50. At 200, it is around 23.
+OneGoodArea's safety scoring uses a sigmoid curve applied to monthly crime rates, with adjustments for violent crime proportion and trend direction. A city with 10 crimes per month scores around 86. At 60 per month, the score drops to 50. At 200, it is around 23.
 
 Critically, we weight violent crime more heavily than property crime or antisocial behaviour. An area with 100 mostly antisocial behaviour incidents scores differently than one with 100 violent crimes.
 
@@ -280,7 +280,7 @@ Remote rural areas like the Shetland and Orkney Islands, the Scottish Highlands,
 
 However, safety alone does not make somewhere a good place to live. These areas often score poorly on transport, amenities, and healthcare access. A village with zero crime but no GP surgery, no school, and a bus that comes twice a day is not ideal for most families.
 
-This is why AreaIQ scores areas across multiple dimensions, not just safety. An area that scores 95 on safety but 15 on transport is not automatically better than one that scores 70 on safety and 80 on transport.
+This is why OneGoodArea scores areas across multiple dimensions, not just safety. An area that scores 95 on safety but 15 on transport is not automatically better than one that scores 70 on safety and 80 on transport.
 
 ## What the Data Does Not Show
 
@@ -291,11 +291,11 @@ Police.uk crime data has known limitations:
 - **Category inconsistency**: What gets classified as "violence and sexual offences" varies between forces
 - **3-month lag**: The most recent data available is typically 2-3 months old
 
-Despite these limitations, police.uk remains the most granular, publicly available crime dataset in the UK. AreaIQ uses a 3-month rolling window to smooth out anomalies and detects trends (rising or falling) to give you a forward-looking view.
+Despite these limitations, police.uk remains the most granular, publicly available crime dataset in the UK. OneGoodArea uses a 3-month rolling window to smooth out anomalies and detects trends (rising or falling) to give you a forward-looking view.
 
 ## How to Check Your Area
 
-Search any UK postcode on police.uk for the raw crime map. Or generate an AreaIQ report to see the safety score in context alongside transport, schools, amenities, cost of living, and environmental data. The safety dimension is weighted at 25% for moving reports and 20% for research, reflecting its importance in residential decisions.
+Search any UK postcode on police.uk for the raw crime map. Or generate a OneGoodArea report to see the safety score in context alongside transport, schools, amenities, cost of living, and environmental data. The safety dimension is weighted at 25% for moving reports and 20% for research, reflecting its importance in residential decisions.
 
 Three free reports per month at area-iq.co.uk. No card required.`,
   },
@@ -344,7 +344,7 @@ Within London:
 - **Lewisham / Catford**: Regeneration areas with improving transport and rising demand
 - **Zone 1-2**: Capital appreciation play, not yield play. Sub-3% yields but historically strong long-term growth
 
-AreaIQ's investing intent scores areas on Price Growth, Rental Yield, Regeneration Potential, Tenant Demand, and Risk Factors. The same tool, different postcode, very different scores within the same city.
+OneGoodArea's investing intent scores areas on Price Growth, Rental Yield, Regeneration Potential, Tenant Demand, and Risk Factors. The same tool, different postcode, very different scores within the same city.
 
 ## Total Returns: Yield + Growth
 
@@ -372,6 +372,6 @@ If you are investing for **long-term capital preservation and growth**, London r
 
 If you are doing **both**, consider a portfolio approach: Manchester for yield, London for growth. Use area-level scoring to find the specific postcodes within each city that best match your investment criteria.
 
-AreaIQ's investing intent analyses Price Growth, Rental Yield, Regeneration Potential, Tenant Demand, and Risk Factors for any UK postcode. Compare areas side-by-side to see exactly where the numbers are strongest. Three free reports per month at area-iq.co.uk.`,
+OneGoodArea's investing intent analyses Price Growth, Rental Yield, Regeneration Potential, Tenant Demand, and Risk Factors for any UK postcode. Compare areas side-by-side to see exactly where the numbers are strongest. Three free reports per month at area-iq.co.uk.`,
   },
 ];
