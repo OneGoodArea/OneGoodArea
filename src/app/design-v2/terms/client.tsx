@@ -50,7 +50,7 @@ export default function TermsClient() {
 
       <LegalSection id="subscriptions" n={3} title="Subscriptions and payments">
         <LegalP>
-          OneGoodArea offers web report plans (Free at £0/month for 3 reports, Starter at £29/month for 20 reports, Pro at £79/month for 75 reports) and API plans (Developer at £49/month for 100 reports, Business at £249/month for 500 reports, Growth at £499/month for 1,500 reports). Enterprise pricing is available on request. All prices are in GBP and inclusive of applicable taxes.
+          OneGoodArea offers a Free tier (£0/month for 3 reports, web-only, sandbox use) and API plans (Developer at £49/month for 100 reports, Business at £249/month for 500 reports, Growth at £499/month for 1,500 reports). Enterprise pricing is available on request. Legacy web report tiers (Starter at £29/month, Pro at £79/month) were retired April 2026. Existing subscribers on those legacy tiers continue on their plan with the features they paid for. All prices are in GBP and inclusive of applicable taxes.
         </LegalP>
         <LegalP>
           Paid subscriptions are billed monthly through Stripe. By subscribing to a paid plan, you authorise us to charge your payment method on a recurring basis until you cancel. You can cancel at any time through the Stripe billing portal. Cancellation takes effect at the end of your current billing period, and you retain access until then.
