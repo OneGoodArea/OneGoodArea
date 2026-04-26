@@ -443,13 +443,15 @@ function Dimensions({ subScores }: { subScores: AreaReport["sub_scores"] }) {
 
 function DimensionRow({ sub }: { sub: AreaReport["sub_scores"][number] }) {
   const rag = appRag(sub.score);
+  const lvl = confLevel(sub.confidence);
+  const isStrong = lvl === "HIGH" || lvl === "MEDIUM";
   return (
     <div>
       <div style={{
         display: "flex", alignItems: "baseline", justifyContent: "space-between",
         gap: 12, marginBottom: 8, flexWrap: "wrap",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <span style={{
             fontFamily: "var(--display)", fontSize: 16, fontWeight: 500,
             letterSpacing: "-0.01em", color: "var(--ink-deep)",
@@ -461,6 +463,22 @@ function DimensionRow({ sub }: { sub: AreaReport["sub_scores"][number] }) {
             border: "1px solid var(--border)",
             padding: "2px 7px", borderRadius: 2,
           }}>Weight {sub.weight}</span>
+          {lvl && (
+            <span
+              title={sub.confidence_reason || `Confidence ${sub.confidence?.toFixed(2)}`}
+              style={{
+                fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 600,
+                letterSpacing: "0.14em",
+                color: isStrong ? "var(--signal-ink)" : "var(--text-3)",
+                background: isStrong ? "var(--signal)" : "transparent",
+                border: `1px solid ${isStrong ? "var(--signal)" : "var(--border)"}`,
+                padding: "2px 7px", borderRadius: 2,
+                cursor: "help",
+              }}
+            >
+              {lvl}
+            </span>
+          )}
         </div>
         <span style={{
           fontFamily: "var(--mono)", fontSize: 16, fontWeight: 600,
@@ -783,6 +801,9 @@ function RecommendationsBlock({ recs }: { recs: string[] }) {
 /* ─────── Metadata footer ─────── */
 
 function MetaBlock({ report, id }: { report: AreaReport; id: string }) {
+  const divider = (
+    <span aria-hidden style={{ width: 1, height: 10, background: "var(--border)" }} />
+  );
   return (
     <div style={{
       fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
@@ -796,11 +817,15 @@ function MetaBlock({ report, id }: { report: AreaReport; id: string }) {
       <span>Report · {id}</span>
       {report.data_sources && report.data_sources.length > 0 && (
         <>
-          <span aria-hidden style={{ width: 1, height: 10, background: "var(--border)" }} />
+          {divider}
           <span>Sources · {report.data_sources.join(" · ")}</span>
         </>
       )}
-      <span aria-hidden style={{ width: 1, height: 10, background: "var(--border)" }} />
+      {divider}
+      <span>Methodology v{report.engine_version || "—"}</span>
+      {divider}
+      <span>Aggregate confidence · {confDisplay(report.confidence)}</span>
+      {divider}
       <span>Generated · {formatDate(report.generated_at)}</span>
     </div>
   );
@@ -810,4 +835,22 @@ function formatDate(ts: string): string {
   try {
     return new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
   } catch { return ts; }
+}
+
+/* ─────── Confidence helpers ─────── */
+
+type ConfLevel = "HIGH" | "MEDIUM" | "LOW" | "NONE";
+
+function confLevel(c: number | undefined): ConfLevel | null {
+  if (c === undefined || c === null || Number.isNaN(c)) return null;
+  if (c >= 0.85) return "HIGH";
+  if (c >= 0.6) return "MEDIUM";
+  if (c >= 0.3) return "LOW";
+  return "NONE";
+}
+
+function confDisplay(c: number | undefined): string {
+  const lvl = confLevel(c);
+  if (!lvl || c === undefined) return "—";
+  return `${c.toFixed(2)} ${lvl}`;
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedReport } from "@/lib/report-cache";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { validateLocationInput, validateIntent } from "@/lib/validation";
 import { logger } from "@/lib/logger";
 
@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
     if (!rl.success) {
       return NextResponse.json(
         { error: "Rate limit exceeded. Try again later." },
-        { status: 429, headers }
+        { status: 429, headers: { ...headers, ...rateLimitHeaders(WIDGET_RATE_LIMIT, rl) } }
       );
     }
 

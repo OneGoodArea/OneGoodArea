@@ -259,6 +259,25 @@ export async function sendReportEmail(email: string, reportId: string, report: A
   const summary = report.summary || "Your report is ready. Click below to view the full analysis.";
   const summaryText = summary.length > 320 ? summary.slice(0, 317) + "..." : summary;
 
+  // Methodology + aggregate confidence footer (optional, gracefully omitted on old reports)
+  const aggConf = typeof report.confidence === "number" ? report.confidence : null;
+  const aggConfLabel =
+    aggConf === null ? null
+    : aggConf >= 0.85 ? "HIGH"
+    : aggConf >= 0.6 ? "MEDIUM"
+    : aggConf >= 0.3 ? "LOW"
+    : "NONE";
+  const methodologyParts: string[] = [];
+  if (report.engine_version) methodologyParts.push(`Methodology v${report.engine_version}`);
+  if (aggConf !== null && aggConfLabel) {
+    methodologyParts.push(`Confidence ${aggConf.toFixed(2)} (${aggConfLabel})`);
+  }
+  const methodologyLine = methodologyParts.length > 0
+    ? `<p style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text3}; margin:0 0 18px 0; letter-spacing:1.5px; text-transform:uppercase;">
+         ${methodologyParts.join(" &middot; ")}
+       </p>`
+    : "";
+
   const content = `
     <p style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text3}; margin:0 0 14px 0; text-transform:uppercase; letter-spacing:2px;">
       Report ready &middot; ${intentLabels[report.intent] || report.intent}
@@ -285,9 +304,11 @@ export async function sendReportEmail(email: string, reportId: string, report: A
     <p style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text3}; margin:0 0 10px 0; text-transform:uppercase; letter-spacing:2px;">
       Top dimensions
     </p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:18px;">
       ${dimensionRows}
     </table>
+
+    ${methodologyLine}
 
     <!-- Summary -->
     <p style="font-family:${FONT_SANS}; font-size:14.5px; color:${COLORS.text}; line-height:1.6; margin:0 0 28px 0;">
