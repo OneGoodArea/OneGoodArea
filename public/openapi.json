@@ -1,0 +1,431 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "OneGoodArea API",
+    "description": "Deterministic UK location intelligence. Scores any UK postcode against four intents (origination / site selection / investment / reference) using seven public datasets. Numbers are computed from real data using fixed formulas; AI narrates the results but never generates the scores.\n\nEvery response carries an `engine_version` string and per-dimension `confidence` values, so a buyer's model risk register can pin to a specific methodology and trust-band the inputs.",
+    "version": "2.0.0",
+    "contact": {
+      "name": "OneGoodArea",
+      "url": "https://www.area-iq.co.uk",
+      "email": "hello@area-iq.co.uk"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://www.area-iq.co.uk/terms"
+    }
+  },
+  "servers": [
+    { "url": "https://www.area-iq.co.uk", "description": "Production" }
+  ],
+  "tags": [
+    { "name": "Reports", "description": "Generate area intelligence reports" },
+    { "name": "Widget", "description": "Embeddable widget endpoint, cache-only" }
+  ],
+  "paths": {
+    "/api/v1/report": {
+      "post": {
+        "tags": ["Reports"],
+        "summary": "Generate an area intelligence report",
+        "description": "Scores a UK postcode or place name against the requested intent. Returns the deterministic score, five weighted dimensions with reasoning and confidence, source attribution, and an AI-generated narrative. Cache-aware (24h TTL per area:intent pair).\n\n**Rate limit:** 30 requests/minute per API key.",
+        "operationId": "generateReport",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ReportRequest" },
+              "example": {
+                "area": "Manchester",
+                "intent": "moving"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Report generated or served from cache",
+            "headers": {
+              "X-RateLimit-Limit": { "schema": { "type": "integer" } },
+              "X-RateLimit-Remaining": { "schema": { "type": "integer" } },
+              "X-RateLimit-Reset": { "schema": { "type": "integer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ReportResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "403": { "$ref": "#/components/responses/PlanError" },
+          "429": { "$ref": "#/components/responses/RateLimitError" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/widget": {
+      "get": {
+        "tags": ["Widget"],
+        "summary": "Embeddable widget — cached scores only",
+        "description": "Lightweight endpoint for the embeddable widget. Returns simplified scores from the 24h cache. Will not generate fresh reports; if a postcode/intent pair has no cached entry, returns a 404 instructing the caller to generate via the main `/api/v1/report` endpoint first.\n\n**Rate limit:** 60 requests/hour per origin/IP. **CORS:** enabled. **Cache-Control:** s-maxage=3600, stale-while-revalidate=86400.",
+        "operationId": "widgetReport",
+        "parameters": [
+          {
+            "name": "postcode",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "example": "M1 1AE"
+          },
+          {
+            "name": "intent",
+            "in": "query",
+            "required": true,
+            "schema": { "$ref": "#/components/schemas/Intent" },
+            "example": "moving"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cached scores",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WidgetResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "404": {
+            "description": "No cached report for this postcode/intent pair",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "429": { "$ref": "#/components/responses/RateLimitError" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "aiq_<48-char hex>",
+        "description": "API key issued from your dashboard at https://www.area-iq.co.uk/api-usage. Format: `aiq_` followed by 48 hex characters. Pass as `Authorization: Bearer aiq_...`."
+      }
+    },
+    "schemas": {
+      "Intent": {
+        "type": "string",
+        "description": "The scoring product to apply. Each intent reweights the same five dimensions for a different decision.",
+        "enum": ["moving", "business", "investing", "research"],
+        "x-product-mapping": {
+          "moving": "Origination scoring — residential mortgage suitability and demand-side risk",
+          "business": "Site selection — footfall, competition, and commercial viability",
+          "investing": "Investment scoring — yield, growth, regeneration, tenant risk",
+          "research": "Reference scoring — neutral baseline, equal weights"
+        }
+      },
+      "AreaType": {
+        "type": "string",
+        "enum": ["urban", "suburban", "rural"],
+        "description": "Auto-detected from postcodes.io rural/urban classification. Scores are benchmarked against the relevant peer group."
+      },
+      "ReportRequest": {
+        "type": "object",
+        "required": ["area", "intent"],
+        "properties": {
+          "area": {
+            "type": "string",
+            "description": "UK postcode (e.g. `M1 1AE`), place name (`Manchester`), or partial. Will be geocoded and resolved to an LSOA before scoring.",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "intent": { "$ref": "#/components/schemas/Intent" }
+        }
+      },
+      "ReportResponse": {
+        "type": "object",
+        "required": ["id", "report"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Internal report ID, prefixed `rpt_`",
+            "example": "rpt_abc123def"
+          },
+          "report": { "$ref": "#/components/schemas/AreaReport" }
+        }
+      },
+      "AreaReport": {
+        "type": "object",
+        "description": "The full area intelligence report.",
+        "required": ["area", "intent", "areaiq_score", "sub_scores", "summary", "sections", "recommendations", "generated_at"],
+        "properties": {
+          "area": { "type": "string", "example": "Manchester" },
+          "intent": { "$ref": "#/components/schemas/Intent" },
+          "areaiq_score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Overall deterministic score, 0–100. Server-locked: AI cannot drift this value."
+          },
+          "area_type": { "$ref": "#/components/schemas/AreaType" },
+          "sub_scores": {
+            "type": "array",
+            "minItems": 5,
+            "maxItems": 5,
+            "items": { "$ref": "#/components/schemas/SubScore" }
+          },
+          "summary": { "type": "string", "description": "AI-generated 2–3 sentence executive summary, intent-aware." },
+          "sections": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ReportSection" }
+          },
+          "recommendations": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "data_sources": {
+            "type": "array",
+            "description": "Authoritative public datasets that contributed to this report.",
+            "items": { "type": "string" },
+            "example": ["postcodes.io", "police.uk", "IMD 2025", "OpenStreetMap", "Environment Agency", "HM Land Registry", "Ofsted"]
+          },
+          "data_freshness": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DataFreshness" }
+          },
+          "property_data": { "$ref": "#/components/schemas/PropertyMarketData" },
+          "schools_data": { "$ref": "#/components/schemas/SchoolsData" },
+          "confidence": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Aggregate confidence across all dimensions, weight-weighted. 1.0 = rich data on every dimension; 0.4 = sparse data or proxy fallback used. See `confidence_reason` on each sub_score for per-dimension explanation."
+          },
+          "engine_version": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$",
+            "description": "Methodology version that produced this report. Pin to a specific version in your model risk register. Changelog at /methodology.",
+            "example": "2.0.0"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SubScore": {
+        "type": "object",
+        "required": ["label", "score", "weight", "summary"],
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Dimension name, e.g. `Safety & Crime`",
+            "example": "Safety & Crime"
+          },
+          "score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Deterministic dimension score, 0–100"
+          },
+          "weight": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "This dimension's weight in the overall score. The five weights sum to 100 per intent.",
+            "example": 25
+          },
+          "summary": {
+            "type": "string",
+            "description": "AI-generated one-sentence summary of the score with specific data references."
+          },
+          "reasoning": {
+            "type": "string",
+            "description": "Deterministic reasoning string from the engine — exact data points that drove the score."
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Per-dimension confidence: 1.0 HIGH (fresh primary data), 0.7 MEDIUM (partial fallback or older dataset), 0.4 LOW (full proxy fallback), 0.2 NONE (no data, default 50)."
+          },
+          "confidence_reason": {
+            "type": "string",
+            "description": "Human-readable explanation of the confidence value."
+          }
+        }
+      },
+      "ReportSection": {
+        "type": "object",
+        "required": ["title", "content"],
+        "properties": {
+          "title": { "type": "string" },
+          "content": { "type": "string" },
+          "data_points": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": { "type": "string" },
+                "value": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "DataFreshness": {
+        "type": "object",
+        "required": ["source", "period", "status"],
+        "properties": {
+          "source": { "type": "string", "example": "police.uk" },
+          "period": { "type": "string", "example": "Apr 2024 to Mar 2025" },
+          "status": {
+            "type": "string",
+            "enum": ["live", "recent", "static"],
+            "description": "live = real-time API; recent = updated within last quarter; static = annual or less frequent release"
+          }
+        }
+      },
+      "PropertyMarketData": {
+        "type": "object",
+        "description": "HM Land Registry sold-price summary for the postcode area.",
+        "properties": {
+          "postcode_area": { "type": "string", "example": "M1" },
+          "median_price": { "type": "integer", "example": 245000 },
+          "mean_price": { "type": "integer", "example": 280000 },
+          "transaction_count": { "type": "integer", "example": 124 },
+          "price_change_pct": {
+            "type": "number",
+            "nullable": true,
+            "description": "Year-over-year change percentage, null if insufficient prior-year data",
+            "example": 4.2
+          },
+          "by_property_type": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "example": "Flat" },
+                "median": { "type": "integer", "example": 198000 },
+                "count": { "type": "integer", "example": 80 }
+              }
+            }
+          },
+          "tenure_split": {
+            "type": "object",
+            "properties": {
+              "freehold": { "type": "integer" },
+              "leasehold": { "type": "integer" }
+            }
+          },
+          "price_range": {
+            "type": "object",
+            "properties": {
+              "min": { "type": "integer" },
+              "max": { "type": "integer" }
+            }
+          },
+          "period": { "type": "string", "example": "2024-2025" }
+        }
+      },
+      "SchoolsData": {
+        "type": "object",
+        "description": "Ofsted school inspection data (England). Estyn (Wales) and Education Scotland on roadmap.",
+        "properties": {
+          "schools": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "phase": { "type": "string", "example": "Primary" },
+                "rating": {
+                  "type": "string",
+                  "enum": ["Outstanding", "Good", "Requires Improvement", "Inadequate", "Not rated"]
+                },
+                "distance_km": { "type": "number" }
+              }
+            }
+          },
+          "rating_breakdown": {
+            "type": "object",
+            "additionalProperties": { "type": "integer" }
+          },
+          "inspectorate": {
+            "type": "string",
+            "enum": ["Ofsted", "Estyn", "Education Scotland"]
+          }
+        }
+      },
+      "WidgetResponse": {
+        "type": "object",
+        "required": ["area", "postcode", "intent", "score", "dimensions", "powered_by"],
+        "properties": {
+          "area": { "type": "string" },
+          "postcode": { "type": "string" },
+          "intent": { "$ref": "#/components/schemas/Intent" },
+          "score": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "area_type": { "$ref": "#/components/schemas/AreaType" },
+          "dimensions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": { "type": "string" },
+                "score": { "type": "integer" }
+              }
+            }
+          },
+          "powered_by": {
+            "type": "string",
+            "example": "OneGoodArea"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" },
+          "code": { "type": "string" }
+        }
+      }
+    },
+    "responses": {
+      "ValidationError": {
+        "description": "Invalid request — missing or malformed `area` or `intent`",
+        "content": {
+          "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
+        }
+      },
+      "AuthError": {
+        "description": "Missing or invalid API key",
+        "content": {
+          "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
+        }
+      },
+      "PlanError": {
+        "description": "API access requires a Developer, Business, or Growth plan",
+        "content": {
+          "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
+        }
+      },
+      "RateLimitError": {
+        "description": "Rate limit exceeded",
+        "content": {
+          "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
+        }
+      },
+      "ServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
+        }
+      }
+    }
+  }
+}
