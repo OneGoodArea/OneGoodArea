@@ -8,6 +8,7 @@ import { getFloodRisk, formatFloodRiskForPrompt, FloodRiskData } from "@/lib/dat
 import { getPropertyPrices, formatPropertyDataForPrompt, PropertyPriceData } from "@/lib/data-sources/land-registry";
 import { getOfstedSchools, formatOfstedForPrompt, OfstedData } from "@/lib/data-sources/ofsted";
 import { computeScores, ComputedScores } from "@/lib/scoring-engine";
+import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 import { AreaReport, Intent, DataFreshness } from "@/lib/types";
 import { ensureReportCacheTable, getCachedReport, setCachedReport } from "@/lib/report-cache";
 import { trackEvent } from "@/lib/activity";
@@ -278,6 +279,7 @@ export async function generateReport(
   report.areaiq_score = scores.overall;
   report.area_type = scores.area_type;
   report.confidence = scores.confidence;
+  report.engine_version = METHODOLOGY_VERSION;
   report.sub_scores = report.sub_scores.map((sub, i) => ({
     ...sub,
     score: scores.dimensions[i]?.score ?? sub.score,
