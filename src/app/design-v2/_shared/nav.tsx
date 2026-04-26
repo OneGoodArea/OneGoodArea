@@ -13,10 +13,11 @@ import { ThemeDot } from "./theme-dot";
    <=720px (matches the existing rule hiding the desktop links). */
 
 const LINKS: { label: string; href: string }[] = [
-  { label: "Business", href: "/business" },
-  { label: "API",      href: "/docs" },
-  { label: "Pricing",  href: "/pricing" },
-  { label: "About",    href: "/about" },
+  { label: "Business",    href: "/business" },
+  { label: "API",         href: "/docs" },
+  { label: "Methodology", href: "/methodology" },
+  { label: "Pricing",     href: "/pricing" },
+  { label: "About",       href: "/about" },
 ];
 
 export function Nav() {

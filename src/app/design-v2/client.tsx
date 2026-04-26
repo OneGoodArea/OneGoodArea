@@ -315,21 +315,21 @@ function Hero({
           margin: "28px 0 0",
           animation: "aiq-fade-up 800ms cubic-bezier(0.16,1,0.3,1) both",
         }}>
-          An intelligence report for{" "}
+          UK location intelligence,{" "}
           <span style={{
             fontStyle: "italic", color: "var(--ink)",
             borderBottom: "3px solid var(--signal)", paddingBottom: 2,
-          }}>every UK postcode</span>.
+          }}>built to embed</span>.
         </h1>
 
         <p style={{
           fontFamily: "var(--sans)", fontSize: 19, lineHeight: 1.55,
           color: "var(--text-2)", letterSpacing: "-0.005em",
           margin: "24px auto 40px",
-          maxWidth: "34em",
+          maxWidth: "38em",
           animation: "aiq-fade-up 800ms cubic-bezier(0.16,1,0.3,1) 100ms both",
         }}>
-          Type a place. Pick why you're looking. Seven public datasets do the rest.
+          Deterministic area scoring for lenders, insurers, and PropTech. Auditable methodology, one API, seven public sources, scores you can ship to a regulator.
         </p>
 
         {/* Form · centered */}
@@ -456,7 +456,7 @@ function HeroEyebrow() {
         boxShadow: "0 0 0 4px rgba(212,243,58,0.22)",
         animation: "aiq-pulse-dot 1800ms ease-in-out infinite",
       }} />
-      <span>UK area intelligence</span>
+      <span>UK location intelligence · for regulated buyers</span>
     </div>
   );
 }
@@ -649,9 +649,9 @@ function Eyebrow() {
         background: "var(--signal)", border: "1px solid var(--ink-deep)",
         animation: "aiq-pulse-dot 2.4s ease-in-out infinite",
       }} />
-      Area intelligence · engine v1.2 · live
+      Location intelligence engine · v1.2 · deterministic · live
       <span style={{ color: "var(--text-4)" }}>/</span>
-      <span style={{ color: "var(--text-3)" }}>42,640 UK areas</span>
+      <span style={{ color: "var(--text-3)" }}>every UK postcode</span>
     </div>
   );
 }
@@ -1985,30 +1985,30 @@ const HIW_STEPS: {
   {
     id: "input",
     number: "01",
-    short: "Locate",
-    title: "Type a place.",
-    blurb: "A UK postcode, a city, or a town. Autocomplete pins the exact neighbourhood before anything else runs.",
+    short: "Input",
+    title: "A postcode and an intent.",
+    blurb: "Web form or POST /v1/report. Same input shape either way. UK postcode, place name, or partial. Autocomplete resolves to the LSOA before anything else runs.",
   },
   {
     id: "intent",
     number: "02",
-    short: "Intent",
-    title: "Pick why you're looking.",
-    blurb: "Moving home, opening a business, property investing, or market research. Each reads the same area through a different lens.",
+    short: "Reweight",
+    title: "The engine picks the weights.",
+    blurb: "Origination, site selection, investment, or reference. Same five dimensions, different weights. The engine reweights deterministically for each.",
   },
   {
     id: "datasets",
     number: "03",
-    short: "Evidence",
-    title: "We gather the evidence.",
-    blurb: "Crime, schools, transport, amenities, deprivation, property prices, flood risk. All public, all at once.",
+    short: "Pipeline",
+    title: "Seven datasets, in parallel.",
+    blurb: "Geocoding, crime, schools, deprivation, amenities, flood risk, property prices. All public sources. Area type detected (urban, suburban, rural) and scores benchmarked accordingly. Server-locked. AI cannot drift the numbers.",
   },
   {
     id: "report",
     number: "04",
-    short: "Report",
-    title: "Out comes a report.",
-    blurb: "A score, five weighted dimensions with plain-English reasoning, a narrative read, and specific recommendations.",
+    short: "Output",
+    title: "Score out. JSON or web.",
+    blurb: "Same numbers in every channel. Score 0–100, five weighted dimensions with reasoning, source citations per dimension, AI narrative. Render on the web, pipe into your underwriting model, or drop in as a widget.",
   },
 ];
 
@@ -2047,11 +2047,11 @@ function HowItWorks() {
               lineHeight: 1.08, letterSpacing: "-0.02em",
               color: "var(--ink-deep)", margin: 0,
             }}>
-              A postcode to a{" "}
+              Postcode in.{" "}
               <span style={{
                 fontStyle: "italic", color: "var(--ink)",
                 borderBottom: "3px solid var(--signal)", paddingBottom: 2,
-              }}>full read</span>, in four steps.
+              }}>Deterministic score</span> out.
             </h2>
           </div>
           <div>
@@ -2493,59 +2493,64 @@ const INTENTS_DATA: {
   id: string;
   number: string;
   verb: string;
+  consumerLabel: string;
   lede: string;
-  dims: string[];
+  dims: { label: string; weight: number }[];
 }[] = [
   {
     id: "moving",
     number: "01",
-    verb: "moving home",
-    lede: "What a buyer or renter needs to know about a neighbourhood before they commit to a viewing or a tenancy.",
+    verb: "Origination scoring",
+    consumerLabel: "Moving home",
+    lede: "Residential mortgage suitability and demand-side risk. Used by lenders for portfolio screening and origination decisions.",
     dims: [
-      "Safety & Crime",
-      "Schools & Education",
-      "Transport & Commute",
-      "Daily Amenities",
-      "Cost of Living",
+      { label: "Safety & Crime",       weight: 25 },
+      { label: "Schools & Education",  weight: 20 },
+      { label: "Transport & Commute",  weight: 20 },
+      { label: "Daily Amenities",      weight: 15 },
+      { label: "Cost of Living",       weight: 20 },
     ],
   },
   {
     id: "business",
     number: "02",
-    verb: "opening a business",
-    lede: "What an operator needs before they sign a lease: footfall, competition, and the cost of holding the space.",
+    verb: "Site selection",
+    consumerLabel: "Opening a business",
+    lede: "Footfall, competition, and commercial viability. Used by retail, F&B, and commercial leasing teams scoring sites across thousands of postcodes.",
     dims: [
-      "Foot Traffic & Demand",
-      "Competition Density",
-      "Transport & Access",
-      "Local Spending Power",
-      "Commercial Costs",
+      { label: "Foot Traffic & Demand",  weight: 30 },
+      { label: "Competition Density",   weight: 20 },
+      { label: "Transport & Access",    weight: 15 },
+      { label: "Local Spending Power",  weight: 20 },
+      { label: "Commercial Costs",      weight: 15 },
     ],
   },
   {
     id: "investing",
     number: "03",
-    verb: "property investing",
-    lede: "What a capital allocator weighs when sizing up a buy-to-let or a development opportunity.",
+    verb: "Investment scoring",
+    consumerLabel: "Property investing",
+    lede: "Yield, growth, regeneration, and tenant risk. Used by BTL and BTR operators sizing up acquisitions, and by investment committees as part of due diligence.",
     dims: [
-      "Price Growth",
-      "Rental Yield",
-      "Regeneration",
-      "Tenant Demand",
-      "Risk Factors",
+      { label: "Price Growth",                weight: 25 },
+      { label: "Rental Yield",                weight: 25 },
+      { label: "Regeneration & Infrastructure", weight: 20 },
+      { label: "Tenant Demand",               weight: 15 },
+      { label: "Risk Factors",                weight: 15 },
     ],
   },
   {
     id: "research",
     number: "04",
-    verb: "market research",
-    lede: "The balanced, neutral read for analysts, agents, and journalists writing about an area.",
+    verb: "Reference scoring",
+    consumerLabel: "Market research",
+    lede: "Neutral baseline for analysts, planners, and journalists. The default read with no thumb on the scale, equal weight across the five dimensions.",
     dims: [
-      "Safety & Crime",
-      "Transport Links",
-      "Amenities & Services",
-      "Demographics",
-      "Environment & Quality",
+      { label: "Safety & Crime",        weight: 20 },
+      { label: "Transport Links",       weight: 20 },
+      { label: "Amenities & Services",  weight: 20 },
+      { label: "Demographics & Economy", weight: 20 },
+      { label: "Environment & Quality", weight: 20 },
     ],
   },
 ];
@@ -2570,32 +2575,30 @@ function IntentsSection() {
             lineHeight: 1.08, letterSpacing: "-0.02em",
             color: "var(--ink-deep)", margin: 0,
           }}>
-            Four readings for{" "}
+            Four scoring products.{" "}
             <span style={{
               fontStyle: "italic", color: "var(--ink)",
               borderBottom: "3px solid var(--signal)", paddingBottom: 2,
-            }}>four situations</span>.
+            }}>One engine</span>.
           </h2>
           <p style={{
             fontFamily: "var(--sans)", fontSize: 16.5, lineHeight: 1.55,
             color: "var(--text-2)", letterSpacing: "-0.003em",
             margin: "20px auto 0", maxWidth: "54ch",
           }}>
-            Each intent replaces the dimensions and reweights the data. Pick the lens
-            that matches what you're doing. The engine does the rest.
+            Same engine, four weighted models. Each intent reweights the five dimensions for a different decision: lender origination, retail site selection, property investment, or neutral reference. The maths is deterministic. The reasoning is explainable.
           </p>
         </div>
 
-        <div className="aiq-intents-grid" style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+        <div className="aiq-intents-stack" style={{
+          display: "flex", flexDirection: "column",
           border: "1px solid var(--border)",
-          borderRadius: 4,
+          borderRadius: 6,
           overflow: "hidden",
           background: "var(--bg)",
         }}>
           {INTENTS_DATA.map((it, i) => (
-            <IntentColumn
+            <IntentRow
               key={it.id}
               intent={it}
               last={i === INTENTS_DATA.length - 1}
@@ -2607,66 +2610,96 @@ function IntentsSection() {
   );
 }
 
-function IntentColumn({
+function IntentRow({
   intent, last,
 }: {
   intent: (typeof INTENTS_DATA)[number];
   last: boolean;
 }) {
   return (
-    <div className="aiq-intent-col" style={{
-      padding: "30px 24px 34px",
-      borderRight: last ? "none" : "1px solid var(--border)",
-      display: "flex", flexDirection: "column",
+    <div className="aiq-intent-row" style={{
+      display: "grid",
+      gridTemplateColumns: "260px 1fr 280px",
+      borderBottom: last ? "none" : "1px solid var(--border)",
     }}>
-      <div style={{
-        fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-        letterSpacing: "0.22em", color: "var(--ink)",
-      }}>{intent.number}</div>
-
-      <h3 style={{
-        fontFamily: "var(--display)", fontStyle: "italic", fontWeight: 400,
-        fontSize: 23, lineHeight: 1.15, letterSpacing: "-0.015em",
-        color: "var(--ink-deep)", margin: "8px 0 18px",
-      }}>
-        {intent.verb}
-      </h3>
-
-      <p style={{
-        fontFamily: "var(--sans)", fontSize: 14, lineHeight: 1.55,
-        color: "var(--text-2)", letterSpacing: "-0.003em",
-        margin: "0 0 24px", minHeight: 88,
-      }}>
-        {intent.lede}
-      </p>
-
-      <div style={{
-        paddingTop: 18,
-        borderTop: "1px dashed var(--border)",
+      {/* Title block */}
+      <div className="aiq-intent-title" style={{
+        padding: "30px 28px 32px",
+        borderRight: "1px solid var(--border-dim)",
+        background: "var(--bg-off)",
+        display: "flex", flexDirection: "column",
       }}>
         <div style={{
-          fontFamily: "var(--mono)", fontSize: 9, fontWeight: 500,
+          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
+          letterSpacing: "0.22em", color: "var(--ink)",
+        }}>{intent.number}</div>
+        <h3 style={{
+          fontFamily: "var(--display)", fontStyle: "italic", fontWeight: 500,
+          fontSize: 26, lineHeight: 1.12, letterSpacing: "-0.018em",
+          color: "var(--ink-deep)",
+          margin: "10px 0 0",
+        }}>
+          {intent.verb}
+        </h3>
+        <div style={{
+          fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
+          letterSpacing: "0.18em", textTransform: "uppercase",
+          color: "var(--text-3)",
+          marginTop: 14,
+        }}>
+          Consumer label · {intent.consumerLabel}
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="aiq-intent-body" style={{
+        padding: "32px 36px",
+        display: "flex", alignItems: "center",
+      }}>
+        <p style={{
+          fontFamily: "var(--sans)", fontSize: 16, lineHeight: 1.6,
+          color: "var(--text-2)", letterSpacing: "-0.003em",
+          margin: 0, maxWidth: "54ch",
+        }}>
+          {intent.lede}
+        </p>
+      </div>
+
+      {/* Weights panel */}
+      <div className="aiq-intent-weights" style={{
+        padding: "26px 28px 28px",
+        borderLeft: "1px solid var(--border-dim)",
+        background: "var(--bg-off)",
+      }}>
+        <div style={{
+          fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
           letterSpacing: "0.22em", textTransform: "uppercase",
           color: "var(--text-3)", marginBottom: 12,
-        }}>Scored on</div>
-        <ul style={{
-          listStyle: "none", padding: 0, margin: 0,
-          display: "flex", flexDirection: "column", gap: 7,
-        }}>
-          {intent.dims.map((d) => (
-            <li key={d} style={{
-              fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 500,
-              color: "var(--ink-deep)", letterSpacing: "-0.003em",
-              display: "flex", alignItems: "center", gap: 10,
+        }}>Dimensions · weights</div>
+        <div>
+          {intent.dims.map((d, idx) => (
+            <div key={d.label} style={{
+              display: "flex", justifyContent: "space-between",
+              alignItems: "baseline", gap: 12,
+              padding: "9px 0",
+              borderTop: idx === 0 ? "none" : "1px solid var(--border-dim)",
             }}>
               <span style={{
-                width: 4, height: 4, borderRadius: 999,
-                background: "var(--signal)", flexShrink: 0,
-              }} />
-              {d}
-            </li>
+                fontFamily: "var(--sans)", fontSize: 13, fontWeight: 500,
+                color: "var(--ink-deep)", letterSpacing: "-0.003em",
+              }}>
+                {d.label}
+              </span>
+              <span style={{
+                fontFamily: "var(--mono)", fontSize: 12.5, fontWeight: 500,
+                color: "var(--ink)", letterSpacing: 0,
+                whiteSpace: "nowrap",
+              }}>
+                {d.weight}
+              </span>
+            </div>
           ))}
-        </ul>
+        </div>
       </div>
     </div>
   );
@@ -2675,17 +2708,17 @@ function IntentColumn({
 /* ─────── Who uses it & why ─────── */
 
 const WHO_ITEMS: { icon: IconName; title: string; body: string }[] = [
-  { icon: "buyer",    title: "Home Buyers",       body: "Evaluate safety, school catchments, and commute times before choosing where to live." },
-  { icon: "investor", title: "Property Investors", body: "Compare rental yields, price growth, and regeneration potential across areas." },
-  { icon: "agent",    title: "Estate Agents",     body: "Create data-backed area briefings for client viewings and property listings." },
-  { icon: "operator", title: "Business Owners",   body: "Assess foot traffic, competition, and local spending power before opening." },
+  { icon: "buyer",    title: "Mortgage lenders",       body: "Origination scoring and portfolio risk for challenger banks. Address-level enrichment, deterministic flood and crime signals, audit trail per dimension." },
+  { icon: "gauge",    title: "Insurance underwriters", body: "Area risk for property and liability cover. Flood, crime, and environmental scoring with confidence per dimension and version-pinned methodology." },
+  { icon: "widget",   title: "PropTech platforms",     body: "Embed kit, white-label scoring, REST API. Add area intelligence to your product without rebuilding it." },
+  { icon: "operator", title: "Retail and CRE",         body: "Site selection scoring at scale. Footfall, competition, and demographic signals across thousands of postcodes." },
 ];
 
 const WHY_ITEMS: { icon: IconName; title: string; body: string }[] = [
-  { icon: "intent", title: "Intent-driven scoring",   body: "Same area, different scores for moving, investing, or opening a business. Most tools give you one generic view." },
-  { icon: "data",   title: "Transparent methodology", body: "Scores computed from real public data using transparent formulas. Same postcode, same score, every time." },
-  { icon: "read",   title: "AI that reads the data",  body: "Numbers tell you what. Our engine explains why: plain English, tailored to your situation, with specific recommendations." },
-  { icon: "api",    title: "Developer API",           body: "A REST API with Bearer auth. Embed area intelligence into property platforms, CRM tools, and relocation apps." },
+  { icon: "repeat", title: "Deterministic scoring",   body: "Same input, same output, every time. Numbers come from formulas. AI just explains what the engine found." },
+  { icon: "read",   title: "Auditable methodology",   body: "Every weight, threshold, and data source is public. Methodology you can ship to a regulator." },
+  { icon: "intent", title: "Intent-driven",           body: "Same area, four scores. Origination, site selection, investment, reference. The engine reweights for each." },
+  { icon: "api",    title: "Built to embed",          body: "REST API, drop-in widget, version pinning on the roadmap. Integrate in an afternoon." },
 ];
 
 function AudiencesSection() {
@@ -2734,7 +2767,7 @@ function AudiencesSection() {
               color: "var(--text-2)", letterSpacing: "-0.003em",
               margin: "14px 0 0", maxWidth: "38ch",
             }}>
-              Built for anyone making a location decision, from first-time buyers to property funds. Hours of research, in seconds.
+              Mortgage lenders, insurers, PropTech platforms, and retail site-selection teams. Built to embed in regulated workflows.
             </p>
 
             <div style={{
@@ -2764,7 +2797,7 @@ function AudiencesSection() {
               color: "var(--text-2)", letterSpacing: "-0.003em",
               margin: "14px 0 0", maxWidth: "38ch",
             }}>
-              Not another postcode lookup. We score, weigh, and explain. For your specific use case.
+              Deterministic. Auditable. Source-attributed. Built for FCA-regulated environments. SOC 2 Type II in progress.
             </p>
 
             <div style={{
@@ -3415,8 +3448,8 @@ function ForBusinessesSection() {
           body="Call any UK postcode with an intent. Get scores, dimensions, reasoning, and source citations back as structured JSON. Same payload that renders on this site."
           bullets={[
             "Four intents. Five weighted dimensions per intent",
-            "Source attribution on every dimension",
-            "Tiered plans from free to enterprise",
+            "Source attribution and confidence per dimension",
+            "Sandbox to enterprise. Volume pricing aligned with API call usage",
           ]}
           visual={<FBApiPanel />}
         />
@@ -3773,7 +3806,7 @@ function FinalCTA() {
           color: "var(--text-2)", letterSpacing: "-0.003em",
           margin: "28px auto 0", maxWidth: "50ch",
         }}>
-          Type a UK place, pick why you&apos;re looking, and get the intelligence report in seconds.
+          Run the engine on any UK postcode in seconds. Or jump to the API to see how it integrates.
         </p>
         <div style={{
           display: "flex", gap: 12, justifyContent: "center",
@@ -3813,7 +3846,7 @@ function FinalCTA() {
           letterSpacing: "0.22em", textTransform: "uppercase",
           color: "var(--text-3)",
         }}>
-          42,640 UK neighbourhoods · free to try · any UK postcode
+          Coverage: every UK postcode · 7 authoritative public datasets · refreshed continuously
         </div>
       </div>
     </section>

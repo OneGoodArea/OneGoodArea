@@ -2,19 +2,19 @@ import type { Metadata } from "next";
 import DesignV2Client from "@/app/design-v2/client";
 
 export const metadata: Metadata = {
-  title: "OneGoodArea | UK Area Intelligence Reports",
-  description: "Enter any UK postcode. Pick why you're looking. Get a scored intelligence report across safety, transport, schools, amenities, and cost.",
+  title: "OneGoodArea | The deterministic UK location intelligence layer",
+  description: "Deterministic area scoring for lenders, insurers, and PropTech. Auditable methodology, one API, seven public sources, scores you can ship to a regulator.",
   openGraph: {
-    title: "OneGoodArea | UK Area Intelligence Reports",
-    description: "Enter any UK postcode. Pick why you're looking. Get a full read in seconds.",
+    title: "OneGoodArea | The deterministic UK location intelligence layer",
+    description: "Deterministic area scoring for lenders, insurers, and PropTech. Auditable methodology. One API, seven public sources.",
     type: "website",
     url: "https://www.area-iq.co.uk",
     images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "OneGoodArea | UK Area Intelligence Reports",
-    description: "Enter any UK postcode, get a scored intelligence report in seconds.",
+    title: "OneGoodArea | The deterministic UK location intelligence layer",
+    description: "Deterministic UK area scoring. Auditable methodology, one API, seven public sources.",
   },
   alternates: { canonical: "https://www.area-iq.co.uk" },
 };

@@ -475,21 +475,32 @@ input:focus, select:focus {
         }
       }
 
-      /* Intents section: collapse to 2 cols on tablet, 1 on mobile */
-      @media (max-width: 880px) {
-        .aiq-intents-grid {
-          grid-template-columns: repeat(2, 1fr) !important;
+      /* Intents section: vertical editorial rows. Collapse weights below body on tablet, full stack on mobile */
+      @media (max-width: 1000px) {
+        .aiq-intent-row {
+          grid-template-columns: 240px 1fr !important;
         }
-        .aiq-intent-col:nth-child(2) { border-right: none !important; }
-        .aiq-intent-col:nth-child(1),
-        .aiq-intent-col:nth-child(2) { border-bottom: 1px solid var(--border) !important; }
+        .aiq-intent-weights {
+          grid-column: 1 / -1 !important;
+          border-left: none !important;
+          border-top: 1px solid var(--border-dim) !important;
+        }
       }
-      @media (max-width: 560px) {
-        .aiq-intents-grid {
+      @media (max-width: 720px) {
+        .aiq-intent-row {
           grid-template-columns: 1fr !important;
         }
-        .aiq-intent-col { border-right: none !important; border-bottom: 1px solid var(--border) !important; }
-        .aiq-intent-col:last-child { border-bottom: none !important; }
+        .aiq-intent-title {
+          border-right: none !important;
+          border-bottom: 1px solid var(--border-dim) !important;
+          padding: 22px 22px 24px !important;
+        }
+        .aiq-intent-body {
+          padding: 24px 22px !important;
+        }
+        .aiq-intent-weights {
+          padding: 22px !important;
+        }
       }
 
 
