@@ -2590,110 +2590,141 @@ function IntentsSection() {
           </p>
         </div>
 
-        <div className="aiq-intents-stack" style={{
-          display: "flex", flexDirection: "column",
+        {/* Bento layout: 12-col grid with zigzag asymmetry. Row 1: intent 01 spans
+            7 cols, intent 02 spans 5. Row 2 reverses: intent 03 spans 5, intent 04
+            spans 7. The size variation creates visual rhythm; cell content stays
+            consistent so all four intents read as equal products. */}
+        <div className="aiq-intents-bento" style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(12, 1fr)",
+          gap: 1,
+          background: "var(--border)",
           border: "1px solid var(--border)",
-          borderRadius: 6,
+          borderRadius: 8,
           overflow: "hidden",
-          background: "var(--bg)",
         }}>
-          {INTENTS_DATA.map((it, i) => (
-            <IntentRow
-              key={it.id}
-              intent={it}
-              last={i === INTENTS_DATA.length - 1}
-            />
-          ))}
+          <IntentBentoCell intent={INTENTS_DATA[0]} cols={7} featured />
+          <IntentBentoCell intent={INTENTS_DATA[1]} cols={5} />
+          <IntentBentoCell intent={INTENTS_DATA[2]} cols={5} />
+          <IntentBentoCell intent={INTENTS_DATA[3]} cols={7} featured />
         </div>
       </div>
     </section>
   );
 }
 
-function IntentRow({
-  intent, last,
+function IntentBentoCell({
+  intent, cols, featured = false,
 }: {
   intent: (typeof INTENTS_DATA)[number];
-  last: boolean;
+  cols: number;
+  featured?: boolean;
 }) {
+  const verbSize = featured ? "clamp(1.55rem, 2.2vw, 2rem)" : "clamp(1.25rem, 1.7vw, 1.55rem)";
+  const ledeSize = featured ? 16 : 14.5;
+  const padding = featured ? "36px 40px 36px 40px" : "30px 32px 32px 32px";
   return (
-    <div className="aiq-intent-row" style={{
+    <div className="aiq-intent-bento-cell" style={{
+      gridColumn: `span ${cols}`,
+      background: "var(--bg)",
+      padding,
       display: "grid",
-      gridTemplateColumns: "260px 1fr 280px",
-      borderBottom: last ? "none" : "1px solid var(--border)",
+      gridTemplateRows: "auto 1fr auto",
+      gap: 18,
+      position: "relative",
+      transition: "background 200ms ease",
     }}>
-      {/* Title block */}
-      <div className="aiq-intent-title" style={{
-        padding: "30px 28px 32px",
-        borderRight: "1px solid var(--border-dim)",
-        background: "var(--bg-off)",
-        display: "flex", flexDirection: "column",
+      {/* Top bar: number + chartreuse pulsing dot + consumer label */}
+      <div style={{
+        display: "flex", alignItems: "center",
+        justifyContent: "space-between", gap: 14,
+        flexWrap: "wrap",
       }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-          letterSpacing: "0.22em", color: "var(--ink)",
-        }}>{intent.number}</div>
-        <h3 style={{
-          fontFamily: "var(--display)", fontStyle: "italic", fontWeight: 500,
-          fontSize: 26, lineHeight: 1.12, letterSpacing: "-0.018em",
-          color: "var(--ink-deep)",
-          margin: "10px 0 0",
-        }}>
-          {intent.verb}
-        </h3>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
-          letterSpacing: "0.18em", textTransform: "uppercase",
-          color: "var(--text-3)",
-          marginTop: 14,
-        }}>
-          Consumer label · {intent.consumerLabel}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{
+            width: 6, height: 6, borderRadius: 999,
+            background: "var(--signal)",
+            boxShadow: "0 0 0 4px rgba(212,243,58,0.22)",
+            animation: "aiq-pulse-dot 1800ms ease-in-out infinite",
+            flexShrink: 0,
+          }} />
+          <span style={{
+            fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
+            letterSpacing: "0.22em", color: "var(--ink)",
+          }}>{intent.number} · {intent.consumerLabel.toUpperCase()}</span>
         </div>
+        {featured && (
+          <span style={{
+            fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
+            letterSpacing: "0.18em", textTransform: "uppercase",
+            color: "var(--ink)",
+            background: "rgba(212,243,58,0.18)",
+            border: "1px solid rgba(10,77,58,0.12)",
+            padding: "3px 8px", borderRadius: 999,
+          }}>Featured</span>
+        )}
       </div>
 
-      {/* Body */}
-      <div className="aiq-intent-body" style={{
-        padding: "32px 36px",
-        display: "flex", alignItems: "center",
-      }}>
+      {/* Verb + lede */}
+      <div>
+        <h3 style={{
+          fontFamily: "var(--display)", fontStyle: "italic", fontWeight: 500,
+          fontSize: verbSize, lineHeight: 1.1, letterSpacing: "-0.02em",
+          color: "var(--ink-deep)",
+          margin: 0,
+        }}>
+          {intent.verb.split(" ")[0]}{" "}
+          <span style={{
+            borderBottom: "3px solid var(--signal)", paddingBottom: 2,
+          }}>
+            {intent.verb.split(" ").slice(1).join(" ")}
+          </span>
+        </h3>
         <p style={{
-          fontFamily: "var(--sans)", fontSize: 16, lineHeight: 1.6,
+          fontFamily: "var(--sans)", fontSize: ledeSize, lineHeight: 1.55,
           color: "var(--text-2)", letterSpacing: "-0.003em",
-          margin: 0, maxWidth: "54ch",
+          margin: "16px 0 0", maxWidth: "60ch",
         }}>
           {intent.lede}
         </p>
       </div>
 
-      {/* Weights panel */}
-      <div className="aiq-intent-weights" style={{
-        padding: "26px 28px 28px",
-        borderLeft: "1px solid var(--border-dim)",
-        background: "var(--bg-off)",
+      {/* Dimensions + weights compact bar */}
+      <div style={{
+        paddingTop: 16,
+        borderTop: "1px dashed var(--border)",
       }}>
         <div style={{
-          fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
+          fontFamily: "var(--mono)", fontSize: 9, fontWeight: 500,
           letterSpacing: "0.22em", textTransform: "uppercase",
-          color: "var(--text-3)", marginBottom: 12,
+          color: "var(--text-3)", marginBottom: 10,
         }}>Dimensions · weights</div>
-        <div>
-          {intent.dims.map((d, idx) => (
-            <div key={d.label} style={{
-              display: "flex", justifyContent: "space-between",
-              alignItems: "baseline", gap: 12,
-              padding: "9px 0",
-              borderTop: idx === 0 ? "none" : "1px solid var(--border-dim)",
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: featured ? "repeat(5, 1fr)" : "repeat(auto-fit, minmax(0, 1fr))",
+          gap: 8,
+        }}>
+          {intent.dims.map((d) => (
+            <div key={d.label} className="aiq-intent-bento-dim" style={{
+              padding: "8px 10px",
+              background: "var(--bg-off)",
+              borderRadius: 4,
+              border: "1px solid var(--border-dim)",
+              display: "flex", flexDirection: "column",
+              gap: 2,
+              minWidth: 0,
             }}>
               <span style={{
-                fontFamily: "var(--sans)", fontSize: 13, fontWeight: 500,
+                fontFamily: "var(--sans)", fontSize: 11.5, fontWeight: 500,
                 color: "var(--ink-deep)", letterSpacing: "-0.003em",
+                lineHeight: 1.25,
+                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
               }}>
                 {d.label}
               </span>
               <span style={{
-                fontFamily: "var(--mono)", fontSize: 12.5, fontWeight: 500,
+                fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
                 color: "var(--ink)", letterSpacing: 0,
-                whiteSpace: "nowrap",
               }}>
                 {d.weight}
               </span>
