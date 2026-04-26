@@ -277,11 +277,14 @@ export async function generateReport(
   // Enforce computed scores and area type (in case AI deviated)
   report.areaiq_score = scores.overall;
   report.area_type = scores.area_type;
+  report.confidence = scores.confidence;
   report.sub_scores = report.sub_scores.map((sub, i) => ({
     ...sub,
     score: scores.dimensions[i]?.score ?? sub.score,
     weight: scores.dimensions[i]?.weight ?? sub.weight,
     reasoning: scores.dimensions[i]?.reasoning ?? sub.reasoning,
+    confidence: scores.dimensions[i]?.confidence ?? sub.confidence,
+    confidence_reason: scores.dimensions[i]?.confidence_reason ?? sub.confidence_reason,
   }));
 
   // Attach data freshness metadata

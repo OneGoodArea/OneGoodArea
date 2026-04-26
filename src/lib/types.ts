@@ -6,6 +6,8 @@ export interface SubScore {
   weight: number;
   summary: string;
   reasoning?: string;
+  confidence?: number;          // 0.0–1.0, derived from data quality. Optional for back-compat with cached pre-2026-04-26 reports.
+  confidence_reason?: string;   // Human-readable explanation of the confidence value.
 }
 
 export interface ReportSection {
@@ -60,6 +62,7 @@ export interface AreaReport {
   data_freshness?: DataFreshness[];
   property_data?: PropertyMarketData;
   schools_data?: SchoolsData;
+  confidence?: number;          // Aggregate confidence across dimensions, 0.0–1.0. Optional for back-compat.
   generated_at: string;
 }
 

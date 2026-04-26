@@ -14,12 +14,41 @@ export interface ComputedDimension {
   score: number;
   weight: number;
   reasoning: string;
+  confidence: number;          // 0.0–1.0, derived from data quality signals
+  confidence_reason: string;   // human-readable why
 }
 
 export interface ComputedScores {
   overall: number;
   dimensions: ComputedDimension[];
   area_type: AreaType;
+  confidence: number;          // weighted average of dimension confidences
+}
+
+/* ── Confidence constants ──
+   Each scoring function attaches one of these to its return based on the
+   quality of the inputs it had available. Overall confidence is a
+   weighted average across dimensions, matching the score weighting.
+
+   Convention:
+   - HIGH    (1.0): fresh, complete, primary-source data
+   - MEDIUM  (0.7): some sparseness, older dataset (e.g. WIMD 2019), or
+                    partial fallback that still uses real signal
+   - LOW     (0.4): minimal data or full proxy fallback
+                    (e.g. IMD decile substituting for property prices)
+   - NONE    (0.2): no data — function returned the default score of 50
+*/
+const CONF_HIGH = 1.0;
+const CONF_MEDIUM = 0.7;
+const CONF_LOW = 0.4;
+const CONF_NONE = 0.2;
+
+/* Internal return type for individual scoring functions. */
+interface ScoreResult {
+  score: number;
+  reasoning: string;
+  confidence: number;
+  confidence_reason: string;
 }
 
 /* ── Area-Type Benchmarks ── */
@@ -66,9 +95,12 @@ function clamp(val: number, min: number, max: number): number {
 
 /* ── Core Scoring Functions ── */
 
-function scoreSafety(crime: CrimeSummary | null): { score: number; reasoning: string } {
-  if (!crime || crime.total_crimes === 0) {
-    return { score: 50, reasoning: "Crime data unavailable for this location" };
+function scoreSafety(crime: CrimeSummary | null): ScoreResult {
+  if (!crime) {
+    return { score: 50, reasoning: "Crime data unavailable for this location", confidence: CONF_NONE, confidence_reason: "No police.uk data returned for these coordinates" };
+  }
+  if (crime.total_crimes === 0) {
+    return { score: 50, reasoning: "Crime data unavailable for this location", confidence: CONF_LOW, confidence_reason: "Zero crimes reported in 12-month window — likely a small or low-coverage LSOA" };
   }
 
   const monthlyRate = crime.total_crimes / Math.max(crime.months_covered, 1);
@@ -119,12 +151,26 @@ function scoreSafety(crime: CrimeSummary | null): { score: number; reasoning: st
     parts.push(`trend: ${trend}`);
   }
 
-  return { score, reasoning: parts.join(". ") };
+  // Confidence: derived from sample size + months of coverage.
+  let confidence: number;
+  let confidence_reason: string;
+  if (crime.total_crimes >= 100 && crime.months_covered >= 12) {
+    confidence = CONF_HIGH;
+    confidence_reason = `${crime.total_crimes} crimes across ${crime.months_covered} months provides strong signal`;
+  } else if (crime.total_crimes >= 30) {
+    confidence = CONF_MEDIUM;
+    confidence_reason = `${crime.total_crimes} crimes across ${crime.months_covered} months — moderate sample`;
+  } else {
+    confidence = CONF_LOW;
+    confidence_reason = `Only ${crime.total_crimes} crimes recorded — sparse sample, treat as indicative`;
+  }
+
+  return { score, reasoning: parts.join(". "), confidence, confidence_reason };
 }
 
-function scoreTransport(amenities: AmenitiesData | null, bench: Benchmarks): { score: number; reasoning: string } {
+function scoreTransport(amenities: AmenitiesData | null, bench: Benchmarks): ScoreResult {
   if (!amenities) {
-    return { score: 50, reasoning: "Transport data unavailable" };
+    return { score: 50, reasoning: "Transport data unavailable", confidence: CONF_NONE, confidence_reason: "No OpenStreetMap data returned for these coordinates" };
   }
 
   const stations = amenities.transport_stations;
@@ -147,7 +193,22 @@ function scoreTransport(amenities: AmenitiesData | null, bench: Benchmarks): { s
     parts.push(`nearby: ${stationNames.slice(0, 3).join(", ")}`);
   }
 
-  return { score, reasoning: parts.join(". ") };
+  // Confidence: OSM transport coverage varies. Confidence rises with named stations and bus density.
+  const transportSignals = stations + Math.min(busStops, 30);
+  let confidence: number;
+  let confidence_reason: string;
+  if (transportSignals >= 15 && stationNames.length > 0) {
+    confidence = CONF_HIGH;
+    confidence_reason = `${stations} stations and ${busStops} bus stops with named OSM entries`;
+  } else if (transportSignals >= 5) {
+    confidence = CONF_MEDIUM;
+    confidence_reason = `${stations} stations and ${busStops} bus stops — moderate OSM coverage`;
+  } else {
+    confidence = CONF_LOW;
+    confidence_reason = `Sparse transport amenities in the catchment — OSM coverage may be incomplete`;
+  }
+
+  return { score, reasoning: parts.join(". "), confidence, confidence_reason };
 }
 
 // Quality weights: Good = 1.0 (neutral, same as count-only). Outstanding gives bonus, poor schools penalise.
@@ -159,9 +220,9 @@ const OFSTED_QUALITY_WEIGHTS: Record<string, number> = {
   "Not rated": 0.7,
 };
 
-function scoreSchools(amenities: AmenitiesData | null, bench: Benchmarks, ofsted: OfstedData | null): { score: number; reasoning: string } {
+function scoreSchools(amenities: AmenitiesData | null, bench: Benchmarks, ofsted: OfstedData | null): ScoreResult {
   if (!amenities && !ofsted) {
-    return { score: 50, reasoning: "Education data unavailable" };
+    return { score: 50, reasoning: "Education data unavailable", confidence: CONF_NONE, confidence_reason: "No OpenStreetMap or Ofsted data available for this location" };
   }
 
   const osmCount = amenities?.schools ?? 0;
@@ -183,18 +244,26 @@ function scoreSchools(amenities: AmenitiesData | null, bench: Benchmarks, ofsted
     const otherPart = otherFacilities > 0 ? `. ${otherFacilities} additional educational facilities nearby` : "";
 
     const reasoning = `${ofsted.total_rated} ${ofsted.inspectorate}-rated school${ofsted.total_rated !== 1 ? "s" : ""} within 1.5km (${breakdownParts})${otherPart}`;
-    return { score, reasoning };
+    // Confidence: HIGH when Ofsted-rated schools are present; degrade slightly when only 1-2 are available.
+    const confidence = ofsted.total_rated >= 3 ? CONF_HIGH : CONF_MEDIUM;
+    const confidence_reason = ofsted.total_rated >= 3
+      ? `${ofsted.total_rated} ${ofsted.inspectorate}-rated schools within radius (quality-weighted)`
+      : `Only ${ofsted.total_rated} ${ofsted.inspectorate}-rated school${ofsted.total_rated !== 1 ? "s" : ""} in the catchment — small sample`;
+    return { score, reasoning, confidence, confidence_reason };
   }
 
   // Fallback: count-only (no Ofsted data — Scotland, Wales, or table not seeded)
   const score = clamp(Math.sqrt(osmCount) * bench.schools.multiplier + bench.schools.base, 5, 95);
   const reasoning = `${osmCount} school${osmCount !== 1 ? "s" : ""} and educational facilities within 1.5km`;
-  return { score, reasoning };
+  // Without Ofsted, we can score quantity but not quality — degrades to MEDIUM.
+  const confidence = osmCount >= 3 ? CONF_MEDIUM : CONF_LOW;
+  const confidence_reason = `Count-based score from OpenStreetMap — no Ofsted quality data available (Wales, Scotland, or unseeded). Estyn/Education Scotland integration on roadmap`;
+  return { score, reasoning, confidence, confidence_reason };
 }
 
-function scoreAmenities(amenities: AmenitiesData | null, bench: Benchmarks, ofsted: OfstedData | null): { score: number; reasoning: string } {
+function scoreAmenities(amenities: AmenitiesData | null, bench: Benchmarks, ofsted: OfstedData | null): ScoreResult {
   if (!amenities) {
-    return { score: 50, reasoning: "Amenities data unavailable" };
+    return { score: 50, reasoning: "Amenities data unavailable", confidence: CONF_NONE, confidence_reason: "No OpenStreetMap data returned for these coordinates" };
   }
 
   const b = bench.amenities;
@@ -220,7 +289,20 @@ function scoreAmenities(amenities: AmenitiesData | null, bench: Benchmarks, ofst
   const score = clamp(composite * 90 + 5, 5, 95);
 
   const reasoning = `${amenities.total} amenities nearby: ${amenities.schools} schools, ${amenities.restaurants_cafes + amenities.pubs_bars} food/drink, ${amenities.healthcare} healthcare, ${amenities.shops} shops, ${amenities.parks_leisure} parks/leisure`;
-  return { score, reasoning };
+  // Confidence: amenity richness is itself the signal-quality indicator.
+  let confidence: number;
+  let confidence_reason: string;
+  if (amenities.total >= 30) {
+    confidence = CONF_HIGH;
+    confidence_reason = `${amenities.total} amenities provide a rich, multi-category signal`;
+  } else if (amenities.total >= 10) {
+    confidence = CONF_MEDIUM;
+    confidence_reason = `${amenities.total} amenities — moderate OSM coverage in this catchment`;
+  } else {
+    confidence = CONF_LOW;
+    confidence_reason = `Only ${amenities.total} amenities found — sparse OSM coverage, possibly an underrepresented area`;
+  }
+  return { score, reasoning, confidence, confidence_reason };
 }
 
 function getDeprivationContext(lsoaCode: string): { total: number; unit: string; index: string } {
@@ -229,9 +311,9 @@ function getDeprivationContext(lsoaCode: string): { total: number; unit: string;
   return { total: 33755, unit: "LSOAs", index: "IMD 2025" };
 }
 
-function scoreDemographics(deprivation: DeprivationData | null): { score: number; reasoning: string } {
+function scoreDemographics(deprivation: DeprivationData | null): ScoreResult {
   if (!deprivation) {
-    return { score: 50, reasoning: "Deprivation data unavailable (non-England or data gap)" };
+    return { score: 50, reasoning: "Deprivation data unavailable (non-England or data gap)", confidence: CONF_NONE, confidence_reason: "No deprivation data resolved for the LSOA" };
   }
 
   const score = clamp(deprivation.imd_decile * 9 + 5, 10, 95);
@@ -242,15 +324,30 @@ function scoreDemographics(deprivation: DeprivationData | null): { score: number
     : "low deprivation";
 
   const reasoning = `${index} decile ${deprivation.imd_decile}/10 (${level}). Ranked ${deprivation.imd_rank.toLocaleString()} of ${total.toLocaleString()} ${unit} (${percentile}th percentile). LSOA: ${deprivation.lsoa_name}`;
-  return { score, reasoning };
+  // Confidence: IMD 2025 (England) is current, WIMD 2019 (Wales) and SIMD 2020 (Scotland) are older.
+  const code = deprivation.lsoa_code;
+  const confidence = code.startsWith("W") || code.startsWith("S") ? CONF_MEDIUM : CONF_HIGH;
+  const confidence_reason = code.startsWith("W")
+    ? "Based on WIMD 2019 — most recent Welsh release; updated cadence ~5 years"
+    : code.startsWith("S")
+      ? "Based on SIMD 2020 — most recent Scottish release; updated cadence ~5 years"
+      : "Based on IMD 2025 — current English release";
+  return { score, reasoning, confidence, confidence_reason };
 }
 
-function scoreEnvironment(flood: FloodRiskData | null, amenities: AmenitiesData | null): { score: number; reasoning: string } {
+function scoreEnvironment(flood: FloodRiskData | null, amenities: AmenitiesData | null): ScoreResult {
   const parks = amenities?.parks_leisure ?? 0;
 
   if (!flood) {
     const parkScore = Math.min(parks * 10, 40) + 40;
-    return { score: clamp(parkScore, 30, 80), reasoning: `Flood data unavailable. ${parks} parks/green spaces nearby` };
+    return {
+      score: clamp(parkScore, 30, 80),
+      reasoning: `Flood data unavailable. ${parks} parks/green spaces nearby`,
+      confidence: amenities ? CONF_LOW : CONF_NONE,
+      confidence_reason: amenities
+        ? "No Environment Agency flood data — score based on amenity-only park count"
+        : "Neither flood nor amenity data available",
+    };
   }
 
   const floodPenalty = flood.flood_areas_nearby * 6;
@@ -270,10 +367,15 @@ function scoreEnvironment(flood: FloodRiskData | null, amenities: AmenitiesData 
     : "no active warnings");
   parts.push(`${parks} parks/green spaces nearby`);
 
-  return { score, reasoning: parts.join(". ") };
+  // Confidence: HIGH when both flood + amenities present; MEDIUM when flood only.
+  const confidence = amenities ? CONF_HIGH : CONF_MEDIUM;
+  const confidence_reason = amenities
+    ? "Environment Agency flood + OpenStreetMap green-space data both available"
+    : "Environment Agency flood data only — no green-space context";
+  return { score, reasoning: parts.join(". "), confidence, confidence_reason };
 }
 
-function scoreCostOfLiving(deprivation: DeprivationData | null, propertyPrices: PropertyPriceData | null): { score: number; reasoning: string } {
+function scoreCostOfLiving(deprivation: DeprivationData | null, propertyPrices: PropertyPriceData | null): ScoreResult {
   // Use real property prices when available
   if (propertyPrices && propertyPrices.median_price > 0) {
     // National median ~£285k (ONS 2025). Score = how affordable relative to national median.
@@ -286,12 +388,15 @@ function scoreCostOfLiving(deprivation: DeprivationData | null, propertyPrices: 
       : "above national average, higher living costs";
 
     const reasoning = `Median sold price £${propertyPrices.median_price.toLocaleString()} (${propertyPrices.postcode_area} district, ${propertyPrices.transaction_count} transactions). ${level}`;
-    return { score, reasoning };
+    // Confidence: scales with transaction count. <20 txns is sparse for an outcode.
+    const confidence = propertyPrices.transaction_count >= 20 ? CONF_HIGH : CONF_MEDIUM;
+    const confidence_reason = `${propertyPrices.transaction_count} HM Land Registry transactions in the ${propertyPrices.postcode_area} outcode — ${propertyPrices.transaction_count >= 20 ? "robust" : "moderate"} sample`;
+    return { score, reasoning, confidence, confidence_reason };
   }
 
   // Fallback to IMD proxy
   if (!deprivation) {
-    return { score: 50, reasoning: "Cost data unavailable" };
+    return { score: 50, reasoning: "Cost data unavailable", confidence: CONF_NONE, confidence_reason: "Neither HM Land Registry nor deprivation data available" };
   }
 
   const score = clamp((11 - deprivation.imd_decile) * 8 + 10, 10, 90);
@@ -301,14 +406,19 @@ function scoreCostOfLiving(deprivation: DeprivationData | null, propertyPrices: 
 
   const { index } = getDeprivationContext(deprivation.lsoa_code);
   const reasoning = `${index} decile ${deprivation.imd_decile}/10 as cost proxy: ${level}`;
-  return { score, reasoning };
+  return {
+    score,
+    reasoning,
+    confidence: CONF_LOW,
+    confidence_reason: "No HM Land Registry data available — deprivation index used as cost proxy. Treat as indicative, not a price signal",
+  };
 }
 
 /* ── Business-Specific Scoring ── */
 
-function scoreFootTraffic(amenities: AmenitiesData | null, bench: Benchmarks): { score: number; reasoning: string } {
+function scoreFootTraffic(amenities: AmenitiesData | null, bench: Benchmarks): ScoreResult {
   if (!amenities) {
-    return { score: 50, reasoning: "Foot traffic data unavailable" };
+    return { score: 50, reasoning: "Foot traffic data unavailable", confidence: CONF_NONE, confidence_reason: "No OpenStreetMap data returned for these coordinates" };
   }
 
   const ft = bench.footTraffic;
@@ -318,12 +428,15 @@ function scoreFootTraffic(amenities: AmenitiesData | null, bench: Benchmarks): {
 
   const totalActivity = amenities.restaurants_cafes + amenities.pubs_bars + amenities.shops;
   const reasoning = `${amenities.transport_stations} transit stations and ${amenities.bus_stops} bus stops drive footfall. ${totalActivity} retail/food venues indicate ${totalActivity > 20 ? "a busy" : totalActivity > 10 ? "an active" : "a quieter"} commercial area`;
-  return { score, reasoning };
+  // Confidence: footfall is a proxy in itself — we don't have actual mobile-phone footfall data. Mark MEDIUM.
+  const confidence = totalActivity >= 15 ? CONF_MEDIUM : CONF_LOW;
+  const confidence_reason = `Footfall inferred from ${totalActivity} retail/food venues + transport. Not actual mobile-derived footfall data — directional only`;
+  return { score, reasoning, confidence, confidence_reason };
 }
 
-function scoreCompetition(amenities: AmenitiesData | null): { score: number; reasoning: string } {
+function scoreCompetition(amenities: AmenitiesData | null): ScoreResult {
   if (!amenities) {
-    return { score: 50, reasoning: "Competition data unavailable" };
+    return { score: 50, reasoning: "Competition data unavailable", confidence: CONF_NONE, confidence_reason: "No OpenStreetMap data returned" };
   }
 
   const competitors = amenities.restaurants_cafes + amenities.pubs_bars + amenities.shops;
@@ -334,12 +447,15 @@ function scoreCompetition(amenities: AmenitiesData | null): { score: number; rea
     : "high competition, differentiation essential";
 
   const reasoning = `${competitors} competing food/retail venues within 1km. ${level}`;
-  return { score, reasoning };
+  // Confidence scales with venue density (more data = more reliable count).
+  const confidence = competitors >= 10 ? CONF_HIGH : competitors >= 3 ? CONF_MEDIUM : CONF_LOW;
+  const confidence_reason = `${competitors} competing venues identified in OSM within 1km — ${competitors >= 10 ? "robust" : competitors >= 3 ? "moderate" : "sparse"} signal`;
+  return { score, reasoning, confidence, confidence_reason };
 }
 
-function scoreSpendingPower(deprivation: DeprivationData | null): { score: number; reasoning: string } {
+function scoreSpendingPower(deprivation: DeprivationData | null): ScoreResult {
   if (!deprivation) {
-    return { score: 50, reasoning: "Spending power data unavailable" };
+    return { score: 50, reasoning: "Spending power data unavailable", confidence: CONF_NONE, confidence_reason: "No deprivation data resolved for the LSOA" };
   }
 
   const score = clamp(deprivation.imd_decile * 9 + 8, 15, 95);
@@ -350,10 +466,18 @@ function scoreSpendingPower(deprivation: DeprivationData | null): { score: numbe
   const { total, index } = getDeprivationContext(deprivation.lsoa_code);
   const country = deprivation.lsoa_code.startsWith("W") ? "Wales" : deprivation.lsoa_code.startsWith("S") ? "Scotland" : "England";
   const reasoning = `${index} decile ${deprivation.imd_decile}/10 indicates ${level}. Less deprived than ${((deprivation.imd_rank / total) * 100).toFixed(0)}% of ${country}`;
-  return { score, reasoning };
+  // IMD income decile is a strong proxy for spending power but it is a proxy, not direct income data.
+  const code = deprivation.lsoa_code;
+  const confidence = code.startsWith("W") || code.startsWith("S") ? CONF_MEDIUM : CONF_HIGH;
+  const confidence_reason = code.startsWith("W")
+    ? "WIMD 2019 used as spending-power proxy — older release, directional"
+    : code.startsWith("S")
+      ? "SIMD 2020 used as spending-power proxy — older release, directional"
+      : "IMD 2025 income decile used as direct spending-power proxy";
+  return { score, reasoning, confidence, confidence_reason };
 }
 
-function scoreCommercialCosts(deprivation: DeprivationData | null, propertyPrices: PropertyPriceData | null): { score: number; reasoning: string } {
+function scoreCommercialCosts(deprivation: DeprivationData | null, propertyPrices: PropertyPriceData | null): ScoreResult {
   // Use real property prices as commercial cost proxy
   if (propertyPrices && propertyPrices.median_price > 0) {
     const nationalMedian = 285000;
@@ -365,12 +489,15 @@ function scoreCommercialCosts(deprivation: DeprivationData | null, propertyPrice
       : "premium area, higher operating costs expected";
 
     const reasoning = `Property values £${propertyPrices.median_price.toLocaleString()} median (${propertyPrices.postcode_area}). ${level}`;
-    return { score, reasoning };
+    // Residential prices are a proxy for commercial — degrade to MEDIUM.
+    const confidence = propertyPrices.transaction_count >= 20 ? CONF_MEDIUM : CONF_LOW;
+    const confidence_reason = `Inferred from residential property values (${propertyPrices.transaction_count} transactions). Not actual commercial rent data — proxy signal`;
+    return { score, reasoning, confidence, confidence_reason };
   }
 
   // Fallback to IMD proxy
   if (!deprivation) {
-    return { score: 50, reasoning: "Commercial cost data unavailable" };
+    return { score: 50, reasoning: "Commercial cost data unavailable", confidence: CONF_NONE, confidence_reason: "Neither HM Land Registry nor deprivation data available" };
   }
 
   const score = clamp((11 - deprivation.imd_decile) * 9 + 5, 10, 90);
@@ -380,12 +507,17 @@ function scoreCommercialCosts(deprivation: DeprivationData | null, propertyPrice
 
   const { index } = getDeprivationContext(deprivation.lsoa_code);
   const reasoning = `${index} decile ${deprivation.imd_decile}/10: ${level}. Commercial rents correlate with area affluence`;
-  return { score, reasoning };
+  return {
+    score,
+    reasoning,
+    confidence: CONF_LOW,
+    confidence_reason: "No property data available — deprivation index used as second-order proxy. Treat as directional",
+  };
 }
 
 /* ── Investing-Specific Scoring ── */
 
-function scorePriceGrowth(deprivation: DeprivationData | null, amenities: AmenitiesData | null, propertyPrices: PropertyPriceData | null): { score: number; reasoning: string } {
+function scorePriceGrowth(deprivation: DeprivationData | null, amenities: AmenitiesData | null, propertyPrices: PropertyPriceData | null): ScoreResult {
   // Use real YoY price change when available
   if (propertyPrices && propertyPrices.price_change_pct !== null) {
     const change = propertyPrices.price_change_pct;
@@ -400,12 +532,15 @@ function scorePriceGrowth(deprivation: DeprivationData | null, amenities: Amenit
       : "declining, potential buying opportunity or risk";
 
     const reasoning = `Prices ${direction} ${Math.abs(change)}% YoY (£${propertyPrices.prior_median?.toLocaleString()} to £${propertyPrices.median_price.toLocaleString()}). ${outlook}. ${amenities ? `${amenities.transport_stations} transport links` : ""}`;
-    return { score, reasoning };
+    // Confidence: real YoY signal is the strongest growth indicator we have. Scale by transaction depth.
+    const confidence = propertyPrices.transaction_count >= 20 ? CONF_HIGH : CONF_MEDIUM;
+    const confidence_reason = `Real YoY price change from HM Land Registry (${propertyPrices.transaction_count} transactions in current window)`;
+    return { score, reasoning, confidence, confidence_reason };
   }
 
   // Fallback to IMD proxy
   if (!deprivation) {
-    return { score: 50, reasoning: "Insufficient data for price growth assessment" };
+    return { score: 50, reasoning: "Insufficient data for price growth assessment", confidence: CONF_NONE, confidence_reason: "No property data and no deprivation data available" };
   }
 
   const decile = deprivation.imd_decile;
@@ -427,10 +562,15 @@ function scorePriceGrowth(deprivation: DeprivationData | null, amenities: Amenit
 
   const { index } = getDeprivationContext(deprivation.lsoa_code);
   const reasoning = `${index} decile ${decile}/10: ${outlook}. ${amenities ? `${amenities.transport_stations} transport links support appreciation` : "Transport data unavailable"}`;
-  return { score, reasoning };
+  return {
+    score,
+    reasoning,
+    confidence: CONF_LOW,
+    confidence_reason: "No HM Land Registry YoY data — deprivation decile used as growth proxy. Treat as directional only",
+  };
 }
 
-function scoreRentalYield(deprivation: DeprivationData | null, amenities: AmenitiesData | null, propertyPrices: PropertyPriceData | null): { score: number; reasoning: string } {
+function scoreRentalYield(deprivation: DeprivationData | null, amenities: AmenitiesData | null, propertyPrices: PropertyPriceData | null): ScoreResult {
   // Use real prices when available: lower median price = higher potential yield
   if (propertyPrices && propertyPrices.median_price > 0) {
     const nationalMedian = 285000;
@@ -446,12 +586,15 @@ function scoreRentalYield(deprivation: DeprivationData | null, amenities: Amenit
       : "higher purchase prices compress gross yields";
 
     const reasoning = `Median price £${propertyPrices.median_price.toLocaleString()} (${(ratio * 100).toFixed(0)}% of national median). ${level}. ${amenities ? `${amenities.total} amenities support demand` : ""}`;
-    return { score, reasoning };
+    // Yield is inferred from purchase price + demand — we don't have actual rent data. Mark MEDIUM at best.
+    const confidence = propertyPrices.transaction_count >= 20 ? CONF_MEDIUM : CONF_LOW;
+    const confidence_reason = `Yield inferred from purchase price (${propertyPrices.transaction_count} transactions) and amenity demand. Not actual rent observations — directional`;
+    return { score, reasoning, confidence, confidence_reason };
   }
 
   // Fallback to IMD proxy
   if (!deprivation) {
-    return { score: 50, reasoning: "Insufficient data for yield assessment" };
+    return { score: 50, reasoning: "Insufficient data for yield assessment", confidence: CONF_NONE, confidence_reason: "No property and no deprivation data available" };
   }
 
   const decile = deprivation.imd_decile;
@@ -465,12 +608,17 @@ function scoreRentalYield(deprivation: DeprivationData | null, amenities: Amenit
 
   const { index } = getDeprivationContext(deprivation.lsoa_code);
   const reasoning = `${index} decile ${decile}/10: ${level}. ${amenities ? `${amenities.total} nearby amenities support tenant demand` : ""}`;
-  return { score, reasoning };
+  return {
+    score,
+    reasoning,
+    confidence: CONF_LOW,
+    confidence_reason: "No HM Land Registry data — deprivation decile used as yield proxy. Treat as indicative only",
+  };
 }
 
-function scoreRegeneration(deprivation: DeprivationData | null, amenities: AmenitiesData | null): { score: number; reasoning: string } {
+function scoreRegeneration(deprivation: DeprivationData | null, amenities: AmenitiesData | null): ScoreResult {
   if (!deprivation) {
-    return { score: 50, reasoning: "Insufficient data for regeneration assessment" };
+    return { score: 50, reasoning: "Insufficient data for regeneration assessment", confidence: CONF_NONE, confidence_reason: "No deprivation data resolved for the LSOA" };
   }
 
   const decile = deprivation.imd_decile;
@@ -492,12 +640,15 @@ function scoreRegeneration(deprivation: DeprivationData | null, amenities: Ameni
 
   const { index } = getDeprivationContext(deprivation.lsoa_code);
   const reasoning = `${index} decile ${decile}/10: ${outlook}. ${amenities ? `${amenities.transport_stations} transport links support development case` : ""}`;
-  return { score, reasoning };
+  // Regeneration prediction is inherently speculative — never HIGH confidence.
+  const confidence = amenities ? CONF_MEDIUM : CONF_LOW;
+  const confidence_reason = "Regeneration scoring is forward-looking and inherently uncertain. Based on deprivation level and infrastructure presence, not announced regeneration projects";
+  return { score, reasoning, confidence, confidence_reason };
 }
 
-function scoreTenantDemand(amenities: AmenitiesData | null, bench: Benchmarks): { score: number; reasoning: string } {
+function scoreTenantDemand(amenities: AmenitiesData | null, bench: Benchmarks): ScoreResult {
   if (!amenities) {
-    return { score: 50, reasoning: "Insufficient data for demand assessment" };
+    return { score: 50, reasoning: "Insufficient data for demand assessment", confidence: CONF_NONE, confidence_reason: "No OpenStreetMap data returned" };
   }
 
   const td = bench.tenantDemand;
@@ -508,10 +659,13 @@ function scoreTenantDemand(amenities: AmenitiesData | null, bench: Benchmarks): 
   const score = clamp(transportScore + amenityScore + busScore + foodScore, 10, 95);
 
   const reasoning = `${amenities.transport_stations} stations and ${amenities.bus_stops} bus stops create commuter demand. ${amenities.total} local amenities support liveability`;
-  return { score, reasoning };
+  // Tenant demand is inferred from amenity + transport richness, not actual lettings data.
+  const confidence = amenities.total >= 30 ? CONF_MEDIUM : CONF_LOW;
+  const confidence_reason = `Demand inferred from ${amenities.transport_stations} stations and ${amenities.total} local amenities. Not actual lettings volume — directional`;
+  return { score, reasoning, confidence, confidence_reason };
 }
 
-function scoreRiskFactors(crime: CrimeSummary | null, flood: FloodRiskData | null): { score: number; reasoning: string } {
+function scoreRiskFactors(crime: CrimeSummary | null, flood: FloodRiskData | null): ScoreResult {
   const safety = scoreSafety(crime);
   const env = scoreEnvironment(flood, null);
 
@@ -531,7 +685,21 @@ function scoreRiskFactors(crime: CrimeSummary | null, flood: FloodRiskData | nul
   }
   if (parts.length === 0) parts.push("Limited risk data available");
 
-  return { score, reasoning: parts.join(". ") };
+  // Risk confidence: strongest when both crime + flood are present.
+  let confidence: number;
+  let confidence_reason: string;
+  if (crime && flood) {
+    confidence = CONF_HIGH;
+    confidence_reason = "Crime (police.uk) and flood risk (Environment Agency) both available";
+  } else if (crime || flood) {
+    confidence = CONF_MEDIUM;
+    confidence_reason = `Only ${crime ? "crime" : "flood"} data available — ${crime ? "flood" : "crime"} half of risk picture missing`;
+  } else {
+    confidence = CONF_NONE;
+    confidence_reason = "Neither crime nor flood data resolved";
+  }
+
+  return { score, reasoning: parts.join(". "), confidence, confidence_reason };
 }
 
 /* ── Intent Compositions ── */
@@ -555,7 +723,8 @@ function computeMovingScores(
   ];
 
   const overall = Math.round(dimensions.reduce((sum, d) => sum + d.score * d.weight, 0) / 100);
-  return { overall, dimensions, area_type: areaType };
+  const confidence = aggregateConfidence(dimensions);
+  return { overall, dimensions, area_type: areaType, confidence };
 }
 
 function computeBusinessScores(
@@ -575,7 +744,8 @@ function computeBusinessScores(
   ];
 
   const overall = Math.round(dimensions.reduce((sum, d) => sum + d.score * d.weight, 0) / 100);
-  return { overall, dimensions, area_type: areaType };
+  const confidence = aggregateConfidence(dimensions);
+  return { overall, dimensions, area_type: areaType, confidence };
 }
 
 function computeInvestingScores(
@@ -596,7 +766,8 @@ function computeInvestingScores(
   ];
 
   const overall = Math.round(dimensions.reduce((sum, d) => sum + d.score * d.weight, 0) / 100);
-  return { overall, dimensions, area_type: areaType };
+  const confidence = aggregateConfidence(dimensions);
+  return { overall, dimensions, area_type: areaType, confidence };
 }
 
 function computeResearchScores(
@@ -617,7 +788,18 @@ function computeResearchScores(
   ];
 
   const overall = Math.round(dimensions.reduce((sum, d) => sum + d.score * d.weight, 0) / 100);
-  return { overall, dimensions, area_type: areaType };
+  const confidence = aggregateConfidence(dimensions);
+  return { overall, dimensions, area_type: areaType, confidence };
+}
+
+/* Aggregate dimension confidences using the same weight scheme as the
+   overall score. Returns a value between 0 (no signal) and 1 (rich data). */
+function aggregateConfidence(dimensions: ComputedDimension[]): number {
+  const totalWeight = dimensions.reduce((s, d) => s + d.weight, 0);
+  if (totalWeight === 0) return 0;
+  const weighted = dimensions.reduce((s, d) => s + d.confidence * d.weight, 0);
+  // Round to 2 decimal places for stable JSON output.
+  return Math.round((weighted / totalWeight) * 100) / 100;
 }
 
 /* ── Main Export ── */
