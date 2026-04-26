@@ -464,19 +464,48 @@ function DimensionRow({ sub }: { sub: AreaReport["sub_scores"][number] }) {
             padding: "2px 7px", borderRadius: 2,
           }}>Weight {sub.weight}</span>
           {lvl && (
-            <span
-              title={sub.confidence_reason || `Confidence ${sub.confidence?.toFixed(2)}`}
-              style={{
+            <span className="aiq-conf-chip" style={{
+              position: "relative", display: "inline-block",
+              cursor: "help",
+            }}>
+              <span style={{
                 fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 600,
                 letterSpacing: "0.14em",
                 color: isStrong ? "var(--signal-ink)" : "var(--text-3)",
                 background: isStrong ? "var(--signal)" : "transparent",
                 border: `1px solid ${isStrong ? "var(--signal)" : "var(--border)"}`,
                 padding: "2px 7px", borderRadius: 2,
-                cursor: "help",
-              }}
-            >
-              {lvl}
+                display: "inline-block",
+              }}>
+                {lvl}
+              </span>
+              <span className="aiq-conf-tooltip" role="tooltip" style={{
+                position: "absolute", bottom: "calc(100% + 8px)", left: 0,
+                width: 280, maxWidth: "70vw",
+                background: "var(--ink-deep)",
+                color: "#FFFFFF",
+                padding: "11px 14px",
+                borderRadius: 5,
+                fontFamily: "var(--sans)", fontSize: 12.5, fontWeight: 400,
+                lineHeight: 1.45, letterSpacing: "-0.003em",
+                opacity: 0, pointerEvents: "none",
+                transform: "translateY(4px)",
+                transition: "opacity 160ms ease, transform 160ms ease",
+                zIndex: 100,
+                boxShadow: "0 10px 28px rgba(6,42,30,0.20)",
+                whiteSpace: "normal",
+              }}>
+                <span style={{
+                  display: "block",
+                  fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 600,
+                  letterSpacing: "0.18em", textTransform: "uppercase",
+                  color: "var(--signal)",
+                  marginBottom: 5,
+                }}>
+                  {lvl} · {sub.confidence?.toFixed(2)}
+                </span>
+                {sub.confidence_reason || `Confidence ${sub.confidence?.toFixed(2)}`}
+              </span>
             </span>
           )}
         </div>
