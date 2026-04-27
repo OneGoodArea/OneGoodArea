@@ -284,4 +284,122 @@ describe("computeScores", () => {
       expect(labels).toContain("Environment & Quality");
     });
   });
+
+  /* ── Confidence scoring ── */
+
+  describe("confidence scoring", () => {
+    it("returns a confidence value on every dimension", () => {
+      const result = computeScores("moving", crime, deprivation, amenities, flood, "suburban", propertyPrices, ofsted);
+      for (const d of result.dimensions) {
+        expect(typeof d.confidence).toBe("number");
+        expect(d.confidence).toBeGreaterThanOrEqual(0);
+        expect(d.confidence).toBeLessThanOrEqual(1);
+      }
+    });
+
+    it("returns a confidence_reason string on every dimension", () => {
+      const result = computeScores("moving", crime, deprivation, amenities, flood);
+      for (const d of result.dimensions) {
+        expect(typeof d.confidence_reason).toBe("string");
+        expect(d.confidence_reason.length).toBeGreaterThan(0);
+      }
+    });
+
+    it("returns aggregate overall confidence between 0 and 1", () => {
+      const result = computeScores("moving", crime, deprivation, amenities, flood, "suburban", propertyPrices, ofsted);
+      expect(typeof result.confidence).toBe("number");
+      expect(result.confidence).toBeGreaterThanOrEqual(0);
+      expect(result.confidence).toBeLessThanOrEqual(1);
+    });
+
+    it("aggregate confidence is HIGH when all data sources are present", () => {
+      const result = computeScores("moving", crime, deprivation, amenities, flood, "suburban", propertyPrices, ofsted);
+      expect(result.confidence).toBeGreaterThanOrEqual(0.85);
+    });
+
+    it("aggregate confidence is LOW when most inputs are null", () => {
+      const result = computeScores("moving", null, null, null, null);
+      expect(result.confidence).toBeLessThanOrEqual(0.4);
+    });
+
+    it("Cost of Living confidence is HIGH when Land Registry has many transactions", () => {
+      const result = computeScores("moving", crime, deprivation, amenities, flood, "suburban", propertyPrices, ofsted);
+      const cost = result.dimensions.find(d => d.label === "Cost of Living");
+      expect(cost?.confidence).toBe(1.0);
+    });
+
+    it("Cost of Living confidence falls back to LOW when only IMD is available", () => {
+      const result = computeScores("moving", crime, deprivation, amenities, flood);
+      const cost = result.dimensions.find(d => d.label === "Cost of Living");
+      expect(cost?.confidence).toBe(0.4);
+    });
+
+    it("Schools confidence is HIGH with Ofsted data, MEDIUM without", () => {
+      const withOfsted = computeScores("moving", crime, deprivation, amenities, flood, "suburban", propertyPrices, ofsted);
+      const withoutOfsted = computeScores("moving", crime, deprivation, amenities, flood, "suburban", propertyPrices, null);
+      const sw = withOfsted.dimensions.find(d => d.label === "Schools & Education");
+      const so = withoutOfsted.dimensions.find(d => d.label === "Schools & Education");
+      expect(sw?.confidence).toBe(1.0);
+      expect(so?.confidence).toBe(0.7);
+    });
+
+    it("Demographics confidence is MEDIUM for Welsh and Scottish LSOAs", () => {
+      const welshDep: DeprivationData = { ...deprivation, lsoa_code: "W01000001" };
+      const scottishDep: DeprivationData = { ...deprivation, lsoa_code: "S01000001" };
+      const welsh = computeScores("research", crime, welshDep, amenities, flood);
+      const scottish = computeScores("research", crime, scottishDep, amenities, flood);
+      const wd = welsh.dimensions.find(d => d.label === "Demographics & Economy");
+      const sd = scottish.dimensions.find(d => d.label === "Demographics & Economy");
+      expect(wd?.confidence).toBe(0.7);
+      expect(sd?.confidence).toBe(0.7);
+    });
+
+    it("Demographics confidence is HIGH for English LSOAs", () => {
+      const result = computeScores("research", crime, deprivation, amenities, flood);
+      const dem = result.dimensions.find(d => d.label === "Demographics & Economy");
+      expect(dem?.confidence).toBe(1.0);
+    });
+
+    it("Safety confidence is HIGH with rich crime sample (100+ crimes, 12+ months)", () => {
+      const richCrime: CrimeSummary = { ...crime, months_covered: 12 };
+      const result = computeScores("moving", richCrime, deprivation, amenities, flood);
+      const safety = result.dimensions.find(d => d.label === "Safety & Crime");
+      expect(safety?.confidence).toBe(1.0);
+    });
+
+    it("Safety confidence is MEDIUM when sample is recent but partial", () => {
+      // Default fixture has 3 months coverage and 300 crimes — moderate sample.
+      const result = computeScores("moving", crime, deprivation, amenities, flood);
+      const safety = result.dimensions.find(d => d.label === "Safety & Crime");
+      expect(safety?.confidence).toBe(0.7);
+    });
+
+    it("Safety confidence is LOW when crime sample is sparse", () => {
+      const sparseCrime: CrimeSummary = { ...crime, total_crimes: 5, monthly_trend: [{ month: "2025-01", count: 5 }] };
+      const result = computeScores("moving", sparseCrime, deprivation, amenities, flood);
+      const safety = result.dimensions.find(d => d.label === "Safety & Crime");
+      expect(safety?.confidence).toBe(0.4);
+    });
+
+    it("Safety confidence is NONE when crime data is null", () => {
+      const result = computeScores("moving", null, deprivation, amenities, flood);
+      const safety = result.dimensions.find(d => d.label === "Safety & Crime");
+      expect(safety?.confidence).toBe(0.2);
+    });
+
+    it("aggregate confidence is rounded to 2 decimal places", () => {
+      const result = computeScores("moving", crime, deprivation, amenities, flood);
+      const decimals = result.confidence.toString().split(".")[1] ?? "";
+      expect(decimals.length).toBeLessThanOrEqual(2);
+    });
+
+    it("confidence does not affect score values", () => {
+      const result1 = computeScores("moving", crime, deprivation, amenities, flood);
+      const result2 = computeScores("moving", crime, deprivation, amenities, flood);
+      expect(result1.overall).toBe(result2.overall);
+      result1.dimensions.forEach((d, i) => {
+        expect(d.score).toBe(result2.dimensions[i].score);
+      });
+    });
+  });
 });

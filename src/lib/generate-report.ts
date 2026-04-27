@@ -8,6 +8,7 @@ import { getFloodRisk, formatFloodRiskForPrompt, FloodRiskData } from "@/lib/dat
 import { getPropertyPrices, formatPropertyDataForPrompt, PropertyPriceData } from "@/lib/data-sources/land-registry";
 import { getOfstedSchools, formatOfstedForPrompt, OfstedData } from "@/lib/data-sources/ofsted";
 import { computeScores, ComputedScores } from "@/lib/scoring-engine";
+import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 import { AreaReport, Intent, DataFreshness } from "@/lib/types";
 import { ensureReportCacheTable, getCachedReport, setCachedReport } from "@/lib/report-cache";
 import { trackEvent } from "@/lib/activity";
@@ -122,11 +123,19 @@ function buildPrompt(
 
   /* ── Pre-computed scores block ── */
   const areaTypeLabel = scores.area_type === "rural" ? "Rural" : scores.area_type === "urban" ? "Urban" : "Suburban";
+  const confLabel = (c: number): string => {
+    if (c >= 0.85) return "HIGH";
+    if (c >= 0.6) return "MEDIUM";
+    if (c >= 0.3) return "LOW";
+    return "NONE";
+  };
+  const overallConfLabel = confLabel(scores.confidence);
   const scoresBlock = `
 PRE-COMPUTED SCORES (deterministic — DO NOT modify these numbers):
 Area Type: ${areaTypeLabel} (scores benchmarked against ${areaTypeLabel.toLowerCase()} standards)
 Overall AreaIQ Score: ${scores.overall}/100
-${scores.dimensions.map(d => `- ${d.label}: ${d.score}/100 (weight: ${d.weight}%) — ${d.reasoning}`).join("\n")}`;
+Aggregate Confidence: ${overallConfLabel} (${scores.confidence.toFixed(2)})
+${scores.dimensions.map(d => `- ${d.label}: ${d.score}/100 (weight: ${d.weight}%, confidence: ${confLabel(d.confidence)} ${d.confidence.toFixed(2)}) — ${d.confidence_reason}. ${d.reasoning}`).join("\n")}`;
 
   /* ── Data sources ── */
   const dataSources = [
@@ -192,7 +201,9 @@ Requirements:
 - Where real data has been provided, use exact figures. Where not available, provide reasonable estimates and note them as estimates.${crime ? "\n- The Safety section MUST reference the real police.uk crime data — use actual category counts and percentages" : ""}${deprivation ? "\n- Reference the real IMD deprivation data — include the decile, rank, and interpretation" : ""}${amenities ? "\n- Reference the real OpenStreetMap amenities counts and named places" : ""}${flood ? "\n- Include flood risk information from the Environment Agency data" : ""}
 - Recommendations should be specific, actionable, and UK-relevant
 - Do NOT fabricate data that contradicts the real data provided
-- Do NOT reference non-UK sources${propertyPrices ? "\n- Reference the real Land Registry price data: median prices, YoY changes, property type breakdown" : ""}${ofsted ? "\n- Reference the real Ofsted inspection data: name schools, their ratings, and what this means for the area. Use the actual school names and ratings provided." : ""}`;
+- Do NOT reference non-UK sources${propertyPrices ? "\n- Reference the real Land Registry price data: median prices, YoY changes, property type breakdown" : ""}${ofsted ? "\n- Reference the real Ofsted inspection data: name schools, their ratings, and what this means for the area. Use the actual school names and ratings provided." : ""}
+- For dimensions where confidence is MEDIUM, LOW, or NONE, the sub_score summary MUST include a brief caveat phrase that reflects the limitation. Examples: "Based on a moderate sample of...", "Inferred from proxy data because...", "Limited data available for...". Do NOT write a confident narrative for low-confidence dimensions.
+- The overall summary MUST mention aggregate confidence if it is below MEDIUM (0.6). Phrasing like "data quality varies — see per-dimension confidence" is appropriate.`;
 }
 
 export async function generateReport(
@@ -277,11 +288,15 @@ export async function generateReport(
   // Enforce computed scores and area type (in case AI deviated)
   report.areaiq_score = scores.overall;
   report.area_type = scores.area_type;
+  report.confidence = scores.confidence;
+  report.engine_version = METHODOLOGY_VERSION;
   report.sub_scores = report.sub_scores.map((sub, i) => ({
     ...sub,
     score: scores.dimensions[i]?.score ?? sub.score,
     weight: scores.dimensions[i]?.weight ?? sub.weight,
     reasoning: scores.dimensions[i]?.reasoning ?? sub.reasoning,
+    confidence: scores.dimensions[i]?.confidence ?? sub.confidence,
+    confidence_reason: scores.dimensions[i]?.confidence_reason ?? sub.confidence_reason,
   }));
 
   // Attach data freshness metadata

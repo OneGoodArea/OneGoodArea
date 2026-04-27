@@ -473,6 +473,75 @@ export function exportReportPDF(report: AreaReport) {
     }
   }
 
+  // ── Methodology + per-dimension confidence ──
+  const subScores = Array.isArray(report.sub_scores) ? report.sub_scores : [];
+  const dimsWithConfidence = subScores.filter(
+    (s) => typeof s.confidence === "number"
+  );
+
+  const aggConf = typeof report.confidence === "number" ? report.confidence : null;
+  const aggConfLabel =
+    aggConf === null ? null
+    : aggConf >= 0.85 ? "HIGH"
+    : aggConf >= 0.6 ? "MEDIUM"
+    : aggConf >= 0.3 ? "LOW"
+    : "NONE";
+
+  if (report.engine_version || aggConf !== null || dimsWithConfidence.length > 0) {
+    y = checkPageBreak(pdf, y, 12);
+    drawLine(pdf, y);
+    y += 6;
+    pdf.setFontSize(7);
+    pdf.setFont("helvetica", "bold");
+    setColor(pdf, COLORS.textTertiary);
+    pdf.text("METHODOLOGY", 20, y);
+    y += 5;
+
+    pdf.setFont("helvetica", "normal");
+    setColor(pdf, COLORS.textSecondary);
+    if (report.engine_version) {
+      pdf.text(`Engine version: v${report.engine_version}`, 20, y);
+      y += 4;
+    }
+    if (aggConf !== null && aggConfLabel) {
+      pdf.text(`Aggregate confidence: ${aggConf.toFixed(2)} (${aggConfLabel})`, 20, y);
+      y += 4;
+    }
+
+    if (dimsWithConfidence.length > 0) {
+      y += 2;
+      pdf.setFont("helvetica", "bold");
+      setColor(pdf, COLORS.textTertiary);
+      pdf.text("CONFIDENCE PER DIMENSION", 20, y);
+      y += 5;
+      pdf.setFont("helvetica", "normal");
+      for (const d of dimsWithConfidence) {
+        const conf = d.confidence as number;
+        const lbl =
+          conf >= 0.85 ? "HIGH"
+          : conf >= 0.6 ? "MEDIUM"
+          : conf >= 0.3 ? "LOW"
+          : "NONE";
+        const head = `${d.label}  ${conf.toFixed(2)}  ${lbl}`;
+        y = checkPageBreak(pdf, y, 4);
+        setColor(pdf, COLORS.textPrimary);
+        pdf.text(head, 20, y);
+        y += 4;
+        if (d.confidence_reason) {
+          const reasonLines = wrapText(pdf, d.confidence_reason, 156);
+          setColor(pdf, COLORS.textTertiary);
+          for (const line of reasonLines) {
+            y = checkPageBreak(pdf, y, 4);
+            pdf.text(line, 30, y);
+            y += 3.6;
+          }
+        }
+        y += 1;
+      }
+    }
+    y += 2;
+  }
+
   // ── Data Sources Footer ──
   y = checkPageBreak(pdf, y, 15);
   drawLine(pdf, y);

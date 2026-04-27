@@ -6,6 +6,7 @@ import { Styles } from "../_shared/styles";
 import { Nav } from "../_shared/nav";
 import { Footer } from "../_shared/footer";
 import { AiqIcon, type IconName } from "../_shared/icons";
+import { METHODOLOGY_VERSIONS } from "@/lib/methodology-versions";
 
 /* ═══════════════════════════════════════════════════════════════
    OneGoodArea · Design V2 · /methodology
@@ -19,6 +20,8 @@ const SECTIONS: { id: string; label: string }[] = [
   { id: "intents",      label: "Intent types" },
   { id: "scoring",      label: "Scoring functions" },
   { id: "ai-role",      label: "Role of AI" },
+  { id: "confidence",   label: "Confidence per dimension" },
+  { id: "versioning",   label: "Methodology versioning" },
   { id: "overall",      label: "Overall score" },
   { id: "scale",        label: "Score scale" },
 ];
@@ -121,6 +124,8 @@ function Body() {
           <IntentTypes />
           <ScoringFunctions />
           <RoleOfAi />
+          <ConfidencePerDimension />
+          <MethodologyVersioning />
           <OverallScore />
           <ScoreScale />
         </div>
@@ -659,6 +664,276 @@ function RoleOfAi() {
         }}>
           Even if the AI model returns different numbers in its response, the server replaces them with the pre-computed scores before the report is saved. The numbers you see are always the output of the scoring engine.
         </p>
+      </div>
+    </SectionBlock>
+  );
+}
+
+/* ─────── Confidence per dimension ─────── */
+
+const CONFIDENCE_LEVELS: {
+  level: string; value: string; tone: "strong" | "moderate" | "weak" | "none"; meaning: string; example: string;
+}[] = [
+  { level: "HIGH",   value: "1.0", tone: "strong",
+    meaning: "Fresh primary data from the named source.",
+    example: "Crime: police.uk street-level incidents in the last three months. Prices: HM Land Registry sold prices in the last twelve months." },
+  { level: "MEDIUM", value: "0.7", tone: "moderate",
+    meaning: "Partial fallback or older underlying dataset.",
+    example: "Demographics in Wales (WIMD 2019) and Scotland (SIMD 2020) sit here because the underlying releases are older than IMD 2025. Schools in Wales and Scotland sit here because Ofsted does not cover them." },
+  { level: "LOW",    value: "0.4", tone: "weak",
+    meaning: "Full proxy fallback. The dimension was inferred from related signals, not measured directly.",
+    example: "Cost of Living when Land Registry has no recent sales for the postcode district and the score is derived from deprivation data instead." },
+  { level: "NONE",   value: "0.2", tone: "none",
+    meaning: "No usable data was returned for that dimension.",
+    example: "An upstream source timed out or returned an empty result. The score still renders, but you should treat the number as directional." },
+];
+
+const INFERRED_DIMENSIONS: string[] = [
+  "Foot Traffic",
+  "Rental Yield",
+  "Regeneration",
+  "Tenant Demand",
+];
+
+function ConfidencePerDimension() {
+  return (
+    <SectionBlock
+      id="confidence"
+      eyebrow="Confidence per dimension"
+      title={<>Every score ships with <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>a confidence band.</em></>}
+    >
+      <P>
+        A score on its own is a black box. Lenders, insurers, and any FCA-regulated buyer cannot trust-band a single number without knowing how solid the underlying evidence was. So OneGoodArea returns a confidence value alongside every dimension score, plus a short reason explaining why that band was chosen.
+      </P>
+      <P>
+        Confidence is not a hedge. It is a structural property of the evidence the engine had at the time of the request. Every dimension is graded against the same four-level rubric.
+      </P>
+
+      <SubHead eyebrow="The four-level rubric" />
+      <div style={{
+        marginTop: 4,
+        border: "1px solid var(--border)", background: "var(--bg)",
+      }}>
+        {CONFIDENCE_LEVELS.map((c, i) => {
+          const bg    = c.tone === "strong"   ? "var(--signal-dim)"
+                      : c.tone === "moderate" ? "#FFF4D1"
+                      : c.tone === "weak"     ? "#FFE8E2"
+                      :                          "var(--bg-off)";
+          const fg    = c.tone === "strong"   ? "var(--ink-deep)"
+                      : c.tone === "moderate" ? "#6E5300"
+                      : c.tone === "weak"     ? "#A01B00"
+                      :                          "var(--text-3)";
+          const dotBg = c.tone === "strong"   ? "var(--ink)"
+                      : c.tone === "moderate" ? "#D49900"
+                      : c.tone === "weak"     ? "#D13A1E"
+                      :                          "var(--text-3)";
+          return (
+            <div key={c.level} style={{
+              padding: "22px 24px",
+              borderBottom: i === CONFIDENCE_LEVELS.length - 1 ? "none" : "1px solid var(--border-dim)",
+              display: "grid",
+              gridTemplateColumns: "170px 1fr",
+              gap: 20, alignItems: "start",
+            }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <span style={{
+                  fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
+                  letterSpacing: "0.06em",
+                  color: fg, background: bg,
+                  padding: "4px 10px", borderRadius: 2,
+                  alignSelf: "flex-start",
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                }}>
+                  <span aria-hidden style={{
+                    width: 6, height: 6, borderRadius: 6, background: dotBg,
+                  }} />
+                  {c.level} · {c.value}
+                </span>
+                <span style={{
+                  fontFamily: "var(--display)", fontSize: 17, fontWeight: 500,
+                  letterSpacing: "-0.012em",
+                  color: "var(--ink-deep)",
+                }}>{c.meaning}</span>
+              </div>
+              <p style={{
+                fontFamily: "var(--sans)", fontSize: 14.5, fontWeight: 400,
+                lineHeight: 1.55, color: "var(--text-2)",
+                letterSpacing: "-0.003em",
+                margin: 0, maxWidth: "66ch",
+              }}>{c.example}</p>
+            </div>
+          );
+        })}
+      </div>
+
+      <SubHead eyebrow="Inferred, not measured" />
+      <P>
+        Some dimensions cannot be measured from any public UK dataset. They are inferred from related signals (transport, amenities, deprivation, sold prices) using stable formulas. They are useful, but they are not direct observations, and we will not pretend otherwise. The following dimensions are capped at MEDIUM confidence by design:
+      </P>
+      <div style={{
+        display: "flex", flexWrap: "wrap", gap: 8,
+        marginTop: 4, marginBottom: 18,
+      }}>
+        {INFERRED_DIMENSIONS.map((d) => (
+          <span key={d} style={{
+            fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
+            letterSpacing: "0.06em",
+            color: "#6E5300", background: "#FFF4D1",
+            padding: "5px 10px", borderRadius: 2,
+            display: "inline-flex", alignItems: "center", gap: 8,
+          }}>
+            <span aria-hidden style={{
+              width: 6, height: 6, borderRadius: 6, background: "#D49900",
+            }} />
+            {d}
+          </span>
+        ))}
+      </div>
+      <P>
+        If a future data source lets us measure one of these directly (live mobility data for Foot Traffic, listings-based asking-rent feeds for Rental Yield), the ceiling lifts and the rubric is updated in a versioned release.
+      </P>
+
+      <SubHead eyebrow="Aggregate confidence" />
+      <P>
+        The report itself carries a single aggregate confidence value. It is the weight-weighted average of the per-dimension confidence values, using the same weights as the overall score. A report dominated by HIGH-confidence inputs lands near 1.0. A report leaning on proxies and older datasets lands lower, and the per-dimension breakdown shows you exactly where.
+      </P>
+
+      <div style={{
+        marginTop: 18,
+        border: "1px solid var(--border)",
+        background: "var(--bg-off)",
+        padding: "16px 20px", borderRadius: 4,
+      }}>
+        <div style={{
+          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
+          letterSpacing: "0.22em", textTransform: "uppercase",
+          color: "var(--text-3)", marginBottom: 6,
+        }}>In the API</div>
+        <p style={{
+          fontFamily: "var(--sans)", fontSize: 14, fontWeight: 400,
+          lineHeight: 1.55, color: "var(--text-2)",
+          margin: 0,
+        }}>
+          Every <code style={{ fontFamily: "var(--mono)", fontSize: 13, color: "var(--ink-deep)" }}>sub_score</code> object exposes <code style={{ fontFamily: "var(--mono)", fontSize: 13, color: "var(--ink-deep)" }}>confidence</code> (0.0 to 1.0) and <code style={{ fontFamily: "var(--mono)", fontSize: 13, color: "var(--ink-deep)" }}>confidence_reason</code> (a short string). The top-level report carries an aggregate <code style={{ fontFamily: "var(--mono)", fontSize: 13, color: "var(--ink-deep)" }}>confidence</code>. Persist these fields next to the score in your model risk register.
+        </p>
+      </div>
+    </SectionBlock>
+  );
+}
+
+/* ─────── Methodology versioning ─────── */
+
+function MethodologyVersioning() {
+  const versionsNewestFirst = [...METHODOLOGY_VERSIONS].reverse();
+  const current = versionsNewestFirst[0];
+
+  return (
+    <SectionBlock
+      id="versioning"
+      eyebrow="Methodology versioning"
+      title={<>Every report is stamped with <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>an engine version.</em></>}
+    >
+      <P>
+        Every report carries an <code style={{ fontFamily: "var(--mono)", fontSize: 14, color: "var(--ink-deep)" }}>engine_version</code> field. The current version is <strong style={{ color: "var(--ink-deep)" }}>{current.version}</strong>. If the methodology changes, the version changes. Old reports keep the version they were produced with, so a score from last quarter can always be reproduced from the methodology that generated it.
+      </P>
+      <P>
+        FCA-regulated buyers (lenders, insurers, valuers) keep model risk registers that demand exactly this. A score with no version stamp is unauditable. A score with a version stamp can be tied to a dated, public methodology entry.
+      </P>
+
+      <SubHead eyebrow="Semver convention" />
+      <div style={{
+        border: "1px solid var(--border)", background: "var(--bg)",
+        marginBottom: 24,
+      }}>
+        {[
+          { tag: "MAJOR", body: "Breaking change to dimension structure, intent set, or core weight. Anything that would invalidate prior scores." },
+          { tag: "MINOR", body: "Additive change. New dimension, new data source, new intent. Existing scores remain valid." },
+          { tag: "PATCH", body: "Formula tuning, threshold adjustment, confidence rubric refinement." },
+        ].map((row, i, arr) => (
+          <div key={row.tag} style={{
+            padding: "18px 22px",
+            borderBottom: i === arr.length - 1 ? "none" : "1px solid var(--border-dim)",
+            background: i % 2 === 0 ? "var(--bg)" : "var(--bg-off)",
+            display: "grid",
+            gridTemplateColumns: "120px 1fr",
+            gap: 18, alignItems: "start",
+          }}>
+            <span style={{
+              fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
+              letterSpacing: "0.18em", textTransform: "uppercase",
+              color: "var(--signal-ink)", background: "var(--signal)",
+              padding: "4px 10px", borderRadius: 2,
+              alignSelf: "flex-start",
+            }}>{row.tag}</span>
+            <p style={{
+              fontFamily: "var(--sans)", fontSize: 14.5, fontWeight: 400,
+              lineHeight: 1.55, color: "var(--text-2)",
+              margin: 0, maxWidth: "66ch",
+            }}>{row.body}</p>
+          </div>
+        ))}
+      </div>
+
+      <SubHead eyebrow="Version registry" />
+      <div style={{
+        border: "1px solid var(--border)", background: "var(--bg)",
+      }}>
+        {versionsNewestFirst.map((v, i) => {
+          const isCurrent = i === 0;
+          return (
+            <article key={v.version} style={{
+              padding: "26px 26px 28px",
+              borderBottom: i === versionsNewestFirst.length - 1 ? "none" : "1px solid var(--border-dim)",
+              background: isCurrent ? "var(--bg)" : "var(--bg-off)",
+            }}>
+              <header style={{
+                display: "flex", alignItems: "baseline", gap: 12,
+                flexWrap: "wrap", marginBottom: 10,
+              }}>
+                <span style={{
+                  fontFamily: "var(--display)", fontSize: 22, fontWeight: 500,
+                  letterSpacing: "-0.014em", color: "var(--ink-deep)",
+                }}>v{v.version}</span>
+                <span style={{
+                  fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
+                  letterSpacing: "0.18em", textTransform: "uppercase",
+                  color: "var(--text-3)",
+                }}>{v.released_at}</span>
+                {isCurrent && (
+                  <span style={{
+                    fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
+                    letterSpacing: "0.2em", textTransform: "uppercase",
+                    color: "var(--signal-ink)", background: "var(--signal)",
+                    padding: "3px 8px", borderRadius: 2,
+                  }}>Current</span>
+                )}
+              </header>
+              <p style={{
+                fontFamily: "var(--sans)", fontSize: 15, fontWeight: 400,
+                lineHeight: 1.55, color: "var(--text)",
+                letterSpacing: "-0.003em",
+                margin: "0 0 14px", maxWidth: "66ch",
+              }}>{v.summary}</p>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+                {v.changes.map((c) => (
+                  <li key={c} style={{
+                    display: "flex", alignItems: "flex-start", gap: 12,
+                    fontFamily: "var(--sans)", fontSize: 14, fontWeight: 400,
+                    color: "var(--text-2)", lineHeight: 1.55,
+                    maxWidth: "66ch",
+                  }}>
+                    <span aria-hidden style={{
+                      flexShrink: 0, marginTop: 7,
+                      width: 10, height: 2, background: "var(--signal)",
+                      borderRadius: 1,
+                    }} />
+                    {c}
+                  </li>
+                ))}
+              </ul>
+            </article>
+          );
+        })}
       </div>
     </SectionBlock>
   );

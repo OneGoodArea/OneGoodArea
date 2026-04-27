@@ -24,6 +24,7 @@ const SECTIONS: { id: string; label: string }[] = [
   { id: "data-sources",   label: "Data sources" },
   { id: "widget",         label: "Drop-in widget" },
   { id: "examples",       label: "Code examples" },
+  { id: "openapi",        label: "OpenAPI" },
 ];
 
 export default function DocsClient() {
@@ -96,7 +97,7 @@ function Hero() {
           letterSpacing: "-0.005em",
           margin: 0, maxWidth: "62ch",
         }}>
-          REST endpoint, Bearer token auth, JSON in and out. Every response is cached for 24 hours. Cached hits don&apos;t count against your quota.
+          REST endpoint, Bearer token auth, JSON in and out. Every response is cached for 24 hours. Cached hits don&apos;t count against your quota. The full API contract is published as an OpenAPI 3.0 spec for procurement and integration teams.
         </p>
         <div style={{
           marginTop: 28, display: "flex", gap: 22, flexWrap: "wrap",
@@ -143,6 +144,7 @@ function Body() {
           <DataSources />
           <Widget />
           <CodeExamples />
+          <OpenApiSpec />
         </div>
       </div>
     </section>
@@ -686,11 +688,15 @@ const RESPONSE_FIELDS: { path: string; type: string; desc: string }[] = [
   { path: "report.intent",                  type: "string",      desc: "Intent type used for scoring." },
   { path: "report.area_type",               type: "string",      desc: "urban | suburban | rural. Benchmark category." },
   { path: "report.areaiq_score",            type: "number",      desc: "Overall weighted score 0–100 (integer)." },
+  { path: "report.confidence",              type: "number",      desc: "Aggregate confidence across dimensions, weight-weighted. Range 0.0–1.0." },
+  { path: "report.engine_version",          type: "string",      desc: "Methodology version that produced this report. Pin in your model risk register. Format: semver, e.g. 2.0.0." },
   { path: "report.sub_scores[]",            type: "SubScore[]",  desc: "Exactly five dimensions keyed to the intent." },
   { path: "report.sub_scores[].label",      type: "string",      desc: "Dimension name. Varies per intent." },
   { path: "report.sub_scores[].score",      type: "number",      desc: "Dimension score 0–100 (integer)." },
   { path: "report.sub_scores[].weight",     type: "number",      desc: "Relative weight. Sums to 100 across all five." },
   { path: "report.sub_scores[].reasoning",  type: "string",      desc: "Data-backed explanation for this score." },
+  { path: "report.sub_scores[].confidence", type: "number",      desc: "Per-dimension confidence. Range 0.0–1.0. Reflects data coverage and source freshness." },
+  { path: "report.sub_scores[].confidence_reason", type: "string", desc: "Human-readable explanation of the per-dimension confidence value." },
   { path: "report.summary",                 type: "string",      desc: "2–3 sentence executive summary." },
   { path: "report.sections[]",              type: "Section[]",   desc: "4–6 detailed analysis sections." },
   { path: "report.recommendations[]",       type: "string[]",    desc: "3+ actionable recommendations." },
@@ -1077,6 +1083,96 @@ function CodeExamples() {
         { label: "Python",     lang: "python",     snippet: EX_PY   },
         { label: "Go",         lang: "go",         snippet: EX_GO   },
       ]} />
+    </Block>
+  );
+}
+
+/* ─────── OpenAPI 3.0 spec ─────── */
+
+const OPENAPI_GEN_CMD = `openapi-generator-cli generate \\
+  -i https://www.area-iq.co.uk/openapi.json \\
+  -g python \\
+  -o ./client`;
+
+function OpenApiSpec() {
+  return (
+    <Block
+      id="openapi"
+      eyebrow="OpenAPI"
+      title={<>Machine-readable, <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>contract first.</em></>}
+    >
+      <P>
+        OneGoodArea ships a full OpenAPI 3.0 spec at{" "}
+        <a
+          href="https://www.area-iq.co.uk/openapi.json"
+          style={{ color: "var(--ink)", textDecoration: "underline" }}
+        >
+          https://www.area-iq.co.uk/openapi.json
+        </a>
+        . It documents both endpoints (the live <IC>/api/v1/report</IC> route and the widget cache route), every error response (400, 401, 403, 429, 500), the full request and response schemas including the new <IC>confidence</IC> and <IC>engine_version</IC> fields, and the Bearer auth scheme.
+      </P>
+      <P>
+        The spec version is pinned to the scoring engine version (currently 2.0.0), so a procurement or model-risk team can lock against a specific contract. Postman, Insomnia, and curl users can import the URL directly. SDK teams can generate a typed client in any supported language.
+      </P>
+      <h3 style={{
+        fontFamily: "var(--display)", fontSize: 18, fontWeight: 500,
+        letterSpacing: "-0.012em", color: "var(--ink-deep)",
+        margin: "22px 0 10px",
+      }}>Generate a client</h3>
+      <CodeBlock lang="bash" snippet={OPENAPI_GEN_CMD} />
+      <div style={{
+        marginTop: 18, display: "flex", gap: 12, flexWrap: "wrap",
+        alignItems: "center",
+      }}>
+        <a
+          href="/docs/api-reference"
+          style={{
+            fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
+            letterSpacing: "0.14em", textTransform: "uppercase",
+            color: "var(--signal-ink)", background: "var(--signal)",
+            padding: "12px 22px", borderRadius: 999, textDecoration: "none",
+            border: "1px solid var(--signal)",
+            display: "inline-flex", alignItems: "center", gap: 9,
+            transition: "transform 140ms cubic-bezier(0.16,1,0.3,1)",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-1px)")}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+        >
+          Open interactive reference
+          <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
+        </a>
+        <a
+          href="https://www.area-iq.co.uk/openapi.json"
+          download="onegoodarea-openapi.json"
+          style={{
+            fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
+            letterSpacing: "0.14em", textTransform: "uppercase",
+            color: "var(--ink-deep)", background: "transparent",
+            padding: "12px 22px", borderRadius: 999, textDecoration: "none",
+            border: "1px solid var(--border)",
+            display: "inline-flex", alignItems: "center", gap: 9,
+          }}
+        >
+          Download spec
+          <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>↓</span>
+        </a>
+        <a
+          href="https://www.area-iq.co.uk/openapi.json"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
+            letterSpacing: "0.14em", textTransform: "uppercase",
+            color: "var(--ink-deep)", background: "transparent",
+            padding: "12px 22px", borderRadius: 999, textDecoration: "none",
+            border: "1px solid var(--border)",
+            display: "inline-flex", alignItems: "center", gap: 9,
+          }}
+        >
+          View raw JSON
+          <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
+        </a>
+      </div>
     </Block>
   );
 }

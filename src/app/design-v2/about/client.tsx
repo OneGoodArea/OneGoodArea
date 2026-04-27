@@ -76,11 +76,11 @@ function Hero() {
           letterSpacing: "-0.02em", color: "var(--ink-deep)",
           margin: "0 0 24px",
         }}>
-          We built the tool we{" "}
+          We built the location intelligence layer{" "}
           <span style={{
             fontStyle: "italic", color: "var(--ink)",
             borderBottom: "3px solid var(--signal)", paddingBottom: 2,
-          }}>couldn&apos;t find.</span>
+          }}>regulated buyers couldn&apos;t find.</span>
         </h1>
         <p style={{
           fontFamily: "var(--sans)", fontSize: 17.5, fontWeight: 400,
@@ -88,7 +88,7 @@ function Hero() {
           letterSpacing: "-0.005em",
           margin: "0 auto", maxWidth: "58ch",
         }}>
-          A transparent, intent-driven read on every UK postcode. Real public data. Same answer every time. Written so anyone can use it.
+          Deterministic UK area scoring. Same input, same answer, version-stamped on every report, confidence-banded per dimension. Built for FCA-regulated workflows, embeddable in any product.
         </p>
       </div>
     </section>

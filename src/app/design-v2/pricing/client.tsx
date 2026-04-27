@@ -31,12 +31,6 @@ type Plan = {
   disabled?: boolean;
 };
 
-const WEB_PLANS: Plan[] = [
-  { id: "free",    name: "Free",    price: "£0",  cadence: "forever", reports: "3 reports / month",  blurb: "Kick the tyres. A few reports a month, all data sources, no card required.", cta: "Start free", disabled: true },
-  { id: "starter", name: "Starter", price: "£29", cadence: "/ month", reports: "20 reports / month", blurb: "For freelance agents, landlords, and the occasional move.", cta: "Get Starter" },
-  { id: "pro",     name: "Pro",     price: "£79", cadence: "/ month", reports: "75 reports / month", blurb: "For agencies and active investors scoring areas regularly.", cta: "Upgrade to Pro", highlight: true },
-];
-
 const API_PLANS: Plan[] = [
   { id: "developer", name: "Developer", price: "£49",  cadence: "/ month", reports: "100 reports / month",  perReport: "£0.49 each", blurb: "For solo devs and small PropTech prototypes.", cta: "Start building" },
   { id: "business",  name: "Business",  price: "£249", cadence: "/ month", reports: "500 reports / month",  perReport: "£0.50 each", blurb: "For platforms and integrations with steady traffic.", cta: "Get Business", highlight: true },
@@ -44,20 +38,6 @@ const API_PLANS: Plan[] = [
 ];
 
 type Row = { label: string; values: (string | boolean)[]; sub?: string; icon?: IconName };
-
-const WEB_FEATURES: Row[] = [
-  { label: "Reports / month",            values: ["3", "20", "75"],           icon: "data" },
-  { label: "Seven public datasets",      values: [true, true, true],          sub: "Postcodes.io · Police.uk · IMD · OSM · Land Registry · EA · Ofsted", icon: "map" },
-  { label: "All four intent modes",      values: [true, true, true],          sub: "Moving · Business · Investing · Research", icon: "intent" },
-  { label: "Same answer every time",     values: [true, true, true],          sub: "Public-data formulas. Score is reproducible.", icon: "repeat" },
-  { label: "Share & email delivery",     values: [true, true, true],          sub: "WhatsApp, LinkedIn, X, direct link, email", icon: "share" },
-  { label: "Watchlist & CSV export",     values: [true, true, true],          sub: "Save areas, filter, export", icon: "watchlist" },
-  { label: "Data freshness badges",      values: [true, true, true],          sub: "Source + age on every datapoint", icon: "fresh" },
-  { label: "PDF export",                 values: [false, true, true],         sub: "Branded report as PDF", icon: "pdf" },
-  { label: "Area comparison",            values: [false, true, true],         sub: "Side-by-side intelligence", icon: "compare" },
-  { label: "Property market data",       values: [false, false, true],        sub: "Land Registry sold prices + YoY", icon: "investor" },
-  { label: "Ofsted school ratings",      values: [true, true, true],          sub: "Within 1.5km (England)", icon: "researcher" },
-];
 
 const API_FEATURES: Row[] = [
   { label: "API reports / month",        values: ["100", "500", "1,500"],     icon: "data" },
@@ -78,7 +58,6 @@ const API_FEATURES: Row[] = [
 export default function PricingClient() {
   const { data: session } = useSession();
   const isSignedIn = !!session;
-  const [tab, setTab] = useState<"web" | "api">("web");
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -86,10 +65,7 @@ export default function PricingClient() {
   useEffect(() => {
     if (!isSignedIn) return;
     fetch("/api/usage").then(r => r.json()).then(data => {
-      if (data?.plan) {
-        setCurrentPlan(data.plan);
-        if (["developer", "business", "growth"].includes(data.plan)) setTab("api");
-      }
+      if (data?.plan) setCurrentPlan(data.plan);
     }).catch(() => setCurrentPlan("free"));
   }, [isSignedIn]);
 
@@ -121,25 +97,21 @@ export default function PricingClient() {
     }
   }
 
-  const plans    = tab === "web" ? WEB_PLANS : API_PLANS;
-  const features = tab === "web" ? WEB_FEATURES : API_FEATURES;
-
   return (
     <div className="aiq">
       <Styles />
       <Nav />
       <Hero />
-      <AudienceSwitch tab={tab} setTab={setTab} />
       {error && <ErrorBanner error={error} onDismiss={() => setError(null)} />}
       <PlanGrid
-        plans={plans}
-        tab={tab}
+        plans={API_PLANS}
         currentPlan={currentPlan}
         loading={loading}
         onUpgrade={handleUpgrade}
       />
-      {tab === "api" && <EnterpriseCallout />}
-      <FeatureTable plans={plans} rows={features} tab={tab} />
+      <EnterpriseCallout />
+      <FeatureTable plans={API_PLANS} rows={API_FEATURES} />
+      <RetiredPlansNotice />
       <Faq />
       <FinalCta isSignedIn={isSignedIn} />
       <Footer />
@@ -184,7 +156,7 @@ function Hero() {
             background: "var(--signal)",
             animation: "aiq-pulse-dot 1.6s ease-in-out infinite",
           }} />
-          Pricing · GBP · cancel any time
+          API pricing · GBP · cancel any time
         </div>
         <h1 style={{
           fontFamily: "var(--display)", fontWeight: 400,
@@ -206,64 +178,8 @@ function Hero() {
           letterSpacing: "-0.005em",
           margin: "0 auto", maxWidth: "58ch",
         }}>
-          Every plan ships the seven public datasets, four intent modes, the written narrative, and the watchlist. Your price is your quota, nothing more.
+          Every plan ships the seven public datasets, four intent modes, the written narrative, and the drop-in widget. Your price is your quota, nothing more.
         </p>
-      </div>
-    </section>
-  );
-}
-
-/* ─────── Audience switch ─────── */
-
-function AudienceSwitch({ tab, setTab }: {
-  tab: "web" | "api"; setTab: (t: "web" | "api") => void;
-}) {
-  return (
-    <section style={{
-      background: "var(--bg)",
-      padding: "24px 0 8px",
-      display: "flex", justifyContent: "center",
-    }}>
-      <div style={{
-        display: "inline-flex", padding: 4,
-        background: "var(--bg-off)",
-        border: "1px solid var(--border)",
-        borderRadius: 999,
-        gap: 2,
-      }}>
-        {[
-          { id: "web" as const, label: "For readers", sub: "Web reports" },
-          { id: "api" as const, label: "For builders", sub: "API + widget" },
-        ].map((t) => {
-          const active = tab === t.id;
-          return (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              style={{
-                fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-                letterSpacing: "0.14em", textTransform: "uppercase",
-                color: active ? "var(--signal-ink)" : "var(--text-2)",
-                background: active ? "var(--signal)" : "transparent",
-                padding: "10px 20px", borderRadius: 999,
-                border: "none", cursor: "pointer",
-                display: "inline-flex", alignItems: "center", gap: 10,
-                transition: "background 180ms ease, color 180ms ease",
-              }}
-            >
-              <span>{t.label}</span>
-              <span aria-hidden style={{
-                width: 1, height: 10,
-                background: active ? "rgba(26,38,0,0.28)" : "var(--border)",
-              }} />
-              <span style={{
-                fontSize: 10.5,
-                color: active ? "rgba(26,38,0,0.72)" : "var(--text-3)",
-                letterSpacing: "0.12em",
-              }}>{t.sub}</span>
-            </button>
-          );
-        })}
       </div>
     </section>
   );
@@ -301,9 +217,9 @@ function ErrorBanner({ error, onDismiss }: { error: string; onDismiss: () => voi
 /* ─────── Plan grid ─────── */
 
 function PlanGrid({
-  plans, tab, currentPlan, loading, onUpgrade,
+  plans, currentPlan, loading, onUpgrade,
 }: {
-  plans: Plan[]; tab: "web" | "api";
+  plans: Plan[];
   currentPlan: string | null; loading: string | null;
   onUpgrade: (id: PlanId) => void;
 }) {
@@ -338,7 +254,7 @@ function PlanGrid({
           <span>✓ Billed monthly</span>
           <span>✓ Cancel any time</span>
           <span>✓ No setup fee</span>
-          {tab === "api" && <span>✓ Cached hits free</span>}
+          <span>✓ Cached hits free</span>
         </div>
       </div>
     </section>
@@ -545,8 +461,8 @@ function EnterpriseCallout() {
 
 /* ─────── Feature comparison ─────── */
 
-function FeatureTable({ plans, rows, tab }: {
-  plans: Plan[]; rows: Row[]; tab: "web" | "api";
+function FeatureTable({ plans, rows }: {
+  plans: Plan[]; rows: Row[];
 }) {
   return (
     <section style={{
@@ -578,9 +494,7 @@ function FeatureTable({ plans, rows, tab }: {
               letterSpacing: "-0.016em", color: "var(--ink-deep)",
               margin: 0, maxWidth: "26ch",
             }}>
-              {tab === "web"
-                ? <>Read-level features, <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>side by side.</em></>
-                : <>Integration features, <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>side by side.</em></>}
+              Integration features, <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>side by side.</em>
             </h2>
           </div>
         </div>
@@ -787,6 +701,41 @@ function FaqRow({ item, index, isLast }: {
   );
 }
 
+/* ─────── Retired plans notice ─────── */
+
+function RetiredPlansNotice() {
+  return (
+    <section style={{
+      background: "var(--bg)",
+      borderTop: "1px solid var(--border-dim)",
+      padding: "28px 0",
+    }}>
+      <div style={{
+        maxWidth: 1100, margin: "0 auto", padding: "0 40px",
+        textAlign: "center",
+      }}>
+        <p style={{
+          fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
+          letterSpacing: "0.18em", textTransform: "uppercase",
+          color: "var(--text-3)", margin: 0, lineHeight: 1.7,
+        }}>
+          Web report plans were retired April 2026.
+          {" "}Existing subscribers continue on their current plan.
+          {" "}Contact{" "}
+          <a
+            href="mailto:hello@area-iq.co.uk?subject=Plan migration"
+            style={{
+              color: "var(--ink)", textDecoration: "underline",
+              textUnderlineOffset: 3, textDecorationColor: "var(--border)",
+            }}
+          >hello@area-iq.co.uk</a>
+          {" "}to migrate.
+        </p>
+      </div>
+    </section>
+  );
+}
+
 /* ─────── Final CTA ─────── */
 
 function FinalCta({ isSignedIn }: { isSignedIn: boolean }) {
@@ -817,7 +766,7 @@ function FinalCta({ isSignedIn }: { isSignedIn: boolean }) {
           letterSpacing: "-0.003em",
           margin: "0 auto 32px", maxWidth: "52ch",
         }}>
-          Three reports a month are free. No card, no timer. Decide after you&apos;ve seen one.
+          Read the docs, grab a key, ship a request in minutes. No card to start. Decide after you&apos;ve seen the JSON.
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
           <Link

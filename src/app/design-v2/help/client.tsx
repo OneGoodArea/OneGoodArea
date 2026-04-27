@@ -26,12 +26,12 @@ const TOPICS: Topic[] = [
       { q: "How are scores calculated?",         a: "Each report scores your area across five dimensions, weighted by intent. A moving report prioritises Safety, Schools, and Transport. A business report focuses on Foot Traffic and Spending Power. The same inputs always produce the same output. See the Methodology page for more details." },
       { q: "What are the intent types?",          a: "Moving (residential relocation), Business (commercial viability), Investing (property investment), and Research (general area profile). Each uses different scoring dimensions and weights." },
       { q: "Can I share my reports?",             a: "Yes. Every report has share buttons for WhatsApp, LinkedIn, X, and a copy link button. Reports have permanent URLs that anyone can view without an account." },
-      { q: "Can I download a report as PDF?",     a: "Yes, on Starter plans and above. Click the PDF button on any report to download a branded PDF you can share with clients or attach to property offers." },
+      { q: "Can I download a report as PDF?",     a: "Yes. Click the PDF button on any report to download a branded PDF you can share with stakeholders or attach to procurement memos. Free tier reports include the PDF export." },
       { q: "Do I get emailed my reports?",        a: "Yes. Every report is automatically emailed to you with a score summary as soon as it is generated. No extra setup needed." },
       { q: "What is the watchlist?",              a: "Save any area from a report to your watchlist. View all saved areas on your dashboard, filter them, and export the list as a CSV file." },
       { q: "What are data freshness badges?",     a: "Every report shows colour-coded badges indicating the source and age of each data point, so you know exactly how current the information is." },
       { q: "What is the Nearby Schools panel?",   a: "For English postcodes, every report shows Ofsted inspection ratings for schools within 1.5km. You can see each school's name, type, rating (Outstanding, Good, Requires Improvement, or Inadequate), and distance. School quality also factors into the Schools and Education score. Scotland and Wales support is planned." },
-      { q: "What is the Property Market panel?",  a: "Available on Pro plans and above. It shows real sold prices from HM Land Registry for the local postcode district: median price, year-on-year trends, property type breakdown, tenure split, and price range." },
+      { q: "What is the Property Market panel?",  a: "Real sold prices from HM Land Registry for the local postcode district: median price, year-on-year trends, property type breakdown, tenure split, and price range. Included on every report." },
     ],
   },
   {
@@ -39,7 +39,7 @@ const TOPICS: Topic[] = [
     title: "Billing + plans",
     desc: "Pricing tiers, upgrades, cancellations, and invoices.",
     items: [
-      { q: "What plans are available?",           a: "Web reports: Free (3/month), Starter £29/mo (20), Pro £79/mo (75). API access: Developer £49/mo (100), Business £249/mo (500), Growth £499/mo (1,500). Enterprise pricing is available on request." },
+      { q: "What plans are available?",           a: "Free tier (3 reports/month, web-only, sandbox use). API access: Developer £49/mo (100 calls), Business £249/mo (500), Growth £499/mo (1,500). Enterprise: custom contracts, version pinning, SOC 2 documentation, dedicated support. Web report tiers (Starter, Pro) were retired April 2026. Existing subscribers continue on their current plan." },
       { q: "How do I upgrade?",                   a: "Go to the Pricing page and select your plan. Payment is handled securely via Stripe." },
       { q: "Can I cancel any time?",              a: "Yes. Cancel from your dashboard via the billing portal. You keep access until the end of your billing period." },
       { q: "What happens if I hit my limit?",     a: "You see a prompt to upgrade. Your existing reports remain accessible, you just can't generate new ones until your limit resets on the 1st of the month." },

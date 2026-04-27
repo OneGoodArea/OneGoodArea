@@ -70,17 +70,17 @@ function Hero() {
           letterSpacing: "-0.02em", color: "var(--ink-deep)",
           margin: "0 0 16px", maxWidth: "22ch",
         }}>
-          Data-led reads on <em style={{
+          Notes from the <em style={{
             fontStyle: "italic", color: "var(--ink)",
             borderBottom: "3px solid var(--signal)", paddingBottom: 2,
-          }}>UK neighbourhoods.</em>
+          }}>UK location intelligence layer.</em>
         </h1>
         <p style={{
           fontFamily: "var(--sans)", fontSize: 16.5, fontWeight: 400,
           lineHeight: 1.55, color: "var(--text-2)",
           margin: 0, maxWidth: "62ch",
         }}>
-          Area intelligence, property data analysis, and practical guides for buyers, investors, and agents. All backed by real public data.
+          Methodology deep-dives, data-source explainers, and field notes on UK area scoring. Written for the engineers, underwriters, and product teams who integrate with us, plus anyone curious about how the engine actually works.
         </p>
       </div>
     </section>
