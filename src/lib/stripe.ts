@@ -51,26 +51,37 @@ export const PLANS = {
   },
   developer: {
     name: "Developer",
-    price: 4900, // £49 in pence
-    reportsPerMonth: 100,
-    priceId: process.env.STRIPE_DEVELOPER_PRICE_ID!,
+    price: 9900, // £99 in pence (April 2026 reprice)
+    reportsPerMonth: 10000,
+    priceId: process.env.STRIPE_DEVELOPER_PRICE_ID || "price_1TQrWc0oI5PvXSlpqAlXQaG8",
     apiAccess: true,
   },
   business: {
     name: "Business",
-    price: 24900, // £249 in pence
-    reportsPerMonth: 500,
-    priceId: process.env.STRIPE_BUSINESS_PRICE_ID!,
+    price: 49900, // £499 in pence (April 2026 reprice)
+    reportsPerMonth: 50000,
+    priceId: process.env.STRIPE_BUSINESS_PRICE_ID || "price_1TQrWd0oI5PvXSlpFeLRBkAt",
     apiAccess: true,
   },
   growth: {
     name: "Growth",
-    price: 49900, // £499 in pence
-    reportsPerMonth: 1500,
-    priceId: process.env.STRIPE_GROWTH_PRICE_ID!,
+    price: 149900, // £1,499 in pence (April 2026 reprice)
+    reportsPerMonth: 250000,
+    priceId: process.env.STRIPE_GROWTH_PRICE_ID || "price_1TQrWd0oI5PvXSlpZASdLVI4",
     apiAccess: true,
   },
 } as const;
+
+/* April 2026 reprice notes:
+ * - New live price IDs above replace the original Developer £49 / Business £249 / Growth £499 tiers.
+ * - Existing subscribers on the old prices are grandfathered: their subscriptions keep the
+ *   original Stripe price IDs and the original quotas via Stripe's subscription model.
+ * - The OLD price IDs (price_1T9Q3V0oI5PvXSlpwhhZ2Sef, price_1T8ukH0oI5PvXSlprHY1EWJY,
+ *   price_1T9Q3W0oI5PvXSlpCMjOCgKO) remain ACTIVE in Stripe — do not archive.
+ * - Production env vars on Vercel can override these defaults. If unset, the new live
+ *   price IDs are used. Test/staging environments should set their own STRIPE_*_PRICE_ID
+ *   env vars to test-mode price IDs in .env.local.
+ */
 
 export type PlanId = keyof typeof PLANS;
 
