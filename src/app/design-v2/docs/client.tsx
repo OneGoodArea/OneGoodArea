@@ -1125,8 +1125,7 @@ function OpenApiSpec() {
         alignItems: "center",
       }}>
         <a
-          href="https://www.area-iq.co.uk/openapi.json"
-          download="areaiq-openapi.json"
+          href="/docs/api-reference"
           style={{
             fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
             letterSpacing: "0.14em", textTransform: "uppercase",
@@ -1138,6 +1137,21 @@ function OpenApiSpec() {
           }}
           onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-1px)")}
           onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+        >
+          Open interactive reference
+          <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
+        </a>
+        <a
+          href="https://www.area-iq.co.uk/openapi.json"
+          download="onegoodarea-openapi.json"
+          style={{
+            fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
+            letterSpacing: "0.14em", textTransform: "uppercase",
+            color: "var(--ink-deep)", background: "transparent",
+            padding: "12px 22px", borderRadius: 999, textDecoration: "none",
+            border: "1px solid var(--border)",
+            display: "inline-flex", alignItems: "center", gap: 9,
+          }}
         >
           Download spec
           <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>↓</span>
