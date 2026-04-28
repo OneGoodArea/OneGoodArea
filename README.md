@@ -1,3 +1,4 @@
+[![CI](https://github.com/OneGoodArea/OneGoodArea/actions/workflows/ci.yml/badge.svg)](https://github.com/OneGoodArea/OneGoodArea/actions/workflows/ci.yml)
 # OneGoodArea
 
 **An intelligence report for every UK postcode.**
