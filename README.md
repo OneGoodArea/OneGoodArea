@@ -1,5 +1,6 @@
 [![CI](https://github.com/OneGoodArea/OneGoodArea/actions/workflows/ci.yml/badge.svg)](https://github.com/OneGoodArea/OneGoodArea/actions/workflows/ci.yml)
-![GitHub branch count](https://img.shields.io/github/branches/:user/:repo)
+![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/m-rossini/OneGoodArea?style=plastic)
+
 
 
 
