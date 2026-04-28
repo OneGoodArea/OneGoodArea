@@ -1,5 +1,6 @@
 [![CI](https://github.com/OneGoodArea/OneGoodArea/actions/workflows/ci.yml/badge.svg)](https://github.com/OneGoodArea/OneGoodArea/actions/workflows/ci.yml)
-![GitHub commits since latest release (branch)](https://img.shields.io/github/commits-since/:user/:repo/latest/:branch)
+![GitHub branch count](https://img.shields.io/github/branches/:user/:repo)
+
 
 
 # OneGoodArea
