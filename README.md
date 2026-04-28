@@ -1,5 +1,6 @@
 [![CI](https://github.com/OneGoodArea/OneGoodArea/actions/workflows/ci.yml/badge.svg)](https://github.com/OneGoodArea/OneGoodArea/actions/workflows/ci.yml)
-![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/m-rossini/OneGoodArea?style=plastic)
+![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/OneGoodArea/OneGoodArea?style=plastic)
+
 
 
 
