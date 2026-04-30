@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var API_BASE = "https://www.area-iq.co.uk";
+  var API_BASE = "https://www.onegoodarea.com";
   var WIDGET_SELECTOR = "[data-areaiq-postcode]";
 
   function getScoreColor(score) {
@@ -181,7 +181,7 @@
     el.innerHTML =
       '<div style="' + s.container + '">' +
       '<div style="' + s.header + '">' +
-      '<span style="' + s.logo + '">AreaIQ</span>' +
+      '<span style="' + s.logo + '">OneGoodArea</span>' +
       '<span style="' + s.area + '">' + (data.area || data.postcode) + (data.area_type ? " \u00b7 " + data.area_type : "") + "</span>" +
       "</div>" +
       '<div style="' + s.scoreSection + '">' +
@@ -195,7 +195,7 @@
       '<div style="' + s.dims + '">' + dimsHTML + "</div>" +
       "</div>" +
       '<div style="' + s.footer + '">' +
-      '<a href="' + API_BASE + '?utm_source=widget" target="_blank" rel="noopener" style="' + s.footerLink + '">Powered by AreaIQ</a>' +
+      '<a href="' + API_BASE + '?utm_source=widget" target="_blank" rel="noopener" style="' + s.footerLink + '">Powered by OneGoodArea</a>' +
       '<a href="' + reportUrl + '" target="_blank" rel="noopener" style="' + s.viewReport + '">View full report \u2192</a>' +
       "</div>" +
       "</div>";

@@ -348,7 +348,7 @@ export default async function OGImage({
                 display: "flex",
               }}
             >
-              area-iq.co.uk
+              onegoodarea.com
             </span>
           </div>
         </div>

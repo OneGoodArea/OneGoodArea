@@ -465,7 +465,7 @@ function Quickstart() {
           </div>
         ))}
       </div>
-      <CodeBlock lang="bash" snippet={`curl -X POST https://www.area-iq.co.uk/api/v1/report \\
+      <CodeBlock lang="bash" snippet={`curl -X POST https://www.onegoodarea.com/api/v1/report \\
   -H "Authorization: Bearer aiq_your_api_key" \\
   -H "Content-Type: application/json" \\
   -d '{"area": "Shoreditch", "intent": "business"}'`} />
@@ -539,7 +539,7 @@ function Endpoint() {
           fontFamily: "var(--mono)", fontSize: 14, fontWeight: 500,
           color: "var(--ink-deep)", letterSpacing: "0.02em",
         }}>
-          https://www.area-iq.co.uk/api/v1/report
+          https://www.onegoodarea.com/api/v1/report
         </code>
       </div>
       <P>
@@ -933,14 +933,14 @@ const WIDGET_HTML = `<!-- Where the widget should render -->
 ></div>
 
 <!-- Before </body> -->
-<script src="https://www.area-iq.co.uk/widget.js"></script>`;
+<script src="https://www.onegoodarea.com/widget.js"></script>`;
 
 const WIDGET_MULTI = `<div data-areaiq-postcode="E1 6AN"   data-areaiq-intent="investing"></div>
 <div data-areaiq-postcode="SW11 1AA" data-areaiq-intent="moving"></div>
 <div data-areaiq-postcode="M1 1AD"   data-areaiq-intent="business"
      data-areaiq-theme="light"></div>
 
-<script src="https://www.area-iq.co.uk/widget.js"></script>`;
+<script src="https://www.onegoodarea.com/widget.js"></script>`;
 
 const WIDGET_ATTRS: { attr: string; required: boolean; desc: string }[] = [
   { attr: "data-areaiq-postcode", required: true,  desc: "UK postcode or area name." },
@@ -1008,7 +1008,7 @@ function Widget() {
 
 /* ─────── Code examples ─────── */
 
-const EX_CURL = `curl -X POST https://www.area-iq.co.uk/api/v1/report \\
+const EX_CURL = `curl -X POST https://www.onegoodarea.com/api/v1/report \\
   -H "Authorization: Bearer aiq_your_api_key" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -1016,7 +1016,7 @@ const EX_CURL = `curl -X POST https://www.area-iq.co.uk/api/v1/report \\
     "intent": "business"
   }'`;
 
-const EX_NODE = `const response = await fetch("https://www.area-iq.co.uk/api/v1/report", {
+const EX_NODE = `const response = await fetch("https://www.onegoodarea.com/api/v1/report", {
   method: "POST",
   headers: {
     "Authorization": "Bearer aiq_your_api_key",
@@ -1037,7 +1037,7 @@ console.log(report.recommendations);    // ["Consider …", …]`;
 const EX_PY = `import requests
 
 response = requests.post(
-    "https://www.area-iq.co.uk/api/v1/report",
+    "https://www.onegoodarea.com/api/v1/report",
     headers={"Authorization": "Bearer aiq_your_api_key"},
     json={"area": "Camden", "intent": "investing"},
 )
@@ -1057,7 +1057,7 @@ const EX_GO = `payload := map[string]string{
 }
 
 body, _ := json.Marshal(payload)
-req, _ := http.NewRequest("POST", "https://www.area-iq.co.uk/api/v1/report", bytes.NewBuffer(body))
+req, _ := http.NewRequest("POST", "https://www.onegoodarea.com/api/v1/report", bytes.NewBuffer(body))
 req.Header.Set("Authorization", "Bearer aiq_your_api_key")
 req.Header.Set("Content-Type", "application/json")
 
@@ -1090,7 +1090,7 @@ function CodeExamples() {
 /* ─────── OpenAPI 3.0 spec ─────── */
 
 const OPENAPI_GEN_CMD = `openapi-generator-cli generate \\
-  -i https://www.area-iq.co.uk/openapi.json \\
+  -i https://www.onegoodarea.com/openapi.json \\
   -g python \\
   -o ./client`;
 
@@ -1104,10 +1104,10 @@ function OpenApiSpec() {
       <P>
         OneGoodArea ships a full OpenAPI 3.0 spec at{" "}
         <a
-          href="https://www.area-iq.co.uk/openapi.json"
+          href="https://www.onegoodarea.com/openapi.json"
           style={{ color: "var(--ink)", textDecoration: "underline" }}
         >
-          https://www.area-iq.co.uk/openapi.json
+          https://www.onegoodarea.com/openapi.json
         </a>
         . It documents both endpoints (the live <IC>/api/v1/report</IC> route and the widget cache route), every error response (400, 401, 403, 429, 500), the full request and response schemas including the new <IC>confidence</IC> and <IC>engine_version</IC> fields, and the Bearer auth scheme.
       </P>
@@ -1142,7 +1142,7 @@ function OpenApiSpec() {
           <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
         </a>
         <a
-          href="https://www.area-iq.co.uk/openapi.json"
+          href="https://www.onegoodarea.com/openapi.json"
           download="onegoodarea-openapi.json"
           style={{
             fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
@@ -1157,7 +1157,7 @@ function OpenApiSpec() {
           <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>↓</span>
         </a>
         <a
-          href="https://www.area-iq.co.uk/openapi.json"
+          href="https://www.onegoodarea.com/openapi.json"
           target="_blank"
           rel="noopener noreferrer"
           style={{
@@ -1233,7 +1233,7 @@ function FinalCta() {
             See the plans
             <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
           </Link>
-          <a href="mailto:hello@area-iq.co.uk?subject=Enterprise API enquiry" style={{
+          <a href="mailto:hello@onegoodarea.com?subject=Enterprise API enquiry" style={{
             fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
             letterSpacing: "0.14em", textTransform: "uppercase",
             color: "rgba(255,255,255,0.88)", background: "transparent",

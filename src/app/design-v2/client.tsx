@@ -1435,7 +1435,7 @@ const SampleReport = forwardRef<
                 color: "var(--ink)", letterSpacing: "0.14em", textTransform: "uppercase",
                 marginBottom: 14,
               }}>
-                Narrative · areaiq engine
+                Narrative · onegoodarea engine
               </div>
               <p
                 key={`nar-${intentId}-${resolved.display}`}
@@ -3621,7 +3621,7 @@ function FBApiPanel() {
         color: "#C2D5CA",
         whiteSpace: "pre", overflowX: "auto",
       }}>
-{`$ curl https://api.area-iq.co.uk/v1/score \\
+{`$ curl https://api.onegoodarea.com/v1/score \\
   -H `}<span style={{color:"var(--signal-dim)"}}>{`"Authorization: Bearer aiq_live_••••"`}</span>{` \\
   -H `}<span style={{color:"var(--signal-dim)"}}>{`"Content-Type: application/json"`}</span>{` \\
   -d `}<span style={{color:"var(--signal-dim)"}}>{`'{ "postcode": "M1 1AD", "intent": "moving" }'`}</span>{`
@@ -3784,7 +3784,7 @@ function FBWidgetPanel() {
         overflowX: "auto",
         whiteSpace: "nowrap",
       }}>
-        <span style={{color:"rgba(255,255,255,0.36)"}}>{`<`}</span><span style={{color:"var(--signal-dim)"}}>{`area-iq`}</span>{` `}
+        <span style={{color:"rgba(255,255,255,0.36)"}}>{`<`}</span><span style={{color:"var(--signal-dim)"}}>{`one-good-area`}</span>{` `}
         <span style={{color:"#8DC3A8"}}>postcode</span>=<span style={{color:"var(--signal-dim)"}}>{`"M1 1AD"`}</span>{` `}
         <span style={{color:"#8DC3A8"}}>intent</span>=<span style={{color:"var(--signal-dim)"}}>{`"moving"`}</span>{` `}
         <span style={{color:"rgba(255,255,255,0.36)"}}>{`/>`}</span>

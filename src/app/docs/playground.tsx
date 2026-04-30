@@ -270,7 +270,7 @@ export function ApiPlayground() {
                   {result.areaiq_score}
                 </div>
                 <div className="text-[9px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
-                  AreaIQ Score
+                  OneGoodArea Score
                 </div>
               </div>
             </div>

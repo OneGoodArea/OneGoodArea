@@ -8,11 +8,11 @@ export const metadata: Metadata = {
     title: "API pricing | OneGoodArea",
     description: "Developer £49/mo, Business £249/mo, Growth £499/mo, Enterprise custom. Free sandbox tier.",
     type: "website",
-    url: "https://www.area-iq.co.uk/pricing",
+    url: "https://www.onegoodarea.com/pricing",
     images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
   },
   twitter: { card: "summary_large_image", title: "API pricing | OneGoodArea", description: "Developer £49/mo, Business £249/mo, Growth £499/mo, Enterprise custom." },
-  alternates: { canonical: "https://www.area-iq.co.uk/pricing" },
+  alternates: { canonical: "https://www.onegoodarea.com/pricing" },
 };
 
 export default function Pricing() {

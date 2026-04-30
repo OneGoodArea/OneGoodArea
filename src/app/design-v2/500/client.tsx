@@ -13,7 +13,7 @@ export default function ErrorClient() {
       quickLinks={[
         { label: "Dashboard", href: "/" },
         { label: "Help",      href: "/help" },
-        { label: "Contact",   href: "mailto:hello@area-iq.co.uk" },
+        { label: "Contact",   href: "mailto:hello@onegoodarea.com" },
       ]}
     />
   );

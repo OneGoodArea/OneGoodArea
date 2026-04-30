@@ -52,8 +52,8 @@ describe("config", () => {
   });
 
   describe("EMAIL_FROM", () => {
-    it("contains the AreaIQ brand name", () => {
-      expect(EMAIL_FROM).toContain("AreaIQ");
+    it("contains the OneGoodArea brand name", () => {
+      expect(EMAIL_FROM).toContain("OneGoodArea");
     });
 
     it("contains a valid email address", () => {

@@ -4,7 +4,7 @@
 
 @baseUrl = http://localhost:3000
 # For production testing, change to:
-# @baseUrl = https://www.area-iq.co.uk
+# @baseUrl = https://www.onegoodarea.com
 
 # Test user credentials (create test accounts first)
 @testEmail = test@example.com

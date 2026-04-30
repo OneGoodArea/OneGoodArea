@@ -22,8 +22,8 @@ export function ReportView({ report, plan = "free", reportId }: { report: AreaRe
   const [saving, setSaving] = useState(false);
   const toast = useToast();
 
-  const reportUrl = reportId ? `https://www.area-iq.co.uk/report/${reportId}` : "";
-  const shareText = `${report.area} scored ${report.areaiq_score}/100 for ${report.intent} on AreaIQ`;
+  const reportUrl = reportId ? `https://www.onegoodarea.com/report/${reportId}` : "";
+  const shareText = `${report.area} scored ${report.areaiq_score}/100 for ${report.intent} on OneGoodArea`;
 
   function copyLink() {
     if (!reportUrl) return;
@@ -50,7 +50,7 @@ export function ReportView({ report, plan = "free", reportId }: { report: AreaRe
       const { exportReportPDF } = await import("@/lib/pdf-export");
       exportReportPDF(report);
     } catch (err) {
-      logger.error("[AreaIQ] PDF export failed:", err);
+      logger.error("[OneGoodArea] PDF export failed:", err);
     } finally {
       setExporting(false);
     }
@@ -177,7 +177,7 @@ export function ReportView({ report, plan = "free", reportId }: { report: AreaRe
               <ScoreRing score={report.areaiq_score} size={130} />
               <div className="text-center mt-2">
                 <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
-                  AreaIQ Score
+                  OneGoodArea Score
                 </span>
               </div>
               <div className="w-full mt-4 max-w-[200px]">

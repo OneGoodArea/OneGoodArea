@@ -133,7 +133,7 @@ function buildPrompt(
   const scoresBlock = `
 PRE-COMPUTED SCORES (deterministic — DO NOT modify these numbers):
 Area Type: ${areaTypeLabel} (scores benchmarked against ${areaTypeLabel.toLowerCase()} standards)
-Overall AreaIQ Score: ${scores.overall}/100
+Overall OneGoodArea Score: ${scores.overall}/100
 Aggregate Confidence: ${overallConfLabel} (${scores.confidence.toFixed(2)})
 ${scores.dimensions.map(d => `- ${d.label}: ${d.score}/100 (weight: ${d.weight}%, confidence: ${confLabel(d.confidence)} ${d.confidence.toFixed(2)}) — ${d.confidence_reason}. ${d.reasoning}`).join("\n")}`;
 
@@ -148,7 +148,7 @@ ${scores.dimensions.map(d => `- ${d.label}: ${d.score}/100 (weight: ${d.weight}%
     ofsted ? '"Ofsted"' : "",
   ].filter(Boolean).join(", ");
 
-  return `You are AreaIQ, an expert UK area intelligence analyst. Your job is to NARRATE and EXPLAIN a pre-scored area intelligence report. The scores have already been computed from real data — your role is to write compelling, actionable summaries and analysis that bring the scores to life.
+  return `You are OneGoodArea, an expert UK area intelligence analyst. Your job is to NARRATE and EXPLAIN a pre-scored area intelligence report. The scores have already been computed from real data — your role is to write compelling, actionable summaries and analysis that bring the scores to life.
 
 IMPORTANT: This platform is UK-only. Use UK-specific references:
 - Crime data: police.uk / Home Office statistics
@@ -216,7 +216,7 @@ export async function generateReport(
 
   const cached = await getCachedReport(area, intent);
   if (cached) {
-    logger.info(`[AreaIQ] Cache HIT for ${area} (${intent})`);
+    logger.info(`[OneGoodArea] Cache HIT for ${area} (${intent})`);
     trackEvent("report.cache_hit", userId, { area, intent });
 
     // Save to user's reports table so it appears in their dashboard
@@ -229,7 +229,7 @@ export async function generateReport(
     return { id, report: cached.report };
   }
 
-  logger.info(`[AreaIQ] Cache MISS for ${area} (${intent}), generating fresh report`);
+  logger.info(`[OneGoodArea] Cache MISS for ${area} (${intent}), generating fresh report`);
   trackEvent("report.cache_miss", userId, { area, intent });
 
   /* ── 1. Geocode ── */
@@ -248,7 +248,7 @@ export async function generateReport(
     : [null, null, null, null, null, null];
 
   logger.info(
-    `[AreaIQ] Data fetched for "${area}": geo=${!!geo}, crime=${crime?.total_crimes ?? 0}, imd=${deprivation?.imd_rank ?? "n/a"}, amenities=${amenities?.total ?? 0}, flood_areas=${flood?.flood_areas_nearby ?? 0}, property=${propertyPrices ? `£${propertyPrices.median_price.toLocaleString()} (${propertyPrices.transaction_count} txns)` : "n/a"}, ofsted=${ofsted ? `${ofsted.total_rated} schools` : "n/a"}`
+    `[OneGoodArea] Data fetched for "${area}": geo=${!!geo}, crime=${crime?.total_crimes ?? 0}, imd=${deprivation?.imd_rank ?? "n/a"}, amenities=${amenities?.total ?? 0}, flood_areas=${flood?.flood_areas_nearby ?? 0}, property=${propertyPrices ? `£${propertyPrices.median_price.toLocaleString()} (${propertyPrices.transaction_count} txns)` : "n/a"}, ofsted=${ofsted ? `${ofsted.total_rated} schools` : "n/a"}`
   );
 
   /* ── 3. Compute deterministic scores (area-type aware) ── */
@@ -256,7 +256,7 @@ export async function generateReport(
   const scores = computeScores(intent, crime, deprivation, amenities, flood, areaType, propertyPrices, ofsted);
 
   logger.info(
-    `[AreaIQ] Scores computed for "${area}" (${intent}, ${areaType}): overall=${scores.overall}, dimensions=[${scores.dimensions.map(d => `${d.label}:${d.score}`).join(", ")}]`
+    `[OneGoodArea] Scores computed for "${area}" (${intent}, ${areaType}): overall=${scores.overall}, dimensions=[${scores.dimensions.map(d => `${d.label}:${d.score}`).join(", ")}]`
   );
 
   /* ── 4. AI narrates (scores are locked) ── */
@@ -341,7 +341,7 @@ export async function generateReport(
 
   /* ── 6. Cache the result for future requests ── */
   setCachedReport(area, intent, report, report.areaiq_score).catch((err) =>
-    logger.error("[AreaIQ] Failed to cache report:", err)
+    logger.error("[OneGoodArea] Failed to cache report:", err)
   );
 
   return { id, report };

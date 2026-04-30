@@ -84,7 +84,7 @@ function FailureState() {
           Sign up again
           <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
         </Link>
-        <a href="mailto:hello@area-iq.co.uk?subject=Verification help" style={ghostCta}>
+        <a href="mailto:hello@onegoodarea.com?subject=Verification help" style={ghostCta}>
           Contact support
         </a>
       </div>

@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: ["/opengraph-image"],
     },
     alternates: {
-      canonical: `https://www.area-iq.co.uk/report/${id}`,
+      canonical: `https://www.onegoodarea.com/report/${id}`,
     },
   };
 }

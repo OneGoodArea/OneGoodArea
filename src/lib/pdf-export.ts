@@ -67,7 +67,7 @@ function drawPageFooter(pdf: jsPDF) {
   setColor(pdf, COLORS.textTertiary);
   pdf.text("ONEGOODAREA", 20, 290);
   setColor(pdf, COLORS.ink);
-  pdf.text("area-iq.co.uk", 190, 290, { align: "right" });
+  pdf.text("onegoodarea.com", 190, 290, { align: "right" });
 }
 
 /** Wrap long text into lines that fit within maxWidth */

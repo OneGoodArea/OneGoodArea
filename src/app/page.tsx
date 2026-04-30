@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "OneGoodArea | The deterministic UK location intelligence layer",
     description: "Deterministic area scoring for lenders, insurers, and PropTech. Auditable methodology. One API, seven public sources.",
     type: "website",
-    url: "https://www.area-iq.co.uk",
+    url: "https://www.onegoodarea.com",
     images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
   },
   twitter: {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     title: "OneGoodArea | The deterministic UK location intelligence layer",
     description: "Deterministic UK area scoring. Auditable methodology, one API, seven public sources.",
   },
-  alternates: { canonical: "https://www.area-iq.co.uk" },
+  alternates: { canonical: "https://www.onegoodarea.com" },
 };
 
 function WebSiteJsonLd() {
@@ -28,10 +28,10 @@ function WebSiteJsonLd() {
           "@context": "https://schema.org",
           "@type": "WebSite",
           name: "OneGoodArea",
-          url: "https://www.area-iq.co.uk",
+          url: "https://www.onegoodarea.com",
           potentialAction: {
             "@type": "SearchAction",
-            target: "https://www.area-iq.co.uk/report?q={search_term_string}",
+            target: "https://www.onegoodarea.com/report?q={search_term_string}",
             "query-input": "required name=search_term_string",
           },
         }),

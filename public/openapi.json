@@ -6,16 +6,16 @@
     "version": "2.0.0",
     "contact": {
       "name": "OneGoodArea",
-      "url": "https://www.area-iq.co.uk",
-      "email": "hello@area-iq.co.uk"
+      "url": "https://www.onegoodarea.com",
+      "email": "hello@onegoodarea.com"
     },
     "license": {
       "name": "Proprietary",
-      "url": "https://www.area-iq.co.uk/terms"
+      "url": "https://www.onegoodarea.com/terms"
     }
   },
   "servers": [
-    { "url": "https://www.area-iq.co.uk", "description": "Production" }
+    { "url": "https://www.onegoodarea.com", "description": "Production" }
   ],
   "tags": [
     { "name": "Reports", "description": "Generate area intelligence reports" },
@@ -114,7 +114,7 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "aiq_<48-char hex>",
-        "description": "API key issued from your dashboard at https://www.area-iq.co.uk/api-usage. Format: `aiq_` followed by 48 hex characters. Pass as `Authorization: Bearer aiq_...`."
+        "description": "API key issued from your dashboard at https://www.onegoodarea.com/api-usage. Format: `aiq_` followed by 48 hex characters. Pass as `Authorization: Bearer aiq_...`."
       }
     },
     "schemas": {

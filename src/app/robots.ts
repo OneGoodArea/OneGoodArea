@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/api/", "/admin", "/dashboard", "/settings", "/compare", "/verify", "/forgot-password", "/reset-password", "/api-usage"],
       },
     ],
-    sitemap: "https://www.area-iq.co.uk/sitemap.xml",
+    sitemap: "https://www.onegoodarea.com/sitemap.xml",
   };
 }

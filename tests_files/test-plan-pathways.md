@@ -1211,7 +1211,7 @@ ENTRY CONDITIONS:
 FLOW:
 1–4. Same as PATH_WIDGET_001
 5. getCachedReport() → MISS
-6. 404 returned with message directing user to area-iq.co.uk
+6. 404 returned with message directing user to onegoodarea.com
 
 EXPECTED OUTCOME:
 Widget explicitly refuses to generate reports unauthenticated; protects AI spend

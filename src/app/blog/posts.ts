@@ -239,7 +239,7 @@ What you see at 2pm on a Tuesday is not what you get at 11pm on a Saturday.
 
 ## The Shortcut
 
-Checking all of this manually takes hours per area. If you are comparing multiple locations, it becomes a full-time job. OneGoodArea automates the data collection across 7 government sources (crime, deprivation, amenities, transport, school inspections, flood risk, and property prices) and scores each area on the dimensions that matter for your specific intent, whether you are moving, investing, or opening a business. Three free reports per month at area-iq.co.uk.`,
+Checking all of this manually takes hours per area. If you are comparing multiple locations, it becomes a full-time job. OneGoodArea automates the data collection across 7 government sources (crime, deprivation, amenities, transport, school inspections, flood risk, and property prices) and scores each area on the dimensions that matter for your specific intent, whether you are moving, investing, or opening a business. Three free reports per month at onegoodarea.com.`,
   },
   {
     slug: "safest-places-to-live-uk-2026",
@@ -297,7 +297,7 @@ Despite these limitations, police.uk remains the most granular, publicly availab
 
 Search any UK postcode on police.uk for the raw crime map. Or generate a OneGoodArea report to see the safety score in context alongside transport, schools, amenities, cost of living, and environmental data. The safety dimension is weighted at 25% for moving reports and 20% for research, reflecting its importance in residential decisions.
 
-Three free reports per month at area-iq.co.uk. No card required.`,
+Three free reports per month at onegoodarea.com. No card required.`,
   },
   {
     slug: "london-vs-manchester-property-investment-2026",
@@ -372,6 +372,6 @@ If you are investing for **long-term capital preservation and growth**, London r
 
 If you are doing **both**, consider a portfolio approach: Manchester for yield, London for growth. Use area-level scoring to find the specific postcodes within each city that best match your investment criteria.
 
-OneGoodArea's investing intent analyses Price Growth, Rental Yield, Regeneration Potential, Tenant Demand, and Risk Factors for any UK postcode. Compare areas side-by-side to see exactly where the numbers are strongest. Three free reports per month at area-iq.co.uk.`,
+OneGoodArea's investing intent analyses Price Growth, Rental Yield, Regeneration Potential, Tenant Demand, and Risk Factors for any UK postcode. Compare areas side-by-side to see exactly where the numbers are strongest. Three free reports per month at onegoodarea.com.`,
   },
 ];

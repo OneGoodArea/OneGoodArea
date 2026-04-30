@@ -3,11 +3,11 @@
  * All magic numbers, hardcoded strings, and environment-dependent values live here.
  */
 
-export const APP_URL = process.env.NEXTAUTH_URL || "https://www.area-iq.co.uk";
+export const APP_URL = process.env.NEXTAUTH_URL || "https://www.onegoodarea.com";
 
 export const SUPERUSER_EMAILS = ["ptengelmann@gmail.com"];
 
-export const EMAIL_FROM = "AreaIQ <noreply@area-iq.co.uk>";
+export const EMAIL_FROM = "OneGoodArea <noreply@onegoodarea.com>";
 
 export const RATE_LIMITS = {
   report: { max: 10, windowSeconds: 60 },

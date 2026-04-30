@@ -29,11 +29,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       type: "article",
-      url: `https://www.area-iq.co.uk/area/${slug}`,
+      url: `https://www.onegoodarea.com/area/${slug}`,
       images: [{ url: `/area/${slug}/opengraph-image`, width: 1200, height: 630, alt: `${area.name} Area Intelligence` }],
     },
     twitter: { card: "summary_large_image", title, description },
-    alternates: { canonical: `https://www.area-iq.co.uk/area/${slug}` },
+    alternates: { canonical: `https://www.onegoodarea.com/area/${slug}` },
   };
 }
 

@@ -7,7 +7,7 @@ export function OverallScoreSection() {
         className="text-[13px] mb-4 leading-relaxed"
         style={{ color: "var(--text-secondary)" }}
       >
-        The AreaIQ overall score is a weighted average of all dimension
+        The OneGoodArea overall score is a weighted average of all dimension
         scores for the selected intent. Each dimension contributes
         proportionally to its internally calibrated weight. The result
         is a single 0-100 number representing how well the area suits
@@ -63,7 +63,7 @@ export function ScoreScaleSection() {
       >
         Scores are colour-coded using a RAG (Red, Amber, Green) system
         across every report. This applies to both dimension scores and
-        the overall AreaIQ score.
+        the overall OneGoodArea score.
       </p>
 
       <div

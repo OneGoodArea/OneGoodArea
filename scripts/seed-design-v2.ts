@@ -59,7 +59,7 @@ out tags center;`;
         body: `data=${encodeURIComponent(query)}`,
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
-          "User-Agent": "AreaIQ-seed-script/1.0 (ptengelmann@gmail.com)",
+          "User-Agent": "OneGoodArea-seed-script/1.0 (ptengelmann@gmail.com)",
           "Accept": "application/json",
         },
         signal: AbortSignal.timeout(90_000),

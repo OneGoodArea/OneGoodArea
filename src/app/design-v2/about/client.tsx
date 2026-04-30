@@ -394,7 +394,7 @@ const MILESTONES: { date: string; label: string; body: string }[] = [
   { date: "January 2025",  label: "Idea validated",  body: "Ran into the same question for the fourth time in a row: is this area any good? Checked every tool available. Answer: not really, not for this intent." },
   { date: "February 2025", label: "First prototype", body: "Seven public datasets wired in parallel. Narrative generated from the numbers, not from thin air." },
   { date: "March 2025",    label: "Scoring engine",  body: "Swapped AI-generated scores for deterministic formulas. The narrative stayed AI-written, but the numbers became reproducible." },
-  { date: "March 2025",    label: "Public launch",   body: "Went live at area-iq.co.uk. Stripe checkout, API keys, Ofsted integration, watchlist. The lot." },
+  { date: "March 2025",    label: "Public launch",   body: "Went live at onegoodarea.com. Stripe checkout, API keys, Ofsted integration, watchlist. The lot." },
   { date: "April 2026",    label: "Design V2",       body: "OneGoodArea rebrand. Cleaner type system, editorial voice, the engine finally gets a page that does it justice." },
 ];
 

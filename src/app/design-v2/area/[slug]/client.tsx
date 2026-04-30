@@ -62,7 +62,7 @@ export default function AreaClient({ slug, area, related }: {
               addressCountry: "GB",
               postalCode: area.postcode,
             },
-            url: `https://www.area-iq.co.uk/area/${slug}`,
+            url: `https://www.onegoodarea.com/area/${slug}`,
             additionalProperty: [
               { "@type": "PropertyValue", name: "OneGoodArea Score", value: area.overallScore, maxValue: 100, unitText: "points" },
               ...area.dimensions.map((d) => ({
