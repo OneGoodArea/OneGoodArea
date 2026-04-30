@@ -15,7 +15,7 @@ import "./globals.css";
    live Google Fonts CSS endpoint. */
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.area-iq.co.uk"),
+  metadataBase: new URL("https://www.onegoodarea.com"),
   title: "OneGoodArea | Know any UK area.",
   description:
     "UK area intelligence. Enter any postcode, pick your intent, get a scored report in seconds.",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     description: "UK area intelligence. Scored reports for moving, business, investing, and research.",
     siteName: "OneGoodArea",
     type: "website",
-    url: "https://www.area-iq.co.uk",
+    url: "https://www.onegoodarea.com",
   },
   twitter: {
     card: "summary_large_image",
@@ -64,7 +64,7 @@ export default function RootLayout({
                 "@context": "https://schema.org",
                 "@type": "WebApplication",
                 name: "OneGoodArea",
-                url: "https://www.area-iq.co.uk",
+                url: "https://www.onegoodarea.com",
                 applicationCategory: "BusinessApplication",
                 operatingSystem: "Web",
                 description: "UK area intelligence. Scored reports for moving, business, investing, and research.",
@@ -85,13 +85,13 @@ export default function RootLayout({
                 "@context": "https://schema.org",
                 "@type": "Organization",
                 name: "OneGoodArea",
-                url: "https://www.area-iq.co.uk",
-                logo: "https://www.area-iq.co.uk/favicon.ico",
+                url: "https://www.onegoodarea.com",
+                logo: "https://www.onegoodarea.com/favicon.ico",
                 description: "UK area intelligence platform. Scored reports for moving, business, investing, and research.",
                 contactPoint: {
                   "@type": "ContactPoint",
                   contactType: "customer service",
-                  url: "https://www.area-iq.co.uk/help",
+                  url: "https://www.onegoodarea.com/help",
                 },
               }),
             }}

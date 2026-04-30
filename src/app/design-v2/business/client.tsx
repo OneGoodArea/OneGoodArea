@@ -122,7 +122,7 @@ function Hero() {
                 Get API access
                 <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
               </Link>
-              <a href="mailto:hello@area-iq.co.uk?subject=Enterprise API enquiry" style={{
+              <a href="mailto:hello@onegoodarea.com?subject=Enterprise API enquiry" style={{
                 fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
                 letterSpacing: "0.14em", textTransform: "uppercase",
                 color: "var(--ink)", background: "transparent",
@@ -176,7 +176,7 @@ function HeroCodeCard() {
           letterSpacing: "0.16em", textTransform: "uppercase",
           color: "rgba(255,255,255,0.42)",
         }}>
-          api.area-iq.co.uk / v1 / report
+          api.onegoodarea.com / v1 / report
         </span>
       </div>
       <pre style={{
@@ -258,7 +258,7 @@ function StatsStrip() {
 
 /* ─────── API preview · long form ─────── */
 
-const REQUEST_SNIPPET = `curl -X POST https://www.area-iq.co.uk/api/v1/report \\
+const REQUEST_SNIPPET = `curl -X POST https://www.onegoodarea.com/api/v1/report \\
   -H "Authorization: Bearer aiq_your_key" \\
   -H "Content-Type: application/json" \\
   -d '{"area": "SW1A 1AA", "intent": "moving"}'`;
@@ -709,7 +709,7 @@ function FinalCta() {
             Get API access
             <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
           </Link>
-          <a href="mailto:hello@area-iq.co.uk?subject=Enterprise API enquiry" style={{
+          <a href="mailto:hello@onegoodarea.com?subject=Enterprise API enquiry" style={{
             fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
             letterSpacing: "0.14em", textTransform: "uppercase",
             color: "rgba(255,255,255,0.88)", background: "transparent",

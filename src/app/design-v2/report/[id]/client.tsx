@@ -68,7 +68,7 @@ function ReportActions({ id, report, score, onToast }: {
 
   const shareUrl = typeof window !== "undefined"
     ? `${window.location.origin}/report/${id}`
-    : `https://www.area-iq.co.uk/report/${id}`;
+    : `https://www.onegoodarea.com/report/${id}`;
   const shareText = `${report.area} scored ${score}/100 for ${report.intent} on OneGoodArea`;
 
   function copyLink() {

@@ -4,7 +4,7 @@ import * as path from "path";
 import { METHODOLOGY_VERSION } from "../lib/methodology-versions";
 
 /* OpenAPI spec sanity checks. The spec lives at public/openapi.json and
-   is served as-is at https://www.area-iq.co.uk/openapi.json. These tests
+   is served as-is at https://www.onegoodarea.com/openapi.json. These tests
    keep it from drifting away from the actual API contract — when fields
    are added to the engine response, the spec must be updated to match. */
 
@@ -34,7 +34,7 @@ describe("OpenAPI 3.0 spec at public/openapi.json", () => {
 
   it("declares the production server", () => {
     const urls = (spec.servers ?? []).map((s: { url: string }) => s.url);
-    expect(urls).toContain("https://www.area-iq.co.uk");
+    expect(urls).toContain("https://www.onegoodarea.com");
   });
 
   it("documents POST /api/v1/report", () => {

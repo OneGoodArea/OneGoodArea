@@ -24,14 +24,14 @@ export function Footer() {
   const companyLinks: { label: string; href: string }[] = [
     { label: "About",   href: "/about" },
     { label: "Help",    href: "/help" },
-    { label: "Contact", href: "mailto:hello@area-iq.co.uk" },
+    { label: "Contact", href: "mailto:hello@onegoodarea.com" },
   ];
   const legalLinks: { label: string; href: string }[] = [
     { label: "Terms",   href: "/terms" },
     { label: "Privacy", href: "/privacy" },
   ];
   const socialLinks: { label: string; href: string }[] = [
-    { label: "Email",    href: "mailto:hello@area-iq.co.uk" },
+    { label: "Email",    href: "mailto:hello@onegoodarea.com" },
     { label: "GitHub",   href: "https://github.com/OneGoodArea/OneGoodArea" },
     { label: "LinkedIn", href: "#" },
     { label: "X",        href: "#" },

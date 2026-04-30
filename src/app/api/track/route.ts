@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     if (referrer && typeof referrer === "string") {
       try {
         const refUrl = new URL(referrer);
-        if (!refUrl.hostname.includes("area-iq.co.uk") && !refUrl.hostname.includes("localhost")) {
+        if (!refUrl.hostname.includes("onegoodarea.com") && !refUrl.hostname.includes("localhost")) {
           cleanReferrer = refUrl.hostname;
         }
       } catch {

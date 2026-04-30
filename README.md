@@ -4,7 +4,7 @@
 
 Type a place. Pick why you're looking. Seven public datasets do the rest. OneGoodArea scores 42,640 UK neighbourhoods across four intents (moving home, opening a business, property investing, market research) and renders the full picture in a single editorial report.
 
-**Live at [area-iq.co.uk](https://www.area-iq.co.uk)**
+**Live at [onegoodarea.com](https://www.onegoodarea.com)**
 
 ---
 

@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
             label: s.label,
             score: s.score,
           })),
-          powered_by: "https://www.area-iq.co.uk",
+          powered_by: "https://www.onegoodarea.com",
         },
         { headers }
       );
@@ -93,7 +93,7 @@ export async function GET(req: NextRequest) {
 
     // Cache miss: widget only serves cached data to prevent unauthenticated AI spend
     return NextResponse.json(
-      { error: "No cached data available for this location. Generate a report at https://www.area-iq.co.uk first." },
+      { error: "No cached data available for this location. Generate a report at https://www.onegoodarea.com first." },
       { status: 404, headers }
     );
   } catch (error) {

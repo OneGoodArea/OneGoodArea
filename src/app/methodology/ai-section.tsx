@@ -155,7 +155,7 @@ export function AiSection() {
                 "Choose dimension weights",
                 "Invent data points or statistics",
                 "Override the scoring engine",
-                "Influence the overall AreaIQ score",
+                "Influence the overall OneGoodArea score",
               ].map((item) => (
                 <div
                   key={item}

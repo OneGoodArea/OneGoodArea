@@ -63,7 +63,7 @@ const TOPICS: Topic[] = [
     items: [
       { q: "How do I sign up?",                   a: "Sign up with Google, GitHub, or create an account with email and password at /sign-up." },
       { q: "How do I reset my password?",         a: "Go to /forgot-password, enter the email you signed up with, and we'll send a reset link. Link expires in 1 hour." },
-      { q: "How do I delete my account?",         a: "Contact us at hello@area-iq.co.uk and we'll process your request within 48 hours." },
+      { q: "How do I delete my account?",         a: "Contact us at hello@onegoodarea.com and we'll process your request within 48 hours." },
     ],
   },
 ];
@@ -197,7 +197,7 @@ function ContactCard() {
               }}>Bugs, feature requests, account issues, or anything else.</div>
             </div>
           </div>
-          <a href="mailto:hello@area-iq.co.uk" style={{
+          <a href="mailto:hello@onegoodarea.com" style={{
             fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
             letterSpacing: "0.14em", textTransform: "uppercase",
             color: "var(--signal-ink)", background: "var(--signal)",
@@ -205,7 +205,7 @@ function ContactCard() {
             border: "1px solid var(--ink-deep)",
             display: "inline-flex", alignItems: "center", gap: 8,
           }}>
-            hello@area-iq.co.uk
+            hello@onegoodarea.com
             <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
           </a>
         </div>
@@ -339,7 +339,7 @@ function FinalCta() {
         }}>
           Drop us an email and we&apos;ll get back to you within 24 hours.
         </p>
-        <a href="mailto:hello@area-iq.co.uk" style={{
+        <a href="mailto:hello@onegoodarea.com" style={{
           fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
           letterSpacing: "0.16em", textTransform: "uppercase",
           color: "var(--signal-ink)", background: "var(--signal)",

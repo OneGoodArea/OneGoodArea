@@ -132,7 +132,7 @@ export async function getOfstedSchools(
       inspectorate: "Ofsted",
     };
   } catch (err) {
-    logger.error("[AreaIQ] Ofsted lookup failed:", err);
+    logger.error("[OneGoodArea] Ofsted lookup failed:", err);
     return null;
   }
 }

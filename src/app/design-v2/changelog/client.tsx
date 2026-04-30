@@ -355,7 +355,7 @@ function FinalCta() {
         }}>
           Drop us a note and tell us what you&apos;d like to see next. Most items on this page started as an email.
         </p>
-        <a href="mailto:hello@area-iq.co.uk?subject=Feature request" style={{
+        <a href="mailto:hello@onegoodarea.com?subject=Feature request" style={{
           fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
           letterSpacing: "0.16em", textTransform: "uppercase",
           color: "var(--signal-ink)", background: "var(--signal)",

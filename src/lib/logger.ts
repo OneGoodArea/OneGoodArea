@@ -10,12 +10,12 @@ function formatArgs(args: unknown[]): unknown[] {
 
 export const logger = {
   info(...args: unknown[]) {
-    console.log("[AreaIQ]", ...formatArgs(args));
+    console.log("[OneGoodArea]", ...formatArgs(args));
   },
   warn(...args: unknown[]) {
-    console.warn("[AreaIQ]", ...formatArgs(args));
+    console.warn("[OneGoodArea]", ...formatArgs(args));
   },
   error(...args: unknown[]) {
-    console.error("[AreaIQ]", ...formatArgs(args));
+    console.error("[OneGoodArea]", ...formatArgs(args));
   },
 };

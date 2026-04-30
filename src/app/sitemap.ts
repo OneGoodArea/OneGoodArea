@@ -44,7 +44,7 @@ const BLOG_SLUGS = [
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://www.area-iq.co.uk";
+  const baseUrl = "https://www.onegoodarea.com";
 
   const areaPages: MetadataRoute.Sitemap = AREA_SLUGS.map((slug) => ({
     url: `${baseUrl}/area/${slug}`,

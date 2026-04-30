@@ -8,11 +8,11 @@ export const metadata: Metadata = {
     title: "About | OneGoodArea",
     description: "The story behind OneGoodArea. Transparent, deterministic area scoring using 7 live UK data sources.",
     type: "website",
-    url: "https://www.area-iq.co.uk/about",
+    url: "https://www.onegoodarea.com/about",
     images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
   },
   twitter: { card: "summary_large_image", title: "About | OneGoodArea", description: "The story behind OneGoodArea. Transparent, deterministic area scoring." },
-  alternates: { canonical: "https://www.area-iq.co.uk/about" },
+  alternates: { canonical: "https://www.onegoodarea.com/about" },
 };
 
 export default function About() {

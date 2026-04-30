@@ -70,7 +70,7 @@ function baseTemplate(content: string): string {
           <tr>
             <td style="padding-top:22px; text-align:center;">
               <span style="font-family:${FONT_MONO}; font-size:11px; color:${COLORS.text3}; letter-spacing:1.5px; text-transform:uppercase;">
-                area-iq.co.uk
+                onegoodarea.com
               </span>
             </td>
           </tr>
@@ -162,7 +162,7 @@ export async function sendWelcomeEmail(email: string, name: string) {
         3 reports per month. All seven public datasets. No card needed.
       </p>
     </div>
-    ${ctaButton("Generate your first report", "https://www.area-iq.co.uk/report")}
+    ${ctaButton("Generate your first report", "https://www.onegoodarea.com/report")}
   `;
 
   await getResendClient().emails.send({
@@ -208,7 +208,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
 export async function sendReportEmail(email: string, reportId: string, report: AreaReport) {
   logger.info(`[report-email] Sending report email to ${email} for report ${reportId}`);
 
-  const baseUrl = process.env.NEXTAUTH_URL || "https://www.area-iq.co.uk";
+  const baseUrl = process.env.NEXTAUTH_URL || "https://www.onegoodarea.com";
   const reportUrl = `${baseUrl}/report/${reportId}`;
 
   const score = report.areaiq_score ?? 0;
