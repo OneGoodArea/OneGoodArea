@@ -1,3 +1,9 @@
+[![CI](https://github.com/OneGoodArea/OneGoodArea/actions/workflows/ci.yml/badge.svg)](https://github.com/OneGoodArea/OneGoodArea/actions/workflows/ci.yml)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/OneGoodArea/OneGoodArea?style=plastic)
+![GitHub branch count](https://img.shields.io/github/branches/OneGoodArea/OneGoodArea)
+![Website](https://img.shields.io/website?url=https%3A%2F%2Fwww.onegoodarea.com&style=plastic)
+![GitHub repo size](https://img.shields.io/github/repo-size/OneGoodArea/OneGoodArea)
+![Vercel](https://vercelbadge.vercel.app/api/OneGoodArea/OneGoodArea)
 # OneGoodArea
 
 **An intelligence report for every UK postcode.**
