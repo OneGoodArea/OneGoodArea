@@ -2699,34 +2699,34 @@ function IntentBentoCell({
           letterSpacing: "0.22em", textTransform: "uppercase",
           color: "var(--text-3)", marginBottom: 10,
         }}>Dimensions · weights</div>
-        <div style={{
+        <div className="aiq-intent-bento-dim-grid" style={{
           display: "grid",
-          gridTemplateColumns: featured ? "repeat(5, 1fr)" : "repeat(auto-fit, minmax(0, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
           gap: 8,
         }}>
           {intent.dims.map((d) => (
             <div key={d.label} className="aiq-intent-bento-dim" style={{
-              padding: "8px 10px",
+              padding: "10px 12px",
               background: "var(--bg-off)",
               borderRadius: 4,
               border: "1px solid var(--border-dim)",
               display: "flex", flexDirection: "column",
-              gap: 2,
+              gap: 4,
               minWidth: 0,
             }}>
               <span style={{
                 fontFamily: "var(--sans)", fontSize: 11.5, fontWeight: 500,
                 color: "var(--ink-deep)", letterSpacing: "-0.003em",
-                lineHeight: 1.25,
-                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                lineHeight: 1.3,
+                wordBreak: "break-word",
               }}>
                 {d.label}
               </span>
               <span style={{
-                fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
+                fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 600,
                 color: "var(--ink)", letterSpacing: 0,
               }}>
-                {d.weight}
+                {d.weight}%
               </span>
             </div>
           ))}

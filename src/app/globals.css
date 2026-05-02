@@ -918,6 +918,17 @@ input:focus, select:focus {
           gap: 24px !important;
         }
       }
+
+      /* Homepage IntentsSection · bento stacks single-column on mobile so the
+         12-col 7+5 layout doesn't squash dimension cells past readability. */
+      @media (max-width: 820px) {
+        .aiq-intents-bento {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-intent-bento-cell {
+          grid-column: span 1 !important;
+        }
+      }
       @media (max-width: 620px) {
         .aiq-stats-strip {
           grid-template-columns: repeat(2, 1fr) !important;
