@@ -13,6 +13,13 @@ const SAMPLE_AREAS = [
 ];
 
 const INTENTS = ["moving", "investing", "business", "research"] as const;
+// API enum -> B2B display label. Per AR-139.
+const INTENT_LABEL: Record<string, string> = {
+  moving:    "Origination",
+  business:  "Site selection",
+  investing: "Investment",
+  research:  "Reference",
+};
 
 const LOADING_STEPS = [
   { label: "Resolving postcode", source: "Postcodes.io", duration: 3000 },
@@ -203,7 +210,7 @@ export function ApiPlayground() {
                 style={{ background: "var(--bg-elevated)", borderColor: "var(--border)", color: "var(--text-primary)" }}
               >
                 {INTENTS.map((i) => (
-                  <option key={i} value={i}>{i}</option>
+                  <option key={i} value={i}>{INTENT_LABEL[i] ?? i}</option>
                 ))}
               </select>
               <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--text-tertiary)" }} />

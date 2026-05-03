@@ -314,10 +314,10 @@ function DataSources() {
 /* ─────── Intent types ─────── */
 
 const INTENTS: { code: string; label: string; desc: string; dimensions: string[] }[] = [
-  { code: "moving",    label: "Moving",    desc: "Residential relocation", dimensions: ["Safety", "Schools", "Transport", "Amenities", "Cost of Living"] },
-  { code: "business",  label: "Business",  desc: "Commercial viability",   dimensions: ["Foot Traffic", "Competition", "Transport", "Spending Power", "Commercial Costs"] },
-  { code: "investing", label: "Investing", desc: "Property investment",    dimensions: ["Price Growth", "Rental Yield", "Regeneration", "Tenant Demand", "Risk Factors"] },
-  { code: "research",  label: "Research",  desc: "General area profile",   dimensions: ["Safety", "Transport", "Amenities", "Demographics", "Environment"] },
+  { code: "moving",    label: "Origination",    desc: "Residential mortgage suitability + demand-side risk", dimensions: ["Safety", "Schools", "Transport", "Amenities", "Cost of Living"] },
+  { code: "business",  label: "Site selection", desc: "Footfall, competition, commercial viability",         dimensions: ["Foot Traffic", "Competition", "Transport", "Spending Power", "Commercial Costs"] },
+  { code: "investing", label: "Investment",     desc: "Yield, growth, regeneration, tenant risk",            dimensions: ["Price Growth", "Rental Yield", "Regeneration", "Tenant Demand", "Risk Factors"] },
+  { code: "research",  label: "Reference",      desc: "Neutral baseline for analysts and planning",          dimensions: ["Safety", "Transport", "Amenities", "Demographics", "Environment"] },
 ];
 
 function IntentTypes() {
@@ -383,13 +383,13 @@ function IntentTypes() {
 /* ─────── Scoring functions ─────── */
 
 const CORE_FNS: { label: string; intents: string; icon: IconName; body: string }[] = [
-  { label: "Safety",          intents: "Moving · Research",             icon: "support",    body: "Uses the last 3 months of police.uk crime data. Rising crime is penalised, falling crime is rewarded, and violent crime concentration is weighted appropriately." },
-  { label: "Transport",       intents: "Moving · Business · Research",  icon: "map",        body: "Rail and bus connectivity combined into a single accessibility score. Benchmarked against area type so rural postcodes are judged against other rural postcodes." },
-  { label: "Schools",         intents: "Moving",                         icon: "read",       body: "School and educational facility density nearby, with a diminishing returns curve. One good school matters more than many middling ones." },
-  { label: "Amenities",       intents: "Moving · Research",             icon: "operator",   body: "Weighted composite across education, food and drink, healthcare, retail, and green spaces. Each category normalised against area-type benchmarks." },
-  { label: "Demographics",    intents: "Research",                       icon: "researcher", body: "Official deprivation indices (IMD for England, WIMD for Wales, SIMD for Scotland). Maps decile ranking to a score that reflects the socioeconomic profile of the neighbourhood." },
-  { label: "Environment",     intents: "Moving · Research",             icon: "intent",     body: "Combines flood risk zones, active flood warnings, and green space availability. Areas with no flood risk and good park access score highest." },
-  { label: "Cost of Living",  intents: "Moving",                         icon: "investor",   body: "Uses Land Registry sold prices as the primary input. Scored as a ratio of local median to national median. Falls back to deprivation data when price data is unavailable." },
+  { label: "Safety",          intents: "Origination · Reference",                       icon: "support",    body: "Uses the last 3 months of police.uk crime data. Rising crime is penalised, falling crime is rewarded, and violent crime concentration is weighted appropriately." },
+  { label: "Transport",       intents: "Origination · Site selection · Reference",      icon: "map",        body: "Rail and bus connectivity combined into a single accessibility score. Benchmarked against area type so rural postcodes are judged against other rural postcodes." },
+  { label: "Schools",         intents: "Origination",                                    icon: "read",       body: "School and educational facility density nearby, with a diminishing returns curve. One good school matters more than many middling ones." },
+  { label: "Amenities",       intents: "Origination · Reference",                       icon: "operator",   body: "Weighted composite across education, food and drink, healthcare, retail, and green spaces. Each category normalised against area-type benchmarks." },
+  { label: "Demographics",    intents: "Reference",                                      icon: "researcher", body: "Official deprivation indices (IMD for England, WIMD for Wales, SIMD for Scotland). Maps decile ranking to a score that reflects the socioeconomic profile of the neighbourhood." },
+  { label: "Environment",     intents: "Origination · Reference",                       icon: "intent",     body: "Combines flood risk zones, active flood warnings, and green space availability. Areas with no flood risk and good park access score highest." },
+  { label: "Cost of Living",  intents: "Origination",                                    icon: "investor",   body: "Uses Land Registry sold prices as the primary input. Scored as a ratio of local median to national median. Falls back to deprivation data when price data is unavailable." },
 ];
 
 const BIZ_FNS: { label: string; body: string }[] = [

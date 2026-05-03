@@ -216,10 +216,10 @@ export async function sendReportEmail(email: string, reportId: string, report: A
   const scoreLabel = score >= 70 ? "Strong fit" : score >= 45 ? "Moderate fit" : "Weak fit";
 
   const intentLabels: Record<string, string> = {
-    moving: "Moving home",
-    business: "Opening a business",
-    investing: "Property investing",
-    research: "Market research",
+    moving: "Origination",
+    business: "Site selection",
+    investing: "Investment",
+    research: "Reference",
   };
 
   const areaTypeLabels: Record<string, string> = {

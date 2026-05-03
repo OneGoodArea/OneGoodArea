@@ -557,10 +557,10 @@ const FIELDS: { name: string; type: string; required: boolean; desc: React.React
 ];
 
 const INTENT_TABLE: { code: string; label: string; dims: string }[] = [
-  { code: "moving",    label: "Moving home",        dims: "Safety · Schools · Transport · Amenities · Cost of Living" },
-  { code: "business",  label: "Opening a business", dims: "Foot Traffic · Competition · Access · Spending Power · Costs" },
-  { code: "investing", label: "Property investing", dims: "Price Growth · Rental Yield · Regeneration · Demand · Risk" },
-  { code: "research",  label: "Research profile",   dims: "Safety · Transport · Amenities · Demographics · Environment" },
+  { code: "moving",    label: "Origination",    dims: "Safety · Schools · Transport · Amenities · Cost of Living" },
+  { code: "business",  label: "Site selection", dims: "Foot Traffic · Competition · Access · Spending Power · Costs" },
+  { code: "investing", label: "Investment",     dims: "Price Growth · Rental Yield · Regeneration · Demand · Risk" },
+  { code: "research",  label: "Reference",      dims: "Safety · Transport · Amenities · Demographics · Environment" },
 ];
 
 function RequestBody() {
