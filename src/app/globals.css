@@ -929,6 +929,18 @@ input:focus, select:focus {
           grid-column: span 1 !important;
         }
       }
+
+      /* Sample report · API request/response side-by-side stacks on mobile.
+         Keeps the curl + JSON snippets readable below ~720px. */
+      @media (max-width: 720px) {
+        .aiq-api-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .aiq-api-grid > :first-child {
+          border-right: none !important;
+          border-bottom: 1px solid var(--border-dim) !important;
+        }
+      }
       @media (max-width: 620px) {
         .aiq-stats-strip {
           grid-template-columns: repeat(2, 1fr) !important;

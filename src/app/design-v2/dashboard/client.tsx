@@ -18,6 +18,17 @@ type Report = { id: string; area: string; intent: string; score: number; created
 type SavedArea = { id: string; postcode: string; label: string; intent: string | null; created_at: string };
 type ApiKey = { id: string; key_preview: string; name: string; created_at: string; last_used_at: string | null };
 
+// API enum -> B2B display label. Per AR-139 / AR-120 (strategic repositioning),
+// dashboard surfaces should show "Origination" not the raw "moving" enum.
+const INTENT_LABEL: Record<string, string> = {
+  moving:    "Origination",
+  business:  "Site selection",
+  investing: "Investment",
+  research:  "Reference",
+};
+const intentLabel = (id: string | null | undefined) =>
+  id ? (INTENT_LABEL[id] ?? id) : "";
+
 type Props = {
   reports: Report[];
   plan: string;
@@ -288,7 +299,7 @@ function Watchlist({ items, onRemove }: {
                 color: "var(--text-3)",
                 marginTop: 3,
               }}>
-                {area.postcode}{area.intent ? ` · ${area.intent}` : ""}
+                {area.postcode}{area.intent ? ` · ${intentLabel(area.intent)}` : ""}
               </div>
             </div>
             <button
@@ -557,7 +568,7 @@ function ReportsTable({ reports, onDelete }: {
           }}
         >
           <option value="all">All intents</option>
-          {intents.map((i) => <option key={i} value={i}>{i}</option>)}
+          {intents.map((i) => <option key={i} value={i}>{intentLabel(i)}</option>)}
         </select>
         {filtered.length > 0 && <GhostCta onClick={exportCSV}>Export CSV</GhostCta>}
       </div>
@@ -650,7 +661,7 @@ function ReportRow({ report, isLast, onDelete }: {
         letterSpacing: "0.04em",
         color: "var(--signal-ink)", background: "var(--signal)",
         padding: "3px 8px", borderRadius: 2, justifySelf: "start",
-      }}>{report.intent}</span>
+      }}>{intentLabel(report.intent)}</span>
 
       <span style={{
         fontFamily: "var(--mono)", fontSize: 14, fontWeight: 600,

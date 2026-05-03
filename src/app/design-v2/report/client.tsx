@@ -18,10 +18,10 @@ import { AiqIcon, type IconName } from "../_shared/icons";
 type Intent = "moving" | "business" | "investing" | "research";
 
 const INTENTS: { value: Intent; label: string; desc: string; icon: IconName }[] = [
-  { value: "moving",    label: "Moving",    desc: "Evaluate for living",   icon: "buyer" },
-  { value: "business",  label: "Business",  desc: "Open a business",       icon: "operator" },
-  { value: "investing", label: "Investing", desc: "Investment potential",  icon: "investor" },
-  { value: "research",  label: "Research",  desc: "General overview",      icon: "researcher" },
+  { value: "moving",    label: "Origination",    desc: "Mortgage suitability + demand-side risk", icon: "buyer" },
+  { value: "business",  label: "Site selection", desc: "Footfall, competition, commercial viability", icon: "operator" },
+  { value: "investing", label: "Investment",     desc: "Yield, growth, regeneration, tenant risk",     icon: "investor" },
+  { value: "research",  label: "Reference",      desc: "Neutral baseline for analysts + planning",     icon: "researcher" },
 ];
 
 const PIPELINE = [

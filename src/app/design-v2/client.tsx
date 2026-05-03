@@ -103,11 +103,15 @@ function resolveInput(raw: string): { lat: number; lng: number; display: string 
   return null;
 }
 
+// `verb` was previously consumer phrasing ("moving home" etc) and is now B2B
+// across the front door per AR-120 / AR-139. Consumer-language equivalents
+// kept as `consumerVerb` for any awareness-funnel surfaces that import this
+// (currently none — area page + blog have their own copy).
 const INTENTS = [
-  { id: "moving",   verb: "moving home",         noun: "a place to live" },
-  { id: "business", verb: "opening a business",  noun: "a place to trade" },
-  { id: "invest",   verb: "property investing",  noun: "a yield decision" },
-  { id: "research", verb: "market research",     noun: "a market read" },
+  { id: "moving",   verb: "origination",     consumerVerb: "moving home",        noun: "a place to live" },
+  { id: "business", verb: "site selection",  consumerVerb: "opening a business", noun: "a place to trade" },
+  { id: "invest",   verb: "investment",      consumerVerb: "property investing", noun: "a yield decision" },
+  { id: "research", verb: "reference",       consumerVerb: "market research",    noun: "a market read" },
 ] as const;
 
 type IntentId = typeof INTENTS[number]["id"];
@@ -219,8 +223,10 @@ export default function DesignV2Client() {
   const resolved = useMemo(() => resolveInput(raw), [raw]);
   const intent = INTENTS.find(i => i.id === intentId)!;
 
-  function runEngine() {
-    if (!resolved) return;
+  function runEngineFor(postcode: string) {
+    const r = resolveInput(postcode);
+    if (!r) return;
+    setRaw(postcode);
     setShowReport(true);
     setTimeout(() => {
       reportRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -232,13 +238,10 @@ export default function DesignV2Client() {
       <Styles />
       <Nav />
       <Hero
-        raw={raw}
-        setRaw={setRaw}
         intentId={intentId}
         setIntentId={setIntentId}
-        resolved={resolved}
         intent={intent}
-        onRun={runEngine}
+        onRunWith={runEngineFor}
       />
       <SampleReport
         ref={reportRef}
@@ -260,26 +263,73 @@ export default function DesignV2Client() {
 
 /* ─────── Hero ─────── */
 
+// Curated demo areas — `match` is the string passed to onRunWith and must hit
+// resolveSampleKey AND resolveInput exactly so the report renders real captured
+// engine output from sample-reports.json (not the fictional SAMPLE_DIMS fallback).
+// Today only 4 areas have real data captured. Adding more = run scripts/seed-design-v2.ts
+// against new postcodes and append to sample-reports.json.
+const HERO_SAMPLES: { match: string; city: string; postcode: string }[] = [
+  { match: "Manchester", city: "Manchester", postcode: "M1 1AE"  },
+  { match: "Clapham",    city: "Clapham",    postcode: "SW4 0LG" },
+  { match: "Edinburgh",  city: "Edinburgh",  postcode: "EH1 1BB" },
+  { match: "Bristol",    city: "Bristol",    postcode: "BS1 4DJ" },
+];
+
+// B2B-framed intent labels for the hero tabs + sample report (consumer labels
+// stay in INTENTS for downstream narratives + the area report detail page).
+// Per project_positioning.md.
+const HERO_INTENT_LABELS: Record<IntentId, string> = {
+  moving:   "Origination",
+  business: "Site selection",
+  invest:   "Investment",
+  research: "Reference",
+};
+
+// One-line explanations shown under the active hero intent tab so a visitor
+// understands what the term means without scrolling to IntentsSection.
+// Source copy mirrors INTENTS_DATA[].lede in the bento further down the page.
+const HERO_INTENT_BLURBS: Record<IntentId, string> = {
+  moving:   "Residential mortgage suitability and demand-side risk. Used by lenders for portfolio screening and origination decisions.",
+  business: "Footfall, competition, and commercial viability. Used by retail, F&B, and commercial leasing teams scoring sites across thousands of postcodes.",
+  invest:   "Yield, growth, regeneration, and tenant risk. Used by BTL and BTR operators sizing up acquisitions, and investment committees as part of due diligence.",
+  research: "Neutral baseline for analysts, planners, and journalists. The default read with no thumb on the scale. Equal weight across the five dimensions.",
+};
+
+// Per-dimension source attribution. Used as small badges next to each row in
+// the sample report so a B2B evaluator sees which public dataset backs each
+// score without having to dig through methodology.
+const DIM_SOURCES: Record<string, string> = {
+  "Safety & Crime":              "Police.uk",
+  "Schools & Education":         "Ofsted",
+  "Transport & Commute":         "OpenStreetMap",
+  "Daily Amenities":             "OpenStreetMap",
+  "Cost of Living":              "Land Registry · IMD",
+  "Foot Traffic & Demand":       "OpenStreetMap",
+  "Competition Density":         "OpenStreetMap",
+  "Transport & Access":          "OpenStreetMap",
+  "Local Spending Power":        "Land Registry · IMD",
+  "Commercial Costs":            "Land Registry",
+  "Price Growth":                "Land Registry",
+  "Rental Yield":                "Land Registry",
+  "Regeneration & Infrastructure": "OpenStreetMap · IMD",
+  "Tenant Demand":               "IMD · Police.uk",
+  "Risk Factors":                "Environment Agency",
+  "Transport Links":             "OpenStreetMap",
+  "Amenities & Services":        "OpenStreetMap",
+  "Demographics & Economy":      "IMD 2025",
+  "Environment & Quality":       "Environment Agency",
+};
+
 function Hero({
-  raw, setRaw,
   intentId, setIntentId,
-  resolved, intent,
-  onRun,
+  intent,
+  onRunWith,
 }: {
-  raw: string;
-  setRaw: (v: string) => void;
   intentId: IntentId;
   setIntentId: (id: IntentId) => void;
-  resolved: { lat: number; lng: number; display: string } | null;
   intent: (typeof INTENTS)[number];
-  onRun: () => void;
+  onRunWith: (postcode: string) => void;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    const t = setTimeout(() => inputRef.current?.focus(), 500);
-    return () => clearTimeout(t);
-  }, []);
-
   return (
     <section style={{
       position: "relative",
@@ -332,75 +382,71 @@ function Hero({
           Deterministic area scoring for lenders, insurers, and PropTech. Auditable methodology, one API, seven public sources, scores you can ship to a regulator.
         </p>
 
-        {/* Form · centered */}
+        {/* Curated sample chips · click loads a real sample report below.
+            Replaces the old free-text input that only worked for a hand-coded
+            list of postcode prefixes (consumer pattern, broke for B2B traffic). */}
         <div style={{
-          display: "flex", justifyContent: "center",
-          gap: 10, flexWrap: "wrap",
+          marginBottom: 28,
           animation: "aiq-fade-up 800ms cubic-bezier(0.16,1,0.3,1) 180ms both",
         }}>
           <div style={{
-            position: "relative", width: "100%", maxWidth: 360,
-            border: `1px solid ${resolved ? "var(--ink)" : "var(--border)"}`,
-            borderRadius: 8,
-            background: "var(--bg)",
-            transition: "border-color 160ms",
+            fontFamily: "var(--mono)", fontSize: 10,
+            letterSpacing: "0.24em", textTransform: "uppercase",
+            color: "var(--text-3)", marginBottom: 14,
+          }}>Try the engine on a real UK area</div>
+          <div style={{
+            display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap",
           }}>
-            <input
-              ref={inputRef}
-              value={raw}
-              onChange={(e) => setRaw(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && resolved) onRun(); }}
-              placeholder="e.g. Manchester, SW4 0LG"
-              style={{
-                width: "100%",
-                fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500,
-                color: "var(--ink-deep)", letterSpacing: "-0.01em",
-                padding: "14px 18px", border: "none", outline: "none",
-                borderRadius: 8, background: "transparent",
-                textAlign: "left",
-              }}
-            />
+            {HERO_SAMPLES.map((s, i) => (
+              <button
+                key={s.match}
+                onClick={() => onRunWith(s.match)}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 10,
+                  fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 500,
+                  color: "var(--ink-deep)",
+                  background: "var(--bg)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 999, padding: "9px 14px 9px 11px",
+                  cursor: "pointer",
+                  letterSpacing: "-0.005em",
+                  transition: "all 160ms cubic-bezier(0.16,1,0.3,1)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "var(--ink-deep)";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(6,42,30,0.08)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "var(--border)";
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              >
+                <span style={{
+                  fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
+                  letterSpacing: "0.18em", color: "var(--text-3)",
+                }}>{String(i + 1).padStart(2, "0")}</span>
+                <span>{s.city}</span>
+                <span style={{
+                  fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
+                  color: "var(--text-3)", letterSpacing: 0,
+                }}>{s.postcode}</span>
+              </button>
+            ))}
           </div>
-          <button
-            disabled={!resolved}
-            onClick={onRun}
-            style={{
-              fontFamily: "var(--sans)", fontSize: 15, fontWeight: 600,
-              color: resolved ? "var(--signal-ink)" : "var(--text-4)",
-              background: resolved ? "var(--signal)" : "var(--bg-off)",
-              border: `1px solid ${resolved ? "var(--ink-deep)" : "var(--border)"}`,
-              borderRadius: 8, padding: "0 24px",
-              cursor: resolved ? "pointer" : "not-allowed",
-              letterSpacing: "-0.005em",
-              display: "inline-flex", alignItems: "center", gap: 8,
-              transition: "all 180ms cubic-bezier(0.16,1,0.3,1)",
-              minHeight: 48,
-            }}
-            onMouseEnter={(e) => {
-              if (!resolved) return;
-              e.currentTarget.style.transform = "translateY(-1px)";
-              e.currentTarget.style.boxShadow = "0 8px 20px rgba(6,42,30,0.14)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
-          >
-            Get report
-            <span style={{ fontSize: 16 }}>→</span>
-          </button>
         </div>
 
-        {/* Intent tabs · centered */}
+        {/* Intent tabs · re-scores the same area for a different decision */}
         <div style={{
-          marginTop: 28,
+          marginBottom: 36,
           animation: "aiq-fade-up 800ms cubic-bezier(0.16,1,0.3,1) 260ms both",
         }}>
           <div style={{
             fontFamily: "var(--mono)", fontSize: 10,
             letterSpacing: "0.24em", textTransform: "uppercase",
             color: "var(--text-3)", marginBottom: 12,
-          }}>Pick your intent</div>
+          }}>Re-score for</div>
           <div style={{
             display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap",
           }}>
@@ -427,11 +473,89 @@ function Hero({
                     if (!active) e.currentTarget.style.color = "var(--text-2)";
                   }}
                 >
-                  {it.verb}
+                  {HERO_INTENT_LABELS[it.id]}
                 </button>
               );
             })}
           </div>
+
+          {/* Active intent blurb · in-context explanation so a B2B visitor
+              understands what each term means without scrolling further. */}
+          <p
+            key={`blurb-${intentId}`}
+            style={{
+              fontFamily: "var(--sans)", fontSize: 14, lineHeight: 1.55,
+              color: "var(--text-2)", letterSpacing: "-0.003em",
+              margin: "16px auto 0", maxWidth: "56ch", textAlign: "center",
+              animation: "aiq-fade-up 380ms cubic-bezier(0.16,1,0.3,1) both",
+            }}
+          >
+            {HERO_INTENT_BLURBS[intentId]}
+          </p>
+        </div>
+
+        {/* Primary CTAs · explicit B2B next steps. Self-serve API access on the
+            left, methodology read on the right (the trust-builder for evaluators). */}
+        <div style={{
+          display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap",
+          animation: "aiq-fade-up 800ms cubic-bezier(0.16,1,0.3,1) 320ms both",
+        }}>
+          <a
+            href="/sign-up"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              fontFamily: "var(--sans)", fontSize: 15, fontWeight: 600,
+              color: "var(--signal-ink)", background: "var(--signal)",
+              border: "1px solid var(--ink-deep)",
+              borderRadius: 8, padding: "12px 22px",
+              textDecoration: "none", letterSpacing: "-0.005em",
+              transition: "all 180ms cubic-bezier(0.16,1,0.3,1)",
+              minHeight: 48, boxSizing: "border-box",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.boxShadow = "0 8px 20px rgba(6,42,30,0.14)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          >
+            Get API access
+            <span style={{ fontSize: 16 }}>→</span>
+          </a>
+          <a
+            href="/methodology"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              fontFamily: "var(--sans)", fontSize: 15, fontWeight: 500,
+              color: "var(--ink-deep)", background: "transparent",
+              border: "1px solid var(--border)",
+              borderRadius: 8, padding: "12px 22px",
+              textDecoration: "none", letterSpacing: "-0.005em",
+              transition: "all 180ms cubic-bezier(0.16,1,0.3,1)",
+              minHeight: 48, boxSizing: "border-box",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "var(--ink-deep)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "var(--border)";
+            }}
+          >
+            Read the methodology
+            <span style={{ fontSize: 16 }}>→</span>
+          </a>
+        </div>
+
+        {/* Tiny signpost · sets expectations on what signup gets you */}
+        <div style={{
+          fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
+          letterSpacing: "0.16em", textTransform: "uppercase",
+          color: "var(--text-3)", marginTop: 18,
+          animation: "aiq-fade-up 800ms cubic-bezier(0.16,1,0.3,1) 380ms both",
+        }}>
+          Free sandbox · no card required · 100 API calls / month
         </div>
 
       </div>
@@ -561,19 +685,19 @@ function HeroForm({
 const PULLQUOTES: Record<IntentId, { body: string; meta: string }> = {
   moving: {
     body: "Strong fit for families. Four of five nearby schools are rated Good or Outstanding. The trade-off is cost: roughly 14% above the London median.",
-    meta: "SW4 0LG · scored for moving home · 71 / 100",
+    meta: "SW4 0LG · scored for origination · 71 / 100",
   },
   business: {
     body: "Solid foot traffic and amenity density for a retail or hospitality lease. Falling crime trend supports evening trade, but expect a 25% rent premium over outer postcodes.",
-    meta: "SW4 0LG · scored for opening a business · 73 / 100",
+    meta: "SW4 0LG · scored for site selection · 73 / 100",
   },
   invest: {
     body: "Limited yield at current prices. Median sale £625k, median rent £2,100/mo gives ~4% gross, below London average. A low-risk hold rather than a value play.",
-    meta: "SW4 0LG · scored for property investing · 61 / 100",
+    meta: "SW4 0LG · scored for investment · 61 / 100",
   },
   research: {
     body: "Upper quartile for transport and amenities, median for safety, below-median for affordability. IMD 2025 decile 6: useful benchmark for inner-London neighbourhoods.",
-    meta: "SW4 0LG · scored for market research · 71 / 100",
+    meta: "SW4 0LG · scored for reference · 71 / 100",
   },
 };
 
@@ -1371,15 +1495,21 @@ const SampleReport = forwardRef<
                 width: 6, height: 6, borderRadius: "50%",
                 background: isReal ? "var(--ink)" : "#B59A2A",
               }} />
-              {isReal ? "Snapshot" : "Preview"} · {resolved.display.toLowerCase()} · scored for {intent.verb}
+              {isReal ? "Engine snapshot" : "Preview"} · {resolved.display.toLowerCase()} · {HERO_INTENT_LABELS[intentId].toLowerCase()}
             </div>
             <div style={{
+              display: "flex", alignItems: "center", gap: 12,
               fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-4)",
               letterSpacing: "0.1em", textTransform: "uppercase",
             }}>
-              {isReal
-                ? `engine run · live · ${realLoc?.lsoa ?? "LSOA"}`
-                : "demo numbers · sign up for live"}
+              <span>engine v2.0.0</span>
+              <span style={{ opacity: 0.5 }}>·</span>
+              <span>{realLoc?.lsoa ?? "LSOA"}</span>
+              <span style={{ opacity: 0.5 }}>·</span>
+              <a href="/methodology" style={{
+                color: "var(--ink)", textDecoration: "none",
+                borderBottom: "1px solid var(--border)",
+              }}>methodology →</a>
             </div>
           </div>
 
@@ -1392,7 +1522,7 @@ const SampleReport = forwardRef<
           }}>
             {resolved.display} scores{" "}
             <span style={{ color: "var(--ink)", fontStyle: "italic" }}>{score}</span>{" "}
-            for <span style={{ color: "var(--ink)", fontStyle: "italic" }}>{intent.verb}</span>.
+            for <span style={{ color: "var(--ink)", fontStyle: "italic" }}>{HERO_INTENT_LABELS[intentId].toLowerCase()}</span>.
           </h2>
 
           {/* Score + Narrative grid */}
@@ -1487,10 +1617,10 @@ const SampleReport = forwardRef<
                   display: "grid", gap: 8,
                 }}>
                   {[
-                    `${hiddenCount} more dimension${hiddenCount === 1 ? "" : "s"} scored against 7 datasets`,
-                    "Tailored recommendations for your situation",
-                    "5-year trend data and comparable postcodes",
-                    "Downloadable PDF + shareable permalink",
+                    `${hiddenCount} more dimension${hiddenCount === 1 ? "" : "s"} with confidence per signal`,
+                    "Source URL per data point — full audit trail",
+                    "Engine version pinning (lock v2.0.0 for 12 months)",
+                    "REST API · drop-in widget · bulk endpoint",
                   ].map((bullet) => (
                     <li key={bullet} style={{
                       display: "grid", gridTemplateColumns: "16px 1fr", gap: 10,
@@ -1529,7 +1659,7 @@ const SampleReport = forwardRef<
                     e.currentTarget.style.boxShadow = "0 1px 0 rgba(6,42,30,0.04)";
                   }}
                 >
-                  Get the full report →
+                  Get API access →
                 </a>
                 <span style={{
                   marginLeft: 14,
@@ -1537,7 +1667,7 @@ const SampleReport = forwardRef<
                   color: "rgba(246,249,244,0.48)",
                   letterSpacing: "0.06em",
                 }}>
-                  3 free / month · no card
+                  Free sandbox · 100 calls / month · no card
                 </span>
               </div>
             </div>
@@ -1558,13 +1688,13 @@ const SampleReport = forwardRef<
                 fontFamily: "var(--mono)", fontSize: 10,
                 color: "var(--ink)", letterSpacing: "0.14em", textTransform: "uppercase",
               }}>
-                Top 3 dimensions · weighted for {intent.verb}
+                Top 3 dimensions · weighted for {HERO_INTENT_LABELS[intentId].toLowerCase()}
               </div>
               <div style={{
                 fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-4)",
                 letterSpacing: "0.08em",
               }}>
-                +{hiddenCount} more in full report
+                +{hiddenCount} more in API response
               </div>
             </div>
 
@@ -1577,6 +1707,13 @@ const SampleReport = forwardRef<
                 borderBottom: i < topDims.length - 1 ? "1px solid var(--border-dim)" : "none",
               }}>
                 <div style={{ minWidth: 0 }}>
+                  {DIM_SOURCES[d.label] && (
+                    <div style={{
+                      fontFamily: "var(--mono)", fontSize: 9, fontWeight: 500,
+                      letterSpacing: "0.18em", textTransform: "uppercase",
+                      color: "var(--text-4)", marginBottom: 5,
+                    }}>{DIM_SOURCES[d.label]}</div>
+                  )}
                   <div style={{
                     fontSize: 14, fontWeight: 500, color: "var(--ink-deep)",
                     letterSpacing: "-0.005em",
@@ -1592,7 +1729,7 @@ const SampleReport = forwardRef<
                     <span style={{
                       color: "var(--ink)", fontWeight: 600,
                     }}>{d.weight}% weight</span>
-                    {" "}for {intent.verb}
+                    {" "}for {HERO_INTENT_LABELS[intentId].toLowerCase()}
                   </div>
                 </div>
 
@@ -1634,11 +1771,110 @@ const SampleReport = forwardRef<
               color: "var(--text-4)", letterSpacing: "0.08em",
               textTransform: "uppercase",
             }}>
-              <span>+ {hiddenCount} more dimensions locked</span>
+              <span>+ {hiddenCount} more dimensions in the API response</span>
               <a href="/sign-up" style={{
                 color: "var(--ink)", textDecoration: "none",
                 borderBottom: "1px solid var(--signal)", paddingBottom: 1,
-              }}>unlock →</a>
+              }}>get API access →</a>
+            </div>
+          </div>
+
+          {/* API response · same data, programmatic. The single most-effective
+              trust+conversion signal for B2B integration buyers is showing the
+              actual JSON shape they'd receive. Built from the live sample data
+              so it matches the report above. */}
+          <div style={{
+            border: "1px solid var(--border)",
+            borderRadius: 16,
+            background: "var(--bg)",
+            marginBottom: 24,
+            overflow: "hidden",
+          }}>
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "14px 24px",
+              borderBottom: "1px solid var(--border-dim)",
+              background: "var(--bg-off)",
+              flexWrap: "wrap", gap: 12,
+            }}>
+              <div style={{
+                display: "flex", alignItems: "center", gap: 10,
+                fontFamily: "var(--mono)", fontSize: 10,
+                color: "var(--ink)", letterSpacing: "0.14em", textTransform: "uppercase",
+              }}>
+                <span style={{
+                  width: 5, height: 5, borderRadius: "50%",
+                  background: "var(--signal)",
+                }} />
+                Same data · programmatic
+              </div>
+              <a href="/docs/api-reference" style={{
+                fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-3)",
+                letterSpacing: "0.08em", textTransform: "uppercase",
+                textDecoration: "none",
+                borderBottom: "1px solid var(--border)",
+              }}>full API reference →</a>
+            </div>
+
+            <div className="aiq-api-grid" style={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+            }}>
+              {/* curl request */}
+              <div style={{
+                padding: "20px 24px",
+                borderRight: "1px solid var(--border-dim)",
+                background: "var(--bg-ink)",
+              }}>
+                <div style={{
+                  fontFamily: "var(--mono)", fontSize: 9, fontWeight: 500,
+                  letterSpacing: "0.18em", textTransform: "uppercase",
+                  color: "rgba(246,249,244,0.5)", marginBottom: 12,
+                }}>Request · curl</div>
+                <pre style={{
+                  fontFamily: "var(--mono)", fontSize: 12, lineHeight: 1.7,
+                  margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word",
+                  color: "rgba(246,249,244,0.92)",
+                }}>{`curl -X POST https://api.onegoodarea.com/v1/score \\
+  -H "Authorization: Bearer YOUR_KEY" \\
+  -d '{
+    "postcode": "${realLoc?.postcode ?? "M1 1AE"}",
+    "intent":   "${intentId}"
+  }'`}</pre>
+              </div>
+
+              {/* JSON response */}
+              <div style={{
+                padding: "20px 24px",
+                background: "var(--bg)",
+              }}>
+                <div style={{
+                  fontFamily: "var(--mono)", fontSize: 9, fontWeight: 500,
+                  letterSpacing: "0.18em", textTransform: "uppercase",
+                  color: "var(--text-4)", marginBottom: 12,
+                }}>Response · JSON</div>
+                <pre style={{
+                  fontFamily: "var(--mono)", fontSize: 11.5, lineHeight: 1.6,
+                  margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word",
+                  color: "var(--ink-deep)",
+                }}>{`{
+  "area": "${resolved.display}",
+  "intent": "${intentId}",
+  "areaiq_score": ${score},
+  "engine_version": "2.0.0",
+  "lsoa": "${realLoc?.lsoa ?? ""}",
+  "dimensions": [
+${allDims.slice(0, 2).map(d => `    {
+      "label":  "${d.label}",
+      "score":  ${d.score},
+      "weight": ${d.weight},
+      "source": "${DIM_SOURCES[d.label] ?? "OneGoodArea"}"
+    }`).join(",\n")},
+    ... +${Math.max(allDims.length - 2, 0)} more
+  ],
+  "generated_at": "${new Date().toISOString().slice(0, 19)}Z"
+}`}</pre>
+              </div>
             </div>
           </div>
 
@@ -2201,10 +2437,10 @@ function HIWPanelInput() {
 }
 
 const HIW_INTENT_ITEMS = [
-  { id: "moving",     number: "01", verb: "moving home" },
-  { id: "business",   number: "02", verb: "opening a business" },
-  { id: "investing",  number: "03", verb: "property investing" },
-  { id: "research",   number: "04", verb: "market research" },
+  { id: "moving",     number: "01", verb: "origination" },
+  { id: "business",   number: "02", verb: "site selection" },
+  { id: "investing",  number: "03", verb: "investment" },
+  { id: "research",   number: "04", verb: "reference" },
 ];
 
 function HIWPanelIntent() {
@@ -2333,7 +2569,7 @@ function HIWPanelReport({ onExpand }: { onExpand?: () => void }) {
           fontFamily: "var(--mono)", fontSize: 9,
           letterSpacing: "0.2em", textTransform: "uppercase",
           color: "var(--text-3)",
-        }}>Manchester · moving home</span>
+        }}>Manchester · origination</span>
         <span style={{
           fontFamily: "var(--display)", fontSize: 28, lineHeight: 1,
           color: "var(--ink-deep)", fontVariantNumeric: "tabular-nums",
@@ -2501,7 +2737,7 @@ const INTENTS_DATA: {
     id: "moving",
     number: "01",
     verb: "Origination scoring",
-    consumerLabel: "Moving home",
+    consumerLabel: "For lenders",
     lede: "Residential mortgage suitability and demand-side risk. Used by lenders for portfolio screening and origination decisions.",
     dims: [
       { label: "Safety & Crime",       weight: 25 },
@@ -2515,7 +2751,7 @@ const INTENTS_DATA: {
     id: "business",
     number: "02",
     verb: "Site selection",
-    consumerLabel: "Opening a business",
+    consumerLabel: "For retail & CRE",
     lede: "Footfall, competition, and commercial viability. Used by retail, F&B, and commercial leasing teams scoring sites across thousands of postcodes.",
     dims: [
       { label: "Foot Traffic & Demand",  weight: 30 },
@@ -2529,7 +2765,7 @@ const INTENTS_DATA: {
     id: "investing",
     number: "03",
     verb: "Investment scoring",
-    consumerLabel: "Property investing",
+    consumerLabel: "For BTL & investors",
     lede: "Yield, growth, regeneration, and tenant risk. Used by BTL and BTR operators sizing up acquisitions, and by investment committees as part of due diligence.",
     dims: [
       { label: "Price Growth",                weight: 25 },
@@ -2543,7 +2779,7 @@ const INTENTS_DATA: {
     id: "research",
     number: "04",
     verb: "Reference scoring",
-    consumerLabel: "Market research",
+    consumerLabel: "For analysts & planners",
     lede: "Neutral baseline for analysts, planners, and journalists. The default read with no thumb on the scale, equal weight across the five dimensions.",
     dims: [
       { label: "Safety & Crime",        weight: 20 },
@@ -2982,7 +3218,7 @@ function IRSummary() {
         color: "var(--text-3)", marginBottom: 14,
       }}>
         Manchester · M1 1AE · scored for{" "}
-        <span style={{ color: "var(--ink)", fontWeight: 500 }}>moving home</span>
+        <span style={{ color: "var(--ink)", fontWeight: 500 }}>origination</span>
       </div>
       <h3 style={{
         fontFamily: "var(--display)", fontStyle: "italic", fontWeight: 400,
@@ -3420,7 +3656,7 @@ function IRFooter() {
           fontFamily: "var(--mono)", fontSize: 9,
           letterSpacing: "0.18em", textTransform: "uppercase",
           color: "var(--text-3)",
-        }}>ref · 84 of 100 · Manchester · moving home</span>
+        }}>ref · 84 of 100 · Manchester · origination</span>
       </div>
     </div>
   );
