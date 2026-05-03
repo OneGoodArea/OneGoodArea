@@ -941,6 +941,15 @@ input:focus, select:focus {
           border-bottom: 1px solid var(--border-dim) !important;
         }
       }
+
+      /* Status quo section · 60px number column collapses to top-row on
+         narrow screens so the body has full width for the pain copy. */
+      @media (max-width: 620px) {
+        .aiq-statusquo-row {
+          grid-template-columns: 1fr !important;
+          gap: 12px !important;
+        }
+      }
       @media (max-width: 620px) {
         .aiq-stats-strip {
           grid-template-columns: repeat(2, 1fr) !important;

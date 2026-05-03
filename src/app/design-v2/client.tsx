@@ -253,6 +253,7 @@ export default function DesignV2Client() {
       />
       <HowItWorks />
       <IntentsSection />
+      <StatusQuoSection />
       <AudiencesSection />
       <ForBusinessesSection />
       <FinalCTA />
@@ -2969,6 +2970,152 @@ function IntentBentoCell({
         </div>
       </div>
     </div>
+  );
+}
+
+/* ─────── What this replaces · per-buyer pain articulation ───────
+   Editorial single-column section between IntentsSection and AudiencesSection.
+   Articulates the buyer pain each B2B persona has TODAY (manual stitching,
+   stale aggregations, audit-trail rejection) and the concrete fix OneGoodArea
+   delivers. Per AR-139 follow-up, addresses the gap that AudiencesSection's
+   one-line-per-persona cells couldn't carry.
+
+   Pattern is single editorial column with mono number + italic display
+   header + sans pain paragraph + chartreuse-bordered "the fix" callout.
+   No card grid (per design taste memory). */
+
+const STATUS_QUO_ROWS: { id: string; audience: string; pain: string; fix: string }[] = [
+  {
+    id: "lenders",
+    audience: "mortgage lenders",
+    pain: "Origination flag rules and portfolio risk monitoring rely on postcode-area data stitched manually from police.uk, IMD CSVs, and OS open data. Engineering eats sprints. The model risk team rejects what ships because the methodology is not version-pinned. Stale aggregations miss flood-zone properties that a postcode prefix cannot see.",
+    fix: "One API call per address. Confidence per dimension, source URL per signal. Lock to engine v2.0.0 for twelve months so the FCA model-risk register is happy.",
+  },
+  {
+    id: "insurers",
+    audience: "insurance underwriters",
+    pain: "Area risk for property and liability quotes today relies on enrichment data that is a year old, with no audit trail to defend a claim if the area's risk profile has changed since underwriting. Actuarial teams want confidence per dimension. They get a flat number and a screenshot.",
+    fix: "Confidence per dimension. Engine version stamped on every response. Sources attributed to Environment Agency, Police.uk, and Land Registry. Re-score programmatically when upstream refreshes.",
+  },
+  {
+    id: "proptech",
+    audience: "PropTech platforms",
+    pain: "Every PropTech building area intelligence ends up rebuilding the same wheel. Postcodes.io for geocoding, Police.uk for crime, OpenStreetMap for amenities, scraping Ofsted for schools. Months of integration, drift bugs, and no methodology page to point customers to.",
+    fix: "REST API plus drop-in widget. Same payload our marketing site renders. Public methodology your customers can read directly. Integrate in an afternoon.",
+  },
+  {
+    id: "retail",
+    audience: "retail and CRE",
+    pain: "Site selection at scale today means licensing footfall and demographic signals separately, combining them with crime and planning data manually, exporting to Excel, scoring against bespoke criteria region-by-region. One analyst per thousand sites.",
+    fix: "One bulk endpoint. The site selection intent reweights five dimensions for commercial viability. Score thousands of postcodes in a single job.",
+  },
+];
+
+function StatusQuoSection() {
+  return (
+    <section id="what-this-replaces" style={{
+      background: "var(--bg)",
+      borderTop: "1px solid var(--border)",
+      padding: "104px 0 120px",
+    }}>
+      <div style={{ maxWidth: 880, margin: "0 auto", padding: "0 40px" }}>
+        {/* Section header */}
+        <div style={{ textAlign: "center", maxWidth: 720, margin: "0 auto 72px" }}>
+          <div style={{
+            fontFamily: "var(--mono)", fontSize: 11,
+            letterSpacing: "0.22em", textTransform: "uppercase",
+            color: "var(--text-3)", marginBottom: 18,
+          }}>The status quo</div>
+          <h2 style={{
+            fontFamily: "var(--display)", fontWeight: 400,
+            fontSize: "clamp(1.9rem, 3.6vw, 2.8rem)",
+            lineHeight: 1.08, letterSpacing: "-0.02em",
+            color: "var(--ink-deep)", margin: 0,
+          }}>
+            What this{" "}
+            <span style={{
+              fontStyle: "italic", color: "var(--ink)",
+              borderBottom: "3px solid var(--signal)", paddingBottom: 2,
+            }}>replaces</span>.
+          </h2>
+          <p style={{
+            fontFamily: "var(--sans)", fontSize: 16.5, lineHeight: 1.55,
+            color: "var(--text-2)", letterSpacing: "-0.003em",
+            margin: "20px auto 0", maxWidth: "54ch",
+          }}>
+            Every team buying area intelligence today is stitching it from public APIs and CSVs, defending it to model-risk reviewers, and shipping stale aggregations. Here is what shifts when you swap that for one auditable engine.
+          </p>
+        </div>
+
+        {/* Persona pain rows · single editorial column */}
+        <div>
+          {STATUS_QUO_ROWS.map((row, i) => (
+            <article key={row.id} className="aiq-statusquo-row" style={{
+              display: "grid",
+              gridTemplateColumns: "60px minmax(0, 1fr)",
+              gap: 32,
+              padding: "44px 0",
+              borderTop: "1px solid var(--border)",
+              borderBottom: i === STATUS_QUO_ROWS.length - 1 ? "1px solid var(--border)" : "none",
+              alignItems: "start",
+            }}>
+              <div style={{
+                fontFamily: "var(--mono)", fontSize: 14, fontWeight: 500,
+                letterSpacing: "0.16em", color: "var(--text-3)",
+                paddingTop: 6,
+              }}>0{i + 1}</div>
+
+              <div>
+                <h3 style={{
+                  fontFamily: "var(--display)", fontStyle: "italic", fontWeight: 400,
+                  fontSize: "clamp(1.4rem, 2.2vw, 1.8rem)",
+                  lineHeight: 1.15, letterSpacing: "-0.02em",
+                  color: "var(--ink-deep)", margin: 0,
+                }}>
+                  For{" "}
+                  <span style={{
+                    borderBottom: "2px solid var(--signal)", paddingBottom: 1,
+                  }}>{row.audience}</span>
+                </h3>
+
+                <p style={{
+                  fontFamily: "var(--sans)", fontSize: 16, lineHeight: 1.7,
+                  color: "var(--text-2)", letterSpacing: "-0.003em",
+                  margin: "20px 0 0",
+                }}>
+                  {row.pain}
+                </p>
+
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "auto minmax(0, 1fr)",
+                  alignItems: "start", gap: 14,
+                  marginTop: 22,
+                  padding: "14px 18px",
+                  background: "var(--bg-off)",
+                  border: "1px solid var(--border)",
+                  borderLeft: "3px solid var(--signal)",
+                  borderRadius: 4,
+                }}>
+                  <span style={{
+                    fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
+                    letterSpacing: "0.18em", textTransform: "uppercase",
+                    color: "var(--ink)",
+                    paddingTop: 3,
+                  }}>The fix →</span>
+                  <span style={{
+                    fontFamily: "var(--sans)", fontSize: 14.5, lineHeight: 1.55,
+                    color: "var(--ink-deep)", letterSpacing: "-0.005em",
+                  }}>
+                    {row.fix}
+                  </span>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
