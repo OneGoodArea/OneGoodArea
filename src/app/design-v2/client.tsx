@@ -3014,8 +3014,8 @@ const STATUS_QUO_ROWS: { id: string; audience: string; pain: string; fix: string
 function StatusQuoSection() {
   return (
     <section id="what-this-replaces" style={{
-      background: "var(--bg)",
-      borderTop: "1px solid var(--border)",
+      background: "var(--bg-ink)",
+      borderTop: "1px solid var(--ink)",
       padding: "104px 0 120px",
     }}>
       <div style={{ maxWidth: 880, margin: "0 auto", padding: "0 40px" }}>
@@ -3024,30 +3024,38 @@ function StatusQuoSection() {
           <div style={{
             fontFamily: "var(--mono)", fontSize: 11,
             letterSpacing: "0.22em", textTransform: "uppercase",
-            color: "var(--text-3)", marginBottom: 18,
-          }}>The status quo</div>
+            color: "var(--signal)", marginBottom: 22,
+            display: "inline-flex", alignItems: "center", gap: 9,
+          }}>
+            <span style={{
+              width: 6, height: 6, borderRadius: "50%",
+              background: "var(--signal)",
+              animation: "aiq-pulse-dot 2s ease-in-out infinite",
+            }} />
+            The status quo
+          </div>
           <h2 style={{
             fontFamily: "var(--display)", fontWeight: 400,
             fontSize: "clamp(1.9rem, 3.6vw, 2.8rem)",
             lineHeight: 1.08, letterSpacing: "-0.02em",
-            color: "var(--ink-deep)", margin: 0,
+            color: "#F4F8F2", margin: 0,
           }}>
             What this{" "}
             <span style={{
-              fontStyle: "italic", color: "var(--ink)",
+              fontStyle: "italic", color: "#F4F8F2",
               borderBottom: "3px solid var(--signal)", paddingBottom: 2,
             }}>replaces</span>.
           </h2>
           <p style={{
             fontFamily: "var(--sans)", fontSize: 16.5, lineHeight: 1.55,
-            color: "var(--text-2)", letterSpacing: "-0.003em",
+            color: "#A7BFB4", letterSpacing: "-0.003em",
             margin: "20px auto 0", maxWidth: "54ch",
           }}>
             Every team buying area intelligence today is stitching it from public APIs and CSVs, defending it to model-risk reviewers, and shipping stale aggregations. Here is what shifts when you swap that for one auditable engine.
           </p>
         </div>
 
-        {/* Persona pain rows · single editorial column */}
+        {/* Persona pain rows · single editorial column on dark forest bg */}
         <div>
           {STATUS_QUO_ROWS.map((row, i) => (
             <article key={row.id} className="aiq-statusquo-row" style={{
@@ -3055,13 +3063,13 @@ function StatusQuoSection() {
               gridTemplateColumns: "60px minmax(0, 1fr)",
               gap: 32,
               padding: "44px 0",
-              borderTop: "1px solid var(--border)",
-              borderBottom: i === STATUS_QUO_ROWS.length - 1 ? "1px solid var(--border)" : "none",
+              borderTop: "1px solid rgba(212,243,58,0.12)",
+              borderBottom: i === STATUS_QUO_ROWS.length - 1 ? "1px solid rgba(212,243,58,0.12)" : "none",
               alignItems: "start",
             }}>
               <div style={{
                 fontFamily: "var(--mono)", fontSize: 14, fontWeight: 500,
-                letterSpacing: "0.16em", color: "var(--text-3)",
+                letterSpacing: "0.16em", color: "rgba(212,243,58,0.55)",
                 paddingTop: 6,
               }}>0{i + 1}</div>
 
@@ -3070,7 +3078,7 @@ function StatusQuoSection() {
                   fontFamily: "var(--display)", fontStyle: "italic", fontWeight: 400,
                   fontSize: "clamp(1.4rem, 2.2vw, 1.8rem)",
                   lineHeight: 1.15, letterSpacing: "-0.02em",
-                  color: "var(--ink-deep)", margin: 0,
+                  color: "#F4F8F2", margin: 0,
                 }}>
                   For{" "}
                   <span style={{
@@ -3080,7 +3088,7 @@ function StatusQuoSection() {
 
                 <p style={{
                   fontFamily: "var(--sans)", fontSize: 16, lineHeight: 1.7,
-                  color: "var(--text-2)", letterSpacing: "-0.003em",
+                  color: "#A7BFB4", letterSpacing: "-0.003em",
                   margin: "20px 0 0",
                 }}>
                   {row.pain}
@@ -3092,20 +3100,20 @@ function StatusQuoSection() {
                   alignItems: "start", gap: 14,
                   marginTop: 22,
                   padding: "14px 18px",
-                  background: "var(--bg-off)",
-                  border: "1px solid var(--border)",
+                  background: "rgba(212,243,58,0.06)",
+                  border: "1px solid rgba(212,243,58,0.14)",
                   borderLeft: "3px solid var(--signal)",
                   borderRadius: 4,
                 }}>
                   <span style={{
                     fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
                     letterSpacing: "0.18em", textTransform: "uppercase",
-                    color: "var(--ink)",
+                    color: "var(--signal)",
                     paddingTop: 3,
                   }}>The fix →</span>
                   <span style={{
                     fontFamily: "var(--sans)", fontSize: 14.5, lineHeight: 1.55,
-                    color: "var(--ink-deep)", letterSpacing: "-0.005em",
+                    color: "#F4F8F2", letterSpacing: "-0.005em",
                   }}>
                     {row.fix}
                   </span>
