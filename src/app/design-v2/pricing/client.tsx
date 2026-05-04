@@ -46,26 +46,20 @@ const API_PLANS: Plan[] = [
 type Row = { label: string; values: (string | boolean)[]; sub?: string; icon?: IconName };
 
 // Columns: Sandbox · Starter · Build · Scale · Growth (5 tiers).
-// "→" prefix on sub-text marks roadmap features that ship soon (per project_pricing_v2.md).
+// CRITICAL RULE (per feedback_no_invented_claims.md): only list features that
+// are SHIPPED. No "coming soon" rows in this comparison table. Roadmap items
+// belong in a separate Roadmap section, NEVER as gated features in this table.
 const API_FEATURES: Row[] = [
   { label: "API calls / month",          values: ["250", "1,500", "6,000", "25,000", "100,000"],                  icon: "data" },
   { label: "Effective £ per call",       values: ["—", "£0.033", "£0.025", "£0.020", "£0.015"],                    icon: "gauge" },
-  { label: "Annual prepay (12 for 10)",  values: [false, false, true, true, true],          sub: "17% off · paid annually", icon: "data" },
   { label: "REST API + Bearer auth",     values: [true, true, true, true, true],            sub: "JSON in/out, OpenAPI 3.0 spec", icon: "api" },
   { label: "5-dimension scoring engine", values: [true, true, true, true, true],            sub: "Confidence per dimension, source attribution, version stamp", icon: "intent" },
   { label: "7 public datasets",          values: [true, true, true, true, true],            sub: "Postcodes.io · Police.uk · IMD · OSM · Land Registry · EA · Ofsted", icon: "map" },
   { label: "Drop-in widget (CORS)",      values: [true, true, true, true, true],            sub: "Cache-only, 60/hr per origin", icon: "widget" },
   { label: "API keys",                   values: ["1", "1", "5", "10", "25"],                icon: "key" },
-  { label: "Idempotency-Key header",     values: [false, true, true, true, true],           sub: "→ ships with AR-128", icon: "repeat" },
-  { label: "Engine version pinning",     values: [false, false, true, true, true],          sub: "→ X-Engine-Version header (AR-131)", icon: "repeat" },
-  { label: "Outbound webhooks",          values: [false, false, false, true, true],         sub: "→ score.changed events (AR-129)", icon: "api" },
-  { label: "Bulk endpoint",              values: [false, false, false, true, true],         sub: "→ POST /api/v1/batch (AR-130)", icon: "data" },
-  { label: "Audit log",                  values: [false, false, false, true, true],         sub: "→ source URL per signal", icon: "read" },
-  { label: "Uptime SLA",                 values: ["—", "—", "99.5%", "99.9%", "99.9%"],      icon: "gauge" },
+  { label: "30 req/min rate limit",      values: [true, true, true, true, true],            sub: "Per key, sliding window", icon: "gauge" },
+  { label: "24-hour response cache",     values: [true, true, true, true, true],            sub: "Cache hits don't count against quota", icon: "cache" },
   { label: "Email support",              values: ["community", "community", "5-day", "48h", "24h"], icon: "support" },
-  { label: "Signed DPA",                 values: [false, false, false, true, true],         sub: "Data processing agreement", icon: "read" },
-  { label: "SOC 2 Type I letter",        values: [false, false, false, false, true],        sub: "→ via Vanta (~6 months)", icon: "support" },
-  { label: "MCP server access",          values: [false, false, "add-on", true, true],      sub: "→ AR-144 (~10 days). £29/mo add-on for Build.", icon: "api" },
 ];
 
 /* ─────── Root ─────── */

@@ -63,7 +63,10 @@ function Body({ reports: initialReports, plan, planName, used, limit, savedAreas
   const [savedAreas, setSavedAreas] = useState<SavedArea[]>(initialSaved);
   const [portalLoading, setPortalLoading] = useState(false);
 
-  const isApiPlan = plan === "developer" || plan === "business" || plan === "growth";
+  // V1 grandfathered (developer/business/growth) + V2 active (sandbox/starter_v2/build/scale/growth_v2/enterprise)
+  // all grant API access. Keep in sync with API_PLANS in src/lib/stripe.ts.
+  const apiPlans = ["developer", "business", "growth", "sandbox", "starter_v2", "build", "scale", "growth_v2", "enterprise"];
+  const isApiPlan = apiPlans.includes(plan);
   const stats = useMemo(() => {
     if (reports.length === 0) return null;
     const avg = Math.round(reports.reduce((s, r) => s + r.score, 0) / reports.length);

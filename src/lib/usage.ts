@@ -20,7 +20,11 @@ export async function getUserPlan(userId: string): Promise<PlanId> {
     SELECT plan FROM subscriptions
     WHERE user_id = ${userId} AND status = 'active'
   `;
-  if (rows.length === 0) return "free";
+  // Default for users with no subscription row = sandbox (v2). This is what
+  // makes the homepage's "Free sandbox · 250 API calls / month" claim TRUE.
+  // Existing v1 grandfathered users have an explicit subscriptions row with
+  // their plan name and are unaffected.
+  if (rows.length === 0) return "sandbox";
   const sub = row<Pick<SubscriptionRow, "plan">>(rows[0]);
   return sub.plan as PlanId;
 }

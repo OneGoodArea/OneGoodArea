@@ -12,7 +12,7 @@ export const POST = withAuth(async (req: NextRequest, { userId }) => {
   const apiAllowed = await hasApiAccess(userId);
   if (!apiAllowed) {
     return NextResponse.json(
-      { error: "API keys require a Developer, Business, or Growth plan. Upgrade at /pricing." },
+      { error: "API keys are not available on your current plan. Upgrade at /pricing." },
       { status: 403 }
     );
   }

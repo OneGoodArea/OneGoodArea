@@ -1619,9 +1619,9 @@ const SampleReport = forwardRef<
                 }}>
                   {[
                     `${hiddenCount} more dimension${hiddenCount === 1 ? "" : "s"} with confidence per signal`,
-                    "Source URL per data point — full audit trail",
-                    "Engine version pinning (lock v2.0.0 for 12 months)",
-                    "REST API · drop-in widget · bulk endpoint",
+                    "Source attribution per dimension",
+                    "Engine version stamp on every response",
+                    "REST API · drop-in widget · 7 public datasets",
                   ].map((bullet) => (
                     <li key={bullet} style={{
                       display: "grid", gridTemplateColumns: "16px 1fr", gap: 10,
@@ -2989,7 +2989,7 @@ const STATUS_QUO_ROWS: { id: string; audience: string; pain: string; fix: string
     id: "lenders",
     audience: "mortgage lenders",
     pain: "Origination flag rules and portfolio risk monitoring rely on postcode-area data stitched manually from police.uk, IMD CSVs, and OS open data. Engineering eats sprints. The model risk team rejects what ships because the methodology is not version-pinned. Stale aggregations miss flood-zone properties that a postcode prefix cannot see.",
-    fix: "One API call per address. Confidence per dimension, source URL per signal. Lock to engine v2.0.0 for twelve months so the FCA model-risk register is happy.",
+    fix: "One API call per postcode. Confidence per dimension, source attribution per signal, engine version stamp on every response — auditable end-to-end.",
   },
   {
     id: "insurers",
@@ -3007,7 +3007,7 @@ const STATUS_QUO_ROWS: { id: string; audience: string; pain: string; fix: string
     id: "retail",
     audience: "retail and CRE",
     pain: "Site selection at scale today means licensing footfall and demographic signals separately, combining them with crime and planning data manually, exporting to Excel, scoring against bespoke criteria region-by-region. One analyst per thousand sites.",
-    fix: "One bulk endpoint. The site selection intent reweights five dimensions for commercial viability. Score thousands of postcodes in a single job.",
+    fix: "Programmatic API. The site selection intent reweights five dimensions for commercial viability. Score postcodes via the REST API at sub-second latency.",
   },
 ];
 
@@ -3130,7 +3130,7 @@ function StatusQuoSection() {
 /* ─────── Who uses it & why ─────── */
 
 const WHO_ITEMS: { icon: IconName; title: string; body: string }[] = [
-  { icon: "buyer",    title: "Mortgage lenders",       body: "Origination scoring and portfolio risk for challenger banks. Address-level enrichment, deterministic flood and crime signals, audit trail per dimension." },
+  { icon: "buyer",    title: "Mortgage lenders",       body: "Origination scoring and portfolio risk for challenger banks. Postcode-level enrichment, deterministic flood and crime signals, source attribution per dimension." },
   { icon: "gauge",    title: "Insurance underwriters", body: "Area risk for property and liability cover. Flood, crime, and environmental scoring with confidence per dimension and version-pinned methodology." },
   { icon: "widget",   title: "PropTech platforms",     body: "Embed kit, white-label scoring, REST API. Add area intelligence to your product without rebuilding it." },
   { icon: "operator", title: "Retail and CRE",         body: "Site selection scoring at scale. Footfall, competition, and demographic signals across thousands of postcodes." },
@@ -3140,7 +3140,7 @@ const WHY_ITEMS: { icon: IconName; title: string; body: string }[] = [
   { icon: "repeat", title: "Deterministic scoring",   body: "Same input, same output, every time. Numbers come from formulas. AI just explains what the engine found." },
   { icon: "read",   title: "Auditable methodology",   body: "Every weight, threshold, and data source is public. Methodology you can ship to a regulator." },
   { icon: "intent", title: "Intent-driven",           body: "Same area, four scores. Origination, site selection, investment, reference. The engine reweights for each." },
-  { icon: "api",    title: "Built to embed",          body: "REST API, drop-in widget, version pinning on the roadmap. Integrate in an afternoon." },
+  { icon: "api",    title: "Built to embed",          body: "REST API, drop-in widget, source attribution per dimension. Integrate in an afternoon." },
 ];
 
 function AudiencesSection() {
