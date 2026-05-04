@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { stripe, PLANS, PlanId } from "@/lib/stripe";
+import { stripe, PLANS, PlanId, V2_PAID_PLANS } from "@/lib/stripe";
 import { trackEvent } from "@/lib/activity";
 import { sql } from "@/lib/db";
 import { row, SubscriptionRow } from "@/lib/db-types";
@@ -16,7 +16,14 @@ export async function POST(req: NextRequest) {
     }
 
     const { plan } = await req.json();
-    if (!plan || !["starter", "pro", "developer", "business", "growth"].includes(plan)) {
+    // Accept v2 paid plans (new commercial offering) + v1 legacy paid plans
+    // (so an existing grandfathered customer can still upgrade between v1 tiers
+    // if they exist). Sandbox is free, no checkout needed. Enterprise is
+    // contact-only — handled separately, not via this self-serve route.
+    const v1LegacyPaid = ["starter", "pro", "developer", "business", "growth"];
+    const v2SelfServePaid = V2_PAID_PLANS.filter((p) => p !== "enterprise");
+    const allowedPlans: string[] = [...v1LegacyPaid, ...v2SelfServePaid];
+    if (!plan || !allowedPlans.includes(plan)) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 

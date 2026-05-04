@@ -556,7 +556,7 @@ function Hero({
           color: "var(--text-3)", marginTop: 18,
           animation: "aiq-fade-up 800ms cubic-bezier(0.16,1,0.3,1) 380ms both",
         }}>
-          Start free · 3 reports / month · no card required
+          Free sandbox · 250 API calls / month · no card required
         </div>
 
       </div>
@@ -1668,7 +1668,7 @@ const SampleReport = forwardRef<
                   color: "rgba(246,249,244,0.48)",
                   letterSpacing: "0.06em",
                 }}>
-                  Start free · 3 reports / month · no card
+                  Free sandbox · 250 API calls / month · no card
                 </span>
               </div>
             </div>
