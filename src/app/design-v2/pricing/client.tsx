@@ -32,15 +32,15 @@ type Plan = {
 };
 
 const API_PLANS: Plan[] = [
-  { id: "developer", name: "Developer", price: "£49",  cadence: "/ month", reports: "100 reports / month",  perReport: "£0.49 each", blurb: "For solo devs and small PropTech prototypes.", cta: "Start building" },
-  { id: "business",  name: "Business",  price: "£249", cadence: "/ month", reports: "500 reports / month",  perReport: "£0.50 each", blurb: "For platforms and integrations with steady traffic.", cta: "Get Business", highlight: true },
-  { id: "growth",    name: "Growth",    price: "£499", cadence: "/ month", reports: "1,500 reports / month", perReport: "£0.33 each", blurb: "For portals and high-volume surfaces.", cta: "Get Growth" },
+  { id: "developer", name: "Developer", price: "£99",   cadence: "/ month", reports: "10,000 reports / month",  perReport: "≈1p per call",  blurb: "For solo devs and small PropTech prototypes.", cta: "Start building" },
+  { id: "business",  name: "Business",  price: "£499",  cadence: "/ month", reports: "50,000 reports / month",  perReport: "≈1p per call",  blurb: "For platforms and integrations with steady traffic.", cta: "Get Business", highlight: true },
+  { id: "growth",    name: "Growth",    price: "£1,499", cadence: "/ month", reports: "250,000 reports / month", perReport: "≈0.6p per call", blurb: "For portals and high-volume surfaces.", cta: "Get Growth" },
 ];
 
 type Row = { label: string; values: (string | boolean)[]; sub?: string; icon?: IconName };
 
 const API_FEATURES: Row[] = [
-  { label: "API reports / month",        values: ["100", "500", "1,500"],     icon: "data" },
+  { label: "API reports / month",        values: ["10,000", "50,000", "250,000"],     icon: "data" },
   { label: "REST API access",            values: [true, true, true],          sub: "Bearer token, JSON in/out", icon: "api" },
   { label: "API key management",         values: [true, true, true],          sub: "Create, revoke, rotate", icon: "key" },
   { label: "Full API documentation",     values: [true, true, true],          sub: "Routes, params, response shapes", icon: "read" },
