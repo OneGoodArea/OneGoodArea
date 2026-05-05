@@ -36,7 +36,7 @@ type Plan = {
 };
 
 const API_PLANS: Plan[] = [
-  { id: "sandbox",    name: "Sandbox",  price: "£0",      cadence: "forever",   reports: "250 calls / month",     perReport: "no card required", blurb: "Evaluate the API. Hard cap at 250 calls.",                                       cta: "Start free", free: true },
+  { id: "sandbox",    name: "Sandbox",  price: "£0",      cadence: "forever",   reports: "35 calls / month",      perReport: "no card required", blurb: "Evaluate the API across a handful of postcodes and intents. Hard cap.",                cta: "Start free", free: true },
   { id: "starter_v2", name: "Starter",  price: "£49",     cadence: "/ month",   reports: "1,500 calls / month",   perReport: "£0.033 per call",  blurb: "Indie devs and small PropTech in early production.",                              cta: "Start building" },
   { id: "build",      name: "Build",    price: "£149",    cadence: "/ month",   reports: "6,000 calls / month",   perReport: "£0.025 per call",  blurb: "Niche PropTech, small InsureTech MGA, small CRE team.",                           cta: "Get Build", highlight: true },
   { id: "scale",      name: "Scale",    price: "£499",    cadence: "/ month",   reports: "25,000 calls / month",  perReport: "£0.020 per call",  blurb: "Mid-tier challenger lender, mid insurer, mid PropTech.",                          cta: "Get Scale" },

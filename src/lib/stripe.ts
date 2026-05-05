@@ -117,7 +117,7 @@ export const PLANS = {
   sandbox: {
     name: "Sandbox",
     price: 0,
-    reportsPerMonth: 250,
+    reportsPerMonth: 35,
     priceId: null,
     apiAccess: true,
     generation: "v2",

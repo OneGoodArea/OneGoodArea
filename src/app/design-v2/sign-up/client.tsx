@@ -167,7 +167,7 @@ export default function SignUpClient() {
         <AuthTitle
           eyebrow="Create an account"
           title={<>Start your <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>free sandbox.</em></>}
-          sub="250 API calls a month, free forever. No card, no timer, no trial."
+          sub="35 API calls a month for evaluation. Free forever, no card, no timer, no trial."
         />
 
         <OAuthButtons onProvider={handleOAuth} />

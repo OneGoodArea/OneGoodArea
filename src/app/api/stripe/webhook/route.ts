@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
       case "customer.subscription.deleted": {
         const sub = asSubscription(event.data.object);
 
-        // On cancellation, revert to v2 Sandbox (250 calls/mo, apiAccess: true).
+        // On cancellation, revert to v2 Sandbox (35 calls/mo, apiAccess: true).
         // Better goodwill than v1 'free' (3 reports, no API) and consistent
         // with the new-user default in usage.ts.
         await sql`

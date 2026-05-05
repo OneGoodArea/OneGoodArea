@@ -50,7 +50,7 @@ describe("PLANS object integrity", () => {
   });
 
   it("v2 active plans match the AR-143 approved monthly call quotas", () => {
-    expect(PLANS.sandbox.reportsPerMonth).toBe(250);
+    expect(PLANS.sandbox.reportsPerMonth).toBe(35);
     expect(PLANS.starter_v2.reportsPerMonth).toBe(1500);
     expect(PLANS.build.reportsPerMonth).toBe(6000);
     expect(PLANS.scale.reportsPerMonth).toBe(25000);
