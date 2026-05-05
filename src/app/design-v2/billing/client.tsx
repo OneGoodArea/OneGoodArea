@@ -291,7 +291,7 @@ function CurrentPlanStrip({
   const rag = pct >= 90 ? "#FFB8A8" : pct >= 70 ? "#FFE07A" : "var(--signal)";
 
   return (
-    <div style={{
+    <div className="aiq-dash-usage" style={{
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 0,
