@@ -41,11 +41,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify API access (Developer, Business, or Growth plan)
+    // Verify API access (any v2 paid tier or Sandbox; v1 grandfathered Developer/Business/Growth also valid)
     const apiAllowed = await hasApiAccess(userId);
     if (!apiAllowed) {
       return NextResponse.json(
-        { error: "API access requires a Developer, Business, or Growth plan" },
+        { error: "API access not available on your current plan. Upgrade at /pricing." },
         { status: 403, headers }
       );
     }
