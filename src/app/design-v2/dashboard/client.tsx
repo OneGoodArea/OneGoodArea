@@ -177,12 +177,17 @@ function McpAddOnSection({ mcp }: { mcp: McpStatus }) {
     }
   }
 
-  // STATE 1: Plan includes MCP free (Growth+ / Enterprise)
-  if (mcp.includedFreeViaPlan) {
+  // STATE 1: Has MCP access — render active card with appropriate label.
+  // Branches in priority: plan-included > add-on > catch-all (e.g. superuser
+  // implicit access without a paid plan or add-on row).
+  if (mcp.access) {
+    let label = "Active";
+    if (mcp.includedFreeViaPlan) label = "Included free on your plan";
+    else if (mcp.addonOwned) label = "MCP add-on · £29 / month";
     return (
       <AppCard title="MCP Server">
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <McpStatusBadge status="active" label="Included free on your plan" />
+          <McpStatusBadge status="active" label={label} />
           <McpUsageStat callsThisMonth={mcp.callsThisMonth} />
           <McpInstallHelp />
         </div>
@@ -190,20 +195,8 @@ function McpAddOnSection({ mcp }: { mcp: McpStatus }) {
     );
   }
 
-  // STATE 2: Add-on owned
-  if (mcp.addonOwned) {
-    return (
-      <AppCard title="MCP Server">
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <McpStatusBadge status="active" label="MCP add-on · £29 / month" />
-          <McpUsageStat callsThisMonth={mcp.callsThisMonth} />
-          <McpInstallHelp />
-        </div>
-      </AppCard>
-    );
-  }
-
-  // STATE 3: Not owned, not on plan that includes — show purchase CTA
+  // STATE 2: No MCP access (not superuser, plan doesn't include, no add-on).
+  // Show purchase CTA.
   return (
     <AppCard title="MCP Server">
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
