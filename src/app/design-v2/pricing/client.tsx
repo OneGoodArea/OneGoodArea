@@ -3,45 +3,20 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import type { PlanId } from "@/lib/stripe";
 import { Styles } from "../_shared/styles";
 import { Nav } from "../_shared/nav";
 import { Footer } from "../_shared/footer";
 import { AiqIcon, type IconName } from "../_shared/icons";
+import { DISPLAY_PLANS, PlanGrid, type DisplayPlan } from "../_shared/plan-grid";
 
 /* ═══════════════════════════════════════════════════════════════
    OneGoodArea · Design V2 · /pricing
-   Two audiences (web reports / API access), shared visual system.
-   Preserves Stripe checkout wiring + session-aware CTAs.
+   Marketing-only surface. Authenticated upgrades happen at
+   /dashboard/billing (AR-145). Plan grid + card definitions live
+   in _shared/plan-grid.tsx so this page and the in-app billing
+   page can never drift.
    ═══════════════════════════════════════════════════════════════ */
-
-// Pricing v2 (AR-143). Source of truth: project_pricing_v2.md memory file
-// + src/lib/stripe.ts PLANS object. Keep in lockstep.
-type PlanId =
-  | "free" | "starter" | "pro"
-  | "developer" | "business" | "growth"  // v1 legacy (grandfathering only)
-  | "sandbox" | "starter_v2" | "build" | "scale" | "growth_v2" | "enterprise";
-
-type Plan = {
-  id: PlanId;
-  name: string;
-  price: string;
-  cadence: string;
-  reports: string;
-  perReport?: string;
-  blurb: string;
-  cta: string;
-  highlight?: boolean;
-  disabled?: boolean;
-  free?: boolean; // skip Stripe checkout, route to /sign-up instead
-};
-
-const API_PLANS: Plan[] = [
-  { id: "sandbox",    name: "Sandbox",  price: "£0",      cadence: "forever",   reports: "35 calls / month",      perReport: "no card required", blurb: "Evaluate the API across a handful of postcodes and intents. Hard cap.",                cta: "Start free", free: true },
-  { id: "starter_v2", name: "Starter",  price: "£49",     cadence: "/ month",   reports: "1,500 calls / month",   perReport: "£0.033 per call",  blurb: "Indie devs and small PropTech in early production.",                              cta: "Start building" },
-  { id: "build",      name: "Build",    price: "£149",    cadence: "/ month",   reports: "6,000 calls / month",   perReport: "£0.025 per call",  blurb: "Niche PropTech, small InsureTech MGA, small CRE team.",                           cta: "Get Build", highlight: true },
-  { id: "scale",      name: "Scale",    price: "£499",    cadence: "/ month",   reports: "25,000 calls / month",  perReport: "£0.020 per call",  blurb: "Mid-tier challenger lender, mid insurer, mid PropTech.",                          cta: "Get Scale" },
-  { id: "growth_v2",  name: "Growth",   price: "£1,499",  cadence: "/ month",   reports: "100,000 calls / month", perReport: "£0.015 per call",  blurb: "Larger lenders, regional InsureTech, scaling PropTech.",                          cta: "Get Growth" },
-];
 
 type Row = { label: string; values: (string | boolean)[]; sub?: string; icon?: IconName };
 
@@ -69,8 +44,6 @@ export default function PricingClient() {
   const { data: session } = useSession();
   const isSignedIn = !!session;
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
-  const [loading, setLoading] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isSignedIn) return;
@@ -79,38 +52,21 @@ export default function PricingClient() {
     }).catch(() => setCurrentPlan("free"));
   }, [isSignedIn]);
 
-  async function handleUpgrade(planId: PlanId) {
-    if (planId === "free" || loading) return;
-    // Sandbox is free, no Stripe checkout — route straight to sign-up
-    const sandboxIds: PlanId[] = ["sandbox"];
-    if (sandboxIds.includes(planId)) {
-      window.location.href = `/sign-up?plan=sandbox`;
+  /* Marketing-page click-through (AR-147). Never opens Stripe Checkout from
+     here — that lives at /dashboard/billing now. Anonymous users go through
+     sign-up; signed-in users go straight to the in-app billing surface with
+     the chosen plan pre-selected so they hit the confirm panel. */
+  function handleSelect(planId: PlanId) {
+    if (planId === "sandbox") {
+      window.location.href = isSignedIn ? `/dashboard` : `/sign-up?plan=sandbox`;
       return;
     }
+    const billingTarget = `/dashboard/billing?plan=${encodeURIComponent(planId)}`;
     if (!isSignedIn) {
-      window.location.href = `/sign-in?callbackUrl=/pricing`;
+      window.location.href = `/sign-up?callbackUrl=${encodeURIComponent(billingTarget)}`;
       return;
     }
-    setLoading(planId);
-    setError(null);
-    try {
-      const res = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: planId }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Something went wrong. Please try again.");
-        setLoading(null);
-        return;
-      }
-      if (data.url) window.location.href = data.url;
-      else { setError("Failed to start checkout."); setLoading(null); }
-    } catch {
-      setError("Network error. Check your connection and try again.");
-      setLoading(null);
-    }
+    window.location.href = billingTarget;
   }
 
   return (
@@ -118,15 +74,15 @@ export default function PricingClient() {
       <Styles />
       <Nav />
       <Hero />
-      {error && <ErrorBanner error={error} onDismiss={() => setError(null)} />}
       <PlanGrid
-        plans={API_PLANS}
+        plans={DISPLAY_PLANS}
         currentPlan={currentPlan}
-        loading={loading}
-        onUpgrade={handleUpgrade}
+        loading={null}
+        mode="marketing"
+        onSelect={handleSelect}
       />
       <EnterpriseCallout />
-      <FeatureTable plans={API_PLANS} rows={API_FEATURES} />
+      <FeatureTable plans={DISPLAY_PLANS} rows={API_FEATURES} />
       <RetiredPlansNotice />
       <Faq />
       <FinalCta isSignedIn={isSignedIn} />
@@ -201,212 +157,6 @@ function Hero() {
   );
 }
 
-/* ─────── Error banner ─────── */
-
-function ErrorBanner({ error, onDismiss }: { error: string; onDismiss: () => void }) {
-  return (
-    <div style={{
-      maxWidth: 1100, margin: "20px auto 0", padding: "0 40px",
-    }}>
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "12px 18px",
-        background: "rgba(239,68,68,0.06)",
-        border: "1px solid rgba(239,68,68,0.25)",
-        borderRadius: 4,
-      }}>
-        <span style={{
-          fontFamily: "var(--mono)", fontSize: 12,
-          color: "#b42318", letterSpacing: "-0.005em",
-        }}>{error}</span>
-        <button onClick={onDismiss} style={{
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-          letterSpacing: "0.18em", textTransform: "uppercase",
-          color: "#b42318", background: "transparent", border: "none",
-          cursor: "pointer", padding: "4px 8px",
-        }}>Dismiss</button>
-      </div>
-    </div>
-  );
-}
-
-/* ─────── Plan grid ─────── */
-
-function PlanGrid({
-  plans, currentPlan, loading, onUpgrade,
-}: {
-  plans: Plan[];
-  currentPlan: string | null; loading: string | null;
-  onUpgrade: (id: PlanId) => void;
-}) {
-  return (
-    <section style={{
-      background: "var(--bg)",
-      padding: "48px 0 80px",
-    }}>
-      <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 40px" }}>
-        <div className="aiq-plan-grid" style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${plans.length}, 1fr)`,
-          gap: 0, border: "1px solid var(--border)",
-        }}>
-          {plans.map((p, i) => (
-            <PlanCard
-              key={p.id}
-              plan={p}
-              isLast={i === plans.length - 1}
-              isCurrent={currentPlan === p.id}
-              isLoading={loading === p.id}
-              onClick={() => onUpgrade(p.id)}
-            />
-          ))}
-        </div>
-        <div style={{
-          marginTop: 18, display: "flex", gap: 22, flexWrap: "wrap",
-          fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-          letterSpacing: "0.16em", textTransform: "uppercase",
-          color: "var(--text-3)",
-        }}>
-          <span>✓ Billed monthly</span>
-          <span>✓ Cancel any time</span>
-          <span>✓ No setup fee</span>
-          <span>✓ Cached hits free</span>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function PlanCard({ plan, isLast, isCurrent, isLoading, onClick }: {
-  plan: Plan; isLast: boolean; isCurrent: boolean; isLoading: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <div style={{
-      padding: "34px 30px 32px",
-      borderRight: !isLast ? "1px solid var(--border)" : "none",
-      background: plan.highlight ? "var(--bg-off)" : "var(--bg)",
-      position: "relative",
-      display: "flex", flexDirection: "column", gap: 14,
-      minHeight: 380,
-    }}>
-      {plan.highlight && (
-        <span aria-hidden style={{
-          position: "absolute", top: 0, left: 0, right: 0,
-          height: 3, background: "var(--signal)",
-        }} />
-      )}
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-          letterSpacing: "0.22em", textTransform: "uppercase",
-          color: "var(--text-2)",
-        }}>{plan.name}</div>
-        {plan.highlight && !isCurrent && (
-          <span style={{
-            fontFamily: "var(--mono)", fontSize: 9, fontWeight: 500,
-            letterSpacing: "0.22em", textTransform: "uppercase",
-            color: "var(--ink)", background: "var(--signal-dim)",
-            padding: "3px 7px 2px", borderRadius: 2,
-          }}>Popular</span>
-        )}
-        {isCurrent && (
-          <span style={{
-            fontFamily: "var(--mono)", fontSize: 9, fontWeight: 500,
-            letterSpacing: "0.22em", textTransform: "uppercase",
-            color: "var(--signal-ink)", background: "var(--signal)",
-            padding: "3px 7px 2px", borderRadius: 2,
-          }}>Current</span>
-        )}
-      </div>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-        <span style={{
-          fontFamily: "var(--display)", fontSize: 52, fontWeight: 500,
-          letterSpacing: "-0.024em", color: "var(--ink-deep)", lineHeight: 1,
-        }}>{plan.price}</span>
-        <span style={{
-          fontFamily: "var(--mono)", fontSize: 12,
-          color: "var(--text-3)", letterSpacing: "0.04em",
-        }}>{plan.cadence}</span>
-      </div>
-      <div style={{
-        fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-        letterSpacing: "0.04em", color: "var(--ink)",
-      }}>{plan.reports}</div>
-      {plan.perReport && (
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10.5,
-          color: "var(--text-3)",
-        }}>{plan.perReport}</div>
-      )}
-      <p style={{
-        fontFamily: "var(--sans)", fontSize: 14, fontWeight: 400,
-        lineHeight: 1.5, color: "var(--text-2)",
-        letterSpacing: "-0.003em", margin: 0,
-      }}>{plan.blurb}</p>
-      <div style={{ flex: 1 }} />
-      <button
-        onClick={onClick}
-        disabled={plan.disabled || isCurrent || isLoading}
-        style={{
-          width: "100%", height: 44,
-          fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-          letterSpacing: "0.16em", textTransform: "uppercase",
-          color: isCurrent
-            ? "var(--ink)"
-            : plan.highlight ? "var(--signal-ink)" : "var(--ink-deep)",
-          background: isCurrent
-            ? "var(--signal-dim)"
-            : plan.highlight ? "var(--signal)" : "transparent",
-          border: isCurrent
-            ? "1px solid var(--ink)"
-            : plan.highlight
-              ? "1px solid var(--ink-deep)"
-              : "1px solid var(--border)",
-          borderRadius: 999, cursor: (plan.disabled || isCurrent || isLoading) ? "default" : "pointer",
-          opacity: plan.disabled ? 0.45 : 1,
-          transition: "background 140ms ease, border-color 140ms ease, transform 140ms cubic-bezier(0.16,1,0.3,1)",
-          display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 10,
-        }}
-        onMouseEnter={(e) => {
-          if (plan.disabled || isCurrent || isLoading) return;
-          if (!plan.highlight) {
-            e.currentTarget.style.background = "var(--bg-off)";
-            e.currentTarget.style.borderColor = "var(--ink)";
-          } else {
-            e.currentTarget.style.transform = "translateY(-1px)";
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (plan.disabled || isCurrent || isLoading) return;
-          if (!plan.highlight) {
-            e.currentTarget.style.background = "transparent";
-            e.currentTarget.style.borderColor = "var(--border)";
-          } else {
-            e.currentTarget.style.transform = "translateY(0)";
-          }
-        }}
-      >
-        {isLoading ? <Spinner /> : isCurrent ? "Current plan" : plan.cta}
-        {!isLoading && !isCurrent && !plan.disabled && (
-          <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
-        )}
-      </button>
-    </div>
-  );
-}
-
-function Spinner() {
-  return (
-    <span style={{
-      width: 14, height: 14, borderRadius: "50%",
-      border: "1.5px solid currentColor", borderTopColor: "transparent",
-      display: "inline-block",
-      animation: "aiq-spin 800ms linear infinite",
-    }} />
-  );
-}
-
 /* ─────── Enterprise callout (API tab) ─────── */
 
 function EnterpriseCallout() {
@@ -478,7 +228,7 @@ function EnterpriseCallout() {
 /* ─────── Feature comparison ─────── */
 
 function FeatureTable({ plans, rows }: {
-  plans: Plan[]; rows: Row[];
+  plans: DisplayPlan[]; rows: Row[];
 }) {
   return (
     <section style={{
