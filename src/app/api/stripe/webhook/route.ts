@@ -3,7 +3,7 @@ import { stripe } from "@/lib/stripe";
 import { sql } from "@/lib/db";
 import { trackEvent } from "@/lib/activity";
 import Stripe from "stripe";
-import { ensureWebhookEventsTable } from "@/lib/db-schema";
+import { ensureWebhookEventsTable, ensureSubscriptionAddonsTable } from "@/lib/db-schema";
 import { logger } from "@/lib/logger";
 import { generateId } from "@/lib/id";
 import { asSubscription } from "@/lib/stripe-types";
@@ -80,7 +80,46 @@ export async function POST(req: NextRequest) {
         const session = event.data.object as Stripe.Checkout.Session;
         const clerkUserId = session.metadata?.user_id;
         const plan = session.metadata?.plan;
+        const addon = session.metadata?.addon;
 
+        // Branch 1: ADD-ON purchase (e.g. MCP £29/mo). Insert into
+        // subscription_addons table; do NOT touch the user's main plan row.
+        if (clerkUserId && addon && session.subscription) {
+          const sub = asSubscription(
+            await stripe.subscriptions.retrieve(session.subscription as string)
+          );
+
+          // Ensure subscription_addons table exists (lazy migration)
+          await ensureSubscriptionAddonsTable();
+
+          await sql`
+            INSERT INTO subscription_addons (
+              id, user_id, addon_key, stripe_subscription_id, stripe_customer_id,
+              status, current_period_start, current_period_end
+            )
+            VALUES (
+              ${generateId("addon")},
+              ${clerkUserId},
+              ${addon},
+              ${sub.id},
+              ${session.customer as string},
+              'active',
+              ${new Date(sub.current_period_start * 1000).toISOString()},
+              ${new Date(sub.current_period_end * 1000).toISOString()}
+            )
+            ON CONFLICT (user_id, addon_key) DO UPDATE SET
+              stripe_subscription_id = ${sub.id},
+              stripe_customer_id = ${session.customer as string},
+              status = 'active',
+              current_period_start = ${new Date(sub.current_period_start * 1000).toISOString()},
+              current_period_end = ${new Date(sub.current_period_end * 1000).toISOString()},
+              updated_at = NOW()
+          `;
+          trackEvent("addon.purchased", clerkUserId, { addon });
+          break;
+        }
+
+        // Branch 2: MAIN PLAN upgrade (existing behaviour preserved)
         if (clerkUserId && plan) trackEvent("plan.upgraded", clerkUserId, { plan });
         if (clerkUserId && plan && session.subscription) {
           const sub = asSubscription(
@@ -113,7 +152,25 @@ export async function POST(req: NextRequest) {
 
       case "customer.subscription.updated": {
         const sub = asSubscription(event.data.object);
+        const subMetadata = (sub as unknown as { metadata?: Record<string, string> }).metadata ?? {};
+        const addon = subMetadata.addon;
 
+        // Branch 1: this is an add-on subscription (mirror status into addon row)
+        if (addon) {
+          await ensureSubscriptionAddonsTable();
+          const newStatus = sub.status === "active" || sub.status === "trialing" ? "active" : sub.status === "past_due" ? "past_due" : "cancelled";
+          await sql`
+            UPDATE subscription_addons SET
+              status = ${newStatus},
+              current_period_start = ${new Date(sub.current_period_start * 1000).toISOString()},
+              current_period_end = ${new Date(sub.current_period_end * 1000).toISOString()},
+              updated_at = NOW()
+            WHERE stripe_subscription_id = ${sub.id}
+          `;
+          break;
+        }
+
+        // Branch 2: main plan subscription (existing behaviour)
         await sql`
           UPDATE subscriptions SET
             status = ${sub.status === "active" ? "active" : "inactive"},
@@ -127,10 +184,27 @@ export async function POST(req: NextRequest) {
 
       case "customer.subscription.deleted": {
         const sub = asSubscription(event.data.object);
+        const subMetadata = (sub as unknown as { metadata?: Record<string, string> }).metadata ?? {};
+        const addon = subMetadata.addon;
 
+        // Branch 1: add-on cancellation (mark cancelled — keep row for history)
+        if (addon) {
+          await ensureSubscriptionAddonsTable();
+          await sql`
+            UPDATE subscription_addons SET
+              status = 'cancelled',
+              updated_at = NOW()
+            WHERE stripe_subscription_id = ${sub.id}
+          `;
+          break;
+        }
+
+        // Branch 2: main plan cancellation — revert to v2 Sandbox.
+        // Better goodwill than v1 'free' (3 reports, no API) and consistent
+        // with the new-user default in usage.ts.
         await sql`
           UPDATE subscriptions SET
-            plan = 'free',
+            plan = 'sandbox',
             status = 'active',
             stripe_subscription_id = NULL,
             current_period_start = NULL,

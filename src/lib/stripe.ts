@@ -27,63 +27,229 @@ export const stripe = new Proxy({} as Stripe, {
   },
 });
 
+/* OneGoodArea PLANS (canonical source of truth for tiers, quotas, and Stripe IDs).
+ *
+ * Two generations live side-by-side:
+ *   - V1 LEGACY (free / starter / pro / developer / business / growth) — kept ALIVE for
+ *     grandfathered Stripe subscribers. As of 2026-05-04, zero paying customers, but the
+ *     architecture supports grandfathering for the day someone pays.
+ *   - V2 ACTIVE (sandbox / starter_v2 / build / scale / growth_v2 / enterprise) — pricing v2
+ *     per AR-143, approved 2026-05-04. Public on /pricing. New signups land here.
+ *
+ * V2 design notes (research-backed, see PRICING-V2-PROPOSAL.md):
+ *   - Per-call rates beat WhenFresh / Hometrack / Cotality 50-95% while keeping 60%+ margin
+ *     via 24h cache (typical 70-80% cache-hit rate at scale).
+ *   - Sandbox is the developer-led discovery tier — small quota, hard cap, no card.
+ *   - Build / Scale / Growth are eligible for 17% annual prepay (12 for 10).
+ *   - Enterprise has a published floor (£4,999/mo) that anchors contract conversations;
+ *     real ACVs negotiated to £60-250k/yr.
+ *
+ * Overage rules (V2 only):
+ *   - Sandbox + Starter: HARD cap. 429 thrown, no extra calls billed.
+ *   - Build / Scale / Growth: SOFT cap with +25% headroom included, then £0.05/call (~3x list,
+ *     market-standard penalty).
+ *   - Enterprise: NEGOTIATED. Custom commit + tiered overage in MSA.
+ *
+ * Stripe price IDs:
+ *   - V1 fallbacks are LIVE production price IDs (existing customers).
+ *   - V2 fallbacks are EMPTY — must be set via env var (.env.local for dev, Vercel for prod).
+ *     TEST mode IDs were generated 2026-05-04 via scripts/create-stripe-prices.ts and are
+ *     in .env.local. To create LIVE prices, run the script with --execute --live.
+ */
 export const PLANS = {
+  /* ─── V1 LEGACY (grandfathering only — not on public /pricing) ─── */
   free: {
     name: "Free",
     price: 0,
     reportsPerMonth: 3,
     priceId: null,
     apiAccess: false,
+    mcpAccess: false,
+    generation: "v1",
+    overageMode: "hard" as const,
   },
   starter: {
-    name: "Starter",
-    price: 2900, // £29 in pence
+    name: "Starter (legacy)",
+    price: 2900, // £29
     reportsPerMonth: 20,
     priceId: process.env.STRIPE_STARTER_PRICE_ID!,
     apiAccess: false,
+    mcpAccess: false,
+    generation: "v1",
+    overageMode: "hard" as const,
   },
   pro: {
-    name: "Pro",
-    price: 7900, // £79 in pence
+    name: "Pro (legacy)",
+    price: 7900, // £79
     reportsPerMonth: 75,
     priceId: process.env.STRIPE_PRO_PRICE_ID!,
     apiAccess: false,
+    mcpAccess: false,
+    generation: "v1",
+    overageMode: "hard" as const,
   },
   developer: {
-    name: "Developer",
-    price: 9900, // £99 in pence (April 2026 reprice)
+    name: "Developer (legacy)",
+    price: 9900, // £99 (April 2026 reprice)
     reportsPerMonth: 10000,
     priceId: process.env.STRIPE_DEVELOPER_PRICE_ID || "price_1TQrWc0oI5PvXSlpqAlXQaG8",
     apiAccess: true,
+    mcpAccess: false,
+    generation: "v1",
+    overageMode: "hard" as const,
   },
   business: {
-    name: "Business",
-    price: 49900, // £499 in pence (April 2026 reprice)
+    name: "Business (legacy)",
+    price: 49900, // £499 (April 2026 reprice)
     reportsPerMonth: 50000,
     priceId: process.env.STRIPE_BUSINESS_PRICE_ID || "price_1TQrWd0oI5PvXSlpFeLRBkAt",
     apiAccess: true,
+    mcpAccess: false,
+    generation: "v1",
+    overageMode: "hard" as const,
   },
   growth: {
-    name: "Growth",
-    price: 149900, // £1,499 in pence (April 2026 reprice)
+    name: "Growth (legacy)",
+    price: 149900, // £1,499 (April 2026 reprice)
     reportsPerMonth: 250000,
     priceId: process.env.STRIPE_GROWTH_PRICE_ID || "price_1TQrWd0oI5PvXSlpZASdLVI4",
     apiAccess: true,
+    mcpAccess: false,
+    generation: "v1",
+    overageMode: "hard" as const,
+  },
+
+  /* ─── V2 ACTIVE (public on /pricing, AR-143) ───
+   *
+   * mcpAccess: included free on growth_v2 + enterprise per AR-144 / AR-142
+   * pricing v2 spec. Sandbox/Starter/Build/Scale must purchase the £29/mo
+   * MCP add-on (purchase flow shipping in a follow-up; for now, "false" =
+   * no MCP access, MCP server refuses to start at /api/v1/me check).
+   */
+  sandbox: {
+    name: "Sandbox",
+    price: 0,
+    reportsPerMonth: 35,
+    priceId: null,
+    apiAccess: true,
+    mcpAccess: false,
+    generation: "v2",
+    overageMode: "hard" as const,
+    overagePence: 0,
+    softCapHeadroomPct: 0,
+  },
+  starter_v2: {
+    name: "Starter",
+    price: 4900, // £49
+    reportsPerMonth: 1500,
+    priceId: process.env.STRIPE_STARTER_V2_PRICE_ID || "",
+    apiAccess: true,
+    mcpAccess: false,
+    generation: "v2",
+    overageMode: "hard" as const,
+    overagePence: 0,
+    softCapHeadroomPct: 0,
+  },
+  build: {
+    name: "Build",
+    price: 14900, // £149
+    reportsPerMonth: 6000,
+    priceId: process.env.STRIPE_BUILD_PRICE_ID || "",
+    annualPriceId: process.env.STRIPE_BUILD_ANNUAL_PRICE_ID || "",
+    apiAccess: true,
+    mcpAccess: false,
+    generation: "v2",
+    overageMode: "soft" as const,
+    overagePence: 5, // £0.05 per overage call
+    softCapHeadroomPct: 25,
+  },
+  scale: {
+    name: "Scale",
+    price: 49900, // £499
+    reportsPerMonth: 25000,
+    priceId: process.env.STRIPE_SCALE_PRICE_ID || "",
+    annualPriceId: process.env.STRIPE_SCALE_ANNUAL_PRICE_ID || "",
+    apiAccess: true,
+    mcpAccess: false,
+    generation: "v2",
+    overageMode: "soft" as const,
+    overagePence: 5,
+    softCapHeadroomPct: 25,
+  },
+  growth_v2: {
+    name: "Growth",
+    price: 149900, // £1,499
+    reportsPerMonth: 100000,
+    priceId: process.env.STRIPE_GROWTH_V2_PRICE_ID || "",
+    annualPriceId: process.env.STRIPE_GROWTH_V2_ANNUAL_PRICE_ID || "",
+    apiAccess: true,
+    mcpAccess: true, // included free on Growth+
+    generation: "v2",
+    overageMode: "soft" as const,
+    overagePence: 5,
+    softCapHeadroomPct: 25,
+  },
+  enterprise: {
+    name: "Enterprise",
+    price: 499900, // £4,999/mo public floor; real ACVs negotiated £60-250k/yr
+    reportsPerMonth: 250000, // floor; negotiated up
+    priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID || "",
+    apiAccess: true,
+    mcpAccess: true, // included free on Enterprise
+    generation: "v2",
+    overageMode: "negotiated" as const,
+    overagePence: 0,
+    softCapHeadroomPct: 0,
   },
 } as const;
 
-/* April 2026 reprice notes:
- * - New live price IDs above replace the original Developer £49 / Business £249 / Growth £499 tiers.
- * - Existing subscribers on the old prices are grandfathered: their subscriptions keep the
- *   original Stripe price IDs and the original quotas via Stripe's subscription model.
- * - The OLD price IDs (price_1T9Q3V0oI5PvXSlpwhhZ2Sef, price_1T8ukH0oI5PvXSlprHY1EWJY,
- *   price_1T9Q3W0oI5PvXSlpCMjOCgKO) remain ACTIVE in Stripe — do not archive.
- * - Production env vars on Vercel can override these defaults. If unset, the new live
- *   price IDs are used. Test/staging environments should set their own STRIPE_*_PRICE_ID
- *   env vars to test-mode price IDs in .env.local.
- */
-
 export type PlanId = keyof typeof PLANS;
 
-export const API_PLANS: PlanId[] = ["developer", "business", "growth"];
+/* Plan groupings.
+ *
+ * API_PLANS = any tier with apiAccess: true (used by hasApiAccess() to gate API key issuance).
+ * CONSUMER_PLANS = legacy v1 consumer tiers (free / starter / pro), kept for grandfathering.
+ * V2_PUBLIC_PLANS = the tiers shown on /pricing (the live commercial offering).
+ * V2_PAID_PLANS = paid v2 tiers (excludes Sandbox).
+ */
+export const API_PLANS: PlanId[] = [
+  // V1 (grandfathered)
+  "developer", "business", "growth",
+  // V2 active
+  "sandbox", "starter_v2", "build", "scale", "growth_v2", "enterprise",
+];
 export const CONSUMER_PLANS: PlanId[] = ["free", "starter", "pro"];
+export const V2_PUBLIC_PLANS: PlanId[] = ["sandbox", "starter_v2", "build", "scale", "growth_v2", "enterprise"];
+export const V2_PAID_PLANS: PlanId[] = ["starter_v2", "build", "scale", "growth_v2", "enterprise"];
+
+/* ─── Add-ons (AR-144 Session 5) ───
+ *
+ * Add-ons sit ON TOP of any plan. Each is a separate Stripe Subscription
+ * (not a SubscriptionItem on the main plan) so cancellation is isolated.
+ *
+ * Source of truth = subscription_addons table; this map is purely for
+ * Stripe price lookup + display name. To check if a user has an add-on,
+ * use hasAddon(userId, addonKey) in src/lib/usage.ts.
+ */
+export type AddonKey = "mcp";
+
+export interface AddonConfig {
+  key: AddonKey;
+  name: string;
+  pricePence: number;
+  priceId: string;
+  description: string;
+}
+
+export const ADDONS: Record<AddonKey, AddonConfig> = {
+  mcp: {
+    key: "mcp",
+    name: "MCP Server access",
+    pricePence: 2900, // £29/mo
+    priceId: process.env.STRIPE_MCP_ADDON_PRICE_ID || "",
+    description:
+      "MCP (Model Context Protocol) server for Claude Desktop, Cursor, and any MCP-compatible client. Score postcodes inline in your AI workflow.",
+  },
+};
+
+export const ADDON_KEYS: AddonKey[] = ["mcp"];

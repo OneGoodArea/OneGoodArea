@@ -166,8 +166,8 @@ export default function SignUpClient() {
       <AuthShell>
         <AuthTitle
           eyebrow="Create an account"
-          title={<>Start with a <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>single postcode.</em></>}
-          sub="Three reports a month are free. No card, no timer, no trial."
+          title={<>Start your <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>free sandbox.</em></>}
+          sub="35 API calls a month for evaluation. Free forever, no card, no timer, no trial."
         />
 
         <OAuthButtons onProvider={handleOAuth} />

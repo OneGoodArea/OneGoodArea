@@ -60,7 +60,7 @@ function SignInForm() {
       <AuthTitle
         eyebrow="Welcome back"
         title={<>Sign <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>in.</em></>}
-        sub="Pick up where you left off. Your watchlist and report history are waiting."
+        sub="Pick up where you left off. Your reports, API keys, and watchlist are waiting."
       />
 
       <OAuthButtons onProvider={handleOAuth} />

@@ -14,9 +14,12 @@ import { AiqIcon, type IconName } from "../_shared/icons";
    Preserves Stripe checkout wiring + session-aware CTAs.
    ═══════════════════════════════════════════════════════════════ */
 
+// Pricing v2 (AR-143). Source of truth: project_pricing_v2.md memory file
+// + src/lib/stripe.ts PLANS object. Keep in lockstep.
 type PlanId =
   | "free" | "starter" | "pro"
-  | "developer" | "business" | "growth";
+  | "developer" | "business" | "growth"  // v1 legacy (grandfathering only)
+  | "sandbox" | "starter_v2" | "build" | "scale" | "growth_v2" | "enterprise";
 
 type Plan = {
   id: PlanId;
@@ -29,28 +32,35 @@ type Plan = {
   cta: string;
   highlight?: boolean;
   disabled?: boolean;
+  free?: boolean; // skip Stripe checkout, route to /sign-up instead
 };
 
 const API_PLANS: Plan[] = [
-  { id: "developer", name: "Developer", price: "£99",   cadence: "/ month", reports: "10,000 reports / month",  perReport: "≈1p per call",  blurb: "For solo devs and small PropTech prototypes.", cta: "Start building" },
-  { id: "business",  name: "Business",  price: "£499",  cadence: "/ month", reports: "50,000 reports / month",  perReport: "≈1p per call",  blurb: "For platforms and integrations with steady traffic.", cta: "Get Business", highlight: true },
-  { id: "growth",    name: "Growth",    price: "£1,499", cadence: "/ month", reports: "250,000 reports / month", perReport: "≈0.6p per call", blurb: "For portals and high-volume surfaces.", cta: "Get Growth" },
+  { id: "sandbox",    name: "Sandbox",  price: "£0",      cadence: "forever",   reports: "35 calls / month",      perReport: "no card required", blurb: "Evaluate the API across a handful of postcodes and intents. Hard cap.",                cta: "Start free", free: true },
+  { id: "starter_v2", name: "Starter",  price: "£49",     cadence: "/ month",   reports: "1,500 calls / month",   perReport: "£0.033 per call",  blurb: "Indie devs and small PropTech in early production.",                              cta: "Start building" },
+  { id: "build",      name: "Build",    price: "£149",    cadence: "/ month",   reports: "6,000 calls / month",   perReport: "£0.025 per call",  blurb: "Niche PropTech, small InsureTech MGA, small CRE team.",                           cta: "Get Build", highlight: true },
+  { id: "scale",      name: "Scale",    price: "£499",    cadence: "/ month",   reports: "25,000 calls / month",  perReport: "£0.020 per call",  blurb: "Mid-tier challenger lender, mid insurer, mid PropTech.",                          cta: "Get Scale" },
+  { id: "growth_v2",  name: "Growth",   price: "£1,499",  cadence: "/ month",   reports: "100,000 calls / month", perReport: "£0.015 per call",  blurb: "Larger lenders, regional InsureTech, scaling PropTech.",                          cta: "Get Growth" },
 ];
 
 type Row = { label: string; values: (string | boolean)[]; sub?: string; icon?: IconName };
 
+// Columns: Sandbox · Starter · Build · Scale · Growth (5 tiers).
+// CRITICAL RULE (per feedback_no_invented_claims.md): only list features that
+// are SHIPPED. No "coming soon" rows in this comparison table. Roadmap items
+// belong in a separate Roadmap section, NEVER as gated features in this table.
 const API_FEATURES: Row[] = [
-  { label: "API reports / month",        values: ["10,000", "50,000", "250,000"],     icon: "data" },
-  { label: "REST API access",            values: [true, true, true],          sub: "Bearer token, JSON in/out", icon: "api" },
-  { label: "API key management",         values: [true, true, true],          sub: "Create, revoke, rotate", icon: "key" },
-  { label: "Full API documentation",     values: [true, true, true],          sub: "Routes, params, response shapes", icon: "read" },
-  { label: "30 req/min rate limit",      values: [true, true, true],          sub: "Per key, sliding window", icon: "gauge" },
-  { label: "24-hour response cache",     values: [true, true, true],          sub: "Cache hits don't count against quota", icon: "cache" },
-  { label: "Seven public datasets",      values: [true, true, true],          sub: "Postcodes.io · Police.uk · IMD · OSM · Land Registry · EA · Ofsted", icon: "map" },
-  { label: "Written narrative",          values: [true, true, true],          sub: "Plain-English read with cited facts", icon: "read" },
-  { label: "Usage dashboard",            values: [true, true, true],          sub: "30-day trend + per-key breakdown", icon: "dash" },
-  { label: "Drop-in widget",             values: [true, true, true],          sub: "CORS-enabled, cache-only, 60/hr per origin", icon: "widget" },
-  { label: "Priority support",           values: [false, true, true],         sub: "Faster response times", icon: "support" },
+  { label: "API calls / month",          values: ["250", "1,500", "6,000", "25,000", "100,000"],                  icon: "data" },
+  { label: "Effective £ per call",       values: ["—", "£0.033", "£0.025", "£0.020", "£0.015"],                    icon: "gauge" },
+  { label: "REST API + Bearer auth",     values: [true, true, true, true, true],            sub: "JSON in/out, OpenAPI 3.0 spec", icon: "api" },
+  { label: "5-dimension scoring engine", values: [true, true, true, true, true],            sub: "Confidence per dimension, source attribution, version stamp", icon: "intent" },
+  { label: "7 public datasets",          values: [true, true, true, true, true],            sub: "Postcodes.io · Police.uk · IMD · OSM · Land Registry · EA · Ofsted", icon: "map" },
+  { label: "Drop-in widget (CORS)",      values: [true, true, true, true, true],            sub: "Cache-only, 60/hr per origin", icon: "widget" },
+  { label: "API keys",                   values: ["1", "1", "5", "10", "25"],                icon: "key" },
+  { label: "30 req/min rate limit",      values: [true, true, true, true, true],            sub: "Per key, sliding window", icon: "gauge" },
+  { label: "24-hour response cache",     values: [true, true, true, true, true],            sub: "Cache hits don't count against quota", icon: "cache" },
+  { label: "Email support",              values: ["community", "community", "5-day", "48h", "24h"], icon: "support" },
+  { label: "MCP server access",          values: ["add-on", "add-on", "add-on", "add-on", true],     sub: "Claude Desktop / Cursor / any MCP client. £29/mo add-on for Sandbox/Starter/Build/Scale; included free on Growth and Enterprise.", icon: "api" },
 ];
 
 /* ─────── Root ─────── */
@@ -71,6 +81,12 @@ export default function PricingClient() {
 
   async function handleUpgrade(planId: PlanId) {
     if (planId === "free" || loading) return;
+    // Sandbox is free, no Stripe checkout — route straight to sign-up
+    const sandboxIds: PlanId[] = ["sandbox"];
+    if (sandboxIds.includes(planId)) {
+      window.location.href = `/sign-up?plan=sandbox`;
+      return;
+    }
     if (!isSignedIn) {
       window.location.href = `/sign-in?callbackUrl=/pricing`;
       return;
@@ -426,13 +442,13 @@ function EnterpriseCallout() {
               fontSize: 26, letterSpacing: "-0.014em", lineHeight: 1.2,
               color: "#FFFFFF", marginBottom: 6,
             }}>
-              5,000+ reports, SLAs, <em style={{ fontStyle: "italic", color: "var(--signal)" }}>annual contracts.</em>
+              From £4,999 / month, 250,000+ calls, <em style={{ fontStyle: "italic", color: "var(--signal)" }}>custom contract.</em>
             </div>
             <div style={{
               fontFamily: "var(--sans)", fontSize: 14,
               color: "rgba(255,255,255,0.64)", lineHeight: 1.5,
             }}>
-              Dedicated support, volume pricing, bespoke integration help. Drop us a line and we&apos;ll put a proposal together.
+              Custom MSA, signed DPA, SOC 2 Type I letter, named CSM, 99.95% SLA, address-level scoring (when shipped), white-label and on-prem options. Annual contract, negotiated overage, volume pricing. Built for big-6 lenders, top-10 insurers, and Houseful-scale platforms.
             </div>
           </div>
           <a

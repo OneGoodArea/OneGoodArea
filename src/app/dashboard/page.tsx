@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { redirect } from "next/navigation";
-import { getUserPlan, getMonthlyReportCount } from "@/lib/usage";
+import { getUserPlan, getMonthlyReportCount, hasMcpAccess, hasAddon, getMcpUsageThisMonth } from "@/lib/usage";
 import { PLANS } from "@/lib/stripe";
 import DashboardClient from "@/app/design-v2/dashboard/client";
 import { rows, ReportRow, SavedAreaRow } from "@/lib/db-types";
@@ -68,14 +68,18 @@ export default async function DashboardPage() {
   const userId = session?.user?.id;
   if (!userId) redirect("/sign-in");
 
-  const [reports, plan, used, savedAreas] = await Promise.all([
+  const [reports, plan, used, savedAreas, mcpAccess, mcpAddonOwned, mcpUsage] = await Promise.all([
     getUserReports(userId),
     getUserPlan(userId),
     getMonthlyReportCount(userId),
     getSavedAreas(userId),
+    hasMcpAccess(userId),
+    hasAddon(userId, "mcp"),
+    getMcpUsageThisMonth(userId),
   ]);
 
   const planConfig = PLANS[plan];
+  const planIncludesMcp = planConfig?.mcpAccess === true;
 
   return (
     <DashboardClient
@@ -85,6 +89,12 @@ export default async function DashboardPage() {
       used={used}
       limit={planConfig.reportsPerMonth}
       savedAreas={savedAreas}
+      mcp={{
+        access: mcpAccess,
+        addonOwned: mcpAddonOwned,
+        includedFreeViaPlan: planIncludesMcp,
+        callsThisMonth: mcpUsage,
+      }}
     />
   );
 }

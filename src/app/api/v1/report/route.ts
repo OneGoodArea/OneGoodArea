@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateApiKey } from "@/lib/api-keys";
-import { hasApiAccess, canGenerateReport } from "@/lib/usage";
+import { hasApiAccess, canGenerateReport, trackMcpCall, hasMcpAccess } from "@/lib/usage";
 import { generateReport } from "@/lib/generate-report";
 import { trackEvent } from "@/lib/activity";
 import { Intent } from "@/lib/types";
@@ -9,6 +9,12 @@ import { validateLocationInput, validateIntent } from "@/lib/validation";
 import { isAppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { RATE_LIMITS } from "@/lib/config";
+
+/** Detect MCP-originated requests via the User-Agent stamp set by the MCP api-client. */
+function isFromMcpServer(req: NextRequest): boolean {
+  const ua = req.headers.get("user-agent") ?? "";
+  return ua.toLowerCase().includes("onegoodarea-mcp-server");
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,11 +47,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify API access (Developer, Business, or Growth plan)
+    // Verify API access (any v2 paid tier or Sandbox; v1 grandfathered Developer/Business/Growth also valid)
     const apiAllowed = await hasApiAccess(userId);
     if (!apiAllowed) {
       return NextResponse.json(
-        { error: "API access requires a Developer, Business, or Growth plan" },
+        { error: "API access not available on your current plan. Upgrade at /pricing." },
         { status: 403, headers }
       );
     }
@@ -84,8 +90,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // If this request came from the MCP server, the user must have MCP
+    // entitlement (plan-included or active add-on). Block here so we don't
+    // give MCP capability to users who don't pay for it.
+    const fromMcp = isFromMcpServer(req);
+    if (fromMcp) {
+      const mcpAllowed = await hasMcpAccess(userId);
+      if (!mcpAllowed) {
+        return NextResponse.json(
+          {
+            error:
+              "MCP server access not included on your plan. Add the £29/mo MCP add-on at /pricing or upgrade to Growth/Enterprise (included free).",
+          },
+          { status: 403, headers }
+        );
+      }
+    }
+
     const result = await generateReport(locationCheck.sanitized, intent as Intent, userId);
-    trackEvent("api.report.generated", userId, { area, intent, reportId: result.id });
+    trackEvent("api.report.generated", userId, { area, intent, reportId: result.id, source: fromMcp ? "mcp" : "api" });
+
+    // Increment MCP usage counter (best-effort, non-blocking)
+    if (fromMcp) {
+      trackMcpCall(userId).catch((err) => logger.error("[api/v1/report] trackMcpCall failed:", err));
+    }
 
     return NextResponse.json(
       {

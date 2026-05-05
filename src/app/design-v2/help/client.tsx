@@ -39,7 +39,7 @@ const TOPICS: Topic[] = [
     title: "Billing + plans",
     desc: "Pricing tiers, upgrades, cancellations, and invoices.",
     items: [
-      { q: "What plans are available?",           a: "Free tier (3 reports/month, web-only, sandbox use). API access: Developer £49/mo (100 calls), Business £249/mo (500), Growth £499/mo (1,500). Enterprise: custom contracts, version pinning, SOC 2 documentation, dedicated support. Web report tiers (Starter, Pro) were retired April 2026. Existing subscribers continue on their current plan." },
+      { q: "What plans are available?",           a: "Free Sandbox (35 API calls/month, no card required — for evaluation only). Paid tiers: Starter £49/mo (1,500 calls), Build £149/mo (6,000), Scale £499/mo (25,000), Growth £1,499/mo (100,000). Enterprise from £4,999/mo with custom annual contracts. Existing subscribers on retired tiers (legacy Free, Starter, Pro, Developer, Business, Growth) continue on their current plan." },
       { q: "How do I upgrade?",                   a: "Go to the Pricing page and select your plan. Payment is handled securely via Stripe." },
       { q: "Can I cancel any time?",              a: "Yes. Cancel from your dashboard via the billing portal. You keep access until the end of your billing period." },
       { q: "What happens if I hit my limit?",     a: "You see a prompt to upgrade. Your existing reports remain accessible, you just can't generate new ones until your limit resets on the 1st of the month." },
@@ -50,9 +50,9 @@ const TOPICS: Topic[] = [
     title: "API access",
     desc: "API keys, integration, rate limits, and documentation.",
     items: [
-      { q: "How do I get API access?",            a: "Subscribe to a Developer (£49/mo), Business (£249/mo), or Growth (£499/mo) plan, then generate API keys from your dashboard." },
+      { q: "How do I get API access?",            a: "Sign up for the free Sandbox tier and generate an API key from your dashboard. Sandbox includes 35 calls per month at no cost — enough to evaluate the API across a few postcodes and intents. Upgrade to Starter, Build, Scale, or Growth on the Pricing page when you need more." },
       { q: "Where are the API docs?",             a: "Full documentation with code examples in cURL, Node.js, Python, and Go is available at /docs." },
-      { q: "What are the rate limits?",           a: "API plans include 100 to 1,500 reports/month depending on tier. Rate limit is 30 requests per minute per key. Cached responses (24 hours) don't count against your quota." },
+      { q: "What are the rate limits?",           a: "Plans include 250 to 100,000+ API calls per month depending on tier. Rate limit is 30 requests per minute per key. Cached responses (24 hours) don't count against your quota." },
       { q: "Can I revoke an API key?",            a: "Yes. Revoke any key instantly from your dashboard. The key stops working immediately." },
     ],
   },
