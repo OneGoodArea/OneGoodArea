@@ -51,10 +51,11 @@ export const stripe = new Proxy({} as Stripe, {
  *   - Enterprise: NEGOTIATED. Custom commit + tiered overage in MSA.
  *
  * Stripe price IDs:
- *   - V1 fallbacks are LIVE production price IDs (existing customers).
- *   - V2 fallbacks are EMPTY — must be set via env var (.env.local for dev, Vercel for prod).
- *     TEST mode IDs were generated 2026-05-04 via scripts/create-stripe-prices.ts and are
- *     in .env.local. To create LIVE prices, run the script with --execute --live.
+ *   - V1 + V2 fallbacks are LIVE production price IDs hardcoded as `||` defaults.
+ *   - .env.local override is used for local TEST mode (so npm run dev hits TEST Stripe);
+ *     Vercel production has no env override → falls through to LIVE fallbacks here.
+ *   - To regenerate LIVE prices (e.g., after a major reprice), run
+ *     scripts/create-stripe-prices.ts --execute --live and update the fallbacks below.
  */
 export const PLANS = {
   /* ─── V1 LEGACY (grandfathering only — not on public /pricing) ─── */
@@ -142,7 +143,7 @@ export const PLANS = {
     name: "Starter",
     price: 4900, // £49
     reportsPerMonth: 1500,
-    priceId: process.env.STRIPE_STARTER_V2_PRICE_ID || "",
+    priceId: process.env.STRIPE_STARTER_V2_PRICE_ID || "price_1TTgK20oI5PvXSlph3zeFq7u",
     apiAccess: true,
     mcpAccess: false,
     generation: "v2",
@@ -154,8 +155,8 @@ export const PLANS = {
     name: "Build",
     price: 14900, // £149
     reportsPerMonth: 6000,
-    priceId: process.env.STRIPE_BUILD_PRICE_ID || "",
-    annualPriceId: process.env.STRIPE_BUILD_ANNUAL_PRICE_ID || "",
+    priceId: process.env.STRIPE_BUILD_PRICE_ID || "price_1TTgK30oI5PvXSlp4UqqilQY",
+    annualPriceId: process.env.STRIPE_BUILD_ANNUAL_PRICE_ID || "price_1TTgK30oI5PvXSlpW3g2yR19",
     apiAccess: true,
     mcpAccess: false,
     generation: "v2",
@@ -167,8 +168,8 @@ export const PLANS = {
     name: "Scale",
     price: 49900, // £499
     reportsPerMonth: 25000,
-    priceId: process.env.STRIPE_SCALE_PRICE_ID || "",
-    annualPriceId: process.env.STRIPE_SCALE_ANNUAL_PRICE_ID || "",
+    priceId: process.env.STRIPE_SCALE_PRICE_ID || "price_1TTgK40oI5PvXSlpHa2gnWvP",
+    annualPriceId: process.env.STRIPE_SCALE_ANNUAL_PRICE_ID || "price_1TTgK40oI5PvXSlpxodxVkUj",
     apiAccess: true,
     mcpAccess: false,
     generation: "v2",
@@ -180,8 +181,8 @@ export const PLANS = {
     name: "Growth",
     price: 149900, // £1,499
     reportsPerMonth: 100000,
-    priceId: process.env.STRIPE_GROWTH_V2_PRICE_ID || "",
-    annualPriceId: process.env.STRIPE_GROWTH_V2_ANNUAL_PRICE_ID || "",
+    priceId: process.env.STRIPE_GROWTH_V2_PRICE_ID || "price_1TTgK50oI5PvXSlpnbzX6QRE",
+    annualPriceId: process.env.STRIPE_GROWTH_V2_ANNUAL_PRICE_ID || "price_1TTgK50oI5PvXSlpPsX0QA3n",
     apiAccess: true,
     mcpAccess: true, // included free on Growth+
     generation: "v2",
@@ -193,7 +194,7 @@ export const PLANS = {
     name: "Enterprise",
     price: 499900, // £4,999/mo public floor; real ACVs negotiated £60-250k/yr
     reportsPerMonth: 250000, // floor; negotiated up
-    priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID || "",
+    priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID || "price_1TTgK60oI5PvXSlp1kWCkxth",
     apiAccess: true,
     mcpAccess: true, // included free on Enterprise
     generation: "v2",
@@ -246,7 +247,7 @@ export const ADDONS: Record<AddonKey, AddonConfig> = {
     key: "mcp",
     name: "MCP Server access",
     pricePence: 2900, // £29/mo
-    priceId: process.env.STRIPE_MCP_ADDON_PRICE_ID || "",
+    priceId: process.env.STRIPE_MCP_ADDON_PRICE_ID || "price_1TTgK70oI5PvXSlpJ1WQ6CmV",
     description:
       "MCP (Model Context Protocol) server for Claude Desktop, Cursor, and any MCP-compatible client. Score postcodes inline in your AI workflow.",
   },

@@ -8,7 +8,7 @@ export type IconName =
   | "buyer" | "renter" | "investor" | "agent" | "operator" | "researcher"
   | "data" | "intent" | "read" | "map" | "api"
   | "repeat" | "share" | "watchlist" | "fresh" | "pdf" | "compare"
-  | "key" | "gauge" | "cache" | "dash" | "widget" | "support";
+  | "key" | "gauge" | "cache" | "dash" | "widget" | "support" | "billing";
 
 export function AiqIcon({ name, size = 26 }: { name: IconName; size?: number }) {
   const s = size;
@@ -238,6 +238,15 @@ export function AiqIcon({ name, size = 26 }: { name: IconName; size?: number }) 
         <svg {...common}>
           <circle cx="14" cy="14" r="9" />
           <path d="M14 9 L15.3 12.3 L18.8 12.6 L16.1 14.9 L16.9 18.4 L14 16.6 L11.1 18.4 L11.9 14.9 L9.2 12.6 L12.7 12.3 Z" fill={accent} stroke="var(--ink)" strokeWidth="1" />
+        </svg>
+      );
+    case "billing":
+      // credit card · billing / subscription
+      return (
+        <svg {...common}>
+          <rect x="4" y="8" width="20" height="13" rx="1.5" />
+          <path d="M4 12.5 H24" />
+          <rect x="6" y="16" width="6" height="2.4" fill={accent} stroke="none" />
         </svg>
       );
   }

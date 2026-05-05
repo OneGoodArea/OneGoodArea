@@ -18,14 +18,15 @@ type NavItem = { href: string; label: string; icon: IconName; exact?: boolean };
 
 const PRIMARY: NavItem[] = [
   { href: "/dashboard",  label: "Dashboard",  icon: "dash",       exact: true },
-  { href: "/dashboard",  label: "Reports",    icon: "read" },
+  { href: "/dashboard",  label: "Reports",    icon: "read",       exact: true },
   { href: "/report",     label: "New report", icon: "map" },
   { href: "/compare",    label: "Compare",    icon: "compare" },
 ];
 
 const SECONDARY: NavItem[] = [
-  { href: "/api-usage",  label: "API + usage", icon: "api" },
-  { href: "/settings",   label: "Settings",    icon: "key" },
+  { href: "/api-usage",          label: "API + usage", icon: "api" },
+  { href: "/dashboard/billing",  label: "Billing",     icon: "billing" },
+  { href: "/settings",           label: "Settings",    icon: "key" },
 ];
 
 export function AppShell({
@@ -310,6 +311,14 @@ function NavIconDark({ name, active }: { name: IconName; active: boolean }) {
           <path d="M13 11 L23 11" />
           <path d="M20 11 L20 13.5" />
           <path d="M17 11 L17 13" />
+        </svg>
+      );
+    case "billing":
+      return (
+        <svg {...common}>
+          <rect x="4" y="8" width="20" height="13" rx="1.5" />
+          <path d="M4 12.5 H24" />
+          <rect x="6" y="16" width="6" height="2.4" fill={accent} stroke={stroke} />
         </svg>
       );
     default:
