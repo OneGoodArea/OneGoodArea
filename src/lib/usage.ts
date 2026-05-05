@@ -35,6 +35,20 @@ export async function hasApiAccess(userId: string): Promise<boolean> {
   return API_PLANS.includes(plan);
 }
 
+/**
+ * MCP access is gated separately from API access. Per AR-144:
+ *   - Growth + Enterprise: included
+ *   - Sandbox / Starter / Build / Scale: must purchase £29/mo add-on (flow TBD)
+ *   - V1 legacy tiers: no MCP
+ *
+ * Superuser gets MCP for testing.
+ */
+export async function hasMcpAccess(userId: string): Promise<boolean> {
+  if (await isSuperuser(userId)) return true;
+  const plan = await getUserPlan(userId);
+  return PLANS[plan]?.mcpAccess === true;
+}
+
 export async function getMonthlyReportCount(userId: string): Promise<number> {
   const rows = await sql`
     SELECT COUNT(*)::int as count FROM reports

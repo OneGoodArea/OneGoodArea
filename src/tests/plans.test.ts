@@ -98,6 +98,27 @@ describe("PLANS object integrity", () => {
     expect(PLANS.enterprise.overageMode).toBe("negotiated");
   });
 
+  it("mcpAccess included free only on Growth+ and Enterprise (per AR-144)", () => {
+    expect(PLANS.growth_v2.mcpAccess).toBe(true);
+    expect(PLANS.enterprise.mcpAccess).toBe(true);
+  });
+
+  it("mcpAccess NOT included on Sandbox/Starter/Build/Scale (must add £29/mo add-on)", () => {
+    expect(PLANS.sandbox.mcpAccess).toBe(false);
+    expect(PLANS.starter_v2.mcpAccess).toBe(false);
+    expect(PLANS.build.mcpAccess).toBe(false);
+    expect(PLANS.scale.mcpAccess).toBe(false);
+  });
+
+  it("mcpAccess NOT included on any v1 legacy tier (consumer or grandfathered API)", () => {
+    expect(PLANS.free.mcpAccess).toBe(false);
+    expect(PLANS.starter.mcpAccess).toBe(false);
+    expect(PLANS.pro.mcpAccess).toBe(false);
+    expect(PLANS.developer.mcpAccess).toBe(false);
+    expect(PLANS.business.mcpAccess).toBe(false);
+    expect(PLANS.growth.mcpAccess).toBe(false);
+  });
+
   it("price IDs are unique within v2 active tiers (no copy-paste regression)", () => {
     const v2Ids: PlanId[] = ["starter_v2", "build", "scale", "growth_v2", "enterprise"];
     const priceIds = v2Ids

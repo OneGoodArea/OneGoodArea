@@ -60,6 +60,7 @@ const API_FEATURES: Row[] = [
   { label: "30 req/min rate limit",      values: [true, true, true, true, true],            sub: "Per key, sliding window", icon: "gauge" },
   { label: "24-hour response cache",     values: [true, true, true, true, true],            sub: "Cache hits don't count against quota", icon: "cache" },
   { label: "Email support",              values: ["community", "community", "5-day", "48h", "24h"], icon: "support" },
+  { label: "MCP server access",          values: ["add-on", "add-on", "add-on", "add-on", true],     sub: "Claude Desktop / Cursor / any MCP client. £29/mo add-on for Sandbox/Starter/Build/Scale; included free on Growth and Enterprise.", icon: "api" },
 ];
 
 /* ─────── Root ─────── */

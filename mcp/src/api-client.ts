@@ -37,6 +37,18 @@ export interface OogaApiClientOptions {
   timeoutMs?: number;
 }
 
+export interface OogaMeResponse {
+  plan: string;
+  plan_name: string;
+  generation: "v1" | "v2";
+  api_access: boolean;
+  mcp_access: boolean;
+  reports_per_month: number;
+  used_this_month: number;
+  limit_this_month: number | null;
+  engine_version: string;
+}
+
 export class OogaApiError extends Error {
   constructor(
     message: string,
@@ -58,6 +70,43 @@ export class OogaApiClient {
     this.apiKey = opts.apiKey;
     this.baseUrl = (opts.baseUrl ?? DEFAULT_BASE).replace(/\/$/, "");
     this.timeoutMs = opts.timeoutMs ?? 60_000;
+  }
+
+  /**
+   * GET /api/v1/me — returns the authenticated user's plan + entitlements.
+   * Called by the MCP server at startup to check mcp_access.
+   */
+  async me(): Promise<OogaMeResponse> {
+    const url = `${this.baseUrl}/api/v1/me`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000);
+
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${this.apiKey}`,
+          "User-Agent": "onegoodarea-mcp-server/0.2.0",
+        },
+        signal: controller.signal,
+      });
+
+      const text = await res.text();
+      let body: unknown;
+      try { body = JSON.parse(text); } catch { body = text; }
+
+      if (!res.ok) {
+        const errMsg =
+          typeof body === "object" && body !== null && "error" in body
+            ? String((body as { error: unknown }).error)
+            : `HTTP ${res.status}`;
+        throw new OogaApiError(errMsg, res.status, body);
+      }
+
+      return body as OogaMeResponse;
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   /**

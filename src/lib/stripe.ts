@@ -64,6 +64,7 @@ export const PLANS = {
     reportsPerMonth: 3,
     priceId: null,
     apiAccess: false,
+    mcpAccess: false,
     generation: "v1",
     overageMode: "hard" as const,
   },
@@ -73,6 +74,7 @@ export const PLANS = {
     reportsPerMonth: 20,
     priceId: process.env.STRIPE_STARTER_PRICE_ID!,
     apiAccess: false,
+    mcpAccess: false,
     generation: "v1",
     overageMode: "hard" as const,
   },
@@ -82,6 +84,7 @@ export const PLANS = {
     reportsPerMonth: 75,
     priceId: process.env.STRIPE_PRO_PRICE_ID!,
     apiAccess: false,
+    mcpAccess: false,
     generation: "v1",
     overageMode: "hard" as const,
   },
@@ -91,6 +94,7 @@ export const PLANS = {
     reportsPerMonth: 10000,
     priceId: process.env.STRIPE_DEVELOPER_PRICE_ID || "price_1TQrWc0oI5PvXSlpqAlXQaG8",
     apiAccess: true,
+    mcpAccess: false,
     generation: "v1",
     overageMode: "hard" as const,
   },
@@ -100,6 +104,7 @@ export const PLANS = {
     reportsPerMonth: 50000,
     priceId: process.env.STRIPE_BUSINESS_PRICE_ID || "price_1TQrWd0oI5PvXSlpFeLRBkAt",
     apiAccess: true,
+    mcpAccess: false,
     generation: "v1",
     overageMode: "hard" as const,
   },
@@ -109,17 +114,25 @@ export const PLANS = {
     reportsPerMonth: 250000,
     priceId: process.env.STRIPE_GROWTH_PRICE_ID || "price_1TQrWd0oI5PvXSlpZASdLVI4",
     apiAccess: true,
+    mcpAccess: false,
     generation: "v1",
     overageMode: "hard" as const,
   },
 
-  /* ─── V2 ACTIVE (public on /pricing, AR-143) ─── */
+  /* ─── V2 ACTIVE (public on /pricing, AR-143) ───
+   *
+   * mcpAccess: included free on growth_v2 + enterprise per AR-144 / AR-142
+   * pricing v2 spec. Sandbox/Starter/Build/Scale must purchase the £29/mo
+   * MCP add-on (purchase flow shipping in a follow-up; for now, "false" =
+   * no MCP access, MCP server refuses to start at /api/v1/me check).
+   */
   sandbox: {
     name: "Sandbox",
     price: 0,
     reportsPerMonth: 35,
     priceId: null,
     apiAccess: true,
+    mcpAccess: false,
     generation: "v2",
     overageMode: "hard" as const,
     overagePence: 0,
@@ -131,6 +144,7 @@ export const PLANS = {
     reportsPerMonth: 1500,
     priceId: process.env.STRIPE_STARTER_V2_PRICE_ID || "",
     apiAccess: true,
+    mcpAccess: false,
     generation: "v2",
     overageMode: "hard" as const,
     overagePence: 0,
@@ -143,6 +157,7 @@ export const PLANS = {
     priceId: process.env.STRIPE_BUILD_PRICE_ID || "",
     annualPriceId: process.env.STRIPE_BUILD_ANNUAL_PRICE_ID || "",
     apiAccess: true,
+    mcpAccess: false,
     generation: "v2",
     overageMode: "soft" as const,
     overagePence: 5, // £0.05 per overage call
@@ -155,6 +170,7 @@ export const PLANS = {
     priceId: process.env.STRIPE_SCALE_PRICE_ID || "",
     annualPriceId: process.env.STRIPE_SCALE_ANNUAL_PRICE_ID || "",
     apiAccess: true,
+    mcpAccess: false,
     generation: "v2",
     overageMode: "soft" as const,
     overagePence: 5,
@@ -167,6 +183,7 @@ export const PLANS = {
     priceId: process.env.STRIPE_GROWTH_V2_PRICE_ID || "",
     annualPriceId: process.env.STRIPE_GROWTH_V2_ANNUAL_PRICE_ID || "",
     apiAccess: true,
+    mcpAccess: true, // included free on Growth+
     generation: "v2",
     overageMode: "soft" as const,
     overagePence: 5,
@@ -178,6 +195,7 @@ export const PLANS = {
     reportsPerMonth: 250000, // floor; negotiated up
     priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID || "",
     apiAccess: true,
+    mcpAccess: true, // included free on Enterprise
     generation: "v2",
     overageMode: "negotiated" as const,
     overagePence: 0,
