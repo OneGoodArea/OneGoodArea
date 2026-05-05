@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateApiKey } from "@/lib/api-keys";
-import { getUserPlan, hasApiAccess, hasMcpAccess, canGenerateReport } from "@/lib/usage";
+import { getUserPlan, hasApiAccess, hasMcpAccess, canGenerateReport, listAddons, getMcpUsageThisMonth } from "@/lib/usage";
 import { PLANS } from "@/lib/stripe";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { RATE_LIMITS } from "@/lib/config";
@@ -49,11 +49,13 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const [plan, apiAllowed, mcpAllowed, usage] = await Promise.all([
+    const [plan, apiAllowed, mcpAllowed, usage, addons, mcpUsed] = await Promise.all([
       getUserPlan(userId),
       hasApiAccess(userId),
       hasMcpAccess(userId),
       canGenerateReport(userId),
+      listAddons(userId),
+      getMcpUsageThisMonth(userId),
     ]);
 
     const planConfig = PLANS[plan];
@@ -69,6 +71,8 @@ export async function GET(req: NextRequest) {
         used_this_month: usage.used,
         limit_this_month: usage.limit === Infinity ? null : usage.limit,
         engine_version: "2.0.0",
+        addons,
+        mcp_calls_this_month: mcpUsed,
       },
       { status: 200, headers }
     );

@@ -221,3 +221,35 @@ export const API_PLANS: PlanId[] = [
 export const CONSUMER_PLANS: PlanId[] = ["free", "starter", "pro"];
 export const V2_PUBLIC_PLANS: PlanId[] = ["sandbox", "starter_v2", "build", "scale", "growth_v2", "enterprise"];
 export const V2_PAID_PLANS: PlanId[] = ["starter_v2", "build", "scale", "growth_v2", "enterprise"];
+
+/* ─── Add-ons (AR-144 Session 5) ───
+ *
+ * Add-ons sit ON TOP of any plan. Each is a separate Stripe Subscription
+ * (not a SubscriptionItem on the main plan) so cancellation is isolated.
+ *
+ * Source of truth = subscription_addons table; this map is purely for
+ * Stripe price lookup + display name. To check if a user has an add-on,
+ * use hasAddon(userId, addonKey) in src/lib/usage.ts.
+ */
+export type AddonKey = "mcp";
+
+export interface AddonConfig {
+  key: AddonKey;
+  name: string;
+  pricePence: number;
+  priceId: string;
+  description: string;
+}
+
+export const ADDONS: Record<AddonKey, AddonConfig> = {
+  mcp: {
+    key: "mcp",
+    name: "MCP Server access",
+    pricePence: 2900, // £29/mo
+    priceId: process.env.STRIPE_MCP_ADDON_PRICE_ID || "",
+    description:
+      "MCP (Model Context Protocol) server for Claude Desktop, Cursor, and any MCP-compatible client. Score postcodes inline in your AI workflow.",
+  },
+};
+
+export const ADDON_KEYS: AddonKey[] = ["mcp"];

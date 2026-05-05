@@ -66,6 +66,67 @@ export async function ensureApiKeysTable() {
   `;
 }
 
+/**
+ * Subscription add-ons (AR-144 Session 5).
+ *
+ * One row per (user_id, addon_key) — composite uniqueness enforced. addon_key
+ * is a short string from the ADDONS map in src/lib/stripe.ts (currently only
+ * "mcp"; future: "estyn-scotland", "time-series", "premium-sla", "slack").
+ *
+ * status mirrors the Stripe subscription status for the add-on:
+ *   - "active" = paid + valid
+ *   - "cancelled" = user cancelled, kept until current_period_end then row deleted
+ *   - "past_due" = payment failed, addon temporarily disabled
+ *
+ * stripe_subscription_id ties back to the Stripe Subscription that funds this
+ * add-on. We use a SEPARATE Stripe Subscription per add-on (not a
+ * SubscriptionItem) so cancellation is isolated from the main plan.
+ */
+export async function ensureSubscriptionAddonsTable() {
+  await sql`
+    CREATE TABLE IF NOT EXISTS subscription_addons (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      addon_key TEXT NOT NULL,
+      stripe_subscription_id TEXT,
+      stripe_customer_id TEXT,
+      status TEXT NOT NULL DEFAULT 'active',
+      current_period_start TIMESTAMPTZ,
+      current_period_end TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE (user_id, addon_key)
+    )
+  `;
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_subscription_addons_user_active
+      ON subscription_addons (user_id) WHERE status = 'active'
+  `;
+}
+
+/**
+ * MCP usage tracking (AR-144 Session 5).
+ *
+ * Per-user, per-month counter incremented every time the /api/v1/report
+ * endpoint receives a request with the MCP User-Agent header. Lets us:
+ *   - Show usage on the dashboard ("X MCP calls this month")
+ *   - Bill differently in future if MCP usage diverges from API usage
+ *   - Spot heavy users to upsell
+ *
+ * Period is YYYY-MM string for cheap aggregation. month_total resets each month.
+ */
+export async function ensureMcpUsageTable() {
+  await sql`
+    CREATE TABLE IF NOT EXISTS mcp_usage (
+      user_id TEXT NOT NULL,
+      period TEXT NOT NULL,
+      call_count INTEGER NOT NULL DEFAULT 0,
+      last_call_at TIMESTAMPTZ DEFAULT NOW(),
+      PRIMARY KEY (user_id, period)
+    )
+  `;
+}
+
 export async function ensureReportCacheTable() {
   await sql`
     CREATE TABLE IF NOT EXISTS report_cache (

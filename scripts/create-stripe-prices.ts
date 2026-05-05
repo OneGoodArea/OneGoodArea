@@ -36,6 +36,23 @@ type TierSpec = {
   annualEligible: boolean;
 };
 
+type AddonSpec = {
+  addon: string;
+  productName: string;
+  productDescription: string;
+  monthlyPence: number;
+};
+
+const ADDONS: AddonSpec[] = [
+  {
+    addon: "mcp",
+    productName: "OneGoodArea MCP Server",
+    productDescription:
+      "Add-on: MCP (Model Context Protocol) server access for Claude Desktop, Cursor, and any MCP-compatible client. Score postcodes inline in your AI workflow. Included free on Growth and Enterprise plans.",
+    monthlyPence: 2900, // £29/mo
+  },
+];
+
 const TIERS: TierSpec[] = [
   {
     tier: "starter_v2",
@@ -215,6 +232,59 @@ async function main() {
         amountPence: annualPence,
       });
     }
+    console.log("");
+  }
+
+  // Add-ons (currently only MCP)
+  for (const a of ADDONS) {
+    console.log(`── ${a.productName} (addon: ${a.addon}) ──`);
+    console.log(`   Monthly: ${gbp(a.monthlyPence)} / month, no quota (entitlement-only)`);
+
+    if (!execute) {
+      console.log(`   [dry-run] would create product + 1 price`);
+      console.log("");
+      continue;
+    }
+
+    const existing = await stripe.products.search({
+      query: `metadata['addon']:'${a.addon}' AND metadata['version']:'v2'`,
+    });
+    let productId: string;
+    if (existing.data.length > 0) {
+      productId = existing.data[0].id;
+      console.log(`   [skip-product] reusing existing product ${productId}`);
+    } else {
+      const product = await stripe.products.create({
+        name: a.productName,
+        description: a.productDescription,
+        metadata: {
+          addon: a.addon,
+          version: "v2",
+          created_by: "create-stripe-prices.ts",
+          created_at: new Date().toISOString(),
+        },
+      });
+      productId = product.id;
+      console.log(`   [created] product ${productId}`);
+    }
+
+    const price = await stripe.prices.create({
+      product: productId,
+      unit_amount: a.monthlyPence,
+      currency: "gbp",
+      recurring: { interval: "month" },
+      metadata: { addon: a.addon, version: "v2", cadence: "monthly" },
+    });
+    console.log(`   [created] monthly price ${price.id}`);
+
+    const envVar = `STRIPE_${a.addon.toUpperCase()}_ADDON_PRICE_ID`;
+    created.push({
+      tier: `addon:${a.addon}`,
+      envVar,
+      priceId: price.id,
+      cadence: "monthly",
+      amountPence: a.monthlyPence,
+    });
     console.log("");
   }
 
