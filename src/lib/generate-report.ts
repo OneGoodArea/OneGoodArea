@@ -1,4 +1,3 @@
-import { anthropic } from "@/lib/anthropic";
 import { sql } from "@/lib/db";
 import { geocodeArea, GeocodedArea } from "@/lib/data-sources/postcodes";
 import { getCrimeData, formatCrimeDataForPrompt, CrimeSummary } from "@/lib/data-sources/police";
@@ -14,6 +13,7 @@ import { ensureReportCacheTable, getCachedReport, setCachedReport } from "@/lib/
 import { trackEvent } from "@/lib/activity";
 import { generateId } from "@/lib/id";
 import { logger } from "@/lib/logger";
+import { getAiProvider } from "@/lib/ai/providers";
 
 function generateReportId(): string {
   return generateId("rpt", 8);
@@ -260,28 +260,16 @@ export async function generateReport(
   );
 
   /* ── 4. AI narrates (scores are locked) ── */
-  const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 4096,
-    messages: [
-      {
-        role: "user",
-        content: buildPrompt(area, intent, scores, geo, crime, deprivation, amenities, flood, propertyPrices, ofsted),
-      },
-    ],
-  });
-
-  const textContent = message.content.find((c) => c.type === "text");
-  if (!textContent || textContent.type !== "text") {
-    throw new Error("No text response from AI");
-  }
+  const textContent = await (await getAiProvider()).generateNarrative(
+    buildPrompt(area, intent, scores, geo, crime, deprivation, amenities, flood, propertyPrices, ofsted)
+  );
 
   let report: AreaReport;
   try {
-    report = JSON.parse(textContent.text);
+    report = JSON.parse(textContent);
   } catch {
     // Strip markdown fences if AI wrapped JSON in ```json...```
-    const cleaned = textContent.text.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+    const cleaned = textContent.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
     report = JSON.parse(cleaned);
   }
 
