@@ -32,12 +32,13 @@ services:
 
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: oga_local
       POSTGRES_USER: oga_user
       POSTGRES_PASSWORD: oga_test_password_local
     ports:
-      - "5432:5432"
+      - "55432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U oga_user -d oga_local"]
       interval: 5s
