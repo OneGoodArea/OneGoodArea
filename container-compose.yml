@@ -14,7 +14,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      neon-proxy:
+      neon-compat-proxy:
         condition: service_healthy
       mailhog:
         condition: service_healthy
@@ -51,7 +51,7 @@ services:
     networks:
       - oga-network
 
-  neon-proxy:
+  neon-compat-proxy:
     build:
       context: ./services/neon-compat-proxy
       dockerfile: Dockerfile
