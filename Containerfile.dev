@@ -1,0 +1,29 @@
+# Development container with debug tooling
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install debug tools
+RUN apk add --no-cache \
+    curl \
+    wget \
+    ping \
+    dig \
+    netcat-openbsd \
+    net-tools \
+    vim \
+    nano \
+    htop \
+    dnsmasq \
+    postgresql-client
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+
+RUN npm run build
+
+EXPOSE 3000
+
+CMD ["npm", "run", "dev"]
