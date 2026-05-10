@@ -51,34 +51,55 @@ function formatStructured(level: LogLevel, message: string, context?: LogContext
   return JSON.stringify(log);
 }
 
+function normalizeArgs(args: unknown[]): { message: string; context?: LogContext } {
+  const [first, second, ...rest] = args;
+  if (typeof first === "string") {
+    if (second && typeof second === "object" && !Array.isArray(second)) {
+      return { message: first, context: second as LogContext };
+    }
+    if (rest.length > 0) {
+      return { message: [first, second, ...rest].filter(Boolean).map(String).join(" ") };
+    }
+    return { message: first };
+  }
+
+  return { message: args.map((value) => String(value)).join(" ") };
+}
+
 export const logger = {
-  trace(message: string, context?: LogContext) {
+  trace(...args: unknown[]) {
     if (shouldLog('trace')) {
+      const { message, context } = normalizeArgs(args);
       console.log(formatStructured('trace', message, context));
     }
   },
-  debug(message: string, context?: LogContext) {
+  debug(...args: unknown[]) {
     if (shouldLog('debug')) {
+      const { message, context } = normalizeArgs(args);
       console.log(formatStructured('debug', message, context));
     }
   },
-  verbose(message: string, context?: LogContext) {
+  verbose(...args: unknown[]) {
     if (shouldLog('verbose')) {
+      const { message, context } = normalizeArgs(args);
       console.log(formatStructured('verbose', message, context));
     }
   },
-  info(message: string, context?: LogContext) {
+  info(...args: unknown[]) {
     if (shouldLog('info')) {
+      const { message, context } = normalizeArgs(args);
       console.log(formatStructured('info', message, context));
     }
   },
-  warn(message: string, context?: LogContext) {
+  warn(...args: unknown[]) {
     if (shouldLog('warn')) {
+      const { message, context } = normalizeArgs(args);
       console.warn(formatStructured('warn', message, context));
     }
   },
-  error(message: string, context?: LogContext) {
+  error(...args: unknown[]) {
     if (shouldLog('error')) {
+      const { message, context } = normalizeArgs(args);
       console.error(formatStructured('error', message, context));
     }
   },

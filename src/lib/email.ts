@@ -1,19 +1,7 @@
-import { Resend } from "resend";
 import { AreaReport } from "@/lib/types";
 import { logger } from "@/lib/logger";
 import { APP_URL, EMAIL_FROM } from "@/lib/config";
-
-let resendClient: Resend | null = null;
-
-function getResendClient() {
-  if (resendClient) return resendClient;
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    throw new Error('Missing API key. Pass it to the constructor `new Resend("re_123")`');
-  }
-  resendClient = new Resend(apiKey);
-  return resendClient;
-}
+import { getEmailProvider } from "@/lib/email/providers";
 
 /* ────────────────────────────────────────────────────────────
    OneGoodArea email templates.
@@ -134,7 +122,7 @@ export async function sendVerificationEmail(email: string, token: string) {
     </div>
   `;
 
-  await getResendClient().emails.send({
+  await (await getEmailProvider()).send({
     from: EMAIL_FROM,
     to: email,
     subject: "Verify your email | OneGoodArea",
@@ -165,7 +153,7 @@ export async function sendWelcomeEmail(email: string, name: string) {
     ${ctaButton("Generate your first report", "https://www.onegoodarea.com/report")}
   `;
 
-  await getResendClient().emails.send({
+  await (await getEmailProvider()).send({
     from: EMAIL_FROM,
     to: email,
     subject: "Welcome to OneGoodArea",
@@ -197,7 +185,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
     </div>
   `;
 
-  await getResendClient().emails.send({
+  await (await getEmailProvider()).send({
     from: EMAIL_FROM,
     to: email,
     subject: "Reset your password | OneGoodArea",
@@ -324,12 +312,12 @@ export async function sendReportEmail(email: string, reportId: string, report: A
     </div>
   `;
 
-  const result = await getResendClient().emails.send({
+  await (await getEmailProvider()).send({
     from: EMAIL_FROM,
     to: email,
     subject: `Your OneGoodArea report: ${report.area || "Area Analysis"}`,
     html: baseTemplate(content),
   });
 
-  logger.info(`[report-email] Sent successfully:`, result);
+  logger.info("Report email sent", { email, reportId, area: report.area });
 }
