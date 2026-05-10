@@ -4,8 +4,7 @@ import GitHub from "next-auth/providers/github";
 import Credentials from "next-auth/providers/credentials";
 import { sql } from "@/lib/db";
 import { trackEvent } from "@/lib/activity";
-import { sendVerificationEmail } from "@/lib/email";
-import { hashPassword, verifyPassword, generateToken } from "@/lib/crypto";
+import { hashPassword, verifyPassword } from "@/lib/crypto";
 import { ensureUsersTable, ensureVerificationTable } from "@/lib/db-schema";
 import { row, UserRow } from "@/lib/db-types";
 import { generateId } from "@/lib/id";
@@ -58,23 +57,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             INSERT INTO users (id, email, name, password_hash, provider, email_verified)
             VALUES (${id}, ${email}, ${name}, ${hash}, 'credentials', FALSE)
           `;
-
-          // Send verification email (fire-and-forget)
-          try {
-            await ensureAuthTables();
-            const token = generateToken();
-            const tokenId = generateId("evt");
-            const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours
-
-            await sql`
-              INSERT INTO email_verification_tokens (id, user_id, email, token, expires_at)
-              VALUES (${tokenId}, ${id}, ${email}, ${token}, ${expiresAt})
-            `;
-
-            await sendVerificationEmail(email, token);
-          } catch (e) {
-            logger.error("Failed to send verification email:", e);
-          }
 
           return { id, email, name };
         }
