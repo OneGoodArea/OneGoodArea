@@ -53,3 +53,4 @@ scripts/uk-paths.json
 
 # claude code local state
 .claude/
+.aider*
