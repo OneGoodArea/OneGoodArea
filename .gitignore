@@ -38,6 +38,9 @@ yarn-error.log*
 # env files
 .env*.local
 .env
+.env.local.test
+.env.local.test.secrets
+*.secrets
 vercel-import.env
 
 # vercel
