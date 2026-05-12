@@ -1,0 +1,53 @@
+name: Feature request
+description: Suggest an improvement or new capability
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What's the underlying need? Who's affected? What's painful today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed solution
+      description: What change would solve it? Be specific about behaviour, not implementation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+
+  - type: dropdown
+    id: audience
+    attributes:
+      label: Primary audience
+      options:
+        - Mortgage lenders
+        - Insurance underwriters
+        - PropTech platforms
+        - Retail / CRE site selection
+        - Developers (API consumers)
+        - Internal (admin / ops)
+        - Multiple / unsure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority-signal
+    attributes:
+      label: Customer signal
+      description: Has a customer asked for this?
+      options:
+        - Yes, a paying customer has asked
+        - Yes, a design partner / prospect has asked
+        - No, internal idea
+        - I don't know
+    validations:
+      required: true

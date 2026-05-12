@@ -1,9 +1,16 @@
 import { describe, it, expect } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 import { parseAutomatedTests, generateTestSummary } from './parse-automated-test';
 
-const tests = parseAutomatedTests();
+// The fixture markdown is not part of the committed repo (lives in a gitignored
+// QA workspace). Skip this suite entirely when the fixture is missing so CI does
+// not redden on a known-absent file.
+const FIXTURE = path.join(process.cwd(), 'tests-automated.md');
+const fixturePresent = fs.existsSync(FIXTURE);
+const tests = fixturePresent ? parseAutomatedTests() : [];
 
-describe('Automated Tests from tests-automated.md', () => {
+describe.skipIf(!fixturePresent)('Automated Tests from tests-automated.md', () => {
 
   it('should parse all automated tests', () => {
     expect(tests.length).toBeGreaterThan(0);

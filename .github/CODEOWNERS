@@ -1,0 +1,36 @@
+# CODEOWNERS — automatic review assignment.
+# Patterns are evaluated top-to-bottom; the LAST matching pattern wins.
+# Format: <pattern> <owner1> <owner2> ...
+
+# Default owner for everything
+*                                       @ptengelmann
+
+# Scoring engine + methodology — extra care; do not merge without product owner review
+/src/lib/scoring-engine.ts              @ptengelmann
+/src/lib/methodology-versions.ts        @ptengelmann
+/src/lib/generate-report.ts             @ptengelmann
+/src/lib/data-sources/                  @ptengelmann
+/public/openapi.json                    @ptengelmann
+
+# Payments + billing
+/src/lib/stripe.ts                      @ptengelmann
+/src/lib/stripe-types.ts                @ptengelmann
+/src/app/api/stripe/                    @ptengelmann
+/src/app/design-v2/pricing/             @ptengelmann
+/src/app/design-v2/billing/             @ptengelmann
+
+# Auth + security
+/src/lib/auth.ts                        @ptengelmann
+/src/lib/crypto.ts                      @ptengelmann
+/src/lib/api-keys.ts                    @ptengelmann
+/src/lib/with-auth.ts                   @ptengelmann
+
+# Database schema + migrations
+/src/lib/db-schema.ts                   @ptengelmann
+/tests/db/                              @ptengelmann
+
+# CI, GitHub config, repo policy
+/.github/                               @ptengelmann
+/package.json                           @ptengelmann
+/next.config.ts                         @ptengelmann
+/tsconfig.json                          @ptengelmann

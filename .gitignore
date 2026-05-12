@@ -48,7 +48,12 @@ vercel-import.env
 
 # typescript
 *.tsbuildinfo
+tsconfig.tsbuildinfo
 next-env.d.ts
+
+# internal Claude-authored strategy + architecture snapshots
+STRATEGY.md
+ARCHITECTURE.md
 
 # design-v2 build artefacts — large topojson fetched once, SVG paths inlined in client.tsx
 scripts/world-*.json
