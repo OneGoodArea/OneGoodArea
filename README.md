@@ -243,6 +243,16 @@ Build: `npx next build`.
 When `OGA_ENABLE_TESTING_AUTH_ROUTES=true`, the app exposes testing-only auth routes under `/api/testing/auth/*`.
 If `OGA_TESTING_AUTH_TOKEN` is set, include it as the `x-test-auth-token` header on those requests.
 
+## Local runtime seed workflow
+
+The local runtime reset now applies deterministic seed data by default.
+
+```bash
+npm run local:test:reset   # drops schema, bootstraps, applies seeds
+npm run local:test:seed    # reapplies only seed files
+```
+
+Set `OGA_SEED_PROFILE` to switch datasets (default: `baseline`) and `OGA_SKIP_SEEDS=true` to run reset without seeding.
 ## Local runtime diagnostics dashboard
 
 When local runtime and testing auth routes are enabled, `/api/testing/runtime/dashboard` returns a runtime diagnostics snapshot plus health probes for app, Neon proxy, and MailHog.
