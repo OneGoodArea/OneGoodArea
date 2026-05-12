@@ -277,6 +277,35 @@ Core local endpoints:
 | AI responses look non-deterministic | Wrong AI provider | Set `OGA_AI_PROVIDER=mock` |
 | Seed data missing after reset | Seeds skipped/profile mismatch | Ensure `OGA_SKIP_SEEDS` is unset and `OGA_SEED_PROFILE=baseline` |
 
+## Local runtime architecture diagrams
+
+```text
+┌────────────────────────────┐
+│ Next.js App (localhost:3000) │
+└──────────────┬─────────────┘
+               │
+       ┌───────┴─────────────────────────────────────┐
+       │                                             │
+┌──────▼─────────────┐                     ┌─────────▼──────────┐
+│ Neon Compat Proxy  │                     │ MailHog            │
+│ (localhost:55433)  │                     │ SMTP:1025 UI:8025  │
+└──────┬─────────────┘                     └────────────────────┘
+       │
+┌──────▼─────────────┐
+│ PostgreSQL         │
+│ (localhost:55432)  │
+└────────────────────┘
+```
+
+```text
+runtime-reset.sh
+  ├─ drop/recreate public schema
+  ├─ apply tests/db/bootstrap/001-bootstrap.sql
+  └─ runtime-seed.sh
+      ├─ tests/seeds/framework/*.sql
+      └─ tests/seeds/profiles/$OGA_SEED_PROFILE/*.sql
+```
+
 ## Licence
 
 All rights reserved. This codebase is publicly visible for portfolio and reference purposes. It is not open source and may not be copied, modified, or distributed without written permission.
