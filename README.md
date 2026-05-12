@@ -306,6 +306,32 @@ runtime-reset.sh
       └─ tests/seeds/profiles/$OGA_SEED_PROFILE/*.sql
 ```
 
+## Local runtime provider switching guide
+
+Provider behavior is controlled only by environment variables in `.env.local.test`.
+
+| Concern | Variable | Typical local value | Alternative |
+| --- | --- | --- | --- |
+| AI provider | `OGA_AI_PROVIDER` | `mock` | `anthropic` |
+| Email provider | `OGA_EMAIL_PROVIDER` | `mailhog` | `resend` |
+| Log verbosity | `OGA_LOG_LEVEL` | `debug` | `trace`, `verbose`, `info`, `warn`, `error` |
+| Seed profile | `OGA_SEED_PROFILE` | `baseline` | any profile folder under `tests/seeds/profiles` |
+
+Switch profile example:
+
+```bash
+export OGA_SEED_PROFILE=baseline
+npm run local:test:reset
+```
+
+Switch to live providers example:
+
+```bash
+export OGA_AI_PROVIDER=anthropic
+export OGA_EMAIL_PROVIDER=resend
+npm run local:test:start
+```
+
 ## Licence
 
 All rights reserved. This codebase is publicly visible for portfolio and reference purposes. It is not open source and may not be copied, modified, or distributed without written permission.
