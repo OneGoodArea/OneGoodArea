@@ -247,6 +247,91 @@ If `OGA_TESTING_AUTH_TOKEN` is set, include it as the `x-test-auth-token` header
 
 When local runtime and testing auth routes are enabled, `/api/testing/runtime/dashboard` returns a runtime diagnostics snapshot plus health probes for app, Neon proxy, and MailHog.
 
+## Local runtime onboarding guide
+
+Use the local runtime when you want deterministic development and test behavior with local services.
+
+1. Copy `.env.local.test.example` to `.env.local.test`.
+2. Copy `.env.local.test.secrets.example` to `.env.local.test.secrets`.
+3. Set `NEXTAUTH_SECRET` (or `AUTH_SECRET`) and, if needed, `OGA_TESTING_AUTH_TOKEN`.
+4. Start services with `npm run local:test:start`.
+5. Reset and seed deterministic baseline data with `npm run local:test:reset`.
+6. Use `npm run local:test:stop` when finished.
+
+Core local endpoints:
+
+- App: `http://localhost:3000`
+- Runtime config: `GET /api/testing/runtime/config`
+- Runtime dashboard: `GET /api/testing/runtime/dashboard`
+- MailHog UI: `http://localhost:8025`
+
+## Local runtime troubleshooting guide
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| `runtime-up.sh` fails before startup | Container engine unavailable | Install/start Docker Desktop or Podman, then retry |
+| Runtime config endpoint returns 403 | `OGA_ENABLE_TESTING_AUTH_ROUTES` is false | Set it to `true` in `.env.local.test` |
+| Runtime endpoints return 401 | Missing or wrong `x-test-auth-token` | Use the value from `OGA_TESTING_AUTH_TOKEN` |
+| Dashboard shows `neonProxy: down` | Proxy container not healthy | Run `npm run local:test:stop && npm run local:test:start` |
+| Emails not visible in MailHog | Wrong email provider | Set `OGA_EMAIL_PROVIDER=mailhog` |
+| AI responses look non-deterministic | Wrong AI provider | Set `OGA_AI_PROVIDER=mock` |
+| Seed data missing after reset | Seeds skipped/profile mismatch | Ensure `OGA_SKIP_SEEDS` is unset and `OGA_SEED_PROFILE=baseline` |
+
+## Local runtime architecture diagrams
+
+```text
+┌────────────────────────────┐
+│ Next.js App (localhost:3000) │
+└──────────────┬─────────────┘
+               │
+       ┌───────┴─────────────────────────────────────┐
+       │                                             │
+┌──────▼─────────────┐                     ┌─────────▼──────────┐
+│ Neon Compat Proxy  │                     │ MailHog            │
+│ (localhost:55433)  │                     │ SMTP:1025 UI:8025  │
+└──────┬─────────────┘                     └────────────────────┘
+       │
+┌──────▼─────────────┐
+│ PostgreSQL         │
+│ (localhost:55432)  │
+└────────────────────┘
+```
+
+```text
+runtime-reset.sh
+  ├─ drop/recreate public schema
+  ├─ apply tests/db/bootstrap/001-bootstrap.sql
+  └─ runtime-seed.sh
+      ├─ tests/seeds/framework/*.sql
+      └─ tests/seeds/profiles/$OGA_SEED_PROFILE/*.sql
+```
+
+## Local runtime provider switching guide
+
+Provider behavior is controlled only by environment variables in `.env.local.test`.
+
+| Concern | Variable | Typical local value | Alternative |
+| --- | --- | --- | --- |
+| AI provider | `OGA_AI_PROVIDER` | `mock` | `anthropic` |
+| Email provider | `OGA_EMAIL_PROVIDER` | `mailhog` | `resend` |
+| Log verbosity | `OGA_LOG_LEVEL` | `debug` | `trace`, `verbose`, `info`, `warn`, `error` |
+| Seed profile | `OGA_SEED_PROFILE` | `baseline` | any profile folder under `tests/seeds/profiles` |
+
+Switch profile example:
+
+```bash
+export OGA_SEED_PROFILE=baseline
+npm run local:test:reset
+```
+
+Switch to live providers example:
+
+```bash
+export OGA_AI_PROVIDER=anthropic
+export OGA_EMAIL_PROVIDER=resend
+npm run local:test:start
+```
+
 ## Licence
 
 All rights reserved. This codebase is publicly visible for portfolio and reference purposes. It is not open source and may not be copied, modified, or distributed without written permission.
