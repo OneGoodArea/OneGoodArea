@@ -40,13 +40,46 @@ interface LogContext {
   [key: string]: unknown;
 }
 
+function serializeError(error: Error) {
+  return {
+    name: error.name,
+    message: error.message,
+    stack: error.stack,
+  };
+}
+
+function normalizeContext(context?: LogContext): LogContext | undefined {
+  if (!context) {
+    return undefined;
+  }
+
+  if (context instanceof Error) {
+    return { error: serializeError(context) };
+  }
+
+  const normalizedEntries = Object.entries(context).map(([key, value]) => {
+    if (value instanceof Error) {
+      return [key, serializeError(value)];
+    }
+    return [key, value];
+  });
+
+  return Object.fromEntries(normalizedEntries);
+}
+
 function formatStructured(level: LogLevel, message: string, context?: LogContext): string {
+  const normalizedContext = normalizeContext(context);
+  const correlationId = typeof normalizedContext?.correlationId === "string"
+    ? normalizedContext.correlationId
+    : undefined;
+
   const log = {
     service: 'OneGoodArea',
     level,
     timestamp: formatTimestamp(),
+    ...(correlationId ? { correlationId } : {}),
     message,
-    ...(context && Object.keys(context).length > 0 ? { context } : {}),
+    ...(normalizedContext && Object.keys(normalizedContext).length > 0 ? { context: normalizedContext } : {}),
   };
   return JSON.stringify(log);
 }

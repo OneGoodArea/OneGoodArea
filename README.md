@@ -243,6 +243,10 @@ Build: `npx next build`.
 When `OGA_ENABLE_TESTING_AUTH_ROUTES=true`, the app exposes testing-only auth routes under `/api/testing/auth/*`.
 If `OGA_TESTING_AUTH_TOKEN` is set, include it as the `x-test-auth-token` header on those requests.
 
+## Local runtime diagnostics dashboard
+
+When local runtime and testing auth routes are enabled, `/api/testing/runtime/dashboard` returns a runtime diagnostics snapshot plus health probes for app, Neon proxy, and MailHog.
+
 ## Licence
 
 All rights reserved. This codebase is publicly visible for portfolio and reference purposes. It is not open source and may not be copied, modified, or distributed without written permission.

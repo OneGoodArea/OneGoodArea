@@ -22,6 +22,7 @@ describe("runtime env", () => {
   it("loads layered defaults", async () => {
     process.env.OGA_LOCAL_RUNTIME_ENABLED = "true";
     process.env.OGA_SERVICE_MODE = "local-test";
+    process.env.OGA_LOG_LEVEL = "verbose";
     process.env.DATABASE_URL = "postgres://oga_user:oga_test_password_local@localhost:55432/oga_local";
     process.env.POSTCODES_API_BASE_URL = "https://api.postcodes.io";
 
@@ -29,6 +30,7 @@ describe("runtime env", () => {
 
     expect(config.localRuntimeEnabled).toBe(true);
     expect(config.serviceMode).toBe("local-test");
+    expect(config.logLevel).toBe("verbose");
     expect(config.databaseUrl).toContain("localhost:55432");
   });
 
@@ -41,5 +43,7 @@ describe("runtime env", () => {
 
     expect(diagnostics.hasDatabaseUrl).toBe(true);
     expect(diagnostics.postcodesApiBaseUrl).toBe("https://api.postcodes.io");
+    expect(diagnostics.debug.composeFile).toBe("container-compose.yml");
+    expect(diagnostics.debug.serviceUrls.app).toContain("http://localhost:");
   });
 });

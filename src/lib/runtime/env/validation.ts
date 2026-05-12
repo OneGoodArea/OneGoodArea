@@ -1,5 +1,5 @@
 export type RuntimeServiceMode = "local-test" | "development" | "production";
-export type RuntimeLogLevel = "trace" | "debug" | "info" | "warn" | "error";
+export type RuntimeLogLevel = "trace" | "debug" | "verbose" | "info" | "warn" | "error";
 
 export interface RuntimeConfig {
   localRuntimeEnabled: boolean;
@@ -13,7 +13,7 @@ export interface RuntimeConfig {
 }
 
 const allowedServiceModes: RuntimeServiceMode[] = ["local-test", "development", "production"];
-const allowedLogLevels: RuntimeLogLevel[] = ["trace", "debug", "info", "warn", "error"];
+const allowedLogLevels: RuntimeLogLevel[] = ["trace", "debug", "verbose", "info", "warn", "error"];
 
 export function parseBoolean(value: string | undefined, fallback: boolean): boolean {
   if (value === undefined) {
