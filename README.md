@@ -265,6 +265,18 @@ Core local endpoints:
 - Runtime dashboard: `GET /api/testing/runtime/dashboard`
 - MailHog UI: `http://localhost:8025`
 
+## Local runtime troubleshooting guide
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| `runtime-up.sh` fails before startup | Container engine unavailable | Install/start Docker Desktop or Podman, then retry |
+| Runtime config endpoint returns 403 | `OGA_ENABLE_TESTING_AUTH_ROUTES` is false | Set it to `true` in `.env.local.test` |
+| Runtime endpoints return 401 | Missing or wrong `x-test-auth-token` | Use the value from `OGA_TESTING_AUTH_TOKEN` |
+| Dashboard shows `neonProxy: down` | Proxy container not healthy | Run `npm run local:test:stop && npm run local:test:start` |
+| Emails not visible in MailHog | Wrong email provider | Set `OGA_EMAIL_PROVIDER=mailhog` |
+| AI responses look non-deterministic | Wrong AI provider | Set `OGA_AI_PROVIDER=mock` |
+| Seed data missing after reset | Seeds skipped/profile mismatch | Ensure `OGA_SKIP_SEEDS` is unset and `OGA_SEED_PROFILE=baseline` |
+
 ## Licence
 
 All rights reserved. This codebase is publicly visible for portfolio and reference purposes. It is not open source and may not be copied, modified, or distributed without written permission.
