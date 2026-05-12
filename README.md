@@ -243,6 +243,17 @@ Build: `npx next build`.
 When `OGA_ENABLE_TESTING_AUTH_ROUTES=true`, the app exposes testing-only auth routes under `/api/testing/auth/*`.
 If `OGA_TESTING_AUTH_TOKEN` is set, include it as the `x-test-auth-token` header on those requests.
 
+## Local runtime seed workflow
+
+The local runtime reset now applies deterministic seed data by default.
+
+```bash
+npm run local:test:reset   # drops schema, bootstraps, applies seeds
+npm run local:test:seed    # reapplies only seed files
+```
+
+Set `OGA_SEED_PROFILE` to switch datasets (default: `baseline`) and `OGA_SKIP_SEEDS=true` to run reset without seeding.
+
 ## Licence
 
 All rights reserved. This codebase is publicly visible for portfolio and reference purposes. It is not open source and may not be copied, modified, or distributed without written permission.
