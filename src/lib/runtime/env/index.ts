@@ -9,6 +9,7 @@ import {
   type RuntimeServiceMode,
   validateRuntimeConfig,
 } from "./validation";
+import { getRuntimeDebugConfig } from "../debug/config";
 
 const DEFAULTS = {
   localRuntimeEnabled: false,
@@ -81,7 +82,7 @@ export async function resolveRuntimeConfig(): Promise<RuntimeConfig> {
   const config: RuntimeConfig = {
     localRuntimeEnabled: parseBoolean(env.OGA_LOCAL_RUNTIME_ENABLED, DEFAULTS.localRuntimeEnabled),
     serviceMode: parseEnum(env.OGA_SERVICE_MODE, ["local-test", "development", "production"], DEFAULTS.serviceMode),
-    logLevel: parseEnum(env.OGA_LOG_LEVEL, ["trace", "debug", "info", "warn", "error"], DEFAULTS.logLevel),
+    logLevel: parseEnum(env.OGA_LOG_LEVEL, ["trace", "debug", "verbose", "info", "warn", "error"], DEFAULTS.logLevel),
     databaseUrl: parseString(env.DATABASE_URL, DEFAULTS.databaseUrl),
     postcodesApiBaseUrl: parseString(env.POSTCODES_API_BASE_URL, DEFAULTS.postcodesApiBaseUrl),
     aiProvider: parseString(env.OGA_AI_PROVIDER, DEFAULTS.aiProvider),
@@ -117,5 +118,6 @@ export async function getRuntimeDiagnostics() {
     hasDatabaseUrl: Boolean(config.databaseUrl),
     postcodesApiBaseUrl: config.postcodesApiBaseUrl,
     envFiles: config.envFiles,
+    debug: getRuntimeDebugConfig(),
   };
 }
