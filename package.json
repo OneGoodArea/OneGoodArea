@@ -10,6 +10,7 @@
     "local:test:start": "./scripts/runtime-up.sh",
     "local:test:stop": "./scripts/runtime-down.sh",
     "local:test:reset": "./scripts/runtime-reset.sh",
+    "local:test:seed": "./scripts/runtime-seed.sh",
     "lint": "eslint src/",
     "test": "vitest run",
     "test:watch": "vitest",
