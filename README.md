@@ -247,6 +247,24 @@ If `OGA_TESTING_AUTH_TOKEN` is set, include it as the `x-test-auth-token` header
 
 When local runtime and testing auth routes are enabled, `/api/testing/runtime/dashboard` returns a runtime diagnostics snapshot plus health probes for app, Neon proxy, and MailHog.
 
+## Local runtime onboarding guide
+
+Use the local runtime when you want deterministic development and test behavior with local services.
+
+1. Copy `.env.local.test.example` to `.env.local.test`.
+2. Copy `.env.local.test.secrets.example` to `.env.local.test.secrets`.
+3. Set `NEXTAUTH_SECRET` (or `AUTH_SECRET`) and, if needed, `OGA_TESTING_AUTH_TOKEN`.
+4. Start services with `npm run local:test:start`.
+5. Reset and seed deterministic baseline data with `npm run local:test:reset`.
+6. Use `npm run local:test:stop` when finished.
+
+Core local endpoints:
+
+- App: `http://localhost:3000`
+- Runtime config: `GET /api/testing/runtime/config`
+- Runtime dashboard: `GET /api/testing/runtime/dashboard`
+- MailHog UI: `http://localhost:8025`
+
 ## Licence
 
 All rights reserved. This codebase is publicly visible for portfolio and reference purposes. It is not open source and may not be copied, modified, or distributed without written permission.
