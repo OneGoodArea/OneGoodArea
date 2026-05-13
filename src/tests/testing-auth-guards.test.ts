@@ -11,7 +11,7 @@ describe("testing auth guards", () => {
   });
 
   it("blocks routes when disabled", () => {
-    process.env.NODE_ENV = "development";
+    (process.env as Record<string, string>).NODE_ENV = "development";
     process.env.OGA_ENABLE_TESTING_AUTH_ROUTES = "false";
 
     const result = resolveTestingRouteAccess({ headers: new Headers() });
@@ -23,7 +23,7 @@ describe("testing auth guards", () => {
   });
 
   it("requires the auth token when configured", () => {
-    process.env.NODE_ENV = "development";
+    (process.env as Record<string, string>).NODE_ENV = "development";
     process.env.OGA_ENABLE_TESTING_AUTH_ROUTES = "true";
     process.env.OGA_TESTING_AUTH_TOKEN = "secret-token";
 

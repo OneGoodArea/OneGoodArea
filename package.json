@@ -12,6 +12,7 @@
     "local:test:reset": "./scripts/runtime-reset.sh",
     "local:test:seed": "./scripts/runtime-seed.sh",
     "lint": "eslint src/",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

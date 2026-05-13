@@ -1,0 +1,71 @@
+name: Bug report
+description: Report something that doesn't work as expected
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear and concise description of the bug.
+      placeholder: When I do X, Y happens instead of Z.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Production (onegoodarea.com)
+        - Local dev (localhost)
+        - Both
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs, screenshots, request IDs
+      description: Paste any relevant logs, error messages, screenshots, or Sentry event IDs.
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser + version (if frontend)
+      placeholder: e.g. Chrome 138, Safari 17, Firefox 140
+
+  - type: input
+    id: timestamp
+    attributes:
+      label: When did this happen?
+      placeholder: e.g. 2026-05-12 14:32 BST
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Acknowledgements
+      options:
+        - label: I have searched existing issues for duplicates
+          required: true
+        - label: This is not a security vulnerability (those go through the security policy, not here)
+          required: true
