@@ -1,197 +1,133 @@
 [![CI](https://github.com/OneGoodArea/OneGoodArea/actions/workflows/ci.yml/badge.svg)](https://github.com/OneGoodArea/OneGoodArea/actions/workflows/ci.yml)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/OneGoodArea/OneGoodArea?style=plastic)
-![GitHub branch count](https://img.shields.io/github/branches/OneGoodArea/OneGoodArea)
 ![Website](https://img.shields.io/website?url=https%3A%2F%2Fwww.onegoodarea.com&style=plastic)
 ![GitHub repo size](https://img.shields.io/github/repo-size/OneGoodArea/OneGoodArea)
 ![Vercel](https://vercelbadge.vercel.app/api/OneGoodArea/OneGoodArea)
 # OneGoodArea
 
-**An intelligence report for every UK postcode.**
+**The deterministic UK location intelligence layer.**
 
-Type a place. Pick why you're looking. Seven public datasets do the rest. OneGoodArea scores 42,640 UK neighbourhoods across four intents (moving home, opening a business, property investing, market research) and renders the full picture in a single editorial report.
+One scoring engine. Four intents (origination, site selection, investment, reference). Five weighted dimensions per intent. Seven authoritative UK public datasets. Source-attributed reasoning, version-pinned methodology, confidence reported per dimension. Built for regulated buyers who need a number they can ship to a model risk register.
 
-**Live at [onegoodarea.com](https://www.onegoodarea.com)**
+**Live at [onegoodarea.com](https://www.onegoodarea.com)** · API ref: [`/openapi.json`](https://www.onegoodarea.com/openapi.json) · Methodology: [`/methodology`](https://www.onegoodarea.com/methodology)
 
 ---
 
-## What it does
+## Category
 
-Enter a UK postcode or area name, pick your intent, and get a fully scored report sourced from seven live UK datasets. Every dimension is computed from real numbers using fixed formulas, then narrated by the engine. The same inputs always produce the same scores.
+Intent-driven UK area intelligence. Same engine, four reweighted models — origination scoring is not site selection is not investment is not reference. The dimensions are constant; the weights and reasoning change per intent. The methodology document tells you exactly why.
 
 ## What makes it different
 
-- **Intent-driven scoring.** "Good for raising a family" and "good for opening a coffee shop" weight different dimensions of the same area. Four intents, five dimensions each, weights summing to 100.
-- **Reproducible numbers.** Scoring formulas are deterministic. Same postcode, same intent, same scores. Narrative prose varies; the maths does not.
-- **Context-aware benchmarks.** A village with one school is well served. A city with one school is not. Reports auto-classify the area as urban, suburban, or rural and benchmark against the right peer group.
-- **Transparent.** Every dimension shows the data, the source, and the freshness window behind it. No black boxes, no proprietary indices, no vague star ratings.
+- **Intent-driven scoring.** Most location intelligence vendors ship one score. We ship four reweighted models of the same engine, one per decision type. The composition is documented; the weights are public.
+- **Deterministic numbers.** Scoring formulas are fixed. Same postcode, same intent, same scores. AI narrates the result; it cannot override the maths. Server-side score lock after AI response.
+- **Confidence per dimension.** Every dimension reports HIGH / MEDIUM / LOW / NONE confidence based on data freshness and completeness. Insurance underwriters can't buy a black-box score; this is the answer.
+- **Version-pinned methodology.** Every report stamps the engine version. Customers can pin to a specific version for procurement / FCA model risk register compliance.
+- **Source-attributed reasoning.** Every dimension cites the upstream public dataset that drove the number. No proprietary indices, no opaque composites.
+- **API-first.** OpenAPI 3.0 spec, interactive reference, MCP server for AI workflows.
+
+## Audiences
+
+- **Mortgage lenders** — origination scoring, portfolio risk enrichment
+- **Property insurers** — area risk per postcode (flood, crime, environment)
+- **PropTech platforms** — embed kit, white-label scoring inside their products
+- **Retail and CRE site selection** — programmatic location evaluation at scale
+
+Consumer surfaces (blog, area pages, /report) exist as an awareness funnel only.
 
 ## Tech stack
 
 | Layer        | Tech |
 |--------------|------|
 | Framework    | Next.js 16, React 19, TypeScript |
-| Styling      | Tailwind 4, design tokens scoped to `.aiq` wrapper, `globals.css` |
+| Styling      | Tailwind 4, design tokens in `globals.css` |
 | Typography   | Fraunces (display), Inter (body), Geist Mono (labels) |
 | Database     | Neon Postgres |
-| Auth         | NextAuth v5 (Google OAuth + credentials, PBKDF2-SHA256) |
-| Payments     | Stripe (consumer plans + API plans, webhook idempotency) |
-| AI           | Anthropic Claude (narration only, never scoring) |
-| Email        | Resend (verification, report delivery, password reset) |
-| Errors       | Sentry (client + server + edge) |
-| CI/CD        | GitHub Actions, Vercel auto-deploy from `main` |
+| Auth         | NextAuth v5 (Google OAuth + Credentials, PBKDF2-SHA256 password hashing) |
+| Payments     | Stripe (idempotent webhooks, 6-tier pricing + add-on architecture) |
+| AI narration | Server-side LLM call, narration only — never alters scoring values |
+| Email        | Resend (transactional, branded templates) |
+| Errors       | Sentry (client + server + edge runtimes) |
+| Observability| `/api/health`, structured logger, request-scoped trace IDs |
+| CI/CD        | GitHub Actions (lint + typecheck + tests), Vercel auto-deploy from `main` |
 
 ## Data sources
 
 | Source | Coverage |
 |--------|----------|
-| [Postcodes.io](https://postcodes.io) | Geocoding, LSOA mapping, area classification |
-| [Police.uk](https://data.police.uk) | Street-level crime, 12 months rolling, by category |
-| [IMD 2025 / WIMD 2019 / SIMD 2020](https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025) | Deprivation indices, 33,755 LSOAs (England, Wales, Scotland) |
+| [Postcodes.io](https://postcodes.io) | Geocoding, LSOA mapping, urban/suburban/rural classification |
+| [Police.uk](https://data.police.uk) | Street-level crime, 12 months rolling, categorised |
+| [IMD 2025 / WIMD 2019 / SIMD 2020](https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025) | Deprivation indices, 33,755 LSOAs across England, Wales, Scotland |
 | [OpenStreetMap (Overpass)](https://www.openstreetmap.org) | Schools, transport, healthcare, retail, parks, amenities |
 | [Environment Agency](https://environment.data.gov.uk) | Flood risk zones and active warnings |
-| [HM Land Registry](https://landregistry.data.gov.uk) | Price Paid SPARQL, real sold prices, YoY change, transaction volume |
+| [HM Land Registry](https://landregistry.data.gov.uk) | Price Paid SPARQL — real sold prices, YoY change, transaction volume |
 | [Ofsted](https://www.gov.uk/government/organisations/ofsted) | School inspection ratings, 19,770 English schools, quality-weighted |
 
-Estyn (Wales) and Education Scotland integration planned.
+Estyn (Wales) and Education Scotland integration on roadmap.
 
-Reports are cached server-side for 24 hours per `area:intent` pair; identical requests return the same report without re-fetching upstream APIs.
+Reports cached server-side for 24 hours per `area:intent` pair. Cache hits don't count against API quota.
 
-## Architecture
+## Engine architecture
 
 ```
-User input
+Request
   → Geocode (Postcodes.io)
-  → Fetch in parallel from 7 sources
+  → Parallel fetch from 7 data sources
   → Classify area type (urban / suburban / rural)
   → Score 5 dimensions for the chosen intent (deterministic, weights sum to 100)
-  → Narrate with Claude (numbers passed in, never recomputed)
-  → Cache for 24h, persist to Postgres
-  → Render report (web), email (Resend), or JSON (REST API)
+  → Compute confidence per dimension (HIGH / MEDIUM / LOW / NONE)
+  → Aggregate weighted score + report-level confidence
+  → Narrate (numbers passed in, never recomputed)
+  → Server-side score enforcement (AI cannot drift the numbers)
+  → Stamp engine_version + cache 24h
+  → Return JSON / render web / email / PDF
 ```
 
-Scoring lives in `src/lib/scoring-engine.ts`. Five scoring functions per intent across four intents, plus three area-type benchmark profiles. Scores are enforced server-side after AI generation, so the model can never override computed values.
+Scoring lives in `src/lib/scoring-engine.ts` (16 functions, 4 intent compositions). Methodology versions registered in `src/lib/methodology-versions.ts`. Current engine version: `2.0.0`.
 
-## Features
+## Surfaces
 
-**Reports**
-- Four intents (moving, business, investing, research), five weighted dimensions each
-- Property Market panel (median price, YoY, transaction volume, price by property type)
-- Schools panel (Ofsted distribution + top-rated schools, quality-weighted)
+**Public API**
+- REST: `POST /api/v1/report` (Bearer auth, OpenAPI 3.0 documented at `/openapi.json`)
+- Interactive reference: `/docs/api-reference` (Scalar embed)
+- Widget: `GET /api/widget` (CORS, cache-only, 60/hr per origin)
+- Entitlement check: `GET /api/v1/me`
+- Time-series re-scoring cron: `/api/cron/rescore`
+
+**MCP server** (Model Context Protocol)
+- Separate npm package: `@onegoodarea/mcp-server` (`mcp/` directory)
+- Four tools: `score_postcode`, `compare_postcodes`, `methodology_for`, `engine_version`
+- For Claude Desktop, Cursor, and any MCP-compatible client
+- Install docs at `/docs/mcp`
+
+**Web product**
+- Generator + permanent SSR report pages
 - Side-by-side area comparison
-- PDF export (branded layout)
-- Email delivery via Resend
-- Watchlist + CSV export
-- Social sharing (WhatsApp, LinkedIn, X, copy link)
-- Dynamic OG images per report and per area page
-
-**Public surfaces**
-- 32 programmatic SEO area pages with real engine output
+- PDF export, email delivery, watchlist + CSV export
+- 32 programmatic SEO area pages
 - Editorial blog with JSON-LD
-- Methodology, changelog, help, business, pricing, docs, about
 
-**Developer platform**
-- REST API with Bearer auth (`aiq_<48-hex>`), PBKDF2-hashed keys
-- Embeddable widget (`/api/widget`, cache-only, CORS, rate-limited per origin)
-- API usage dashboard with 30-day chart
-- Interactive playground in `/docs`
-
-**Account + billing**
-- NextAuth v5 (Google OAuth + credentials)
-- Email verification, password reset, account deletion
-- Stripe checkout, webhook, customer portal, plan changes with proration
-- Adaptive CTAs based on plan state
+**Customer dashboard**
+- Report history, watchlist, API key management
+- API usage charts with 30-day rolling window
+- In-app billing surface at `/dashboard/billing` (plan selection, MCP add-on, current plan strip)
 
 **Admin**
 - Traffic analytics (pageviews, devices, countries, referrers)
 - Conversion funnels, MRR tracking, activity feed
 
-**Platform**
-- Dark / light theme with `data-theme` token swap, persistent via localStorage
-- 24h report cache (Postgres `report_cache`)
-- Sliding-window rate limiter (Neon-backed)
-- Sentry error monitoring
-- GitHub Actions CI (lint, typecheck, build, test)
-- Health endpoint at `/api/health`
+## Pricing (v2)
 
-## Project structure
+| Tier       | Price/mo | Calls/mo | Effective £/call |
+|------------|----------|----------|------------------|
+| Sandbox    | £0       | 35       | —                |
+| Starter    | £49      | 1,500    | £0.033           |
+| Build      | £149     | 6,000    | £0.025           |
+| Scale      | £499     | 25,000   | £0.020           |
+| Growth     | £1,499   | 100,000  | £0.015           |
+| Enterprise | from £4,999 | from 250,000 | from £0.020 (negotiated) |
 
-```
-src/
-├── app/
-│   ├── page.tsx                    Landing page
-│   ├── layout.tsx                  Root layout, fonts, theme-restore script
-│   ├── report/                     Generator + SSR report pages
-│   ├── dashboard/                  User report history
-│   ├── compare/                    Side-by-side area comparison
-│   ├── api-usage/                  API key management + usage charts
-│   ├── admin/                      Admin analytics
-│   ├── pricing/                    Pricing
-│   ├── docs/                       API documentation
-│   ├── methodology/                Scoring methodology
-│   ├── about/                      About
-│   ├── blog/                       Blog index + post template
-│   ├── area/[slug]/                Programmatic SEO area pages
-│   ├── changelog/                  Release history
-│   ├── help/                       FAQ + contact
-│   ├── settings/                   Account + subscription
-│   ├── sign-in/ & sign-up/         Auth (NextAuth v5 catch-all routes)
-│   ├── forgot-password/            Password reset flow
-│   ├── verify/                     Email verification
-│   ├── terms/ & privacy/           Legal
-│   ├── design-v2/                  Internal preview namespace (noindex, rollback)
-│   ├── design-v2/_shared/          Shared marketing components (nav, footer, styles, icons)
-│   ├── api/
-│   │   ├── report/                 Report generation
-│   │   ├── v1/report/              Public REST API
-│   │   ├── widget/                 Embeddable widget endpoint (cache-only)
-│   │   ├── keys/                   API key CRUD
-│   │   ├── stripe/                 Checkout, webhook, portal, cancel
-│   │   ├── settings/               Password, delete, subscription
-│   │   ├── watchlist/              Watchlist CRUD
-│   │   ├── auth/                   NextAuth handler
-│   │   ├── track/                  Pageview tracking
-│   │   └── health/                 Health probe
-│   ├── error.tsx                   Error boundary
-│   ├── not-found.tsx               404
-│   ├── opengraph-image.tsx         Default OG
-│   ├── icon.tsx                    Favicon (concentric rings + chartreuse pin)
-│   └── globals.css                 Design tokens (loaded in head, no FOUC)
-├── lib/
-│   ├── scoring-engine.ts           Scoring functions, intent compositions, benchmarks
-│   ├── generate-report.ts          Fetch → score → narrate pipeline
-│   ├── data-sources/               Postcodes, Police, Deprivation, OSM, Flood, Land Registry, Ofsted
-│   ├── auth.ts                     NextAuth config
-│   ├── db.ts                       Neon client
-│   ├── db-schema.ts                Table definitions, ensureTable guards
-│   ├── db-types.ts                 Typed row helpers
-│   ├── stripe.ts                   Stripe client, plan config
-│   ├── stripe-types.ts             Type-safe casts
-│   ├── crypto.ts                   PBKDF2-SHA256 (Edge-compatible)
-│   ├── config.ts                   Centralised env config
-│   ├── logger.ts                   Structured logger
-│   ├── with-auth.ts                Auth wrapper for API routes
-│   ├── errors.ts                   AppError + isAppError
-│   ├── id.ts                       generateId helper
-│   ├── usage.ts                    Usage + quota tracking
-│   ├── email.ts                    Resend templates (OneGoodArea brand)
-│   ├── rate-limit.ts               Sliding window (Neon-backed)
-│   ├── validation.ts               Input sanitisation
-│   ├── pdf-export.ts               Programmatic PDF
-│   ├── api-keys.ts                 API key CRUD
-│   ├── activity.ts                 Event tracking
-│   └── rag.ts                      Score → RAG band mapping
-├── components/
-│   ├── full-navbar.tsx             Pre-rebrand navbar (kept for legacy refs)
-│   ├── footer.tsx                  Pre-rebrand footer (kept for legacy refs)
-│   ├── score-ring.tsx              Shared primitives
-│   ├── stat-card.tsx
-│   ├── terminal-card.tsx
-│   ├── pageview-tracker.tsx
-│   └── (etc.)
-└── instrumentation.ts              Sentry init
-```
-
-The marketing surface (nav, footer, design tokens, icon set) lives in `src/app/design-v2/_shared/`. Every public route renders a v2 client; the bare `/design-v2/*` preview routes are kept noindex as a rollback path.
+MCP server access: £29/mo add-on (free on Growth + Enterprise). Annual prepay 17% off on Build / Scale / Growth.
 
 ## Local development
 
@@ -199,149 +135,99 @@ The marketing surface (nav, footer, design tokens, icon set) lives in `src/app/d
 git clone https://github.com/OneGoodArea/OneGoodArea.git
 cd OneGoodArea
 npm install
+cp .env.example .env.local   # then fill in keys
+npm run dev
 ```
 
-Create `.env.local`:
+Required env vars (see `.env.example` for full list):
 
 ```env
-# Auth
 AUTH_SECRET=
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 NEXTAUTH_URL=http://localhost:3000
-
-# Database
 DATABASE_URL=
-
-# AI
 ANTHROPIC_API_KEY=
-
-# Payments
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
-
-# Email
 RESEND_API_KEY=
-
-# Errors (optional in dev)
-NEXT_PUBLIC_SENTRY_DSN=
 ```
 
 ```bash
-npm run dev
+npm test                # 224 tests across scoring engine, validation, stripe-types, crypto, config, id, methodology versions, MCP server, OpenAPI spec
+npx tsc --noEmit        # typecheck
+npx next build          # production build
 ```
 
-Tests: `npm test` (Vitest, 60+ unit + integration tests across scoring engine, validation, stripe-types, crypto, config, id).
+## Repository structure
 
-Typecheck: `npx tsc --noEmit`.
+```
+src/
+├── app/
+│   ├── page.tsx                    Marketing landing (renders design-v2 client)
+│   ├── layout.tsx                  Root layout, fonts, theme-restore script
+│   ├── design-v2/                  Marketing + app design system (canonical source for nav, footer, shared components)
+│   │   └── _shared/                Wordmark, Mark, Nav, Footer, AppShell, AuthShell, Icons, LoadingStates
+│   ├── report/                     Generator + SSR report pages
+│   ├── dashboard/                  User dashboard
+│   │   └── billing/                In-app billing surface
+│   ├── compare/                    Side-by-side area comparison
+│   ├── api-usage/                  API key management
+│   ├── admin/                      Admin analytics
+│   ├── pricing/                    Pricing
+│   ├── docs/                       API documentation + MCP install + interactive reference
+│   ├── methodology/                Scoring methodology (procurement artifact)
+│   ├── about/                      About
+│   ├── blog/                       Editorial blog
+│   ├── area/[slug]/                Programmatic SEO area pages
+│   ├── changelog/                  Release history
+│   ├── help/                       FAQ + contact
+│   ├── settings/                   Account + subscription
+│   ├── sign-in/ & sign-up/         NextAuth catch-all routes
+│   ├── forgot-password/            Password reset flow
+│   ├── verify/                     Email verification
+│   ├── terms/ & privacy/           Legal
+│   ├── api/
+│   │   ├── v1/                     Public REST API (`/report`, `/me`)
+│   │   ├── widget/                 Embeddable widget endpoint (cache-only)
+│   │   ├── cron/rescore/           Time-series re-scoring (Vercel Cron)
+│   │   ├── stripe/                 Checkout, addon-checkout, webhook, portal, cancel
+│   │   ├── keys/                   API key CRUD
+│   │   ├── auth/                   NextAuth handler + register + verification
+│   │   ├── settings/               Password, delete, subscription
+│   │   ├── report/, watchlist/, usage/, track/, health/
+│   ├── opengraph-image.tsx, icon.tsx
+│   └── globals.css
+├── lib/
+│   ├── scoring-engine.ts           16 scoring functions, 4 intent compositions, confidence rubric
+│   ├── generate-report.ts          Fetch → score → narrate → enforce → stamp pipeline
+│   ├── methodology-versions.ts     Typed registry of engine releases (current: v2.0.0)
+│   ├── data-sources/               Postcodes, Police, Deprivation, OSM, Flood, Land Registry, Ofsted
+│   ├── top-postcodes.ts            Seed list for time-series cron
+│   ├── auth.ts, crypto.ts, with-auth.ts
+│   ├── stripe.ts, stripe-types.ts  V1 legacy + V2 active plans, MCP add-on
+│   ├── usage.ts, api-keys.ts       Quota + entitlement helpers
+│   ├── email.ts, pdf-export.ts     Branded transactional outputs
+│   ├── db.ts, db-schema.ts, db-types.ts
+│   ├── rate-limit.ts, validation.ts, errors.ts, id.ts, logger.ts, config.ts
+│   ├── activity.ts, report-cache.ts, rag.ts
+└── instrumentation.ts              Sentry init
 
-Build: `npx next build`.
-
-## Local auth testing
-
-When `OGA_ENABLE_TESTING_AUTH_ROUTES=true`, the app exposes testing-only auth routes under `/api/testing/auth/*`.
-If `OGA_TESTING_AUTH_TOKEN` is set, include it as the `x-test-auth-token` header on those requests.
-
-## Local runtime seed workflow
-
-The local runtime reset now applies deterministic seed data by default.
-
-```bash
-npm run local:test:reset   # drops schema, bootstraps, applies seeds
-npm run local:test:seed    # reapplies only seed files
+mcp/                                @onegoodarea/mcp-server package (separate tsconfig)
+scripts/                            Stripe utilities, data seeding, cron
+public/openapi.json                 OpenAPI 3.0 spec
 ```
 
-Set `OGA_SEED_PROFILE` to switch datasets (default: `baseline`) and `OGA_SKIP_SEEDS=true` to run reset without seeding.
-## Local runtime diagnostics dashboard
+## Status
 
-When local runtime and testing auth routes are enabled, `/api/testing/runtime/dashboard` returns a runtime diagnostics snapshot plus health probes for app, Neon proxy, and MailHog.
+- Engine v2.0.0 LIVE — confidence per dimension + version stamping on every report
+- Pricing v2 LIVE on Stripe — 6 tiers + MCP add-on
+- Design system shipped — design-v2 promoted to whole-site production
+- OpenAPI 3.0 spec served at `/openapi.json` with Scalar interactive reference
+- MCP server v0.2.0 built and tested, npm publish pending
+- 224 tests across two packages, CI green
 
-## Local runtime onboarding guide
+## License
 
-Use the local runtime when you want deterministic development and test behavior with local services.
-
-1. Copy `.env.local.test.example` to `.env.local.test`.
-2. Copy `.env.local.test.secrets.example` to `.env.local.test.secrets`.
-3. Set `NEXTAUTH_SECRET` (or `AUTH_SECRET`) and, if needed, `OGA_TESTING_AUTH_TOKEN`.
-4. Start services with `npm run local:test:start`.
-5. Reset and seed deterministic baseline data with `npm run local:test:reset`.
-6. Use `npm run local:test:stop` when finished.
-
-Core local endpoints:
-
-- App: `http://localhost:3000`
-- Runtime config: `GET /api/testing/runtime/config`
-- Runtime dashboard: `GET /api/testing/runtime/dashboard`
-- MailHog UI: `http://localhost:8025`
-
-## Local runtime troubleshooting guide
-
-| Symptom | Likely cause | Fix |
-| --- | --- | --- |
-| `runtime-up.sh` fails before startup | Container engine unavailable | Install/start Docker Desktop or Podman, then retry |
-| Runtime config endpoint returns 403 | `OGA_ENABLE_TESTING_AUTH_ROUTES` is false | Set it to `true` in `.env.local.test` |
-| Runtime endpoints return 401 | Missing or wrong `x-test-auth-token` | Use the value from `OGA_TESTING_AUTH_TOKEN` |
-| Dashboard shows `neonProxy: down` | Proxy container not healthy | Run `npm run local:test:stop && npm run local:test:start` |
-| Emails not visible in MailHog | Wrong email provider | Set `OGA_EMAIL_PROVIDER=mailhog` |
-| AI responses look non-deterministic | Wrong AI provider | Set `OGA_AI_PROVIDER=mock` |
-| Seed data missing after reset | Seeds skipped/profile mismatch | Ensure `OGA_SKIP_SEEDS` is unset and `OGA_SEED_PROFILE=baseline` |
-
-## Local runtime architecture diagrams
-
-```text
-┌────────────────────────────┐
-│ Next.js App (localhost:3000) │
-└──────────────┬─────────────┘
-               │
-       ┌───────┴─────────────────────────────────────┐
-       │                                             │
-┌──────▼─────────────┐                     ┌─────────▼──────────┐
-│ Neon Compat Proxy  │                     │ MailHog            │
-│ (localhost:55433)  │                     │ SMTP:1025 UI:8025  │
-└──────┬─────────────┘                     └────────────────────┘
-       │
-┌──────▼─────────────┐
-│ PostgreSQL         │
-│ (localhost:55432)  │
-└────────────────────┘
-```
-
-```text
-runtime-reset.sh
-  ├─ drop/recreate public schema
-  ├─ apply tests/db/bootstrap/001-bootstrap.sql
-  └─ runtime-seed.sh
-      ├─ tests/seeds/framework/*.sql
-      └─ tests/seeds/profiles/$OGA_SEED_PROFILE/*.sql
-```
-
-## Local runtime provider switching guide
-
-Provider behavior is controlled only by environment variables in `.env.local.test`.
-
-| Concern | Variable | Typical local value | Alternative |
-| --- | --- | --- | --- |
-| AI provider | `OGA_AI_PROVIDER` | `mock` | `anthropic` |
-| Email provider | `OGA_EMAIL_PROVIDER` | `mailhog` | `resend` |
-| Log verbosity | `OGA_LOG_LEVEL` | `debug` | `trace`, `verbose`, `info`, `warn`, `error` |
-| Seed profile | `OGA_SEED_PROFILE` | `baseline` | any profile folder under `tests/seeds/profiles` |
-
-Switch profile example:
-
-```bash
-export OGA_SEED_PROFILE=baseline
-npm run local:test:reset
-```
-
-Switch to live providers example:
-
-```bash
-export OGA_AI_PROVIDER=anthropic
-export OGA_EMAIL_PROVIDER=resend
-npm run local:test:start
-```
-
-## Licence
-
-All rights reserved. This codebase is publicly visible for portfolio and reference purposes. It is not open source and may not be copied, modified, or distributed without written permission.
+See [`LICENSE`](./LICENSE). Source-available for portfolio and audit reference. Not open source. Commercial use requires written permission.

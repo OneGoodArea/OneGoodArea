@@ -1,0 +1,17 @@
+Copyright (c) 2026 Pedro Tengelmann. All rights reserved.
+
+This source code and accompanying documentation are made publicly visible for
+portfolio, reference, and security-audit purposes only. They are NOT open source.
+
+You may not, without prior written permission from the copyright holder:
+
+  - Copy, modify, or redistribute any portion of this codebase
+  - Use any portion of this codebase to build a competing product or service
+  - Train machine learning models on this codebase
+  - Reverse-engineer the scoring methodology beyond what is publicly documented
+    at https://www.onegoodarea.com/methodology
+
+Third-party dependencies retain their respective licenses. See package.json and
+node_modules/<package>/LICENSE for individual terms.
+
+For licensing inquiries: hello@onegoodarea.com
