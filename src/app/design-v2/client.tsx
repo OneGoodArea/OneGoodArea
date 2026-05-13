@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import SAMPLE_REPORTS_JSON from "./sample-reports.json";
 import { Styles } from "./_shared/styles";
 import { Mark } from "./_shared/mark";
@@ -501,7 +502,7 @@ function Hero({
           display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap",
           animation: "aiq-fade-up 800ms cubic-bezier(0.16,1,0.3,1) 320ms both",
         }}>
-          <a
+          <Link
             href="/sign-up"
             style={{
               display: "inline-flex", alignItems: "center", gap: 8,
@@ -524,7 +525,7 @@ function Hero({
           >
             Get API access
             <span style={{ fontSize: 16 }}>→</span>
-          </a>
+          </Link>
           <a
             href="/methodology"
             style={{
@@ -1639,7 +1640,7 @@ const SampleReport = forwardRef<
                   ))}
                 </ul>
 
-                <a
+                <Link
                   href="/sign-up"
                   style={{
                     display: "inline-flex", alignItems: "center", gap: 8,
@@ -1661,7 +1662,7 @@ const SampleReport = forwardRef<
                   }}
                 >
                   Get API access →
-                </a>
+                </Link>
                 <span style={{
                   marginLeft: 14,
                   fontFamily: "var(--mono)", fontSize: 10,
@@ -1773,10 +1774,10 @@ const SampleReport = forwardRef<
               textTransform: "uppercase",
             }}>
               <span>+ {hiddenCount} more dimensions in the API response</span>
-              <a href="/sign-up" style={{
+              <Link href="/sign-up" style={{
                 color: "var(--ink)", textDecoration: "none",
                 borderBottom: "1px solid var(--signal)", paddingBottom: 1,
-              }}>get API access →</a>
+              }}>get API access →</Link>
             </div>
           </div>
 
@@ -3288,7 +3289,7 @@ function InsideReport() {
             fontFamily: "var(--mono)", fontSize: 11,
             letterSpacing: "0.22em", textTransform: "uppercase",
             color: "var(--text-3)", marginBottom: 18,
-          }}>What's in a report</div>
+          }}>What&apos;s in a report</div>
           <h2 style={{
             fontFamily: "var(--display)", fontWeight: 400,
             fontSize: "clamp(1.9rem, 3.6vw, 2.8rem)",
@@ -3389,7 +3390,7 @@ function IRSummary() {
       }}>
         Manchester does what a move home needs. Transport is exceptional,{" "}
         <IRMark>3,579 amenities within a kilometre</IRMark>, and safety reads strong
-        for a city core. The trade-off is cost. You're paying mid-market for
+        for a city core. The trade-off is cost. You&apos;re paying mid-market for
         genuine urban convenience.
       </p>
     </div>
