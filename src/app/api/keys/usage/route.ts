@@ -79,7 +79,7 @@ export async function GET() {
       sql`
         SELECT
           ak.id,
-          LEFT(ak.key, 8) || '...' as key_preview,
+          ak.key_prefix as key_preview,
           ak.name,
           ak.created_at,
           ak.last_used_at
