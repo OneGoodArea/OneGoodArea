@@ -7,11 +7,12 @@ import { Nav } from "../_shared/nav";
 import { Footer } from "../_shared/footer";
 import { AiqIcon, type IconName } from "../_shared/icons";
 
-/* ═══════════════════════════════════════════════════════════════
+/* =================================================================
    OneGoodArea · Design V2 · /business
-   Same design language as the home page. B2B marketing page:
-   hero + stats + API preview + capabilities + audiences + pricing + CTA
-   ═══════════════════════════════════════════════════════════════ */
+   B2B marketing page for the regulated buyer audience.
+   Hero · stats · API preview · capabilities · vertical use cases ·
+   regulatory signals · pricing · final CTA.
+   ================================================================= */
 
 export default function BusinessClient() {
   return (
@@ -23,6 +24,7 @@ export default function BusinessClient() {
       <ApiPreview />
       <Capabilities />
       <Audiences />
+      <RegulatoryStrip />
       <PricingStrip />
       <FinalCta />
       <Footer />
@@ -30,7 +32,7 @@ export default function BusinessClient() {
   );
 }
 
-/* ─────── Hero ─────── */
+/* --- Hero --- */
 
 function Hero() {
   return (
@@ -72,7 +74,7 @@ function Hero() {
                 background: "var(--signal)",
                 animation: "aiq-pulse-dot 1.6s ease-in-out infinite",
               }} />
-              For businesses · API + widget
+              For regulated buyers · API + MCP + widget
             </div>
 
             <h1 style={{
@@ -81,22 +83,22 @@ function Hero() {
               letterSpacing: "-0.02em", color: "var(--ink-deep)",
               margin: "0 0 24px",
             }}>
-              Every UK postcode,{" "}
+              The deterministic UK{" "}
               <span style={{
                 fontStyle: "italic", color: "var(--ink)",
                 borderBottom: "3px solid var(--signal)", paddingBottom: 2,
-              }}>scored.</span>
+              }}>location intelligence</span>
               <br />
-              One API call.
+              layer.
             </h1>
 
             <p style={{
               fontFamily: "var(--sans)", fontSize: 17, fontWeight: 400,
               lineHeight: 1.5, color: "var(--text-2)",
               letterSpacing: "-0.005em",
-              margin: "0 0 36px", maxWidth: "46ch",
+              margin: "0 0 36px", maxWidth: "48ch",
             }}>
-              A REST API and drop-in widget for property portals, relocation platforms, and investment tools. The same engine that powers OneGoodArea, on your surface.
+              Every UK postcode scored from seven public datasets using fixed formulas. Same input, same output, version-stamped, confidence-banded per dimension. Built to be entered into a model risk register.
             </p>
 
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
@@ -122,7 +124,7 @@ function Hero() {
                 Get API access
                 <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
               </Link>
-              <a href="mailto:hello@onegoodarea.com?subject=Enterprise API enquiry" style={{
+              <a href="mailto:hello@onegoodarea.com?subject=Enterprise%20API%20enquiry" style={{
                 fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
                 letterSpacing: "0.14em", textTransform: "uppercase",
                 color: "var(--ink)", background: "transparent",
@@ -152,8 +154,7 @@ function Hero() {
   );
 }
 
-/* Compact code card in the hero · a teaser for the API preview below.
-   Uses chartreuse syntax highlights, not terminal-green. */
+/* Compact code card in the hero. Teases the API preview below. */
 function HeroCodeCard() {
   return (
     <div style={{
@@ -186,6 +187,7 @@ function HeroCodeCard() {
       }}>
 {'POST '}<span style={{ color: "var(--signal)" }}>/v1/report</span>{'\n'}
 <span style={{ color: "rgba(255,255,255,0.42)" }}>Authorization:</span>{' Bearer '}<span style={{ color: "var(--signal)" }}>aiq_***</span>{'\n'}
+<span style={{ color: "rgba(255,255,255,0.42)" }}>X-Engine-Version:</span>{' '}<span style={{ color: "var(--signal)" }}>2.0.2</span>{'\n'}
 {'\n'}
 {'{\n'}
 {'  '}<span style={{ color: "rgba(255,255,255,0.55)" }}>&quot;area&quot;</span>{': '}<span style={{ color: "var(--signal)" }}>&quot;SW1A 1AA&quot;</span>{',\n'}
@@ -204,20 +206,20 @@ function HeroCodeCard() {
           background: "rgba(212,243,58,0.14)", borderRadius: 3,
         }}>200 OK</span>
         <span style={{ color: "rgba(255,255,255,0.48)" }}>
-          Report · 78/100 · moving
+          engine 2.0.2 · score 78 · confidence 0.82
         </span>
       </div>
     </div>
   );
 }
 
-/* ─────── Stats strip ─────── */
+/* --- Stats strip --- */
 
 const STATS: { value: string; label: string }[] = [
-  { value: "42,640", label: "UK neighbourhoods" },
-  { value: "7",      label: "Public datasets" },
-  { value: "4",      label: "Intent modes" },
-  { value: "24h",    label: "Response cache" },
+  { value: "Every",   label: "UK postcode" },
+  { value: "7",       label: "Public datasets" },
+  { value: "v2.0.2",  label: "Engine stamped" },
+  { value: "OpenAPI", label: "3.0 spec" },
 ];
 
 function StatsStrip() {
@@ -256,33 +258,40 @@ function StatsStrip() {
   );
 }
 
-/* ─────── API preview · long form ─────── */
+/* --- API preview · long form --- */
 
 const REQUEST_SNIPPET = `curl -X POST https://www.onegoodarea.com/api/v1/report \\
   -H "Authorization: Bearer aiq_your_key" \\
+  -H "X-Engine-Version: 2.0.2" \\
+  -H "Idempotency-Key: 550e8400-e29b-41d4-a716-446655440000" \\
   -H "Content-Type: application/json" \\
   -d '{"area": "SW1A 1AA", "intent": "moving"}'`;
 
 const RESPONSE_SNIPPET = `{
   "id": "rpt_1710000000_abc123",
   "report": {
-    "area":          "Westminster, SW1A 1AA",
-    "intent":        "moving",
-    "area_type":     "urban",
-    "areaiq_score":  78,
+    "area":           "Westminster, SW1A 1AA",
+    "intent":         "moving",
+    "area_type":      "urban",
+    "areaiq_score":   78,
+    "confidence":     0.82,
+    "engine_version": "2.0.2",
     "sub_scores": [
-      { "label": "Safety & Crime",      "score": 72, "weight": 25 },
-      { "label": "Schools & Education", "score": 68, "weight": 20 },
-      { "label": "Transport & Commute", "score": 94, "weight": 20 },
-      { "label": "Daily Amenities",     "score": 86, "weight": 15 },
-      { "label": "Cost of Living",      "score": 70, "weight": 20 }
+      { "label": "Safety & Crime",      "score": 72, "weight": 25,
+        "confidence": 0.90, "confidence_reason": "Live police.uk data" },
+      { "label": "Schools & Education", "score": 68, "weight": 20,
+        "confidence": 1.00, "confidence_reason": "Ofsted inspections" },
+      { "label": "Transport & Commute", "score": 94, "weight": 20,
+        "confidence": 0.85, "confidence_reason": "OSM amenities" },
+      { "label": "Daily Amenities",     "score": 86, "weight": 15,
+        "confidence": 0.85, "confidence_reason": "OSM amenities" },
+      { "label": "Cost of Living",      "score": 70, "weight": 20,
+        "confidence": 0.70, "confidence_reason": "Land Registry, 83 txns" }
     ],
-    "property_data":    { "median_price": 895000, "price_change_pct": 2.1 },
-    "schools_data":     { "rating_breakdown": { ... } },
-    "summary":          "Westminster scores 78 out of 100 …",
-    "recommendations":  [ … ],
-    "data_sources":     [ "postcodes.io", "police.uk", ... ],
-    "data_freshness":   [ { "source": "Police", "period": "12mo", ... } ]
+    "property_data":  { "median_price": 895000, "price_change_pct": 2.1 },
+    "schools_data":   { "rating_breakdown": { ... } },
+    "data_sources":   [ "postcodes.io", "police.uk", ... ],
+    "data_freshness": [ { "source": "Police", "period": "12mo", ... } ]
   }
 }`;
 
@@ -297,7 +306,7 @@ function ApiPreview() {
         <SectionHead
           eyebrow="Developer experience"
           title={<>One request. <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>A full read.</em></>}
-          sub="Send a postcode and an intent. Get back an overall score, five weighted dimensions, a plain-English narrative, and data-backed recommendations. Four intent modes: moving, investing, business, research."
+          sub="Send a postcode and an intent. Get back an overall score, five weighted dimensions with confidence bands, a plain-English narrative, and cited data sources. Pin the engine version with one header. Retry safely with the idempotency key."
         />
 
         <div className="aiq-api-grid" style={{
@@ -312,8 +321,12 @@ function ApiPreview() {
           marginTop: 40, display: "flex", gap: 32, flexWrap: "wrap",
           alignItems: "center",
         }}>
-          <Link href="/docs" style={linkInline}>
-            Read the API docs
+          <Link href="/docs/api-reference" style={linkInline}>
+            Open the OpenAPI reference
+            <span aria-hidden>→</span>
+          </Link>
+          <Link href="/docs/mcp" style={{ ...linkInline, color: "var(--text-2)" }}>
+            MCP server
             <span aria-hidden>→</span>
           </Link>
           <Link href="/docs#embed" style={{ ...linkInline, color: "var(--text-2)" }}>
@@ -383,7 +396,7 @@ function CodeBlock({ label, snippet, copyable }: {
   );
 }
 
-/* ─────── Section head helper ─────── */
+/* --- Section head helper --- */
 
 function SectionHead({ eyebrow, title, sub }: {
   eyebrow: string; title: React.ReactNode; sub?: string;
@@ -415,22 +428,22 @@ function SectionHead({ eyebrow, title, sub }: {
           fontFamily: "var(--sans)", fontSize: 16, fontWeight: 400,
           lineHeight: 1.5, color: "var(--text-2)",
           letterSpacing: "-0.005em",
-          margin: "18px 0 0", maxWidth: "58ch",
+          margin: "18px 0 0", maxWidth: "62ch",
         }}>{sub}</p>
       )}
     </div>
   );
 }
 
-/* ─────── Capabilities · editorial list with AiqIcons ─────── */
+/* --- Capabilities · what's actually shipped --- */
 
 const CAPABILITIES: { icon: IconName; title: string; body: string }[] = [
-  { icon: "api",        title: "REST API",            body: "POST a postcode and an intent. Back comes an overall score, five weighted dimensions with reasoning, a narrative, recommendations, and cited data. Bearer-token auth, 30 requests a minute, JSON in and out." },
-  { icon: "map",        title: "Drop-in widget",      body: "Single-origin script for any page. No API key on the client. Reads from the 24-hour cache so embed traffic never hits live pricing. CORS-enabled, 60 requests an hour per origin." },
-  { icon: "intent",     title: "Four intent modes",   body: "Origination, site selection, investment, and reference. Same postcode, different scores. The engine reweights five dimensions to match what the buyer is actually deciding. Origination weighs Safety 25% · Schools 20% · Transport 20% · Amenities 15% · Cost 20%. Site selection rewrites the lot." },
-  { icon: "data",       title: "Seven public datasets", body: "Postcodes.io, Police.uk (12 months of street-level incidents), IMD 2025, OpenStreetMap (amenities, transport, schools), HM Land Registry, Environment Agency flood risk, and Ofsted inspections. Every response carries a data_freshness block so you know exactly what was read and when." },
-  { icon: "read",       title: "Plain-English read",  body: "Numbers tell you what. The narrative explains why. Specific facts cited inline: median sold price, YoY change, crime rate per intent, flood zone, nearest Outstanding school within 1.5km. No vague copy. Every claim is grounded in one of the datasets above." },
-  { icon: "researcher", title: "Self-serve dashboard",body: "Manage keys, monitor calls, view a 30-day trend. Cached hits don't count against your quota, so embed traffic is effectively free. Billing and quota live with the account. No procurement loop to use the product." },
+  { icon: "api",        title: "REST API + bulk endpoint", body: "POST /v1/report for one postcode. POST /v1/batch for up to 100 in one call with bounded concurrency. Bearer token auth. 30 requests a minute on single, 5 batches a minute. JSON in and out, cited data sources on every response." },
+  { icon: "data",       title: "Engine version pinning",   body: "Send X-Engine-Version: 2.0.2 to lock every response to that methodology version. Response stamps the same value into the body, plus an X-Engine-Version header. Buyers entering reports into a model risk register get a clean audit trail." },
+  { icon: "researcher", title: "Confidence per dimension", body: "Every dimension returns a confidence value (0.0 to 1.0) and a reason string. High when the data is fresh primary source, medium for partial fallback, low for proxy data, none when missing. Aggregate confidence on the overall report. Buyers see the trust band, not just the number." },
+  { icon: "repeat",     title: "Idempotency-Key + retries", body: "Stripe-style Idempotency-Key header on /v1/report and /v1/batch. Retries with the same key + body return the cached response within 24 hours without consuming additional quota. Different body with the same key returns 409. Safe to retry on network failure." },
+  { icon: "intent",     title: "Outbound webhooks",        body: "Subscribe a URL to event types. report.created fires after every successful generation; score.changed when the time-series cron detects a material change. Stripe-style HMAC-SHA256 signing, 5s timeout per delivery, failures recorded for replay." },
+  { icon: "operator",   title: "MCP server + widget",      body: "Native Model Context Protocol server for Claude Desktop / IDE workflows. Drop-in widget for any page with no API key on the client, reading from the 24-hour cache. Same engine on every surface. Same scores from every door." },
 ];
 
 function Capabilities() {
@@ -474,7 +487,7 @@ function Capabilities() {
               <div style={{
                 fontFamily: "var(--sans)", fontSize: 15, fontWeight: 400,
                 lineHeight: 1.55, color: "var(--text-2)",
-                letterSpacing: "-0.004em", maxWidth: "58ch",
+                letterSpacing: "-0.004em", maxWidth: "62ch",
               }}>{c.body}</div>
             </div>
           ))}
@@ -484,13 +497,17 @@ function Capabilities() {
   );
 }
 
-/* ─────── Audiences · who this is for ─────── */
+/* --- Audiences · B2B vertical use cases --- */
 
 const B2B_AUDIENCES: { icon: IconName; title: string; body: string; tag: string }[] = [
-  { icon: "buyer",    title: "Property portals",     tag: "API or widget",  body: "Add area scores to every listing page. Give buyers objective data on safety, transport, schools, and amenities before they book a viewing." },
-  { icon: "agent",    title: "Estate agents",        tag: "Widget or API",  body: "Show area quality alongside property details. Embed the score card on your site, or pull scores into the CRM for your briefs." },
-  { icon: "investor", title: "Investment platforms", tag: "API batches",    body: "Screen postcodes at scale for yield, safety, and growth potential. Filter by intent-specific dimensions. Cached queries are free." },
-  { icon: "map",      title: "Relocation companies", tag: "API",            body: "Score destination neighbourhoods for corporate clients automatically. Provide objective area intelligence alongside relocation packages." },
+  { icon: "investor", title: "Mortgage lenders",    tag: "/v1/batch · webhooks",
+    body: "Screen portfolios at scale. Submit 100 postcodes per batch call, pre-checked against your monthly quota. Subscribe to score.changed webhooks to catch material movements on watchlisted properties. Methodology pinning gives your model risk team a clean line of sight on every score that touches a credit decision." },
+  { icon: "support",  title: "Insurance underwriters", tag: "/v1/report · MCP",
+    body: "Enrich quote workflows with environment-agency flood zones, crime baselines, deprivation indices, and property volatility bands. Per-dimension confidence tells underwriters when to trust the proxy and when to ask for a manual review. MCP server lets actuarial analysts query the engine from Claude in seconds." },
+  { icon: "buyer",    title: "PropTech platforms",     tag: "API · widget · MCP",
+    body: "Embed deterministic area intelligence on every listing, valuation screen, or relocation flow. REST API for server-side enrichment. Drop-in widget for embed traffic that reads from the 24-hour cache, so customer-facing pages stay snappy and your quota isn't drained by anonymous browsers." },
+  { icon: "agent",    title: "Retail / CRE site selection", tag: "/v1/batch",
+    body: "Score a longlist of candidate locations against the business intent: foot traffic, competition density, transport access, local spending power, commercial costs. Reweight a portfolio against the same engine; compare apples to apples across cities and regions without hand-tuning a model per market." },
 ];
 
 function Audiences() {
@@ -503,7 +520,7 @@ function Audiences() {
       <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 40px" }}>
         <SectionHead
           eyebrow="Who this is for"
-          title={<>Four teams. <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>One engine.</em></>}
+          title={<>Four buyers. <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>One engine.</em></>}
         />
 
         <div className="aiq-audiences-grid" style={{
@@ -532,7 +549,7 @@ function Audiences() {
                 fontFamily: "var(--sans)", fontSize: 14.5, fontWeight: 400,
                 lineHeight: 1.55, color: "var(--text-2)",
                 letterSpacing: "-0.003em",
-                margin: 0, maxWidth: "52ch",
+                margin: 0, maxWidth: "56ch",
               }}>{a.body}</p>
               <span style={{
                 alignSelf: "flex-start",
@@ -549,13 +566,79 @@ function Audiences() {
   );
 }
 
-/* ─────── Pricing strip ─────── */
+/* --- Regulatory signal strip --- */
 
-const TIERS: { name: string; price: string; cadence: string; reports: string; perReport: string; desc: string; highlight?: boolean }[] = [
-  { name: "Developer",  price: "£49",     cadence: "/mo",  reports: "100 reports",   perReport: "£0.49 each", desc: "Solo devs, prototypes, early integrations." },
-  { name: "Business",   price: "£249",    cadence: "/mo",  reports: "500 reports",   perReport: "£0.50 each", desc: "Platforms and integrations with steady traffic.", highlight: true },
-  { name: "Growth",     price: "£499",    cadence: "/mo",  reports: "1,500 reports", perReport: "£0.33 each", desc: "Portals and high-volume surfaces." },
-  { name: "Enterprise", price: "Custom",  cadence: "",     reports: "5,000+",        perReport: "Custom",     desc: "SLAs, annual contracts, bespoke terms." },
+const REG_SIGNALS: { label: string; body: string }[] = [
+  { label: "Auditable", body: "Every report stamped with engine_version and per-dimension confidence. Entered into model risk register without ambiguity." },
+  { label: "Version-pinned", body: "X-Engine-Version request header locks the methodology. Patch versions in the v2.x series are score-equivalent by design." },
+  { label: "Deterministic", body: "Scores computed from public datasets using fixed formulas. The AI narrates but never generates the numbers." },
+  { label: "Hashed at rest", body: "API keys SHA-256 hashed in the database. Server never sees a plaintext key after the issue moment. Same pattern as Stripe / GitHub." },
+];
+
+function RegulatoryStrip() {
+  return (
+    <section style={{
+      background: "var(--bg)",
+      borderBottom: "1px solid var(--border)",
+      padding: "96px 0 104px",
+    }}>
+      <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 40px" }}>
+        <SectionHead
+          eyebrow="Built for the model risk register"
+          title={<>Four properties <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>your compliance team will ask for.</em></>}
+          sub="None of this is a sticker on a marketing page. Every property below is a real surface on the API today, with docs and tests behind it."
+        />
+
+        <div className="aiq-reg-grid" style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${REG_SIGNALS.length}, 1fr)`,
+          gap: 0, marginTop: 56,
+          border: "1px solid var(--border)",
+          background: "var(--bg-off)",
+        }}>
+          {REG_SIGNALS.map((s, i) => (
+            <div key={s.label} style={{
+              padding: "26px 24px",
+              borderRight: i < REG_SIGNALS.length - 1 ? "1px solid var(--border)" : "none",
+              display: "flex", flexDirection: "column", gap: 10,
+            }}>
+              <div style={{
+                fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
+                letterSpacing: "0.22em", textTransform: "uppercase",
+                color: "var(--ink)",
+              }}>{s.label}</div>
+              <p style={{
+                fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 400,
+                lineHeight: 1.55, color: "var(--text-2)",
+                letterSpacing: "-0.003em",
+                margin: 0, maxWidth: "30ch",
+              }}>{s.body}</p>
+            </div>
+          ))}
+        </div>
+
+        <div style={{
+          marginTop: 22,
+          fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
+          letterSpacing: "0.16em", textTransform: "uppercase",
+          color: "var(--text-3)",
+        }}>
+          Enterprise security review pack available on request.
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* --- Pricing strip · V2 plans, sourced from src/lib/stripe.ts PLANS --- */
+
+const TIERS: { name: string; price: string; cadence: string; reports: string; mcp: string; desc: string; highlight?: boolean }[] = [
+  { name: "Sandbox",    price: "£0",     cadence: "/mo",  reports: "35 calls",          mcp: "Add-on",         desc: "Try the API end to end without a card. Full surface, capped." },
+  { name: "Starter",    price: "£49",    cadence: "/mo",  reports: "1,500 calls",       mcp: "£29/mo add-on",  desc: "Solo devs and pilots." },
+  { name: "Build",      price: "£149",   cadence: "/mo",  reports: "6,000 calls",       mcp: "£29/mo add-on",  desc: "Production integrations with steady traffic.", highlight: true },
+  { name: "Scale",      price: "£499",   cadence: "/mo",  reports: "25,000 calls",      mcp: "£29/mo add-on",  desc: "Portals and platforms with embed-heavy surfaces." },
+  { name: "Growth",     price: "£1,499", cadence: "/mo",  reports: "100,000 calls",     mcp: "Included",       desc: "Lender portfolios, InsurTech back-ends, multi-product surfaces." },
+  { name: "Enterprise", price: "£4,999+", cadence: "/mo", reports: "250,000+ calls",    mcp: "Included",       desc: "Annual contract, SLAs, security review, bespoke commercials." },
 ];
 
 function PricingStrip() {
@@ -568,8 +651,8 @@ function PricingStrip() {
       <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 40px" }}>
         <SectionHead
           eyebrow="API pricing"
-          title={<>Scale as <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>you grow.</em></>}
-          sub="Cached queries don't count against your quota. Cancel any time. No setup fee."
+          title={<>Six tiers. <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>Same engine.</em></>}
+          sub="Cached calls don't count against your quota. Build and Scale carry a soft overage cap, hard caps on Sandbox and Starter, negotiated overages on Enterprise. Cancel any time."
         />
 
         <div className="aiq-tier-grid" style={{
@@ -579,7 +662,7 @@ function PricingStrip() {
         }}>
           {TIERS.map((t, i) => (
             <div key={t.name} style={{
-              padding: "30px 26px 32px",
+              padding: "28px 18px 30px",
               borderRight: i < TIERS.length - 1 ? "1px solid var(--border)" : "none",
               background: t.highlight ? "var(--bg-off)" : "var(--bg)",
               position: "relative",
@@ -598,12 +681,12 @@ function PricingStrip() {
               }}>{t.name}</div>
               <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
                 <span style={{
-                  fontFamily: "var(--display)", fontSize: 38, fontWeight: 500,
+                  fontFamily: "var(--display)", fontSize: 30, fontWeight: 500,
                   letterSpacing: "-0.02em", color: "var(--ink-deep)",
                   lineHeight: 1,
                 }}>{t.price}</span>
                 {t.cadence && <span style={{
-                  fontFamily: "var(--mono)", fontSize: 12,
+                  fontFamily: "var(--mono)", fontSize: 11,
                   color: "var(--text-3)",
                 }}>{t.cadence}</span>}
               </div>
@@ -612,11 +695,12 @@ function PricingStrip() {
                 letterSpacing: "0.06em", color: "var(--ink)",
               }}>{t.reports}</div>
               <div style={{
-                fontFamily: "var(--mono)", fontSize: 10.5,
+                fontFamily: "var(--mono)", fontSize: 10,
                 color: "var(--text-3)",
-              }}>{t.perReport}</div>
+                letterSpacing: "0.06em",
+              }}>MCP: {t.mcp}</div>
               <div style={{
-                fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 400,
+                fontFamily: "var(--sans)", fontSize: 13, fontWeight: 400,
                 lineHeight: 1.5, color: "var(--text-2)",
                 marginTop: 4,
               }}>{t.desc}</div>
@@ -631,17 +715,27 @@ function PricingStrip() {
           color: "var(--text-3)",
           display: "flex", gap: 28, flexWrap: "wrap",
         }}>
-          <span>✓ Cached queries free</span>
-          <span>✓ Self-serve onboarding</span>
+          <span>✓ Cached calls free</span>
+          <span>✓ Self-serve from Sandbox</span>
+          <span>✓ Annual billing on Build+</span>
           <span>✓ Cancel any time</span>
-          <span>✓ Bearer token auth</span>
+        </div>
+
+        <div style={{
+          marginTop: 32, display: "flex", gap: 28, flexWrap: "wrap",
+          alignItems: "center",
+        }}>
+          <Link href="/pricing" style={linkInline}>
+            See the full pricing page
+            <span aria-hidden>→</span>
+          </Link>
         </div>
       </div>
     </section>
   );
 }
 
-/* ─────── Final CTA ─────── */
+/* --- Final CTA --- */
 
 function FinalCta() {
   return (
@@ -682,16 +776,16 @@ function FinalCta() {
           letterSpacing: "-0.02em", color: "#FFFFFF",
           margin: "0 0 18px",
         }}>
-          Put a <em style={{
+          A <em style={{
             fontStyle: "italic", color: "var(--signal)",
-          }}>proper read</em> on every postcode in your product.
+          }}>deterministic read</em> on every UK postcode in your product.
         </h2>
         <p style={{
           fontFamily: "var(--sans)", fontSize: 16.5, fontWeight: 400,
           lineHeight: 1.55, color: "rgba(255,255,255,0.64)",
-          margin: "0 auto 36px", maxWidth: "48ch",
+          margin: "0 auto 36px", maxWidth: "50ch",
         }}>
-          Create an account, subscribe to a plan, generate a key, start building. Under two minutes, no sales call.
+          Start on Sandbox without a card. Go to Build when the pilot lands. Enterprise contracts available for portfolio-scale workloads.
         </p>
         <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
           <Link href="/pricing" style={{
@@ -709,7 +803,7 @@ function FinalCta() {
             Get API access
             <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
           </Link>
-          <a href="mailto:hello@onegoodarea.com?subject=Enterprise API enquiry" style={{
+          <a href="mailto:hello@onegoodarea.com?subject=Enterprise%20API%20enquiry" style={{
             fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
             letterSpacing: "0.14em", textTransform: "uppercase",
             color: "rgba(255,255,255,0.88)", background: "transparent",
