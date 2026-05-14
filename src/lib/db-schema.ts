@@ -53,10 +53,15 @@ export async function ensureActivityTable() {
 }
 
 export async function ensureApiKeysTable() {
+  // Base table. `key` is nullable since AR-127; new rows write `key_hash` + `key_prefix` only.
+  // `key` column kept temporarily for pre-AR-127 rows until they're backfilled. Dropped in a
+  // follow-up PR after a week of clean CI.
   await sql`
     CREATE TABLE IF NOT EXISTS api_keys (
       id TEXT PRIMARY KEY,
-      key TEXT UNIQUE NOT NULL,
+      key TEXT UNIQUE,
+      key_hash TEXT,
+      key_prefix TEXT,
       user_id TEXT NOT NULL,
       name TEXT DEFAULT 'Default',
       created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -64,6 +69,11 @@ export async function ensureApiKeysTable() {
       revoked BOOLEAN DEFAULT FALSE
     )
   `;
+  // AR-127 idempotent additions: handles pre-existing tables that don't have the new columns.
+  await sql`ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS key_hash TEXT`;
+  await sql`ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS key_prefix TEXT`;
+  await sql`ALTER TABLE api_keys ALTER COLUMN key DROP NOT NULL`;
+  await sql`CREATE UNIQUE INDEX IF NOT EXISTS api_keys_key_hash_idx ON api_keys (key_hash)`;
 }
 
 /**
