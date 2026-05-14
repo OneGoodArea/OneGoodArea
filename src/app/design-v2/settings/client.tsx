@@ -38,6 +38,9 @@ export default function SettingsClient() {
   }, []);
 
   useEffect(() => {
+    // Valid: fetch subscription on session change. The setState calls happen inside
+    // fetchSubscription after the async fetch resolves, not synchronously in this effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (session?.user) fetchSubscription();
   }, [session, fetchSubscription]);
 

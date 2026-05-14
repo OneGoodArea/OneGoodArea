@@ -50,6 +50,9 @@ export default function ApiUsageClient() {
   }, [router]);
 
   useEffect(() => {
+    // Valid: fetch usage on session change. The setState calls happen inside
+    // fetchUsage after the async fetch resolves, not synchronously in this effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (session?.user) fetchUsage();
   }, [session, fetchUsage]);
 
