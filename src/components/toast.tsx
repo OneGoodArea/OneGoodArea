@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useState, useRef, useEffect } from "react";
-import { X } from "lucide-react";
+import { X } from "@/components/icons/ui-icons";
 import { generateId } from "@/lib/id";
 
 type ToastType = "success" | "error" | "info";

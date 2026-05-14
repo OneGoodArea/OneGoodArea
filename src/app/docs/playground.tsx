@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Play, Loader2, ChevronDown, Check } from "lucide-react";
+import { Play, Loader2, ChevronDown, Check } from "@/components/icons/ui-icons";
 
 const SAMPLE_AREAS = [
   { postcode: "SW1A 1AA", label: "Westminster, London", type: "Urban" },
@@ -48,15 +48,20 @@ function ScoreColor(score: number) {
 }
 
 function LoadingSteps({ elapsed }: { elapsed: number }) {
-  let cumulative = 0;
+  // Pre-compute cumulative end-of-step offsets so render stays pure.
+  // boundaries[i] is the elapsed-ms at which step i finishes.
+  const boundaries = LOADING_STEPS.reduce<number[]>((acc, step) => {
+    acc.push((acc[acc.length - 1] ?? 0) + step.duration);
+    return acc;
+  }, []);
 
   return (
     <div className="py-4 space-y-1.5">
       {LOADING_STEPS.map((step, i) => {
-        const stepStart = cumulative;
-        cumulative += step.duration;
-        const isActive = elapsed >= stepStart && elapsed < cumulative;
-        const isDone = elapsed >= cumulative;
+        const stepStart = i === 0 ? 0 : boundaries[i - 1];
+        const stepEnd = boundaries[i];
+        const isActive = elapsed >= stepStart && elapsed < stepEnd;
+        const isDone = elapsed >= stepEnd;
 
         return (
           <div key={i} className="flex items-center gap-3">
@@ -89,7 +94,7 @@ function LoadingSteps({ elapsed }: { elapsed: number }) {
           <div
             className="h-full transition-all duration-1000 ease-linear"
             style={{
-              width: `${Math.min((elapsed / cumulative) * 100, 95)}%`,
+              width: `${Math.min((elapsed / boundaries[boundaries.length - 1]) * 100, 95)}%`,
               background: "var(--neon-green)",
             }}
           />
