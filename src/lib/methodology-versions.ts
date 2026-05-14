@@ -85,6 +85,18 @@ export const METHODOLOGY_VERSIONS: MethodologyVersion[] = [
       "Patch version (PATCH) — score values are byte-identical to v2.0.0; only confidence metadata refines",
     ],
   },
+  {
+    version: "2.0.2",
+    released_at: "2026-05-14",
+    summary: "OpenStreetMap data-source reliability hardening. Transport scoring no longer degrades to NONE confidence for UK city centres. No formula changes.",
+    changes: [
+      "Overpass query timeout bumped from 15s to 25s server-side; client AbortSignal from 20s to 35s",
+      "Overpass failures now retry once after 500ms before falling back to null",
+      "Overpass errors now logged via logger.warn() — previously silent (Sentry-invisible)",
+      "Resolves AR-135: dense UK city centres (Manchester, Birmingham, Edinburgh, Cardiff, York etc.) consistently exceeded the previous 15s Overpass timeout when the bundled 8-subquery hit thousands of nodes in the 1-2km radii. Reports for these postcodes returned Transport scoring with confidence NONE despite the areas having major rail and bus coverage.",
+      "Patch version (PATCH) — implementation reliability fix, scoring formulas are byte-identical to v2.0.1.",
+    ],
+  },
 ];
 
 if (METHODOLOGY_VERSIONS.length === 0) {
