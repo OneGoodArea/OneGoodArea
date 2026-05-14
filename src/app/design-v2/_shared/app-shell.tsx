@@ -335,6 +335,9 @@ function SidebarThemeRow() {
   const [hover, setHover] = useState(false);
 
   useEffect(() => {
+    // Valid mount-time pattern: hydrate from localStorage / data-theme on first
+    // client render only. Runs once, no cascade because deps array is empty.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     const stored =
       (typeof window !== "undefined" && localStorage.getItem("aiq-theme")) ||

@@ -984,6 +984,10 @@ function EnginePanel({
   // Animate source tape as a "run" whenever resolved changes.
   const [runId, setRunId] = useState(0);
   useEffect(() => {
+    // Valid: incrementing a counter when a prop changes to retrigger the
+    // source-tape animation. Cannot derive in render (we want a fresh run
+    // each time `resolved.display` changes, not just on first render).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (resolved) setRunId(id => id + 1);
   }, [resolved?.display]);
 
@@ -1346,6 +1350,10 @@ function SourceRow({
   const runDuration = Math.max(350, source.ms);
 
   useEffect(() => {
+    // Valid: reset on `active=false` then schedule the done flip via setTimeout.
+    // The synchronous setDone(false) only fires when prop transitions, not on
+    // every render, so no cascade.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!active) { setDone(false); return; }
     const t = setTimeout(() => setDone(true), startDelay + runDuration);
     return () => clearTimeout(t);
@@ -2488,6 +2496,10 @@ function HIWPanelIntent() {
 function HIWPanelDatasets() {
   const [running, setRunning] = useState(false);
   useEffect(() => {
+    // Valid: ensure animation starts from a known false state on mount, then
+    // flip to true after 120ms so the source-tape rails animate in. Empty
+    // deps means this runs once per mount, no cascade.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRunning(false);
     const t = setTimeout(() => setRunning(true), 120);
     return () => clearTimeout(t);
