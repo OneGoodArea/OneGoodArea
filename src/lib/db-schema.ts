@@ -180,6 +180,39 @@ export async function ensureWatchlistTable() {
   `;
 }
 
+/**
+ * AR-128: idempotency records for the public REST API.
+ *
+ * Stripe-style. Caller sends `Idempotency-Key: <uuid>` header on a billed
+ * operation (POST /api/v1/report, POST /api/v1/batch); we store the
+ * response keyed by (user_id, idempotency_key). Subsequent requests with the
+ * same key return the cached response without re-running the engine.
+ *
+ * - `request_hash` is SHA-256 of the canonical JSON request body; mismatch
+ *   on same key + different body → 409 IDEMPOTENCY_CONFLICT (Stripe contract).
+ * - 24h TTL; lookups filter `expires_at > NOW()` so stale rows are invisible.
+ * - Periodic GC can be added later if the table grows; not blocking.
+ */
+export async function ensureIdempotencyRecordsTable() {
+  await sql`
+    CREATE TABLE IF NOT EXISTS idempotency_records (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      idempotency_key TEXT NOT NULL,
+      request_hash TEXT NOT NULL,
+      response_status INTEGER NOT NULL,
+      response_body JSONB NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      expires_at TIMESTAMPTZ NOT NULL,
+      UNIQUE (user_id, idempotency_key)
+    )
+  `;
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_idempotency_records_expires
+      ON idempotency_records (expires_at)
+  `;
+}
+
 export async function ensureWebhookEventsTable() {
   await sql`
     CREATE TABLE IF NOT EXISTS webhook_events (

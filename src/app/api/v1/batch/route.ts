@@ -12,6 +12,7 @@ import {
   isSuccess,
   processBatchItems,
 } from "@/lib/batch";
+import { parseIdempotencyKey, withIdempotency } from "@/lib/idempotency";
 
 /* AR-130: bulk scoring endpoint for portfolio-scale buyers.
    Lender portfolios are 10k-500k properties; one-at-a-time /api/v1/report calls
@@ -117,24 +118,37 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Process with bounded concurrency
-    const results = await processBatchItems(items, userId);
-
-    const succeeded = results.filter(isSuccess).length;
-    const failed = results.length - succeeded;
-    trackEvent("api.batch.processed", userId, {
-      batch_size: items.length,
-      succeeded,
-      failed,
-    });
-
-    return NextResponse.json(
-      {
-        results,
-        summary: { total: items.length, succeeded, failed },
+    // AR-128: idempotency wrap. Retries with the same Idempotency-Key + same
+    // items array get the cached result without re-running the engine on 100
+    // postcodes again.
+    const idempotencyKey = parseIdempotencyKey(req.headers.get("idempotency-key"));
+    const idem = await withIdempotency(
+      userId,
+      idempotencyKey,
+      { items },
+      async () => {
+        const results = await processBatchItems(items, userId);
+        const succeeded = results.filter(isSuccess).length;
+        const failed = results.length - succeeded;
+        trackEvent("api.batch.processed", userId, {
+          batch_size: items.length,
+          succeeded,
+          failed,
+        });
+        return {
+          status: 200,
+          body: {
+            results,
+            summary: { total: items.length, succeeded, failed },
+          },
+        };
       },
-      { headers },
     );
+
+    return NextResponse.json(idem.body, {
+      status: idem.status,
+      headers: { ...headers, "X-Idempotency-Replayed": String(idem.replayed) },
+    });
   } catch (error) {
     if (isAppError(error)) {
       return NextResponse.json(

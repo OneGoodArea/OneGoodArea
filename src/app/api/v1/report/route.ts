@@ -9,6 +9,7 @@ import { validateLocationInput, validateIntent } from "@/lib/validation";
 import { isAppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { RATE_LIMITS } from "@/lib/config";
+import { parseIdempotencyKey, withIdempotency } from "@/lib/idempotency";
 
 /** Detect MCP-originated requests via the User-Agent stamp set by the MCP api-client. */
 function isFromMcpServer(req: NextRequest): boolean {
@@ -107,21 +108,34 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const result = await generateReport(locationCheck.sanitized, intent as Intent, userId);
-    trackEvent("api.report.generated", userId, { area, intent, reportId: result.id, source: fromMcp ? "mcp" : "api" });
+    // AR-128: idempotency. If Idempotency-Key header is present, cache the
+    // response keyed by (user_id, key); retries with the same key + same body
+    // get the cached response without re-running the engine.
+    const idempotencyKey = parseIdempotencyKey(req.headers.get("idempotency-key"));
+    const idem = await withIdempotency(
+      userId,
+      idempotencyKey,
+      { area: locationCheck.sanitized, intent },
+      async () => {
+        const result = await generateReport(locationCheck.sanitized, intent as Intent, userId);
+        trackEvent("api.report.generated", userId, { area, intent, reportId: result.id, source: fromMcp ? "mcp" : "api" });
 
-    // Increment MCP usage counter (best-effort, non-blocking)
-    if (fromMcp) {
-      trackMcpCall(userId).catch((err) => logger.error("[api/v1/report] trackMcpCall failed:", err));
-    }
+        // Increment MCP usage counter (best-effort, non-blocking)
+        if (fromMcp) {
+          trackMcpCall(userId).catch((err) => logger.error("[api/v1/report] trackMcpCall failed:", err));
+        }
 
-    return NextResponse.json(
-      {
-        id: result.id,
-        report: result.report,
+        return {
+          status: 200,
+          body: { id: result.id, report: result.report },
+        };
       },
-      { headers }
     );
+
+    return NextResponse.json(idem.body, {
+      status: idem.status,
+      headers: { ...headers, "X-Idempotency-Replayed": String(idem.replayed) },
+    });
   } catch (error) {
     if (isAppError(error)) {
       return NextResponse.json(
