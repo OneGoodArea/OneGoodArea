@@ -3,7 +3,7 @@
   "info": {
     "title": "OneGoodArea API",
     "description": "Deterministic UK location intelligence. Scores any UK postcode against four intents (origination / site selection / investment / reference) using seven public datasets. Numbers are computed from real data using fixed formulas; AI narrates the results but never generates the scores.\n\nEvery response carries an `engine_version` string and per-dimension `confidence` values, so a buyer's model risk register can pin to a specific methodology and trust-band the inputs.",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "contact": {
       "name": "OneGoodArea",
       "url": "https://www.onegoodarea.com",

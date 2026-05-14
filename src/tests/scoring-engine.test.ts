@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeScores } from "../lib/scoring-engine";
+import { computeScores, propertyConfidence } from "../lib/scoring-engine";
 import type { CrimeSummary } from "../lib/data-sources/police";
 import type { DeprivationData } from "../lib/data-sources/deprivation";
 import type { AmenitiesData } from "../lib/data-sources/openstreetmap";
@@ -401,5 +401,58 @@ describe("computeScores", () => {
         expect(d.score).toBe(result2.dimensions[i].score);
       });
     });
+  });
+});
+
+/* AR-137: variance-aware property confidence rubric (v2.0.1).
+   Locks in the new HIGH/MEDIUM/LOW gates. */
+
+describe("AR-137: propertyConfidence", () => {
+  it("returns HIGH for >=50 txns with low YoY volatility (<=15%)", () => {
+    expect(propertyConfidence(50, 0).value).toBe(1.0);
+    expect(propertyConfidence(100, 5).value).toBe(1.0);
+    expect(propertyConfidence(200, -15).value).toBe(1.0);
+    expect(propertyConfidence(200, 15).value).toBe(1.0);
+  });
+
+  it("caps at MEDIUM when sample is large but volatility >15%", () => {
+    expect(propertyConfidence(50, 16).value).toBe(0.7);
+    expect(propertyConfidence(83, -21.1).value).toBe(0.7); // York YO1 case
+    expect(propertyConfidence(200, 25).value).toBe(0.7);
+  });
+
+  it("is MEDIUM for moderate samples (20-49 txns) regardless of volatility", () => {
+    expect(propertyConfidence(20, 0).value).toBe(0.7);
+    expect(propertyConfidence(35, 5).value).toBe(0.7);
+    expect(propertyConfidence(49, 100).value).toBe(0.7);
+  });
+
+  it("is LOW for sparse samples (<20 txns)", () => {
+    expect(propertyConfidence(19, 0).value).toBe(0.4);
+    expect(propertyConfidence(5, 5).value).toBe(0.4);
+    expect(propertyConfidence(0, 0).value).toBe(0.4);
+  });
+
+  it("treats null YoY as zero volatility", () => {
+    expect(propertyConfidence(50, null).value).toBe(1.0);
+    expect(propertyConfidence(100, null).value).toBe(1.0);
+  });
+
+  it("includes sample size and volatility in the reason string when HIGH", () => {
+    const result = propertyConfidence(100, 5);
+    expect(result.reason).toMatch(/100/);
+    expect(result.reason).toMatch(/5\.0%/);
+  });
+
+  it("flags volatility as the cap reason when MEDIUM-via-volatility", () => {
+    const result = propertyConfidence(83, -21.1);
+    expect(result.reason).toMatch(/volatility/i);
+    expect(result.reason).toMatch(/21\.1/);
+  });
+
+  it("describes sparse samples honestly in LOW reasons", () => {
+    const result = propertyConfidence(5, 0);
+    expect(result.reason).toMatch(/[Ss]parse/);
+    expect(result.reason).toMatch(/5/);
   });
 });
