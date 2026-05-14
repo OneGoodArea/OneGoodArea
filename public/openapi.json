@@ -19,7 +19,8 @@
   ],
   "tags": [
     { "name": "Reports", "description": "Generate area intelligence reports" },
-    { "name": "Widget", "description": "Embeddable widget endpoint, cache-only" }
+    { "name": "Widget", "description": "Embeddable widget endpoint, cache-only" },
+    { "name": "Webhooks", "description": "Outbound webhook subscriptions for event-driven integrations" }
   ],
   "paths": {
     "/api/v1/report": {
@@ -180,6 +181,107 @@
           "429": { "$ref": "#/components/responses/RateLimitError" }
         }
       }
+    },
+    "/api/v1/webhooks": {
+      "post": {
+        "tags": ["Webhooks"],
+        "summary": "Register a webhook subscription",
+        "description": "Subscribe to outbound webhook events. We POST signed payloads to your URL when matching events fire. Stripe-style HMAC-SHA256 signature in the `X-OneGoodArea-Signature` header (format: `t=<unix-ts>,v1=<hex>`).\n\n**Supported event types:**\n- `report.created`: fires after every successful report generation by your API key (live now).\n- `score.changed`: fires when the time-series cron detects a score change >5 points for a postcode you've watched. (Available once the cron is scheduled — see roadmap.)\n\n**Secret:** the per-subscription HMAC signing secret (`whsec_<48-hex>`) is returned ONCE in the create response. Store it server-side; it cannot be retrieved later. Rotate by revoking + recreating.\n\n**URL requirements:** must be HTTPS. Localhost and RFC 1918 private ranges are rejected.\n\n**Delivery:** synchronous POST with 5s timeout. Failed deliveries are recorded in our internal audit log; a Phase-2 retry cron will pick them up with exponential backoff.",
+        "operationId": "createWebhookSubscription",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/WebhookSubscriptionRequest" },
+              "example": {
+                "url": "https://hooks.acme-lender.example.com/onegoodarea",
+                "events": ["report.created"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Subscription created. The `secret` is returned ONCE and is never recoverable.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CreatedWebhookSubscription" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "403": { "$ref": "#/components/responses/PlanError" },
+          "429": { "$ref": "#/components/responses/RateLimitError" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      },
+      "get": {
+        "tags": ["Webhooks"],
+        "summary": "List your active webhook subscriptions",
+        "description": "Returns active subscriptions for the API key. Secrets are NEVER included in list responses — only the URL, event types, status, and delivery timestamps.",
+        "operationId": "listWebhookSubscriptions",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Subscription list",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WebhookSubscriptionList" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "403": { "$ref": "#/components/responses/PlanError" },
+          "429": { "$ref": "#/components/responses/RateLimitError" }
+        }
+      }
+    },
+    "/api/v1/webhooks/{id}": {
+      "delete": {
+        "tags": ["Webhooks"],
+        "summary": "Revoke a webhook subscription",
+        "description": "Marks the subscription as `revoked`. No further events will be delivered. Idempotent: revoking an already-revoked subscription returns 404.",
+        "operationId": "revokeWebhookSubscription",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "example": "whsub_abc123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Revoked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "status": { "type": "string", "example": "revoked" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "403": { "$ref": "#/components/responses/PlanError" },
+          "404": {
+            "description": "Subscription not found or already revoked",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "429": { "$ref": "#/components/responses/RateLimitError" }
+        }
+      }
     }
   },
   "components": {
@@ -285,6 +387,82 @@
               "succeeded": { "type": "integer", "description": "Items that produced a report." },
               "failed": { "type": "integer", "description": "Items that returned an error." }
             }
+          }
+        }
+      },
+      "WebhookEventType": {
+        "type": "string",
+        "enum": ["report.created", "score.changed"],
+        "description": "Event types that a webhook subscription can fire on. `report.created` is live; `score.changed` becomes active when the time-series cron is scheduled."
+      },
+      "WebhookSubscriptionRequest": {
+        "type": "object",
+        "required": ["url", "events"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "HTTPS URL we POST signed event payloads to. Must be publicly reachable — localhost and RFC 1918 private ranges are rejected.",
+            "example": "https://hooks.acme-lender.example.com/onegoodarea"
+          },
+          "events": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/WebhookEventType" },
+            "minItems": 1,
+            "description": "Event types this subscription should fire on. Unknown types are silently filtered."
+          }
+        }
+      },
+      "CreatedWebhookSubscription": {
+        "type": "object",
+        "required": ["id", "url", "events", "secret", "created_at"],
+        "properties": {
+          "id": { "type": "string", "example": "whsub_abc123def" },
+          "url": { "type": "string", "format": "uri" },
+          "events": { "type": "array", "items": { "$ref": "#/components/schemas/WebhookEventType" } },
+          "secret": {
+            "type": "string",
+            "description": "HMAC-SHA256 signing secret. Format: `whsec_<48-hex>`. RETURNED ONCE on create; never recoverable. Use to verify the `X-OneGoodArea-Signature` header on incoming webhook deliveries.",
+            "example": "whsec_a1b2c3d4..."
+          },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "WebhookSubscription": {
+        "type": "object",
+        "required": ["id", "url", "events", "status", "created_at"],
+        "properties": {
+          "id": { "type": "string" },
+          "url": { "type": "string", "format": "uri" },
+          "events": { "type": "array", "items": { "$ref": "#/components/schemas/WebhookEventType" } },
+          "status": { "type": "string", "enum": ["active", "revoked"] },
+          "created_at": { "type": "string", "format": "date-time" },
+          "last_success_at": { "type": "string", "format": "date-time", "nullable": true },
+          "last_failure_at": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "WebhookSubscriptionList": {
+        "type": "object",
+        "required": ["subscriptions"],
+        "properties": {
+          "subscriptions": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/WebhookSubscription" }
+          }
+        }
+      },
+      "WebhookEventEnvelope": {
+        "type": "object",
+        "description": "Shape of the JSON body POST'ed to your webhook URL when an event fires. The body is signed by `X-OneGoodArea-Signature: t=<unix-seconds>,v1=<hmac-sha256-hex>` — verify by recomputing HMAC over `<timestamp>.<raw-body>` with your secret.",
+        "required": ["id", "type", "created", "data"],
+        "properties": {
+          "id": { "type": "string", "example": "evt_abc123def" },
+          "type": { "$ref": "#/components/schemas/WebhookEventType" },
+          "created": { "type": "integer", "description": "Unix timestamp (seconds) when the event was generated" },
+          "data": {
+            "type": "object",
+            "description": "Event-specific payload. For `report.created`: `{report_id, area, intent, score, engine_version, confidence}`.",
+            "additionalProperties": true
           }
         }
       },

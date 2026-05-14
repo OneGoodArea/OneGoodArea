@@ -224,6 +224,69 @@ export async function ensureWebhookEventsTable() {
   `;
 }
 
+/**
+ * AR-129: customer-facing webhook subscriptions.
+ *
+ * Lenders register a URL + event list; we POST signed payloads when matching
+ * events fire (`report.created` today, `score.changed` once the time-series
+ * cron is scheduled).
+ *
+ * - `secret` is the per-subscription HMAC-SHA256 signing key (whsec_<48-hex>).
+ *   Returned to the customer ONCE on create; never visible in list responses.
+ * - `events` is TEXT[]; ANY()-matched in the lookup query.
+ * - `status` is 'active' or 'revoked'.
+ */
+export async function ensureWebhookSubscriptionsTable() {
+  await sql`
+    CREATE TABLE IF NOT EXISTS webhook_subscriptions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      url TEXT NOT NULL,
+      secret TEXT NOT NULL,
+      events TEXT[] NOT NULL,
+      status TEXT NOT NULL DEFAULT 'active',
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      last_success_at TIMESTAMPTZ,
+      last_failure_at TIMESTAMPTZ
+    )
+  `;
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_webhook_subscriptions_user_active
+      ON webhook_subscriptions (user_id) WHERE status = 'active'
+  `;
+}
+
+/**
+ * AR-129: outbound webhook delivery audit log.
+ *
+ * One row per delivery attempt. MVP marks each as `delivered` or `failed`
+ * synchronously after the HTTP POST resolves. Phase 2 cron drains `failed`
+ * rows with exponential backoff retry.
+ */
+export async function ensureWebhookDeliveriesTable() {
+  await sql`
+    CREATE TABLE IF NOT EXISTS webhook_deliveries (
+      id TEXT PRIMARY KEY,
+      subscription_id TEXT NOT NULL,
+      event_id TEXT NOT NULL UNIQUE,
+      event_type TEXT NOT NULL,
+      payload JSONB NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      http_status INTEGER,
+      response_body TEXT,
+      attempts INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      delivered_at TIMESTAMPTZ,
+      next_retry_at TIMESTAMPTZ
+    )
+  `;
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_status
+      ON webhook_deliveries (status, next_retry_at)
+      WHERE status IN ('pending', 'failed')
+  `;
+}
+
 export async function ensurePageviewTable() {
   await sql`
     CREATE TABLE IF NOT EXISTS pageviews (
