@@ -26,9 +26,12 @@
       "post": {
         "tags": ["Reports"],
         "summary": "Generate an area intelligence report",
-        "description": "Scores a UK postcode or place name against the requested intent. Returns the deterministic score, five weighted dimensions with reasoning and confidence, source attribution, and an AI-generated narrative. Cache-aware (24h TTL per area:intent pair).\n\n**Rate limit:** 30 requests/minute per API key.",
+        "description": "Scores a UK postcode or place name against the requested intent. Returns the deterministic score, five weighted dimensions with reasoning and confidence, source attribution, and an AI-generated narrative. Cache-aware (24h TTL per area:intent pair).\n\n**Rate limit:** 30 requests/minute per API key.\n\n**Idempotency:** supply an `Idempotency-Key` header for safe retries. See the parameter description.",
         "operationId": "generateReport",
         "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/IdempotencyKey" }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -47,7 +50,11 @@
             "headers": {
               "X-RateLimit-Limit": { "schema": { "type": "integer" } },
               "X-RateLimit-Remaining": { "schema": { "type": "integer" } },
-              "X-RateLimit-Reset": { "schema": { "type": "integer" } }
+              "X-RateLimit-Reset": { "schema": { "type": "integer" } },
+              "X-Idempotency-Replayed": {
+                "description": "`true` when this response was served from the idempotency cache; `false` when freshly generated. Only present if the request supplied an Idempotency-Key.",
+                "schema": { "type": "string", "enum": ["true", "false"] }
+              }
             },
             "content": {
               "application/json": {
@@ -58,6 +65,14 @@
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/AuthError" },
           "403": { "$ref": "#/components/responses/PlanError" },
+          "409": {
+            "description": "Idempotency-Key conflict: the same key was previously used with a different request body. Use a fresh key.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
           "429": { "$ref": "#/components/responses/RateLimitError" },
           "500": { "$ref": "#/components/responses/ServerError" }
         }
@@ -70,6 +85,9 @@
         "description": "Bulk variant of `/api/v1/report` for portfolio-scale buyers (mortgage lenders, insurance underwriters, CRE site-selection teams). Accepts an array of `{ area, intent }` items, processes them with bounded concurrency, and returns a per-item result array.\n\n**Limits:**\n- Max 100 items per request. Larger workloads should be split client-side, or use the async pattern (roadmap).\n- 5 batch requests per minute per API key.\n- Each item counts as 1 report against the monthly quota. Pre-check: if `items.length > remaining_quota`, returns 429 with full details, no quota consumed.\n- Items are processed in parallel with concurrency=5 internally; cache hits resolve in ~100ms, cache misses up to ~30s each.\n\n**Failure handling:** per-item errors do not fail the batch. Each result is either `{ area, intent, report }` (success) or `{ area, intent, error }` (failure).",
         "operationId": "batchReport",
         "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/IdempotencyKey" }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -91,7 +109,11 @@
             "headers": {
               "X-RateLimit-Limit": { "schema": { "type": "integer" } },
               "X-RateLimit-Remaining": { "schema": { "type": "integer" } },
-              "X-RateLimit-Reset": { "schema": { "type": "integer" } }
+              "X-RateLimit-Reset": { "schema": { "type": "integer" } },
+              "X-Idempotency-Replayed": {
+                "description": "`true` when this response was served from the idempotency cache; `false` when freshly generated. Only present if the request supplied an Idempotency-Key.",
+                "schema": { "type": "string", "enum": ["true", "false"] }
+              }
             },
             "content": {
               "application/json": {
@@ -102,6 +124,14 @@
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/AuthError" },
           "403": { "$ref": "#/components/responses/PlanError" },
+          "409": {
+            "description": "Idempotency-Key conflict: the same key was previously used with a different request body. Use a fresh key.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
           "429": { "$ref": "#/components/responses/RateLimitError" },
           "500": { "$ref": "#/components/responses/ServerError" }
         }
@@ -153,6 +183,15 @@
     }
   },
   "components": {
+    "parameters": {
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": false,
+        "description": "Optional opaque string (UUID v4 recommended, 1-255 chars). When supplied, the response is cached for 24 hours keyed by `(your-api-key, idempotency-key)`. A retry with the same key + same request body returns the original response without re-running the engine and without consuming additional quota. If the same key is reused with a different request body, the API returns HTTP 409 with code `IDEMPOTENCY_CONFLICT`. Stripe-style. Recommended for any retry-on-network-failure pattern.",
+        "schema": { "type": "string", "minLength": 1, "maxLength": 255, "example": "550e8400-e29b-41d4-a716-446655440000" }
+      }
+    },
     "securitySchemes": {
       "BearerAuth": {
         "type": "http",
