@@ -10,6 +10,7 @@ import { computeScores, ComputedScores } from "@/lib/scoring-engine";
 import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 import { AreaReport, Intent, DataFreshness } from "@/lib/types";
 import { ensureReportCacheTable, getCachedReport, setCachedReport } from "@/lib/report-cache";
+import { fireWebhookEvent } from "@/lib/webhooks";
 import { trackEvent } from "@/lib/activity";
 import { generateId } from "@/lib/id";
 import { logger } from "@/lib/logger";
@@ -330,6 +331,20 @@ export async function generateReport(
   /* ── 6. Cache the result for future requests ── */
   setCachedReport(area, intent, report, report.areaiq_score).catch((err) =>
     logger.error("[OneGoodArea] Failed to cache report:", err)
+  );
+
+  /* ── 7. Fire `report.created` webhook event (AR-129).
+     Fire-and-forget — the caller doesn't wait for customer endpoints to respond.
+     fireWebhookEvent never throws into this path; it logs failures internally. */
+  fireWebhookEvent(userId, "report.created", {
+    report_id: id,
+    area,
+    intent,
+    score: report.areaiq_score,
+    engine_version: report.engine_version,
+    confidence: report.confidence,
+  }).catch((err) =>
+    logger.error("[OneGoodArea] Failed to fire report.created webhook:", err)
   );
 
   return { id, report };
