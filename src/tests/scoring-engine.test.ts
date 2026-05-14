@@ -456,3 +456,52 @@ describe("AR-137: propertyConfidence", () => {
     expect(result.reason).toMatch(/5/);
   });
 });
+
+/* AR-135: regression — Transport scoring must not return NONE confidence
+   for a realistic city-centre amenities fixture. The bug was Overpass timing
+   out and returning null; this test asserts that GIVEN non-null amenities
+   with the kind of values a city centre would have, the score function
+   produces a confident result. (The upstream Overpass timeout fix in
+   openstreetmap.ts is what makes the non-null amenities reach this function.) */
+
+describe("AR-135: Transport scoring on city-centre amenity fixtures", () => {
+  const cityCentreAmenities: AmenitiesData = {
+    schools: 8,
+    restaurants_cafes: 120,
+    pubs_bars: 25,
+    healthcare: 15,
+    shops: 18,
+    parks_leisure: 6,
+    transport_stations: 3,
+    bus_stops: 45,
+    total: 240,
+    highlights: ["York Station", "King's Cross station", "Manchester Piccadilly station"],
+  };
+
+  it("returns score > 50 for a city-centre fixture (3 stations + 45 bus stops)", () => {
+    const result = computeScores("moving", crime, deprivation, cityCentreAmenities, flood);
+    const transport = result.dimensions.find(d => d.label.toLowerCase().includes("transport"));
+    expect(transport).toBeDefined();
+    expect(transport!.score).toBeGreaterThan(50);
+  });
+
+  it("never returns NONE confidence when amenities object is non-null", () => {
+    const result = computeScores("moving", crime, deprivation, cityCentreAmenities, flood);
+    const transport = result.dimensions.find(d => d.label.toLowerCase().includes("transport"));
+    expect(transport!.confidence).toBeGreaterThan(0.3); // > LOW threshold = at least LOW
+  });
+
+  it("returns HIGH confidence for densely-served city centres", () => {
+    const result = computeScores("moving", crime, deprivation, cityCentreAmenities, flood);
+    const transport = result.dimensions.find(d => d.label.toLowerCase().includes("transport"));
+    // 3 stations + 45 bus stops + 3 named station highlights → should hit HIGH
+    expect(transport!.confidence).toBe(1.0);
+  });
+
+  it("returns NONE only when amenities is null (data source failure)", () => {
+    const result = computeScores("moving", crime, deprivation, null, flood);
+    const transport = result.dimensions.find(d => d.label.toLowerCase().includes("transport"));
+    expect(transport!.confidence).toBe(0.2);
+    expect(transport!.confidence_reason.toLowerCase()).toMatch(/no openstreetmap data/);
+  });
+});

@@ -1,3 +1,5 @@
+import { logger } from "@/lib/logger";
+
 export interface AmenitiesData {
   schools: number;
   restaurants_cafes: number;
@@ -20,9 +22,24 @@ interface OverpassElement {
   tags?: Record<string, string>;
 }
 
-export async function getNearbyAmenities(lat: number, lng: number): Promise<AmenitiesData | null> {
-  try {
-    const query = `[out:json][timeout:15];
+/* AR-135 (v2.0.2): Overpass reliability hardening.
+   Previously this query had `timeout:15` and a 20s AbortSignal. For UK
+   city centres the bundled 8-subquery response can exceed both — central
+   Manchester, Edinburgh, York, Birmingham, Cardiff all hit thousands of
+   nodes within the 1km-2km radii. When Overpass times out we returned null
+   silently, and scoreTransport correctly degraded to NONE confidence on
+   exactly the postcodes where transport coverage is densest.
+
+   Fix: bump Overpass-side timeout to 25s, bump our AbortSignal to 35s,
+   add visibility on errors via logger.warn (was a silent catch), and
+   retry once after 500ms on the first failure before giving up. */
+
+const OVERPASS_QUERY_TIMEOUT_SECONDS = 25;
+const OVERPASS_FETCH_TIMEOUT_MS = 35000;
+const OVERPASS_RETRY_DELAY_MS = 500;
+
+async function fetchOverpass(lat: number, lng: number): Promise<unknown | null> {
+  const query = `[out:json][timeout:${OVERPASS_QUERY_TIMEOUT_SECONDS}];
 (
   nwr["amenity"~"^(school|kindergarten|college|university)$"](around:1500,${lat},${lng});
   nwr["amenity"~"^(restaurant|cafe|fast_food)$"](around:1000,${lat},${lng});
@@ -35,16 +52,47 @@ export async function getNearbyAmenities(lat: number, lng: number): Promise<Amen
 );
 out tags center;`;
 
-    const res = await fetch("https://overpass-api.de/api/interpreter", {
-      method: "POST",
-      body: `data=${encodeURIComponent(query)}`,
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      signal: AbortSignal.timeout(20000),
-    });
+  const res = await fetch("https://overpass-api.de/api/interpreter", {
+    method: "POST",
+    body: `data=${encodeURIComponent(query)}`,
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    signal: AbortSignal.timeout(OVERPASS_FETCH_TIMEOUT_MS),
+  });
 
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data.elements) return null;
+  if (!res.ok) {
+    throw new Error(`Overpass HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function getNearbyAmenities(lat: number, lng: number): Promise<AmenitiesData | null> {
+  let data: unknown;
+  try {
+    data = await fetchOverpass(lat, lng);
+  } catch (firstErr) {
+    logger.warn("[overpass] first attempt failed, retrying once", {
+      lat,
+      lng,
+      error: firstErr instanceof Error ? firstErr.message : String(firstErr),
+    });
+    // Retry once after a brief pause — handles transient Overpass slowness/load
+    await new Promise((resolve) => setTimeout(resolve, OVERPASS_RETRY_DELAY_MS));
+    try {
+      data = await fetchOverpass(lat, lng);
+    } catch (retryErr) {
+      logger.warn("[overpass] retry failed, returning null", {
+        lat,
+        lng,
+        error: retryErr instanceof Error ? retryErr.message : String(retryErr),
+      });
+      return null;
+    }
+  }
+
+  try {
+    if (!data || typeof data !== "object") return null;
+    const responseData = data as { elements?: unknown };
+    if (!Array.isArray(responseData.elements)) return null;
 
     let schools = 0;
     let restaurants_cafes = 0;
@@ -56,7 +104,7 @@ out tags center;`;
     let bus_stops = 0;
     const highlights: string[] = [];
 
-    for (const el of data.elements as OverpassElement[]) {
+    for (const el of responseData.elements as OverpassElement[]) {
       const tags = el.tags || {};
       const amenity = tags.amenity;
       const shop = tags.shop;
