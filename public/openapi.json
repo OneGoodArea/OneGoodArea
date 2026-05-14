@@ -63,6 +63,50 @@
         }
       }
     },
+    "/api/v1/batch": {
+      "post": {
+        "tags": ["Reports"],
+        "summary": "Score up to 100 postcodes in a single request",
+        "description": "Bulk variant of `/api/v1/report` for portfolio-scale buyers (mortgage lenders, insurance underwriters, CRE site-selection teams). Accepts an array of `{ area, intent }` items, processes them with bounded concurrency, and returns a per-item result array.\n\n**Limits:**\n- Max 100 items per request. Larger workloads should be split client-side, or use the async pattern (roadmap).\n- 5 batch requests per minute per API key.\n- Each item counts as 1 report against the monthly quota. Pre-check: if `items.length > remaining_quota`, returns 429 with full details, no quota consumed.\n- Items are processed in parallel with concurrency=5 internally; cache hits resolve in ~100ms, cache misses up to ~30s each.\n\n**Failure handling:** per-item errors do not fail the batch. Each result is either `{ area, intent, report }` (success) or `{ area, intent, error }` (failure).",
+        "operationId": "batchReport",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/BatchRequest" },
+              "example": {
+                "items": [
+                  { "area": "Manchester", "intent": "moving" },
+                  { "area": "M1 1AE", "intent": "business" },
+                  { "area": "Edinburgh", "intent": "investing" }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch processed. Individual items may have succeeded or failed; check the `error` field on each result.",
+            "headers": {
+              "X-RateLimit-Limit": { "schema": { "type": "integer" } },
+              "X-RateLimit-Remaining": { "schema": { "type": "integer" } },
+              "X-RateLimit-Reset": { "schema": { "type": "integer" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BatchResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "403": { "$ref": "#/components/responses/PlanError" },
+          "429": { "$ref": "#/components/responses/RateLimitError" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
     "/api/widget": {
       "get": {
         "tags": ["Widget"],
@@ -145,6 +189,64 @@
             "maxLength": 80
           },
           "intent": { "$ref": "#/components/schemas/Intent" }
+        }
+      },
+      "BatchRequest": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "Array of (area, intent) pairs to score. Minimum 1, maximum 100. Order is preserved in the response.",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": { "$ref": "#/components/schemas/ReportRequest" }
+          }
+        }
+      },
+      "BatchResultItem": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["area", "intent", "report"],
+            "properties": {
+              "area": { "type": "string", "description": "Echo of the input area string" },
+              "intent": { "$ref": "#/components/schemas/Intent" },
+              "report": { "$ref": "#/components/schemas/AreaReport" }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["area", "intent", "error"],
+            "properties": {
+              "area": { "type": "string" },
+              "intent": { "type": "string" },
+              "error": {
+                "type": "string",
+                "description": "Per-item failure reason (e.g. invalid intent, geocode failure, upstream error). The batch as a whole still returns 200; this item is just not fulfilled."
+              }
+            }
+          }
+        ]
+      },
+      "BatchResponse": {
+        "type": "object",
+        "required": ["results", "summary"],
+        "properties": {
+          "results": {
+            "type": "array",
+            "description": "Per-item results in input order. Each entry is either a success (has `report`) or an error (has `error`).",
+            "items": { "$ref": "#/components/schemas/BatchResultItem" }
+          },
+          "summary": {
+            "type": "object",
+            "required": ["total", "succeeded", "failed"],
+            "properties": {
+              "total": { "type": "integer", "description": "Number of items submitted." },
+              "succeeded": { "type": "integer", "description": "Items that produced a report." },
+              "failed": { "type": "integer", "description": "Items that returned an error." }
+            }
+          }
         }
       },
       "ReportResponse": {
