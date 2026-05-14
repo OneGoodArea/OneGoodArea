@@ -43,6 +43,49 @@ const CONF_MEDIUM = 0.7;
 const CONF_LOW = 0.4;
 const CONF_NONE = 0.2;
 
+/* AR-137: variance-aware property confidence rubric (v2.0.1).
+   The Land Registry-backed dimensions used to gate confidence purely on
+   transaction count (>=20 → HIGH). That was optically generous when a small
+   sample carried a wide YoY swing: e.g. York YO1 returned HIGH on 83 txns
+   with a -21% YoY change. Honest confidence has to factor volatility too.
+
+   Rubric:
+   - HIGH:   >= 50 transactions AND <= 15% absolute YoY change (robust + stable)
+   - MEDIUM: >= 20 transactions (either smaller sample, or volatile)
+   - LOW:    < 20 transactions
+
+   Used by scoreCostOfLiving, scorePriceGrowth, scoreCommercialCosts,
+   scoreRentalYield. The last two are proxy dimensions and clamp the result
+   to CONF_MEDIUM regardless.
+*/
+export function propertyConfidence(
+  txns: number,
+  yoyChangePct: number | null,
+): { value: number; reason: string } {
+  const yoyAbs = yoyChangePct === null ? 0 : Math.abs(yoyChangePct);
+  const isHighSample = txns >= 50;
+  const isVolatile = yoyAbs > 15;
+
+  if (isHighSample && !isVolatile) {
+    return {
+      value: CONF_HIGH,
+      reason: `Robust sample (${txns} HM Land Registry transactions) with stable prices (±${yoyAbs.toFixed(1)}% YoY)`,
+    };
+  }
+  if (txns >= 20) {
+    return {
+      value: CONF_MEDIUM,
+      reason: isVolatile
+        ? `${txns} transactions, but ±${yoyAbs.toFixed(1)}% YoY volatility caps confidence at moderate`
+        : `Moderate sample (${txns} transactions)`,
+    };
+  }
+  return {
+    value: CONF_LOW,
+    reason: `Sparse sample (${txns} transactions) — insufficient for high confidence`,
+  };
+}
+
 /* Internal return type for individual scoring functions. */
 interface ScoreResult {
   score: number;
@@ -388,10 +431,15 @@ function scoreCostOfLiving(deprivation: DeprivationData | null, propertyPrices: 
       : "above national average, higher living costs";
 
     const reasoning = `Median sold price £${propertyPrices.median_price.toLocaleString()} (${propertyPrices.postcode_area} district, ${propertyPrices.transaction_count} transactions). ${level}`;
-    // Confidence: scales with transaction count. <20 txns is sparse for an outcode.
-    const confidence = propertyPrices.transaction_count >= 20 ? CONF_HIGH : CONF_MEDIUM;
-    const confidence_reason = `${propertyPrices.transaction_count} HM Land Registry transactions in the ${propertyPrices.postcode_area} outcode — ${propertyPrices.transaction_count >= 20 ? "robust" : "moderate"} sample`;
-    return { score, reasoning, confidence, confidence_reason };
+    // AR-137: variance-aware confidence. A wide YoY swing on a small sample
+    // caps confidence at MEDIUM even when transaction_count >= 20.
+    const pc = propertyConfidence(propertyPrices.transaction_count, propertyPrices.price_change_pct);
+    return {
+      score,
+      reasoning,
+      confidence: pc.value,
+      confidence_reason: `${pc.reason}, ${propertyPrices.postcode_area} outcode`,
+    };
   }
 
   // Fallback to IMD proxy
@@ -489,9 +537,12 @@ function scoreCommercialCosts(deprivation: DeprivationData | null, propertyPrice
       : "premium area, higher operating costs expected";
 
     const reasoning = `Property values £${propertyPrices.median_price.toLocaleString()} median (${propertyPrices.postcode_area}). ${level}`;
-    // Residential prices are a proxy for commercial — degrade to MEDIUM.
-    const confidence = propertyPrices.transaction_count >= 20 ? CONF_MEDIUM : CONF_LOW;
-    const confidence_reason = `Inferred from residential property values (${propertyPrices.transaction_count} transactions). Not actual commercial rent data — proxy signal`;
+    // AR-137: proxy signal even with good data (residential ≠ commercial rent),
+    // so cap at MEDIUM regardless. Variance-aware rubric still degrades sparse
+    // samples to LOW.
+    const pc = propertyConfidence(propertyPrices.transaction_count, propertyPrices.price_change_pct);
+    const confidence = Math.min(pc.value, CONF_MEDIUM);
+    const confidence_reason = `Inferred from residential property values. Not actual commercial rent data — proxy signal. ${pc.reason}`;
     return { score, reasoning, confidence, confidence_reason };
   }
 
@@ -532,9 +583,12 @@ function scorePriceGrowth(deprivation: DeprivationData | null, amenities: Amenit
       : "declining, potential buying opportunity or risk";
 
     const reasoning = `Prices ${direction} ${Math.abs(change)}% YoY (£${propertyPrices.prior_median?.toLocaleString()} to £${propertyPrices.median_price.toLocaleString()}). ${outlook}. ${amenities ? `${amenities.transport_stations} transport links` : ""}`;
-    // Confidence: real YoY signal is the strongest growth indicator we have. Scale by transaction depth.
-    const confidence = propertyPrices.transaction_count >= 20 ? CONF_HIGH : CONF_MEDIUM;
-    const confidence_reason = `Real YoY price change from HM Land Registry (${propertyPrices.transaction_count} transactions in current window)`;
+    // AR-137: variance-aware confidence. Price Growth is most sensitive to
+    // volatility — a 21% YoY swing on 83 txns is not "HIGH" confidence even
+    // though sample exceeds 20.
+    const pc = propertyConfidence(propertyPrices.transaction_count, change);
+    const confidence = pc.value;
+    const confidence_reason = `Real YoY price change from HM Land Registry. ${pc.reason}`;
     return { score, reasoning, confidence, confidence_reason };
   }
 
@@ -586,9 +640,12 @@ function scoreRentalYield(deprivation: DeprivationData | null, amenities: Amenit
       : "higher purchase prices compress gross yields";
 
     const reasoning = `Median price £${propertyPrices.median_price.toLocaleString()} (${(ratio * 100).toFixed(0)}% of national median). ${level}. ${amenities ? `${amenities.total} amenities support demand` : ""}`;
-    // Yield is inferred from purchase price + demand — we don't have actual rent data. Mark MEDIUM at best.
-    const confidence = propertyPrices.transaction_count >= 20 ? CONF_MEDIUM : CONF_LOW;
-    const confidence_reason = `Yield inferred from purchase price (${propertyPrices.transaction_count} transactions) and amenity demand. Not actual rent observations — directional`;
+    // AR-137: yield is inferred from price + amenity demand (no actual rent
+    // observations), so cap at MEDIUM. Variance check still degrades small
+    // samples to LOW.
+    const pc = propertyConfidence(propertyPrices.transaction_count, propertyPrices.price_change_pct);
+    const confidence = Math.min(pc.value, CONF_MEDIUM);
+    const confidence_reason = `Yield inferred from purchase price and amenity demand — not actual rent observations, directional only. ${pc.reason}`;
     return { score, reasoning, confidence, confidence_reason };
   }
 

@@ -73,6 +73,18 @@ export const METHODOLOGY_VERSIONS: MethodologyVersion[] = [
       "Public methodology changelog established. Score values themselves are unchanged — confidence is purely additive metadata.",
     ],
   },
+  {
+    version: "2.0.1",
+    released_at: "2026-05-14",
+    summary: "Property confidence rubric is now variance-aware. Wide YoY swings cap confidence at MEDIUM. No score changes.",
+    changes: [
+      "Property-backed dimensions (Cost of Living, Price Growth, Commercial Costs, Rental Yield) factor YoY price volatility into the confidence band, not just transaction count",
+      "New rubric: HIGH requires both >=50 transactions AND <=15% absolute YoY change. MEDIUM for >=20 transactions (smaller sample or volatile prices). LOW for <20 transactions.",
+      "Resolves AR-137 — central York YO1 was returning HIGH confidence on 83 txns with a -21% YoY swing. Insurance underwriters need honest variance signal.",
+      "Confidence-reason strings updated to surface both sample size and volatility explicitly",
+      "Patch version (PATCH) — score values are byte-identical to v2.0.0; only confidence metadata refines",
+    ],
+  },
 ];
 
 if (METHODOLOGY_VERSIONS.length === 0) {
