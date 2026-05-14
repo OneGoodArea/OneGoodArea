@@ -13,6 +13,7 @@ import {
   processBatchItems,
 } from "@/lib/batch";
 import { parseIdempotencyKey, withIdempotency } from "@/lib/idempotency";
+import { resolveEngineVersion } from "@/lib/engine-version";
 
 /* AR-130: bulk scoring endpoint for portfolio-scale buyers.
    Lender portfolios are 10k-500k properties; one-at-a-time /api/v1/report calls
@@ -56,6 +57,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "API access not available on your current plan. Upgrade at /pricing." },
         { status: 403, headers },
+      );
+    }
+
+    // AR-131: resolve X-Engine-Version pin before parsing the (potentially large) items array
+    const engine = resolveEngineVersion(req.headers.get("x-engine-version"));
+    if (!engine.ok) {
+      return NextResponse.json(
+        {
+          error: engine.error,
+          code: engine.code,
+          supported_versions: engine.supportedVersions,
+        },
+        { status: engine.statusCode, headers },
       );
     }
 
@@ -147,7 +161,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(idem.body, {
       status: idem.status,
-      headers: { ...headers, "X-Idempotency-Replayed": String(idem.replayed) },
+      headers: {
+        ...headers,
+        "X-Idempotency-Replayed": String(idem.replayed),
+        "X-Engine-Version": engine.resolvedVersion,
+      },
     });
   } catch (error) {
     if (isAppError(error)) {

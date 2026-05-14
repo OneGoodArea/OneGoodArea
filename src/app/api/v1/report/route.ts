@@ -10,6 +10,7 @@ import { isAppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { RATE_LIMITS } from "@/lib/config";
 import { parseIdempotencyKey, withIdempotency } from "@/lib/idempotency";
+import { resolveEngineVersion } from "@/lib/engine-version";
 
 /** Detect MCP-originated requests via the User-Agent stamp set by the MCP api-client. */
 function isFromMcpServer(req: NextRequest): boolean {
@@ -91,6 +92,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // AR-131: resolve X-Engine-Version pin before doing work
+    const engine = resolveEngineVersion(req.headers.get("x-engine-version"));
+    if (!engine.ok) {
+      return NextResponse.json(
+        {
+          error: engine.error,
+          code: engine.code,
+          supported_versions: engine.supportedVersions,
+        },
+        { status: engine.statusCode, headers },
+      );
+    }
+
     // If this request came from the MCP server, the user must have MCP
     // entitlement (plan-included or active add-on). Block here so we don't
     // give MCP capability to users who don't pay for it.
@@ -134,7 +148,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(idem.body, {
       status: idem.status,
-      headers: { ...headers, "X-Idempotency-Replayed": String(idem.replayed) },
+      headers: {
+        ...headers,
+        "X-Idempotency-Replayed": String(idem.replayed),
+        "X-Engine-Version": engine.resolvedVersion,
+      },
     });
   } catch (error) {
     if (isAppError(error)) {
