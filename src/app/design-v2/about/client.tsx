@@ -98,10 +98,10 @@ function Hero() {
 /* ─────── Stats ─────── */
 
 const STATS: { value: string; label: string }[] = [
-  { value: "42,640", label: "UK neighbourhoods" },
-  { value: "7",      label: "Public datasets" },
-  { value: "4",      label: "Intent modes" },
-  { value: "5",      label: "Dimensions each" },
+  { value: "Every",   label: "UK postcode" },
+  { value: "7",       label: "Public datasets" },
+  { value: "v2.0.2",  label: "Engine stamped" },
+  { value: "OpenAPI", label: "3.0 spec" },
 ];
 
 function StatsStrip() {
@@ -166,14 +166,14 @@ function TheGap() {
               fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
               letterSpacing: "0.22em", textTransform: "uppercase",
               color: "var(--text-3)", marginBottom: 14,
-            }}>What already existed</div>
+            }}>What regulated buyers had</div>
             <p style={{
               fontFamily: "var(--sans)", fontSize: 15.5, fontWeight: 400,
               lineHeight: 1.62, color: "var(--text-2)",
               letterSpacing: "-0.003em",
               margin: "0 0 14px", maxWidth: "50ch",
             }}>
-              Every listings site shows you the house. Most of them will even give you a rough school catchment and a bus stop. Fewer than a handful score the area, and the ones that do score it the same way for everyone: buyer, investor, or business owner reading the same number.
+              Black-box AVMs from incumbent vendors. No methodology disclosure, no version pinning, no per-dimension confidence band. Hard to enter into a model risk register, harder to defend in a regulatory review.
             </p>
             <p style={{
               fontFamily: "var(--sans)", fontSize: 15.5, fontWeight: 400,
@@ -181,7 +181,7 @@ function TheGap() {
               letterSpacing: "-0.003em",
               margin: 0, maxWidth: "50ch",
             }}>
-              Paid data tools existed, but they were wholesale. Spreadsheets the size of a phone book, priced for consultancies, without any effort to help a reader reach a decision.
+              Or the alternative: raw Land Registry pulls, ONS CSV dumps, council-scraped data. Free at source, expensive in engineering hours. Months to integrate, no audit trail, no support contract when the data vintage shifts.
             </p>
           </div>
           <div>
@@ -189,14 +189,14 @@ function TheGap() {
               fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
               letterSpacing: "0.22em", textTransform: "uppercase",
               color: "var(--ink)", marginBottom: 14,
-            }}>What we wanted instead</div>
+            }}>What we built instead</div>
             <p style={{
               fontFamily: "var(--sans)", fontSize: 15.5, fontWeight: 400,
               lineHeight: 1.62, color: "var(--text-2)",
               letterSpacing: "-0.003em",
               margin: "0 0 14px", maxWidth: "50ch",
             }}>
-              One place where a postcode goes in and a proper read comes out. Scored against what the reader is actually deciding, citing the data it used, and written the way a friend would explain it.
+              The deterministic UK location intelligence layer. One API call returns a postcode-level score, five weighted dimensions, per-dimension confidence, cited public datasets, and a version stamp. Same input, same output, every time.
             </p>
             <p style={{
               fontFamily: "var(--sans)", fontSize: 15.5, fontWeight: 400,
@@ -204,7 +204,7 @@ function TheGap() {
               letterSpacing: "-0.003em",
               margin: 0, maxWidth: "50ch",
             }}>
-              A score a buyer could trust. A score a developer could embed. Same postcode, same answer every time, even when four different people ask for four different reasons.
+              Methodology pinning so the model risk team knows exactly which engine version produced every score. Public changelog. Audit trail on every response. Built to be embedded in lender, insurer, and PropTech surfaces without a six-month integration cycle.
             </p>
           </div>
         </div>
@@ -255,10 +255,10 @@ function SectionHead({ eyebrow, title, sub }: {
 /* ─────── Principles · editorial rows with bespoke icons ─────── */
 
 const PRINCIPLES: { icon: IconName; title: string; body: string }[] = [
-  { icon: "data",    title: "Transparent by default",       body: "Every score shows the data behind it. If a neighbourhood scores 72 for safety, the report tells you which crimes, over which months, and how the rate compares to other urban areas. Nothing important is hidden behind a footnote." },
-  { icon: "repeat",  title: "Same postcode, same answer",   body: "Scores come from public data using the same formulas every time. Two readers querying the same postcode for the same intent see the same number. The narrative explains the number. It never invents it." },
-  { icon: "intent",  title: "Intent changes the weighting", body: "A great area to move to isn't the same as a great area to open a coffee shop. We rebalance the five dimensions per intent. Safety and schools weigh heaviest when you're moving, footfall and spending power when you're trading." },
-  { icon: "map",     title: "Context before comparison",    body: "A village with one school is not the same as a city with one school. We classify every postcode as urban, suburban, or rural and benchmark it against its own category. No unfair comparisons between a London high street and a Lake District lane." },
+  { icon: "data",    title: "Deterministic by design",       body: "Scores come from public datasets using fixed formulas. Same input, same output, every time. The AI narrates the result; it never generates the numbers. Server-side score lock is enforced in the response layer." },
+  { icon: "repeat",  title: "Version-stamped responses",     body: "Every response carries an engine_version field and a per-dimension confidence band. Buyers entering reports into a model risk register get a clean audit line. X-Engine-Version request header pins the methodology when a regulated workflow needs it." },
+  { icon: "intent",  title: "Intent shapes the weighting",   body: "Origination scoring is not the same as site selection. We rebalance the five dimensions per intent. Safety and schools weigh heaviest for origination; footfall, competition, and spending power for site selection. Same engine, four different products." },
+  { icon: "map",     title: "Benchmarked against its own peer group", body: "A village with one school is not the same as a city with one school. Every postcode is classified urban / suburban / rural from postcodes.io rural-urban codes and benchmarked against its own peer group. No unfair comparisons between a London high street and a Lake District lane." },
 ];
 
 function Principles() {
@@ -380,7 +380,7 @@ function DataSources() {
             letterSpacing: "0.18em", textTransform: "uppercase",
             color: "var(--text-3)",
           }}>
-            Want the detail? See <Link href="/" style={{ color: "var(--ink-deep)", textDecoration: "underline" }}>the methodology page</Link>.
+            Want the detail? See <Link href="/methodology" style={{ color: "var(--ink-deep)", textDecoration: "underline" }}>the methodology page</Link>.
           </span>
         </div>
       </div>
@@ -391,11 +391,14 @@ function DataSources() {
 /* ─────── Timeline ─────── */
 
 const MILESTONES: { date: string; label: string; body: string }[] = [
-  { date: "January 2025",  label: "Idea validated",  body: "Ran into the same question for the fourth time in a row: is this area any good? Checked every tool available. Answer: not really, not for this intent." },
-  { date: "February 2025", label: "First prototype", body: "Seven public datasets wired in parallel. Narrative generated from the numbers, not from thin air." },
-  { date: "March 2025",    label: "Scoring engine",  body: "Swapped AI-generated scores for deterministic formulas. The narrative stayed AI-written, but the numbers became reproducible." },
-  { date: "March 2025",    label: "Public launch",   body: "Went live at onegoodarea.com. Stripe checkout, API keys, Ofsted integration, watchlist. The lot." },
-  { date: "April 2026",    label: "Design V2",       body: "OneGoodArea rebrand. Cleaner type system, editorial voice, the engine finally gets a page that does it justice." },
+  { date: "January 2025",  label: "Idea validated",         body: "Ran into the same question for the fourth time: is this area any good? Checked every tool available. The honest answer was 'not really, and certainly not per-intent'." },
+  { date: "February 2025", label: "First prototype",        body: "Seven public datasets wired in parallel: Postcodes.io, Police.uk, IMD, OpenStreetMap, Environment Agency, HM Land Registry, Ofsted. Narrative generated from the numbers, not from thin air." },
+  { date: "March 2025",    label: "Deterministic engine",   body: "AI-generated scores swapped for fixed formulas. Numbers became reproducible. The narrative stayed AI-written. Server-side score lock added so the AI never drifts the output." },
+  { date: "March 2025",    label: "Public launch",          body: "Live at the consumer surface. Stripe checkout, API keys, Ofsted integration, watchlist. Built and shipped solo." },
+  { date: "April 2026",    label: "Engine v2.0.0",          body: "Confidence per dimension, methodology versioning, OpenAPI 3.0 spec, interactive API reference. Every response stamped with the engine version that produced it." },
+  { date: "April 2026",    label: "Strategic repositioning", body: "Pivot from consumer postcode tool to the deterministic UK location intelligence layer for regulated B2B buyers. Front door moves to mortgage lenders, insurance underwriters, PropTech, retail / CRE site selection." },
+  { date: "May 2026",      label: "Pricing v2 + MCP server", body: "Six-tier pricing for the B2B audience (Sandbox through Enterprise). Native MCP server for Claude Desktop and IDE workflows ships at v0.2.0." },
+  { date: "May 2026",      label: "API infrastructure complete", body: "API keys hashed at rest, bulk endpoint for portfolio-scale calls, Idempotency-Key support, outbound webhooks with HMAC signing, and X-Engine-Version header for model-risk-register pinning." },
 ];
 
 function Timeline() {
@@ -613,19 +616,19 @@ function FinalCta() {
           letterSpacing: "-0.02em", color: "#FFFFFF",
           margin: "0 0 18px",
         }}>
-          Enter a postcode. <em style={{
+          Try the engine. <em style={{
             fontStyle: "italic", color: "var(--signal)",
-          }}>Get the full read.</em>
+          }}>Read the methodology.</em>
         </h2>
         <p style={{
           fontFamily: "var(--sans)", fontSize: 16.5, fontWeight: 400,
           lineHeight: 1.55, color: "rgba(255,255,255,0.64)",
-          margin: "0 auto 36px", maxWidth: "50ch",
+          margin: "0 auto 36px", maxWidth: "52ch",
         }}>
-          Score, data, reasoning, recommendations. All in one report. Three a month are free.
+          Sandbox is free, no card. 35 calls a month against the full API surface. Pin a version, fire webhooks, batch a portfolio.
         </p>
         <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href="/" style={{
+          <Link href="/pricing" style={{
             fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
             letterSpacing: "0.14em", textTransform: "uppercase",
             color: "var(--signal-ink)", background: "var(--signal)",
@@ -637,10 +640,10 @@ function FinalCta() {
             onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-1px)")}
             onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
           >
-            Try a postcode
+            Start on Sandbox
             <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
           </Link>
-          <Link href="/pricing" style={{
+          <Link href="/methodology" style={{
             fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
             letterSpacing: "0.14em", textTransform: "uppercase",
             color: "rgba(255,255,255,0.88)", background: "transparent",
@@ -658,7 +661,7 @@ function FinalCta() {
               e.currentTarget.style.background = "transparent";
             }}
           >
-            See the pricing
+            Read the methodology
           </Link>
         </div>
       </div>
