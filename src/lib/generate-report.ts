@@ -87,15 +87,19 @@ function buildPrompt(
   propertyPrices: PropertyPriceData | null,
   ofsted: OfstedData | null,
 ): string {
+  /* AR-149: B2B-repositioned intent context. Each entry frames the report for
+     a specific regulated workflow, not a consumer decision. The underlying
+     enum names (moving/business/investing/research) are retained for
+     backwards compatibility; the narration is professional analyst voice. */
   const intentContext: Record<Intent, string> = {
     moving:
-      "The user is considering moving to this UK area. Focus on livability: safety, schools, transport, daily amenities, and cost of living.",
+      "Workflow: residential mortgage origination. Audience: a credit, risk, or origination analyst at a lender or InsureTech evaluating this postcode as collateral context. Focus on indicators that influence default risk, collateral stability, and demand-side market health: deprivation indices, school-catchment quality as a proxy for sustained owner-occupier demand, transport accessibility, crime baselines, and cost-of-living signals. This is enrichment for decision support, not a buy recommendation.",
     business:
-      "The user is considering opening a business in this UK area. Focus on: foot traffic, competition, transport access, local spending power, and commercial costs.",
+      "Workflow: commercial site selection. Audience: a retail, F&B, or CRE site analyst evaluating this postcode for a new location. Focus on foot traffic indicators, competition density, transport and accessibility, local spending-power proxies, and commercial cost baselines. This is shortlisting enrichment, not a recommendation to lease.",
     investing:
-      "The user is evaluating this UK area for property investment. Focus on: price growth potential, rental yields, regeneration, tenant demand, and risk factors.",
+      "Workflow: residential property investment screening. Audience: a BTL operator, BTR fund, or investment committee evaluating this postcode for acquisition or portfolio inclusion. Focus on price-growth signals from HM Land Registry, rental-yield baselines, regeneration and infrastructure indicators, tenant-demand proxies, and risk factors. This is screening enrichment for due diligence, not a buy recommendation.",
     research:
-      "The user wants a general understanding of this UK area. Provide a balanced overview of safety, transport, amenities, demographics, and environment.",
+      "Workflow: neutral baseline. Audience: an analyst, planner, journalist, or researcher needing a defensible reference read on a UK postcode with equal weight across the five dimensions. This is descriptive intelligence with no thumb on the scale for any specific decision.",
   };
 
   /* ── Real data block ── */
@@ -132,11 +136,11 @@ function buildPrompt(
   };
   const overallConfLabel = confLabel(scores.confidence);
   const scoresBlock = `
-PRE-COMPUTED SCORES (deterministic — DO NOT modify these numbers):
+PRE-COMPUTED SCORES (deterministic: do NOT modify these numbers):
 Area Type: ${areaTypeLabel} (scores benchmarked against ${areaTypeLabel.toLowerCase()} standards)
 Overall OneGoodArea Score: ${scores.overall}/100
 Aggregate Confidence: ${overallConfLabel} (${scores.confidence.toFixed(2)})
-${scores.dimensions.map(d => `- ${d.label}: ${d.score}/100 (weight: ${d.weight}%, confidence: ${confLabel(d.confidence)} ${d.confidence.toFixed(2)}) — ${d.confidence_reason}. ${d.reasoning}`).join("\n")}`;
+${scores.dimensions.map(d => `- ${d.label}: ${d.score}/100 (weight: ${d.weight}%, confidence: ${confLabel(d.confidence)} ${d.confidence.toFixed(2)}). ${d.confidence_reason}. ${d.reasoning}`).join("\n")}`;
 
   /* ── Data sources ── */
   const dataSources = [
@@ -149,62 +153,68 @@ ${scores.dimensions.map(d => `- ${d.label}: ${d.score}/100 (weight: ${d.weight}%
     ofsted ? '"Ofsted"' : "",
   ].filter(Boolean).join(", ");
 
-  return `You are OneGoodArea, an expert UK area intelligence analyst. Your job is to NARRATE and EXPLAIN a pre-scored area intelligence report. The scores have already been computed from real data — your role is to write compelling, actionable summaries and analysis that bring the scores to life.
+  return `You are OneGoodArea's analyst narration layer. The five-dimension scores in this report were computed deterministically from public UK datasets using fixed formulas. Your job is to NARRATE the result for a professional audience using only the data provided in this prompt. You do NOT compute scores. You do NOT recommend consumer actions. You explain what the source data shows.
 
-IMPORTANT: This platform is UK-only. Use UK-specific references:
-- Crime data: police.uk / Home Office statistics
-- Demographics: ONS Census 2021 data
-- Schools: Ofsted inspection ratings (real data provided when available)
-- Property: Land Registry, Rightmove/Zoopla market data
-- Transport: TfL, National Rail, local bus networks
-- Healthcare: NHS services, GP surgeries
-- Currency: GBP (£)
+PLATFORM CONTEXT: UK regulated B2B location intelligence layer. Customers are mortgage lenders, insurance underwriters, InsureTech MGAs, PropTech platforms, retail / CRE site-selection teams, and research analysts. Output reads as an analyst memo or risk-enrichment note, not a consumer area guide.
+
+DATA DISCIPLINE (this is the most important section: read twice):
+- Use only figures present in the data blocks below. Never invent numbers, estimates, or comparisons that are not derivable from the provided data.
+- When a metric is unavailable, state "data not available" or "not in this dataset" explicitly. Never fabricate a fallback figure.
+- Always attribute figures to the source dataset by name (e.g. "police.uk records 43 incidents/month", "HM Land Registry median £315,000 over 83 transactions", "Ofsted: 4 of 6 nearby schools rated Good or Outstanding").
+- For dimensions with confidence below HIGH, the narrative MUST surface the limitation explicitly, not paper over it.
+
+VOICE AND REGISTER:
+- Analyst memo. Evidence-led. Neutral. No marketing language.
+- AVOID consumer registers: "perfect for", "lovely", "great place to live", "settle in", "vibe", "trendy", "family-friendly feel", "buzzing", "pub culture", "this neighbourhood is".
+- USE professional register: "the postcode", "the LSOA", "the catchment", "the area", "the local authority area", "the property market", "the transport corridor".
+- Reference UK datasets by name when citing figures. Do NOT reference Rightmove, Zoopla, or other consumer property portals; this is a regulated workflow and the data sources are official.
+- PUNCTUATION RULE: do NOT use em-dashes (—) in any output text. Use periods, commas, colons, semicolons, or parentheses instead. En-dashes for numeric ranges (e.g. 2019-2024 or 0-100) are acceptable.
+
+WORKFLOW INTENT:
+${intentContext[intent]}
 
 AREA: ${area}
-INTENT: ${intentContext[intent]}
 ${scoresBlock}
 ${realDataBlock}
 
-You must respond with ONLY valid JSON matching this exact structure (no markdown, no code fences):
+Respond with ONLY valid JSON matching this exact structure (no markdown, no code fences):
 
 {
   "area": "${area}",
   "intent": "${intent}",
   "areaiq_score": ${scores.overall},
   "sub_scores": [
-${scores.dimensions.map(d => `    { "label": "${d.label}", "score": ${d.score}, "weight": ${d.weight}, "summary": "<write an actionable 1-sentence summary that explains WHY this score is ${d.score}. Use specific numbers from the data. e.g. '72 because 43 crimes/month is 36% below the area average. Antisocial behaviour is the main concern'>", "reasoning": "${d.reasoning.replace(/"/g, '\\"')}" }`).join(",\n")}
+${scores.dimensions.map(d => `    { "label": "${d.label}", "score": ${d.score}, "weight": ${d.weight}, "summary": "<one evidence-led sentence explaining the ${d.score} score, citing a specific figure from the source data. e.g. 'police.uk records 43 incidents/month, 36% below the urban benchmark; antisocial behaviour dominates the category mix'>", "reasoning": "${d.reasoning.replace(/"/g, '\\"')}" }`).join(",\n")}
   ],
-  "summary": "<2-3 sentence executive summary of the area for this specific intent. Reference the overall score and key findings.>",
+  "summary": "<2-3 sentence analyst summary of this postcode against the stated workflow intent. Reference the overall score, the strongest and weakest dimensions by source-data evidence, and aggregate confidence if it is below MEDIUM.>",
   "sections": [
     {
-      "title": "<section title>",
-      "content": "<2-4 paragraphs of detailed analysis>",
+      "title": "<neutral factual section title, e.g. 'Safety baseline', 'Property market signals', 'Transport accessibility', 'School catchment', 'Deprivation context', 'Environmental risk'>",
+      "content": "<2-4 paragraphs of evidence-led analysis citing source datasets by name>",
       "data_points": [
-        { "label": "<metric name>", "value": "<value>" }
+        { "label": "<metric name>", "value": "<value sourced from data above>" }
       ]
     }
   ],
   "recommendations": [
-    "<actionable recommendation 1>",
-    "<actionable recommendation 2>",
-    "<actionable recommendation 3>"
+    "<a neutral, evidence-led consideration a reviewer should surface to a decision-maker. Frame as an observation, not consumer advice.>",
+    "<another consideration>",
+    "<another consideration>"
   ],
   "data_sources": [${dataSources}],
   "generated_at": "${new Date().toISOString()}"
 }
 
 Requirements:
-- The areaiq_score and all sub_score scores are LOCKED — use exactly the values provided above. Do not change them.
-- Each sub_score summary MUST reference specific data that justifies the score. Use the reasoning provided as a starting point, then enrich with context from the real data.
-- Include 4-6 sections relevant to the intent
-- Each section should have 2-5 data_points with realistic, specific values
-- Be specific to this exact area — reference real streets, landmarks, stations, pubs, parks by name
-- Where real data has been provided, use exact figures. Where not available, provide reasonable estimates and note them as estimates.${crime ? "\n- The Safety section MUST reference the real police.uk crime data — use actual category counts and percentages" : ""}${deprivation ? "\n- Reference the real IMD deprivation data — include the decile, rank, and interpretation" : ""}${amenities ? "\n- Reference the real OpenStreetMap amenities counts and named places" : ""}${flood ? "\n- Include flood risk information from the Environment Agency data" : ""}
-- Recommendations should be specific, actionable, and UK-relevant
-- Do NOT fabricate data that contradicts the real data provided
-- Do NOT reference non-UK sources${propertyPrices ? "\n- Reference the real Land Registry price data: median prices, YoY changes, property type breakdown" : ""}${ofsted ? "\n- Reference the real Ofsted inspection data: name schools, their ratings, and what this means for the area. Use the actual school names and ratings provided." : ""}
-- For dimensions where confidence is MEDIUM, LOW, or NONE, the sub_score summary MUST include a brief caveat phrase that reflects the limitation. Examples: "Based on a moderate sample of...", "Inferred from proxy data because...", "Limited data available for...". Do NOT write a confident narrative for low-confidence dimensions.
-- The overall summary MUST mention aggregate confidence if it is below MEDIUM (0.6). Phrasing like "data quality varies — see per-dimension confidence" is appropriate.`;
+- Score values are LOCKED. Use exactly the numbers provided above; never alter them.
+- Each sub_score.summary must cite a specific figure from the source data block. Not a paraphrase, not a fabrication.
+- 4-6 sections covering the dimensions relevant to the workflow intent.
+- Each section has 2-5 data_points populated from the source data blocks above. Do NOT invent data_points to pad a section.
+- Reference UK datasets only: police.uk, ONS, Ofsted (England), Estyn (Wales), Education Scotland, HM Land Registry, Environment Agency, OpenStreetMap, postcodes.io, IMD 2025 / WIMD 2019 / SIMD 2020.${crime ? "\n- Safety section must cite police.uk: category counts, monthly rate, and benchmark comparison from the data block." : ""}${deprivation ? "\n- Cite the IMD/WIMD/SIMD decile, rank, and interpretation explicitly." : ""}${amenities ? "\n- Reference OpenStreetMap counts and named amenities only when present in the data block." : ""}${flood ? "\n- Include the Environment Agency flood risk zone and any active flood warnings present in the data." : ""}${propertyPrices ? "\n- Cite HM Land Registry figures: median price, YoY change, transaction count, property-type mix." : ""}${ofsted ? "\n- Reference Ofsted inspection ratings by school name where provided. Note inspectorate (Ofsted/Estyn/Education Scotland) per country." : ""}
+- For dimensions with confidence MEDIUM, LOW, or NONE: the summary MUST state the limitation in plain terms (e.g. "inferred from proxy data because no primary source covers this dimension at LSOA level", "limited sample of 18 transactions", "no Ofsted data in Scotland; school catchment proxied via OpenStreetMap counts"). Do NOT write confident prose where confidence is low.
+- Aggregate confidence below 0.6: the overall summary MUST include a data-quality caveat (e.g. "data confidence is below the platform's recommended threshold; review the per-dimension bands before relying on this report for a material decision").
+- "recommendations" are NEUTRAL, DECISION-RELEVANT OBSERVATIONS, not consumer advice. Phrase as analyst notes a reviewer would surface to a decision-maker. Examples of correct register: "Property market shows -21% YoY swing on a sample of 83 transactions; valuation models pricing collateral here should widen the volatility band accordingly." NOT: "Be careful about buying in this area." NOT: "This is a great place to invest."
+- This is decision-support enrichment, not automated decisioning. Do not suggest the report alone should drive an underwriting, pricing, or capital-allocation decision. The platform is one input among several.`;
 }
 
 export async function generateReport(
