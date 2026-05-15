@@ -7,28 +7,22 @@ import {
   AppShell, AppCard, StatCell, PrimaryCta, GhostCta, appRag,
 } from "../_shared/app-shell";
 import { McpAddOnSection, type McpStatus } from "../_shared/mcp-addon-section";
+import { intentLabel } from "@/lib/intents";
 
-/* ═══════════════════════════════════════════════════════════════
+/* =================================================================
    OneGoodArea · Design V2 · /dashboard
-   Reports list + usage + watchlist + API keys (if API plan).
+   Reports list + usage + monitored postcodes + API keys (if API plan).
    All real endpoints preserved: /api/stripe/portal, /api/keys,
-   /api/report/:id, /api/watchlist/:id.
-   ═══════════════════════════════════════════════════════════════ */
+   /api/report/:id, /api/watchlist/:id (legacy route, surface relabelled).
+   ================================================================= */
 
 type Report = { id: string; area: string; intent: string; score: number; created_at: string };
 type SavedArea = { id: string; postcode: string; label: string; intent: string | null; created_at: string };
 type ApiKey = { id: string; key_preview: string; name: string; created_at: string; last_used_at: string | null };
 
-// API enum -> B2B display label. Per AR-139 / AR-120 (strategic repositioning),
-// dashboard surfaces should show "Origination" not the raw "moving" enum.
-const INTENT_LABEL: Record<string, string> = {
-  moving:    "Origination",
-  business:  "Site selection",
-  investing: "Investment",
-  research:  "Reference",
-};
-const intentLabel = (id: string | null | undefined) =>
-  id ? (INTENT_LABEL[id] ?? id) : "";
+// Intent enum (moving / business / investing / research) → B2B workflow
+// label (Origination / Site selection / Investment / Reference) via the
+// canonical helper in src/lib/intents.ts. Per AR-149.
 
 type Props = {
   reports: Report[];
@@ -46,7 +40,7 @@ export default function DashboardClient(props: Props) {
       <Styles />
       <AppShell
         title="Dashboard"
-        subtitle="Your reports, watchlist, and usage."
+        subtitle="Reports, monitored postcodes, and usage."
         actions={
           <PrimaryCta href="/report">
             New report
@@ -99,14 +93,14 @@ function Body({ reports: initialReports, plan, planName, used, limit, savedAreas
           background: "var(--bg)",
           borderRadius: 4, overflow: "hidden",
         }}>
-          <StatCell label="Total reports"  value={reports.length} />
-          <StatCell label="Average score"  value={stats.avg}      accent={appRag(stats.avg).tone} />
-          <StatCell label="Best area"      value={
+          <StatCell label="Total reports"      value={reports.length} />
+          <StatCell label="Average score"      value={stats.avg}      accent={appRag(stats.avg).tone} />
+          <StatCell label="Top-scoring postcode" value={
             <span style={{ fontSize: 17, lineHeight: 1.25, letterSpacing: "-0.012em" }}>
               {stats.best.area}
             </span>
           } />
-          <StatCell label="Best score"     value={stats.best.score} accent={appRag(stats.best.score).tone} />
+          <StatCell label="Top score"          value={stats.best.score} accent={appRag(stats.best.score).tone} />
         </div>
       )}
 
@@ -256,13 +250,13 @@ function UsageStrip({ plan, planName, isApiPlan, used, limit }: {
   );
 }
 
-/* ─────── Watchlist ─────── */
+/* --- Monitored postcodes --- */
 
 function Watchlist({ items, onRemove }: {
   items: SavedArea[]; onRemove: (id: string) => void;
 }) {
   return (
-    <AppCard title={`Watchlist · ${items.length} area${items.length !== 1 ? "s" : ""}`} noPad>
+    <AppCard title={`Monitored postcodes · ${items.length}`} noPad>
       <ul className="aiq-watchlist" style={{
         listStyle: "none", margin: 0, padding: 0,
         display: "grid",
@@ -297,7 +291,7 @@ function Watchlist({ items, onRemove }: {
             </div>
             <button
               onClick={() => onRemove(area.id)}
-              aria-label="Remove from watchlist"
+              aria-label="Stop monitoring this postcode"
               style={{
                 width: 26, height: 26, flexShrink: 0,
                 background: "transparent",
@@ -560,7 +554,7 @@ function ReportsTable({ reports, onDelete }: {
             outline: "none", cursor: "pointer",
           }}
         >
-          <option value="all">All intents</option>
+          <option value="all">All workflows</option>
           {intents.map((i) => <option key={i} value={i}>{intentLabel(i)}</option>)}
         </select>
         {filtered.length > 0 && <GhostCta onClick={exportCSV}>Export CSV</GhostCta>}
@@ -578,8 +572,8 @@ function ReportsTable({ reports, onDelete }: {
           letterSpacing: "0.22em", textTransform: "uppercase",
           color: "var(--text-3)",
         }}>
-          <SortHeader label="Area"     active={sortBy === "area"}   dir={sortDir} onClick={() => toggleSort("area")} />
-          <span>Intent</span>
+          <SortHeader label="Postcode" active={sortBy === "area"}   dir={sortDir} onClick={() => toggleSort("area")} />
+          <span>Workflow</span>
           <SortHeader label="Score"    active={sortBy === "score"}  dir={sortDir} onClick={() => toggleSort("score")} />
           <SortHeader label="Created"  active={sortBy === "date"}   dir={sortDir} onClick={() => toggleSort("date")} />
           <span />
@@ -742,8 +736,8 @@ function EmptyState({ hasReports }: { hasReports: boolean }) {
         margin: "0 auto 20px", maxWidth: "44ch",
       }}>
         {hasReports
-          ? "Clear the search or change the intent filter to see your reports again."
-          : "Generate your first report. Three are free every month."}
+          ? "Clear the search or change the workflow filter to see your reports again."
+          : "Generate your first report. The Sandbox tier includes 35 free API calls a month, no card required."}
       </p>
       {!hasReports && (
         <PrimaryCta href="/report">

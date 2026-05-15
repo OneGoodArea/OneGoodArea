@@ -28,8 +28,8 @@ export default function CompareClient({ selected, all }: {
     <>
       <Styles />
       <AppShell
-        title="Compare areas"
-        subtitle="Pick two reports to see the scores side by side."
+        title="Compare postcodes"
+        subtitle="Select two reports to see the scores side by side. Useful for portfolio screening and site-shortlisting workflows."
         actions={<GhostCta href="/dashboard">← Dashboard</GhostCta>}
       >
         <div style={{ padding: "28px 40px 64px", display: "flex", flexDirection: "column", gap: 22, maxWidth: 1100 }}>

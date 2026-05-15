@@ -449,7 +449,7 @@ function DangerZone() {
           color: "var(--text-2)", lineHeight: 1.55,
           margin: "0 0 18px", maxWidth: "64ch",
         }}>
-          Deletes your account, reports, watchlist, and API keys. Cannot be undone. Your Stripe subscription is cancelled separately via the billing portal.
+          Deletes your account, reports, monitored postcodes, and API keys. Cannot be undone. Your Stripe subscription is cancelled separately via the billing portal.
         </p>
         {!showConfirm ? (
           <GhostCta onClick={() => setShowConfirm(true)} danger>Delete account</GhostCta>

@@ -8,6 +8,7 @@ import { Mark } from "./_shared/mark";
 import { Nav } from "./_shared/nav";
 import { Footer } from "./_shared/footer";
 import { AiqIcon, type IconName } from "./_shared/icons";
+import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 
 /* ═══════════════════════════════════════════════════════════════
    OneGoodArea · Design V2
@@ -145,40 +146,51 @@ const INTENT_WEIGHTS: Record<IntentId, Record<string, number>> = {
   research: { safety: 20, schools: 20, transport: 20, amenities: 20, cost: 20 },
 };
 
+// AR-149: B2B-flavoured score-band labels for the sample report card.
+// Was: "Strong-Moderate fit" / "Strong fit" etc. Reframed as analyst-style
+// band descriptors. No "fit for" framing.
 const INTENT_LABELS: Record<IntentId, string> = {
-  moving: "Strong-Moderate fit",
-  business: "Strong fit",
-  invest: "Moderate fit",
+  moving: "Upper band",
+  business: "Top band",
+  invest: "Mid band",
   research: "Balanced read",
 };
 
+// AR-149: B2B analyst-voice narratives for the sample report. Each function
+// returns analyst-grade prose for the given location string. Voice rules:
+// cite source datasets by name, no consumer registers, no "fit for families",
+// no "settle in", no "evening trade", no advice phrasing.
 const INTENT_NARRATIVES: Record<IntentId, (loc: string) => string> = {
-  moving:   (loc) => `${loc} is a strong fit for families moving in. Four of five nearby schools are rated Good or Outstanding by Ofsted. Northern Line access gives 20-minute commutes to Westminster. Main trade-off is cost. Median sale price sits roughly 14% above the London median.`,
-  business: (loc) => `${loc} has solid footfall and amenity density for a retail or hospitality business. 143 amenities within 1km, four stations within 2km. Rent and leasehold prices are the constraint. Expect a 25%+ premium vs outer-borough equivalents. Falling crime trend supports evening trade.`,
-  invest:   (loc) => `${loc} offers limited yield at current prices. Median sale £625k, median rent £2,100/mo = ~4% gross yield, below the 5.5% London average. Capital growth has been steady at 3-4% YoY over five years. A lower-yield, lower-risk hold rather than a value play.`,
-  research: (loc) => `${loc} sits in the upper quartile for transport and amenities, median for safety, below-median for affordability. IMD 2025 decile 6: relatively deprived on income but less so on crime and education. Useful benchmark for comparing inner-London neighbourhoods.`,
+  moving:   (loc) => `${loc} reads in the upper band of the urban benchmark for residential mortgage origination. School-catchment quality is solid per Ofsted, and rail-and-bus accessibility from OpenStreetMap supports sustained owner-occupier demand. The binding constraint is cost-of-living: HM Land Registry shows sold-price medians running roughly 14% above the regional median, which lenders should weight into collateral-volatility checks.`,
+  business: (loc) => `${loc} indicates favourable site-selection signals on OSM amenity density (143 amenities within 1km) and Police.uk crime-trend data (falling). Four rail stations within 2km support the foot-traffic case. Commercial-cost proxies from HM Land Registry indicate a 25% premium versus outer-borough comparators; site-shortlisting workflows should pair this with category-specific rent benchmarks before commitment.`,
+  invest:   (loc) => `${loc} returns a limited gross-yield read at current sold prices. HM Land Registry median price £625k against benchmark median rent of £2,100/mo produces ~4% gross yield, below the urban regional benchmark of ~5.5%. Five-year price drift sits at 3-4% per annum. Profile reads as a lower-risk, lower-yield hold rather than a yield-driven acquisition target.`,
+  research: (loc) => `${loc} sits in the upper quartile for transport and amenity density (OSM), median for crime baseline (Police.uk), below median for affordability (HM Land Registry). IMD 2025 decile 6 places it in the middle deprivation band. Useful as a peer-group reference for inner-London comparables when benchmarking other postcodes against a known anchor.`,
 };
 
+// AR-149: B2B-flavoured sample report recommendations. Reframed as neutral
+// analyst observations a reviewer would surface to a decision-maker, not
+// consumer advice. No "prioritise viewings", no "budget for", no "consider
+// 1-bed units". Each item cites a data source where relevant.
 const INTENT_RECS: Record<IntentId, string[]> = {
   moving: [
-    "Prioritise viewings east of the high street for lower median prices.",
-    "Research the two Outstanding-rated primaries before shortlisting.",
-    "Budget for a 10-15% premium vs neighbouring postcodes.",
+    "Cost-of-living dimension is the binding constraint on the overall band. Origination workflows should pair this score with collateral-volatility checks against HM Land Registry price drift.",
+    "School-catchment quality (Ofsted) and crime baseline (Police.uk) support sustained owner-occupier demand. Useful demand-side signals for refinance-probability and forced-sale-risk inputs.",
+    "Crime trend reads below the urban benchmark on a 12-month window. Tenant-default and arrears-risk indicators look favourable on this dimension specifically.",
   ],
   business: [
-    "Target corners with proven foot traffic (high street / park junction).",
-    "Budget £80-120/sqft leasehold; expect 6-month fit-out.",
-    "Evening licence viable. Crime trend and residential density support.",
+    "Foot-traffic dimension sits at the top of the urban OSM amenity-density benchmark. Site-shortlisting workflows should weight this against commercial-cost proxies before lease commitment.",
+    "Local spending-power proxy (IMD decile 6) is mid-band; align with category-spend assumptions before underwriting unit economics for the site.",
+    "Falling Police.uk crime trend supports extended operating hours. Portfolio teams running multi-site rollouts should compare this against the regional benchmark dataset.",
   ],
   invest: [
-    "Consider 1-bed units over family homes for best gross yield.",
-    "Avoid premium corners; peripheral stock outperforms on yield basis.",
-    "Minimum 5-year hold to offset transaction + stamp duty drag.",
+    "Gross-yield read sits below the urban regional benchmark on current HM Land Registry data. Investment screening should run rent-growth sensitivity scenarios before progressing.",
+    "Regeneration dimension is the marginal upside; combine with infrastructure-spend overlays and local-authority planning data where available.",
+    "Five-year price drift is moderate (3-4% per annum). Use as a baseline for stress-testing IRR assumptions under different exit-timing scenarios.",
   ],
   research: [
-    "Benchmark against two adjacent postcodes to normalise IMD context.",
-    "Pull 5-year trend data for crime + prices before drawing conclusions.",
-    "Use LSOA-level data where possible. Ward-level aggregates hide variance.",
+    "Benchmark against two adjacent LSOAs to normalise IMD context before drawing longitudinal trend conclusions.",
+    "Pull five-year crime and price drift before reporting trend claims; the engine surfaces current period only.",
+    "Use LSOA-level data where granularity matters; ward and local-authority aggregates compress within-area variance and bias toward the mean.",
   ],
 };
 
@@ -684,21 +696,23 @@ function HeroForm({
 
 /* ─────── PullQuote · editorial sample of engine voice ─────── */
 
+// AR-149: B2B-voice editorial samples shown in the hero pullquote slot.
+// Analyst-grade phrasing, data-source citations, no consumer registers.
 const PULLQUOTES: Record<IntentId, { body: string; meta: string }> = {
   moving: {
-    body: "Strong fit for families. Four of five nearby schools are rated Good or Outstanding. The trade-off is cost: roughly 14% above the London median.",
+    body: "Upper-band origination read driven by Ofsted school-catchment quality and OSM transport density. Cost-of-living is the binding constraint, with HM Land Registry medians sitting roughly 14% above the regional benchmark.",
     meta: "SW4 0LG · scored for origination · 71 / 100",
   },
   business: {
-    body: "Solid foot traffic and amenity density for a retail or hospitality lease. Falling crime trend supports evening trade, but expect a 25% rent premium over outer postcodes.",
+    body: "Foot-traffic dimension reads strong on OSM amenity density (143 within 1km) and Police.uk crime-trend data. HM Land Registry commercial-cost proxies indicate a 25% premium versus outer-borough comparators.",
     meta: "SW4 0LG · scored for site selection · 73 / 100",
   },
   invest: {
-    body: "Limited yield at current prices. Median sale £625k, median rent £2,100/mo gives ~4% gross, below London average. A low-risk hold rather than a value play.",
+    body: "HM Land Registry median £625k against benchmark median rent £2,100/mo produces ~4% gross yield, below the urban regional benchmark. Profile reads as lower-risk, lower-yield hold rather than a yield-driven acquisition.",
     meta: "SW4 0LG · scored for investment · 61 / 100",
   },
   research: {
-    body: "Upper quartile for transport and amenities, median for safety, below-median for affordability. IMD 2025 decile 6: useful benchmark for inner-London neighbourhoods.",
+    body: "Upper quartile for transport and amenities (OSM), median for crime baseline (Police.uk), below median for affordability (HM Land Registry). IMD 2025 decile 6. Useful peer-group reference for inner-London comparables.",
     meta: "SW4 0LG · scored for reference · 71 / 100",
   },
 };
@@ -1512,7 +1526,7 @@ const SampleReport = forwardRef<
               fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-4)",
               letterSpacing: "0.1em", textTransform: "uppercase",
             }}>
-              <span>engine v2.0.0</span>
+              <span>engine v{METHODOLOGY_VERSION}</span>
               <span style={{ opacity: 0.5 }}>·</span>
               <span>{realLoc?.lsoa ?? "LSOA"}</span>
               <span style={{ opacity: 0.5 }}>·</span>
@@ -3002,7 +3016,7 @@ const STATUS_QUO_ROWS: { id: string; audience: string; pain: string; fix: string
     id: "lenders",
     audience: "mortgage lenders",
     pain: "Origination flag rules and portfolio risk monitoring rely on postcode-area data stitched manually from police.uk, IMD CSVs, and OS open data. Engineering eats sprints. The model risk team rejects what ships because the methodology is not version-pinned. Stale aggregations miss flood-zone properties that a postcode prefix cannot see.",
-    fix: "One API call per postcode. Confidence per dimension, source attribution per signal, engine version stamp on every response — auditable end-to-end.",
+    fix: "One API call per postcode. Confidence per dimension, source attribution per signal, engine version stamp on every response. Auditable end to end.",
   },
   {
     id: "insurers",
@@ -3393,17 +3407,15 @@ function IRSummary() {
         fontSize: "clamp(1.9rem, 3.4vw, 2.6rem)", lineHeight: 1.08,
         letterSpacing: "-0.02em", color: "var(--ink-deep)", margin: 0,
       }}>
-        Strong fit<span style={{ borderBottom: "3px solid var(--signal)", paddingBottom: 2 }}>.</span>
+        Top quartile<span style={{ borderBottom: "3px solid var(--signal)", paddingBottom: 2 }}>.</span>
       </h3>
       <p style={{
         fontFamily: "var(--sans)", fontSize: 16.5, lineHeight: 1.6,
         color: "var(--ink-deep)", letterSpacing: "-0.003em",
         margin: "18px 0 0", maxWidth: "62ch",
       }}>
-        Manchester does what a move home needs. Transport is exceptional,{" "}
-        <IRMark>3,579 amenities within a kilometre</IRMark>, and safety reads strong
-        for a city core. The trade-off is cost. You&apos;re paying mid-market for
-        genuine urban convenience.
+        Manchester M1 1AE sits in the upper band of the urban benchmark for origination workflows. Transport and amenity density read strong, with{" "}
+        <IRMark>3,579 amenities within a 1km radius</IRMark>, and Police.uk crime trend is favourable for a city-core LSOA. The binding constraint on the overall score is cost-of-living: collateral-cost proxies sit at mid-band for the regional comparable set.
       </p>
     </div>
   );
@@ -3608,11 +3620,10 @@ function IRNarrativeBlock() {
         color: "var(--ink-deep)", letterSpacing: "-0.003em",
         margin: 0, maxWidth: "64ch",
       }}>
-        The area sits on top of <IRMark>6 rail and tube stations</IRMark> within 2km
+        OpenStreetMap returns <IRMark>6 rail and tube stations</IRMark> within 2km
         (Ardwick, Piccadilly, Oxford Road) plus <IRMark>43 bus stops inside 500 metres</IRMark>.
-        Combined with <IRMark>3,579 daily amenities in a kilometre</IRMark> (593 food,
-        167 parks, 42 healthcare), most of the city is inside a half-hour commute on
-        foot or on transit. For a move home, this is rare density outside of Zone 1-2 London.
+        Combined with <IRMark>3,579 amenities in a 1km radius</IRMark> (593 food,
+        167 parks, 42 healthcare), the postcode sits well above the urban regional benchmark on the OSM transport-and-amenity composite. For origination workflows, this density profile supports demand-side stability outside Zone 1-2 London comparables.
       </p>
       <div style={{
         fontFamily: "var(--mono)", fontSize: 10,
@@ -3713,21 +3724,23 @@ function IRSchools() {
 }
 
 function IRRecommendations() {
+  // AR-149: reframed as analyst observations a reviewer would surface to a
+  // decision-maker, not consumer advice. Each item cites a data source.
   const recs = [
     {
       n: "01",
-      title: "Target terrace or 2-bed flats in the £180–260k band.",
-      detail: "Best match for local median. Detached at £412k sits above budget for most first-move buyers.",
+      title: "Property-mix at £180-260k aligns with the local median.",
+      detail: "HM Land Registry shows terrace and 2-bed flat stock at this band sitting on the median; detached stock at £412k sits in the upper segment for the postcode district. Origination workflows should match collateral assumptions to the dominant stock type.",
     },
     {
       n: "02",
-      title: "Prioritise Chorlton, Didsbury, or Ancoats for school catchment.",
-      detail: "Three Outstanding-rated primaries sit within a 1.5km radius of the city core.",
+      title: "School catchment is strongest in Chorlton, Didsbury, and Ancoats.",
+      detail: "Ofsted records three Outstanding-rated primaries within a 1.5km radius of the city core LSOA. Useful demand-side signal for refinance probability on owner-occupier collateral.",
     },
     {
       n: "03",
-      title: "Check the flood overlay before committing on the River Mersey corridor.",
-      detail: "Ten flood zones within 3km cluster along the Mersey and Irwell. Mostly low-risk, but insurance premiums vary.",
+      title: "Environment Agency flood overlay clusters along the Mersey-Irwell corridor.",
+      detail: "Ten flood zones within 3km, mostly low-risk classification. Worth checking individual-property exposure for collateral in the corridor; insurance premium differentials may apply for specific properties within the affected zones.",
     },
   ];
   return (
@@ -3735,7 +3748,7 @@ function IRRecommendations() {
       padding: "28px 40px",
       borderTop: "1px dashed var(--border)",
     }}>
-      <IRSectionHead eyebrow="What to do next" title="Three concrete moves." />
+      <IRSectionHead eyebrow="Decision-support observations" title="Three points for review." />
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {recs.map((r) => (
           <div key={r.n} style={{
@@ -3776,7 +3789,7 @@ function IRFooter() {
   const actions = [
     { label: "PDF export",       icon: "↓" },
     { label: "Shareable link",   icon: "↗" },
-    { label: "Save to watchlist", icon: "★" },
+    { label: "Add to monitor", icon: "★" },
   ];
   return (
     <div style={{

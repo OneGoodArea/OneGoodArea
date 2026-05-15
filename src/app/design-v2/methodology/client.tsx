@@ -17,10 +17,13 @@ import { METHODOLOGY_VERSIONS } from "@/lib/methodology-versions";
 
 const SECTIONS: { id: string; label: string }[] = [
   { id: "data-sources", label: "Data sources" },
+  { id: "scope-limits", label: "Scope and limitations" },
   { id: "intents",      label: "Intent types" },
   { id: "scoring",      label: "Scoring functions" },
   { id: "ai-role",      label: "Role of AI" },
   { id: "confidence",   label: "Confidence per dimension" },
+  { id: "boundaries",   label: "Boundaries and MAUP" },
+  { id: "calibration",  label: "Calibration and validation" },
   { id: "versioning",   label: "Methodology versioning" },
   { id: "overall",      label: "Overall score" },
   { id: "scale",        label: "Score scale" },
@@ -82,21 +85,21 @@ function Hero() {
           fontFamily: "var(--display)", fontWeight: 400,
           fontSize: "clamp(40px, 5vw, 62px)", lineHeight: 1.04,
           letterSpacing: "-0.02em", color: "var(--ink-deep)",
-          margin: "0 0 20px", maxWidth: "22ch",
+          margin: "0 0 20px", maxWidth: "26ch",
         }}>
           How OneGoodArea{" "}
           <span style={{
             fontStyle: "italic", color: "var(--ink)",
             borderBottom: "3px solid var(--signal)", paddingBottom: 2,
-          }}>scores an area.</span>
+          }}>scores a UK postcode.</span>
         </h1>
         <p style={{
           fontFamily: "var(--sans)", fontSize: 17, fontWeight: 400,
           lineHeight: 1.55, color: "var(--text-2)",
           letterSpacing: "-0.005em",
-          margin: 0, maxWidth: "62ch",
+          margin: 0, maxWidth: "66ch",
         }}>
-          Every score is built from real data. Same postcode, same answer. This page is the plain-English record of what the engine reads, what it weighs, and what the AI layer is (and isn&apos;t) allowed to do.
+          The methodology record for regulated buyers. Documents the seven datasets the engine reads, the formulas that produce each score, the confidence rubric that grades them, the version pinning that locks every report to a specific engine, and the limitations a model risk reviewer should know about before relying on a score.
         </p>
       </div>
     </section>
@@ -121,10 +124,13 @@ function Body() {
         <Sidebar />
         <div style={{ minWidth: 0 }}>
           <DataSources />
+          <ScopeAndLimits />
           <IntentTypes />
           <ScoringFunctions />
           <RoleOfAi />
           <ConfidencePerDimension />
+          <BoundariesAndMaup />
+          <CalibrationAndValidation />
           <MethodologyVersioning />
           <OverallScore />
           <ScoreScale />
@@ -821,7 +827,173 @@ function ConfidencePerDimension() {
   );
 }
 
-/* ─────── Methodology versioning ─────── */
+/* --- Scope and limitations --- */
+
+function ScopeAndLimits() {
+  return (
+    <SectionBlock
+      id="scope-limits"
+      eyebrow="Scope and limitations"
+      title={<>What this is, <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>and what it isn&apos;t.</em></>}
+    >
+      <P>
+        OneGoodArea is decision-support enrichment for UK property workflows. A regulated buyer uses the report as one input among several, alongside surveyor reports, internal credit scoring, valuation models, and the buyer&apos;s own risk framework. The platform does not replace any of those inputs.
+      </P>
+
+      <SubHead eyebrow="Specifically, this is NOT" />
+      <div style={{
+        marginTop: 4,
+        border: "1px solid var(--border)", background: "var(--bg)",
+      }}>
+        {[
+          {
+            label: "An AVM (Automated Valuation Model)",
+            body: "OneGoodArea does not predict the market value of a specific property. It scores the area around the postcode against five dimensions. Land Registry sold-price data is read at postcode-district level for context, not address-level valuation.",
+          },
+          {
+            label: "A credit decisioning model",
+            body: "Scores do not predict individual default risk, individual affordability, or individual creditworthiness. They describe the area, not the applicant. Lender model risk teams should classify OneGoodArea as a Tier 3 / non-decisioning enrichment input.",
+          },
+          {
+            label: "A replacement for underwriting",
+            body: "Reports do not approve or reject applications. They surface area-level risk and demand signals that an underwriter or origination analyst weighs alongside their own decisioning model.",
+          },
+          {
+            label: "Individual-property scoring",
+            body: "Scoring is at postcode and LSOA granularity today. Address-level scoring via OS AddressBase Premium and UPRN-keyed property attributes is on the roadmap (AR-134) but not live in the v2 engine.",
+          },
+        ].map((item, i, arr) => (
+          <div key={item.label} style={{
+            padding: "20px 24px",
+            borderBottom: i === arr.length - 1 ? "none" : "1px solid var(--border-dim)",
+            background: i % 2 === 0 ? "var(--bg)" : "var(--bg-off)",
+          }}>
+            <div style={{
+              fontFamily: "var(--display)", fontSize: 17, fontWeight: 500,
+              letterSpacing: "-0.012em", color: "var(--ink-deep)",
+              marginBottom: 6,
+            }}>{item.label}</div>
+            <p style={{
+              fontFamily: "var(--sans)", fontSize: 14.5, fontWeight: 400,
+              lineHeight: 1.55, color: "var(--text-2)",
+              letterSpacing: "-0.003em",
+              margin: 0, maxWidth: "68ch",
+            }}>{item.body}</p>
+          </div>
+        ))}
+      </div>
+
+      <SubHead eyebrow="Ecological fallacy disclosure" />
+      <P>
+        An area-level signal describes an area average. It is not a reliable predictor for any specific household, property, or business inside that area. Underwriters and pricing analysts using OneGoodArea must apply this caveat when treating a score as an input to an individual decision. A postcode scoring 78 for Origination does not mean the specific property at that postcode carries the safety, school, or transport profile of an 78-rated area; it means the area averages do.
+      </P>
+
+      <SubHead eyebrow="Fair-lending note" />
+      <P>
+        OneGoodArea reads area-level deprivation indices (IMD 2025, WIMD 2019, SIMD 2020) as inputs to several dimensions. These indices correlate with protected characteristics in some local markets. Buyers operating in FCA-regulated lending workflows remain responsible for ensuring their use of OneGoodArea outputs complies with their own fair-lending obligations and CONC/SS1-23 controls. Where a postcode-level score would create a discriminatory outcome at individual-application level, the report should not be the deciding input.
+      </P>
+    </SectionBlock>
+  );
+}
+
+/* --- Boundaries and MAUP --- */
+
+function BoundariesAndMaup() {
+  return (
+    <SectionBlock
+      id="boundaries"
+      eyebrow="Boundaries and MAUP"
+      title={<>Postcode and LSOA <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>boundaries are administrative.</em></>}
+    >
+      <P>
+        LSOAs (Lower Super Output Areas) and UK postcode districts are administrative units. They were drawn for census collection and mail delivery, not around natural neighbourhoods, school catchments, or commercial activity zones. England has roughly 33,755 LSOAs (2021 census); Wales has 1,917 (2011); Scotland has 6,976 data zones (2011, used by SIMD). Boundaries occasionally shift between census cycles.
+      </P>
+
+      <SubHead eyebrow="The Modifiable Areal Unit Problem" />
+      <P>
+        Scores depend on the boundary used. A property 50 metres outside an LSOA edge can return a measurably different score from a property 50 metres inside, even when the actual local conditions are nearly identical. This is the Modifiable Areal Unit Problem (MAUP), a well-documented limitation of all area-level geographic analysis. It is not specific to OneGoodArea; it applies to every UK product that scores at LSOA, MSOA, or postcode level (Hometrack, WhenFresh, CACI, Mosaic, Experian Acorn).
+      </P>
+      <P>
+        A related effect, the ecological fallacy, is addressed in the Scope and limitations section above. Together, MAUP and the ecological fallacy mean an area-level score should be read as a property of the AREA, not a property of any specific household inside it.
+      </P>
+
+      <SubHead eyebrow="How OneGoodArea handles boundary effects" />
+      <P>
+        Every postcode is classified urban, suburban, or rural from the postcodes.io rural-urban classification codes and benchmarked against its peer group. This stops a London high-street postcode from being unfairly compared to a Cumbrian village. The classification is exposed in the response as <code style={inlineCodeStyle}>area_type</code> and the per-dimension reasoning strings reference it explicitly.
+      </P>
+      <P>
+        OneGoodArea does not currently apply spatial smoothing across LSOA boundaries. A score reported for postcode AB12 1CD reflects the LSOA the postcode centroid falls inside; it does not blend with the neighbouring LSOAs. Spatial smoothing for the dimensions where boundary effects matter most (Schools, Transport, Crime) is on the v3 engine roadmap and will be a flagged methodology change.
+      </P>
+
+      <SubHead eyebrow="What this means in practice" />
+      <P>
+        Scores within 100 metres of an LSOA boundary should be reviewed with awareness that the administrative line introduces variance. The confidence band already reflects sample-size limitations for dimensions where the underlying dataset has thin coverage near the boundary. For mortgage origination workflows where the property is materially close to a boundary edge, lenders should treat the dimensional scores as directional rather than precise.
+      </P>
+    </SectionBlock>
+  );
+}
+
+/* --- Calibration and validation --- */
+
+function CalibrationAndValidation() {
+  return (
+    <SectionBlock
+      id="calibration"
+      eyebrow="Calibration and validation"
+      title={<>How the numbers are <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>anchored to reality.</em></>}
+    >
+      <P>
+        Each scoring function is calibrated against an area-type peer benchmark. A 78 for Safety in an urban LSOA means the postcode falls in the top quartile of urban LSOAs nationally on the relevant crime indicators; it does not mean 78 against a national average that mixes urban and rural baselines. Calibration anchors keep the score band meaningful across the UK.
+      </P>
+
+      <SubHead eyebrow="What OneGoodArea currently publishes" />
+      <P>
+        Per-dimension scoring approach in the Scoring functions section above. The dataset behind each dimension, the radius queried, and the formula structure are all documented on this page. The exact threshold constants inside each function (where a Safety score crosses from band 60 into band 70, for example) are not published; this is a deliberate boundary that protects the calibration without preventing third-party audit.
+      </P>
+
+      <SubHead eyebrow="What OneGoodArea does NOT yet publish" />
+      <P>
+        Longitudinal backtesting against outcome data. The honest answer to the question &quot;is a score of 80 for Investment predictive of price growth above the area-type average over the next 3 years?&quot; is: that is a separate, longitudinal claim, and we are not making it yet. The time-series corpus required for this kind of validation is being built by the monthly engine re-score job introduced in AR-132. Once 18 to 24 months of clean re-score data is in the corpus, an outcome-based validation pack will be published and audited.
+      </P>
+      <P>
+        In the interim, buyers needing predictive validation evidence should treat OneGoodArea as a calibrated descriptive layer rather than a predictive model. A descriptive area-intelligence input is still useful for portfolio screening, exposure monitoring, and decision-support enrichment in many regulated workflows. It is not yet a substitute for a buyer&apos;s own predictive risk model.
+      </P>
+
+      <SubHead eyebrow="PRA SS1/23 alignment" />
+      <P>
+        Every report ships with four artefacts that a Bank-of-England model risk register can ingest directly:
+      </P>
+      <ol style={{
+        margin: "10px 0 18px 22px", padding: 0,
+        fontFamily: "var(--sans)", fontSize: 15, lineHeight: 1.6,
+        color: "var(--text-2)", maxWidth: "66ch",
+      }}>
+        <li><strong>Input dataset list</strong>: the <code style={inlineCodeStyle}>data_sources</code> array on the response declares every dataset the engine read.</li>
+        <li><strong>Per-dimension confidence band</strong>: the <code style={inlineCodeStyle}>confidence</code> and <code style={inlineCodeStyle}>confidence_reason</code> fields surface the trust band for each dimension.</li>
+        <li><strong>Engine version stamp</strong>: <code style={inlineCodeStyle}>engine_version</code> on the response and <code style={inlineCodeStyle}>X-Engine-Version</code> response header identify the methodology that produced the score.</li>
+        <li><strong>Public change log</strong>: the Methodology versioning section below lists every methodology change with rationale, alongside the date released.</li>
+      </ol>
+      <P>
+        Pinning a request to a specific engine version with <code style={inlineCodeStyle}>X-Engine-Version: 2.0.2</code> locks the methodology for that request, so a model risk team can review and approve a specific version before allowing dependent workflows to consume it.
+      </P>
+
+      <SubHead eyebrow="Change control" />
+      <P>
+        Methodology updates follow semver. PATCH changes (rubric refinement, threshold adjustment) keep scores byte-identical to the previous patch. MINOR changes (new dimension, new data source) extend the engine without breaking prior scores. MAJOR changes (breaking change to dimension structure, intent set, or core weight) are reserved for material model changes and trigger a frozen prior-version module so buyers pinned to the older version continue to receive their original methodology.
+      </P>
+    </SectionBlock>
+  );
+}
+
+const inlineCodeStyle: React.CSSProperties = {
+  fontFamily: "var(--mono)", fontSize: 12.5, fontWeight: 500,
+  color: "var(--ink-deep)",
+  background: "var(--bg-off)",
+  border: "1px solid var(--border)",
+  padding: "1px 6px", borderRadius: 2,
+};
+
+/* --- Methodology versioning --- */
 
 function MethodologyVersioning() {
   const versionsNewestFirst = [...METHODOLOGY_VERSIONS].reverse();

@@ -96,7 +96,7 @@ export default function SignUpClient() {
               {[
                 "Open the email from OneGoodArea",
                 "Click the verification link",
-                "Sign in and generate your first report",
+                "Sign in and make your first API call",
               ].map((step, i) => (
                 <li key={i} style={{
                   padding: "12px 16px",

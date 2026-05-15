@@ -72,7 +72,7 @@ function BrandPanel() {
           letterSpacing: "-0.018em", color: "var(--ink-deep)",
           margin: "0 0 18px",
         }}>
-          An intelligence report for{" "}
+          Deterministic location intelligence for{" "}
           <em style={{
             fontStyle: "italic", color: "var(--ink)",
             borderBottom: "2.5px solid var(--signal)", paddingBottom: 2,
@@ -82,9 +82,9 @@ function BrandPanel() {
           fontFamily: "var(--sans)", fontSize: 15.5, fontWeight: 400,
           lineHeight: 1.58, color: "var(--text-2)",
           letterSpacing: "-0.003em",
-          margin: 0, maxWidth: "46ch",
+          margin: 0, maxWidth: "50ch",
         }}>
-          Type a place, pick why you&apos;re looking, and seven public datasets do the rest. Three reports a month are free.
+          Versioned, source-attributed area scores for property workflows. The Sandbox tier includes 35 API calls a month for evaluation, no card required.
         </p>
       </div>
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Styles } from "../../_shared/styles";
 import { AppShell, AppCard, appRag, GhostCta } from "../../_shared/app-shell";
 import type { AreaReport } from "@/lib/types";
+import { intentLabel } from "@/lib/intents";
 
 /* ═══════════════════════════════════════════════════════════════
    OneGoodArea · Design V2 · /report/[id]
@@ -34,7 +35,7 @@ export default function ReportViewClient({ id, report, score, createdAt }: Props
       <Styles />
       <AppShell
         title={report.area}
-        subtitle={`${report.intent} · generated ${formatDate(createdAt)}`}
+        subtitle={`${intentLabel(report.intent)} · generated ${formatDate(createdAt)}`}
         actions={
           <ReportActions id={id} report={report} score={score} onToast={flash} />
         }
@@ -69,7 +70,7 @@ function ReportActions({ id, report, score, onToast }: {
   const shareUrl = typeof window !== "undefined"
     ? `${window.location.origin}/report/${id}`
     : `https://www.onegoodarea.com/report/${id}`;
-  const shareText = `${report.area} scored ${score}/100 for ${report.intent} on OneGoodArea`;
+  const shareText = `${report.area} scored ${score}/100 for ${intentLabel(report.intent)} on OneGoodArea`;
 
   function copyLink() {
     if (typeof navigator === "undefined") return;
@@ -106,9 +107,9 @@ function ReportActions({ id, report, score, onToast }: {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ postcode: report.area, label: "", intent: report.intent }),
       });
-      if (res.ok) { setSaved(true); onToast("ok", "Saved to watchlist"); }
-      else if (res.status === 409) { setSaved(true); onToast("ok", "Already in watchlist"); }
-      else { onToast("err", "Could not save"); }
+      if (res.ok) { setSaved(true); onToast("ok", "Added to monitored postcodes"); }
+      else if (res.status === 409) { setSaved(true); onToast("ok", "Already monitored"); }
+      else { onToast("err", "Could not add"); }
     } catch {
       onToast("err", "Network error");
     } finally { setSaving(false); }
@@ -122,7 +123,7 @@ function ReportActions({ id, report, score, onToast }: {
         tone={saved ? "active" : "ghost"}
       >
         <BookmarkIcon filled={saved} />
-        {saved ? "Saved" : saving ? "Saving…" : "Save area"}
+        {saved ? "Monitoring" : saving ? "Adding…" : "Monitor postcode"}
       </ActionBtn>
 
       <ActionBtn onClick={exportPDF} disabled={exporting} tone="ghost">
@@ -185,13 +186,16 @@ function ActionBtn({ children, onClick, disabled, tone }: {
   );
 }
 
-function ShareMenu({ shareUrl, shareText, onCopy, onSocial, onClose }: {
+function ShareMenu({ shareUrl, onCopy, onSocial, onClose }: {
   shareUrl: string; shareText: string;
   onCopy: () => void; onSocial: (url: string) => void; onClose: () => void;
 }) {
-  const waUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}`;
+  // AR-149: WhatsApp and X (Twitter) share buttons removed. They were
+  // consumer-register surfaces. LinkedIn stays because it is a professional
+  // network and a relevant channel for a regulated B2B share. Copy link is
+  // the primary action — most useful in vendor evaluations where a buyer
+  // pastes the report URL into Slack, email, or a procurement portal.
   const liUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
-  const xUrl  = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
 
   return (
     <>
@@ -211,11 +215,9 @@ function ShareMenu({ shareUrl, shareText, onCopy, onSocial, onClose }: {
         boxShadow: "0 16px 36px -10px rgba(6,42,30,0.18)",
         overflow: "hidden",
       }}>
-        <ShareItem label="WhatsApp"    onClick={() => onSocial(waUrl)} />
-        <ShareItem label="LinkedIn"    onClick={() => onSocial(liUrl)} />
-        <ShareItem label="X (Twitter)" onClick={() => onSocial(xUrl)} />
+        <ShareItem label="Copy link"        onClick={onCopy} primary />
         <div style={{ borderTop: "1px solid var(--border-dim)" }} />
-        <ShareItem label="Copy link" onClick={onCopy} primary />
+        <ShareItem label="Share to LinkedIn" onClick={() => onSocial(liUrl)} />
       </div>
     </>
   );

@@ -148,9 +148,9 @@ function Hero() {
           fontFamily: "var(--sans)", fontSize: 17.5, fontWeight: 400,
           lineHeight: 1.5, color: "var(--text-2)",
           letterSpacing: "-0.005em",
-          margin: "0 auto", maxWidth: "58ch",
+          margin: "0 auto", maxWidth: "66ch",
         }}>
-          Every plan ships the seven public datasets, four intent modes, the written narrative, and the drop-in widget. Your price is your quota, nothing more.
+          Developer tier to evaluate. Production tiers to ship customer-facing surfaces. Enterprise for portfolio scale and contract terms. Every tier ships the seven public datasets, four intent modes, engine version pinning, and per-dimension confidence. Your price is your monthly call volume; everything else is included.
         </p>
       </div>
     </section>
@@ -198,7 +198,7 @@ function EnterpriseCallout() {
               fontFamily: "var(--sans)", fontSize: 14,
               color: "rgba(255,255,255,0.64)", lineHeight: 1.5,
             }}>
-              Custom MSA, signed DPA, SOC 2 Type I letter, named CSM, 99.95% SLA, address-level scoring (when shipped), white-label and on-prem options. Annual contract, negotiated overage, volume pricing. Built for big-6 lenders, top-10 insurers, and Houseful-scale platforms.
+              Annual contract with negotiated overage and volume pricing. Custom MSA, signed DPA, security review pack on request, methodology pinning by engine version, full audit trail per request. Named technical contact for support and integration. Address-level scoring on the v3 roadmap. Built for challenger lenders, mid-market InsureTech, and PropTech platforms running portfolio-scale workloads.
             </div>
           </div>
           <a
