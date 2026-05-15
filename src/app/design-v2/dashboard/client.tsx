@@ -7,28 +7,22 @@ import {
   AppShell, AppCard, StatCell, PrimaryCta, GhostCta, appRag,
 } from "../_shared/app-shell";
 import { McpAddOnSection, type McpStatus } from "../_shared/mcp-addon-section";
+import { intentLabel } from "@/lib/intents";
 
-/* ═══════════════════════════════════════════════════════════════
+/* =================================================================
    OneGoodArea · Design V2 · /dashboard
-   Reports list + usage + watchlist + API keys (if API plan).
+   Reports list + usage + monitored postcodes + API keys (if API plan).
    All real endpoints preserved: /api/stripe/portal, /api/keys,
-   /api/report/:id, /api/watchlist/:id.
-   ═══════════════════════════════════════════════════════════════ */
+   /api/report/:id, /api/watchlist/:id (legacy route, surface relabelled).
+   ================================================================= */
 
 type Report = { id: string; area: string; intent: string; score: number; created_at: string };
 type SavedArea = { id: string; postcode: string; label: string; intent: string | null; created_at: string };
 type ApiKey = { id: string; key_preview: string; name: string; created_at: string; last_used_at: string | null };
 
-// API enum -> B2B display label. Per AR-139 / AR-120 (strategic repositioning),
-// dashboard surfaces should show "Origination" not the raw "moving" enum.
-const INTENT_LABEL: Record<string, string> = {
-  moving:    "Origination",
-  business:  "Site selection",
-  investing: "Investment",
-  research:  "Reference",
-};
-const intentLabel = (id: string | null | undefined) =>
-  id ? (INTENT_LABEL[id] ?? id) : "";
+// Intent enum (moving / business / investing / research) → B2B workflow
+// label (Origination / Site selection / Investment / Reference) via the
+// canonical helper in src/lib/intents.ts. Per AR-149.
 
 type Props = {
   reports: Report[];

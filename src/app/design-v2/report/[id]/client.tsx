@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Styles } from "../../_shared/styles";
 import { AppShell, AppCard, appRag, GhostCta } from "../../_shared/app-shell";
 import type { AreaReport } from "@/lib/types";
+import { intentLabel } from "@/lib/intents";
 
 /* ═══════════════════════════════════════════════════════════════
    OneGoodArea · Design V2 · /report/[id]
@@ -34,7 +35,7 @@ export default function ReportViewClient({ id, report, score, createdAt }: Props
       <Styles />
       <AppShell
         title={report.area}
-        subtitle={`${report.intent} · generated ${formatDate(createdAt)}`}
+        subtitle={`${intentLabel(report.intent)} · generated ${formatDate(createdAt)}`}
         actions={
           <ReportActions id={id} report={report} score={score} onToast={flash} />
         }
