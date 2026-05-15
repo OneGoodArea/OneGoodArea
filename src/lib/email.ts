@@ -2,6 +2,7 @@ import { AreaReport } from "@/lib/types";
 import { logger } from "@/lib/logger";
 import { APP_URL, EMAIL_FROM } from "@/lib/config";
 import { getEmailProvider } from "@/lib/email/providers";
+import { intentLabel } from "@/lib/intents";
 
 /* ────────────────────────────────────────────────────────────
    OneGoodArea email templates.
@@ -137,20 +138,20 @@ export async function sendWelcomeEmail(email: string, name: string) {
       Welcome to <em style="font-style:italic; color:${COLORS.ink}; border-bottom:2px solid ${COLORS.signal}; padding-bottom:1px;">OneGoodArea</em>.
     </h1>
     <p style="font-family:${FONT_SANS}; font-size:15px; line-height:1.55; color:${COLORS.text2}; margin:0 0 24px 0;">
-      ${safeName}, your account is verified. Three reports a month are on us. Run your first one whenever you&apos;re ready.
+      ${safeName}, your account is verified. You start on the Sandbox tier: 35 API calls a month for evaluation, no card required. Make your first call whenever you&apos;re ready.
     </p>
     <div style="background-color:${COLORS.bg}; border:1px solid ${COLORS.border}; border-radius:4px; padding:18px 20px; margin-bottom:24px;">
       <p style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text3}; margin:0 0 6px 0; text-transform:uppercase; letter-spacing:2px;">
         Your plan
       </p>
       <p style="font-family:${FONT_SERIF}; font-size:22px; font-weight:500; color:${COLORS.inkDeep}; margin:0 0 4px 0;">
-        Free
+        Sandbox
       </p>
       <p style="font-family:${FONT_SANS}; font-size:13px; color:${COLORS.text2}; margin:0; line-height:1.5;">
-        3 reports per month. All seven public datasets. No card needed.
+        35 API calls per month. All seven public datasets. Engine version pinning, per-dimension confidence, OpenAPI 3.0 spec. No card required.
       </p>
     </div>
-    ${ctaButton("Generate your first report", "https://www.onegoodarea.com/report")}
+    ${ctaButton("Make your first call", "https://www.onegoodarea.com/report")}
   `;
 
   await (await getEmailProvider()).send({
@@ -201,14 +202,9 @@ export async function sendReportEmail(email: string, reportId: string, report: A
 
   const score = report.areaiq_score ?? 0;
   const scoreColor = score >= 70 ? COLORS.ink : score >= 45 ? "#B8860B" : "#A01B00";
-  const scoreLabel = score >= 70 ? "Strong fit" : score >= 45 ? "Moderate fit" : "Weak fit";
-
-  const intentLabels: Record<string, string> = {
-    moving: "Origination",
-    business: "Site selection",
-    investing: "Investment",
-    research: "Reference",
-  };
+  // AR-149: B2B-flavoured score band labels. "Strong fit" / "Moderate fit" /
+  // "Weak fit" were consumer-register; reframed as analyst band descriptors.
+  const scoreLabel = score >= 70 ? "Top band" : score >= 45 ? "Mid band" : "Lower band";
 
   const areaTypeLabels: Record<string, string> = {
     urban: "Urban", suburban: "Suburban", rural: "Rural",
@@ -268,7 +264,7 @@ export async function sendReportEmail(email: string, reportId: string, report: A
 
   const content = `
     <p style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text3}; margin:0 0 14px 0; text-transform:uppercase; letter-spacing:2px;">
-      Report ready &middot; ${intentLabels[report.intent] || report.intent}
+      Report ready &middot; ${intentLabel(report.intent)}
     </p>
     <h1 style="font-family:${FONT_SERIF}; font-size:30px; font-weight:400; letter-spacing:-0.6px; color:${COLORS.inkDeep}; margin:0 0 6px 0; line-height:1.1;">
       ${escapeHtml(report.area)}
