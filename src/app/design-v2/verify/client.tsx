@@ -50,7 +50,7 @@ function SuccessState() {
       </AuthStatusIcon>
       <AuthTitle
         title={<>Email <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>verified.</em></>}
-        sub="Your account is ready. Sign in to score your first postcode. Three reports a month are on us."
+        sub="Your account is ready. Sign in to score your first postcode. The Sandbox tier includes 35 API calls a month for evaluation, no card required."
       />
       <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
         <Link href="/sign-in" style={primaryCta}>
