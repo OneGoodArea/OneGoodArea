@@ -3789,7 +3789,7 @@ function IRFooter() {
   const actions = [
     { label: "PDF export",       icon: "↓" },
     { label: "Shareable link",   icon: "↗" },
-    { label: "Save to watchlist", icon: "★" },
+    { label: "Add to monitor", icon: "★" },
   ];
   return (
     <div style={{
