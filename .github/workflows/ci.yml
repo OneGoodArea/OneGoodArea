@@ -4,7 +4,12 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    # Run on PRs to main AND on PRs targeting the AR-150 brand-reskin
+    # long-running base branches. Remove the brand-v3 pattern at the
+    # end of the epic (AR-159 cutover).
+    branches:
+      - main
+      - 'feat/brand-v3-*'
 
 # Cancel superseded runs on the same PR branch. Always run main pushes to completion.
 concurrency:
