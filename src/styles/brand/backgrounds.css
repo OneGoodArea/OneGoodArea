@@ -1,0 +1,224 @@
+/* ============================================================
+   OneGoodArea — Brand v3 (Plotted) — Backgrounds & Dividers
+   Layer on any container. Depends on tokens.css.
+   ============================================================ */
+
+/* ============================================================
+   1. DOT-FIELD BACKGROUNDS
+   ============================================================ */
+
+.oga-bg-dots {
+  background-color: var(--oga-canvas);
+  background-image: radial-gradient(circle, rgba(14,59,42,0.10) 1.2px, transparent 1.4px);
+  background-size: 14px 14px;
+  background-position: 0 0;
+}
+
+.oga-bg-dots-dense  { background-size: 10px 10px; }
+.oga-bg-dots-loose  { background-size: 22px 22px; }
+.oga-bg-dots-loose2 { background-size: 32px 32px; }
+
+.oga-bg-dots-faint  { background-image: radial-gradient(circle, rgba(14,59,42,0.06) 1.2px, transparent 1.4px); }
+.oga-bg-dots-strong { background-image: radial-gradient(circle, rgba(14,59,42,0.18) 1.4px, transparent 1.6px); }
+
+.oga-bg-dots-on-dark {
+  background-color: var(--oga-green);
+  background-image: radial-gradient(circle, rgba(250,248,244,0.10) 1.2px, transparent 1.4px);
+  background-size: 14px 14px;
+}
+
+/* ============================================================
+   2. FADE MASKS — overlay on .oga-bg-dots-*
+   ============================================================ */
+
+.oga-fade-right  { -webkit-mask-image: linear-gradient(to right,  transparent 0%, black 55%, black 100%); mask-image: linear-gradient(to right,  transparent 0%, black 55%, black 100%); }
+.oga-fade-left   { -webkit-mask-image: linear-gradient(to left,   transparent 0%, black 55%, black 100%); mask-image: linear-gradient(to left,   transparent 0%, black 55%, black 100%); }
+.oga-fade-top    { -webkit-mask-image: linear-gradient(to top,    transparent 0%, black 55%, black 100%); mask-image: linear-gradient(to top,    transparent 0%, black 55%, black 100%); }
+.oga-fade-bottom { -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 55%, black 100%); mask-image: linear-gradient(to bottom, transparent 0%, black 55%, black 100%); }
+.oga-fade-vignette { -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 85%); mask-image: radial-gradient(ellipse at center, black 40%, transparent 85%); }
+.oga-fade-edges  { -webkit-mask-image: linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%); mask-image: linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%); }
+
+/* ============================================================
+   3. GIANT MARK — Plotted dot grid as background ornament
+
+   Data-URIs are byte-for-byte the same dot geometry as
+   public/brand/mark-green.svg and mark-white.svg (7x7 grid,
+   r=2.6 regular, r=5 center, viewBox 120x120). They're inlined
+   here so background-image cascades can use them without an
+   HTTP request.
+   ============================================================ */
+
+:root {
+  --oga-mark-url: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120' fill='%230E3B2A'><circle cx='60' cy='18' r='2.6'/><circle cx='32' cy='32' r='2.6'/><circle cx='46' cy='32' r='2.6'/><circle cx='60' cy='32' r='2.6'/><circle cx='74' cy='32' r='2.6'/><circle cx='88' cy='32' r='2.6'/><circle cx='18' cy='46' r='2.6'/><circle cx='32' cy='46' r='2.6'/><circle cx='46' cy='46' r='2.6'/><circle cx='60' cy='46' r='2.6'/><circle cx='74' cy='46' r='2.6'/><circle cx='88' cy='46' r='2.6'/><circle cx='102' cy='46' r='2.6'/><circle cx='18' cy='60' r='2.6'/><circle cx='32' cy='60' r='2.6'/><circle cx='46' cy='60' r='2.6'/><circle cx='60' cy='60' r='5'/><circle cx='74' cy='60' r='2.6'/><circle cx='88' cy='60' r='2.6'/><circle cx='102' cy='60' r='2.6'/><circle cx='18' cy='74' r='2.6'/><circle cx='32' cy='74' r='2.6'/><circle cx='46' cy='74' r='2.6'/><circle cx='60' cy='74' r='2.6'/><circle cx='74' cy='74' r='2.6'/><circle cx='88' cy='74' r='2.6'/><circle cx='102' cy='74' r='2.6'/><circle cx='32' cy='88' r='2.6'/><circle cx='46' cy='88' r='2.6'/><circle cx='60' cy='88' r='2.6'/><circle cx='74' cy='88' r='2.6'/><circle cx='88' cy='88' r='2.6'/><circle cx='60' cy='102' r='2.6'/></svg>");
+
+  --oga-mark-url-white: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120' fill='%23FAF8F4'><circle cx='60' cy='18' r='2.6'/><circle cx='32' cy='32' r='2.6'/><circle cx='46' cy='32' r='2.6'/><circle cx='60' cy='32' r='2.6'/><circle cx='74' cy='32' r='2.6'/><circle cx='88' cy='32' r='2.6'/><circle cx='18' cy='46' r='2.6'/><circle cx='32' cy='46' r='2.6'/><circle cx='46' cy='46' r='2.6'/><circle cx='60' cy='46' r='2.6'/><circle cx='74' cy='46' r='2.6'/><circle cx='88' cy='46' r='2.6'/><circle cx='102' cy='46' r='2.6'/><circle cx='18' cy='60' r='2.6'/><circle cx='32' cy='60' r='2.6'/><circle cx='46' cy='60' r='2.6'/><circle cx='60' cy='60' r='5'/><circle cx='74' cy='60' r='2.6'/><circle cx='88' cy='60' r='2.6'/><circle cx='102' cy='60' r='2.6'/><circle cx='18' cy='74' r='2.6'/><circle cx='32' cy='74' r='2.6'/><circle cx='46' cy='74' r='2.6'/><circle cx='60' cy='74' r='2.6'/><circle cx='74' cy='74' r='2.6'/><circle cx='88' cy='74' r='2.6'/><circle cx='102' cy='74' r='2.6'/><circle cx='32' cy='88' r='2.6'/><circle cx='46' cy='88' r='2.6'/><circle cx='60' cy='88' r='2.6'/><circle cx='74' cy='88' r='2.6'/><circle cx='88' cy='88' r='2.6'/><circle cx='60' cy='102' r='2.6'/></svg>");
+}
+
+.oga-bg-mark {
+  position: relative;
+  background-color: var(--oga-canvas);
+  background-image: var(--oga-mark-url);
+  background-repeat: no-repeat;
+  background-size: 480px 480px;
+  background-position: calc(100% + 80px) calc(100% + 80px);
+}
+.oga-bg-mark-top-left     { background-position: -80px -80px; }
+.oga-bg-mark-top-right    { background-position: calc(100% + 80px) -80px; }
+.oga-bg-mark-bottom-right { background-position: calc(100% + 80px) calc(100% + 80px); }
+.oga-bg-mark-bottom-left  { background-position: -80px calc(100% + 80px); }
+.oga-bg-mark-center       { background-position: center; }
+
+.oga-bg-mark-sm { background-size: 280px 280px; }
+.oga-bg-mark-lg { background-size: 720px 720px; }
+
+.oga-bg-mark-faint   { opacity: 0.06; }
+.oga-bg-mark-ghosted { opacity: 0.12; }
+.oga-bg-mark-soft    { opacity: 0.22; }
+
+/* ============================================================
+   4. DIVIDERS — line + mark + line
+
+   Empty:  <div class="oga-rule-mark" aria-hidden="true"></div>
+   Labeled:
+     <div class="oga-rule-mark">
+       <span class="oga-rule-mark__line"></span>
+       <span class="oga-rule-mark__mark"></span>
+       <span class="oga-rule-mark__label">02 - METHOD</span>
+       <span class="oga-rule-mark__line"></span>
+     </div>
+   ============================================================ */
+
+.oga-rule-mark {
+  display: flex;
+  align-items: center;
+  gap: var(--oga-4);
+  color: var(--oga-green);
+  margin: var(--oga-7) 0;
+}
+
+.oga-rule-mark__line {
+  flex: 1;
+  height: 1px;
+  background: var(--oga-green-10);
+}
+
+.oga-rule-mark__mark {
+  /* 40px (not 28px). The 7x7 dot grid sub-pixel-aliases below ~32px
+     into x-like shapes. 40px gives each regular dot ~0.95px so the
+     grid stays crisp. Spec's "drop to a single dot below 24px" is
+     the lower fallback, not the default. */
+  width: 40px;
+  height: 40px;
+  background-image: var(--oga-mark-url);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  flex: 0 0 auto;
+}
+
+.oga-rule-mark__label {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-green-50);
+  flex: 0 0 auto;
+}
+
+/* Empty variant: render gradient-based lines with mark in center */
+.oga-rule-mark:empty {
+  background:
+    linear-gradient(to right, var(--oga-green-10), var(--oga-green-10)) left center / calc(50% - 28px) 1px no-repeat,
+    linear-gradient(to right, var(--oga-green-10), var(--oga-green-10)) right center / calc(50% - 28px) 1px no-repeat,
+    var(--oga-mark-url) center / 40px 40px no-repeat;
+  height: 44px;
+}
+
+/* Dark surface variants */
+[data-oga-surface="dark"] .oga-rule-mark,
+.oga-on-dark .oga-rule-mark { color: var(--oga-white); }
+
+[data-oga-surface="dark"] .oga-rule-mark:empty,
+.oga-on-dark .oga-rule-mark:empty {
+  background:
+    linear-gradient(to right, rgba(250,248,244,0.18), rgba(250,248,244,0.18)) left center / calc(50% - 28px) 1px no-repeat,
+    linear-gradient(to right, rgba(250,248,244,0.18), rgba(250,248,244,0.18)) right center / calc(50% - 28px) 1px no-repeat,
+    var(--oga-mark-url-white) center / 40px 40px no-repeat;
+}
+
+[data-oga-surface="dark"] .oga-rule-mark__line,
+.oga-on-dark .oga-rule-mark__line { background: rgba(250,248,244,0.18); }
+
+[data-oga-surface="dark"] .oga-rule-mark__mark,
+.oga-on-dark .oga-rule-mark__mark { background-image: var(--oga-mark-url-white); }
+
+[data-oga-surface="dark"] .oga-rule-mark__label,
+.oga-on-dark .oga-rule-mark__label { color: rgba(250,248,244,0.55); }
+
+.oga-rule-plain {
+  height: 1px;
+  background: var(--oga-green-10);
+  border: 0;
+  margin: var(--oga-7) 0;
+}
+
+/* ============================================================
+   5. SECTION SHELLS — opinionated combinations
+   ============================================================ */
+
+.oga-section-hero {
+  position: relative;
+  background-color: var(--oga-canvas);
+  padding: var(--oga-9) var(--oga-7);
+  overflow: hidden;
+  isolation: isolate;
+}
+.oga-section-hero::before {
+  content: "";
+  position: absolute; inset: 0;
+  background-image: radial-gradient(circle, rgba(14,59,42,0.10) 1.2px, transparent 1.4px);
+  background-size: 14px 14px;
+  -webkit-mask-image: linear-gradient(to left, transparent 0%, black 60%, black 100%);
+          mask-image: linear-gradient(to left, transparent 0%, black 60%, black 100%);
+  z-index: -1;
+}
+
+.oga-section-quiet {
+  position: relative;
+  background-color: var(--oga-white);
+  padding: var(--oga-9) var(--oga-7);
+  overflow: hidden;
+  isolation: isolate;
+}
+.oga-section-quiet::after {
+  content: "";
+  position: absolute;
+  bottom: -120px; right: -120px;
+  width: 520px; height: 520px;
+  background-image: var(--oga-mark-url);
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: 0;
+}
+.oga-section-quiet > * { position: relative; z-index: 1; }
+
+.oga-section-dark {
+  position: relative;
+  background-color: var(--oga-green);
+  color: var(--oga-white);
+  padding: var(--oga-9) var(--oga-7);
+  overflow: hidden;
+  isolation: isolate;
+}
+.oga-section-dark::before {
+  content: "";
+  position: absolute; inset: 0;
+  background-image: radial-gradient(circle, rgba(250,248,244,0.10) 1.2px, transparent 1.4px);
+  background-size: 14px 14px;
+  -webkit-mask-image: radial-gradient(ellipse at top right, black 0%, transparent 70%);
+          mask-image: radial-gradient(ellipse at top right, black 0%, transparent 70%);
+  z-index: 0;
+}
+.oga-section-dark > * { position: relative; z-index: 1; }

@@ -1,0 +1,174 @@
+/* ============================================================
+   OneGoodArea — Brand v3 (Plotted) — Components & Motif
+   Depends on tokens.css. Class prefix: .oga-*
+   ============================================================ */
+
+/* ---------- Base ---------- */
+.oga-root {
+  background: var(--oga-canvas);
+  color: var(--oga-fg);
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-body);
+  line-height: var(--oga-lh-body);
+  font-feature-settings: "ss01", "cv11";
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Type ---------- */
+.oga-eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-label {
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-label);
+  letter-spacing: var(--oga-tracking-mono);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-h1 { font-family: var(--oga-font-sans); font-size: var(--oga-fs-h1); font-weight: 500; line-height: var(--oga-lh-tight); letter-spacing: var(--oga-tracking-tight); text-wrap: balance; }
+.oga-h2 { font-family: var(--oga-font-sans); font-size: var(--oga-fs-h2); font-weight: 500; line-height: var(--oga-lh-tight); letter-spacing: var(--oga-tracking-tight); text-wrap: balance; }
+.oga-h3 { font-family: var(--oga-font-sans); font-size: var(--oga-fs-h3); font-weight: 500; line-height: var(--oga-lh-snug); letter-spacing: var(--oga-tracking-tight); }
+.oga-h4 { font-family: var(--oga-font-sans); font-size: var(--oga-fs-h4); font-weight: 500; line-height: var(--oga-lh-snug); letter-spacing: var(--oga-tracking-tight); }
+.oga-display { font-family: var(--oga-font-sans); font-size: var(--oga-fs-display); font-weight: 500; line-height: var(--oga-lh-tight); letter-spacing: var(--oga-tracking-tight); text-wrap: balance; }
+.oga-lead { font-family: var(--oga-font-sans); font-size: var(--oga-fs-lead); line-height: var(--oga-lh-snug); color: var(--oga-fg-subtle); text-wrap: pretty; }
+
+/* ---------- Buttons ----------
+   Default tuned for the modern infrastructure feel: 38px tall,
+   18px padding, 14px text, fast (120ms) transitions. Anthropic /
+   macOS / Linear / Vercel altitude. Use .oga-btn-sm (30px) for
+   dense UIs and .oga-btn-lg (44px) where a real CTA needs weight. */
+.oga-btn {
+  display: inline-flex; align-items: center; gap: var(--oga-2);
+  height: 38px; padding: 0 18px;
+  font-family: var(--oga-font-sans); font-size: 0.875rem; font-weight: 500;
+  letter-spacing: -0.005em;
+  border-radius: var(--oga-radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--oga-dur-fast) var(--oga-ease),
+              color var(--oga-dur-fast) var(--oga-ease),
+              border-color var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-btn-sm { height: 30px; padding: 0 12px; font-size: 0.8125rem; }
+.oga-btn-lg { height: 44px; padding: 0 24px; font-size: 0.9375rem; }
+
+.oga-btn-primary       { background: var(--oga-green); color: var(--oga-white); }
+.oga-btn-primary:hover { background: #154A35; }
+.oga-btn-secondary     { background: transparent; color: var(--oga-green); border-color: var(--oga-green-10); }
+.oga-btn-secondary:hover { border-color: var(--oga-green-30); }
+.oga-btn-ghost         { background: transparent; color: var(--oga-green); padding: 0 12px; }
+.oga-btn-ghost:hover   { background: var(--oga-green-06); }
+
+[data-oga-surface="dark"] .oga-btn-primary,
+.oga-on-dark .oga-btn-primary { background: var(--oga-white); color: var(--oga-green); }
+[data-oga-surface="dark"] .oga-btn-primary:hover,
+.oga-on-dark .oga-btn-primary:hover { background: #EFECE6; }
+[data-oga-surface="dark"] .oga-btn-secondary,
+.oga-on-dark .oga-btn-secondary { color: var(--oga-white); border-color: rgba(250,248,244,0.16); }
+[data-oga-surface="dark"] .oga-btn-secondary:hover,
+.oga-on-dark .oga-btn-secondary:hover { border-color: var(--oga-white); }
+[data-oga-surface="dark"] .oga-btn-ghost,
+.oga-on-dark .oga-btn-ghost { color: var(--oga-white); }
+[data-oga-surface="dark"] .oga-btn-ghost:hover,
+.oga-on-dark .oga-btn-ghost:hover { background: rgba(250,248,244,0.06); }
+
+/* ---------- Card ---------- */
+.oga-card {
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-lg);
+  padding: var(--oga-6);
+}
+
+[data-oga-surface="dark"] .oga-card,
+.oga-on-dark .oga-card { background: rgba(250,248,244,0.04); border-color: rgba(250,248,244,0.16); }
+
+/* ---------- Divider ---------- */
+.oga-rule { height: 1px; background: var(--oga-border); border: 0; margin: var(--oga-5) 0; }
+
+/* ---------- Status pills + chips ---------- */
+.oga-status {
+  display: inline-flex; align-items: center; gap: var(--oga-2);
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-label);
+  letter-spacing: var(--oga-tracking-mono);
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: var(--oga-radius-pill);
+  border: 1px solid currentColor;
+}
+.oga-status-red    { color: var(--oga-status-red);    background: var(--oga-status-red-bg); }
+.oga-status-amber  { color: var(--oga-status-amber);  background: var(--oga-status-amber-bg); }
+.oga-status-yellow { color: var(--oga-status-yellow); background: var(--oga-status-yellow-bg); }
+.oga-status-green  { color: var(--oga-status-green);  background: var(--oga-status-green-bg); }
+
+/* ============================================================
+   THE MOTIF — Plotted dot field
+   Faint dot grid that echoes the mark.
+   ============================================================ */
+
+.oga-dot-field {
+  background-image: radial-gradient(circle, var(--oga-green-06) 1.2px, transparent 1.4px);
+  background-size: 14px 14px;
+  background-position: 0 0;
+}
+
+.oga-dot-fade-right {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 60%, black 100%);
+          mask-image: linear-gradient(to right, transparent 0%, black 60%, black 100%);
+}
+.oga-dot-fade-left {
+  -webkit-mask-image: linear-gradient(to left, transparent 0%, black 60%, black 100%);
+          mask-image: linear-gradient(to left, transparent 0%, black 60%, black 100%);
+}
+.oga-dot-fade-radial {
+  -webkit-mask-image: radial-gradient(ellipse at center, black 35%, transparent 80%);
+          mask-image: radial-gradient(ellipse at center, black 35%, transparent 80%);
+}
+
+/* ============================================================
+   THE MARK — Plotted logo
+   Inline SVG with currentColor; set color on the parent.
+   ============================================================ */
+.oga-mark    { width: 1em; height: 1em; display: inline-block; color: var(--oga-green); }
+.oga-mark-sm { width: 24px;  height: 24px; }
+.oga-mark-md { width: 40px;  height: 40px; }
+.oga-mark-lg { width: 72px;  height: 72px; }
+.oga-mark-xl { width: 128px; height: 128px; }
+
+[data-oga-surface="dark"] .oga-mark,
+.oga-on-dark .oga-mark { color: var(--oga-white); }
+
+/* App-icon tile (squircle) */
+.oga-icon-tile {
+  display: inline-grid; place-items: center;
+  width: 128px; height: 128px;
+  border-radius: var(--oga-radius-icon);
+  background: var(--oga-white);
+  color: var(--oga-green);
+  box-shadow: var(--oga-shadow-md);
+}
+.oga-icon-tile[data-variant="dark"] {
+  background: var(--oga-green);
+  color: var(--oga-white);
+}
+.oga-icon-tile > .oga-mark { width: 66%; height: 66%; }
+
+/* ---------- Focus ring (macOS-tight) ---------- */
+:where(.oga-btn, .oga-root a, .oga-root button, .oga-root input, .oga-root select, .oga-root textarea):focus-visible {
+  outline: 1.5px solid var(--oga-green);
+  outline-offset: 2px;
+  border-radius: var(--oga-radius-sm);
+}
+[data-oga-surface="dark"] :where(.oga-btn, .oga-root a, .oga-root button, .oga-root input, .oga-root select, .oga-root textarea):focus-visible,
+.oga-on-dark :where(.oga-btn, .oga-root a, .oga-root button, .oga-root input, .oga-root select, .oga-root textarea):focus-visible {
+  outline-color: var(--oga-white);
+}
