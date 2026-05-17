@@ -22,7 +22,7 @@ apply_sql_dir() {
 
   find "$dir" -type f -name '*.sql' | sort | while IFS= read -r file; do
     echo "Applying seed file: $file"
-    $COMPOSE -f "$COMPOSE_FILE" exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "${POSTGRES_USER:-oga_user}" -d "${POSTGRES_DB:-oga_local}"' < "$file"
+    $COMPOSE -f "$COMPOSE_FILE" exec -T database sh -lc 'psql -v ON_ERROR_STOP=1 -U "${POSTGRES_USER:-oga_user}" -d "${POSTGRES_DB:-oga_local}"' < "$file"
   done
 }
 

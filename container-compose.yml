@@ -12,11 +12,11 @@ services:
       OGA_SERVICE_MODE: "local-test"
       NEXT_PUBLIC_APP_URL: "http://localhost:3000"
     depends_on:
-      postgres:
+      database:
         condition: service_healthy
-      neon-compat-proxy:
+      database-proxy:
         condition: service_healthy
-      mailhog:
+      email-mock:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
@@ -30,7 +30,7 @@ services:
       - .:/app
       - /app/node_modules
 
-  postgres:
+  database:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
@@ -51,20 +51,20 @@ services:
     networks:
       - oga-network
 
-  neon-compat-proxy:
+  database-proxy:
     build:
-      context: ./services/neon-compat-proxy
+      context: ./services/database-proxy
       dockerfile: Dockerfile
     environment:
       POSTGRES_USER: oga_user
       POSTGRES_PASSWORD: oga_test_password_local
       POSTGRES_DB: oga_local
-      POSTGRES_HOST: postgres
+      POSTGRES_HOST: database
       POSTGRES_PORT: "5432"
     ports:
       - "55433:55433"
     depends_on:
-      postgres:
+      database:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "healthcheck.js"]
@@ -75,7 +75,7 @@ services:
     networks:
       - oga-network
 
-  mailhog:
+  email-mock:
     image: mailhog/mailhog:v1.0.1
     ports:
       - "1025:1025"
@@ -89,7 +89,7 @@ services:
     networks:
       - oga-network
 
-  prism:
+  api-mock:
     image: stoplight/prism:4
     command: mock -h 0.0.0.0 /app/mocks/postcodes.io.yaml
     volumes:
