@@ -25,7 +25,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm run lint
+      - run: make lint
 
   typecheck:
     name: Typecheck
@@ -37,7 +37,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm run typecheck
+      - run: make typecheck
 
   test:
     name: Test
@@ -49,7 +49,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm test
+      - run: make test
 
   build:
     name: Build
@@ -61,7 +61,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm run build
+      - run: make build
         env:
           # Build-time defaults so the production bundle compiles without real secrets.
           # Runtime clients in src/lib/* are lazy-initialised and only read env on first call.

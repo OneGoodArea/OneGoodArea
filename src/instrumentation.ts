@@ -11,7 +11,7 @@ export async function register() {
         } else if (url.includes("api.anthropic.com")) {
           url = url.replace("https://api.anthropic.com", "http://ai-mock:55434");
         } else if (url.includes("api.resend.com")) {
-          url = url.replace("https://api.resend.com", "http://email-mock:1025"); // Placeholder, will refine with proxy
+          url = url.replace("https://api.resend.com", "http://email-proxy:55435");
         }
 
         return originalFetch(url, init);

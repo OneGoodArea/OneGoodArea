@@ -98,6 +98,48 @@ Scoring lives in `src/lib/scoring-engine.ts` (16 functions, 4 intent composition
 - Separate npm package: `@onegoodarea/mcp-server` (`mcp/` directory)
 - Four tools: `score_postcode`, `compare_postcodes`, `methodology_for`, `engine_version`
 - For Claude Desktop, Cursor, and any MCP-compatible client
+
+---
+
+## Development & Local Test Environment
+
+OneGoodArea provides a fully containerized local test environment that mimics the production stack (including Neon Postgres, AI models, and email services) without incurring costs or requiring external API keys (except for Stripe Test Mode).
+
+### **Quick Start**
+
+The project uses a **Full-Lifecycle Makefile** as the primary entry point.
+
+1.  **Start the environment:**
+    ```bash
+    make up
+    ```
+    *This will build the containers, initialize the database schema, and start all mock services.*
+
+2.  **Access the services:**
+    - **App:** [http://localhost:3000](http://localhost:3000)
+    - **Email Mock (MailHog):** [http://localhost:8025](http://localhost:8025)
+    - **API Mock (Prism):** [http://localhost:4010](http://localhost:4010)
+    - **Database Proxy (Neon):** localhost:55433
+
+### **Common Commands**
+
+| Command | Description |
+| :--- | :--- |
+| `make help` | Show all available targets. |
+| `make up` | Start containers and mocks. |
+| `make down` | Stop all containers. |
+| `make logs` | Tail container logs. |
+| `make reset` | Wipe the database and re-initialize schema. |
+| `make ci` | Run lint, typecheck, and tests (same as GitHub Actions). |
+| `make test-api` | Run functional API tests against local environment. |
+
+### **Mocking Strategy**
+- **Database:** A local Postgres container with a `database-proxy` that mimics the Neon HTTP SQL API.
+- **AI:** Calls to Anthropic are redirected to a local `ai-mock` service.
+- **Email:** Resend calls are intercepted and forwarded to MailHog.
+- **External APIs:** Calls to `postcodes.io` are mocked via Prism.
+
+---
 - Install docs at `/docs/mcp`
 
 **Web product**
