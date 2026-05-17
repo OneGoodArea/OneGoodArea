@@ -89,6 +89,24 @@ services:
     networks:
       - oga-network
 
+  email-proxy:
+    build:
+      context: ./services/email-proxy
+      dockerfile: Dockerfile
+    environment:
+      PORT: 55435
+      MAILHOG_SMTP_HOST: email-mock
+    ports:
+      - "55435:55435"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:55435/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+    networks:
+      - oga-network
+
   api-mock:
     image: stoplight/prism:4
     command: mock -h 0.0.0.0 /app/mocks/postcodes.io.yaml
