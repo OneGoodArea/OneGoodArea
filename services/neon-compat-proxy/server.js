@@ -17,15 +17,27 @@ const json = (res, status, body) => {
 };
 
 const server = http.createServer(async (req, res) => {
+  // Add CORS headers for local development if needed
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (req.method === "OPTIONS") {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
   if (req.method === "GET" && req.url === "/health") {
     try {
       await pool.query("SELECT 1");
-      return json(res, 200, { ok: true });
+      return json(res, 200, { ok: true, message: "Proxy is healthy and connected to Postgres" });
     } catch (error) {
       return json(res, 503, { ok: false, error: error instanceof Error ? error.message : "healthcheck failed" });
     }
   }
 
+  // Neon HTTP SQL endpoint is usually /sql
   if (req.method === "POST" && req.url === "/sql") {
     let raw = "";
     req.on("data", (chunk) => {
@@ -35,22 +47,34 @@ const server = http.createServer(async (req, res) => {
     req.on("end", async () => {
       try {
         const payload = raw ? JSON.parse(raw) : {};
-        const text = payload.query;
-        const values = Array.isArray(payload.params) ? payload.params : [];
+        const query = payload.query;
+        const params = Array.isArray(payload.params) ? payload.params : [];
 
-        if (!text || typeof text !== "string") {
+        if (!query || typeof query !== "string") {
           return json(res, 400, { error: "query must be a non-empty string" });
         }
 
-        const result = await pool.query(text, values);
+        // Execute query
+        const result = await pool.query(query, params);
+
+        // Neon's HTTP response format includes 'rows' and 'metadata'
+        // Our client uses result directly if we are using the neon() wrapper
+        // The @neondatabase/serverless driver expects a specific structure if used via fetch
         return json(res, 200, {
           command: result.command,
           rowCount: result.rowCount,
           rows: result.rows,
-          fields: result.fields.map((field) => ({ name: field.name, dataTypeID: field.dataTypeID })),
+          fields: result.fields.map((field) => ({
+            name: field.name,
+            dataTypeID: field.dataTypeID,
+          })),
         });
       } catch (error) {
-        return json(res, 500, { error: error instanceof Error ? error.message : "query execution failed" });
+        console.error("[neon-proxy] Query error:", error);
+        return json(res, 500, {
+          error: error instanceof Error ? error.message : "query execution failed",
+          code: error.code // Include PG error codes for better debugging
+        });
       }
     });
     return;

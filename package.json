@@ -16,7 +16,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:api": "./test_files/simple-run.sh"
+    "test:api": "./test_files/simple-run.sh",
+    "local:up": "./scripts/local-setup.sh"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.2",

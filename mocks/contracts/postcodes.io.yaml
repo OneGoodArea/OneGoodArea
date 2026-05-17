@@ -1,0 +1,195 @@
+openapi: 3.0.0
+info:
+  title: Postcodes.io Mock
+  version: 1.0.0
+paths:
+  /postcodes/{postcode}:
+    get:
+      parameters:
+        - name: postcode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  result:
+                    type: object
+                    properties:
+                      postcode:
+                        type: string
+                        example: M1 1AE
+                      longitude:
+                        type: number
+                        example: -2.233518
+                      latitude:
+                        type: number
+                        example: 53.480911
+                      european_electoral_region:
+                        type: string
+                        example: North West
+                      primary_care_trust:
+                        type: string
+                        example: Manchester
+                      region:
+                        type: string
+                        example: North West
+                      lsoa:
+                        type: string
+                        example: Manchester 001A
+                      msoa:
+                        type: string
+                        example: Manchester 001
+                      admin_district:
+                        type: string
+                        example: Manchester
+                      parish:
+                        type: string
+                        example: Manchester, unparished area
+                      admin_county:
+                        type: string
+                        nullable: true
+                        example: null
+                      admin_ward:
+                        type: string
+                        example: Piccadilly
+                      ccg:
+                        type: string
+                        example: NHS Manchester CCG
+                      nuts:
+                        type: string
+                        example: Greater Manchester
+                      codes:
+                        type: object
+                        properties:
+                          admin_district:
+                            type: string
+                            example: E08000003
+                          admin_county:
+                            type: string
+                            example: E99999999
+                          admin_ward:
+                            type: string
+                            example: E05011370
+                          parish:
+                            type: string
+                            example: E43000212
+                          parliamentary_constituency:
+                            type: string
+                            example: E14000818
+                          ccg:
+                            type: string
+                            example: E38000102
+                          ccg_id:
+                            type: string
+                            example: 00T
+                          ced:
+                            type: string
+                            example: E99999999
+                          nuts:
+                            type: string
+                            example: UKD33
+                          lsoa:
+                            type: string
+                            example: E01005068
+                          msoa:
+                            type: string
+                            example: E02001053
+                          lau2:
+                            type: string
+                            example: E08000003
+  /postcodes/{postcode}/autocomplete:
+    get:
+      parameters:
+        - name: postcode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                  result:
+                    type: array
+                    items:
+                      type: string
+              example:
+                status: 200
+                result: ["M1 1AE", "M1 1AF", "M1 1AG"]
+  /places:
+    get:
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                  result:
+                    type: array
+                    items:
+                      type: object
+              example:
+                status: 200
+                result:
+                  - name: Manchester
+                    postcode: M1 1AE
+                    region: North West
+  /postcodes:
+    get:
+      parameters:
+        - name: lon
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                  result:
+                    type: array
+                    items:
+                      type: object
+              example:
+                status: 200
+                result:
+                  - postcode: M1 1AE
+                    longitude: -2.233518
+                    latitude: 53.480911

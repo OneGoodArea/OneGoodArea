@@ -89,6 +89,33 @@ services:
     networks:
       - oga-network
 
+  prism:
+    image: stoplight/prism:4
+    command: mock -h 0.0.0.0 /app/mocks/postcodes.io.yaml
+    volumes:
+      - ./mocks/contracts:/app/mocks
+    ports:
+      - "4010:4010"
+    networks:
+      - oga-network
+
+  ai-mock:
+    build:
+      context: ./services/ai-mock
+      dockerfile: Dockerfile
+    environment:
+      PORT: 55434
+    ports:
+      - "55434:55434"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:55434/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+    networks:
+      - oga-network
+
 networks:
   oga-network:
     driver: bridge
