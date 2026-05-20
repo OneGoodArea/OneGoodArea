@@ -137,7 +137,7 @@ export default function DesignTestPage() {
         <Section id="color" eyebrow="02 - Foundation" title="Color tokens">
           <div className="oga-label" style={{ marginBottom: "var(--oga-3)" }}>Brand (two-color only)</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "var(--oga-4)", marginBottom: "var(--oga-6)" }}>
-            <Swatch label="green" color="#0E3B2A" value="--oga-green / #0E3B2A" />
+            <Swatch label="green" color="#1A1C1F" value="--oga-green / #1A1C1F" />
             <Swatch label="white" color="#FAF8F4" value="--oga-white / #FAF8F4" />
             <Swatch label="canvas" color="#EFECE6" value="--oga-canvas / #EFECE6" />
           </div>

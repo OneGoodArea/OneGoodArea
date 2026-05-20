@@ -2,70 +2,69 @@
 
 import React, { useEffect, useState } from "react";
 
-/* ═══════════════════════════════════════════════════════════════
-   ThemeDot · 28x28 bespoke theme toggle.
-   Writes data-theme to <html> so the whole site flips. Shared
-   between the marketing Nav and the app-shell sidebar via `tone`.
-   - tone="light": forest border, bg-off surface, hover goes chartreuse.
-   - tone="dark":  white-alpha border on dark surface, chartreuse hover.
-   ═══════════════════════════════════════════════════════════════ */
+/* ThemeDot — 28x28 surface toggle (AR-152 Plotted).
+
+   Writes BOTH `data-theme` on <html> (existing design-v2 system, kept
+   per memory) AND `data-oga-surface` on <body> (Plotted token system).
+   localStorage key `aiq-theme` unchanged.
+
+   Visual styling lives in `.oga-theme-dot` (components.css) so the
+   surface-aware hover state actually flips with the body data attribute.
+   Inline styles can't do that. */
 
 export function ThemeDot({ tone = "light" }: { tone?: "light" | "dark" }) {
   const [theme, setTheme] = useState<"dark" | "light">("light");
   const [mounted, setMounted] = useState(false);
-  const [hover, setHover] = useState(false);
 
   useEffect(() => {
-    // Valid mount-time pattern: hydrate from localStorage / data-theme on first
-    // client render only. Runs once, no cascade because deps array is empty.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     const stored =
       (typeof window !== "undefined" && localStorage.getItem("aiq-theme")) ||
       document.documentElement.getAttribute("data-theme") ||
       "light";
-    setTheme(stored === "dark" ? "dark" : "light");
+    const next = stored === "dark" ? "dark" : "light";
+    setTheme(next);
+    applySurface(next);
   }, []);
+
+  function applySurface(next: "dark" | "light") {
+    document.documentElement.setAttribute("data-theme", next);
+    if (next === "dark") {
+      document.body.setAttribute("data-oga-surface", "dark");
+    } else {
+      document.body.removeAttribute("data-oga-surface");
+    }
+  }
 
   function toggle() {
     const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
-    document.documentElement.setAttribute("data-theme", next);
+    applySurface(next);
     try { localStorage.setItem("aiq-theme", next); } catch {}
   }
 
   if (!mounted) return <span style={{ width: 28, height: 28, flexShrink: 0 }} />;
 
   const isDark = theme === "dark";
-  const sidebarDark = tone === "dark";
 
-  const border = sidebarDark
-    ? (hover ? "rgba(212,243,58,0.55)" : "rgba(255,255,255,0.18)")
-    : (hover ? "var(--ink)"            : "var(--border)");
-  const bg = sidebarDark
-    ? (hover ? "rgba(212,243,58,0.12)" : "rgba(255,255,255,0.05)")
-    : (hover ? "var(--signal-dim)"     : "var(--bg-off)");
-  const iconColor = sidebarDark
-    ? (hover ? "var(--signal)"         : "#FFFFFF")
-    : "var(--ink-deep)";
+  // `tone="dark"` is for perma-dark contexts (e.g. app-shell sidebar).
+  // It forces white ink + alpha-white border regardless of body surface.
+  // Without `tone`, the dot inherits from semantic tokens via the
+  // .oga-theme-dot class and auto-flips with the body surface.
+  const permaDark = tone === "dark";
 
   return (
     <button
       type="button"
+      className="oga-theme-dot"
       onClick={toggle}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
       aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
       title={`Switch to ${isDark ? "light" : "dark"} mode`}
-      style={{
-        width: 28, height: 28, borderRadius: 3,
-        border: `1px solid ${border}`,
-        background: bg,
-        color: iconColor,
-        display: "inline-flex", alignItems: "center", justifyContent: "center",
-        cursor: "pointer", padding: 0, flexShrink: 0,
-        transition: "background 140ms ease, border-color 140ms ease, color 140ms ease",
-      }}
+      style={permaDark ? {
+        borderColor: "rgba(250,248,244,0.18)",
+        color: "var(--oga-white)",
+      } : undefined}
     >
       {isDark ? (
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>

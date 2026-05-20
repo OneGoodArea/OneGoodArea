@@ -56,7 +56,7 @@ export default function RootLayout({
           />
           <script
             dangerouslySetInnerHTML={{
-              __html: `(function(){try{var t=localStorage.getItem("aiq-theme");if(t==="dark"||t==="light"){document.documentElement.setAttribute("data-theme",t)}}catch(e){}})()`,
+              __html: `(function(){try{var t=localStorage.getItem("aiq-theme");if(t==="dark"||t==="light"){document.documentElement.setAttribute("data-theme",t);if(t==="dark"){var b=function(){document.body&&document.body.setAttribute("data-oga-surface","dark")};if(document.body){b()}else{document.addEventListener("DOMContentLoaded",b,{once:true})}}}}catch(e){}})()`,
             }}
           />
           <meta name="msvalidate.01" content="PENDING" />

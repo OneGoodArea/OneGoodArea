@@ -5,17 +5,20 @@
    ============================================================ */
 
 :root {
-  /* ---------- Color ---------- */
-  --oga-green: #0E3B2A;
+  /* ---------- Color ----------
+     Forest green scrapped 2026-05-18. Primary ink is now warm dark
+     graphite. Variable name kept as `--oga-green` for minimal-blast-
+     radius refactor; rename to `--oga-ink` in a later cleanup pass. */
+  --oga-green: #1A1C1F;
   --oga-white: #FAF8F4;
 
   /* Tints (derived; brand stays 2-color) */
-  --oga-green-95: #DCE3DF;
-  --oga-green-80: #B6C2BC;
-  --oga-green-50: #87958D;
-  --oga-green-30: #4E5F56;
-  --oga-green-10: rgba(14, 59, 42, 0.10);
-  --oga-green-06: rgba(14, 59, 42, 0.06);
+  --oga-green-95: #DDD9D5;
+  --oga-green-80: #B5B6B8;
+  --oga-green-50: #74757A;
+  --oga-green-30: #454649;
+  --oga-green-10: rgba(26, 28, 31, 0.10);
+  --oga-green-06: rgba(26, 28, 31, 0.06);
 
   --oga-canvas: #EFECE6;
 
@@ -83,8 +86,8 @@
 
   /* ---------- Elevation (used sparingly) ---------- */
   --oga-shadow-sm: 0 1px 0 rgba(0,0,0,0.04);
-  --oga-shadow-md: 0 1px 0 rgba(0,0,0,0.04), 0 8px 24px -10px rgba(14,59,42,0.18);
-  --oga-shadow-lg: 0 1px 0 rgba(0,0,0,0.04), 0 24px 60px -28px rgba(14,59,42,0.35);
+  --oga-shadow-md: 0 1px 0 rgba(0,0,0,0.04), 0 8px 24px -10px rgba(26, 28, 31,0.18);
+  --oga-shadow-lg: 0 1px 0 rgba(0,0,0,0.04), 0 24px 60px -28px rgba(26, 28, 31,0.35);
 
   /* ---------- Motion ---------- */
   --oga-ease:      cubic-bezier(0.2, 0.7, 0.2, 1);

@@ -9,7 +9,7 @@
 
 .oga-bg-dots {
   background-color: var(--oga-canvas);
-  background-image: radial-gradient(circle, rgba(14,59,42,0.10) 1.2px, transparent 1.4px);
+  background-image: radial-gradient(circle, rgba(26, 28, 31,0.10) 1.2px, transparent 1.4px);
   background-size: 14px 14px;
   background-position: 0 0;
 }
@@ -18,8 +18,8 @@
 .oga-bg-dots-loose  { background-size: 22px 22px; }
 .oga-bg-dots-loose2 { background-size: 32px 32px; }
 
-.oga-bg-dots-faint  { background-image: radial-gradient(circle, rgba(14,59,42,0.06) 1.2px, transparent 1.4px); }
-.oga-bg-dots-strong { background-image: radial-gradient(circle, rgba(14,59,42,0.18) 1.4px, transparent 1.6px); }
+.oga-bg-dots-faint  { background-image: radial-gradient(circle, rgba(26, 28, 31,0.06) 1.2px, transparent 1.4px); }
+.oga-bg-dots-strong { background-image: radial-gradient(circle, rgba(26, 28, 31,0.18) 1.4px, transparent 1.6px); }
 
 .oga-bg-dots-on-dark {
   background-color: var(--oga-green);
@@ -176,7 +176,7 @@
 .oga-section-hero::before {
   content: "";
   position: absolute; inset: 0;
-  background-image: radial-gradient(circle, rgba(14,59,42,0.10) 1.2px, transparent 1.4px);
+  background-image: radial-gradient(circle, rgba(26, 28, 31,0.10) 1.2px, transparent 1.4px);
   background-size: 14px 14px;
   -webkit-mask-image: linear-gradient(to left, transparent 0%, black 60%, black 100%);
           mask-image: linear-gradient(to left, transparent 0%, black 60%, black 100%);

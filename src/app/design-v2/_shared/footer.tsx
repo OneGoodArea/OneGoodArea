@@ -4,10 +4,12 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Wordmark } from "./wordmark";
 
-/* Footer · IA mirrors the live product footer (Areas · Business · API ·
-   Methodology · Pricing · About · Blog · Changelog · Help · Terms · Privacy)
-   grouped into three editorial columns. Visual language matches the nav:
-   Fraunces wordmark, mono small-caps headers, chartreuse slide-in underline. */
+/* Footer — Plotted brand v3 (AR-152).
+
+   Same IA as before: Areas · Business · API · Methodology · Pricing ·
+   About · Blog · Changelog · Help · Terms · Privacy across three editorial
+   columns. Plotted treatment: Geist throughout, no chartreuse, no italic
+   tagline. Tagline carries the new category sentence. */
 
 export function Footer() {
   const productLinks: { label: string; href: string }[] = [
@@ -38,9 +40,10 @@ export function Footer() {
   ];
 
   return (
-    <footer style={{
-      background: "var(--bg-off)",
-      borderTop: "1px solid var(--border)",
+    <footer className="oga-root" data-oga-surface="dark" style={{
+      background: "var(--oga-bg)",
+      color: "var(--oga-fg)",
+      borderTop: "1px solid var(--oga-border)",
       padding: "96px 0 32px",
     }}>
       <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 40px" }}>
@@ -52,29 +55,20 @@ export function Footer() {
         }}>
           <div className="aiq-footer-brand">
             <div style={{ marginBottom: 24 }}>
-              <Wordmark href="/" size={26} />
+              <Wordmark href="/" size={24} />
             </div>
             <p style={{
-              fontFamily: "var(--display)", fontSize: 19, fontWeight: 400,
-              fontStyle: "italic", lineHeight: 1.32,
-              color: "var(--ink)", letterSpacing: "-0.012em",
-              margin: "0 0 26px", maxWidth: "28ch",
+              fontFamily: "var(--oga-font-sans)", fontSize: 17, fontWeight: 400,
+              lineHeight: 1.4,
+              color: "var(--oga-fg-subtle)", letterSpacing: "-0.005em",
+              margin: "0 0 26px", maxWidth: "32ch",
+              textWrap: "pretty",
             }}>
-              An intelligence report for every UK postcode.
+              the decision-grade area intelligence layer for property workflows.
             </p>
-            <Link href="/" style={{
-              fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-              letterSpacing: "0.2em", textTransform: "uppercase",
-              color: "var(--ink-deep)", textDecoration: "none",
-              display: "inline-flex", alignItems: "center", gap: 8,
-              borderBottom: "1px solid var(--ink-deep)", paddingBottom: 3,
-              transition: "gap 160ms ease",
-            }}
-              onMouseEnter={(e) => (e.currentTarget.style.gap = "12px")}
-              onMouseLeave={(e) => (e.currentTarget.style.gap = "8px")}
-            >
+            <Link href="/" className="oga-btn oga-btn-sm oga-btn-secondary" style={{ alignSelf: "flex-start" }}>
               Try a postcode
-              <span aria-hidden>→</span>
+              <span aria-hidden style={{ marginLeft: 4 }}>→</span>
             </Link>
           </div>
 
@@ -84,7 +78,7 @@ export function Footer() {
         </div>
 
         <div className="aiq-footer-bottom" style={{
-          borderTop: "1px solid var(--border)",
+          borderTop: "1px solid var(--oga-border)",
           paddingTop: 26,
           display: "flex", alignItems: "center",
           justifyContent: "space-between", gap: 20, flexWrap: "wrap",
@@ -93,13 +87,13 @@ export function Footer() {
             display: "flex", alignItems: "center",
             gap: 16, flexWrap: "wrap",
           }}>
-            <span style={{
-              fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-              letterSpacing: "0.2em", textTransform: "uppercase",
-              color: "var(--text-3)",
+            <span className="oga-label" style={{
+              fontSize: 10,
+              letterSpacing: "0.2em",
+              color: "var(--oga-fg-muted)",
             }}>© 2026 OneGoodArea · Built in the UK</span>
             <span aria-hidden style={{
-              width: 1, height: 10, background: "var(--border)",
+              width: 1, height: 10, background: "var(--oga-border)",
             }} />
             <div style={{ display: "flex", gap: 14 }}>
               {legalLinks.map((l) => (
@@ -127,10 +121,11 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <div style={{
-        fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-        letterSpacing: "0.24em", textTransform: "uppercase",
-        color: "var(--text-3)", marginBottom: 22,
+      <div className="oga-label" style={{
+        fontSize: 10,
+        letterSpacing: "0.24em",
+        color: "var(--oga-fg-muted)",
+        marginBottom: 22,
       }}>{title}</div>
       <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
         {links.map((l) => (
@@ -150,44 +145,31 @@ function FooterColumnLink({ href, label }: { href: string; label: string }) {
     onMouseEnter: () => setHover(true),
     onMouseLeave: () => setHover(false),
     style: {
-      fontFamily: "var(--sans)", fontSize: 14.5, fontWeight: 400,
-      color: hover ? "var(--ink-deep)" : "var(--text)",
+      fontFamily: "var(--oga-font-sans)", fontSize: 14.5, fontWeight: 400,
+      color: hover ? "var(--oga-fg)" : "var(--oga-fg-subtle)",
       textDecoration: "none", letterSpacing: "-0.005em",
-      position: "relative" as const, paddingBottom: 3,
-      transition: "color 140ms ease",
+      transition: "color var(--oga-dur-fast) var(--oga-ease)",
       display: "inline-block",
     },
   };
-  const inner = (
-    <>
-      {label}
-      <span aria-hidden style={{
-        position: "absolute", left: 0, right: 0, bottom: 0,
-        height: 1.5, background: "var(--signal)",
-        transform: hover ? "scaleX(1)" : "scaleX(0)",
-        transformOrigin: "left center",
-        transition: "transform 260ms cubic-bezier(0.16,1,0.3,1)",
-      }} />
-    </>
-  );
   return isExternal
-    ? <a href={href} {...shared}>{inner}</a>
-    : <Link href={href} {...shared}>{inner}</Link>;
+    ? <a href={href} {...shared}>{label}</a>
+    : <Link href={href} {...shared}>{label}</Link>;
 }
 
 function FooterMiniLink({ href, label }: { href: string; label: string }) {
   const isExternal = href.startsWith("http") || href.startsWith("mailto:");
   const shared = {
     style: {
-      fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
+      fontFamily: "var(--oga-font-mono)", fontSize: 10, fontWeight: 500,
       letterSpacing: "0.2em", textTransform: "uppercase" as const,
-      color: "var(--text-2)", textDecoration: "none",
-      transition: "color 120ms",
+      color: "var(--oga-fg-muted)", textDecoration: "none",
+      transition: "color var(--oga-dur-fast) var(--oga-ease)",
     },
     onMouseEnter: (e: React.MouseEvent<HTMLAnchorElement>) =>
-      (e.currentTarget.style.color = "var(--ink)"),
+      (e.currentTarget.style.color = "var(--oga-fg)"),
     onMouseLeave: (e: React.MouseEvent<HTMLAnchorElement>) =>
-      (e.currentTarget.style.color = "var(--text-2)"),
+      (e.currentTarget.style.color = "var(--oga-fg-muted)"),
   };
   return isExternal
     ? <a href={href} {...shared}>{label}</a>
