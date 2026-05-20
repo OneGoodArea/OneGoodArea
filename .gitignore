@@ -53,14 +53,12 @@ vercel-import.env
 tsconfig.tsbuildinfo
 next-env.d.ts
 
-# internal Claude-authored strategy + architecture snapshots
-STRATEGY.md
-ARCHITECTURE.md
 
 # design-v2 build artefacts — large topojson fetched once, SVG paths inlined in client.tsx
 scripts/world-*.json
 scripts/uk-paths.json
 
-# claude code local state
+# AI code local state
 .claude/
 .aider*
+.antigravitycli/
