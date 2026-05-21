@@ -53,7 +53,7 @@ const WORKFLOWS: Workflow[] = [
     title: "Portfolio monitoring",
     body: "Lenders, insurers, and BTL operators get alerts when an area's classification moves. The time-series rescoring corpus proves the trend, with anomaly explanations source-attributed back to the data that changed.",
     usedBy: "Lender model risk · portfolio teams",
-    highlight: [[18, 74], [32, 74], [46, 60], [60, 46], [74, 32], [88, 46]],
+    highlight: [[32, 88], [32, 74], [46, 60], [60, 46], [74, 32], [88, 46]],
     caption: "Time-series anomaly detection",
   },
   {
@@ -70,9 +70,9 @@ const WORKFLOWS: Workflow[] = [
 const ALL_DOTS: Array<[number, number]> = [
   [60, 18],
   [32, 32], [46, 32], [60, 32], [74, 32], [88, 32],
-  [18, 46], [32, 46], [46, 46], [60, 46], [74, 46], [88, 46], [102, 46],
+  [32, 46], [46, 46], [60, 46], [74, 46], [88, 46],
   [18, 60], [32, 60], [46, 60], [60, 60], [74, 60], [88, 60], [102, 60],
-  [18, 74], [32, 74], [46, 74], [60, 74], [74, 74], [88, 74], [102, 74],
+  [32, 74], [46, 74], [60, 74], [74, 74], [88, 74],
   [32, 88], [46, 88], [60, 88], [74, 88], [88, 88],
   [60, 102],
 ];

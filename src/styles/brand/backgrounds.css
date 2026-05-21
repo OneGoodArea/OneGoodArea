@@ -42,16 +42,17 @@
    3. GIANT MARK — Plotted dot grid as background ornament
 
    Data-URIs are byte-for-byte the same dot geometry as
-   public/brand/mark-green.svg and mark-white.svg (7x7 grid,
-   r=2.6 regular, r=5 center, viewBox 120x120). They're inlined
+   public/brand/mark-green.svg and mark-white.svg (29-dot mark:
+   5x5 core + one tip each cardinal direction, r=2.6 regular,
+   r=5 center, viewBox 120x120). They're inlined
    here so background-image cascades can use them without an
    HTTP request.
    ============================================================ */
 
 :root {
-  --oga-mark-url: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120' fill='%230E3B2A'><circle cx='60' cy='18' r='2.6'/><circle cx='32' cy='32' r='2.6'/><circle cx='46' cy='32' r='2.6'/><circle cx='60' cy='32' r='2.6'/><circle cx='74' cy='32' r='2.6'/><circle cx='88' cy='32' r='2.6'/><circle cx='18' cy='46' r='2.6'/><circle cx='32' cy='46' r='2.6'/><circle cx='46' cy='46' r='2.6'/><circle cx='60' cy='46' r='2.6'/><circle cx='74' cy='46' r='2.6'/><circle cx='88' cy='46' r='2.6'/><circle cx='102' cy='46' r='2.6'/><circle cx='18' cy='60' r='2.6'/><circle cx='32' cy='60' r='2.6'/><circle cx='46' cy='60' r='2.6'/><circle cx='60' cy='60' r='5'/><circle cx='74' cy='60' r='2.6'/><circle cx='88' cy='60' r='2.6'/><circle cx='102' cy='60' r='2.6'/><circle cx='18' cy='74' r='2.6'/><circle cx='32' cy='74' r='2.6'/><circle cx='46' cy='74' r='2.6'/><circle cx='60' cy='74' r='2.6'/><circle cx='74' cy='74' r='2.6'/><circle cx='88' cy='74' r='2.6'/><circle cx='102' cy='74' r='2.6'/><circle cx='32' cy='88' r='2.6'/><circle cx='46' cy='88' r='2.6'/><circle cx='60' cy='88' r='2.6'/><circle cx='74' cy='88' r='2.6'/><circle cx='88' cy='88' r='2.6'/><circle cx='60' cy='102' r='2.6'/></svg>");
+  --oga-mark-url: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120' fill='%231A1C1F'><circle cx='60' cy='18' r='2.6'/><circle cx='32' cy='32' r='2.6'/><circle cx='46' cy='32' r='2.6'/><circle cx='60' cy='32' r='2.6'/><circle cx='74' cy='32' r='2.6'/><circle cx='88' cy='32' r='2.6'/><circle cx='32' cy='46' r='2.6'/><circle cx='46' cy='46' r='2.6'/><circle cx='60' cy='46' r='2.6'/><circle cx='74' cy='46' r='2.6'/><circle cx='88' cy='46' r='2.6'/><circle cx='18' cy='60' r='2.6'/><circle cx='32' cy='60' r='2.6'/><circle cx='46' cy='60' r='2.6'/><circle cx='60' cy='60' r='5'/><circle cx='74' cy='60' r='2.6'/><circle cx='88' cy='60' r='2.6'/><circle cx='102' cy='60' r='2.6'/><circle cx='32' cy='74' r='2.6'/><circle cx='46' cy='74' r='2.6'/><circle cx='60' cy='74' r='2.6'/><circle cx='74' cy='74' r='2.6'/><circle cx='88' cy='74' r='2.6'/><circle cx='32' cy='88' r='2.6'/><circle cx='46' cy='88' r='2.6'/><circle cx='60' cy='88' r='2.6'/><circle cx='74' cy='88' r='2.6'/><circle cx='88' cy='88' r='2.6'/><circle cx='60' cy='102' r='2.6'/></svg>");
 
-  --oga-mark-url-white: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120' fill='%23FAF8F4'><circle cx='60' cy='18' r='2.6'/><circle cx='32' cy='32' r='2.6'/><circle cx='46' cy='32' r='2.6'/><circle cx='60' cy='32' r='2.6'/><circle cx='74' cy='32' r='2.6'/><circle cx='88' cy='32' r='2.6'/><circle cx='18' cy='46' r='2.6'/><circle cx='32' cy='46' r='2.6'/><circle cx='46' cy='46' r='2.6'/><circle cx='60' cy='46' r='2.6'/><circle cx='74' cy='46' r='2.6'/><circle cx='88' cy='46' r='2.6'/><circle cx='102' cy='46' r='2.6'/><circle cx='18' cy='60' r='2.6'/><circle cx='32' cy='60' r='2.6'/><circle cx='46' cy='60' r='2.6'/><circle cx='60' cy='60' r='5'/><circle cx='74' cy='60' r='2.6'/><circle cx='88' cy='60' r='2.6'/><circle cx='102' cy='60' r='2.6'/><circle cx='18' cy='74' r='2.6'/><circle cx='32' cy='74' r='2.6'/><circle cx='46' cy='74' r='2.6'/><circle cx='60' cy='74' r='2.6'/><circle cx='74' cy='74' r='2.6'/><circle cx='88' cy='74' r='2.6'/><circle cx='102' cy='74' r='2.6'/><circle cx='32' cy='88' r='2.6'/><circle cx='46' cy='88' r='2.6'/><circle cx='60' cy='88' r='2.6'/><circle cx='74' cy='88' r='2.6'/><circle cx='88' cy='88' r='2.6'/><circle cx='60' cy='102' r='2.6'/></svg>");
+  --oga-mark-url-white: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120' fill='%23FAF8F4'><circle cx='60' cy='18' r='2.6'/><circle cx='32' cy='32' r='2.6'/><circle cx='46' cy='32' r='2.6'/><circle cx='60' cy='32' r='2.6'/><circle cx='74' cy='32' r='2.6'/><circle cx='88' cy='32' r='2.6'/><circle cx='32' cy='46' r='2.6'/><circle cx='46' cy='46' r='2.6'/><circle cx='60' cy='46' r='2.6'/><circle cx='74' cy='46' r='2.6'/><circle cx='88' cy='46' r='2.6'/><circle cx='18' cy='60' r='2.6'/><circle cx='32' cy='60' r='2.6'/><circle cx='46' cy='60' r='2.6'/><circle cx='60' cy='60' r='5'/><circle cx='74' cy='60' r='2.6'/><circle cx='88' cy='60' r='2.6'/><circle cx='102' cy='60' r='2.6'/><circle cx='32' cy='74' r='2.6'/><circle cx='46' cy='74' r='2.6'/><circle cx='60' cy='74' r='2.6'/><circle cx='74' cy='74' r='2.6'/><circle cx='88' cy='74' r='2.6'/><circle cx='32' cy='88' r='2.6'/><circle cx='46' cy='88' r='2.6'/><circle cx='60' cy='88' r='2.6'/><circle cx='74' cy='88' r='2.6'/><circle cx='88' cy='88' r='2.6'/><circle cx='60' cy='102' r='2.6'/></svg>");
 }
 
 .oga-bg-mark {
@@ -103,7 +104,7 @@
 }
 
 .oga-rule-mark__mark {
-  /* 40px (not 28px). The 7x7 dot grid sub-pixel-aliases below ~32px
+  /* 40px (not 28px). The dot grid sub-pixel-aliases below ~32px
      into x-like shapes. 40px gives each regular dot ~0.95px so the
      grid stays crisp. Spec's "drop to a single dot below 24px" is
      the lower fallback, not the default. */
