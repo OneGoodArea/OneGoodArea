@@ -39,3 +39,12 @@ export const BATCH_MAX_ITEMS = 100;
 // Process at most N items concurrently inside one batch request. Bounds the
 // fan-out into Anthropic + parallel data sources so we don't slam the upstream.
 export const BATCH_CONCURRENCY = 5;
+
+// Monthly GBP price per plan, used for the admin MRR calculation.
+export const PLAN_PRICES_GBP: Record<string, number> = {
+  starter: 29,
+  pro: 79,
+  developer: 49,
+  business: 249,
+  growth: 499,
+};
