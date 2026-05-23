@@ -264,6 +264,19 @@ export const MIGRATIONS: Migration[] = [
     ],
   },
   {
+    // Was self-created by the legacy rate-limit.ts (ensureRateLimitTable).
+    // Centralised here so the migrator owns all DDL; byte-identical to legacy.
+    name: "rate_limit_entries",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS rate_limit_entries (
+        id SERIAL PRIMARY KEY,
+        identifier TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_rate_limit_identifier ON rate_limit_entries (identifier, created_at)`,
+    ],
+  },
+  {
     // The user-facing reports table the generator writes to and the dashboard
     // reads. It was ORPHANED in the legacy codebase: no ensure*Table() helper
     // and no migration created it (it exists only in the production DB, so a

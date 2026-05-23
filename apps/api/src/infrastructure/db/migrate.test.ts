@@ -45,6 +45,7 @@ describe("db migrate", () => {
       "idempotency_records",
       "subscription_addons",
       "ofsted_schools",
+      "rate_limit_entries",
     ]) {
       expect(names).toContain(table);
     }

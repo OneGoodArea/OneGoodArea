@@ -16,3 +16,19 @@ export function getConfig(): ApiConfig {
     aiProvider: process.env.OGA_AI_PROVIDER ?? "anthropic",
   };
 }
+
+/* Static config constants (migrated verbatim from legacy src/lib/config.ts).
+   Not env-derived, so they are plain exports rather than fields on getConfig(). */
+
+export const SUPERUSER_EMAILS = ["ptengelmann@gmail.com"];
+
+export const RATE_LIMITS = {
+  report: { max: 10, windowSeconds: 60 },
+  apiReport: { max: 30, windowSeconds: 60 },
+  // Each batch HTTP call carries up to 100 reports, so we rate-limit batches
+  // more aggressively at the call level. Per-report quota is enforced separately.
+  apiBatch: { max: 5, windowSeconds: 60 },
+  widget: { max: 60, windowSeconds: 3600 },
+  authRegister: { max: 5, windowSeconds: 60 },
+  authSignIn: { max: 10, windowSeconds: 60 },
+} as const;
