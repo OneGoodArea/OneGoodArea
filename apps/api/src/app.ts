@@ -5,9 +5,19 @@ import { sql } from "./infrastructure/db/client";
 import { rows, type ReportRow } from "./infrastructure/db/types";
 import { rateLimit, rateLimitHeaders } from "./infrastructure/rate-limit";
 import { RATE_LIMITS } from "./infrastructure/config";
-import { hasApiAccess, canGenerateReport, hasMcpAccess, trackMcpCall } from "./modules/usage";
+import {
+  getUserPlan,
+  hasApiAccess,
+  canGenerateReport,
+  hasMcpAccess,
+  trackMcpCall,
+  listAddons,
+  getMcpUsageThisMonth,
+} from "./modules/usage";
+import { PLANS } from "./modules/billing/plans";
 import { validateLocationInput, validateIntent } from "./infrastructure/validation/validator";
 import { resolveEngineVersion } from "./modules/reports/engine-version";
+import { METHODOLOGY_VERSION } from "./modules/reports/methodology";
 import { parseIdempotencyKey, withIdempotency } from "./infrastructure/idempotency";
 import { generateReport } from "./modules/reports/report-generator";
 import { trackEvent } from "./modules/tracking/activity";
@@ -83,6 +93,56 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         score: r.score,
         created_at: r.created_at,
       })),
+    };
+  });
+
+  // The authenticated caller's plan + entitlements. Used by the MCP server at
+  // startup to check mcpAccess, and by any consumer needing entitlement without
+  // running a report. Migrated from the legacy /api/v1/me route.
+  app.get("/v1/me", async (request, reply) => {
+    const authHeader = headerString(request.headers.authorization);
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return reply.code(401).send({ error: "Missing API key. Use: Authorization: Bearer oga_..." });
+    }
+    const apiKey = authHeader.slice(7);
+    const userId = await validateApiKey(apiKey);
+    if (!userId) return reply.code(401).send({ error: "Invalid or revoked API key" });
+
+    // Rate-limit /me at the same level as /v1/report (MCP calls it once at
+    // startup, but a misbehaving client could spam it).
+    const rl = await rateLimit(`api-me:${apiKey}`, {
+      max: RATE_LIMITS.apiReport.max,
+      windowSeconds: RATE_LIMITS.apiReport.windowSeconds,
+    });
+    reply.headers(rateLimitHeaders(RATE_LIMITS.apiReport.max, rl));
+    if (!rl.success) {
+      return reply.code(429).send({ error: "Too many requests. Rate limit: 30 requests per minute." });
+    }
+
+    const [plan, apiAllowed, mcpAllowed, usage, addons, mcpUsed] = await Promise.all([
+      getUserPlan(userId),
+      hasApiAccess(userId),
+      hasMcpAccess(userId),
+      canGenerateReport(userId),
+      listAddons(userId),
+      getMcpUsageThisMonth(userId),
+    ]);
+
+    const planConfig = PLANS[plan];
+
+    return {
+      plan,
+      plan_name: planConfig?.name ?? plan,
+      generation: planConfig?.generation ?? "v1",
+      api_access: apiAllowed,
+      mcp_access: mcpAllowed,
+      reports_per_month: planConfig?.reportsPerMonth ?? 0,
+      used_this_month: usage.used,
+      limit_this_month: usage.limit === Infinity ? null : usage.limit,
+      // Canonical engine version (the legacy route hardcoded a now-stale "2.0.0").
+      engine_version: METHODOLOGY_VERSION,
+      addons,
+      mcp_calls_this_month: mcpUsed,
     };
   });
 
