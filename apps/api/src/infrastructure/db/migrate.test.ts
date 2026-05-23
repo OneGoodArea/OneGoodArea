@@ -37,6 +37,7 @@ describe("db migrate", () => {
     for (const table of [
       "users",
       "api_keys",
+      "reports",
       "report_cache",
       "report_history",
       "webhook_subscriptions",

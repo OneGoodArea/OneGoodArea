@@ -264,6 +264,28 @@ export const MIGRATIONS: Migration[] = [
     ],
   },
   {
+    // The user-facing reports table the generator writes to and the dashboard
+    // reads. It was ORPHANED in the legacy codebase: no ensure*Table() helper
+    // and no migration created it (it exists only in the production DB, so a
+    // fresh database could never run the app). Reconstructed here from the
+    // generate-report INSERT + the ReportRow type. CREATE IF NOT EXISTS is a
+    // no-op against prod where the table already exists.
+    name: "reports",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS reports (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        area TEXT NOT NULL,
+        intent TEXT NOT NULL,
+        report JSONB NOT NULL,
+        score INTEGER NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_reports_user_created
+        ON reports (user_id, created_at DESC)`,
+    ],
+  },
+  {
     // Was self-created by the legacy data-sources/ofsted.ts (ensureOfstedTable).
     // Centralised here so the migrator owns all DDL; the table + index
     // definitions are byte-identical to the legacy CREATE statements.
