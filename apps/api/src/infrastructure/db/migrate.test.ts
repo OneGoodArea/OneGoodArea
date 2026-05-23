@@ -43,6 +43,7 @@ describe("db migrate", () => {
       "webhook_deliveries",
       "idempotency_records",
       "subscription_addons",
+      "ofsted_schools",
     ]) {
       expect(names).toContain(table);
     }

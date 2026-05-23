@@ -263,4 +263,26 @@ export const MIGRATIONS: Migration[] = [
         ON report_history (engine_version)`,
     ],
   },
+  {
+    // Was self-created by the legacy data-sources/ofsted.ts (ensureOfstedTable).
+    // Centralised here so the migrator owns all DDL; the table + index
+    // definitions are byte-identical to the legacy CREATE statements.
+    name: "ofsted_schools",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS ofsted_schools (
+        id SERIAL PRIMARY KEY,
+        urn INTEGER UNIQUE NOT NULL,
+        school_name TEXT NOT NULL,
+        phase TEXT,
+        postcode TEXT,
+        latitude DOUBLE PRECISION,
+        longitude DOUBLE PRECISION,
+        overall_effectiveness INTEGER,
+        rating_text TEXT,
+        inspection_date TEXT
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_ofsted_lat ON ofsted_schools (latitude)`,
+      `CREATE INDEX IF NOT EXISTS idx_ofsted_lng ON ofsted_schools (longitude)`,
+    ],
+  },
 ];
