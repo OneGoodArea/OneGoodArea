@@ -32,3 +32,10 @@ export const RATE_LIMITS = {
   authRegister: { max: 5, windowSeconds: 60 },
   authSignIn: { max: 10, windowSeconds: 60 },
 } as const;
+
+// Bulk endpoint hard cap. Larger workloads should use the async pattern (roadmap).
+export const BATCH_MAX_ITEMS = 100;
+
+// Process at most N items concurrently inside one batch request. Bounds the
+// fan-out into Anthropic + parallel data sources so we don't slam the upstream.
+export const BATCH_CONCURRENCY = 5;
