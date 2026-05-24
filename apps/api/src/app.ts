@@ -1130,5 +1130,55 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
+  // Public pageview tracking (analytics). No auth. Skips api/admin/static paths,
+  // derives device from UA + country from the geo header, cleans the referrer to
+  // an external hostname, and inserts a pageview. Never fails visibly (a 400
+  // only for a missing path; everything else returns ok). Migrated from /api/track.
+  app.post("/track", async (request, reply) => {
+    try {
+      const { path, referrer, sessionId } = (request.body ?? {}) as {
+        path?: unknown;
+        referrer?: unknown;
+        sessionId?: unknown;
+      };
+      if (!path || typeof path !== "string") {
+        return reply.code(400).send({ ok: false });
+      }
+
+      // Skip tracking for admin, API, and static asset paths.
+      if (path.startsWith("/api") || path.startsWith("/admin") || path.startsWith("/_next")) {
+        return reply.send({ ok: true });
+      }
+
+      const ua = (request.headers["user-agent"] ?? "").toString();
+      const device = /Mobile|Android|iPhone/i.test(ua) ? "mobile" : /Tablet|iPad/i.test(ua) ? "tablet" : "desktop";
+
+      // Country from the geo header (set by the edge/proxy).
+      const country = headerString(request.headers["x-vercel-ip-country"]);
+
+      // Clean referrer: keep only an external hostname.
+      let cleanReferrer: string | null = null;
+      if (referrer && typeof referrer === "string") {
+        try {
+          const refUrl = new URL(referrer);
+          if (!refUrl.hostname.includes("onegoodarea.com") && !refUrl.hostname.includes("localhost")) {
+            cleanReferrer = refUrl.hostname;
+          }
+        } catch {
+          // Invalid URL, skip.
+        }
+      }
+
+      await sql`
+        INSERT INTO pageviews (path, referrer, country, device, session_id)
+        VALUES (${path.slice(0, 200)}, ${cleanReferrer}, ${country}, ${device}, ${(sessionId as string | undefined) || null})
+      `;
+
+      return reply.send({ ok: true });
+    } catch {
+      return reply.send({ ok: true }); // Never fail visibly.
+    }
+  });
+
   return app;
 }

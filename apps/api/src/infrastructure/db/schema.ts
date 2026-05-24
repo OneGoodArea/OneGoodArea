@@ -265,6 +265,10 @@ export const MIGRATIONS: Migration[] = [
         session_id TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW()
       )`,
+      // Were self-created by the legacy /api/track route (ensureTable). The
+      // migrator owns all DDL now.
+      `CREATE INDEX IF NOT EXISTS idx_pageviews_created ON pageviews (created_at)`,
+      `CREATE INDEX IF NOT EXISTS idx_pageviews_path ON pageviews (path)`,
     ],
   },
   {
