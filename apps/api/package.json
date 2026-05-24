@@ -15,7 +15,8 @@
     "fastify": "^5.2.0",
     "@neondatabase/serverless": "^1.1.0",
     "@anthropic-ai/sdk": "^0.95.2",
-    "@onegoodarea/contracts": "*"
+    "@onegoodarea/contracts": "*",
+    "stripe": "^20.4.0"
   },
   "devDependencies": {
     "tsx": "^4.19.2",
