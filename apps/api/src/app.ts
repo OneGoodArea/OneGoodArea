@@ -29,8 +29,17 @@ import {
   validateWebhookUrl,
   validateEventTypes,
 } from "./modules/webhooks";
+import { handleStripeWebhook } from "./modules/billing/webhook-handler";
 import { isAppError } from "./infrastructure/errors/custom-errors";
 import { logger } from "./modules/tracking/structured-logger";
+
+declare module "fastify" {
+  interface FastifyRequest {
+    /** Raw request body string, preserved by the JSON content-type parser so the
+        Stripe webhook can verify the HMAC signature over the exact payload. */
+    rawBody?: string;
+  }
+}
 
 /** Detect MCP-originated requests via the User-Agent stamp set by the MCP api-client. */
 function isFromMcpServer(request: FastifyRequest): boolean {
@@ -97,6 +106,23 @@ async function requireApiAccess(request: FastifyRequest, reply: FastifyReply): P
 
 export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   const app = Fastify({ logger: opts.logger ?? false });
+
+  // JSON parser that also stashes the raw body string on the request. Routes
+  // still receive a parsed `request.body` (identical to Fastify's default); the
+  // Stripe webhook additionally reads `request.rawBody` to verify the HMAC over
+  // the exact payload bytes. Empty bodies error the same way the default does.
+  app.addContentTypeParser("application/json", { parseAs: "string" }, (request, body, done) => {
+    // parseAs:"string" guarantees a string at runtime; Fastify still types it as
+    // string | Buffer, so coerce for the type checker.
+    const raw = typeof body === "string" ? body : body.toString("utf8");
+    request.rawBody = raw;
+    try {
+      done(null, JSON.parse(raw));
+    } catch (err) {
+      (err as { statusCode?: number }).statusCode = 400;
+      done(err as Error, undefined);
+    }
+  });
 
   // Liveness probe for the container host (Render/Fly/etc.).
   app.get("/health", async () => ({ status: "ok" }));
@@ -435,6 +461,19 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       logger.error("[v1/webhooks/:id DELETE] error:", error);
       return reply.code(500).send({ error: "Internal server error" });
     }
+  });
+
+  // Stripe webhook receiver. Authenticated by HMAC signature (not bearer/session),
+  // so it needs no auth gate. The raw body (preserved by the content-type parser
+  // above) is required for signature verification. handleStripeWebhook returns
+  // the status: 400 = bad signature (no retry), 500 = processing failed (Stripe
+  // retries), 200 = received/deduplicated. Migrated from /api/stripe/webhook.
+  app.post("/stripe/webhook", async (request, reply) => {
+    const result = await handleStripeWebhook(
+      request.rawBody ?? "",
+      headerString(request.headers["stripe-signature"]),
+    );
+    return reply.code(result.status).send(result.body);
   });
 
   return app;
