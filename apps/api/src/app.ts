@@ -34,6 +34,7 @@ import { resolveEngineVersion } from "./modules/reports/engine-version";
 import { METHODOLOGY_VERSION } from "./modules/reports/methodology";
 import { parseIdempotencyKey, withIdempotency } from "./infrastructure/idempotency";
 import { generateReport } from "./modules/reports/report-generator";
+import { getCachedReport } from "./modules/reports/report-cache";
 import { type BatchItem, isBatchItemArray, isSuccess, processBatchItems } from "./modules/reports/batch";
 import { trackEvent } from "./modules/tracking/activity";
 import {
@@ -65,6 +66,17 @@ function isFromMcpServer(request: FastifyRequest): boolean {
 function headerString(value: string | string[] | undefined): string | null {
   if (Array.isArray(value)) return value[0] ?? null;
   return value ?? null;
+}
+
+/** CORS headers for the public embeddable widget (callable from any site). */
+function widgetCorsHeaders(origin: string | null): Record<string, string> {
+  return {
+    "Access-Control-Allow-Origin": origin || "*",
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Max-Age": "86400",
+    "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+  };
 }
 
 /* Standalone backend factory.
@@ -1177,6 +1189,74 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       return reply.send({ ok: true });
     } catch {
       return reply.send({ ok: true }); // Never fail visibly.
+    }
+  });
+
+  // CORS preflight for the public widget.
+  app.options("/widget", async (request, reply) => {
+    reply.headers(widgetCorsHeaders(headerString(request.headers.origin)));
+    return reply.code(204).send();
+  });
+
+  // Public embeddable widget: returns a CACHED area summary for a postcode (no
+  // auth, CORS-open, rate-limited by origin/IP). Cache-only by design so an
+  // unauthenticated embed can never trigger AI spend; 404 on a cache miss.
+  // Migrated from /api/widget.
+  app.get("/widget", async (request, reply) => {
+    const origin = headerString(request.headers.origin);
+    reply.headers(widgetCorsHeaders(origin));
+
+    try {
+      const q = (request.query ?? {}) as { postcode?: string; intent?: string };
+      const postcode = q.postcode;
+      const intent = q.intent || "moving";
+
+      if (!postcode) {
+        return reply.code(400).send({ error: "Missing postcode parameter" });
+      }
+
+      const locationCheck = validateLocationInput(postcode);
+      if (!locationCheck.valid) {
+        return reply.code(400).send({ error: locationCheck.error });
+      }
+
+      const intentCheck = validateIntent(intent);
+      if (!intentCheck.valid) {
+        return reply.code(400).send({ error: intentCheck.error });
+      }
+
+      // Rate limit by origin domain or IP.
+      const rateLimitKey = `widget:${origin || headerString(request.headers["x-forwarded-for"]) || "unknown"}`;
+      const rl = await rateLimit(rateLimitKey, {
+        max: RATE_LIMITS.widget.max,
+        windowSeconds: RATE_LIMITS.widget.windowSeconds,
+      });
+      if (!rl.success) {
+        reply.headers(rateLimitHeaders(RATE_LIMITS.widget.max, rl));
+        return reply.code(429).send({ error: "Rate limit exceeded. Try again later." });
+      }
+
+      // Cache only: widgets serve cached data to prevent unauthenticated AI spend.
+      const cached = await getCachedReport(locationCheck.sanitized, intent);
+      if (cached) {
+        const report = cached.report;
+        return reply.send({
+          area: report.area,
+          postcode: locationCheck.sanitized,
+          intent: report.intent,
+          score: report.areaiq_score,
+          area_type: report.area_type || null,
+          dimensions: report.sub_scores.map((s) => ({ label: s.label, score: s.score })),
+          powered_by: "https://www.onegoodarea.com",
+        });
+      }
+
+      return reply.code(404).send({
+        error: "No cached data available for this location. Generate a report at https://www.onegoodarea.com first.",
+      });
+    } catch (error) {
+      logger.error("[widget] Error:", error);
+      return reply.code(500).send({ error: "Failed to fetch area data" });
     }
   });
 
