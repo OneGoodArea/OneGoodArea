@@ -131,6 +131,15 @@ export async function canGenerateReport(userId: string): Promise<{
   };
 }
 
+/** The user's email, read live from the DB. Used by the Stripe checkout routes
+    to set the customer email (the legacy routes read it off the NextAuth
+    session; reading it by userId is the authoritative, bridge-friendly source). */
+export async function getUserEmail(userId: string): Promise<string | null> {
+  const rows = await sql`SELECT email FROM users WHERE id = ${userId}`;
+  if (rows.length === 0) return null;
+  return row<Pick<UserRow, "email">>(rows[0]).email;
+}
+
 export async function getStripeCustomerId(userId: string): Promise<string | null> {
   const rows = await sql`
     SELECT stripe_customer_id FROM subscriptions
