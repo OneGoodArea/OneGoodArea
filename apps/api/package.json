@@ -16,6 +16,7 @@
     "@neondatabase/serverless": "^1.1.0",
     "@anthropic-ai/sdk": "^0.95.2",
     "@onegoodarea/contracts": "*",
+    "jose": "^6.2.3",
     "stripe": "^20.4.0"
   },
   "devDependencies": {
