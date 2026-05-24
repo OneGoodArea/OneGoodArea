@@ -1100,5 +1100,35 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
+  // Permanently delete the caller's account + all their data. Session-authed.
+  // Migrated from /api/settings/delete-account. The multi-statement transaction
+  // (child tables first, user row last) is copied VERBATIM from the legacy route
+  // and runs through the same Neon client.
+  app.delete("/settings/delete-account", async (request, reply) => {
+    try {
+      const userId = await authenticateSession(request, reply);
+      if (!userId) return reply; // 401 already sent
+
+      await sql`
+        BEGIN;
+        DELETE FROM reports WHERE user_id = ${userId};
+        DELETE FROM api_keys WHERE user_id = ${userId};
+        DELETE FROM activity_events WHERE user_id = ${userId};
+        DELETE FROM email_verification_tokens WHERE user_id = ${userId};
+        DELETE FROM subscriptions WHERE user_id = ${userId};
+        DELETE FROM users WHERE id = ${userId};
+        COMMIT;
+      `;
+
+      return reply.send({ success: true });
+    } catch (error) {
+      logger.error("Account deletion error:", error);
+      if (isAppError(error)) {
+        return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      }
+      return reply.code(500).send({ error: "Failed to delete account" });
+    }
+  });
+
   return app;
 }
