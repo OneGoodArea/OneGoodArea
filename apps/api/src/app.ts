@@ -1,6 +1,6 @@
 import Fastify, { type FastifyInstance, type FastifyRequest, type FastifyReply } from "fastify";
 import { INTENTS, type Intent } from "@onegoodarea/contracts";
-import { validateApiKey } from "./modules/api-keys";
+import { validateApiKey, createApiKey, listApiKeys, revokeApiKey } from "./modules/api-keys";
 import { verifySessionToken } from "./modules/auth/session-token";
 import { sql } from "./infrastructure/db/client";
 import { rows, row, type ReportRow, type SubscriptionRow, type ApiKeyRow, type ActivityEventRow } from "./infrastructure/db/types";
@@ -153,6 +153,14 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     // string | Buffer, so coerce for the type checker.
     const raw = typeof body === "string" ? body : body.toString("utf8");
     request.rawBody = raw;
+    // An empty body is treated as "no body" (request.body = undefined) rather
+    // than a parse error. The legacy Next routes never errored on an empty body
+    // when content-type was application/json (e.g. a DELETE with the header set
+    // but no payload), and route handlers already guard `request.body`.
+    if (raw.length === 0) {
+      done(null, undefined);
+      return;
+    }
     try {
       done(null, JSON.parse(raw));
     } catch (err) {
@@ -1038,6 +1046,57 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     } catch (error) {
       logger.error("Report delete error:", error);
       return reply.code(500).send({ error: "Failed to delete report" });
+    }
+  });
+
+  // List the caller's API keys (dashboard). Session-authed. Migrated from
+  // /api/keys (the legacy withAuth wrapper == authenticateSession + try/catch).
+  app.get("/keys", async (request, reply) => {
+    try {
+      const userId = await authenticateSession(request, reply);
+      if (!userId) return reply; // 401 already sent
+      const keys = await listApiKeys(userId);
+      return reply.send({ keys });
+    } catch (error) {
+      logger.error("GET /keys failed:", error);
+      return reply.code(500).send({ error: "Something went wrong. Please try again." });
+    }
+  });
+
+  // Create a new API key. Requires plan API access. Session-authed. Migrated
+  // from /api/keys. Returns the key once.
+  app.post("/keys", async (request, reply) => {
+    try {
+      const userId = await authenticateSession(request, reply);
+      if (!userId) return reply; // 401 already sent
+
+      if (!(await hasApiAccess(userId))) {
+        return reply.code(403).send({ error: "API keys are not available on your current plan. Upgrade at /pricing." });
+      }
+
+      const name = ((request.body ?? {}) as { name?: string }).name || "Default";
+      const key = await createApiKey(userId, name);
+      return reply.send({ key });
+    } catch (error) {
+      logger.error("POST /keys failed:", error);
+      return reply.code(500).send({ error: "Something went wrong. Please try again." });
+    }
+  });
+
+  // Revoke an API key. Session-authed. Migrated from /api/keys/[id].
+  app.delete<{ Params: { id: string } }>("/keys/:id", async (request, reply) => {
+    try {
+      const userId = await authenticateSession(request, reply);
+      if (!userId) return reply; // 401 already sent
+
+      const revoked = await revokeApiKey(userId, request.params.id);
+      if (!revoked) {
+        return reply.code(404).send({ error: "Key not found" });
+      }
+      return reply.send({ success: true });
+    } catch (error) {
+      logger.error("DELETE /keys/:id failed:", error);
+      return reply.code(500).send({ error: "Something went wrong. Please try again." });
     }
   });
 
