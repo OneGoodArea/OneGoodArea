@@ -22,6 +22,13 @@ export function getConfig(): ApiConfig {
 
 export const SUPERUSER_EMAILS = ["ptengelmann@gmail.com"];
 
+/* The PUBLIC frontend (apps/web) base URL. Used to build Stripe redirect URLs
+   (checkout success/cancel, billing-portal return) which must point at the
+   browser-facing site, NOT at this API origin. Read once at startup from the
+   container env; falls back to the canonical domain. Mirrors legacy
+   src/lib/config.ts APP_URL. */
+export const APP_URL = process.env.NEXTAUTH_URL || "https://www.onegoodarea.com";
+
 export const RATE_LIMITS = {
   report: { max: 10, windowSeconds: 60 },
   apiReport: { max: 30, windowSeconds: 60 },

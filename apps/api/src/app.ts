@@ -1,10 +1,11 @@
 import Fastify, { type FastifyInstance, type FastifyRequest, type FastifyReply } from "fastify";
 import { INTENTS, type Intent } from "@onegoodarea/contracts";
 import { validateApiKey } from "./modules/api-keys";
+import { verifySessionToken } from "./modules/auth/session-token";
 import { sql } from "./infrastructure/db/client";
-import { rows, type ReportRow } from "./infrastructure/db/types";
+import { rows, row, type ReportRow, type SubscriptionRow } from "./infrastructure/db/types";
 import { rateLimit, rateLimitHeaders } from "./infrastructure/rate-limit";
-import { RATE_LIMITS, BATCH_MAX_ITEMS } from "./infrastructure/config";
+import { RATE_LIMITS, BATCH_MAX_ITEMS, APP_URL } from "./infrastructure/config";
 import {
   getUserPlan,
   hasApiAccess,
@@ -13,8 +14,11 @@ import {
   trackMcpCall,
   listAddons,
   getMcpUsageThisMonth,
+  getStripeCustomerId,
 } from "./modules/usage";
 import { PLANS } from "./modules/billing/plans";
+import { stripe } from "./modules/billing/stripe-client";
+import { asSubscription } from "./modules/billing/stripe-types";
 import { validateLocationInput, validateIntent } from "./infrastructure/validation/validator";
 import { resolveEngineVersion } from "./modules/reports/engine-version";
 import { METHODOLOGY_VERSION } from "./modules/reports/methodology";
@@ -102,6 +106,24 @@ async function requireApiAccess(request: FastifyRequest, reply: FastifyReply): P
   }
 
   return userId;
+}
+
+/** Session (browser-user) auth via the JWT bridge — the counterpart to
+   authenticate() (programmatic api-key auth). Verifies the short-lived token
+   apps/web's server mints from its NextAuth session and resolves the userId, or
+   sends 401 and resolves null. Used by the session-only Stripe routes. */
+async function authenticateSession(request: FastifyRequest, reply: FastifyReply): Promise<string | null> {
+  const header = request.headers.authorization;
+  if (!header || !header.startsWith("Bearer ")) {
+    reply.code(401).send({ error: "Unauthorized" });
+    return null;
+  }
+  const session = await verifySessionToken(header.slice(7));
+  if (!session) {
+    reply.code(401).send({ error: "Unauthorized" });
+    return null;
+  }
+  return session.userId;
 }
 
 export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
@@ -474,6 +496,82 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       headerString(request.headers["stripe-signature"]),
     );
     return reply.code(result.status).send(result.body);
+  });
+
+  // Open the Stripe billing portal for the logged-in user. Session-authed.
+  // Migrated from /api/stripe/portal (auth() -> authenticateSession). The
+  // return_url points at the frontend (APP_URL), not this API origin.
+  app.post("/stripe/portal", async (request, reply) => {
+    try {
+      const userId = await authenticateSession(request, reply);
+      if (!userId) return reply; // 401 already sent
+
+      const customerId = await getStripeCustomerId(userId);
+      if (!customerId) {
+        return reply.code(400).send({ error: "No billing account" });
+      }
+
+      const portalSession = await stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: `${APP_URL}/dashboard`,
+      });
+
+      return reply.send({ url: portalSession.url });
+    } catch (error) {
+      logger.error("Portal error:", error);
+      return reply.code(500).send({ error: "Failed to create portal" });
+    }
+  });
+
+  // Schedule cancellation of the user's active subscription at period end (not
+  // immediate). Session-authed. Migrated from /api/stripe/cancel.
+  app.post("/stripe/cancel", async (request, reply) => {
+    try {
+      const userId = await authenticateSession(request, reply);
+      if (!userId) return reply; // 401 already sent
+
+      // Look up the user's active Stripe subscription.
+      const subRows = await sql`
+        SELECT stripe_subscription_id, plan, current_period_end
+        FROM subscriptions
+        WHERE user_id = ${userId} AND status = 'active' AND stripe_subscription_id IS NOT NULL
+      `;
+      if (subRows.length === 0) {
+        return reply.code(404).send({ error: "No active subscription found" });
+      }
+
+      const sub = row<Pick<SubscriptionRow, "stripe_subscription_id" | "plan">>(subRows[0]);
+      const subscriptionId = sub.stripe_subscription_id;
+      const plan = sub.plan;
+
+      // Already scheduled to cancel? Report the existing date.
+      const currentSub = asSubscription(await stripe.subscriptions.retrieve(subscriptionId));
+      if (currentSub.cancel_at_period_end) {
+        return reply.code(409).send({
+          error: "Subscription is already scheduled for cancellation",
+          cancel_at: new Date(currentSub.current_period_end * 1000).toISOString(),
+        });
+      }
+
+      const updatedSub = asSubscription(
+        await stripe.subscriptions.update(subscriptionId, { cancel_at_period_end: true }),
+      );
+      const cancelAt = new Date(updatedSub.current_period_end * 1000).toISOString();
+
+      trackEvent("plan.cancel_scheduled", userId, { plan, cancel_at: cancelAt });
+
+      return reply.send({
+        success: true,
+        cancel_at: cancelAt,
+        message: "Subscription will be cancelled at the end of the billing period",
+      });
+    } catch (error) {
+      if (isAppError(error)) {
+        return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      }
+      logger.error("Cancel subscription error:", error);
+      return reply.code(500).send({ error: "Failed to cancel subscription" });
+    }
   });
 
   return app;
