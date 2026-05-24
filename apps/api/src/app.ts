@@ -983,5 +983,63 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
+  // Fetch one of the caller's own reports by id (browser report view).
+  // Session-authed. Migrated from /api/report/[id]. (The POST that GENERATES a
+  // browser report is deferred — it depends on the not-yet-migrated email
+  // module for report delivery.)
+  app.get<{ Params: { id: string } }>("/report/:id", async (request, reply) => {
+    try {
+      const userId = await authenticateSession(request, reply);
+      if (!userId) return reply; // 401 already sent
+
+      const { id } = request.params;
+      const result = await sql`
+        SELECT id, area, intent, report, score, created_at
+        FROM reports
+        WHERE id = ${id} AND user_id = ${userId}
+      `;
+      if (result.length === 0) {
+        return reply.code(404).send({ error: "Report not found" });
+      }
+
+      const r = result[0];
+      return reply.send({
+        id: r.id,
+        area: r.area,
+        intent: r.intent,
+        report: typeof r.report === "string" ? JSON.parse(r.report) : r.report,
+        score: r.score,
+        created_at: r.created_at,
+      });
+    } catch (error) {
+      logger.error("Report fetch error:", error);
+      return reply.code(500).send({ error: "Failed to fetch report" });
+    }
+  });
+
+  // Delete one of the caller's own reports. Session-authed. Migrated from
+  // /api/report/[id].
+  app.delete<{ Params: { id: string } }>("/report/:id", async (request, reply) => {
+    try {
+      const userId = await authenticateSession(request, reply);
+      if (!userId) return reply; // 401 already sent
+
+      const { id } = request.params;
+      const result = await sql`
+        DELETE FROM reports
+        WHERE id = ${id} AND user_id = ${userId}
+        RETURNING id
+      `;
+      if (result.length === 0) {
+        return reply.code(404).send({ error: "Report not found" });
+      }
+
+      return reply.send({ ok: true });
+    } catch (error) {
+      logger.error("Report delete error:", error);
+      return reply.code(500).send({ error: "Failed to delete report" });
+    }
+  });
+
   return app;
 }
