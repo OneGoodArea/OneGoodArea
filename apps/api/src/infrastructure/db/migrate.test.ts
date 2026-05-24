@@ -43,6 +43,7 @@ describe("db migrate", () => {
       "webhook_subscriptions",
       "webhook_deliveries",
       "idempotency_records",
+      "subscriptions",
       "subscription_addons",
       "ofsted_schools",
       "rate_limit_entries",

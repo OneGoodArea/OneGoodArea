@@ -82,6 +82,34 @@ export const MIGRATIONS: Migration[] = [
     ],
   },
   {
+    // ORPHANED in production: the live billing routes (stripe/checkout,
+    // /cancel, /webhook) read+write `subscriptions`, but no CREATE TABLE for it
+    // exists anywhere in the repo (legacy db-schema.ts has no ensureSubscriptionsTable).
+    // Reconstructed here from the SubscriptionRow type + the INSERT/UPDATE/ON
+    // CONFLICT (user_id) shapes in those routes. CREATE IF NOT EXISTS is a no-op
+    // against prod where the table already exists; this lets a fresh DB run the
+    // billing module. user_id is UNIQUE because the routes upsert ON CONFLICT
+    // (user_id); the period + subscription-id columns are nullable because the
+    // webhook nulls them on cancellation.
+    name: "subscriptions",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS subscriptions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL UNIQUE,
+        stripe_customer_id TEXT,
+        stripe_subscription_id TEXT,
+        plan TEXT NOT NULL,
+        status TEXT NOT NULL,
+        current_period_start TIMESTAMPTZ,
+        current_period_end TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_subscriptions_customer
+        ON subscriptions (stripe_customer_id)`,
+    ],
+  },
+  {
     name: "subscription_addons",
     statements: [
       `CREATE TABLE IF NOT EXISTS subscription_addons (
