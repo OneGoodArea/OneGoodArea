@@ -3,7 +3,7 @@ import { INTENTS, type Intent } from "@onegoodarea/contracts";
 import { validateApiKey } from "./modules/api-keys";
 import { verifySessionToken } from "./modules/auth/session-token";
 import { sql } from "./infrastructure/db/client";
-import { rows, row, type ReportRow, type SubscriptionRow } from "./infrastructure/db/types";
+import { rows, row, type ReportRow, type SubscriptionRow, type ApiKeyRow, type ActivityEventRow } from "./infrastructure/db/types";
 import { rateLimit, rateLimitHeaders } from "./infrastructure/rate-limit";
 import { RATE_LIMITS, BATCH_MAX_ITEMS, APP_URL } from "./infrastructure/config";
 import {
@@ -135,6 +135,11 @@ async function authenticateSession(request: FastifyRequest, reply: FastifyReply)
   }
   return session.userId;
 }
+
+/* Local row shapes for the API-key usage dashboard query (GET /keys/usage). */
+interface CountRow { count: number; }
+interface DayCountRow { day: string; count: number; }
+type ApiKeyPreview = Pick<ApiKeyRow, "id" | "name" | "created_at" | "last_used_at"> & { key_preview: string };
 
 export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   const app = Fastify({ logger: opts.logger ?? false });
@@ -821,6 +826,160 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     } catch (error) {
       logger.error("[addon-checkout] unexpected:", error);
       return reply.code(500).send({ error: "Something went wrong." });
+    }
+  });
+
+  // The logged-in user's monthly report quota usage (dashboard). Session-authed.
+  // Migrated from /api/usage.
+  app.get("/usage", async (request, reply) => {
+    try {
+      const userId = await authenticateSession(request, reply);
+      if (!userId) return reply; // 401 already sent
+
+      const usage = await canGenerateReport(userId);
+      return reply.send(usage);
+    } catch (error) {
+      logger.error("Usage check error:", error);
+      return reply.code(500).send({ error: "Failed to check usage" });
+    }
+  });
+
+  // The logged-in user's plan + whether a Stripe sub is scheduled to cancel.
+  // Session-authed. Migrated from /api/settings/subscription.
+  app.get("/settings/subscription", async (request, reply) => {
+    try {
+      const userId = await authenticateSession(request, reply);
+      if (!userId) return reply; // 401 already sent
+
+      const plan = await getUserPlan(userId);
+      const planConfig = PLANS[plan as PlanId];
+
+      const subRows = await sql`
+        SELECT stripe_subscription_id FROM subscriptions
+        WHERE user_id = ${userId} AND status = 'active' AND stripe_subscription_id IS NOT NULL
+      `;
+
+      let cancelAt: string | null = null;
+      const subRecord = subRows.length > 0 ? row<Pick<SubscriptionRow, "stripe_subscription_id">>(subRows[0]) : null;
+      const hasStripeSubscription = !!subRecord?.stripe_subscription_id;
+
+      if (hasStripeSubscription && subRecord) {
+        try {
+          const sub = asSubscription(await stripe.subscriptions.retrieve(subRecord.stripe_subscription_id));
+          if (sub.cancel_at_period_end && sub.current_period_end) {
+            cancelAt = new Date(sub.current_period_end * 1000).toISOString();
+          }
+        } catch {
+          // Subscription may no longer exist in Stripe; treat as no subscription.
+        }
+      }
+
+      return reply.send({ plan, planName: planConfig.name, hasStripeSubscription, cancelAt });
+    } catch (error) {
+      logger.error("Subscription info error:", error);
+      if (isAppError(error)) {
+        return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      }
+      return reply.code(500).send({ error: "Failed to fetch subscription info" });
+    }
+  });
+
+  // API-key usage dashboard: request totals, a 30-day daily series, and the
+  // caller's active keys. Session-authed + requires plan API access. Migrated
+  // from /api/keys/usage.
+  app.get("/keys/usage", async (request, reply) => {
+    const userId = await authenticateSession(request, reply);
+    if (!userId) return reply; // 401 already sent
+
+    const apiAllowed = await hasApiAccess(userId);
+    if (!apiAllowed) {
+      return reply.code(403).send({ error: "API usage dashboard requires a Developer, Business, or Growth plan" });
+    }
+
+    const plan = await getUserPlan(userId);
+
+    try {
+      const [totalRequests, requestsThisMonth, requestsByDay, lastRequest, apiKeys] = await Promise.all([
+        sql`
+          SELECT COUNT(*)::int as count
+          FROM activity_events
+          WHERE user_id = ${userId} AND event = 'api.report.generated'
+        `,
+        sql`
+          SELECT COUNT(*)::int as count
+          FROM activity_events
+          WHERE user_id = ${userId}
+            AND event = 'api.report.generated'
+            AND created_at >= date_trunc('month', NOW())
+        `,
+        sql`
+          SELECT date_trunc('day', created_at)::date as day, COUNT(*)::int as count
+          FROM activity_events
+          WHERE user_id = ${userId}
+            AND event = 'api.report.generated'
+            AND created_at >= NOW() - INTERVAL '30 days'
+          GROUP BY day
+          ORDER BY day
+        `,
+        sql`
+          SELECT created_at
+          FROM activity_events
+          WHERE user_id = ${userId} AND event = 'api.report.generated'
+          ORDER BY created_at DESC
+          LIMIT 1
+        `,
+        sql`
+          SELECT
+            ak.id,
+            ak.key_prefix as key_preview,
+            ak.name,
+            ak.created_at,
+            ak.last_used_at
+          FROM api_keys ak
+          WHERE ak.user_id = ${userId} AND ak.revoked = FALSE
+          ORDER BY ak.created_at DESC
+        `,
+      ]);
+
+      const totalCount = row<CountRow>(totalRequests[0]);
+      const monthCount = row<CountRow>(requestsThisMonth[0]);
+      const dailyCounts = rows<DayCountRow>(requestsByDay);
+      const lastRow = lastRequest.length > 0 ? row<Pick<ActivityEventRow, "created_at">>(lastRequest[0]) : null;
+      const keys = rows<ApiKeyPreview>(apiKeys);
+
+      // Fill in missing days with zero counts for the chart.
+      const dayMap = new Map<string, number>();
+      const now = new Date();
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        const key = d.toISOString().split("T")[0];
+        dayMap.set(key, 0);
+      }
+      for (const dc of dailyCounts) {
+        const key = new Date(dc.day).toISOString().split("T")[0];
+        dayMap.set(key, dc.count);
+      }
+
+      const dailyData = Array.from(dayMap.entries()).map(([day, count]) => ({ day, count }));
+
+      return reply.send({
+        totalRequests: totalCount.count || 0,
+        requestsThisMonth: monthCount.count || 0,
+        monthlyLimit: PLANS[plan as PlanId]?.reportsPerMonth ?? 100,
+        dailyData,
+        lastRequestAt: lastRow?.created_at || null,
+        keys: keys.map((k) => ({
+          id: k.id,
+          key_preview: k.key_preview,
+          name: k.name,
+          created_at: k.created_at,
+          last_used_at: k.last_used_at,
+        })),
+      });
+    } catch (error) {
+      logger.error("[API Usage] Error:", error);
+      return reply.code(500).send({ error: "Failed to fetch usage data" });
     }
   });
 
