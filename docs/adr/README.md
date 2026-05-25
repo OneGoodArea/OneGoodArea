@@ -20,3 +20,4 @@ and both are kept (the trail matters).
 | [0007](./0007-cross-area-query.md) | Cross-area query (`GET /v1/areas`) — country-by-prefix, LAD via the spine | Accepted |
 | [0008](./0008-scores-v3.md) | Scores v3 (`POST /v1/score`) — presets + custom weights, engine reused untouched | Accepted |
 | [0009](./0009-monitor-portfolios.md) | Monitor v1 — portfolios + bulk enrich (change detection later) | Accepted |
+| [0010](./0010-timeseries-append.md) | Time-series append (the moat clock) — monthly snapshot, immutable per period | Accepted |

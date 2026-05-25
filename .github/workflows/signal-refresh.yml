@@ -43,3 +43,5 @@ jobs:
         run: npm run refresh:deprivation -w @onegoodarea/api
       - name: Normalize
         run: npm run normalize:deprivation -w @onegoodarea/api
+      - name: Append time-series (the moat clock — un-backfillable history)
+        run: npm run timeseries:append -w @onegoodarea/api
