@@ -13,6 +13,7 @@
    locally below because the report shape references it. */
 export * from "./signals";
 export * from "./scores";
+export * from "./portfolios";
 import type { AreaType } from "./signals";
 
 /** The four scoring intents the engine supports. Canonical source of truth. */

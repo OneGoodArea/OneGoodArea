@@ -1,5 +1,5 @@
 import Fastify, { type FastifyInstance, type FastifyRequest, type FastifyReply } from "fastify";
-import { INTENTS, type Intent, SIGNAL_CATEGORIES, isSignalCategory } from "@onegoodarea/contracts";
+import { INTENTS, type Intent, isIntent, SIGNAL_CATEGORIES, isSignalCategory } from "@onegoodarea/contracts";
 import { validateApiKey, createApiKey, listApiKeys, revokeApiKey } from "./modules/api-keys";
 import { verifySessionToken } from "./modules/auth/session-token";
 import { hashPassword, verifyPassword, generateToken } from "./modules/auth/crypto";
@@ -19,6 +19,7 @@ import { rateLimit, rateLimitHeaders } from "./infrastructure/rate-limit";
 import { RATE_LIMITS, BATCH_MAX_ITEMS, APP_URL, getConfig } from "./infrastructure/config";
 import { getAreaProfile, queryAreas, parseAreasQuery } from "./modules/signals";
 import { scoreArea, parseScoreBody } from "./modules/scoring";
+import { createPortfolio, listPortfolios, getPortfolio, deletePortfolio, addAreas, enrichPortfolio, PORTFOLIO_ADD_MAX } from "./modules/monitor";
 import {
   getUserPlan,
   hasApiAccess,
@@ -542,6 +543,126 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         return reply.code(error.statusCode).send({ error: error.message, code: error.code });
       }
       logger.error("[v1/score] error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  // ── Monitor: portfolios (the 3rd product) ──────────────────────────────
+  // A user's tracked book of areas: CRUD + bulk enrich. Scoped to the api-key's
+  // user (ownership). Same dark flag + gate as the rest of the signal surface.
+  // A small helper keeps the six routes from repeating the flag+auth preamble.
+  const guardSignals = async (request: FastifyRequest, reply: FastifyReply): Promise<string | null> => {
+    if (!getConfig().signalsApiEnabled) { reply.code(404).send({ error: "Not found" }); return null; }
+    return requireApiAccess(request, reply);
+  };
+
+  app.post("/v1/portfolios", async (request, reply) => {
+    try {
+      const userId = await guardSignals(request, reply);
+      if (!userId) return reply;
+      const name = typeof (request.body as { name?: unknown })?.name === "string" ? (request.body as { name: string }).name.trim() : "";
+      if (!name) return reply.code(400).send({ error: "Missing required 'name'." });
+      if (name.length > 200) return reply.code(400).send({ error: "name too long (max 200 chars)." });
+      const portfolio = await createPortfolio(userId, name);
+      trackEvent("api.portfolio.created", userId, { portfolioId: portfolio.id });
+      return reply.code(201).send(portfolio);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/portfolios] create error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/v1/portfolios", async (request, reply) => {
+    try {
+      const userId = await guardSignals(request, reply);
+      if (!userId) return reply;
+      return reply.code(200).send({ portfolios: await listPortfolios(userId) });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/portfolios] list error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/v1/portfolios/:id", async (request, reply) => {
+    try {
+      const userId = await guardSignals(request, reply);
+      if (!userId) return reply;
+      const { id } = request.params as { id: string };
+      const portfolio = await getPortfolio(userId, id);
+      if (!portfolio) return reply.code(404).send({ error: "Portfolio not found" });
+      return reply.code(200).send(portfolio);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/portfolios/:id] get error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/v1/portfolios/:id", async (request, reply) => {
+    try {
+      const userId = await guardSignals(request, reply);
+      if (!userId) return reply;
+      const { id } = request.params as { id: string };
+      const ok = await deletePortfolio(userId, id);
+      if (!ok) return reply.code(404).send({ error: "Portfolio not found" });
+      return reply.code(200).send({ deleted: true });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/portfolios/:id] delete error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/v1/portfolios/:id/areas", async (request, reply) => {
+    try {
+      const userId = await guardSignals(request, reply);
+      if (!userId) return reply;
+      const { id } = request.params as { id: string };
+      const body = request.body as { areas?: unknown };
+      if (!Array.isArray(body?.areas) || body.areas.length === 0) {
+        return reply.code(400).send({ error: "Body must be { areas: [{ area, label? }, ...] }." });
+      }
+      if (body.areas.length > PORTFOLIO_ADD_MAX) {
+        return reply.code(400).send({ error: `Too many areas (${body.areas.length}); max ${PORTFOLIO_ADD_MAX} per call.` });
+      }
+      const areas: { area: string; label?: string | null }[] = [];
+      for (const item of body.areas) {
+        const a = (item as { area?: unknown; label?: unknown });
+        if (typeof a?.area !== "string" || !a.area.trim()) {
+          return reply.code(400).send({ error: "Each area needs a non-empty 'area' string." });
+        }
+        areas.push({ area: a.area.trim(), label: typeof a.label === "string" ? a.label : null });
+      }
+      const result = await addAreas(userId, id, areas);
+      if (!result) return reply.code(404).send({ error: "Portfolio not found" });
+      trackEvent("api.portfolio.areas_added", userId, { portfolioId: id, added: result.added });
+      return reply.code(200).send(result);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/portfolios/:id/areas] error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/v1/portfolios/:id/enrich", async (request, reply) => {
+    try {
+      const userId = await guardSignals(request, reply);
+      if (!userId) return reply;
+      const { id } = request.params as { id: string };
+      const presetRaw = (request.body as { preset?: unknown })?.preset;
+      if (presetRaw !== undefined && !isIntent(presetRaw)) {
+        return reply.code(400).send({ error: "preset must be one of: moving, business, investing, research." });
+      }
+      const items = await enrichPortfolio(userId, id, (presetRaw as Intent) ?? "research");
+      if (!items) return reply.code(404).send({ error: "Portfolio not found" });
+      trackEvent("api.portfolio.enriched", userId, { portfolioId: id, areas: items.length });
+      reply.header("X-Engine-Version", METHODOLOGY_VERSION);
+      return reply.code(200).send({ count: items.length, results: items });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/portfolios/:id/enrich] error:", error);
       return reply.code(500).send({ error: "Internal server error" });
     }
   });
