@@ -123,9 +123,12 @@ export const AreaProfileSchema = z.object({
     generated_at: z.string(),
     /** The source datasets that contributed at least one signal. */
     sources: z.array(z.string()),
-    /** Provenance of the values: "live" = fetched on this request; "store" =
-        served from the persisted signal store (added when the store ships). */
-    fetch_mode: z.enum(["live", "store"]),
+    /** Provenance of the values:
+        - "live"   = every signal fetched on this request (today's default).
+        - "store"  = every contributing signal served from the persisted store.
+        - "hybrid" = a mix (some store-backed, some still live) during the
+                     transition as sources are migrated into the store. */
+    fetch_mode: z.enum(["live", "store", "hybrid"]),
   }),
 });
 export type AreaProfile = z.infer<typeof AreaProfileSchema>;

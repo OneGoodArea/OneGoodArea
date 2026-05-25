@@ -121,8 +121,10 @@ describe("AreaProfileSchema", () => {
     expect(AreaProfileSchema.parse(profile)).toEqual(profile);
   });
 
-  it("only allows live | store as fetch_mode", () => {
-    expect(AreaProfileSchema.parse({ ...profile, meta: { ...profile.meta, fetch_mode: "store" } }).meta.fetch_mode).toBe("store");
+  it("allows live | store | hybrid as fetch_mode and rejects anything else", () => {
+    for (const mode of ["live", "store", "hybrid"] as const) {
+      expect(AreaProfileSchema.parse({ ...profile, meta: { ...profile.meta, fetch_mode: mode } }).meta.fetch_mode).toBe(mode);
+    }
     expect(() => AreaProfileSchema.parse({ ...profile, meta: { ...profile.meta, fetch_mode: "cached" } })).toThrow();
   });
 });
