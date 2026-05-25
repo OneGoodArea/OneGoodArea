@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { computeScores } from "./scoring-engine";
+// Guards the FROZEN v2 engine explicitly (not the index resolver), so v2's
+// byte-identical output stays locked regardless of future v3 routing.
+import { computeScores } from "./scoring-engine/v2";
 import type {
   CrimeSummary,
   DeprivationData,
