@@ -65,6 +65,12 @@ export const SIGNAL_CATEGORIES = [
 export const SignalCategorySchema = z.enum(SIGNAL_CATEGORIES);
 export type SignalCategory = z.infer<typeof SignalCategorySchema>;
 
+/** Runtime guard for a signal category — use at trust boundaries (the
+    /v1/signals/{category} path param). */
+export function isSignalCategory(value: unknown): value is SignalCategory {
+  return typeof value === "string" && (SIGNAL_CATEGORIES as readonly string[]).includes(value);
+}
+
 /** How to read a raw value against "good". Catalog metadata we know today (e.g.
     more crime is worse, a higher IMD decile is less deprived), so it ships in v1
     to make raw signals interpretable without our scoring layer. */

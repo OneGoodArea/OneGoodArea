@@ -1,5 +1,5 @@
 import Fastify, { type FastifyInstance, type FastifyRequest, type FastifyReply } from "fastify";
-import { INTENTS, type Intent } from "@onegoodarea/contracts";
+import { INTENTS, type Intent, SIGNAL_CATEGORIES, isSignalCategory } from "@onegoodarea/contracts";
 import { validateApiKey, createApiKey, listApiKeys, revokeApiKey } from "./modules/api-keys";
 import { verifySessionToken } from "./modules/auth/session-token";
 import { hashPassword, verifyPassword, generateToken } from "./modules/auth/crypto";
@@ -413,6 +413,60 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         return reply.code(error.statusCode).send({ error: error.message, code: error.code });
       }
       logger.error("[v1/area] error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  // GET /v1/signals/:category — the addressable single-category view (Plaid
+  // style: "give me just the crime signals"). Returns an AreaProfile filtered to
+  // one category, so it validates against the same shape callers already parse.
+  // Same dark flag + gate as /v1/area. v1 still fans out to all sources then
+  // filters (the persisted store makes single-category reads cheap later).
+  app.get("/v1/signals/:category", async (request, reply) => {
+    try {
+      if (!getConfig().signalsApiEnabled) {
+        return reply.code(404).send({ error: "Not found" });
+      }
+
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply; // 401 / 403 / 429 already sent
+
+      const { category } = request.params as { category: string };
+      if (!isSignalCategory(category)) {
+        return reply.code(400).send({
+          error: `Unknown signal category "${category}". Valid categories: ${SIGNAL_CATEGORIES.join(", ")}.`,
+        });
+      }
+
+      const q = request.query as { area?: unknown; postcode?: unknown };
+      const rawArea =
+        typeof q.area === "string" ? q.area : typeof q.postcode === "string" ? q.postcode : undefined;
+      const locationCheck = validateLocationInput(rawArea);
+      if (!locationCheck.valid) return reply.code(400).send({ error: locationCheck.error });
+
+      const profile = await getAreaProfile(locationCheck.sanitized);
+      if (!profile) {
+        return reply.code(404).send({
+          error: `Could not resolve area "${locationCheck.sanitized}". Provide a UK postcode or place name.`,
+        });
+      }
+
+      const signals = profile.signals.filter((s) => s.category === category);
+      const sources = Array.from(new Set(signals.filter((s) => s.value !== null).map((s) => s.source)));
+
+      trackEvent("api.signals.category", userId, {
+        area: locationCheck.sanitized,
+        category,
+        signals: signals.length,
+      });
+
+      reply.header("X-Engine-Version", profile.meta.engine_version);
+      return reply.code(200).send({ geo: profile.geo, signals, meta: { ...profile.meta, sources } });
+    } catch (error) {
+      if (isAppError(error)) {
+        return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      }
+      logger.error("[v1/signals] error:", error);
       return reply.code(500).send({ error: "Internal server error" });
     }
   });

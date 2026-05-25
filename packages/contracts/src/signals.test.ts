@@ -5,6 +5,7 @@ import {
   AreaProfileSchema,
   SignalCategorySchema,
   SIGNAL_CATEGORIES,
+  isSignalCategory,
   type Signal,
   type AreaProfile,
 } from "./signals";
@@ -60,6 +61,14 @@ describe("SignalCategorySchema", () => {
     for (const c of SIGNAL_CATEGORIES) {
       expect(SignalCategorySchema.parse(c)).toBe(c);
     }
+  });
+
+  it("isSignalCategory guards the trust boundary", () => {
+    expect(isSignalCategory("crime")).toBe(true);
+    expect(isSignalCategory("environment")).toBe(true);
+    expect(isSignalCategory("weather")).toBe(false);
+    expect(isSignalCategory(null)).toBe(false);
+    expect(isSignalCategory(42)).toBe(false);
   });
 });
 
