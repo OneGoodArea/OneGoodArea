@@ -77,6 +77,12 @@ describe("db migrate", () => {
     expect(names.indexOf("signals")).toBeLessThan(names.indexOf("signal_timeseries"));
   });
 
+  it("includes the Monitor tables (restructure Phase 5)", () => {
+    const names = MIGRATIONS.map((m) => m.name);
+    expect(names).toContain("portfolios");
+    expect(names).toContain("portfolio_areas");
+  });
+
   it("has no duplicate table names", () => {
     const names = MIGRATIONS.map((m) => m.name);
     expect(new Set(names).size).toBe(names.length);

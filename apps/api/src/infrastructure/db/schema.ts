@@ -532,4 +532,39 @@ export const MIGRATIONS: Migration[] = [
         ON signal_timeseries (signal_key, geo_type, geo_code, observed_period DESC)`,
     ],
   },
+
+  /* ====================================================================
+     MONITOR (restructure Phase 5, the 3rd product — AR-169)
+     --------------------------------------------------------------------
+     A portfolio is a user's tracked book of areas (enrich now; change
+     detection + alerts once the time-series accrues). Scoped to user_id
+     today; re-scopes to org_id when Levers (tenancy) land. Additive.
+     ==================================================================== */
+  {
+    name: "portfolios",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS portfolios (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_portfolios_user ON portfolios (user_id, created_at DESC)`,
+    ],
+  },
+  {
+    name: "portfolio_areas",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS portfolio_areas (
+        id TEXT PRIMARY KEY,
+        portfolio_id TEXT NOT NULL,
+        area TEXT NOT NULL,
+        label TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE (portfolio_id, area)
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_portfolio_areas_portfolio ON portfolio_areas (portfolio_id)`,
+    ],
+  },
 ];
