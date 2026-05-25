@@ -25,17 +25,20 @@ import {
   type GeoEntityRow,
 } from "./store-writer";
 
-/** geo_lookup field -> NSPL/ONSPD CSV header. Verify against your ONS release. */
+/** geo_lookup field -> NSPL/ONSPD CSV header. Set to the NSPL FEB 2026 UK header
+    (the newer `<geog><year>cd` naming). Verify against your ONS release if it
+    differs. `terminated` (doterm) is read only to skip dead postcodes, not stored. */
 export const NSPL_COLUMNS = {
   postcode: "pcds",
-  oa: "oa21",
-  lsoa: "lsoa21",
-  msoa: "msoa21",
-  lad: "laua",
-  region: "rgn",
-  country: "ctry",
+  oa: "oa21cd",
+  lsoa: "lsoa21cd",
+  msoa: "msoa21cd",
+  lad: "lad25cd",
+  region: "rgn25cd",
+  country: "ctry25cd",
   lat: "lat",
   lng: "long",
+  terminated: "doterm",
 } as const;
 
 export type ColumnMap = typeof NSPL_COLUMNS;
@@ -89,6 +92,8 @@ const num = (s: string | undefined): number | null => {
 /** PURE: one CSV record -> store rows, or null to skip (no postcode or no LSOA =
     not useful for the spine). */
 export function rowToGeo(fields: string[], idx: ColIndex): { lookup: GeoLookupRow; entity: GeoEntityRow } | null {
+  // Skip terminated postcodes (doterm populated) when the column is present.
+  if (idx.terminated >= 0 && str(fields[idx.terminated])) return null;
   const rawPc = idx.postcode >= 0 ? fields[idx.postcode] : undefined;
   const lsoa = idx.lsoa >= 0 ? str(fields[idx.lsoa]) : null;
   if (!rawPc || !rawPc.trim() || !lsoa) return null;
