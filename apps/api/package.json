@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "migrate": "tsx src/infrastructure/db/migrate.ts",
+    "refresh:deprivation": "tsx src/modules/signals/refresh/deprivation.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
