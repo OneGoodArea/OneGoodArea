@@ -60,6 +60,9 @@ export const DEPRIVATION_SIGNALS: SignalCatalogRow[] = [
 
 interface CountryConfig {
   country: string;
+  /** ONS country code (E92000001 etc.) — what we store, consistent with the NSPL
+      geo data. The `country` name above is for source labels/logging only. */
+  countryCode: string;
   source: string;
   observedPeriod: string;
   boundaryVersion: string;
@@ -75,6 +78,7 @@ interface CountryConfig {
 export const COUNTRY_CONFIGS: CountryConfig[] = [
   {
     country: "England",
+    countryCode: "E92000001",
     source: "MHCLG Index of Multiple Deprivation 2025",
     observedPeriod: "IMD 2025",
     boundaryVersion: "2021",
@@ -88,6 +92,7 @@ export const COUNTRY_CONFIGS: CountryConfig[] = [
   },
   {
     country: "Wales",
+    countryCode: "W92000004",
     source: "Welsh Index of Multiple Deprivation 2019",
     observedPeriod: "WIMD 2019",
     boundaryVersion: "2011",
@@ -101,6 +106,7 @@ export const COUNTRY_CONFIGS: CountryConfig[] = [
   },
   {
     country: "Scotland",
+    countryCode: "S92000003",
     source: "Scottish Index of Multiple Deprivation 2020",
     observedPeriod: "SIMD 2020",
     boundaryVersion: "2011",
@@ -185,7 +191,7 @@ export function toStoreRows(
       name,
       latitude: null,
       longitude: null,
-      country: config.country,
+      country: config.countryCode,
       boundary_version: config.boundaryVersion,
     });
 

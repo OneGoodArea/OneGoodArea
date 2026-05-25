@@ -26,7 +26,7 @@ describe("toStoreRows (pure)", () => {
 
   it("emits one geo entity per valid record", () => {
     expect(geoEntities).toHaveLength(3);
-    expect(geoEntities[0]).toMatchObject({ geo_type: "lsoa", geo_code: "E01000001", country: "England", boundary_version: "2021" });
+    expect(geoEntities[0]).toMatchObject({ geo_type: "lsoa", geo_code: "E01000001", country: "E92000001", boundary_version: "2021" });
   });
 
   it("emits rank + decile values where numeric, skipping nulls", () => {
