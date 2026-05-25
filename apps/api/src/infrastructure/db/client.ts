@@ -28,3 +28,13 @@ export const sql: NeonQueryFunction<false, false> = ((
 export async function exec(statement: string): Promise<void> {
   await getClient().query(statement);
 }
+
+/** Parameterized query escape hatch (placeholders $1, $2, …). Used by the bulk
+    signal-store writers, which build chunked multi-row INSERTs that the
+    tagged-template form can't express. Returns the result rows. */
+export async function query<T = Record<string, unknown>>(
+  text: string,
+  params: unknown[] = [],
+): Promise<T[]> {
+  return (await getClient().query(text, params)) as T[];
+}
