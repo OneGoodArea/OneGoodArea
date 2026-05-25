@@ -13,13 +13,7 @@
    Transitional imports: the fetchers live in modules/signals, the engine in
    modules/reports/scoring-engine (frozen). */
 
-import { geocodeArea } from "../signals/data-sources/postcodes";
-import { getCrimeData } from "../signals/data-sources/police";
-import { getDeprivationData } from "../signals/data-sources/deprivation";
-import { getNearbyAmenities } from "../signals/data-sources/openstreetmap";
-import { getFloodRisk } from "../signals/data-sources/flood";
-import { getPropertyPrices } from "../signals/data-sources/land-registry";
-import { getOfstedSchools } from "../signals/data-sources/ofsted";
+import { fetchAreaSources } from "../signals";
 import { computeScores, type ComputedScores } from "../reports/scoring-engine";
 import { METHODOLOGY_VERSION } from "../reports/methodology";
 import { logger } from "../tracking/structured-logger";
@@ -99,24 +93,19 @@ export function applyWeights(
   return { score, dimensions: dims, confidence, weights_source: weights ? "custom" : "preset" };
 }
 
-/** Score one area. Returns null if the area cannot be geocoded (-> 404). */
+/** Score one area. Returns null if the area cannot be geocoded (-> 404). Uses the
+    shared signals fetch (which serves deprivation from the store when enabled). */
 export async function scoreArea(query: ScoreQuery): Promise<ScoreResult | null> {
-  const geo = await geocodeArea(query.area);
-  if (!geo) return null;
+  const fetched = await fetchAreaSources(query.area);
+  if (!fetched) return null;
+  const { geo, sources } = fetched;
 
-  const [crime, deprivation, amenities, flood, property, ofsted] = await Promise.all([
-    getCrimeData(geo.latitude, geo.longitude),
-    getDeprivationData(geo.lsoa, geo.lsoa11),
-    getNearbyAmenities(geo.latitude, geo.longitude),
-    getFloodRisk(geo.latitude, geo.longitude),
-    getPropertyPrices(geo.query),
-    getOfstedSchools(geo.latitude, geo.longitude, geo.country),
-  ]);
-
-  const base = computeScores(query.preset, crime, deprivation, amenities, flood, geo.area_type, property, ofsted);
+  const base = computeScores(
+    query.preset, sources.crime, sources.deprivation, sources.amenities, sources.flood, geo.area_type, sources.property, sources.ofsted,
+  );
   const agg = applyWeights(base, query.weights);
 
-  logger.info(`[scoring] /v1/score "${query.area}" preset=${query.preset} weights=${agg.weights_source} -> ${agg.score}`);
+  logger.info(`[scoring] /v1/score "${query.area}" preset=${query.preset} weights=${agg.weights_source} dep=${fetched.depFromStore ? "store" : "live"} -> ${agg.score}`);
 
   return {
     area: query.area,
