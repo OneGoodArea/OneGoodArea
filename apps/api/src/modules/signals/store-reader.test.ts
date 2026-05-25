@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { readDeprivationFromStore, type Reader } from "./store-reader";
+import { readDeprivationFromStore, readDeprivationNormalization, type Reader } from "./store-reader";
 
 describe("readDeprivationFromStore", () => {
   it("reconstructs DeprivationData when both rank and decile are stored", async () => {
@@ -31,5 +31,23 @@ describe("readDeprivationFromStore", () => {
     const run = vi.fn<Reader>(async () => []);
     await readDeprivationFromStore("E01000009", run);
     expect(run.mock.calls[0][1]).toEqual(["E01000009"]);
+  });
+});
+
+describe("readDeprivationNormalization", () => {
+  it("maps normalized_value + percentile by signal key", async () => {
+    const run: Reader = async () => [
+      { signal_key: "deprivation.imd_rank", normalized_value: 0.786, percentile: "78.58" },
+      { signal_key: "deprivation.imd_decile", normalized_value: 0.5, percentile: null },
+    ];
+    const m = await readDeprivationNormalization("E01000001", run);
+    expect(m["deprivation.imd_rank"]).toEqual({ normalized_value: 0.786, percentile: 78.58 });
+    expect(m["deprivation.imd_decile"]).toEqual({ normalized_value: 0.5, percentile: null });
+  });
+
+  it("returns {} for an empty geo code without querying", async () => {
+    const run = vi.fn<Reader>(async () => []);
+    expect(await readDeprivationNormalization("", run)).toEqual({});
+    expect(run).not.toHaveBeenCalled();
   });
 });

@@ -52,3 +52,34 @@ export async function readDeprivationFromStore(
   // buildAreaProfile); name/LA aren't used by the signal mapping.
   return { lsoa_code: geoCode, lsoa_name: "", local_authority: "", imd_rank: rank, imd_decile: decile };
 }
+
+/** Per-signal normalization (normalized_value 0-1 + national percentile 0-100)
+    for the deprivation signals at an LSOA, keyed by signal_key. Used to enrich
+    the served Signals when deprivation is store-backed. Empty when absent. */
+export async function readDeprivationNormalization(
+  geoCode: string,
+  run: Reader = runDefault,
+): Promise<Record<string, { normalized_value: number | null; percentile: number | null }>> {
+  if (!geoCode) return {};
+
+  const rows = await run(
+    `SELECT sv.signal_key, sv.normalized_value, sp.percentile
+       FROM signal_values sv
+       LEFT JOIN signal_percentiles sp
+         ON sp.signal_key = sv.signal_key AND sp.geo_type = sv.geo_type
+        AND sp.geo_code = sv.geo_code AND sp.scope = 'national'
+      WHERE sv.geo_type = 'lsoa' AND sv.geo_code = $1
+        AND sv.signal_key IN ('deprivation.imd_rank', 'deprivation.imd_decile')`,
+    [geoCode],
+  );
+
+  const out: Record<string, { normalized_value: number | null; percentile: number | null }> = {};
+  for (const r of rows) {
+    const key = r.signal_key as string;
+    out[key] = {
+      normalized_value: r.normalized_value === null || r.normalized_value === undefined ? null : Number(r.normalized_value),
+      percentile: r.percentile === null || r.percentile === undefined ? null : Number(r.percentile),
+    };
+  }
+  return out;
+}

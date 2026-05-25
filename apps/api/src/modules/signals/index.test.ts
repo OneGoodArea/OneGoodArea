@@ -8,17 +8,18 @@ vi.mock("./data-sources/openstreetmap", () => ({ getNearbyAmenities: vi.fn() }))
 vi.mock("./data-sources/flood", () => ({ getFloodRisk: vi.fn() }));
 vi.mock("./data-sources/land-registry", () => ({ getPropertyPrices: vi.fn() }));
 vi.mock("./data-sources/ofsted", () => ({ getOfstedSchools: vi.fn() }));
-vi.mock("./store-reader", () => ({ readDeprivationFromStore: vi.fn() }));
+vi.mock("./store-reader", () => ({ readDeprivationFromStore: vi.fn(), readDeprivationNormalization: vi.fn() }));
 vi.mock("../tracking/structured-logger", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 
 import { getAreaProfile } from "./index";
 import { geocodeArea } from "./data-sources/postcodes";
 import { getDeprivationData } from "./data-sources/deprivation";
-import { readDeprivationFromStore } from "./store-reader";
+import { readDeprivationFromStore, readDeprivationNormalization } from "./store-reader";
 
 const mockGeocode = vi.mocked(geocodeArea);
 const mockLiveDep = vi.mocked(getDeprivationData);
 const mockStoreDep = vi.mocked(readDeprivationFromStore);
+const mockStoreNorm = vi.mocked(readDeprivationNormalization);
 
 const GEO = {
   query: "M1 1AE", latitude: 53.47, longitude: -2.23, admin_district: "Manchester",
@@ -39,7 +40,12 @@ beforeEach(() => {
   mockGeocode.mockResolvedValue(GEO);
   mockLiveDep.mockResolvedValue(LIVE_DEP);
   mockStoreDep.mockResolvedValue(null);
+  mockStoreNorm.mockResolvedValue({});
 });
+
+function signal(signals: import("@onegoodarea/contracts").Signal[], key: string) {
+  return signals.find((s) => s.key === key)!;
+}
 afterAll(() => { delete process.env.OGA_SIGNALS_STORE_READ; });
 
 describe("getAreaProfile (store-read flip)", () => {
@@ -66,6 +72,23 @@ describe("getAreaProfile (store-read flip)", () => {
     expect(mockLiveDep).not.toHaveBeenCalled(); // live deprivation fetch skipped
     expect(profile.meta.fetch_mode).toBe("hybrid");
     expect(decile(profile.signals)).toBe(5); // stored value
+  });
+
+  it("enriches store-backed signals with normalized_value + percentile", async () => {
+    process.env.OGA_SIGNALS_STORE_READ = "true";
+    mockStoreDep.mockResolvedValue(STORE_DEP);
+    mockStoreNorm.mockResolvedValue({
+      "deprivation.imd_decile": { normalized_value: 0.5, percentile: 50 },
+      "deprivation.imd_rank": { normalized_value: 0.786, percentile: 78.58 },
+    });
+
+    const profile = (await getAreaProfile("M1 1AE"))!;
+
+    const dec = signal(profile.signals, "deprivation.imd_decile");
+    expect(dec.normalized_value).toBe(0.5);
+    expect(dec.percentile).toBe(50);
+    // live-only signals carry no normalization
+    expect(signal(profile.signals, "crime.total_12m").percentile).toBeUndefined();
   });
 
   it("falls back to the live fetch on a store miss (stays live)", async () => {

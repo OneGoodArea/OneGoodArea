@@ -23,7 +23,7 @@ import { getOfstedSchools } from "./data-sources/ofsted";
 import { logger } from "../tracking/structured-logger";
 import { getConfig } from "../../infrastructure/config";
 import { buildAreaProfile, type AreaSources } from "./area-profile";
-import { readDeprivationFromStore } from "./store-reader";
+import { readDeprivationFromStore, readDeprivationNormalization } from "./store-reader";
 import type { AreaProfile } from "@onegoodarea/contracts";
 
 export { buildAreaProfile, type AreaSources } from "./area-profile";
@@ -41,10 +41,12 @@ export async function getAreaProfile(area: string): Promise<AreaProfile | null> 
   const geo = await geocodeArea(area);
   if (!geo) return null;
 
-  // Try the store for deprivation first (skips the live deprivation fetch on a hit).
-  const storedDeprivation = getConfig().signalsStoreRead
-    ? await readDeprivationFromStore(geo.lsoa)
-    : null;
+  // Try the store for deprivation first (skips the live deprivation fetch on a
+  // hit). When store-backed, also pull its normalization (normalized_value +
+  // national percentile) to enrich the served signals.
+  const [storedDeprivation, depNormalization] = getConfig().signalsStoreRead
+    ? await Promise.all([readDeprivationFromStore(geo.lsoa), readDeprivationNormalization(geo.lsoa)])
+    : [null, {}];
 
   const [crime, liveDeprivation, amenities, flood, property, ofsted] = await Promise.all([
     getCrimeData(geo.latitude, geo.longitude),
@@ -66,5 +68,20 @@ export async function getAreaProfile(area: string): Promise<AreaProfile | null> 
     `[signals] /v1/area "${area}": mode=${fetchMode}, dep=${storedDeprivation ? "store" : "live"}, crime=${crime?.total_crimes ?? "n/a"}, imd=${deprivation?.imd_decile ?? "n/a"}, amenities=${amenities?.total ?? "n/a"}, flood=${flood?.flood_areas_nearby ?? "n/a"}, property=${property ? `${property.transaction_count} txns` : "n/a"}, ofsted=${ofsted?.total_rated ?? "n/a"}`,
   );
 
-  return buildAreaProfile(geo, sources, fetchMode);
+  const profile = buildAreaProfile(geo, sources, fetchMode);
+
+  // Enrich store-backed signals with their stored normalization (additive: live
+  // signals keep no normalized_value/percentile). Transitional — when every
+  // source is store-served this becomes a store-native read of Signal[].
+  if (storedDeprivation && depNormalization) {
+    for (const s of profile.signals) {
+      const n = depNormalization[s.key];
+      if (n) {
+        s.normalized_value = n.normalized_value;
+        s.percentile = n.percentile;
+      }
+    }
+  }
+
+  return profile;
 }
