@@ -46,6 +46,7 @@ import { METHODOLOGY_VERSION } from "./modules/reports/methodology";
 import { parseIdempotencyKey, withIdempotency } from "./infrastructure/idempotency";
 import { generateReport } from "./modules/reports/report-generator";
 import { getCachedReport } from "./modules/reports/report-cache";
+import { runRescoreCron } from "./modules/reports/rescore";
 import { type BatchItem, isBatchItemArray, isSuccess, processBatchItems } from "./modules/reports/batch";
 import { trackEvent } from "./modules/tracking/activity";
 import {
@@ -1659,6 +1660,33 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     } catch (error) {
       logger.error("Watchlist delete error:", error);
       return reply.code(500).send({ error: "Failed to remove area" });
+    }
+  });
+
+  // Re-score the top UK postcodes into report_history (the time-series moat).
+  // Authenticated by CRON_SECRET (the container scheduler sends it as a Bearer
+  // token), not session/api-key. ?limit=N + ?dry_run=true supported. Migrated
+  // from /api/cron/rescore; the worker logic lives in modules/reports/rescore.
+  app.get("/cron/rescore", async (request, reply) => {
+    const expected = process.env.CRON_SECRET;
+    if (!expected) {
+      return reply.code(503).send({ error: "CRON_SECRET not configured on this deployment" });
+    }
+    if (request.headers.authorization !== `Bearer ${expected}`) {
+      return reply.code(401).send({ error: "Unauthorized" });
+    }
+
+    const q = (request.query ?? {}) as { limit?: string; dry_run?: string };
+    const limit = q.limit ? parseInt(q.limit, 10) : undefined;
+    const dryRun = q.dry_run === "true";
+
+    try {
+      const summary = await runRescoreCron({ limit, dryRun });
+      logger.info("[cron/rescore] done", summary);
+      return reply.send(summary);
+    } catch (err) {
+      logger.error("[cron/rescore] fatal", err);
+      return reply.code(500).send({ error: err instanceof Error ? err.message : "Cron failed" });
     }
   });
 
