@@ -92,6 +92,19 @@ export type GeoEntityRow = {
   country: string | null;
   boundary_version: string | null;
 };
+export type GeoLookupRow = {
+  postcode: string;
+  oa_code: string | null;
+  lsoa_code: string | null;
+  msoa_code: string | null;
+  lad_code: string | null;
+  lad_name: string | null;
+  region: string | null;
+  country: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  boundary_version: string | null;
+};
 export type SignalValueRow = {
   signal_key: string;
   geo_type: string;
@@ -145,6 +158,28 @@ export function upsertGeoEntities(rows: GeoEntityRow[], run: QueryRunner = runDe
         "latitude = EXCLUDED.latitude",
         "longitude = EXCLUDED.longitude",
         "country = EXCLUDED.country",
+        "boundary_version = EXCLUDED.boundary_version",
+      ],
+    },
+  }, rows);
+}
+
+export function upsertGeoLookup(rows: GeoLookupRow[], run: QueryRunner = runDefault): Promise<number> {
+  return bulkUpsert(run, {
+    table: "geo_lookup",
+    columns: ["postcode", "oa_code", "lsoa_code", "msoa_code", "lad_code", "lad_name", "region", "country", "latitude", "longitude", "boundary_version"],
+    conflict: {
+      target: ["postcode"],
+      set: [
+        "oa_code = EXCLUDED.oa_code",
+        "lsoa_code = EXCLUDED.lsoa_code",
+        "msoa_code = EXCLUDED.msoa_code",
+        "lad_code = EXCLUDED.lad_code",
+        "lad_name = EXCLUDED.lad_name",
+        "region = EXCLUDED.region",
+        "country = EXCLUDED.country",
+        "latitude = EXCLUDED.latitude",
+        "longitude = EXCLUDED.longitude",
         "boundary_version = EXCLUDED.boundary_version",
       ],
     },
