@@ -25,9 +25,11 @@ ARCHITECTURE.md
 # testing
 /coverage
 /test_reports
-# next.js
-/.next/
+# next.js (app now lives at apps/web; keep these unanchored so the workspace's
+# build output is ignored too)
+.next/
 /out/
+apps/web/out/
 
 # production
 /build
