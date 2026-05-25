@@ -170,17 +170,24 @@ export const MIGRATIONS: Migration[] = [
     ],
   },
   {
+    // Real prod schema. The legacy src/lib/db-schema.ts ensureWatchlistTable()
+    // DDL (area/score/UNIQUE(user_id,area)) is STALE dead code: the live
+    // dashboard pages (src/app/{,design-v2/}dashboard/page.tsx) create this
+    // table inline with the schema below, and CREATE IF NOT EXISTS makes the
+    // stale version a no-op. The watchlist route (INSERT without id, label
+    // column, ON CONFLICT(user_id,postcode)) only works against THIS schema,
+    // which both dashboards + the route agree on. CREATE IF NOT EXISTS is a
+    // no-op against prod; this just makes a fresh DB match.
     name: "saved_areas",
     statements: [
       `CREATE TABLE IF NOT EXISTS saved_areas (
-        id TEXT PRIMARY KEY,
+        id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
         user_id TEXT NOT NULL,
-        area TEXT NOT NULL,
         postcode TEXT NOT NULL,
-        intent TEXT NOT NULL DEFAULT 'research',
-        score INTEGER,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        UNIQUE(user_id, area)
+        label TEXT NOT NULL DEFAULT '',
+        intent TEXT,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        UNIQUE(user_id, postcode)
       )`,
     ],
   },
