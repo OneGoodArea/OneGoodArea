@@ -2,8 +2,19 @@ import Fastify, { type FastifyInstance, type FastifyRequest, type FastifyReply }
 import { INTENTS, type Intent } from "@onegoodarea/contracts";
 import { validateApiKey, createApiKey, listApiKeys, revokeApiKey } from "./modules/api-keys";
 import { verifySessionToken } from "./modules/auth/session-token";
+import { hashPassword, generateToken } from "./modules/auth/crypto";
+import { sendVerificationEmail, sendPasswordResetEmail } from "./infrastructure/email/senders";
 import { sql } from "./infrastructure/db/client";
-import { rows, row, type ReportRow, type SubscriptionRow, type ApiKeyRow, type ActivityEventRow } from "./infrastructure/db/types";
+import {
+  rows,
+  row,
+  type ReportRow,
+  type SubscriptionRow,
+  type ApiKeyRow,
+  type ActivityEventRow,
+  type UserRow,
+  type PasswordResetTokenRow,
+} from "./infrastructure/db/types";
 import { rateLimit, rateLimitHeaders } from "./infrastructure/rate-limit";
 import { RATE_LIMITS, BATCH_MAX_ITEMS, APP_URL } from "./infrastructure/config";
 import {
@@ -1257,6 +1268,215 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     } catch (error) {
       logger.error("[widget] Error:", error);
       return reply.code(500).send({ error: "Failed to fetch area data" });
+    }
+  });
+
+  // ── Credentials auth flows (public, pre-login). These standalone REST routes
+  // live in apps/api because it owns the users table + crypto + email. NextAuth
+  // itself (OAuth, the Credentials provider's sign-in) stays in apps/web; at the
+  // cutover its server calls these. Migrated from src/app/api/auth/*. ──
+
+  // Register a credentials user + send a verification email. IP rate-limited.
+  app.post("/auth/register", async (request, reply) => {
+    try {
+      const ip = headerString(request.headers["x-forwarded-for"])?.split(",")[0]?.trim() || "unknown";
+      const rl = await rateLimit(`register:${ip}`, RATE_LIMITS.authRegister);
+      if (!rl.success) {
+        reply.headers(rateLimitHeaders(RATE_LIMITS.authRegister.max, rl));
+        return reply.code(429).send({ error: "Too many attempts. Please try again later." });
+      }
+
+      const { email, password } = (request.body ?? {}) as { email?: unknown; password?: unknown };
+      if (!email || typeof email !== "string") {
+        return reply.code(400).send({ error: "Email is required" });
+      }
+      if (!password || typeof password !== "string" || password.length < 8) {
+        return reply.code(400).send({ error: "Password must be at least 8 characters" });
+      }
+
+      const sanitized = email.trim().toLowerCase();
+
+      const existing = await sql`SELECT id, provider FROM users WHERE email = ${sanitized}`;
+      if (existing.length > 0) {
+        const { provider } = row<Pick<UserRow, "id" | "provider">>(existing[0]);
+        if (provider === "google" || provider === "github") {
+          return reply.code(409).send({
+            error: "email_oauth",
+            message: `This email is linked to a ${provider === "google" ? "Google" : "GitHub"} account. Try signing in with ${provider === "google" ? "Google" : "GitHub"} instead.`,
+          });
+        }
+        return reply.code(409).send({
+          error: "email_taken",
+          message: "An account with this email already exists. Try signing in instead.",
+        });
+      }
+
+      const id = generateId("user");
+      const name = sanitized.split("@")[0];
+      const hash = await hashPassword(password);
+
+      await sql`
+        INSERT INTO users (id, email, name, password_hash, provider, email_verified)
+        VALUES (${id}, ${sanitized}, ${name}, ${hash}, 'credentials', FALSE)
+      `;
+
+      // Send verification email (best-effort; account is created regardless).
+      try {
+        const token = generateToken();
+        const tokenId = generateId("evt");
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        await sql`
+          INSERT INTO email_verification_tokens (id, user_id, email, token, expires_at)
+          VALUES (${tokenId}, ${id}, ${sanitized}, ${token}, ${expiresAt})
+        `;
+        await sendVerificationEmail(sanitized, token);
+      } catch (e) {
+        logger.error("Failed to send verification email:", e);
+      }
+
+      return reply.send({ ok: true });
+    } catch (error) {
+      logger.error("Register error:", error);
+      if (isAppError(error)) {
+        return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      }
+      return reply.code(500).send({ error: "server_error", message: "Something went wrong. Please try again." });
+    }
+  });
+
+  // Re-send a verification email. Always 200 (anti-enumeration) except its own
+  // 3-per-hour throttle. Migrated from /api/auth/resend-verification.
+  app.post("/auth/resend-verification", async (request, reply) => {
+    try {
+      const { email } = (request.body ?? {}) as { email?: unknown };
+      if (!email || typeof email !== "string") {
+        return reply.code(400).send({ error: "Email is required" });
+      }
+      const sanitized = email.trim().toLowerCase();
+
+      const result = await sql`
+        SELECT id, email_verified, provider FROM users WHERE email = ${sanitized}
+      `;
+      if (result.length === 0) return reply.send({ ok: true });
+
+      const user = result[0];
+      if (user.email_verified || user.provider !== "credentials") return reply.send({ ok: true });
+
+      const recentTokens = await sql`
+        SELECT COUNT(*) as count FROM email_verification_tokens
+        WHERE email = ${sanitized} AND created_at > NOW() - INTERVAL '1 hour'
+      `;
+      if (Number(recentTokens[0].count) >= 3) {
+        return reply.code(429).send({ error: "Too many requests. Please try again later." });
+      }
+
+      await sql`
+        UPDATE email_verification_tokens SET used = TRUE
+        WHERE user_id = ${user.id} AND used = FALSE
+      `;
+
+      const token = generateToken();
+      const tokenId = generateId("evt");
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      await sql`
+        INSERT INTO email_verification_tokens (id, user_id, email, token, expires_at)
+        VALUES (${tokenId}, ${user.id}, ${sanitized}, ${token}, ${expiresAt})
+      `;
+      await sendVerificationEmail(sanitized, token);
+
+      return reply.send({ ok: true });
+    } catch (error) {
+      logger.error("[resend-verification] Error:", error);
+      return reply.code(500).send({ error: "Something went wrong" });
+    }
+  });
+
+  // Request a password reset email. Always 200 (anti-enumeration). 3/hour.
+  // Migrated from /api/auth/forgot-password.
+  app.post("/auth/forgot-password", async (request, reply) => {
+    try {
+      const { email } = (request.body ?? {}) as { email?: unknown };
+      if (!email || typeof email !== "string") {
+        return reply.code(400).send({ error: "Email is required" });
+      }
+      const sanitized = email.trim().toLowerCase();
+
+      const result = await sql`
+        SELECT id, email, provider, password_hash FROM users WHERE email = ${sanitized}
+      `;
+      if (result.length === 0) return reply.send({ ok: true });
+
+      const user = result[0];
+      // No password to reset for OAuth-only users.
+      if (user.provider !== "credentials" && !user.password_hash) return reply.send({ ok: true });
+
+      const recentTokens = await sql`
+        SELECT COUNT(*) as count FROM password_reset_tokens
+        WHERE email = ${sanitized} AND created_at > NOW() - INTERVAL '1 hour'
+      `;
+      if (Number(recentTokens[0].count) >= 3) return reply.send({ ok: true });
+
+      await sql`
+        UPDATE password_reset_tokens SET used = TRUE
+        WHERE user_id = ${user.id} AND used = FALSE
+      `;
+
+      const token = generateToken();
+      const tokenId = generateId("prt");
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+      await sql`
+        INSERT INTO password_reset_tokens (id, user_id, email, token, expires_at)
+        VALUES (${tokenId}, ${user.id}, ${sanitized}, ${token}, ${expiresAt})
+      `;
+      await sendPasswordResetEmail(sanitized, token);
+
+      return reply.send({ ok: true });
+    } catch (error) {
+      logger.error("[forgot-password] Error:", error);
+      if (isAppError(error)) {
+        return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      }
+      return reply.code(500).send({ error: "Something went wrong" });
+    }
+  });
+
+  // Complete a password reset with a token. Migrated from /api/auth/reset-password.
+  app.post("/auth/reset-password", async (request, reply) => {
+    try {
+      const { token, password } = (request.body ?? {}) as { token?: unknown; password?: unknown };
+      if (!token || typeof token !== "string") {
+        return reply.code(400).send({ error: "Invalid reset link" });
+      }
+      if (!password || typeof password !== "string" || password.length < 8) {
+        return reply.code(400).send({ error: "Password must be at least 8 characters" });
+      }
+
+      const result = await sql`
+        SELECT user_id, email, expires_at, used FROM password_reset_tokens WHERE token = ${token}
+      `;
+      if (result.length === 0) {
+        return reply.code(400).send({ error: "Invalid or expired reset link" });
+      }
+
+      const record = row<Pick<PasswordResetTokenRow, "user_id" | "email" | "expires_at" | "used">>(result[0]);
+      if (record.used) {
+        return reply.code(400).send({ error: "This reset link has already been used" });
+      }
+      if (new Date(record.expires_at) < new Date()) {
+        return reply.code(400).send({ error: "This reset link has expired. Please request a new one." });
+      }
+
+      const hash = await hashPassword(password);
+      await sql`UPDATE users SET password_hash = ${hash} WHERE id = ${record.user_id}`;
+      await sql`UPDATE password_reset_tokens SET used = TRUE WHERE token = ${token}`;
+
+      return reply.send({ ok: true });
+    } catch (error) {
+      logger.error("[reset-password] Error:", error);
+      if (isAppError(error)) {
+        return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      }
+      return reply.code(500).send({ error: "Something went wrong" });
     }
   });
 
