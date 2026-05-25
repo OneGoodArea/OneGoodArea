@@ -16,6 +16,34 @@ export function isIntent(value: unknown): value is Intent {
   return typeof value === "string" && (INTENTS as readonly string[]).includes(value);
 }
 
+/* AR-149: intent enum -> B2B workflow vocabulary. The enum names
+   (moving/business/investing/research) are historical (v1 consumer product) and
+   stay on the API contract + DB for backwards compatibility. Every user-visible
+   surface (dashboard, report view, emails, marketing) uses these workflow
+   labels. Migrated from the legacy src/lib/intents.ts into contracts so web +
+   api share ONE definition. */
+export const INTENT_WORKFLOW: Record<Intent, string> = {
+  moving: "Origination",
+  business: "Site selection",
+  investing: "Investment",
+  research: "Reference",
+};
+
+/** Long-form workflow description, for hover/tooltip surfaces. */
+export const INTENT_WORKFLOW_DESCRIPTION: Record<Intent, string> = {
+  moving: "Residential mortgage origination scoring. Used by lenders for portfolio screening, origination decisions, and demand-side risk enrichment.",
+  business: "Commercial site selection. Used by retail, F&B, and CRE teams scoring candidate locations across thousands of postcodes.",
+  investing: "Residential property investment screening. Used by BTL operators, BTR funds, and investment committees evaluating acquisitions.",
+  research: "Neutral baseline scoring for analysts, planners, and researchers. Equal weight across the five dimensions.",
+};
+
+/** The customer-facing workflow label for an intent enum. Falls back to the raw
+ *  string for unknown values (forward-compatible if a new enum is ever added). */
+export function intentLabel(intent: Intent | string | null | undefined): string {
+  if (!intent) return "";
+  return INTENT_WORKFLOW[intent as Intent] ?? intent;
+}
+
 /** A single-area scoring query (the shape behind POST /v1/report today). */
 export interface AreaQuery {
   /** Free-text area or postcode, e.g. "M1 1AE" or "Clapham". */
