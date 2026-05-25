@@ -1588,5 +1588,79 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
+  // The caller's saved areas (watchlist). Session-authed. Migrated from
+  // /api/watchlist. (Schema confirmed against the live dashboards; see the
+  // saved_areas migration note.)
+  app.get("/watchlist", async (request, reply) => {
+    try {
+      const userId = await authenticateSession(request, reply);
+      if (!userId) return reply; // 401 already sent
+
+      const areas = await sql`
+        SELECT id, postcode, label, intent, created_at
+        FROM saved_areas
+        WHERE user_id = ${userId}
+        ORDER BY created_at DESC
+      `;
+      return reply.send({ areas });
+    } catch (error) {
+      logger.error("Watchlist fetch error:", error);
+      return reply.code(500).send({ error: "Failed to fetch watchlist" });
+    }
+  });
+
+  // Save an area to the watchlist. Session-authed. 409 if already saved.
+  app.post("/watchlist", async (request, reply) => {
+    try {
+      const userId = await authenticateSession(request, reply);
+      if (!userId) return reply; // 401 already sent
+
+      const body = (request.body ?? {}) as { postcode?: unknown; label?: unknown; intent?: unknown };
+      const postcode = (typeof body.postcode === "string" ? body.postcode : "").trim().toUpperCase();
+      const label = (typeof body.label === "string" ? body.label : "").trim();
+      const intent = (body.intent as string | undefined) || null;
+
+      if (!postcode) {
+        return reply.code(400).send({ error: "Postcode is required" });
+      }
+
+      const result = await sql`
+        INSERT INTO saved_areas (user_id, postcode, label, intent)
+        VALUES (${userId}, ${postcode}, ${label}, ${intent})
+        ON CONFLICT (user_id, postcode) DO NOTHING
+        RETURNING id, postcode, label, intent, created_at
+      `;
+      if (result.length === 0) {
+        return reply.code(409).send({ error: "Area already saved" });
+      }
+      return reply.code(201).send({ area: result[0] });
+    } catch (error) {
+      logger.error("Watchlist add error:", error);
+      return reply.code(500).send({ error: "Failed to save area" });
+    }
+  });
+
+  // Remove an area from the watchlist. Session-authed. Migrated from
+  // /api/watchlist/[id].
+  app.delete<{ Params: { id: string } }>("/watchlist/:id", async (request, reply) => {
+    try {
+      const userId = await authenticateSession(request, reply);
+      if (!userId) return reply; // 401 already sent
+
+      const result = await sql`
+        DELETE FROM saved_areas
+        WHERE id = ${request.params.id} AND user_id = ${userId}
+        RETURNING id
+      `;
+      if (result.length === 0) {
+        return reply.code(404).send({ error: "Not found" });
+      }
+      return reply.send({ ok: true });
+    } catch (error) {
+      logger.error("Watchlist delete error:", error);
+      return reply.code(500).send({ error: "Failed to remove area" });
+    }
+  });
+
   return app;
 }
