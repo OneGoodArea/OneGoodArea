@@ -21,31 +21,50 @@ import { getFloodRisk } from "./data-sources/flood";
 import { getPropertyPrices } from "./data-sources/land-registry";
 import { getOfstedSchools } from "./data-sources/ofsted";
 import { logger } from "../tracking/structured-logger";
+import { getConfig } from "../../infrastructure/config";
 import { buildAreaProfile, type AreaSources } from "./area-profile";
+import { readDeprivationFromStore } from "./store-reader";
 import type { AreaProfile } from "@onegoodarea/contracts";
 
 export { buildAreaProfile, type AreaSources } from "./area-profile";
 
 /** Resolve an area and return its full signal profile, or null if the query
-    could not be geocoded (the endpoint maps null to 404). */
+    could not be geocoded (the endpoint maps null to 404).
+
+    Serve-from-store (flagged by OGA_SIGNALS_STORE_READ): deprivation is read
+    from the persisted store when present (England matches today; Wales/Scotland
+    fall back to live until the ONS spine normalizes boundaries). All other
+    sources are still live. `fetch_mode` reports the provenance honestly:
+    "hybrid" while some sources are store-backed and others live, "live"
+    otherwise. See ADR 0004. */
 export async function getAreaProfile(area: string): Promise<AreaProfile | null> {
   const geo = await geocodeArea(area);
   if (!geo) return null;
 
-  const [crime, deprivation, amenities, flood, property, ofsted] = await Promise.all([
+  // Try the store for deprivation first (skips the live deprivation fetch on a hit).
+  const storedDeprivation = getConfig().signalsStoreRead
+    ? await readDeprivationFromStore(geo.lsoa)
+    : null;
+
+  const [crime, liveDeprivation, amenities, flood, property, ofsted] = await Promise.all([
     getCrimeData(geo.latitude, geo.longitude),
-    getDeprivationData(geo.lsoa, geo.lsoa11),
+    storedDeprivation ? Promise.resolve(null) : getDeprivationData(geo.lsoa, geo.lsoa11),
     getNearbyAmenities(geo.latitude, geo.longitude),
     getFloodRisk(geo.latitude, geo.longitude),
     getPropertyPrices(geo.query),
     getOfstedSchools(geo.latitude, geo.longitude, geo.country),
   ]);
 
+  const deprivation = storedDeprivation ?? liveDeprivation;
   const sources: AreaSources = { crime, deprivation, amenities, flood, property, ofsted };
+  // Only deprivation can be store-backed today, so any store hit makes the
+  // profile a live/store mix → "hybrid". Becomes "store" once all contributing
+  // sources are served from the store.
+  const fetchMode = storedDeprivation ? "hybrid" : "live";
 
   logger.info(
-    `[signals] /v1/area "${area}": geo=${!!geo}, crime=${crime?.total_crimes ?? "n/a"}, imd=${deprivation?.imd_decile ?? "n/a"}, amenities=${amenities?.total ?? "n/a"}, flood=${flood?.flood_areas_nearby ?? "n/a"}, property=${property ? `${property.transaction_count} txns` : "n/a"}, ofsted=${ofsted?.total_rated ?? "n/a"}`,
+    `[signals] /v1/area "${area}": mode=${fetchMode}, dep=${storedDeprivation ? "store" : "live"}, crime=${crime?.total_crimes ?? "n/a"}, imd=${deprivation?.imd_decile ?? "n/a"}, amenities=${amenities?.total ?? "n/a"}, flood=${flood?.flood_areas_nearby ?? "n/a"}, property=${property ? `${property.transaction_count} txns` : "n/a"}, ofsted=${ofsted?.total_rated ?? "n/a"}`,
   );
 
-  return buildAreaProfile(geo, sources);
+  return buildAreaProfile(geo, sources, fetchMode);
 }

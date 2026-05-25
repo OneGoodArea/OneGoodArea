@@ -144,7 +144,11 @@ function deprivationSource(d: DeprivationData): string {
 
 /* ── the mapper ── */
 
-export function buildAreaProfile(geo: GeocodedArea, sources: AreaSources): AreaProfile {
+export function buildAreaProfile(
+  geo: GeocodedArea,
+  sources: AreaSources,
+  fetchMode: AreaProfile["meta"]["fetch_mode"] = "live",
+): AreaProfile {
   const { crime, deprivation, amenities, flood, property, ofsted } = sources;
   const signals: Signal[] = [];
 
@@ -267,7 +271,7 @@ export function buildAreaProfile(geo: GeocodedArea, sources: AreaSources): AreaP
       engine_version: METHODOLOGY_VERSION,
       generated_at: new Date().toISOString(),
       sources: sources_used,
-      fetch_mode: "live",
+      fetch_mode: fetchMode,
     },
   };
 }

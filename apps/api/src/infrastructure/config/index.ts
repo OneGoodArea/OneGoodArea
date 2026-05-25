@@ -16,6 +16,13 @@ export interface ApiConfig {
       enabled only when we are ready to expose it (EXECUTION-PLAYBOOK §0.5:
       new endpoints ship behind a flag so they can be killed instantly). */
   signalsApiEnabled: boolean;
+  /** Independent flag for SERVING signals from the persisted store instead of
+      live-fetching. Off by default = always live (today's behaviour). When on,
+      getAreaProfile reads store-backed sources (deprivation first) with a live
+      fallback. Separate from signalsApiEnabled so the read path can be toggled
+      on its own (e.g. enable the store read only after a refresh has populated
+      it). Requires the migration applied + a refresh run. */
+  signalsStoreRead: boolean;
 }
 
 export function getConfig(): ApiConfig {
@@ -23,6 +30,7 @@ export function getConfig(): ApiConfig {
     aiProvider: process.env.OGA_AI_PROVIDER ?? "anthropic",
     emailProvider: process.env.OGA_EMAIL_PROVIDER ?? "resend",
     signalsApiEnabled: process.env.OGA_SIGNALS_API === "true",
+    signalsStoreRead: process.env.OGA_SIGNALS_STORE_READ === "true",
   };
 }
 

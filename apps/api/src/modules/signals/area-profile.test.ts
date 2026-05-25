@@ -52,13 +52,18 @@ describe("buildAreaProfile", () => {
     expect(() => AreaProfileSchema.parse(profile)).not.toThrow();
   });
 
-  it("carries the geo identity and a live fetch_mode", () => {
+  it("carries the geo identity and defaults to a live fetch_mode", () => {
     const { geo: g, meta } = buildAreaProfile(geo, fullSources);
     expect(g.postcode).toBe("M1 1AE");
     expect(g.lsoa).toBe("E01005207");
     expect(g.area_type).toBe("urban");
     expect(meta.fetch_mode).toBe("live");
     expect(meta.engine_version).toBeTruthy();
+  });
+
+  it("stamps the provided fetch_mode (hybrid/store) through to meta", () => {
+    expect(buildAreaProfile(geo, fullSources, "hybrid").meta.fetch_mode).toBe("hybrid");
+    expect(buildAreaProfile(geo, fullSources, "store").meta.fetch_mode).toBe("store");
   });
 
   it("maps raw source values onto the signal catalog", () => {
