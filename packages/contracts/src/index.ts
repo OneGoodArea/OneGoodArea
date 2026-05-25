@@ -12,6 +12,7 @@
    can import everything from "@onegoodarea/contracts". AreaType is also imported
    locally below because the report shape references it. */
 export * from "./signals";
+export * from "./scores";
 import type { AreaType } from "./signals";
 
 /** The four scoring intents the engine supports. Canonical source of truth. */
