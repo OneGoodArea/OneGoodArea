@@ -33,6 +33,16 @@ describe("SignalSchema", () => {
     expect(SignalSchema.parse({ ...validSignal, value: "Outstanding" }).value).toBe("Outstanding");
   });
 
+  it("accepts optional store-backed normalization (normalized_value 0-1, percentile 0-100)", () => {
+    const enriched = SignalSchema.parse({ ...validSignal, normalized_value: 0.786, percentile: 78.58 });
+    expect(enriched.normalized_value).toBe(0.786);
+    expect(enriched.percentile).toBe(78.58);
+    // omitted on live signals
+    expect(SignalSchema.parse(validSignal).percentile).toBeUndefined();
+    // out-of-range percentile rejected
+    expect(() => SignalSchema.parse({ ...validSignal, percentile: 140 })).toThrow();
+  });
+
   it("rejects confidence outside 0..1", () => {
     expect(() => SignalSchema.parse({ ...validSignal, confidence: 1.5 })).toThrow();
     expect(() => SignalSchema.parse({ ...validSignal, confidence: -0.1 })).toThrow();

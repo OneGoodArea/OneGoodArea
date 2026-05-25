@@ -95,6 +95,14 @@ export const SignalSchema = z.object({
   value: z.union([z.number(), z.string(), z.null()]),
   /** Unit of `value`: "count", "GBP", "decile", "rank", "pct", "per_month"… */
   unit: z.string().nullable(),
+  /** Position of the raw value within its comparison distribution (0-1,
+      ascending by raw value). Present only when served from the store + a
+      normalization run; absent on live-fetched signals. Read with `direction`. */
+  normalized_value: z.number().nullable().optional(),
+  /** Percentile rank (0-100) within the signal's comparison scope
+      (national-within-country for deprivation). Present only when store-backed
+      + normalized. */
+  percentile: z.number().min(0).max(100).nullable().optional(),
   direction: SignalDirectionSchema,
   /** 0..1 data-trust for THIS signal. v1 = availability/sample-based heuristic;
       the calibrated confidence model lands with the store (Phase 7). */
