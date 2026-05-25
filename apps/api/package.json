@@ -7,6 +7,7 @@
   "main": "./src/server.ts",
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
     "migrate": "tsx src/infrastructure/db/migrate.ts",
     "refresh:deprivation": "tsx src/modules/signals/refresh/deprivation.ts",
     "normalize:deprivation": "tsx src/modules/signals/refresh/normalize.ts",

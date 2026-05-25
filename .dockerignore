@@ -1,0 +1,19 @@
+# Keep the build context small + the image clean. We never copy apps/web source
+# (the Dockerfile only COPYs apps/api + packages/contracts), and node_modules is
+# always reinstalled inside the image via `npm ci`.
+**/node_modules
+.git
+.github
+.next
+**/.next
+coverage
+**/coverage
+**/*.log
+**/.env
+**/.env.local
+ARCHITECTURE.md
+MASTER-PROPOSAL.md
+EXECUTION-PLAYBOOK.md
+PRODUCT-POSITIONING.md
+DEVELOPMENT-LOG.md
+apps/web/scripts/*.json
