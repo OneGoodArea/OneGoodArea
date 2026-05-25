@@ -17,14 +17,19 @@ ENV NODE_ENV=production
 # server.ts already reads process.env.PORT and binds 0.0.0.0.
 ENV PORT=8080
 
-# Manifests first (layer caching). npm ci needs the lockfile + every declared
-# workspace's package.json to resolve the workspace tree, hence apps/web's
-# manifest is copied even though its source is not (the API doesn't run it).
+# Manifests first (layer caching). Every declared workspace's package.json must
+# be present to resolve the workspace tree, hence apps/web's manifest is copied
+# even though its source is not (the API does not run it).
 COPY package.json package-lock.json ./
 COPY apps/api/package.json ./apps/api/
 COPY apps/web/package.json ./apps/web/
 COPY packages/contracts/package.json ./packages/contracts/
-RUN npm ci
+# `npm install`, not `npm ci`: the lockfile is generated on Windows and is missing
+# Linux-only optional deps (e.g. @emnapi/* pulled by Tailwind's native bindings),
+# which makes `npm ci` fail the strict in-sync check on the Linux build host.
+# `npm install` resolves the platform deps. (Follow-up: a Linux-generated lockfile
+# + selective workspace install would let us return to `npm ci` + a smaller image.)
+RUN npm install --no-audit --no-fund
 
 # Only the backend + its shared contracts source (NOT apps/web source).
 COPY packages/contracts ./packages/contracts
