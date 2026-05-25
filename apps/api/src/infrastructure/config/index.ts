@@ -11,12 +11,18 @@ export interface ApiConfig {
   aiProvider: string;
   /** Email provider: "resend" (default) or "mailhog" for local dev. */
   emailProvider: string;
+  /** Dark feature flag for the signal-first surface (GET /v1/area). Off by
+      default so the new endpoint can ship to the branch/prod additively and be
+      enabled only when we are ready to expose it (EXECUTION-PLAYBOOK §0.5:
+      new endpoints ship behind a flag so they can be killed instantly). */
+  signalsApiEnabled: boolean;
 }
 
 export function getConfig(): ApiConfig {
   return {
     aiProvider: process.env.OGA_AI_PROVIDER ?? "anthropic",
     emailProvider: process.env.OGA_EMAIL_PROVIDER ?? "resend",
+    signalsApiEnabled: process.env.OGA_SIGNALS_API === "true",
   };
 }
 

@@ -16,7 +16,8 @@ import {
   type PasswordResetTokenRow,
 } from "./infrastructure/db/types";
 import { rateLimit, rateLimitHeaders } from "./infrastructure/rate-limit";
-import { RATE_LIMITS, BATCH_MAX_ITEMS, APP_URL } from "./infrastructure/config";
+import { RATE_LIMITS, BATCH_MAX_ITEMS, APP_URL, getConfig } from "./infrastructure/config";
+import { getAreaProfile } from "./modules/signals";
 import {
   getUserPlan,
   hasApiAccess,
@@ -358,6 +359,60 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         return reply.code(error.statusCode).send({ error: error.message, code: error.code });
       }
       logger.error("[v1/report] error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  // GET /v1/area — the signal-first primitive. Returns the full Signal catalog
+  // for an area (raw values + per-signal confidence + source + period), with NO
+  // scoring and NO AI. This is the endpoint that flips the product from a
+  // "report API" to a "data-infrastructure API" (MASTER-PROPOSAL §4): signals
+  // are the product, the score is a feature, the report is a surface.
+  //
+  // Dark-flagged behind OGA_SIGNALS_API: when off it 404s like an unknown route,
+  // so it ships to the branch/prod additively and is enabled deliberately.
+  // Gate = auth + per-key rate-limit + plan API access (the same requireApiAccess
+  // gate the webhooks CRUD uses). The monthly REPORT quota deliberately does NOT
+  // apply: no report is generated, so it is not metered against that allowance.
+  app.get("/v1/area", async (request, reply) => {
+    try {
+      if (!getConfig().signalsApiEnabled) {
+        return reply.code(404).send({ error: "Not found" });
+      }
+
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply; // 401 / 403 / 429 already sent
+
+      // Accept ?area= (free text or postcode) or its ?postcode= alias.
+      const q = request.query as { area?: unknown; postcode?: unknown };
+      const rawArea =
+        typeof q.area === "string" ? q.area : typeof q.postcode === "string" ? q.postcode : undefined;
+      const locationCheck = validateLocationInput(rawArea);
+      if (!locationCheck.valid) return reply.code(400).send({ error: locationCheck.error });
+
+      const profile = await getAreaProfile(locationCheck.sanitized);
+      if (!profile) {
+        return reply.code(404).send({
+          error: `Could not resolve area "${locationCheck.sanitized}". Provide a UK postcode or place name.`,
+        });
+      }
+
+      // Meter early, price late (MASTER §9): every area call emits an org-keyed
+      // usage event from day one. That one event stream later powers quotas,
+      // billing, and the demand-signal moat. Pricing numbers are decided later.
+      trackEvent("api.area.profiled", userId, {
+        area: locationCheck.sanitized,
+        signals: profile.signals.length,
+        sources: profile.meta.sources.length,
+      });
+
+      reply.header("X-Engine-Version", profile.meta.engine_version);
+      return reply.code(200).send(profile);
+    } catch (error) {
+      if (isAppError(error)) {
+        return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      }
+      logger.error("[v1/area] error:", error);
       return reply.code(500).send({ error: "Internal server error" });
     }
   });

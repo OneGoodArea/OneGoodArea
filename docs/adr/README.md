@@ -1,0 +1,14 @@
+# Architecture Decision Records
+
+Short, durable records of the load-bearing decisions in the signal-first
+restructure (and beyond). Each ADR captures the *context*, the *decision*, and
+the *consequences* so future contributors (and future us) understand the *why*,
+not just the *what*. See `EXECUTION-PLAYBOOK.md` §4.
+
+Format: one file per decision, `NNNN-short-slug.md`, numbered in order. A
+decision is never edited away once superseded; instead a later ADR supersedes it
+and both are kept (the trail matters).
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [0001](./0001-signal-first-primitive.md) | Signal as the public primitive; thin `/v1/area` over live-fetch first | Accepted |
