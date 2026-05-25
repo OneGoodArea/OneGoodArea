@@ -21,10 +21,10 @@
     "@onegoodarea/contracts": "*",
     "jose": "^6.2.3",
     "resend": "^6.12.3",
-    "stripe": "^20.4.0"
+    "stripe": "^20.4.0",
+    "tsx": "^4.19.2"
   },
   "devDependencies": {
-    "tsx": "^4.19.2",
     "@types/node": "^25",
     "msw": "^2.14.6"
   }
