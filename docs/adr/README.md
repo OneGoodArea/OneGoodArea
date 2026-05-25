@@ -17,3 +17,4 @@ and both are kept (the trail matters).
 | [0004](./0004-store-read-hybrid.md) | Serving from the store (read-through + live fallback + hybrid provenance) | Accepted |
 | [0005](./0005-normalization-percentiles.md) | Normalization (in-DB percentiles + normalized values, within-country scope) | Accepted |
 | [0006](./0006-geo-spine-loader.md) | The ONS geo spine loader (streaming NSPL, config-driven, seed in git) | Accepted |
+| [0007](./0007-cross-area-query.md) | Cross-area query (`GET /v1/areas`) — country-by-prefix, LAD via the spine | Accepted |

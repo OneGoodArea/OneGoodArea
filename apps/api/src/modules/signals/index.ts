@@ -27,6 +27,7 @@ import { readDeprivationFromStore, readDeprivationNormalization } from "./store-
 import type { AreaProfile } from "@onegoodarea/contracts";
 
 export { buildAreaProfile, type AreaSources } from "./area-profile";
+export { queryAreas, parseAreasQuery, type AreaResult, type AreasQuery } from "./query";
 
 /** Resolve an area and return its full signal profile, or null if the query
     could not be geocoded (the endpoint maps null to 404).

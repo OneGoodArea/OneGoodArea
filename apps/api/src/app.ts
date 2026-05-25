@@ -17,7 +17,7 @@ import {
 } from "./infrastructure/db/types";
 import { rateLimit, rateLimitHeaders } from "./infrastructure/rate-limit";
 import { RATE_LIMITS, BATCH_MAX_ITEMS, APP_URL, getConfig } from "./infrastructure/config";
-import { getAreaProfile } from "./modules/signals";
+import { getAreaProfile, queryAreas, parseAreasQuery } from "./modules/signals";
 import {
   getUserPlan,
   hasApiAccess,
@@ -467,6 +467,40 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         return reply.code(error.statusCode).send({ error: error.message, code: error.code });
       }
       logger.error("[v1/signals] error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  // GET /v1/areas — cross-area query, the data-infrastructure differentiator.
+  // "Find LSOAs (optionally within a country/LAD) where signal X is in the bottom
+  // decile / above a threshold, ranked." Only the store can answer this; the
+  // live-fetch path is one-area-at-a-time. Same dark flag + gate as /v1/area.
+  app.get("/v1/areas", async (request, reply) => {
+    try {
+      if (!getConfig().signalsApiEnabled) {
+        return reply.code(404).send({ error: "Not found" });
+      }
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply; // 401 / 403 / 429 already sent
+
+      const parsed = parseAreasQuery((request.query ?? {}) as Record<string, unknown>);
+      if (!parsed.ok) return reply.code(400).send({ error: parsed.error });
+
+      const areas = await queryAreas(parsed.query);
+
+      trackEvent("api.areas.queried", userId, {
+        signal: parsed.query.signal,
+        country: parsed.query.country,
+        lad: parsed.query.lad,
+        results: areas.length,
+      });
+      reply.header("X-Engine-Version", METHODOLOGY_VERSION);
+      return reply.code(200).send({ signal: parsed.query.signal, count: areas.length, areas });
+    } catch (error) {
+      if (isAppError(error)) {
+        return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      }
+      logger.error("[v1/areas] error:", error);
       return reply.code(500).send({ error: "Internal server error" });
     }
   });
