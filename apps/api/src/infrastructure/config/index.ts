@@ -9,11 +9,14 @@
 export interface ApiConfig {
   /** AI narration provider: "anthropic" (default) or "mock" for local/tests. */
   aiProvider: string;
+  /** Email provider: "resend" (default) or "mailhog" for local dev. */
+  emailProvider: string;
 }
 
 export function getConfig(): ApiConfig {
   return {
     aiProvider: process.env.OGA_AI_PROVIDER ?? "anthropic",
+    emailProvider: process.env.OGA_EMAIL_PROVIDER ?? "resend",
   };
 }
 
@@ -28,6 +31,10 @@ export const SUPERUSER_EMAILS = ["ptengelmann@gmail.com"];
    container env; falls back to the canonical domain. Mirrors legacy
    src/lib/config.ts APP_URL. */
 export const APP_URL = process.env.NEXTAUTH_URL || "https://www.onegoodarea.com";
+
+/* The From address for all outbound email. Migrated verbatim from legacy
+   src/lib/config.ts. */
+export const EMAIL_FROM = "OneGoodArea <noreply@onegoodarea.com>";
 
 export const RATE_LIMITS = {
   report: { max: 10, windowSeconds: 60 },

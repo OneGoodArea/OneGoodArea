@@ -17,6 +17,7 @@
     "@anthropic-ai/sdk": "^0.95.2",
     "@onegoodarea/contracts": "*",
     "jose": "^6.2.3",
+    "resend": "^6.12.3",
     "stripe": "^20.4.0"
   },
   "devDependencies": {
