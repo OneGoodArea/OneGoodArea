@@ -7,6 +7,13 @@
    Hard rule for this package: types + pure helpers only. No DB drivers, no
    secrets, no Node-only APIs — it is imported by the browser bundle. */
 
+/* The signal-first primitive (Signal, AreaGeo, AreaProfile, AreaType) — the
+   public shape the data layer is built around. Re-exported here so consumers
+   can import everything from "@onegoodarea/contracts". AreaType is also imported
+   locally below because the report shape references it. */
+export * from "./signals";
+import type { AreaType } from "./signals";
+
 /** The four scoring intents the engine supports. Canonical source of truth. */
 export const INTENTS = ["moving", "business", "investing", "research"] as const;
 export type Intent = (typeof INTENTS)[number];
@@ -73,7 +80,9 @@ export interface ReportSection {
   data_points?: { label: string; value: string }[];
 }
 
-export type AreaType = "urban" | "suburban" | "rural";
+/* AreaType is the canonical signal-first type, re-exported above from ./signals
+   (single source: the Zod-inferred AreaTypeSchema). Used by the report shape
+   below. */
 
 export interface DataFreshness {
   source: string;

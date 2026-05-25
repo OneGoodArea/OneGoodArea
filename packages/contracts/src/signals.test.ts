@@ -1,0 +1,119 @@
+import { describe, it, expect } from "vitest";
+import {
+  SignalSchema,
+  AreaGeoSchema,
+  AreaProfileSchema,
+  SignalCategorySchema,
+  SIGNAL_CATEGORIES,
+  type Signal,
+  type AreaProfile,
+} from "./signals";
+
+const validSignal: Signal = {
+  key: "crime.total_12m",
+  category: "crime",
+  label: "Total recorded crime (12 months)",
+  value: 540,
+  unit: "count",
+  direction: "lower_is_better",
+  confidence: 0.9,
+  confidence_reason: "police.uk returned 12 months of data for this area.",
+  source: "police.uk",
+  observed_period: "Apr 2025 to Mar 2026",
+};
+
+describe("SignalSchema", () => {
+  it("accepts a well-formed signal", () => {
+    expect(SignalSchema.parse(validSignal)).toEqual(validSignal);
+  });
+
+  it("accepts a null value (no source coverage) and a string value", () => {
+    expect(SignalSchema.parse({ ...validSignal, value: null }).value).toBeNull();
+    expect(SignalSchema.parse({ ...validSignal, value: "Outstanding" }).value).toBe("Outstanding");
+  });
+
+  it("rejects confidence outside 0..1", () => {
+    expect(() => SignalSchema.parse({ ...validSignal, confidence: 1.5 })).toThrow();
+    expect(() => SignalSchema.parse({ ...validSignal, confidence: -0.1 })).toThrow();
+  });
+
+  it("rejects an unknown category", () => {
+    expect(() => SignalSchema.parse({ ...validSignal, category: "weather" })).toThrow();
+  });
+
+  it("rejects an unknown direction", () => {
+    expect(() => SignalSchema.parse({ ...validSignal, direction: "up" })).toThrow();
+  });
+});
+
+describe("SignalCategorySchema", () => {
+  it("exposes the seven live categories", () => {
+    expect(SIGNAL_CATEGORIES).toEqual([
+      "crime",
+      "deprivation",
+      "property",
+      "schools",
+      "amenities",
+      "transport",
+      "environment",
+    ]);
+    for (const c of SIGNAL_CATEGORIES) {
+      expect(SignalCategorySchema.parse(c)).toBe(c);
+    }
+  });
+});
+
+describe("AreaGeoSchema", () => {
+  it("accepts a postcode-resolved area and a place-name area (null postcode)", () => {
+    const base = {
+      query: "M1 1AE",
+      postcode: "M1 1AE",
+      latitude: 53.47,
+      longitude: -2.23,
+      lsoa: "E01005207",
+      msoa: "E02000984",
+      admin_district: "Manchester",
+      region: "North West",
+      country: "England",
+      area_type: "urban" as const,
+    };
+    expect(AreaGeoSchema.parse(base).postcode).toBe("M1 1AE");
+    expect(AreaGeoSchema.parse({ ...base, query: "Soho", postcode: null }).postcode).toBeNull();
+  });
+
+  it("rejects an unknown area_type", () => {
+    expect(() =>
+      AreaGeoSchema.parse({
+        query: "x", postcode: null, latitude: 0, longitude: 0,
+        lsoa: null, msoa: null, admin_district: null, region: null,
+        country: "England", area_type: "coastal",
+      }),
+    ).toThrow();
+  });
+});
+
+describe("AreaProfileSchema", () => {
+  const profile: AreaProfile = {
+    geo: {
+      query: "M1 1AE", postcode: "M1 1AE", latitude: 53.47, longitude: -2.23,
+      lsoa: "E01005207", msoa: "E02000984", admin_district: "Manchester",
+      region: "North West", country: "England", area_type: "urban",
+    },
+    signals: [validSignal],
+    meta: {
+      engine_version: "2.0.2",
+      generated_at: "2026-05-25T12:00:00.000Z",
+      sources: ["police.uk"],
+      fetch_mode: "live",
+    },
+  };
+
+  it("round-trips a full profile", () => {
+    expect(AreaProfileSchema.parse(profile)).toEqual(profile);
+  });
+
+  it("only allows live | store as fetch_mode", () => {
+    expect(AreaProfileSchema.parse({ ...profile, meta: { ...profile.meta, fetch_mode: "store" } }).meta.fetch_mode).toBe("store");
+    expect(() => AreaProfileSchema.parse({ ...profile, meta: { ...profile.meta, fetch_mode: "cached" } })).toThrow();
+  });
+});
