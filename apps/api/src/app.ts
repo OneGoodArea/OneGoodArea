@@ -2,7 +2,7 @@ import Fastify, { type FastifyInstance, type FastifyRequest, type FastifyReply }
 import { INTENTS, type Intent } from "@onegoodarea/contracts";
 import { validateApiKey, createApiKey, listApiKeys, revokeApiKey } from "./modules/api-keys";
 import { verifySessionToken } from "./modules/auth/session-token";
-import { hashPassword, generateToken } from "./modules/auth/crypto";
+import { hashPassword, verifyPassword, generateToken } from "./modules/auth/crypto";
 import { sendVerificationEmail, sendPasswordResetEmail } from "./infrastructure/email/senders";
 import { sql } from "./infrastructure/db/client";
 import {
@@ -1477,6 +1477,54 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         return reply.code(error.statusCode).send({ error: error.message, code: error.code });
       }
       return reply.code(500).send({ error: "Something went wrong" });
+    }
+  });
+
+  // Change the logged-in user's password (verifies the current one first).
+  // Session-authed; credentials accounts only. Migrated from
+  // /api/settings/password.
+  app.post("/settings/password", async (request, reply) => {
+    try {
+      const userId = await authenticateSession(request, reply);
+      if (!userId) return reply; // 401 already sent
+
+      const { currentPassword, newPassword } = (request.body ?? {}) as {
+        currentPassword?: unknown;
+        newPassword?: unknown;
+      };
+
+      if (!currentPassword || !newPassword) {
+        return reply.code(400).send({ error: "Both fields are required" });
+      }
+      if (typeof newPassword !== "string" || newPassword.length < 8) {
+        return reply.code(400).send({ error: "New password must be at least 8 characters" });
+      }
+
+      const result = await sql`SELECT password_hash, provider FROM users WHERE id = ${userId}`;
+      if (result.length === 0) {
+        return reply.code(404).send({ error: "User not found" });
+      }
+
+      const userRecord = row<Pick<UserRow, "password_hash" | "provider">>(result[0]);
+      if (userRecord.provider !== "credentials" || !userRecord.password_hash) {
+        return reply.code(400).send({ error: "Password change is only available for email/password accounts" });
+      }
+
+      const { valid } = await verifyPassword(currentPassword as string, userRecord.password_hash);
+      if (!valid) {
+        return reply.code(403).send({ error: "Current password is incorrect" });
+      }
+
+      const newHash = await hashPassword(newPassword);
+      await sql`UPDATE users SET password_hash = ${newHash} WHERE id = ${userId}`;
+
+      return reply.send({ success: true });
+    } catch (error) {
+      logger.error("Password change error:", error);
+      if (isAppError(error)) {
+        return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      }
+      return reply.code(500).send({ error: "Failed to change password" });
     }
   });
 
