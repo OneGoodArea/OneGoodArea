@@ -3,7 +3,7 @@ import { INTENTS, type Intent } from "@onegoodarea/contracts";
 import { validateApiKey, createApiKey, listApiKeys, revokeApiKey } from "./modules/api-keys";
 import { verifySessionToken } from "./modules/auth/session-token";
 import { hashPassword, verifyPassword, generateToken } from "./modules/auth/crypto";
-import { sendVerificationEmail, sendPasswordResetEmail } from "./infrastructure/email/senders";
+import { sendVerificationEmail, sendPasswordResetEmail, sendReportEmail } from "./infrastructure/email/senders";
 import { sql } from "./infrastructure/db/client";
 import {
   rows,
@@ -1525,6 +1525,66 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         return reply.code(error.statusCode).send({ error: error.message, code: error.code });
       }
       return reply.code(500).send({ error: "Failed to change password" });
+    }
+  });
+
+  // Generate a report from the dashboard (browser flow). Session-authed; rate-
+  // limited per user; counts against the monthly quota; emails the report.
+  // Distinct from the api-key POST /v1/report. Migrated from /api/report.
+  app.post("/report", async (request, reply) => {
+    try {
+      const userId = await authenticateSession(request, reply);
+      if (!userId) return reply; // 401 already sent
+
+      // Rate limit by user id.
+      const rl = await rateLimit(`report:${userId}`, {
+        max: RATE_LIMITS.report.max,
+        windowSeconds: RATE_LIMITS.report.windowSeconds,
+      });
+      reply.headers(rateLimitHeaders(RATE_LIMITS.report.max, rl));
+      if (!rl.success) {
+        return reply.code(429).send({ error: "Too many requests. Please wait before generating another report." });
+      }
+
+      const usage = await canGenerateReport(userId);
+      if (!usage.allowed) {
+        return reply.code(403).send({ error: "limit_reached", used: usage.used, limit: usage.limit, plan: usage.plan });
+      }
+
+      const body = (request.body ?? {}) as { area?: unknown; intent?: unknown };
+      const locationCheck = validateLocationInput(body.area);
+      if (!locationCheck.valid) return reply.code(400).send({ error: locationCheck.error });
+      const intentCheck = validateIntent(body.intent);
+      if (!intentCheck.valid) return reply.code(400).send({ error: intentCheck.error });
+
+      const intent = body.intent as Intent;
+      const result = await generateReport(locationCheck.sanitized, intent, userId);
+      trackEvent("report.generated", userId, {
+        area: body.area,
+        intent,
+        reportId: result.id,
+        score: result.report?.areaiq_score,
+      });
+
+      // Email the report (best-effort). The recipient is resolved from the DB by
+      // userId (the bridge token carries only the id, not the email — the legacy
+      // route read session.user.email, which is the same authoritative value).
+      const userEmail = await getUserEmail(userId);
+      if (userEmail && result.report) {
+        try {
+          await sendReportEmail(userEmail, result.id, result.report);
+        } catch (err) {
+          logger.error("[report-email] Failed to send:", err);
+        }
+      }
+
+      return reply.send(result);
+    } catch (error) {
+      if (isAppError(error)) {
+        return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      }
+      logger.error("Report generation error:", error);
+      return reply.code(500).send({ error: "Failed to generate report" });
     }
   });
 
