@@ -12,3 +12,4 @@ and both are kept (the trail matters).
 | ADR | Title | Status |
 |-----|-------|--------|
 | [0001](./0001-signal-first-primitive.md) | Signal as the public primitive; thin `/v1/area` over live-fetch first | Accepted |
+| [0002](./0002-signal-store-schema.md) | The persisted signal store schema (7 tables, Phase 1) | Accepted |

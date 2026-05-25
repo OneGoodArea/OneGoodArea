@@ -359,4 +359,177 @@ export const MIGRATIONS: Migration[] = [
       `CREATE INDEX IF NOT EXISTS idx_ofsted_lng ON ofsted_schools (longitude)`,
     ],
   },
+
+  /* ====================================================================
+     SIGNAL STORE (restructure Phase 1, AR-171 / epic AR-169)
+     --------------------------------------------------------------------
+     NEW + ADDITIVE. These tables are not yet read by any live path; they
+     are populated by the Phase 1 refresh jobs, and getAreaProfile flips to
+     read them (fetch_mode: "store") in a later sub-task. Nothing here
+     touches an existing table (expand-contract). The shape mirrors
+     MASTER-PROPOSAL §3 and the @onegoodarea/contracts Signal/AreaProfile
+     primitive. Natural keys + app-level integrity, matching this codebase's
+     convention (no FK constraints anywhere above). Mixed-type signal values
+     (the contract allows number | string | null) are split into raw_value
+     (numeric) + raw_value_text (text); the serve layer reconstructs which.
+     See ADR 0002.
+     ==================================================================== */
+  {
+    // The universe of addressable geographies. geo_type is one of
+    // postcode|oa|lsoa|msoa|lad|region (uprn later). Natural composite key
+    // (geo_type, geo_code) is what every signal_* row references.
+    name: "geo_entities",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS geo_entities (
+        geo_type TEXT NOT NULL,
+        geo_code TEXT NOT NULL,
+        name TEXT,
+        latitude DOUBLE PRECISION,
+        longitude DOUBLE PRECISION,
+        country TEXT,
+        boundary_version TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        PRIMARY KEY (geo_type, geo_code)
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_geo_entities_country ON geo_entities (country)`,
+    ],
+  },
+  {
+    // The ONS spine (ONSPD/NSPL): postcode -> OA/LSOA/MSOA/LAD/region.
+    // Boundary-versioned (2011 vs 2021 is a real gotcha). Postcode is stored
+    // normalized (uppercased, single internal space) as the primary key.
+    name: "geo_lookup",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS geo_lookup (
+        postcode TEXT PRIMARY KEY,
+        oa_code TEXT,
+        lsoa_code TEXT,
+        msoa_code TEXT,
+        lad_code TEXT,
+        lad_name TEXT,
+        region TEXT,
+        country TEXT,
+        latitude DOUBLE PRECISION,
+        longitude DOUBLE PRECISION,
+        boundary_version TEXT
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_geo_lookup_lsoa ON geo_lookup (lsoa_code)`,
+      `CREATE INDEX IF NOT EXISTS idx_geo_lookup_lad ON geo_lookup (lad_code)`,
+    ],
+  },
+  {
+    // Provenance of each ingest: which source, what release, when ingested,
+    // licence + checksum + row count. Every signal_value points at the
+    // snapshot it came from (lineage / auditability — part of the moat).
+    name: "source_snapshots",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS source_snapshots (
+        id TEXT PRIMARY KEY,
+        source TEXT NOT NULL,
+        release_date DATE,
+        ingested_at TIMESTAMPTZ DEFAULT NOW(),
+        licence TEXT,
+        checksum TEXT,
+        row_count INTEGER,
+        notes TEXT
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_source_snapshots_source
+        ON source_snapshots (source, ingested_at DESC)`,
+    ],
+  },
+  {
+    // The signal CATALOG: one row per signal key (e.g. crime.total_12m). The
+    // catalog metadata that mirrors the contract's Signal (category, unit,
+    // direction, source, methodology_version). Seeded by the refresh path,
+    // not here (the migrator is DDL-only).
+    name: "signals",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS signals (
+        key TEXT PRIMARY KEY,
+        category TEXT NOT NULL,
+        label TEXT NOT NULL,
+        unit TEXT,
+        direction TEXT NOT NULL DEFAULT 'neutral',
+        source TEXT NOT NULL,
+        methodology_version TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_signals_category ON signals (category)`,
+    ],
+  },
+  {
+    // The CURRENT value of each signal for each area (one row per
+    // signal+geo; history goes to signal_timeseries). raw_value (numeric) and
+    // raw_value_text (text) cover the contract's number | string union; the
+    // serve layer picks whichever is non-null. normalized_value is populated
+    // once the normalization models land.
+    name: "signal_values",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS signal_values (
+        signal_key TEXT NOT NULL,
+        geo_type TEXT NOT NULL,
+        geo_code TEXT NOT NULL,
+        raw_value DOUBLE PRECISION,
+        raw_value_text TEXT,
+        normalized_value DOUBLE PRECISION,
+        confidence NUMERIC(3,2),
+        confidence_reason TEXT,
+        source_snapshot_id TEXT,
+        observed_period TEXT,
+        engine_version TEXT,
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        PRIMARY KEY (signal_key, geo_type, geo_code)
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_signal_values_geo
+        ON signal_values (geo_type, geo_code)`,
+      `CREATE INDEX IF NOT EXISTS idx_signal_values_signal
+        ON signal_values (signal_key)`,
+    ],
+  },
+  {
+    // Percentile rank per signal+geo within a comparison scope
+    // (national | regional | lad | peer_group). scope_key carries the scope's
+    // identifier (region/lad code or peer-group id); national uses '' so the
+    // composite key stays well-defined (no NULLs in the PK).
+    name: "signal_percentiles",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS signal_percentiles (
+        signal_key TEXT NOT NULL,
+        geo_type TEXT NOT NULL,
+        geo_code TEXT NOT NULL,
+        scope TEXT NOT NULL,
+        scope_key TEXT NOT NULL DEFAULT '',
+        percentile NUMERIC(5,2),
+        computed_at TIMESTAMPTZ DEFAULT NOW(),
+        PRIMARY KEY (signal_key, geo_type, geo_code, scope, scope_key)
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_signal_percentiles_geo
+        ON signal_percentiles (geo_type, geo_code)`,
+    ],
+  },
+  {
+    // The MOAT asset: append-only historical snapshots, one row per
+    // signal+geo+observed_period. The UNIQUE-by-PK on observed_period makes
+    // monthly appends safe to re-run (no double-append). captured_at is when
+    // WE snapshotted it; observed_period is what the value describes.
+    name: "signal_timeseries",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS signal_timeseries (
+        signal_key TEXT NOT NULL,
+        geo_type TEXT NOT NULL,
+        geo_code TEXT NOT NULL,
+        observed_period TEXT NOT NULL,
+        raw_value DOUBLE PRECISION,
+        raw_value_text TEXT,
+        normalized_value DOUBLE PRECISION,
+        confidence NUMERIC(3,2),
+        source_snapshot_id TEXT,
+        engine_version TEXT,
+        captured_at TIMESTAMPTZ DEFAULT NOW(),
+        PRIMARY KEY (signal_key, geo_type, geo_code, observed_period)
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_signal_timeseries_series
+        ON signal_timeseries (signal_key, geo_type, geo_code, observed_period DESC)`,
+    ],
+  },
 ];

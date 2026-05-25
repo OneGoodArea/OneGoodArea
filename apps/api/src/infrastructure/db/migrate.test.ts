@@ -52,6 +52,31 @@ describe("db migrate", () => {
     }
   });
 
+  it("includes the signal store tables (restructure Phase 1)", () => {
+    const names = MIGRATIONS.map((m) => m.name);
+    for (const table of [
+      "geo_entities",
+      "geo_lookup",
+      "source_snapshots",
+      "signals",
+      "signal_values",
+      "signal_percentiles",
+      "signal_timeseries",
+    ]) {
+      expect(names).toContain(table);
+    }
+  });
+
+  it("orders signal_values + signal_timeseries after the geo + catalog tables", () => {
+    // Without FK constraints this is convention not enforcement, but keeping the
+    // logical order (geo + catalog before the values that reference them) keeps
+    // the registry readable and a future FK migration trivial.
+    const names = MIGRATIONS.map((m) => m.name);
+    expect(names.indexOf("geo_entities")).toBeLessThan(names.indexOf("signal_values"));
+    expect(names.indexOf("signals")).toBeLessThan(names.indexOf("signal_values"));
+    expect(names.indexOf("signals")).toBeLessThan(names.indexOf("signal_timeseries"));
+  });
+
   it("has no duplicate table names", () => {
     const names = MIGRATIONS.map((m) => m.name);
     expect(new Set(names).size).toBe(names.length);
