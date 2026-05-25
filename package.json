@@ -19,9 +19,9 @@
     "test:api": "./test_files/simple-run.sh"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.95.2",
+    "@anthropic-ai/sdk": "^0.98.0",
     "@neondatabase/serverless": "^1.1.0",
-    "@scalar/api-reference-react": "^0.9.34",
+    "@scalar/api-reference-react": "^0.9.41",
     "@sentry/nextjs": "^10.53.1",
     "@vercel/analytics": "^2.0.1",
     "jspdf": "^4.2.1",
@@ -37,7 +37,7 @@
     "@types/node": "^25",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@vitest/coverage-v8": "^4.1.6",
+    "@vitest/coverage-v8": "^4.1.7",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "msw": "^2.14.6",
