@@ -230,4 +230,4 @@ public/openapi.json                 OpenAPI 3.0 spec
 
 ## License
 
-See [`LICENSE`](./LICENSE). Source-available for portfolio and audit reference. Not open source. Commercial use requires written permission.
+All rights reserved. This is proprietary software. No license is granted to use, copy, modify, or distribute it. Commercial use requires written permission.
