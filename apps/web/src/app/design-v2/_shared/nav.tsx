@@ -6,20 +6,36 @@ import { useSession } from "next-auth/react";
 import { Wordmark } from "./wordmark";
 import { ThemeDot } from "./theme-dot";
 
-/* Nav - structure mirrors the live product nav (Business / API / Pricing /
-   About / Theme / Dashboard/Sign In). Dressed in the design-v2 language:
-   Fraunces wordmark, mono small-caps links, chartreuse slide-in underline on
-   hover, bespoke theme dot, hairline dividers. Mobile hamburger + drawer at
-   <=720px (matches the existing rule hiding the desktop links).
+/* Nav — Plotted brand v3 (AR-152).
 
-   AR-148: Pricing entry is a dropdown (hover on desktop, expandable group
-   in mobile drawer) so MCP server gets a top-level discovery surface
-   alongside the regular API pricing page. */
+   Layout: Wordmark left, Beta chip, flex spacer, Title Case nav items,
+   ThemeDot, primary CTA. 64px tall, sticky, 1px hairline bottom border.
+   Two-color, no chartreuse, no blur. Mobile hamburger preserved.
+
+   Pricing entry is a dropdown so MCP server gets a top-level surface
+   alongside API pricing (AR-148 IA preserved). */
 
 type NavChild = { label: string; href: string; badge?: string };
 type NavEntry = { label: string; href: string; children?: NavChild[] };
 
+/* Center-of-nav items — Methodology moves to the right CTA cluster
+   so it sits beside Get Started as a distinct secondary action. */
 const LINKS: NavEntry[] = [
+  { label: "Business",    href: "/business" },
+  { label: "API",         href: "/docs" },
+  {
+    label: "Pricing",
+    href: "/pricing",
+    children: [
+      { label: "API pricing", href: "/pricing" },
+      { label: "MCP server",  href: "/docs/mcp", badge: "NEW" },
+    ],
+  },
+  { label: "About",       href: "/about" },
+];
+
+/* Mobile drawer still shows all six routes */
+const MOBILE_LINKS: NavEntry[] = [
   { label: "Business",    href: "/business" },
   { label: "API",         href: "/docs" },
   { label: "Methodology", href: "/methodology" },
@@ -36,14 +52,29 @@ const LINKS: NavEntry[] = [
 
 export function Nav() {
   const [scrolled, setScrolled] = useState(false);
+  const [overDarkHero, setOverDarkHero] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { data: session } = useSession();
   const isSignedIn = !!session;
 
   useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 8);
+    const fn = () => {
+      setScrolled(window.scrollY > 8);
+      // Nav adopts dark surface when its bottom edge is still over a
+      // .oga-hero-dark element. Recomputes on every scroll so the nav
+      // flips back to light when the user scrolls past the hero.
+      const hero = document.querySelector(".oga-hero-dark") as HTMLElement | null;
+      if (!hero) { setOverDarkHero(false); return; }
+      const rect = hero.getBoundingClientRect();
+      setOverDarkHero(rect.bottom > 60);
+    };
+    fn();
     window.addEventListener("scroll", fn, { passive: true });
-    return () => window.removeEventListener("scroll", fn);
+    window.addEventListener("resize", fn);
+    return () => {
+      window.removeEventListener("scroll", fn);
+      window.removeEventListener("resize", fn);
+    };
   }, []);
 
   useEffect(() => {
@@ -60,44 +91,32 @@ export function Nav() {
     };
   }, [drawerOpen]);
 
-  const ctaHref = isSignedIn ? "/dashboard" : "/sign-in";
-  const ctaLabel = isSignedIn ? "Dashboard" : "Sign In";
+  const ctaHref = isSignedIn ? "/dashboard" : "/sign-up";
+  const ctaLabel = isSignedIn ? "Dashboard" : "Get started";
 
   return (
     <>
       <nav
-        className={scrolled ? "aiq-nav-scrolled" : "aiq-nav-top"}
+        className={scrolled ? "oga-nav-glass" : ""}
+        data-oga-surface={overDarkHero ? "dark" : undefined}
         style={{
           position: "sticky", top: 0, zIndex: 50,
-          backdropFilter: scrolled ? "blur(14px) saturate(160%)" : "none",
-          borderBottom: `1px solid ${scrolled ? "var(--border)" : "transparent"}`,
-          transition: "all 220ms ease",
+          background: scrolled ? undefined : "transparent",
+          borderBottom: scrolled ? undefined : "1px solid transparent",
+          transition: "background var(--oga-dur) var(--oga-ease), border-color var(--oga-dur) var(--oga-ease), color var(--oga-dur) var(--oga-ease)",
         }}
       >
         <div className="aiq-nav-row" style={{
-          maxWidth: 1240, margin: "0 auto", padding: "0 40px",
-          height: 64, display: "flex", alignItems: "center", gap: 24,
+          maxWidth: 1320, margin: "0 auto", padding: "0 28px 0 56px",
+          height: 52, display: "flex", alignItems: "center", gap: 12,
+          color: "var(--oga-fg)",
         }}>
-          <Wordmark href="/" size={22} />
-          <span className="aiq-nav-beta" style={{
-            fontFamily: "var(--mono)", fontSize: 9, fontWeight: 500,
-            letterSpacing: "0.22em", textTransform: "uppercase",
-            color: "var(--ink)", padding: "3px 7px 2px",
-            border: "1px solid var(--border)", borderRadius: 2,
-            background: "var(--bg-off)",
-            display: "inline-flex", alignItems: "center", gap: 5, lineHeight: 1,
-          }}>
-            <span aria-hidden style={{
-              width: 4, height: 4, borderRadius: 4, background: "var(--signal)",
-              boxShadow: "0 0 0 1.5px rgba(212,243,58,0.28)",
-            }} />
-            Beta
-          </span>
+          <Wordmark href="/" size={18} />
 
           <div style={{ flex: 1 }} />
 
           <div className="aiq-nav-links" style={{
-            display: "flex", alignItems: "center", gap: 26,
+            display: "flex", alignItems: "center", gap: 2,
           }}>
             {LINKS.map((l) => (
               l.children
@@ -106,41 +125,23 @@ export function Nav() {
             ))}
           </div>
 
-          <span aria-hidden className="aiq-nav-div" style={{
-            width: 1, height: 20, background: "var(--border)",
-          }} />
+          <div style={{ flex: 1 }} />
 
-          <ThemeDot />
-
-          <span aria-hidden className="aiq-nav-div" style={{
-            width: 1, height: 20, background: "var(--border)",
-          }} />
-
-          <Link
-            href={ctaHref}
-            className="aiq-nav-cta-desktop"
-            style={{
-              fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-              letterSpacing: "0.14em", textTransform: "uppercase",
-              color: "var(--signal-ink)", background: "var(--signal)",
-              padding: "9px 16px", borderRadius: 999, textDecoration: "none",
-              border: "1px solid var(--ink-deep)",
-              display: "inline-flex", alignItems: "center", gap: 8,
-              transition: "transform 140ms cubic-bezier(0.16,1,0.3,1), box-shadow 140ms",
-              boxShadow: "0 1px 0 rgba(6,42,30,0.04)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-1px)";
-              e.currentTarget.style.boxShadow = "0 6px 16px rgba(6,42,30,0.12)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 1px 0 rgba(6,42,30,0.04)";
-            }}
-          >
-            {ctaLabel}
-            <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
-          </Link>
+          <div className="aiq-nav-cluster aiq-nav-cta-desktop" style={{
+            display: "flex", alignItems: "center", gap: 8,
+          }}>
+            <Link href="/methodology" className="oga-btn oga-btn-secondary">
+              Methodology
+            </Link>
+            <Link href={ctaHref} className="oga-btn oga-btn-primary">
+              {ctaLabel}
+            </Link>
+            <span aria-hidden style={{
+              width: 1, height: 20, background: "var(--oga-border)",
+              marginLeft: 4, marginRight: 4,
+            }} />
+            <ThemeDot />
+          </div>
 
           <button
             type="button"
@@ -150,16 +151,17 @@ export function Nav() {
             onClick={() => setDrawerOpen(true)}
             style={{
               display: "none",
-              width: 40, height: 40, padding: 0,
+              width: 38, height: 38, padding: 0,
               alignItems: "center", justifyContent: "center",
-              border: "1px solid var(--border)",
-              background: "var(--bg-off)",
-              borderRadius: 4, cursor: "pointer",
-              color: "var(--ink-deep)",
+              border: "1px solid var(--oga-border)",
+              background: "transparent",
+              borderRadius: "var(--oga-radius-md)",
+              cursor: "pointer",
+              color: "var(--oga-fg)",
             }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
             </svg>
           </button>
         </div>
@@ -175,6 +177,7 @@ export function Nav() {
       <aside
         className={`aiq-nav-drawer${drawerOpen ? " aiq-drawer-open" : ""}`}
         aria-hidden={!drawerOpen}
+        style={{ color: "var(--oga-fg)", background: "var(--oga-bg)" }}
       >
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -188,21 +191,21 @@ export function Nav() {
             style={{
               width: 36, height: 36, padding: 0,
               display: "inline-flex", alignItems: "center", justifyContent: "center",
-              border: "1px solid var(--border)",
-              background: "var(--bg-off)",
-              borderRadius: 4, cursor: "pointer",
-              color: "var(--ink-deep)",
+              border: "1px solid var(--oga-border)",
+              background: "transparent",
+              borderRadius: "var(--oga-radius-md)", cursor: "pointer",
+              color: "var(--oga-fg)",
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
             </svg>
           </button>
         </div>
 
         <nav style={{
           display: "flex", flexDirection: "column",
-          borderTop: "1px solid var(--border)",
+          borderTop: "1px solid var(--oga-border)",
         }}>
           {LINKS.map((l) => (
             l.children
@@ -214,16 +217,16 @@ export function Nav() {
                   onClick={() => setDrawerOpen(false)}
                   style={{
                     padding: "16px 4px",
-                    borderBottom: "1px solid var(--border)",
-                    fontFamily: "var(--display)", fontSize: 22, fontWeight: 400,
-                    color: "var(--ink-deep)", letterSpacing: "-0.01em",
+                    borderBottom: "1px solid var(--oga-border)",
+                    fontFamily: "var(--oga-font-sans)", fontSize: 20, fontWeight: 500,
+                    color: "var(--oga-fg)", letterSpacing: "-0.012em",
                     textDecoration: "none",
                     display: "flex", alignItems: "center", justifyContent: "space-between",
                   }}
                 >
                   {l.label}
                   <span aria-hidden style={{
-                    fontFamily: "var(--sans)", fontSize: 16, color: "var(--text-3)",
+                    fontFamily: "var(--oga-font-sans)", fontSize: 16, color: "var(--oga-fg-muted)",
                   }}>{"→"}</span>
                 </Link>
               )
@@ -234,14 +237,11 @@ export function Nav() {
 
         <div style={{
           marginTop: 28, paddingTop: 24,
-          borderTop: "1px solid var(--border)",
+          borderTop: "1px solid var(--oga-border)",
           display: "flex", flexDirection: "column", gap: 16,
         }}>
-          <div style={{
+          <div className="oga-label" style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-            letterSpacing: "0.2em", textTransform: "uppercase",
-            color: "var(--text-2)",
           }}>
             Theme
             <ThemeDot />
@@ -250,18 +250,10 @@ export function Nav() {
           <Link
             href={ctaHref}
             onClick={() => setDrawerOpen(false)}
-            style={{
-              fontFamily: "var(--mono)", fontSize: 12, fontWeight: 500,
-              letterSpacing: "0.14em", textTransform: "uppercase",
-              color: "var(--signal-ink)", background: "var(--signal)",
-              padding: "14px 20px", borderRadius: 999, textDecoration: "none",
-              border: "1px solid var(--ink-deep)",
-              display: "inline-flex", alignItems: "center", justifyContent: "center",
-              gap: 10,
-            }}
+            className="oga-btn oga-btn-lg oga-btn-primary"
+            style={{ justifyContent: "center", width: "100%" }}
           >
             {ctaLabel}
-            <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 14 }}>→</span>
           </Link>
         </div>
       </aside>
@@ -270,40 +262,16 @@ export function Nav() {
 }
 
 function NavLink({ href, label }: { href: string; label: string }) {
-  const [hover, setHover] = useState(false);
   return (
-    <Link
-      href={href}
-      style={{
-        fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-        letterSpacing: "0.18em", textTransform: "uppercase",
-        color: hover ? "var(--ink-deep)" : "var(--text-2)",
-        textDecoration: "none", position: "relative",
-        paddingBottom: 6, transition: "color 140ms ease",
-        display: "inline-block",
-      }}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-    >
-      {label}
-      <span aria-hidden style={{
-        position: "absolute", left: 0, right: 0, bottom: 0,
-        height: 2, background: "var(--signal)",
-        transform: hover ? "scaleX(1)" : "scaleX(0)",
-        transformOrigin: "left center",
-        transition: "transform 260ms cubic-bezier(0.16,1,0.3,1)",
-      }} />
-    </Link>
+    <Link href={href} className="oga-nav-link">{label}</Link>
   );
 }
 
-/* Desktop dropdown · trigger link still navigates to entry.href on click,
-   so users on touch (no hover) can still get to the primary destination.
-   Hover or keyboard focus on the wrapper opens the panel; ESC or
-   click-outside closes it. */
+/* Desktop dropdown — trigger link still navigates to entry.href on click,
+   so touch (no hover) still gets to the primary destination. Hover or
+   keyboard focus opens the panel; ESC or click-outside closes it. */
 function NavDropdown({ entry }: { entry: NavEntry }) {
   const [open, setOpen] = useState(false);
-  const [hover, setHover] = useState(false);
   const wrapRef = useRef<HTMLSpanElement | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -317,15 +285,8 @@ function NavDropdown({ entry }: { entry: NavEntry }) {
       closeTimer.current = null;
     }
   }
-  function handleEnter() {
-    cancelClose();
-    setOpen(true);
-    setHover(true);
-  }
-  function handleLeave() {
-    setHover(false);
-    scheduleClose();
-  }
+  function handleEnter() { cancelClose(); setOpen(true); }
+  function handleLeave() { scheduleClose(); }
 
   useEffect(() => {
     if (!open) return;
@@ -341,11 +302,6 @@ function NavDropdown({ entry }: { entry: NavEntry }) {
     };
   }, [open]);
 
-  /* Wrapper is inline-flex so it has no inline strut / line-box — its height
-     is exactly the trigger Link's height, and the navbar's flex-row centers
-     it identically to bare <Link> siblings (NavLink). Without inline-flex,
-     the span's default line-box adds strut-baseline space and pushes the
-     text down vs. adjacent items. */
   return (
     <span
       ref={wrapRef}
@@ -358,32 +314,16 @@ function NavDropdown({ entry }: { entry: NavEntry }) {
         aria-haspopup="menu"
         aria-expanded={open}
         onFocus={() => setOpen(true)}
-        style={{
-          fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-          letterSpacing: "0.18em", textTransform: "uppercase",
-          color: hover || open ? "var(--ink-deep)" : "var(--text-2)",
-          textDecoration: "none", position: "relative",
-          paddingBottom: 6, transition: "color 140ms ease",
-          display: "inline-block",
-        }}
+        className="oga-nav-link"
+        data-active={open ? "true" : "false"}
       >
         {entry.label}
         <span aria-hidden style={{
-          marginLeft: 5,
-          fontFamily: "var(--mono)", fontSize: 8,
-          display: "inline-block",
+          fontSize: 9,
+          marginLeft: 2,
           transform: open ? "translateY(-1px) rotate(180deg)" : "translateY(-1px) rotate(0deg)",
-          transition: "transform 200ms ease",
-          color: "currentColor",
-          verticalAlign: "middle",
+          transition: "transform var(--oga-dur) var(--oga-ease)",
         }}>{"▾"}</span>
-        <span aria-hidden style={{
-          position: "absolute", left: 0, right: 0, bottom: 0,
-          height: 2, background: "var(--signal)",
-          transform: hover || open ? "scaleX(1)" : "scaleX(0)",
-          transformOrigin: "left center",
-          transition: "transform 260ms cubic-bezier(0.16,1,0.3,1)",
-        }} />
       </Link>
 
       <div
@@ -391,17 +331,17 @@ function NavDropdown({ entry }: { entry: NavEntry }) {
         aria-hidden={!open}
         style={{
           position: "absolute",
-          top: "calc(100% + 10px)", left: -14,
+          top: "calc(100% + 4px)", left: 0,
           minWidth: 240,
-          background: "var(--bg)",
-          border: "1px solid var(--border)",
-          borderRadius: 4,
-          boxShadow: "0 16px 40px -12px rgba(6,42,30,0.18), 0 2px 6px rgba(6,42,30,0.06)",
+          background: "var(--oga-bg)",
+          border: "1px solid var(--oga-border)",
+          borderRadius: "2px",
+          boxShadow: "var(--oga-shadow-md)",
           padding: 6,
           opacity: open ? 1 : 0,
           transform: open ? "translateY(0)" : "translateY(-4px)",
           pointerEvents: open ? "auto" : "none",
-          transition: "opacity 180ms ease, transform 200ms cubic-bezier(0.16,1,0.3,1)",
+          transition: "opacity var(--oga-dur) var(--oga-ease), transform var(--oga-dur) var(--oga-ease)",
           zIndex: 60,
         }}
       >
@@ -424,34 +364,36 @@ function NavDropdownItem({ child }: { child: NavChild }) {
       style={{
         display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
         padding: "10px 12px",
-        fontFamily: "var(--sans)", fontSize: 14, fontWeight: 500,
-        color: itemHover ? "var(--ink-deep)" : "var(--ink)",
-        background: itemHover ? "var(--bg-off)" : "transparent",
-        borderRadius: 3, textDecoration: "none",
+        fontFamily: "var(--oga-font-sans)", fontSize: 14, fontWeight: 500,
+        color: "var(--oga-fg)",
+        background: itemHover ? "var(--oga-green-06)" : "transparent",
+        borderRadius: "2px", textDecoration: "none",
         letterSpacing: "-0.005em",
-        transition: "background 140ms ease, color 140ms ease",
+        transition: "background var(--oga-dur-fast) var(--oga-ease)",
       }}
     >
       <span>{child.label}</span>
       {child.badge && (
         <span style={{
-          fontFamily: "var(--mono)", fontSize: 9, fontWeight: 600,
-          letterSpacing: "0.22em", textTransform: "uppercase",
-          color: "var(--signal-ink)", background: "var(--signal)",
-          padding: "3px 7px 2px", borderRadius: 2,
-          border: "1px solid var(--ink-deep)",
+          fontFamily: "var(--oga-font-mono)", fontSize: 9, fontWeight: 500,
+          letterSpacing: "0.2em", textTransform: "uppercase",
+          color: "var(--oga-status-green)",
+          padding: "3px 7px 2px",
+          border: "1px solid var(--oga-status-green)",
+          background: "var(--oga-status-green-bg)",
+          borderRadius: "var(--oga-radius-pill)",
         }}>{child.badge}</span>
       )}
     </Link>
   );
 }
 
-/* Mobile drawer · expandable group. Tapping the parent toggles the group
-   open. Children render indented underneath. */
+/* Mobile drawer — expandable group. Tapping the parent toggles open;
+   children render indented underneath. */
 function MobileNavGroup({ entry, onNavigate }: { entry: NavEntry; onNavigate: () => void }) {
   const [open, setOpen] = useState(false);
   return (
-    <div style={{ borderBottom: "1px solid var(--border)" }}>
+    <div style={{ borderBottom: "1px solid var(--oga-border)" }}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -459,8 +401,8 @@ function MobileNavGroup({ entry, onNavigate }: { entry: NavEntry; onNavigate: ()
         style={{
           width: "100%",
           padding: "16px 4px",
-          fontFamily: "var(--display)", fontSize: 22, fontWeight: 400,
-          color: "var(--ink-deep)", letterSpacing: "-0.01em",
+          fontFamily: "var(--oga-font-sans)", fontSize: 20, fontWeight: 500,
+          color: "var(--oga-fg)", letterSpacing: "-0.012em",
           textDecoration: "none",
           display: "flex", alignItems: "center", justifyContent: "space-between",
           background: "transparent", border: "none", cursor: "pointer",
@@ -468,15 +410,15 @@ function MobileNavGroup({ entry, onNavigate }: { entry: NavEntry; onNavigate: ()
       >
         {entry.label}
         <span aria-hidden style={{
-          fontFamily: "var(--sans)", fontSize: 16, color: "var(--text-3)",
+          fontFamily: "var(--oga-font-sans)", fontSize: 16, color: "var(--oga-fg-muted)",
           transform: open ? "rotate(90deg)" : "rotate(0deg)",
-          transition: "transform 200ms ease",
+          transition: "transform var(--oga-dur) var(--oga-ease)",
         }}>{"→"}</span>
       </button>
       <div style={{
         maxHeight: open ? 200 : 0,
         overflow: "hidden",
-        transition: "max-height 280ms cubic-bezier(0.16,1,0.3,1)",
+        transition: "max-height var(--oga-dur-slow) var(--oga-ease)",
       }}>
         <div style={{ padding: "0 4px 14px 18px", display: "flex", flexDirection: "column", gap: 6 }}>
           {entry.children!.map((child) => (
@@ -486,19 +428,21 @@ function MobileNavGroup({ entry, onNavigate }: { entry: NavEntry; onNavigate: ()
               onClick={onNavigate}
               style={{
                 padding: "10px 0",
-                fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500,
-                color: "var(--ink)", textDecoration: "none",
+                fontFamily: "var(--oga-font-sans)", fontSize: 15, fontWeight: 500,
+                color: "var(--oga-fg)", textDecoration: "none",
                 display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
               }}
             >
               <span>{child.label}</span>
               {child.badge && (
                 <span style={{
-                  fontFamily: "var(--mono)", fontSize: 9, fontWeight: 600,
-                  letterSpacing: "0.22em", textTransform: "uppercase",
-                  color: "var(--signal-ink)", background: "var(--signal)",
-                  padding: "3px 7px 2px", borderRadius: 2,
-                  border: "1px solid var(--ink-deep)",
+                  fontFamily: "var(--oga-font-mono)", fontSize: 9, fontWeight: 500,
+                  letterSpacing: "0.2em", textTransform: "uppercase",
+                  color: "var(--oga-status-green)",
+                  padding: "3px 7px 2px",
+                  border: "1px solid var(--oga-status-green)",
+                  background: "var(--oga-status-green-bg)",
+                  borderRadius: "var(--oga-radius-pill)",
                 }}>{child.badge}</span>
               )}
             </Link>

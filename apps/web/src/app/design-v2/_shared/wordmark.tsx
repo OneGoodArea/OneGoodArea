@@ -4,61 +4,61 @@ import React from "react";
 import Link from "next/link";
 import { Mark } from "./mark";
 
-/* ═══════════════════════════════════════════════════════════════
-   Wordmark · single source of truth for the OneGoodArea logo.
-   - Same proportions, same typography, same italic+chartreuse
-     accent on "Good" everywhere.
-   - `size` scales Mark + font proportionally.
-   - `tone` only changes when the surface demands it:
-       "light" (default): forest-ink on white / cream · the norm.
-       "dark":  white ink on ink-deep / dark backgrounds.
-   - `href` wraps the mark in a Link when provided; otherwise
-     renders a plain span so it can sit inside other links.
-   ═══════════════════════════════════════════════════════════════ */
+/* Wordmark — Plotted brand v3 (AR-152).
+
+   The MARK dominates. Text "onegoodarea" sits next to it at smaller
+   size. Mark scales independently of text via the markSize prop or
+   defaults to 1.6x the text size (min 32px so the dot grid always
+   renders crisp). On hover (when href is provided), the mark gently
+   rotates 6deg — bespoke interaction tied to the brand's grid form. */
 
 export type WordmarkTone = "light" | "dark";
 
 type WordmarkProps = {
-  size?: number;            // Font-size in px; Mark scales to ~92% of this
+  size?: number;
+  markSize?: number;
   tone?: WordmarkTone;
   href?: string;
   className?: string;
+  interactive?: boolean;
 };
 
 export function Wordmark({
-  size = 22, tone = "light", href, className,
+  size = 21,
+  markSize,
+  tone,
+  href,
+  className,
+  interactive,
 }: WordmarkProps) {
-  // Mark scales proportionally. 22px font → 22px mark; 26px font → ~24px mark.
-  const markSize = Math.round(size * 1.0);
+  const resolvedMarkSize = markSize ?? Math.max(Math.round(size * 2), 40);
+  const color =
+    tone === "dark" ? "var(--oga-white)" :
+    tone === "light" ? "var(--oga-green)" :
+    "currentColor";
 
-  const ink     = tone === "dark" ? "#FFFFFF"                          : "var(--ink-deep)";
-  const inkGood = tone === "dark" ? "var(--signal)"                    : "var(--ink)";
-  const under   = "var(--signal)";
+  const isInteractive = interactive ?? Boolean(href);
 
   const content = (
     <span
-      className={className}
+      className={`${className ?? ""} oga-wordmark${isInteractive ? " oga-wordmark-interactive" : ""}`}
       style={{
-        display: "inline-flex", alignItems: "center", gap: Math.round(size * 0.46),
+        display: "inline-flex", alignItems: "center",
+        gap: Math.round(size * 0.5),
         textDecoration: "none", lineHeight: 1,
+        color,
       }}
     >
-      <Mark size={markSize} tone={tone} />
+      <Mark size={resolvedMarkSize} tone={tone} className="oga-wordmark-mark" />
       <span style={{
-        fontFamily: "var(--display)",
+        fontFamily: "var(--oga-font-sans)",
         fontSize: size,
-        fontWeight: 400,
-        letterSpacing: "-0.02em",
-        color: ink,
+        fontWeight: 500,
+        letterSpacing: "-0.022em",
+        color: "currentColor",
         lineHeight: 1,
       }}>
-        One<span style={{
-          fontStyle: "italic",
-          color: inkGood,
-          borderBottom: `2px solid ${under}`,
-          margin: "0 1px",
-          paddingBottom: 1,
-        }}>Good</span>Area
+        onegoodarea
       </span>
     </span>
   );

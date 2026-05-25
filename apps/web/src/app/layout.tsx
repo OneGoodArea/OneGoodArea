@@ -4,6 +4,9 @@ import { ToastProvider } from "@/components/toast";
 import { PageviewTracker } from "@/components/pageview-tracker";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
+import "@/styles/brand/tokens.css";
+import "@/styles/brand/components.css";
+import "@/styles/brand/backgrounds.css";
 
 /* Fonts are loaded via @import in globals.css from Google Fonts —
    identical setup to the live site so Fraunces / Inter / Geist Mono
@@ -42,18 +45,18 @@ export default function RootLayout({
     <SessionProvider>
       <html lang="en" suppressHydrationWarning>
         <head>
-          {/* Google Fonts — Fraunces (display) + Inter (sans) + Geist Mono.
-              preconnect so the woff2 fetches start as early as possible.
-              Same URL as the live site so rendering matches exactly. */}
+          {/* Google Fonts. Fraunces + Inter retire when AR-150 PR #2 ships
+              the shared shell on Geist; loaded together for now so no live
+              route hits a missing-font flash during the brand transition. */}
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
           <link
             rel="stylesheet"
-            href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap"
           />
           <script
             dangerouslySetInnerHTML={{
-              __html: `(function(){try{var t=localStorage.getItem("aiq-theme");if(t==="dark"||t==="light"){document.documentElement.setAttribute("data-theme",t)}}catch(e){}})()`,
+              __html: `(function(){try{var t=localStorage.getItem("aiq-theme");if(t==="dark"||t==="light"){document.documentElement.setAttribute("data-theme",t);if(t==="dark"){var b=function(){document.body&&document.body.setAttribute("data-oga-surface","dark")};if(document.body){b()}else{document.addEventListener("DOMContentLoaded",b,{once:true})}}}}catch(e){}})()`,
             }}
           />
           <meta name="msvalidate.01" content="PENDING" />

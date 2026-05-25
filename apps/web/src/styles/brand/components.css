@@ -1,0 +1,2374 @@
+/* ============================================================
+   OneGoodArea — Brand v3 (Plotted) — Components & Motif
+   Depends on tokens.css. Class prefix: .oga-*
+   ============================================================ */
+
+/* ---------- Base ---------- */
+.oga-root {
+  background: var(--oga-canvas);
+  color: var(--oga-fg);
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-body);
+  line-height: var(--oga-lh-body);
+  font-feature-settings: "ss01", "cv11";
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Type ---------- */
+.oga-eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-label {
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-label);
+  letter-spacing: var(--oga-tracking-mono);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-h1 { font-family: var(--oga-font-sans); font-size: var(--oga-fs-h1); font-weight: 500; line-height: var(--oga-lh-tight); letter-spacing: var(--oga-tracking-tight); text-wrap: balance; }
+.oga-h2 { font-family: var(--oga-font-sans); font-size: var(--oga-fs-h2); font-weight: 500; line-height: var(--oga-lh-tight); letter-spacing: var(--oga-tracking-tight); text-wrap: balance; }
+.oga-h3 { font-family: var(--oga-font-sans); font-size: var(--oga-fs-h3); font-weight: 500; line-height: var(--oga-lh-snug); letter-spacing: var(--oga-tracking-tight); }
+.oga-h4 { font-family: var(--oga-font-sans); font-size: var(--oga-fs-h4); font-weight: 500; line-height: var(--oga-lh-snug); letter-spacing: var(--oga-tracking-tight); }
+.oga-display { font-family: var(--oga-font-sans); font-size: var(--oga-fs-display); font-weight: 500; line-height: var(--oga-lh-tight); letter-spacing: var(--oga-tracking-tight); text-wrap: balance; }
+.oga-lead { font-family: var(--oga-font-sans); font-size: var(--oga-fs-lead); line-height: var(--oga-lh-snug); color: var(--oga-fg-subtle); text-wrap: pretty; }
+
+/* ---------- Buttons — Linear/Vercel/Stripe altitude ----------
+   Recipe (Apple HIG / Linear / shadcn-style craft):
+   • Subtle vertical gradient inside the button (top ~5% lighter)
+     fakes a soft light source — the "edge-lit material" look
+   • 1px inset top highlight in warm-white at ~12% → mimics
+     light catching the top edge
+   • Ambient soft shadow in forest green at low opacity → material
+     depth, not the heavy 2015 drop shadow
+   • 80ms scale-down + tighter shadow on :active → you feel it
+   • Within-palette gradients only (forest green ↔ its own tints,
+     warm white ↔ canvas). No third hue, brand stays two-color. */
+.oga-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 32px; padding: 0 14px;
+  font-family: var(--oga-font-sans); font-size: 13px; font-weight: 500;
+  letter-spacing: -0.005em;
+  border-radius: 2px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition:
+    background var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease),
+    transform 80ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.oga-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.oga-btn-sm { height: 26px; padding: 0 10px; font-size: 12px; }
+.oga-btn-lg { height: 38px; padding: 0 18px; font-size: 14px; }
+
+/* Primary — solid fill + visible darker hairline edge. */
+.oga-btn-primary {
+  background: var(--oga-green);
+  color: var(--oga-white);
+  border-color: #0F1014;
+}
+.oga-btn-primary:hover:not(:disabled) {
+  background: #2A2C30;
+  border-color: #08090C;
+}
+.oga-btn-primary:active:not(:disabled) { transform: scale(0.98); }
+
+/* Secondary — outline only, clearly visible. */
+.oga-btn-secondary {
+  background: transparent;
+  color: var(--oga-green);
+  border-color: rgba(26, 28, 31, 0.40);
+}
+.oga-btn-secondary:hover:not(:disabled) { border-color: var(--oga-green); }
+.oga-btn-secondary:active:not(:disabled) { transform: scale(0.98); }
+
+/* Ghost — invisible until needed */
+.oga-btn-ghost {
+  background: transparent;
+  color: var(--oga-green);
+  padding: 0 12px;
+  border-color: transparent;
+}
+.oga-btn-ghost:hover:not(:disabled) {
+  background: rgba(26, 28, 31, 0.06);
+}
+.oga-btn-ghost:active:not(:disabled) {
+  background: rgba(26, 28, 31, 0.10);
+  transform: scale(0.98);
+}
+
+/* Dark surface — inverted, hairline still visible against fill */
+[data-oga-surface="dark"] .oga-btn-primary,
+.oga-on-dark .oga-btn-primary {
+  background: var(--oga-white);
+  color: var(--oga-green);
+  border-color: rgba(26, 28, 31, 0.45);
+}
+[data-oga-surface="dark"] .oga-btn-primary:hover:not(:disabled),
+.oga-on-dark .oga-btn-primary:hover:not(:disabled) {
+  background: #EFECE6;
+  border-color: rgba(26, 28, 31, 0.60);
+}
+[data-oga-surface="dark"] .oga-btn-primary:active:not(:disabled),
+.oga-on-dark .oga-btn-primary:active:not(:disabled) { transform: scale(0.98); }
+
+[data-oga-surface="dark"] .oga-btn-secondary,
+.oga-on-dark .oga-btn-secondary {
+  background: transparent;
+  color: var(--oga-white);
+  border-color: rgba(250, 248, 244, 0.55);
+}
+[data-oga-surface="dark"] .oga-btn-secondary:hover:not(:disabled),
+.oga-on-dark .oga-btn-secondary:hover:not(:disabled) { border-color: var(--oga-white); }
+[data-oga-surface="dark"] .oga-btn-secondary:active:not(:disabled),
+.oga-on-dark .oga-btn-secondary:active:not(:disabled) { transform: scale(0.98); }
+
+[data-oga-surface="dark"] .oga-btn-ghost,
+.oga-on-dark .oga-btn-ghost { color: var(--oga-white); }
+[data-oga-surface="dark"] .oga-btn-ghost:hover:not(:disabled),
+.oga-on-dark .oga-btn-ghost:hover:not(:disabled) {
+  background: rgba(250, 248, 244, 0.08);
+}
+[data-oga-surface="dark"] .oga-btn-ghost:active:not(:disabled),
+.oga-on-dark .oga-btn-ghost:active:not(:disabled) {
+  background: rgba(250, 248, 244, 0.12);
+  transform: scale(0.98);
+}
+
+/* ---------- Card ---------- */
+.oga-card {
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-lg);
+  padding: var(--oga-6);
+}
+
+[data-oga-surface="dark"] .oga-card,
+.oga-on-dark .oga-card { background: rgba(250,248,244,0.04); border-color: rgba(250,248,244,0.16); }
+
+/* ---------- Divider ---------- */
+.oga-rule { height: 1px; background: var(--oga-border); border: 0; margin: var(--oga-5) 0; }
+
+/* ---------- Status pills + chips ---------- */
+.oga-status {
+  display: inline-flex; align-items: center; gap: var(--oga-2);
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-label);
+  letter-spacing: var(--oga-tracking-mono);
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: var(--oga-radius-pill);
+  border: 1px solid currentColor;
+}
+.oga-status-red    { color: var(--oga-status-red);    background: var(--oga-status-red-bg); }
+.oga-status-amber  { color: var(--oga-status-amber);  background: var(--oga-status-amber-bg); }
+.oga-status-yellow { color: var(--oga-status-yellow); background: var(--oga-status-yellow-bg); }
+.oga-status-green  { color: var(--oga-status-green);  background: var(--oga-status-green-bg); }
+
+/* ============================================================
+   THE MOTIF — Plotted dot field
+   Faint dot grid that echoes the mark.
+   ============================================================ */
+
+.oga-dot-field {
+  background-image: radial-gradient(circle, var(--oga-green-06) 1.2px, transparent 1.4px);
+  background-size: 14px 14px;
+  background-position: 0 0;
+}
+
+.oga-dot-fade-right {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 60%, black 100%);
+          mask-image: linear-gradient(to right, transparent 0%, black 60%, black 100%);
+}
+.oga-dot-fade-left {
+  -webkit-mask-image: linear-gradient(to left, transparent 0%, black 60%, black 100%);
+          mask-image: linear-gradient(to left, transparent 0%, black 60%, black 100%);
+}
+.oga-dot-fade-radial {
+  -webkit-mask-image: radial-gradient(ellipse at center, black 35%, transparent 80%);
+          mask-image: radial-gradient(ellipse at center, black 35%, transparent 80%);
+}
+
+/* ============================================================
+   THE MARK — Plotted logo
+   Inline SVG with currentColor; set color on the parent.
+   ============================================================ */
+.oga-mark    { width: 1em; height: 1em; display: inline-block; color: var(--oga-green); }
+.oga-mark-sm { width: 24px;  height: 24px; }
+.oga-mark-md { width: 40px;  height: 40px; }
+.oga-mark-lg { width: 72px;  height: 72px; }
+.oga-mark-xl { width: 128px; height: 128px; }
+
+[data-oga-surface="dark"] .oga-mark,
+.oga-on-dark .oga-mark { color: var(--oga-white); }
+
+/* App-icon tile (squircle) */
+.oga-icon-tile {
+  display: inline-grid; place-items: center;
+  width: 128px; height: 128px;
+  border-radius: var(--oga-radius-icon);
+  background: var(--oga-white);
+  color: var(--oga-green);
+  box-shadow: var(--oga-shadow-md);
+}
+.oga-icon-tile[data-variant="dark"] {
+  background: var(--oga-green);
+  color: var(--oga-white);
+}
+.oga-icon-tile > .oga-mark { width: 66%; height: 66%; }
+
+/* ============================================================
+   BESPOKE MICRO-DETAILS — Plotted dot motif as interaction
+   ============================================================ */
+
+/* Live pulse — small status dot that breathes. Use sparingly. */
+@keyframes oga-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.45; transform: scale(0.82); }
+}
+.oga-status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--oga-status-green);
+  flex-shrink: 0;
+  animation: oga-pulse 2.6s var(--oga-ease) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .oga-status-dot { animation: none; }
+}
+
+/* Theme-dot — surface-aware hover. Drives the global theme toggle. */
+.oga-theme-dot {
+  width: 28px; height: 28px;
+  border-radius: var(--oga-radius-sm);
+  border: 1px solid var(--oga-border);
+  background: transparent;
+  color: var(--oga-fg);
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; padding: 0; flex-shrink: 0;
+  transition: background var(--oga-dur-fast) var(--oga-ease),
+              border-color var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-theme-dot:hover {
+  background: rgba(26, 28, 31, 0.08);
+  border-color: var(--oga-fg);
+}
+[data-oga-surface="dark"] .oga-theme-dot:hover {
+  background: rgba(250, 248, 244, 0.10);
+}
+
+/* Glass nav — translucent warm-white with backdrop blur. Material
+   depth instead of a flat banner. Inverts on dark surface (either
+   the body or the nav itself carries data-oga-surface="dark"). */
+.oga-nav-glass {
+  background: linear-gradient(180deg, rgba(250, 248, 244, 0.86) 0%, rgba(250, 248, 244, 0.66) 100%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+          backdrop-filter: blur(14px) saturate(160%);
+  border-bottom: 1px solid rgba(26, 28, 31, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+[data-oga-surface="dark"] .oga-nav-glass,
+.oga-nav-glass[data-oga-surface="dark"] {
+  background: linear-gradient(180deg, rgba(15, 16, 20, 0.78) 0%, rgba(15, 16, 20, 0.58) 100%);
+  border-bottom-color: rgba(250, 248, 244, 0.08);
+  box-shadow: inset 0 1px 0 rgba(250, 248, 244, 0.08);
+}
+
+/* Nav over dark hero (transparent + light text) */
+nav[data-oga-surface="dark"] {
+  color: var(--oga-white);
+  --oga-fg: var(--oga-white);
+  --oga-fg-subtle: rgba(250, 248, 244, 0.65);
+  --oga-fg-muted: rgba(250, 248, 244, 0.50);
+  --oga-border: rgba(250, 248, 244, 0.14);
+}
+
+/* Postcode search — the product on display, inline in the nav.
+   Pill, hairline edge, subtle gradient bg, mono postcode field.
+   Focus ring is a soft green halo, not an outline. */
+.oga-nav-search {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-pill);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(250, 248, 244, 0.45) 100%);
+  padding: 0 4px 0 14px;
+  min-width: 320px;
+  gap: 10px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 1px 1px rgba(26, 28, 31, 0.03);
+  transition:
+    border-color var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease),
+    box-shadow var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-nav-search:focus-within {
+  border-color: rgba(26, 28, 31, 0.30);
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 3px rgba(26, 28, 31, 0.06);
+}
+.oga-nav-search__icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--oga-fg-muted);
+  flex-shrink: 0;
+}
+.oga-nav-search__input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  color: var(--oga-fg);
+  letter-spacing: -0.005em;
+  padding: 0;
+  width: 100%;
+  text-transform: uppercase;
+}
+.oga-nav-search__input::placeholder {
+  color: var(--oga-fg-muted);
+  text-transform: none;
+  letter-spacing: -0.005em;
+}
+.oga-nav-search__kbd {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--oga-fg-muted);
+  padding: 2px 6px;
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-sm);
+  background: rgba(26, 28, 31, 0.03);
+  flex-shrink: 0;
+  line-height: 1;
+  letter-spacing: 0.05em;
+}
+.oga-nav-search__submit {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #2A2C30 0%, #1A1C1F 100%);
+  color: var(--oga-white);
+  border: 1px solid rgba(15, 16, 20, 0.55);
+  cursor: pointer; padding: 0;
+  flex-shrink: 0;
+  box-shadow:
+    inset 0 1px 0 rgba(250, 248, 244, 0.14),
+    0 1px 1px rgba(15, 16, 20, 0.08);
+  transition:
+    background var(--oga-dur-fast) var(--oga-ease),
+    transform 80ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.oga-nav-search__submit:hover { background: linear-gradient(180deg, #303236 0%, #232529 100%); }
+.oga-nav-search__submit:active { transform: scale(0.92); }
+
+[data-oga-surface="dark"] .oga-nav-search,
+.oga-on-dark .oga-nav-search {
+  background: linear-gradient(180deg, rgba(250, 248, 244, 0.06) 0%, rgba(250, 248, 244, 0.02) 100%);
+  border-color: rgba(250, 248, 244, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(250, 248, 244, 0.08),
+    0 1px 1px rgba(0, 0, 0, 0.20);
+}
+[data-oga-surface="dark"] .oga-nav-search:focus-within,
+.oga-on-dark .oga-nav-search:focus-within {
+  border-color: rgba(250, 248, 244, 0.40);
+  background: linear-gradient(180deg, rgba(250, 248, 244, 0.10) 0%, rgba(250, 248, 244, 0.05) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(250, 248, 244, 0.12),
+    0 0 0 3px rgba(250, 248, 244, 0.06);
+}
+[data-oga-surface="dark"] .oga-nav-search__input,
+.oga-on-dark .oga-nav-search__input { color: var(--oga-white); }
+[data-oga-surface="dark"] .oga-nav-search__kbd,
+.oga-on-dark .oga-nav-search__kbd {
+  border-color: rgba(250, 248, 244, 0.14);
+  background: rgba(250, 248, 244, 0.04);
+}
+[data-oga-surface="dark"] .oga-nav-search__submit,
+.oga-on-dark .oga-nav-search__submit {
+  background: linear-gradient(180deg, #FFFFFF 0%, #EFECE6 100%);
+  color: var(--oga-green);
+  border-color: rgba(26, 28, 31, 0.18);
+}
+
+/* Nav link — square glassmorphism hover. Background blurs the
+   content behind it on hover; sharp corners, hairline edge on hover. */
+.oga-nav-link {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-fg-subtle);
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 2px;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1;
+  background: transparent;
+  transition:
+    color var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease);
+}
+/* Flat, square hover — matches the .oga-btn-ghost treatment. No
+   glassmorphism, no rounded pill: 2px radius + subtle solid wash. */
+.oga-nav-link:hover,
+.oga-nav-link[data-active="true"] {
+  color: var(--oga-fg);
+  background: rgba(26, 28, 31, 0.06);
+  border-color: transparent;
+}
+[data-oga-surface="dark"] .oga-nav-link:hover,
+[data-oga-surface="dark"] .oga-nav-link[data-active="true"],
+.oga-on-dark .oga-nav-link:hover,
+.oga-on-dark .oga-nav-link[data-active="true"] {
+  background: rgba(250, 248, 244, 0.08);
+  border-color: transparent;
+}
+
+/* Wordmark — mark rotates 6deg on hover. The grid itself becomes
+   the interaction. Bespoke to Plotted; no other mark could do this. */
+.oga-wordmark-mark {
+  transition: transform var(--oga-dur-slow) var(--oga-ease);
+  transform-origin: center;
+}
+.oga-wordmark-interactive:hover .oga-wordmark-mark {
+  transform: rotate(6deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .oga-wordmark-mark { transition: none; }
+  .oga-wordmark-interactive:hover .oga-wordmark-mark { transform: none; }
+}
+
+/* ============================================================
+   HERO — Bold dark, full-bleed. Forest green canvas with warm
+   white type. Vertically-rotating ICP word. Built for impact.
+   ============================================================ */
+.oga-hero-dark {
+  position: relative;
+  /* Compact — sized to its content + reasonable breathing room.
+     No min-height: 100vh, no full-bleed viewport claim. */
+  margin-top: -52px;
+  /* Matte graphite. Slightly warm dark grey — industrial / minimal,
+     less brand-loud than forest green. Easy to switch back via this var. */
+  background: #1A1C1F;
+  color: var(--oga-white);
+  padding: calc(52px + clamp(40px, 6vh, 72px)) clamp(20px, 4vw, 56px) clamp(48px, 6vh, 72px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Dot-field motif, warm white at very low opacity, vignetted */
+.oga-hero-dark__field {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(250, 248, 244, 0.08) 1.2px, transparent 1.4px);
+  background-size: 20px 20px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 0%, transparent 80%);
+          mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 0%, transparent 80%);
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* Subtle warm-white glow behind the headline, gives the hero
+   a "lit from the center" feel without using shadows on type */
+.oga-hero-dark__glow {
+  position: absolute;
+  top: 40%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 640px;
+  height: 360px;
+  background: radial-gradient(ellipse, rgba(250, 248, 244, 0.07) 0%, transparent 60%);
+  z-index: 0;
+  pointer-events: none;
+  filter: blur(36px);
+}
+
+.oga-hero-dark__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: clamp(16px, 2.4vh, 26px);
+}
+
+.oga-hero-dark__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(36px, 5.6vw, 72px);
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  color: var(--oga-white);
+  margin: 0;
+  text-wrap: balance;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.04em;
+}
+.oga-hero-dark__line1 {
+  display: block;
+  color: rgba(250, 248, 244, 0.74);
+}
+
+.oga-hero-dark__lead {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(14px, 1.1vw, 16.5px);
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.62);
+  max-width: 56ch;
+  margin: 0;
+  letter-spacing: -0.005em;
+  text-wrap: pretty;
+}
+
+.oga-hero-dark__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.oga-hero-dark__link {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: rgba(250, 248, 244, 0.65);
+  text-decoration: none;
+  transition: color var(--oga-dur-fast) var(--oga-ease);
+  display: inline-flex;
+  align-items: center;
+}
+.oga-hero-dark__link:hover { color: var(--oga-white); }
+
+/* Footer signal strip — small ambient sources list, not a chip */
+.oga-hero-dark__foot {
+  position: relative;
+  z-index: 1;
+  margin-top: clamp(28px, 4vh, 48px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.45);
+}
+.oga-hero-dark__foot-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(250, 248, 244, 0.62);
+}
+.oga-hero-dark__foot-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(250, 248, 244, 0.38);
+  margin-right: 4px;
+}
+.oga-hero-dark__foot-sep {
+  width: 18px;
+  height: 1px;
+  background: rgba(250, 248, 244, 0.18);
+}
+
+/* ============================================================
+   ROTATOR — fade-in-place. Pure CSS, no JS state.
+   5 ICPs stacked in the same grid cell; each fades in for ~2.2s
+   then fades out, staggered by 2.8s. Total cycle 14s.
+   No slide, no "previous word visible during transition".
+   ============================================================ */
+.oga-rotator {
+  display: block;
+  position: relative;
+  line-height: 1.06;
+  min-height: 1.06em;
+}
+.oga-rotator__list {
+  display: inline-grid;
+  grid-template-areas: "stack";
+  text-align: center;
+}
+.oga-rotator__item {
+  grid-area: stack;
+  display: block;
+  line-height: 1.06;
+  white-space: nowrap;
+  opacity: 0;
+  animation: oga-rotator-fade 14s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
+}
+.oga-rotator__item:nth-child(1) { animation-delay:  0s;   }
+.oga-rotator__item:nth-child(2) { animation-delay:  2.8s; }
+.oga-rotator__item:nth-child(3) { animation-delay:  5.6s; }
+.oga-rotator__item:nth-child(4) { animation-delay:  8.4s; }
+.oga-rotator__item:nth-child(5) { animation-delay: 11.2s; }
+/* The 6th item (duplicate of first) was for the slide loop; with fade,
+   we don't need it. The component still renders it but it gets no
+   animation-delay rule so it stays at opacity 0. */
+.oga-rotator__item:nth-child(6) { display: none; }
+
+.oga-rotator__word {
+  display: inline-block;
+  position: relative;
+  padding: 0 0.08em;
+  color: var(--oga-white);
+  /* No marker-pen highlight band — the animation draws the eye on its own.
+     Cleaner, less fussy at smaller compact-hero sizes. */
+}
+
+@keyframes oga-rotator-fade {
+  0%        { opacity: 0; transform: translateY(8px); }
+  3%        { opacity: 1; transform: translateY(0); }
+  17%       { opacity: 1; transform: translateY(0); }
+  20%, 100% { opacity: 0; transform: translateY(-8px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oga-rotator__item { animation: none; opacity: 1; }
+  .oga-rotator__item:nth-child(n+2) { display: none; }
+}
+
+/* ============================================================
+   SECTION 02 — THE AI POSITION (v4) — vertical split.
+   Left: AI explains (light). Right: Engine scores (dark). The
+   split IS the design. Makes the "AI-native by architecture,
+   deterministic at the source" principle visible at a glance.
+   ============================================================ */
+.oga-ai {
+  position: relative;
+  background: var(--oga-white);
+  color: var(--oga-fg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top band — eyebrow above the split */
+.oga-ai__band-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  padding: clamp(56px, 8vh, 80px) clamp(20px, 4vw, 56px) clamp(40px, 5vh, 56px);
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+.oga-ai__band-num { color: var(--oga-fg); }
+.oga-ai__band-line { width: 36px; height: 1px; background: var(--oga-border); }
+
+/* The split itself */
+.oga-ai__split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 60vh;
+  border-top: 1px solid var(--oga-border);
+  border-bottom: 1px solid var(--oga-border);
+}
+
+.oga-ai__half {
+  position: relative;
+  padding: clamp(56px, 8vh, 96px) clamp(28px, 5vw, 80px);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  isolation: isolate;
+}
+.oga-ai__half--light {
+  background: var(--oga-white);
+  color: var(--oga-fg);
+}
+.oga-ai__half--dark {
+  background: #0F1014;
+  color: var(--oga-white);
+}
+.oga-ai__half--dark::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(250, 248, 244, 0.06) 1.2px, transparent 1.4px);
+  background-size: 18px 18px;
+  -webkit-mask-image: radial-gradient(ellipse at top right, black 0%, transparent 70%);
+          mask-image: radial-gradient(ellipse at top right, black 0%, transparent 70%);
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.oga-ai__half-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.oga-ai__half-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.oga-ai__half--light .oga-ai__half-eyebrow { color: var(--oga-fg-muted); }
+.oga-ai__half--dark  .oga-ai__half-eyebrow { color: rgba(250, 248, 244, 0.55); }
+
+.oga-ai__chip {
+  font-family: var(--oga-font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 3px 8px 2px;
+  border-radius: 3px;
+  line-height: 1;
+  border: 1px solid;
+}
+.oga-ai__chip--live {
+  color: var(--oga-status-green);
+  border-color: var(--oga-status-green);
+  background: var(--oga-status-green-bg);
+}
+.oga-ai__chip--soon {
+  color: var(--oga-fg-muted);
+  border-color: var(--oga-border);
+  background: transparent;
+}
+
+.oga-ai__half-title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3.4vw, 40px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.024em;
+  margin: 0;
+  text-wrap: balance;
+}
+.oga-ai__half--light .oga-ai__half-title { color: var(--oga-fg); }
+.oga-ai__half--dark  .oga-ai__half-title { color: var(--oga-white); }
+
+.oga-ai__half-body {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(15px, 1.2vw, 17px);
+  line-height: 1.6;
+  margin: 0;
+  letter-spacing: -0.005em;
+  max-width: 44ch;
+  text-wrap: pretty;
+}
+.oga-ai__half--light .oga-ai__half-body { color: var(--oga-fg-subtle); }
+.oga-ai__half--dark  .oga-ai__half-body { color: rgba(250, 248, 244, 0.65); }
+
+.oga-ai__half-foot {
+  margin-top: 12px;
+  padding-top: 16px;
+  border-top: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.oga-ai__half--light .oga-ai__half-foot { border-color: var(--oga-border); }
+.oga-ai__half--dark  .oga-ai__half-foot { border-color: rgba(250, 248, 244, 0.14); }
+.oga-ai__half--light .oga-ai__foot-label { color: var(--oga-fg-muted); }
+.oga-ai__half--dark  .oga-ai__foot-label { color: rgba(250, 248, 244, 0.50); }
+.oga-ai__half--light .oga-ai__foot-val { color: var(--oga-fg); }
+.oga-ai__half--dark  .oga-ai__foot-val { color: var(--oga-white); }
+
+/* Bottom band — integration callout + CTA */
+.oga-ai__band-callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: clamp(36px, 5vh, 56px) clamp(20px, 4vw, 56px);
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+}
+.oga-ai__band-text {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(14px, 1vw, 16px);
+  line-height: 1.55;
+  color: var(--oga-fg-subtle);
+  max-width: 64ch;
+  letter-spacing: -0.005em;
+}
+.oga-ai__band-strong {
+  color: var(--oga-fg);
+  font-weight: 500;
+}
+.oga-ai__band-link {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  text-decoration: none;
+  border-bottom: 1px solid var(--oga-fg);
+  padding-bottom: 3px;
+  flex-shrink: 0;
+  transition: padding-bottom var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-ai__band-link:hover { padding-bottom: 4px; }
+
+@media (max-width: 900px) {
+  .oga-ai__split { grid-template-columns: 1fr; }
+}
+
+/* Code panel */
+.oga-code-panel {
+  position: relative;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAF8F4 100%);
+  border: 1px solid rgba(26, 28, 31, 0.10);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 1px 1px rgba(26, 28, 31, 0.04),
+    0 28px 64px -22px rgba(26, 28, 31, 0.20);
+}
+
+/* Hairline corner ticks — bespoke specimen-mount detail */
+.oga-code-panel__tick {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  z-index: 2;
+  pointer-events: none;
+}
+.oga-code-panel__tick::before,
+.oga-code-panel__tick::after {
+  content: "";
+  position: absolute;
+  background: var(--oga-fg);
+  opacity: 0.55;
+}
+.oga-code-panel__tick--tl::before { top: 0; left: 0; width: 14px; height: 1px; }
+.oga-code-panel__tick--tl::after  { top: 0; left: 0; width: 1px; height: 14px; }
+.oga-code-panel__tick--tr::before { top: 0; right: 0; width: 14px; height: 1px; }
+.oga-code-panel__tick--tr::after  { top: 0; right: 0; width: 1px; height: 14px; }
+.oga-code-panel__tick--bl::before { bottom: 0; left: 0; width: 14px; height: 1px; }
+.oga-code-panel__tick--bl::after  { bottom: 0; left: 0; width: 1px; height: 14px; }
+.oga-code-panel__tick--br::before { bottom: 0; right: 0; width: 14px; height: 1px; }
+.oga-code-panel__tick--br::after  { bottom: 0; right: 0; width: 1px; height: 14px; }
+.oga-code-panel__tick--tl { top: 8px; left: 8px; }
+.oga-code-panel__tick--tr { top: 8px; right: 8px; }
+.oga-code-panel__tick--bl { bottom: 8px; left: 8px; }
+.oga-code-panel__tick--br { bottom: 8px; right: 8px; }
+
+.oga-code-panel__header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--oga-border);
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7) 0%, rgba(250, 248, 244, 0.4) 100%);
+}
+.oga-code-panel__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--oga-status-green);
+}
+.oga-code-panel__path { flex: 1; color: var(--oga-fg); }
+.oga-code-panel__meta { color: var(--oga-fg-muted); }
+
+.oga-code-panel__body {
+  position: relative;
+  z-index: 1;
+  padding: 20px 0 22px;
+  margin: 0;
+  font-family: var(--oga-font-mono);
+  font-size: 13.5px;
+  line-height: 1.72;
+  color: var(--oga-fg);
+  overflow-x: auto;
+}
+.oga-code-panel__line {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  align-items: center;
+  white-space: pre;
+}
+.oga-code-panel__num {
+  font-size: 11px;
+  color: var(--oga-fg-muted);
+  opacity: 0.5;
+  text-align: right;
+  padding-right: 16px;
+  user-select: none;
+}
+.oga-code-panel__text { padding-right: 24px; }
+.oga-code-panel__key      { color: var(--oga-status-amber); }
+.oga-code-panel__fn       { color: var(--oga-status-amber); }
+.oga-code-panel__str      { color: var(--oga-fg-subtle); }
+.oga-code-panel__num-val  { color: var(--oga-status-green); font-weight: 500; transition: opacity var(--oga-dur) var(--oga-ease); }
+.oga-code-panel__punct    { color: var(--oga-fg-muted); opacity: 0.7; }
+.oga-code-panel__comment  { color: var(--oga-fg-muted); opacity: 0.7; font-style: italic; }
+
+@media (max-width: 900px) {
+  .oga-section-ai__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   BUILT-FOR SECTION v2 — Interactive tab + featured panel.
+   Tab strip across top, one workflow visible at a time, bespoke
+   per-workflow dot-mark visual that morphs between states.
+   Auto-cycles 6s, click any tab to take manual control.
+   ============================================================ */
+.oga-built {
+  position: relative;
+  background: var(--oga-canvas);
+  color: var(--oga-fg);
+  padding: clamp(72px, 10vh, 120px) clamp(20px, 4vw, 56px);
+  overflow: hidden;
+  isolation: isolate;
+}
+/* Dot motif — same dot grammar as hero, slightly different rhythm.
+   24px pitch (vs hero 20px) + diagonal linear mask (vs hero centered
+   ellipse). Graphite dots at low alpha on warm canvas. */
+.oga-built__field {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(26, 28, 31, 0.08) 1.2px, transparent 1.4px);
+  background-size: 24px 24px;
+  -webkit-mask-image: linear-gradient(135deg, black 0%, black 30%, transparent 75%);
+          mask-image: linear-gradient(135deg, black 0%, black 30%, transparent 75%);
+  z-index: 0;
+  pointer-events: none;
+}
+.oga-built__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.oga-built__header {
+  margin-bottom: clamp(32px, 5vh, 56px);
+  max-width: 720px;
+}
+.oga-built__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: 16px;
+}
+.oga-built__eyebrow-num { color: var(--oga-fg); }
+.oga-built__eyebrow-line { width: 36px; height: 1px; background: var(--oga-border); }
+.oga-built__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(32px, 4.6vw, 56px);
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -0.028em;
+  color: var(--oga-fg);
+  margin: 0;
+  text-wrap: balance;
+  max-width: 18ch;
+}
+
+/* Tab strip */
+.oga-built__tabs {
+  display: flex;
+  gap: 0;
+  border-top: 1px solid var(--oga-border);
+  border-bottom: 1px solid var(--oga-border);
+  overflow-x: auto;
+}
+.oga-built__tab {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px 18px 18px;
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--oga-border);
+  cursor: pointer;
+  position: relative;
+  text-align: left;
+  transition: background var(--oga-dur-fast) var(--oga-ease);
+  min-width: 140px;
+  font-family: inherit;
+}
+.oga-built__tab-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--oga-fg-muted);
+  transition: color var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-built__tab--active .oga-built__tab-icon { color: var(--oga-fg); }
+.oga-built__tab:last-child { border-right: 0; }
+.oga-built__tab:hover { background: rgba(26, 28, 31, 0.03); }
+.oga-built__tab-num {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  color: var(--oga-fg-muted);
+}
+.oga-built__tab-label {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--oga-fg-subtle);
+  letter-spacing: -0.01em;
+  transition: color var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-built__tab--active .oga-built__tab-label { color: var(--oga-fg); }
+.oga-built__tab--active .oga-built__tab-num { color: var(--oga-fg); }
+
+/* Cycle progress bar inside the active tab */
+.oga-built__tab-bar {
+  position: absolute;
+  bottom: 0; left: 0;
+  height: 2px;
+  background: var(--oga-fg);
+  width: 100%;
+  transform-origin: left;
+  animation: oga-built-bar 6000ms linear forwards;
+}
+@keyframes oga-built-bar {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .oga-built__tab-bar { animation: none; transform: scaleX(0); }
+}
+
+/* Featured panel */
+.oga-built__panel {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: clamp(32px, 5vw, 80px);
+  padding: clamp(40px, 6vh, 72px) 0 0;
+  align-items: center;
+}
+.oga-built__panel-text {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 56ch;
+}
+.oga-built__panel-title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3.6vw, 44px);
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -0.024em;
+  color: var(--oga-fg);
+  margin: 0;
+}
+.oga-built__panel-body {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(15px, 1.2vw, 17px);
+  line-height: 1.55;
+  color: var(--oga-fg-subtle);
+  margin: 0;
+  letter-spacing: -0.005em;
+  text-wrap: pretty;
+}
+.oga-built__panel-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 12px;
+  margin-top: 4px;
+  border-top: 1px solid var(--oga-border);
+}
+.oga-built__panel-meta-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+.oga-built__panel-meta-val {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  letter-spacing: -0.005em;
+}
+.oga-built__panel-link {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  text-decoration: none;
+  border-bottom: 1px solid var(--oga-fg);
+  padding-bottom: 3px;
+  align-self: flex-start;
+  margin-top: 8px;
+  transition: padding-bottom var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-built__panel-link:hover { padding-bottom: 4px; }
+
+/* Visual — dot mark floats free on the section bg, no wrapper card.
+   Inherits color from currentColor which adapts to surface tokens. */
+.oga-built__panel-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  color: var(--oga-fg);
+  padding: clamp(16px, 3vh, 32px) 0;
+}
+.oga-built__visual-svg {
+  width: clamp(220px, 26vw, 320px);
+  height: auto;
+  display: block;
+  color: var(--oga-fg);
+}
+.oga-built__visual-dot {
+  transition: r 700ms cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 700ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.oga-built__visual-caption {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+@media (max-width: 900px) {
+  .oga-built__panel { grid-template-columns: 1fr; }
+  .oga-built__tab { padding: 14px 12px; min-width: 110px; }
+  .oga-built__tab-label { font-size: 13px; }
+}
+
+/* ============================================================
+   DEFENSIBLE SECTION (03) — model risk / compliance credibility.
+   Dark matte graphite. Centerpiece: stylized audit ledger that
+   looks like an engineering artifact, not a consumer report.
+   ============================================================ */
+.oga-defensible {
+  position: relative;
+  background: #1A1C1F;
+  color: var(--oga-white);
+  padding: clamp(80px, 12vh, 140px) clamp(20px, 4vw, 56px);
+  overflow: hidden;
+  isolation: isolate;
+  border-top: 1px solid rgba(250, 248, 244, 0.06);
+}
+/* Dot motif — slightly different rhythm from hero + BuiltFor.
+   28px pitch (vs hero 20, built-for 24), top-vignette mask. */
+.oga-defensible__field {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(250, 248, 244, 0.06) 1.2px, transparent 1.4px);
+  background-size: 28px 28px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 20%, black 0%, transparent 75%);
+          mask-image: radial-gradient(ellipse 80% 60% at 50% 20%, black 0%, transparent 75%);
+  z-index: 0;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.oga-defensible__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(36px, 5vh, 56px);
+}
+
+.oga-defensible__header {
+  text-align: center;
+  max-width: 58ch;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.oga-defensible__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.50);
+}
+.oga-defensible__eyebrow-num { color: var(--oga-white); }
+.oga-defensible__eyebrow-line { width: 36px; height: 1px; background: rgba(250, 248, 244, 0.20); }
+.oga-defensible__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(36px, 5.4vw, 68px);
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  color: var(--oga-white);
+  margin: 0;
+  text-wrap: balance;
+}
+.oga-defensible__lead {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(15px, 1.2vw, 17.5px);
+  line-height: 1.6;
+  color: rgba(250, 248, 244, 0.65);
+  margin: 0;
+  letter-spacing: -0.005em;
+  text-wrap: pretty;
+}
+
+.oga-defensible__sub {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(15px, 1.2vw, 17px);
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.62);
+  margin: 0;
+  letter-spacing: -0.005em;
+  max-width: 52ch;
+  text-wrap: pretty;
+}
+
+/* v8 — compact zigzag storytelling.
+   Four short rows, alternating sides. Each row: tight branded
+   visual on one side, explanation + audit signal on the other.
+   Hairline dividers between rows, generous vertical breathing. */
+
+.oga-defensible__zigzag {
+  width: 100%;
+  max-width: 960px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-top: 1px solid rgba(250, 248, 244, 0.14);
+}
+
+.oga-defensible__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: clamp(32px, 5vw, 80px);
+  padding: clamp(28px, 5vh, 48px) 0;
+  border-bottom: 1px solid rgba(250, 248, 244, 0.14);
+  opacity: 0;
+  transform: translateY(8px);
+  animation: oga-def-row-in 620ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.oga-defensible__row--l .oga-defensible__row-text   { order: 2; }
+.oga-defensible__row--l .oga-defensible__row-visual { order: 1; justify-self: start; }
+.oga-defensible__row--r .oga-defensible__row-text   { order: 1; }
+.oga-defensible__row--r .oga-defensible__row-visual { order: 2; justify-self: end; }
+
+@keyframes oga-def-row-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.oga-defensible__row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 44ch;
+}
+.oga-defensible__row-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+.oga-defensible__row-num {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  color: rgba(250, 248, 244, 0.50);
+}
+.oga-defensible__row-title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(20px, 2.2vw, 26px);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.022em;
+  color: var(--oga-white);
+  margin: 0;
+}
+.oga-defensible__row-body {
+  font-family: var(--oga-font-sans);
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.68);
+  margin: 0;
+  letter-spacing: -0.005em;
+  text-wrap: pretty;
+}
+.oga-defensible__row-signal {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 8px;
+  margin-top: 2px;
+  border-top: 1px solid rgba(250, 248, 244, 0.12);
+  align-self: flex-start;
+}
+.oga-defensible__row-signal-label {
+  font-family: var(--oga-font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.50);
+}
+.oga-defensible__row-signal-val {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--oga-white);
+}
+
+.oga-defensible__row-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.oga-defensible__viz {
+  width: clamp(150px, 19vw, 190px);
+  height: auto;
+  display: block;
+  color: var(--oga-white);
+}
+
+/* Sources visual — converge in one dot at a time on mount */
+.oga-defensible__viz-src {
+  opacity: 0;
+  animation: oga-def-fade-in 460ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes oga-def-fade-in {
+  from { opacity: 0; transform: scale(0.6); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.oga-defensible__viz-src {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oga-defensible__row { animation: none; opacity: 1; transform: none; }
+  .oga-defensible__viz-src { animation: none; opacity: 1; transform: none; }
+}
+
+@media (max-width: 720px) {
+  .oga-defensible__row {
+    grid-template-columns: 1fr;
+    gap: 22px;
+    padding: 32px 0;
+  }
+  .oga-defensible__row--l .oga-defensible__row-text,
+  .oga-defensible__row--r .oga-defensible__row-text   { order: 2; justify-self: start; }
+  .oga-defensible__row--l .oga-defensible__row-visual,
+  .oga-defensible__row--r .oga-defensible__row-visual { order: 1; justify-self: start; }
+  .oga-defensible__viz { width: 140px; }
+}
+
+/* Close paragraph + CTA */
+.oga-defensible__close {
+  width: 100%;
+  max-width: 880px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: flex-start;
+  padding-top: clamp(16px, 3vh, 32px);
+  border-top: 1px solid rgba(250, 248, 244, 0.10);
+}
+.oga-defensible__close-text {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(15px, 1.2vw, 17px);
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.65);
+  margin: 0;
+  letter-spacing: -0.005em;
+  max-width: 56ch;
+}
+
+/* Trace — animated scoring audit. Brand-coherent, NOT terminal.
+   Graphite-tint container on graphite section, warm-white alpha
+   borders, Geist Sans for events + Geist Mono for timestamps,
+   dot-mark stamp in the corner. Each line fades + slides in on
+   stagger, full cycle loops infinitely.
+   (Retained for now — currently unused after switch to manifesto.) */
+.oga-trace {
+  width: 100%;
+  max-width: 760px;
+  background: rgba(250, 248, 244, 0.025);
+  border: 1px solid rgba(250, 248, 244, 0.12);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.oga-trace__head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(250, 248, 244, 0.10);
+  background: rgba(250, 248, 244, 0.02);
+}
+.oga-trace__head-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+.oga-trace__head-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-white);
+}
+.oga-trace__head-meta {
+  flex: 1;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.45);
+}
+.oga-trace__head-sep {
+  margin: 0 6px;
+  color: rgba(250, 248, 244, 0.30);
+}
+.oga-trace__stamp {
+  width: 22px;
+  height: 22px;
+  color: rgba(250, 248, 244, 0.45);
+  flex-shrink: 0;
+}
+
+.oga-trace__body {
+  margin: 0;
+  padding: 14px 0;
+  list-style: none;
+}
+.oga-trace__line {
+  display: grid;
+  grid-template-columns: 18px 90px 1fr auto;
+  gap: 14px;
+  align-items: baseline;
+  padding: 7px 20px;
+  font-size: 13.5px;
+  line-height: 1.5;
+
+  /* Animation — fade in + slide up, hold, then fade out + loop */
+  opacity: 0;
+  transform: translateY(6px);
+  animation: oga-trace-line var(--oga-trace-total) infinite ease-out;
+  animation-delay: var(--oga-trace-delay);
+}
+.oga-trace__line-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(250, 248, 244, 0.35);
+  align-self: center;
+  transition: background var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-trace__line-ts {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: rgba(250, 248, 244, 0.42);
+}
+.oga-trace__line-event {
+  font-family: var(--oga-font-sans);
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-white);
+}
+.oga-trace__line-cite {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: rgba(250, 248, 244, 0.50);
+  white-space: nowrap;
+}
+
+/* Per-emphasis line accents — dots tint by event type, no terminal colors */
+.oga-trace__line--source .oga-trace__line-dot { background: rgba(250, 248, 244, 0.50); }
+.oga-trace__line--score  .oga-trace__line-dot { background: var(--oga-status-green); }
+.oga-trace__line--score  .oga-trace__line-event { color: var(--oga-white); font-weight: 500; }
+.oga-trace__line--sign   .oga-trace__line-dot { background: var(--oga-white); }
+.oga-trace__line--response .oga-trace__line-dot { background: rgba(250, 248, 244, 0.65); }
+
+@keyframes oga-trace-line {
+  0%        { opacity: 0; transform: translateY(6px); }
+  8%        { opacity: 1; transform: translateY(0); }
+  78%       { opacity: 1; transform: translateY(0); }
+  88%, 100% { opacity: 0; transform: translateY(-3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .oga-trace__line { opacity: 1; transform: none; animation: none; }
+}
+
+@media (max-width: 720px) {
+  .oga-trace__line {
+    grid-template-columns: 14px 70px 1fr;
+  }
+  .oga-trace__line-cite {
+    grid-column: 2 / -1;
+    font-size: 10.5px;
+  }
+}
+
+/* Principles strip (retained for any later use) */
+.oga-defensible__principles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  width: 100%;
+  max-width: 960px;
+  border-top: 1px solid rgba(250, 248, 244, 0.12);
+  border-bottom: 1px solid rgba(250, 248, 244, 0.12);
+}
+
+@media (max-width: 720px) {
+  .oga-defensible__principles {
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 0;
+  }
+  .oga-defensible__principle {
+    border-bottom: 1px solid rgba(250, 248, 244, 0.12);
+  }
+  .oga-defensible__principle:nth-child(2n) {
+    border-right: 0;
+  }
+  .oga-defensible__ledger-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
+/* Legacy light hero kept for any callsite that hasn't migrated yet */
+.oga-hero {
+  position: relative;
+  padding: 120px 24px 140px;
+  background: var(--oga-canvas);
+  overflow: hidden;
+  isolation: isolate;
+  min-height: calc(100vh - 52px);
+  display: flex;
+  align-items: center;
+}
+.oga-hero__field {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(26, 28, 31, 0.07) 1.2px, transparent 1.4px);
+  background-size: 16px 16px;
+  -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 78%);
+          mask-image: radial-gradient(ellipse at center, black 0%, transparent 78%);
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.7;
+}
+.oga-hero__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 28px;
+}
+.oga-hero__eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 12px 5px;
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-pill);
+  background: linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(250,248,244,0.5) 100%);
+  -webkit-backdrop-filter: blur(10px);
+          backdrop-filter: blur(10px);
+}
+.oga-hero__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(40px, 7vw, 88px);
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -0.028em;
+  color: var(--oga-fg);
+  margin: 0;
+  max-width: 20ch;
+  text-wrap: balance;
+}
+.oga-hero__lead {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(15px, 1.3vw, 18px);
+  line-height: 1.55;
+  color: var(--oga-fg-subtle);
+  max-width: 58ch;
+  margin: 0;
+  letter-spacing: -0.005em;
+  text-wrap: pretty;
+}
+.oga-hero__cta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+/* Sample card — the bespoke element. Glassmorphism panel, hairline edge,
+   inset highlight + soft ambient shadow. Shows a real engine output. */
+.oga-sample-card {
+  margin-top: 32px;
+  width: 100%;
+  max-width: 680px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(250, 248, 244, 0.82) 100%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+          backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(26, 28, 31, 0.08);
+  border-radius: 14px;
+  padding: 26px 28px 22px;
+  text-align: left;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 1px 1px rgba(26, 28, 31, 0.04),
+    0 28px 64px -22px rgba(26, 28, 31, 0.22);
+}
+.oga-sample-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--oga-border);
+}
+.oga-sample-card__label {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: 6px;
+}
+.oga-sample-card__city {
+  font-family: var(--oga-font-sans);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.014em;
+  color: var(--oga-fg);
+  line-height: 1.1;
+}
+.oga-sample-card__sub {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-top: 4px;
+}
+.oga-sample-card__intent {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--oga-fg);
+  padding: 5px 11px 4px;
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-pill);
+  background: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+}
+.oga-sample-card__score-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+.oga-sample-card__score {
+  font-family: var(--oga-font-sans);
+  font-size: 64px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  color: var(--oga-fg);
+  line-height: 0.9;
+}
+.oga-sample-card__score-meta {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 6px;
+}
+.oga-sample-card__confidence {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--oga-status-green);
+}
+.oga-sample-card__dims {
+  display: flex;
+  flex-direction: column;
+}
+.oga-sample-card__dim {
+  display: grid;
+  grid-template-columns: 1fr 120px 32px 100px;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--oga-border);
+}
+.oga-sample-card__dim:last-child { border-bottom: 0; }
+.oga-sample-card__dim-name {
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  letter-spacing: -0.005em;
+}
+.oga-sample-card__dim-bar {
+  position: relative;
+  height: 4px;
+  background: rgba(26, 28, 31, 0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.oga-sample-card__dim-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--oga-fg);
+  border-radius: 2px;
+}
+.oga-sample-card__dim-score {
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  text-align: right;
+  letter-spacing: -0.005em;
+}
+.oga-sample-card__dim-source {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  text-align: right;
+}
+.oga-sample-card__foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--oga-border);
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+/* ---------- Focus ring (macOS-tight) ---------- */
+:where(.oga-btn, .oga-root a, .oga-root button, .oga-root input, .oga-root select, .oga-root textarea):focus-visible {
+  outline: 1.5px solid var(--oga-green);
+  outline-offset: 2px;
+  border-radius: var(--oga-radius-sm);
+}
+[data-oga-surface="dark"] :where(.oga-btn, .oga-root a, .oga-root button, .oga-root input, .oga-root select, .oga-root textarea):focus-visible,
+.oga-on-dark :where(.oga-btn, .oga-root a, .oga-root button, .oga-root input, .oga-root select, .oga-root textarea):focus-visible {
+  outline-color: var(--oga-white);
+}
+
+/* ============================================================
+   INTEGRATION SECTION (04) — "live in an afternoon".
+   Light surface (warm white) for contrast after dark Defensible.
+   One engine, a distribution bus, four spec-sheet columns. No card
+   chrome — just hairline dividers + bespoke dot-mark glyphs.
+   ============================================================ */
+.oga-integration {
+  position: relative;
+  background: var(--oga-white);
+  color: var(--oga-fg);
+  padding: clamp(72px, 10vh, 120px) clamp(20px, 4vw, 56px);
+  overflow: hidden;
+  isolation: isolate;
+  border-top: 1px solid var(--oga-border);
+}
+/* Dot motif — top-anchored ellipse fade. 26px pitch, distinct from
+   hero (centered) and BuiltFor (diagonal). */
+.oga-integration__field {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(26, 28, 31, 0.07) 1.1px, transparent 1.3px);
+  background-size: 26px 26px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 0%, transparent 70%);
+          mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 0%, transparent 70%);
+  z-index: 0;
+  pointer-events: none;
+}
+.oga-integration__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.oga-integration__header {
+  max-width: 720px;
+  margin: 0 auto clamp(32px, 5vh, 48px);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.oga-integration__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+.oga-integration__eyebrow-num { color: var(--oga-fg); }
+.oga-integration__eyebrow-line { width: 36px; height: 1px; background: var(--oga-border); }
+.oga-integration__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(34px, 5vw, 60px);
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  color: var(--oga-fg);
+  margin: 0;
+  text-wrap: balance;
+}
+.oga-integration__sub {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(15px, 1.2vw, 17px);
+  line-height: 1.55;
+  color: var(--oga-fg-subtle);
+  margin: 0;
+  letter-spacing: -0.005em;
+  max-width: 58ch;
+  text-wrap: pretty;
+}
+
+/* Distribution bus — engine node with a dropline to the grid rail */
+.oga-integration__bus {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 26px;
+}
+.oga-integration__bus-node {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--oga-fg);
+  padding: 8px 16px;
+  border: 1px solid var(--oga-border);
+  background: var(--oga-white);
+}
+.oga-integration__bus-node::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 1px;
+  height: 26px;
+  background: var(--oga-border);
+}
+.oga-integration__bus-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--oga-fg);
+}
+
+/* Spec-sheet columns — hairline dividers only, no card chrome */
+.oga-integration__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--oga-border);
+  position: relative;
+}
+.oga-integration__col {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 34px clamp(18px, 2vw, 28px) 28px;
+  border-left: 1px solid var(--oga-border);
+  opacity: 0;
+  transform: translateY(8px);
+  animation: oga-int-col-in 600ms var(--oga-ease) forwards;
+}
+.oga-integration__col:first-child { border-left: 0; }
+.oga-integration__col-junction {
+  position: absolute;
+  top: -3.5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--oga-fg);
+}
+@keyframes oga-int-col-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.oga-integration__col-glyph {
+  color: var(--oga-fg);
+  margin-bottom: 4px;
+}
+.oga-integration__glyph-svg {
+  width: clamp(64px, 7vw, 82px);
+  height: auto;
+  display: block;
+}
+.oga-integration__col-method {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--oga-fg-muted);
+}
+.oga-integration__col-name {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(17px, 1.6vw, 20px);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: var(--oga-fg);
+  margin: 0;
+}
+.oga-integration__col-body {
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--oga-fg-subtle);
+  margin: 0;
+  letter-spacing: -0.005em;
+  text-wrap: pretty;
+  flex: 1 1 auto;
+}
+.oga-integration__col-meta {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  padding-top: 12px;
+  margin-top: 4px;
+  border-top: 1px solid var(--oga-border);
+}
+
+/* Webhook glyph — concentric arcs pulse outward like a live push */
+.oga-integration__pulse--1 { animation: oga-int-w1 2.6s ease-in-out infinite; }
+.oga-integration__pulse--2 { animation: oga-int-w2 2.6s ease-in-out infinite 0.3s; }
+.oga-integration__pulse--3 { animation: oga-int-w3 2.6s ease-in-out infinite 0.6s; }
+@keyframes oga-int-w1 { 0%, 100% { opacity: 0.45; } 50% { opacity: 0.18; } }
+@keyframes oga-int-w2 { 0%, 100% { opacity: 0.30; } 50% { opacity: 0.12; } }
+@keyframes oga-int-w3 { 0%, 100% { opacity: 0.18; } 50% { opacity: 0.06; } }
+
+/* Foot — closing line + reference links */
+.oga-integration__foot {
+  margin-top: clamp(40px, 6vh, 64px);
+  padding-top: clamp(20px, 3vh, 32px);
+  border-top: 1px solid var(--oga-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.oga-integration__foot-text {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(14px, 1.1vw, 15.5px);
+  line-height: 1.55;
+  color: var(--oga-fg-subtle);
+  margin: 0;
+  max-width: 52ch;
+  letter-spacing: -0.005em;
+}
+.oga-integration__foot-links {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+  .oga-integration__grid { grid-template-columns: 1fr 1fr; }
+  .oga-integration__col:nth-child(odd) { border-left: 0; }
+  .oga-integration__col:nth-child(n+3) { border-top: 1px solid var(--oga-border); }
+  .oga-integration__col-junction { display: none; }
+}
+@media (max-width: 560px) {
+  .oga-integration__grid { grid-template-columns: 1fr; }
+  .oga-integration__col { border-left: 0; border-top: 1px solid var(--oga-border); }
+  .oga-integration__col:first-child { border-top: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .oga-integration__col { animation: none; opacity: 1; transform: none; }
+  .oga-integration__pulse--1,
+  .oga-integration__pulse--2,
+  .oga-integration__pulse--3 { animation: none; }
+}
+
+/* ============================================================
+   COVERAGE SECTION (05) — the scale exhale.
+   Dark surface. Abstract neighbourhood field (no UK silhouette)
+   + a stats strip. Monochrome, a few neighbourhoods glowing.
+   ============================================================ */
+.oga-coverage {
+  position: relative;
+  background: #1A1C1F;
+  color: var(--oga-white);
+  padding: clamp(72px, 10vh, 120px) clamp(20px, 4vw, 56px);
+  overflow: hidden;
+  isolation: isolate;
+  border-top: 1px solid rgba(250, 248, 244, 0.06);
+}
+.oga-coverage__field-bg {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(250, 248, 244, 0.05) 1.1px, transparent 1.3px);
+  background-size: 30px 30px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 100%, black 0%, transparent 75%);
+          mask-image: radial-gradient(ellipse 80% 60% at 50% 100%, black 0%, transparent 75%);
+  z-index: 0;
+  opacity: 0.6;
+  pointer-events: none;
+}
+.oga-coverage__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(36px, 5vh, 56px);
+}
+.oga-coverage__header {
+  text-align: center;
+  max-width: 62ch;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.oga-coverage__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.50);
+}
+.oga-coverage__eyebrow-num { color: var(--oga-white); }
+.oga-coverage__eyebrow-line { width: 36px; height: 1px; background: rgba(250, 248, 244, 0.20); }
+.oga-coverage__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(34px, 5.2vw, 64px);
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  color: var(--oga-white);
+  margin: 0;
+  text-wrap: balance;
+}
+.oga-coverage__sub {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(15px, 1.2vw, 17px);
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.65);
+  margin: 0;
+  letter-spacing: -0.005em;
+  max-width: 56ch;
+  text-wrap: pretty;
+}
+
+/* Neighbourhood field — abstract dot corpus, edge-faded */
+.oga-coverage__viz {
+  width: 100%;
+  color: var(--oga-white);
+}
+.oga-coverage__viz-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  -webkit-mask-image: radial-gradient(ellipse 96% 82% at 50% 45%, black 30%, transparent 92%);
+          mask-image: radial-gradient(ellipse 96% 82% at 50% 45%, black 30%, transparent 92%);
+}
+.oga-coverage__dot--bright {
+  animation: oga-cov-twinkle 4s ease-in-out infinite;
+}
+@keyframes oga-cov-twinkle {
+  0%, 100% { opacity: 0.95; }
+  50%      { opacity: 0.40; }
+}
+
+/* Stats strip */
+.oga-coverage__stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  width: 100%;
+  max-width: 880px;
+  border-top: 1px solid rgba(250, 248, 244, 0.14);
+  border-bottom: 1px solid rgba(250, 248, 244, 0.14);
+}
+.oga-coverage__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: clamp(20px, 3vh, 32px) 16px;
+  border-left: 1px solid rgba(250, 248, 244, 0.10);
+  text-align: center;
+}
+.oga-coverage__stat:first-child { border-left: 0; }
+.oga-coverage__stat-val {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 4vw, 46px);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--oga-white);
+  line-height: 1;
+}
+.oga-coverage__stat-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.55);
+}
+
+@media (max-width: 680px) {
+  .oga-coverage__stats { grid-template-columns: 1fr 1fr; }
+  .oga-coverage__stat:nth-child(odd) { border-left: 0; }
+  .oga-coverage__stat:nth-child(n+3) { border-top: 1px solid rgba(250, 248, 244, 0.10); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .oga-coverage__dot--bright { animation: none; }
+}
+
+/* ============================================================
+   CTA SECTION (06) — the close.
+   Canvas surface. Centered, brand mark as closing signature with
+   a soft pulsing ring. Ambient strip bookends the hero foot.
+   ============================================================ */
+.oga-cta {
+  position: relative;
+  background: var(--oga-white);
+  color: var(--oga-fg);
+  padding: clamp(48px, 7vh, 84px) clamp(20px, 4vw, 56px);
+  overflow: hidden;
+  isolation: isolate;
+  border-top: 1px solid var(--oga-border);
+}
+.oga-cta__field {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(26, 28, 31, 0.07) 1.1px, transparent 1.3px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 0%, transparent 70%);
+          mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 0%, transparent 70%);
+  z-index: 0;
+  opacity: 0.8;
+  pointer-events: none;
+}
+.oga-cta__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+}
+.oga-cta__mark {
+  color: var(--oga-fg);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+.oga-cta__mark::before {
+  content: "";
+  position: absolute;
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  border: 1px solid var(--oga-border);
+  animation: oga-cta-ring 3.6s ease-in-out infinite;
+}
+@keyframes oga-cta-ring {
+  0%, 100% { transform: scale(1);    opacity: 0.6; }
+  50%      { transform: scale(1.14); opacity: 0.18; }
+}
+.oga-cta__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3.6vw, 44px);
+  font-weight: 500;
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+  color: var(--oga-fg);
+  margin: 0;
+  text-wrap: balance;
+  max-width: 17ch;
+}
+.oga-cta__sub {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(14px, 1.1vw, 16px);
+  line-height: 1.55;
+  color: var(--oga-fg-subtle);
+  margin: 0;
+  letter-spacing: -0.005em;
+  max-width: 50ch;
+  text-wrap: pretty;
+}
+.oga-cta__buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 6px;
+}
+.oga-cta__foot {
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  .oga-cta__mark::before { animation: none; }
+}
