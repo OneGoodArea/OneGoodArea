@@ -1,11 +1,11 @@
 import { sql } from "../../infrastructure/db/client";
-import { geocodeArea, type GeocodedArea } from "./data-sources/postcodes";
-import { getCrimeData, formatCrimeDataForPrompt } from "./data-sources/police";
-import { getDeprivationData, formatDeprivationForPrompt } from "./data-sources/deprivation";
-import { getNearbyAmenities, formatAmenitiesForPrompt } from "./data-sources/openstreetmap";
-import { getFloodRisk, formatFloodRiskForPrompt } from "./data-sources/flood";
-import { getPropertyPrices, formatPropertyDataForPrompt } from "./data-sources/land-registry";
-import { getOfstedSchools, formatOfstedForPrompt } from "./data-sources/ofsted";
+import { geocodeArea, type GeocodedArea } from "../signals/data-sources/postcodes";
+import { getCrimeData, formatCrimeDataForPrompt } from "../signals/data-sources/police";
+import { getDeprivationData, formatDeprivationForPrompt } from "../signals/data-sources/deprivation";
+import { getNearbyAmenities, formatAmenitiesForPrompt } from "../signals/data-sources/openstreetmap";
+import { getFloodRisk, formatFloodRiskForPrompt } from "../signals/data-sources/flood";
+import { getPropertyPrices, formatPropertyDataForPrompt } from "../signals/data-sources/land-registry";
+import { getOfstedSchools, formatOfstedForPrompt } from "../signals/data-sources/ofsted";
 import type {
   CrimeSummary,
   DeprivationData,
@@ -13,7 +13,7 @@ import type {
   FloodRiskData,
   PropertyPriceData,
   OfstedData,
-} from "./inputs";
+} from "../signals/inputs";
 import { computeScores, type ComputedScores } from "./scoring-engine";
 import { METHODOLOGY_VERSION } from "./methodology";
 import type { AreaReport, Intent, DataFreshness } from "@onegoodarea/contracts";

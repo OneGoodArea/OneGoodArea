@@ -7,7 +7,7 @@ import type {
   PropertyPriceData,
   OfstedData,
   AreaType,
-} from "../inputs";
+} from "../../signals/inputs";
 
 /* ── Types ── */
 

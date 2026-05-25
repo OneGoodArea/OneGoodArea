@@ -5,33 +5,33 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
    (OGA_AI_PROVIDER=mock); the I/O boundaries (data sources, cache, tracking,
    webhooks, db) are mocked so we exercise the wiring without the network/DB. */
 
-vi.mock("./data-sources/postcodes", () => ({ geocodeArea: vi.fn() }));
-vi.mock("./data-sources/police", () => ({ getCrimeData: vi.fn(), formatCrimeDataForPrompt: () => "CRIME" }));
-vi.mock("./data-sources/deprivation", () => ({ getDeprivationData: vi.fn(), formatDeprivationForPrompt: () => "DEP" }));
-vi.mock("./data-sources/openstreetmap", () => ({ getNearbyAmenities: vi.fn(), formatAmenitiesForPrompt: () => "AMEN" }));
-vi.mock("./data-sources/flood", () => ({ getFloodRisk: vi.fn(), formatFloodRiskForPrompt: () => "FLOOD" }));
-vi.mock("./data-sources/land-registry", () => ({ getPropertyPrices: vi.fn(), formatPropertyDataForPrompt: () => "PROP" }));
-vi.mock("./data-sources/ofsted", () => ({ getOfstedSchools: vi.fn(), formatOfstedForPrompt: () => "OFSTED" }));
+vi.mock("../signals/data-sources/postcodes", () => ({ geocodeArea: vi.fn() }));
+vi.mock("../signals/data-sources/police", () => ({ getCrimeData: vi.fn(), formatCrimeDataForPrompt: () => "CRIME" }));
+vi.mock("../signals/data-sources/deprivation", () => ({ getDeprivationData: vi.fn(), formatDeprivationForPrompt: () => "DEP" }));
+vi.mock("../signals/data-sources/openstreetmap", () => ({ getNearbyAmenities: vi.fn(), formatAmenitiesForPrompt: () => "AMEN" }));
+vi.mock("../signals/data-sources/flood", () => ({ getFloodRisk: vi.fn(), formatFloodRiskForPrompt: () => "FLOOD" }));
+vi.mock("../signals/data-sources/land-registry", () => ({ getPropertyPrices: vi.fn(), formatPropertyDataForPrompt: () => "PROP" }));
+vi.mock("../signals/data-sources/ofsted", () => ({ getOfstedSchools: vi.fn(), formatOfstedForPrompt: () => "OFSTED" }));
 vi.mock("./report-cache", () => ({ getCachedReport: vi.fn(), setCachedReport: vi.fn() }));
 vi.mock("../tracking/activity", () => ({ trackEvent: vi.fn() }));
 vi.mock("../webhooks", () => ({ fireWebhookEvent: vi.fn().mockResolvedValue(undefined) }));
 vi.mock("../../infrastructure/db/client", () => ({ sql: vi.fn() }));
 
-import { geocodeArea } from "./data-sources/postcodes";
-import { getCrimeData } from "./data-sources/police";
-import { getDeprivationData } from "./data-sources/deprivation";
-import { getNearbyAmenities } from "./data-sources/openstreetmap";
-import { getFloodRisk } from "./data-sources/flood";
-import { getPropertyPrices } from "./data-sources/land-registry";
-import { getOfstedSchools } from "./data-sources/ofsted";
+import { geocodeArea } from "../signals/data-sources/postcodes";
+import { getCrimeData } from "../signals/data-sources/police";
+import { getDeprivationData } from "../signals/data-sources/deprivation";
+import { getNearbyAmenities } from "../signals/data-sources/openstreetmap";
+import { getFloodRisk } from "../signals/data-sources/flood";
+import { getPropertyPrices } from "../signals/data-sources/land-registry";
+import { getOfstedSchools } from "../signals/data-sources/ofsted";
 import { getCachedReport, setCachedReport } from "./report-cache";
 import { trackEvent } from "../tracking/activity";
 import { fireWebhookEvent } from "../webhooks";
 import { sql } from "../../infrastructure/db/client";
 import { computeScores } from "./scoring-engine";
 import { METHODOLOGY_VERSION } from "./methodology";
-import type { GeocodedArea } from "./data-sources/postcodes";
-import type { CrimeSummary, PropertyPriceData, OfstedData } from "./inputs";
+import type { GeocodedArea } from "../signals/data-sources/postcodes";
+import type { CrimeSummary, PropertyPriceData, OfstedData } from "../signals/inputs";
 import type { AreaReport } from "@onegoodarea/contracts";
 import { generateReport } from "./report-generator";
 

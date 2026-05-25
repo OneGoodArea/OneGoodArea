@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("../../infrastructure/db/client", () => ({ sql: vi.fn() }));
-vi.mock("./data-sources/postcodes", () => ({ geocodeArea: vi.fn() }));
-vi.mock("./data-sources/police", () => ({ getCrimeData: vi.fn() }));
-vi.mock("./data-sources/deprivation", () => ({ getDeprivationData: vi.fn() }));
-vi.mock("./data-sources/openstreetmap", () => ({ getNearbyAmenities: vi.fn() }));
-vi.mock("./data-sources/flood", () => ({ getFloodRisk: vi.fn() }));
-vi.mock("./data-sources/land-registry", () => ({ getPropertyPrices: vi.fn() }));
-vi.mock("./data-sources/ofsted", () => ({ getOfstedSchools: vi.fn() }));
+vi.mock("../signals/data-sources/postcodes", () => ({ geocodeArea: vi.fn() }));
+vi.mock("../signals/data-sources/police", () => ({ getCrimeData: vi.fn() }));
+vi.mock("../signals/data-sources/deprivation", () => ({ getDeprivationData: vi.fn() }));
+vi.mock("../signals/data-sources/openstreetmap", () => ({ getNearbyAmenities: vi.fn() }));
+vi.mock("../signals/data-sources/flood", () => ({ getFloodRisk: vi.fn() }));
+vi.mock("../signals/data-sources/land-registry", () => ({ getPropertyPrices: vi.fn() }));
+vi.mock("../signals/data-sources/ofsted", () => ({ getOfstedSchools: vi.fn() }));
 vi.mock("./scoring-engine", () => ({ computeScores: vi.fn() }));
 vi.mock("../tracking/structured-logger", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
@@ -15,7 +15,7 @@ vi.mock("../tracking/structured-logger", () => ({
 
 import { runRescoreCron } from "./rescore";
 import { sql } from "../../infrastructure/db/client";
-import { geocodeArea } from "./data-sources/postcodes";
+import { geocodeArea } from "../signals/data-sources/postcodes";
 import { computeScores } from "./scoring-engine";
 
 const mockSql = vi.mocked(sql);

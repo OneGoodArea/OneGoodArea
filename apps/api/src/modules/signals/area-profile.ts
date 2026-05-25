@@ -17,12 +17,9 @@
    the value calibrated against outcomes" (the calibrated confidence model lands
    with the persisted signal store, MASTER §6 Phase 7).
 
-   NOTE (temporary coupling): the input TYPES are imported from
-   modules/reports/inputs and the fetchers from modules/reports/data-sources
-   because, post-decoupling, ingestion currently lives under `reports`. The
-   taxonomy promotion (move data-sources + inputs into modules/signals, and have
-   reports import FROM signals) is the next refactor; this file already models
-   the correct direction (signals owns the primitive). */
+   Ingestion (the source structs in ./inputs and the fetchers in ./data-sources)
+   lives in this module: signals OWNS the data layer. The reports surface imports
+   these FROM signals (the correct dependency direction). */
 
 import type {
   Signal,
@@ -37,8 +34,8 @@ import type {
   FloodRiskData,
   PropertyPriceData,
   OfstedData,
-} from "../reports/inputs";
-import type { GeocodedArea } from "../reports/data-sources/postcodes";
+} from "./inputs";
+import type { GeocodedArea } from "./data-sources/postcodes";
 import { METHODOLOGY_VERSION } from "../reports/methodology";
 
 /** Full UK postcode shape — used to decide whether the resolved query is itself

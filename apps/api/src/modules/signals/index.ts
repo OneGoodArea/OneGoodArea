@@ -11,16 +11,15 @@
    and flips fetch_mode to "store" — the response shape is unchanged, so callers
    never break.
 
-   Temporary cross-module import (see area-profile.ts): the fetchers live under
-   modules/reports/data-sources until the taxonomy promotion moves them here. */
+   The fetchers live in this module (./data-sources): signals owns ingestion. */
 
-import { geocodeArea } from "../reports/data-sources/postcodes";
-import { getCrimeData } from "../reports/data-sources/police";
-import { getDeprivationData } from "../reports/data-sources/deprivation";
-import { getNearbyAmenities } from "../reports/data-sources/openstreetmap";
-import { getFloodRisk } from "../reports/data-sources/flood";
-import { getPropertyPrices } from "../reports/data-sources/land-registry";
-import { getOfstedSchools } from "../reports/data-sources/ofsted";
+import { geocodeArea } from "./data-sources/postcodes";
+import { getCrimeData } from "./data-sources/police";
+import { getDeprivationData } from "./data-sources/deprivation";
+import { getNearbyAmenities } from "./data-sources/openstreetmap";
+import { getFloodRisk } from "./data-sources/flood";
+import { getPropertyPrices } from "./data-sources/land-registry";
+import { getOfstedSchools } from "./data-sources/ofsted";
 import { logger } from "../tracking/structured-logger";
 import { buildAreaProfile, type AreaSources } from "./area-profile";
 import type { AreaProfile } from "@onegoodarea/contracts";

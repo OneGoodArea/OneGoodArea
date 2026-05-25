@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { AreaProfileSchema, type Signal } from "@onegoodarea/contracts";
 import { buildAreaProfile, type AreaSources } from "./area-profile";
-import type { GeocodedArea } from "../reports/data-sources/postcodes";
+import type { GeocodedArea } from "./data-sources/postcodes";
 
 const geo: GeocodedArea = {
   query: "M1 1AE",

@@ -9,7 +9,7 @@ import type {
   FloodRiskData,
   PropertyPriceData,
   OfstedData,
-} from "./inputs";
+} from "../signals/inputs";
 
 /* ============================================================================
    GOLDEN-MASTER / characterization net for the deterministic scoring engine.
