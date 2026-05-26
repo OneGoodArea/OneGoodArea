@@ -8,6 +8,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
+    "build": "esbuild src/server.ts --bundle --platform=node --format=cjs --outfile=dist/server.cjs --target=node22",
+    "start:prod": "node dist/server.cjs",
     "migrate": "tsx src/infrastructure/db/migrate.ts",
     "refresh:deprivation": "tsx src/modules/signals/refresh/deprivation.ts",
     "refresh:prices": "tsx src/modules/signals/refresh/prices.ts",
@@ -23,6 +25,7 @@
     "@neondatabase/serverless": "^1.1.0",
     "@anthropic-ai/sdk": "^0.95.2",
     "@onegoodarea/contracts": "*",
+    "esbuild": "^0.28.0",
     "jose": "^6.2.3",
     "resend": "^6.12.3",
     "stripe": "^20.4.0",

@@ -17,3 +17,5 @@ EXECUTION-PLAYBOOK.md
 PRODUCT-POSITIONING.md
 DEVELOPMENT-LOG.md
 apps/web/scripts/*.json
+
+apps/api/dist

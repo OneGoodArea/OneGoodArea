@@ -4,10 +4,12 @@
 # Render, Google Cloud Run, Koyeb, Fly, or a plain VM — so switching providers
 # is zero-rework. Build context is the repo ROOT (monorepo); see .dockerignore.
 #
-# Runs the TypeScript directly via tsx (matches dev; no separate build step, and
-# the @onegoodarea/contracts workspace is imported as source). A future
-# optimization is a JS bundle + slim runtime (smaller image); deliberately kept
-# simple + robust here so the first build is reliable.
+# The server is BUNDLED to a single CJS file with esbuild at build time and run
+# with plain `node` (NOT tsx). Running tsx in prod transpiled the whole TS import
+# graph on every cold start, which on a small free-tier instance (0.1 CPU/512MB)
+# was too slow/heavy to bind a port in time. The prebuilt bundle boots in
+# milliseconds with low memory. tsx stays a dependency only for the data-job CLIs
+# (migrate / refresh:*) the GitHub Actions cron runs — it is not on the server path.
 
 FROM node:22-slim
 WORKDIR /app
@@ -35,5 +37,10 @@ RUN npm install --no-audit --no-fund
 COPY packages/contracts ./packages/contracts
 COPY apps/api ./apps/api
 
+# Bundle the server to dist/server.cjs (esbuild is a dependency, so it is present
+# even with NODE_ENV=production). Bundling pulls the @onegoodarea/contracts source
+# in too, so no workspace resolution is needed at runtime.
+RUN npm run build -w @onegoodarea/api
+
 EXPOSE 8080
-CMD ["npm", "run", "start", "-w", "@onegoodarea/api"]
+CMD ["node", "apps/api/dist/server.cjs"]

@@ -70,3 +70,6 @@ scripts/uk-paths.json
 # claude code local state
 .claude/
 .aider*
+
+# apps/api production bundle (built in-image / by `npm run build`)
+apps/api/dist/
