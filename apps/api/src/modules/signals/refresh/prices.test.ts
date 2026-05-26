@@ -144,7 +144,6 @@ describe("loadPostcodeLsoaMap", () => {
       [{ postcode: "AA1 1AA", lsoa_code: "E01000001" }, { postcode: "AA1 1AB", lsoa_code: "E01000002" }],
       [{ postcode: "AA1 1AC", lsoa_code: "W01000001" }],
     ];
-    let call = 0;
     const run = async (_t: string, params: unknown[]) => {
       // page by the `after` cursor ($1)
       const after = params[0] as string;
