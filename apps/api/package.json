@@ -11,6 +11,7 @@
     "migrate": "tsx src/infrastructure/db/migrate.ts",
     "refresh:deprivation": "tsx src/modules/signals/refresh/deprivation.ts",
     "refresh:prices": "tsx src/modules/signals/refresh/prices.ts",
+    "refresh:crime": "tsx src/modules/signals/refresh/crime.ts",
     "normalize:deprivation": "tsx src/modules/signals/refresh/normalize.ts",
     "timeseries:append": "tsx src/modules/signals/refresh/timeseries.ts",
     "load:geo": "tsx src/modules/signals/refresh/geo-spine.ts",

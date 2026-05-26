@@ -25,3 +25,4 @@ and both are kept (the trail matters).
 | [0012](./0012-property-store-read.md) | Serve property (prices) from the store on `/v1/area` — robust annual median, grain district→LSOA | Accepted |
 | [0013](./0013-monitor-change-detection.md) | Monitor change detection (`signal.changed`) — diff time-series periods, alert on material moves | Accepted |
 | [0014](./0014-property-yoy-and-change-denoise.md) | Property YoY from the store (2yr backfill) + change-detection sample-size de-noising | Accepted |
+| [0015](./0015-crime-into-store.md) | Crime into the store (police.uk bulk archive, LSOA-native) — loader + sample; prod load on archive download | Accepted |

@@ -22,11 +22,12 @@ const runDefault: QueryRunner = (text, params) => defaultQuery(text, params);
 /** PURE: the append statement. Copies current signal_values into the history,
     stamping captured_at; the source's observed_period is the period key.
 
-    Excludes property.* — prices write their OWN monthly history directly
-    (refresh/prices.ts) and their signal_values is a window AGGREGATE (e.g.
-    "2025-01 to 2025-12"), not a single monthly observation, so it must not be
-    appended as a fake period. The append job is for signals whose signal_values
-    IS their current observed-period value (deprivation releases, live signals). */
+    Excludes property.* and crime.* — those sources write their OWN monthly
+    history directly (refresh/prices.ts, refresh/crime.ts) and their signal_values
+    is a window AGGREGATE (e.g. "2025-01 to 2025-12"), not a single monthly
+    observation, so it must not be appended as a fake period. The append job is
+    for signals whose signal_values IS their current observed-period value
+    (deprivation releases, and future live-captured signals). */
 export function buildTimeseriesAppendSql(): string {
   return `INSERT INTO signal_timeseries
             (signal_key, geo_type, geo_code, observed_period, raw_value, raw_value_text,
@@ -36,6 +37,7 @@ export function buildTimeseriesAppendSql(): string {
             FROM signal_values
            WHERE observed_period IS NOT NULL
              AND signal_key NOT LIKE 'property.%'
+             AND signal_key NOT LIKE 'crime.%'
           ON CONFLICT (signal_key, geo_type, geo_code, observed_period) DO NOTHING`;
 }
 
