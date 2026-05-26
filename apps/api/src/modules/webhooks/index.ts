@@ -23,7 +23,7 @@ import { logger } from "../tracking/structured-logger";
 const WEBHOOK_DELIVERY_TIMEOUT_MS = 5000;
 const SECRET_PREFIX = "whsec_";
 
-export const SUPPORTED_EVENT_TYPES = ["report.created", "score.changed"] as const;
+export const SUPPORTED_EVENT_TYPES = ["report.created", "score.changed", "signal.changed"] as const;
 export type WebhookEventType = (typeof SUPPORTED_EVENT_TYPES)[number];
 
 export interface WebhookSubscriptionRow {

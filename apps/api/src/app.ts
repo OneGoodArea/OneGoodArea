@@ -19,7 +19,7 @@ import { rateLimit, rateLimitHeaders } from "./infrastructure/rate-limit";
 import { RATE_LIMITS, BATCH_MAX_ITEMS, APP_URL, getConfig } from "./infrastructure/config";
 import { getAreaProfile, queryAreas, parseAreasQuery } from "./modules/signals";
 import { scoreArea, parseScoreBody } from "./modules/scoring";
-import { createPortfolio, listPortfolios, getPortfolio, deletePortfolio, addAreas, enrichPortfolio, PORTFOLIO_ADD_MAX } from "./modules/monitor";
+import { createPortfolio, listPortfolios, getPortfolio, deletePortfolio, addAreas, enrichPortfolio, detectPortfolioChanges, PORTFOLIO_ADD_MAX, type Baseline } from "./modules/monitor";
 import {
   getUserPlan,
   hasApiAccess,
@@ -663,6 +663,43 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     } catch (error) {
       if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
       logger.error("[v1/portfolios/:id/enrich] error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  // Change detection: diff the portfolio's areas across time-series periods,
+  // fire signal.changed webhooks for material moves. Needs accrued history
+  // (prices move; deprivation is static).
+  app.post("/v1/portfolios/:id/changes", async (request, reply) => {
+    try {
+      const userId = await guardSignals(request, reply);
+      if (!userId) return reply;
+      const { id } = request.params as { id: string };
+      const body = (request.body ?? {}) as { baseline?: unknown; threshold_pct?: unknown; emit?: unknown };
+
+      if (body.baseline !== undefined && body.baseline !== "previous" && body.baseline !== "first") {
+        return reply.code(400).send({ error: "baseline must be 'previous' or 'first'." });
+      }
+      let thresholdPct: number | undefined;
+      if (body.threshold_pct !== undefined) {
+        thresholdPct = Number(body.threshold_pct);
+        if (!Number.isFinite(thresholdPct) || thresholdPct < 0) {
+          return reply.code(400).send({ error: "threshold_pct must be a non-negative number." });
+        }
+      }
+
+      const report = await detectPortfolioChanges(userId, id, {
+        baseline: body.baseline as Baseline | undefined,
+        thresholdPct,
+        emit: body.emit === undefined ? true : Boolean(body.emit),
+      });
+      if (!report) return reply.code(404).send({ error: "Portfolio not found" });
+      trackEvent("api.portfolio.changes_checked", userId, { portfolioId: id, material: report.material_count });
+      reply.header("X-Engine-Version", METHODOLOGY_VERSION);
+      return reply.code(200).send(report);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/portfolios/:id/changes] error:", error);
       return reply.code(500).send({ error: "Internal server error" });
     }
   });

@@ -39,3 +39,35 @@ export const PortfolioEnrichItemSchema = z.object({
   error: z.string().nullable(),
 });
 export type PortfolioEnrichItem = z.infer<typeof PortfolioEnrichItemSchema>;
+
+/* ── change detection ──
+   A material move in one signal for one tracked area, between two time-series
+   periods. Powers `signal.changed` alerts. Needs the signal to have >= 2 stored
+   periods (so prices, which accrue monthly; deprivation is static = no change). */
+export const SignalChangeSchema = z.object({
+  signal_key: z.string(),
+  label: z.string().nullable(),
+  area: z.string(),            // the tracked area string (as added to the portfolio)
+  geo_code: z.string(),        // the LSOA it resolved to
+  period_from: z.string(),
+  period_to: z.string(),
+  value_from: z.number().nullable(),
+  value_to: z.number().nullable(),
+  delta: z.number().nullable(),
+  pct_change: z.number().nullable(),   // null when the baseline value is 0/absent
+  direction: z.enum(["up", "down", "flat"]),
+  material: z.boolean(),               // |pct_change| >= threshold_pct
+});
+export type SignalChange = z.infer<typeof SignalChangeSchema>;
+
+/** The result of checking a portfolio for change between two periods. */
+export const ChangeReportSchema = z.object({
+  portfolio_id: z.string(),
+  baseline: z.enum(["previous", "first"]),  // compare latest vs the prior period, or vs the oldest in range
+  threshold_pct: z.number(),
+  areas_checked: z.number(),
+  material_count: z.number(),
+  changes: z.array(SignalChangeSchema),     // material changes only
+  generated_at: z.string(),
+});
+export type ChangeReport = z.infer<typeof ChangeReportSchema>;
