@@ -75,7 +75,10 @@ export function buildHeaderIndex(headerFields: string[], cols: ColumnMap = NSPL_
   return idx;
 }
 
-function normalizePostcode(pc: string): string {
+/** Normalize a postcode to the geo_lookup key form (uppercase, single internal
+    space before the 3-char inward code). Exported so every store join uses the
+    SAME key shape (e.g. the prices refresh maps PP-file postcodes to LSOAs). */
+export function normalizePostcode(pc: string): string {
   const t = pc.trim().toUpperCase().replace(/\s+/g, "");
   return t.length < 5 ? t : `${t.slice(0, -3)} ${t.slice(-3)}`;
 }

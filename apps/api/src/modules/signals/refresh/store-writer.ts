@@ -118,6 +118,18 @@ export type SignalValueRow = {
   observed_period: string | null;
   engine_version: string | null;
 };
+export type SignalTimeseriesRow = {
+  signal_key: string;
+  geo_type: string;
+  geo_code: string;
+  observed_period: string;
+  raw_value: number | null;
+  raw_value_text: string | null;
+  normalized_value: number | null;
+  confidence: number | null;
+  source_snapshot_id: string | null;
+  engine_version: string | null;
+};
 
 /* ── domain writers (each is one UpsertSpec) ── */
 
@@ -181,6 +193,36 @@ export function upsertGeoLookup(rows: GeoLookupRow[], run: QueryRunner = runDefa
         "latitude = EXCLUDED.latitude",
         "longitude = EXCLUDED.longitude",
         "boundary_version = EXCLUDED.boundary_version",
+      ],
+    },
+  }, rows);
+}
+
+/** Upsert historical rows DIRECTLY into signal_timeseries (DO UPDATE).
+
+    This is for sources that publish their OWN history (e.g. HM Land Registry
+    Price Paid, a refreshable archive): re-running recomputes a past period in
+    place when the source adds late-registered records. This is deliberately
+    distinct from the monthly append job (refresh/timeseries.ts), which copies
+    the current signal_values and is immutable per period (ON CONFLICT DO
+    NOTHING) because live-captured signals have no authoritative history to
+    correct against. */
+export function upsertSignalTimeseries(rows: SignalTimeseriesRow[], run: QueryRunner = runDefault): Promise<number> {
+  return bulkUpsert(run, {
+    table: "signal_timeseries",
+    columns: [
+      "signal_key", "geo_type", "geo_code", "observed_period", "raw_value",
+      "raw_value_text", "normalized_value", "confidence", "source_snapshot_id", "engine_version",
+    ],
+    conflict: {
+      target: ["signal_key", "geo_type", "geo_code", "observed_period"],
+      set: [
+        "raw_value = EXCLUDED.raw_value",
+        "raw_value_text = EXCLUDED.raw_value_text",
+        "normalized_value = EXCLUDED.normalized_value",
+        "confidence = EXCLUDED.confidence",
+        "source_snapshot_id = EXCLUDED.source_snapshot_id",
+        "engine_version = EXCLUDED.engine_version",
       ],
     },
   }, rows);

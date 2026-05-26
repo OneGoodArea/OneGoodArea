@@ -43,5 +43,7 @@ jobs:
         run: npm run refresh:deprivation -w @onegoodarea/api
       - name: Normalize
         run: npm run normalize:deprivation -w @onegoodarea/api
+      - name: Refresh prices (HM Land Registry, current year — self-normalizes)
+        run: npm run refresh:prices -w @onegoodarea/api -- $(date -u +%Y)
       - name: Append time-series (the moat clock — un-backfillable history)
         run: npm run timeseries:append -w @onegoodarea/api

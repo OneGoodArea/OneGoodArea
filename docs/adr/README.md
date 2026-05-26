@@ -21,3 +21,4 @@ and both are kept (the trail matters).
 | [0008](./0008-scores-v3.md) | Scores v3 (`POST /v1/score`) — presets + custom weights, engine reused untouched | Accepted |
 | [0009](./0009-monitor-portfolios.md) | Monitor v1 — portfolios + bulk enrich (change detection later) | Accepted |
 | [0010](./0010-timeseries-append.md) | Time-series append (the moat clock) — monthly snapshot, immutable per period | Accepted |
+| [0011](./0011-prices-into-store.md) | HM Land Registry prices into the store — first dynamic + backfilled source (LSOA × month) | Accepted |

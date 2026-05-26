@@ -61,18 +61,27 @@ export interface NormalizeSummary {
   signals: string[];
 }
 
-/** Normalize every deprivation signal (national-within-country). Idempotent:
-    re-running recomputes in place. */
-export async function runDeprivationNormalize(run: QueryRunner = runDefault): Promise<NormalizeSummary> {
+/** Normalize an arbitrary set of signal keys (national-within-country).
+    Reused by every source's refresh (deprivation, prices, …) so normalization
+    lives in ONE place. Idempotent: re-running recomputes in place. */
+export async function normalizeSignals(
+  keys: readonly string[],
+  run: QueryRunner = runDefault,
+): Promise<NormalizeSummary> {
   const normalizedValueSql = buildNormalizedValueSql();
   const percentilesSql = buildPercentilesSql();
 
-  for (const key of DEPRIVATION_SIGNAL_KEYS) {
+  for (const key of keys) {
     await run(normalizedValueSql, [key]);
     await run(percentilesSql, [key]);
   }
 
-  return { signals: [...DEPRIVATION_SIGNAL_KEYS] };
+  return { signals: [...keys] };
+}
+
+/** Normalize every deprivation signal (national-within-country). */
+export async function runDeprivationNormalize(run: QueryRunner = runDefault): Promise<NormalizeSummary> {
+  return normalizeSignals(DEPRIVATION_SIGNAL_KEYS, run);
 }
 
 /* CLI entry:  npm run normalize:deprivation -w @onegoodarea/api */
