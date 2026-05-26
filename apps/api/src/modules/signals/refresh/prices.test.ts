@@ -187,7 +187,6 @@ describe("runPricesRefresh (injected lines + map + run)", () => {
       lines,
       postcodeToLsoa: new Map([["M1 1AE", "E01000001"]]),
       makeId: () => "snap_test",
-      skipNormalize: true,
     });
 
     expect(summary.parsed).toBe(3); // the B row is skipped
@@ -205,7 +204,7 @@ describe("runPricesRefresh (injected lines + map + run)", () => {
 
   it("throws if the postcode->LSOA map is empty (spine not loaded)", async () => {
     await expect(
-      runPricesRefresh({ run: async () => [], postcodeToLsoa: new Map(), lines: async function* () {}, skipNormalize: true }),
+      runPricesRefresh({ run: async () => [], postcodeToLsoa: new Map(), lines: async function* () {} }),
     ).rejects.toThrow(/geo spine/i);
   });
 });

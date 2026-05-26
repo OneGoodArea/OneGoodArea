@@ -26,6 +26,7 @@ export const SUPPORTED_SIGNALS = [
   "deprivation.imd_rank",
   "property.median_price",
   "property.transaction_count",
+  "property.price_change_pct_yoy",
   "crime.total_12m",
   "crime.monthly_rate",
   "crime.monthly_count",

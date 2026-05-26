@@ -31,7 +31,6 @@ import { generateId } from "../../../infrastructure/utils/id";
 import { logger } from "../../tracking/structured-logger";
 import { query as defaultQuery } from "../../../infrastructure/db/client";
 import { parseCsvLine, normalizePostcode } from "./geo-spine";
-import { normalizeSignals } from "./normalize";
 import {
   writeSnapshots,
   upsertSignalCatalog,
@@ -258,8 +257,6 @@ export interface PricesRefreshDeps {
   postcodeToLsoa?: ReadonlyMap<string, string>;
   /** Override line streaming (tests inject; prod streams the file/URL). */
   lines?: () => AsyncIterable<string>;
-  /** Skip normalization (tests). */
-  skipNormalize?: boolean;
 }
 
 export interface PricesRefreshSummary {
@@ -316,7 +313,8 @@ export async function runPricesRefresh(deps: PricesRefreshDeps = {}): Promise<Pr
   }], run);
   await upsertSignalTimeseries(timeseriesRows, run);
   await upsertSignalValues(signalValues, run);
-  if (!deps.skipNormalize) await normalizeSignals(PRICES_NORMALIZE_KEYS, run);
+  // WRITE-ONLY: normalization is a separate idempotent step (`normalize:signals`).
+  // A transient HTTP timeout in normalize must not be able to fail this run.
 
   logger.info(`[refresh:prices] ${parsed} sales -> ${buckets.size} LSOAs x ${periods} months; ${signalValues.length} current + ${timeseriesRows.length} history rows`);
 

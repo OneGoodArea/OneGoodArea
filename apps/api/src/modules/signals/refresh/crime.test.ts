@@ -91,7 +91,7 @@ describe("runCrimeRefresh (injected files + lines + run)", () => {
     };
 
     const summary = await runCrimeRefresh({
-      run, files: async () => ["a-street.csv"], linesOf, makeId: () => "snap_t", skipNormalize: true,
+      run, files: async () => ["a-street.csv"], linesOf, makeId: () => "snap_t",
     });
 
     expect(summary.parsed).toBe(3);   // the no-LSOA row dropped
@@ -105,7 +105,7 @@ describe("runCrimeRefresh (injected files + lines + run)", () => {
 
   it("throws when the header lacks LSOA/Month", async () => {
     const linesOf = async function* () { yield "Crime ID,Foo,Bar"; yield "x,y,z"; };
-    await expect(runCrimeRefresh({ run: async () => [], files: async () => ["bad.csv"], linesOf, skipNormalize: true }))
+    await expect(runCrimeRefresh({ run: async () => [], files: async () => ["bad.csv"], linesOf }))
       .rejects.toThrow(/LSOA code/i);
   });
 });

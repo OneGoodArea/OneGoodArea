@@ -28,3 +28,4 @@ and both are kept (the trail matters).
 | [0015](./0015-crime-into-store.md) | Crime into the store (police.uk bulk archive, LSOA-native) — loader + sample; prod load on archive download | Accepted |
 | [0016](./0016-crime-store-read.md) | Serve crime from the store on `/v1/area` — store-read flip mirroring property, real monthly_trend, by_category gap documented | Accepted |
 | [0017](./0017-query-plane.md) | Intelligence v1: `POST /v1/query` — the typed query plane (programmatic + NL), planner/executor split, deterministic principle | Accepted |
+| [0018](./0018-derived-signals-and-write-only-refresh.md) | Derived signals layer + write-only refresh / unified normalize — `property.price_change_pct_yoy` queryable; resilient cron | Accepted |

@@ -25,7 +25,6 @@ import { METHODOLOGY_VERSION } from "../../reports/methodology";
 import { generateId } from "../../../infrastructure/utils/id";
 import { logger } from "../../tracking/structured-logger";
 import { parseCsvLine } from "./geo-spine";
-import { normalizeSignals } from "./normalize";
 import {
   writeSnapshots,
   upsertSignalCatalog,
@@ -155,7 +154,6 @@ export interface CrimeRefreshDeps {
   /** Override file discovery + line streaming (tests). */
   files?: () => Promise<string[]>;
   linesOf?: (file: string) => AsyncIterable<string>;
-  skipNormalize?: boolean;
 }
 
 export interface CrimeRefreshSummary {
@@ -212,7 +210,9 @@ export async function runCrimeRefresh(deps: CrimeRefreshDeps = {}): Promise<Crim
   }], run);
   await upsertSignalTimeseries(timeseriesRows, run);
   await upsertSignalValues(signalValues, run);
-  if (!deps.skipNormalize) await normalizeSignals(CRIME_NORMALIZE_KEYS, run);
+  // WRITE-ONLY: normalization is a separate idempotent step (`normalize:signals`).
+  // The single-process inline normalize after a multi-minute write timed out
+  // on Neon HTTP three times this session — separating prevents that recurrence.
 
   logger.info(`[refresh:crime] ${parsed} crimes from ${files.length} files -> ${buckets.size} LSOAs x ${months} months; ${signalValues.length} current + ${timeseriesRows.length} history rows`);
 

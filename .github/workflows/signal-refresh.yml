@@ -39,11 +39,13 @@ jobs:
       - run: npm ci
       - name: Migrate (idempotent)
         run: npm run migrate -w @onegoodarea/api
-      - name: Refresh deprivation
+      - name: Refresh deprivation (write-only)
         run: npm run refresh:deprivation -w @onegoodarea/api
-      - name: Normalize
-        run: npm run normalize:deprivation -w @onegoodarea/api
-      - name: Refresh prices (HM Land Registry, current year — self-normalizes)
+      - name: Refresh prices (HM Land Registry, current year, write-only)
         run: npm run refresh:prices -w @onegoodarea/api -- $(date -u +%Y)
+      - name: Derive signals (YoY etc. — computed from the time-series, write-only)
+        run: npm run derive:signals -w @onegoodarea/api
+      - name: Normalize all signals (single idempotent step; cannot fail the writes above)
+        run: npm run normalize:signals -w @onegoodarea/api
       - name: Append time-series (the moat clock — un-backfillable history)
         run: npm run timeseries:append -w @onegoodarea/api
