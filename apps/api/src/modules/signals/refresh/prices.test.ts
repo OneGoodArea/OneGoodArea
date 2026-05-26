@@ -103,7 +103,7 @@ describe("addToBuckets / aggregateTransactions", () => {
 });
 
 describe("bucketsToRows", () => {
-  it("emits all months as history and the latest month as current values", () => {
+  it("emits every month as history and a window-median + total count as current", () => {
     const { buckets } = aggregateTransactions(
       [
         { postcode: "M1 1AE", price: 100, ym: "2024-01" },
@@ -117,18 +117,27 @@ describe("bucketsToRows", () => {
     expect(latestPeriod).toBe("2024-02");
     // history: 2 signals x 2 months = 4 rows
     expect(timeseriesRows).toHaveLength(4);
-    // current: 2 signals for the latest month only
+    // current: 2 signals, one window aggregate each
     expect(signalValues).toHaveLength(2);
 
     const curMedian = signalValues.find((r) => r.signal_key === "property.median_price")!;
-    expect(curMedian.observed_period).toBe("2024-02");
-    expect(curMedian.raw_value).toBe(500);
+    expect(curMedian.observed_period).toBe("2024-01 to 2024-02"); // window label
+    expect(curMedian.raw_value).toBe(300); // median of ALL sales [100,300,500]
     const curCount = signalValues.find((r) => r.signal_key === "property.transaction_count")!;
-    expect(curCount.raw_value).toBe(1);
+    expect(curCount.raw_value).toBe(3); // total across the window
 
     const janMedian = timeseriesRows.find((r) => r.observed_period === "2024-01" && r.signal_key === "property.median_price")!;
-    expect(janMedian.raw_value).toBe(200); // median of [100,300]
+    expect(janMedian.raw_value).toBe(200); // monthly median of [100,300]
     expect(janMedian.geo_code).toBe("E01000001");
+  });
+
+  it("labels the window as a single month when there is only one", () => {
+    const { buckets } = aggregateTransactions(
+      [{ postcode: "M1 1AE", price: 250, ym: "2025-06" }],
+      new Map([["M1 1AE", "E01000001"]]),
+    );
+    const { signalValues } = bucketsToRows(buckets, "snap_2");
+    expect(signalValues.find((r) => r.signal_key === "property.median_price")!.observed_period).toBe("2025-06");
   });
 });
 

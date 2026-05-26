@@ -1,5 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
-import { readDeprivationFromStore, readDeprivationNormalization, type Reader } from "./store-reader";
+import {
+  readDeprivationFromStore,
+  readDeprivationNormalization,
+  readPropertyFromStore,
+  readPropertyNormalization,
+  type Reader,
+} from "./store-reader";
 
 describe("readDeprivationFromStore", () => {
   it("reconstructs DeprivationData when both rank and decile are stored", async () => {
@@ -48,6 +54,69 @@ describe("readDeprivationNormalization", () => {
   it("returns {} for an empty geo code without querying", async () => {
     const run = vi.fn<Reader>(async () => []);
     expect(await readDeprivationNormalization("", run)).toEqual({});
+    expect(run).not.toHaveBeenCalled();
+  });
+});
+
+describe("readPropertyFromStore", () => {
+  it("reconstructs a PropertyPriceData the mapper + engine can read", async () => {
+    const run: Reader = async () => [
+      { signal_key: "property.median_price", raw_value: 285000, observed_period: "2025-01 to 2025-12" },
+      { signal_key: "property.transaction_count", raw_value: 42, observed_period: "2025-01 to 2025-12" },
+    ];
+    const p = await readPropertyFromStore("E01000001", run);
+    expect(p).toMatchObject({
+      postcode_area: "E01000001",
+      median_price: 285000,
+      transaction_count: 42,
+      price_change_pct: null,
+      prior_median: null,
+      period: "2025-01 to 2025-12",
+    });
+    // unused fields are safe-filled, not undefined
+    expect(p!.by_property_type).toEqual([]);
+    expect(p!.price_range).toEqual({ min: 285000, max: 285000 });
+  });
+
+  it("returns null (→ live fallback) when there is no usable median", async () => {
+    const run: Reader = async () => [{ signal_key: "property.transaction_count", raw_value: 3, observed_period: "2025-06" }];
+    expect(await readPropertyFromStore("E01000001", run)).toBeNull();
+  });
+
+  it("returns null when the median is non-positive", async () => {
+    const run: Reader = async () => [{ signal_key: "property.median_price", raw_value: 0, observed_period: "2025-06" }];
+    expect(await readPropertyFromStore("E01000001", run)).toBeNull();
+  });
+
+  it("returns null on no rows (e.g. a Scotland LSOA — Land Registry is E&W only)", async () => {
+    const run: Reader = async () => [];
+    expect(await readPropertyFromStore("S01000001", run)).toBeNull();
+  });
+
+  it("defaults transaction_count to 0 if the count row is absent", async () => {
+    const run: Reader = async () => [{ signal_key: "property.median_price", raw_value: 200000, observed_period: "2025-06" }];
+    expect((await readPropertyFromStore("E01000001", run))!.transaction_count).toBe(0);
+  });
+
+  it("returns null for an empty geo code without querying", async () => {
+    const run = vi.fn<Reader>(async () => []);
+    expect(await readPropertyFromStore("", run)).toBeNull();
+    expect(run).not.toHaveBeenCalled();
+  });
+});
+
+describe("readPropertyNormalization", () => {
+  it("maps normalized_value + percentile for median_price", async () => {
+    const run: Reader = async () => [
+      { signal_key: "property.median_price", normalized_value: 0.99, percentile: "99.24" },
+    ];
+    const m = await readPropertyNormalization("E01000002", run);
+    expect(m["property.median_price"]).toEqual({ normalized_value: 0.99, percentile: 99.24 });
+  });
+
+  it("returns {} for an empty geo code without querying", async () => {
+    const run = vi.fn<Reader>(async () => []);
+    expect(await readPropertyNormalization("", run)).toEqual({});
     expect(run).not.toHaveBeenCalled();
   });
 });

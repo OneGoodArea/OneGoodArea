@@ -22,3 +22,4 @@ and both are kept (the trail matters).
 | [0009](./0009-monitor-portfolios.md) | Monitor v1 — portfolios + bulk enrich (change detection later) | Accepted |
 | [0010](./0010-timeseries-append.md) | Time-series append (the moat clock) — monthly snapshot, immutable per period | Accepted |
 | [0011](./0011-prices-into-store.md) | HM Land Registry prices into the store — first dynamic + backfilled source (LSOA × month) | Accepted |
+| [0012](./0012-property-store-read.md) | Serve property (prices) from the store on `/v1/area` — robust annual median, grain district→LSOA | Accepted |

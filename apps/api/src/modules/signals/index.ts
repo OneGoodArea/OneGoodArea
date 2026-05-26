@@ -23,46 +23,62 @@ import { getOfstedSchools } from "./data-sources/ofsted";
 import { logger } from "../tracking/structured-logger";
 import { getConfig } from "../../infrastructure/config";
 import { buildAreaProfile, type AreaSources } from "./area-profile";
-import { readDeprivationFromStore, readDeprivationNormalization } from "./store-reader";
+import {
+  readDeprivationFromStore,
+  readDeprivationNormalization,
+  readPropertyFromStore,
+  readPropertyNormalization,
+} from "./store-reader";
 import type { AreaProfile } from "@onegoodarea/contracts";
 
 export { buildAreaProfile, type AreaSources } from "./area-profile";
 export { queryAreas, parseAreasQuery, type AreaResult, type AreasQuery } from "./query";
 
-/** Geocoded area + its assembled source structs + whether deprivation came from
-    the store. The shared fetch behind getAreaProfile (signals) AND scoreArea
+/** Geocoded area + its assembled source structs + which sources came from the
+    store. The shared fetch behind getAreaProfile (signals) AND scoreArea
     (scoring), so the data-gathering + serve-from-store logic lives in one place. */
 export interface FetchedArea {
   geo: GeocodedArea;
   sources: AreaSources;
   depFromStore: boolean;
+  propertyFromStore: boolean;
 }
 
-/** Geocode an area and gather its six source structs. Deprivation is read from
-    the persisted store when OGA_SIGNALS_STORE_READ is on and present (skipping
-    the live fetch); everything else is live. Returns null if the area cannot be
-    geocoded. See ADR 0004. */
+/** Geocode an area and gather its six source structs. Deprivation and property
+    are read from the persisted store when OGA_SIGNALS_STORE_READ is on and
+    present (skipping the live fetch); everything else is live. Returns null if
+    the area cannot be geocoded. See ADR 0004 (deprivation), 0012 (property). */
 export async function fetchAreaSources(area: string): Promise<FetchedArea | null> {
   const geo = await geocodeArea(area);
   if (!geo) return null;
 
-  const storedDeprivation = getConfig().signalsStoreRead
-    ? await readDeprivationFromStore(geo.lsoa)
-    : null;
+  const storeRead = getConfig().signalsStoreRead;
+  const [storedDeprivation, storedProperty] = await Promise.all([
+    storeRead ? readDeprivationFromStore(geo.lsoa) : Promise.resolve(null),
+    storeRead ? readPropertyFromStore(geo.lsoa) : Promise.resolve(null),
+  ]);
 
-  const [crime, liveDeprivation, amenities, flood, property, ofsted] = await Promise.all([
+  const [crime, liveDeprivation, amenities, flood, liveProperty, ofsted] = await Promise.all([
     getCrimeData(geo.latitude, geo.longitude),
     storedDeprivation ? Promise.resolve(null) : getDeprivationData(geo.lsoa, geo.lsoa11),
     getNearbyAmenities(geo.latitude, geo.longitude),
     getFloodRisk(geo.latitude, geo.longitude),
-    getPropertyPrices(geo.query),
+    storedProperty ? Promise.resolve(null) : getPropertyPrices(geo.query),
     getOfstedSchools(geo.latitude, geo.longitude, geo.country),
   ]);
 
   return {
     geo,
-    sources: { crime, deprivation: storedDeprivation ?? liveDeprivation, amenities, flood, property, ofsted },
+    sources: {
+      crime,
+      deprivation: storedDeprivation ?? liveDeprivation,
+      amenities,
+      flood,
+      property: storedProperty ?? liveProperty,
+      ofsted,
+    },
     depFromStore: !!storedDeprivation,
+    propertyFromStore: !!storedProperty,
   };
 }
 
@@ -75,19 +91,25 @@ export async function fetchAreaSources(area: string): Promise<FetchedArea | null
 export async function getAreaProfile(area: string): Promise<AreaProfile | null> {
   const fetched = await fetchAreaSources(area);
   if (!fetched) return null;
-  const { geo, sources, depFromStore } = fetched;
+  const { geo, sources, depFromStore, propertyFromStore } = fetched;
 
-  const depNormalization = depFromStore ? await readDeprivationNormalization(geo.lsoa) : {};
-  const fetchMode = depFromStore ? "hybrid" : "live";
+  type NormMap = Record<string, { normalized_value: number | null; percentile: number | null }>;
+  const emptyNorm: NormMap = {};
+  const [depNormalization, propertyNormalization] = await Promise.all([
+    depFromStore ? readDeprivationNormalization(geo.lsoa) : Promise.resolve(emptyNorm),
+    propertyFromStore ? readPropertyNormalization(geo.lsoa) : Promise.resolve(emptyNorm),
+  ]);
+  const fetchMode = depFromStore || propertyFromStore ? "hybrid" : "live";
 
-  logger.info(`[signals] /v1/area "${area}": mode=${fetchMode}, dep=${depFromStore ? "store" : "live"}, imd=${sources.deprivation?.imd_decile ?? "n/a"}, crime=${sources.crime?.total_crimes ?? "n/a"}, amenities=${sources.amenities?.total ?? "n/a"}`);
+  logger.info(`[signals] /v1/area "${area}": mode=${fetchMode}, dep=${depFromStore ? "store" : "live"}, property=${propertyFromStore ? "store" : "live"}, imd=${sources.deprivation?.imd_decile ?? "n/a"}, crime=${sources.crime?.total_crimes ?? "n/a"}, amenities=${sources.amenities?.total ?? "n/a"}`);
 
   const profile = buildAreaProfile(geo, sources, fetchMode);
 
   // Enrich store-backed signals with their stored normalization (additive).
-  if (depFromStore) {
+  const normalization = { ...depNormalization, ...propertyNormalization };
+  if (depFromStore || propertyFromStore) {
     for (const s of profile.signals) {
-      const n = depNormalization[s.key];
+      const n = normalization[s.key];
       if (n) {
         s.normalized_value = n.normalized_value;
         s.percentile = n.percentile;

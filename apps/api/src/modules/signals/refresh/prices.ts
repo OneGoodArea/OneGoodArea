@@ -155,37 +155,50 @@ export interface PriceStoreRows {
   latestPeriod: string | null;
 }
 
-/** PURE: buckets -> store rows. Every (lsoa, month) becomes timeseries history
-    (median + count); the latest month per lsoa also becomes the current
-    signal_values. */
+/** PURE: buckets -> store rows.
+
+    - signal_timeseries: every (lsoa, month) -> monthly median + count (the moat;
+      granular history).
+    - signal_values (CURRENT): per lsoa, the median over the WHOLE window's sales
+      (a true median of all the period's raw prices, not a noisy single month) +
+      the total transaction count. This is the robust "headline" figure that gets
+      normalized + served; observed_period is the window it covers
+      (e.g. "2025-01 to 2025-12"). */
 export function bucketsToRows(buckets: PriceBuckets, snapshotId: string): PriceStoreRows {
   const signalValues: SignalValueRow[] = [];
   const timeseriesRows: SignalTimeseriesRow[] = [];
   let latestPeriod: string | null = null;
 
   for (const [lsoa, byMonth] of buckets) {
+    const allPrices: number[] = [];
+    let earliestYm = "";
     let latestYm = "";
-    for (const ym of byMonth.keys()) if (ym > latestYm) latestYm = ym;
-    if (latestYm > (latestPeriod ?? "")) latestPeriod = latestYm;
 
     for (const [ym, prices] of byMonth) {
-      const median = medianOf(prices);
-      const count = prices.length;
-      const conf = priceConfidence(count);
-      const reason = `${PRICES_SOURCE}: median of ${count} standard residential sale${count === 1 ? "" : "s"} in ${ym}.`;
+      if (!earliestYm || ym < earliestYm) earliestYm = ym;
+      if (ym > latestYm) latestYm = ym;
+      for (const p of prices) allPrices.push(p);
 
+      const monthMedian = medianOf(prices);
+      const monthCount = prices.length;
+      const monthConf = priceConfidence(monthCount);
       timeseriesRows.push(
-        { signal_key: "property.median_price", geo_type: "lsoa", geo_code: lsoa, observed_period: ym, raw_value: median, raw_value_text: null, normalized_value: null, confidence: conf, source_snapshot_id: snapshotId, engine_version: METHODOLOGY_VERSION },
-        { signal_key: "property.transaction_count", geo_type: "lsoa", geo_code: lsoa, observed_period: ym, raw_value: count, raw_value_text: null, normalized_value: null, confidence: conf, source_snapshot_id: snapshotId, engine_version: METHODOLOGY_VERSION },
+        { signal_key: "property.median_price", geo_type: "lsoa", geo_code: lsoa, observed_period: ym, raw_value: monthMedian, raw_value_text: null, normalized_value: null, confidence: monthConf, source_snapshot_id: snapshotId, engine_version: METHODOLOGY_VERSION },
+        { signal_key: "property.transaction_count", geo_type: "lsoa", geo_code: lsoa, observed_period: ym, raw_value: monthCount, raw_value_text: null, normalized_value: null, confidence: monthConf, source_snapshot_id: snapshotId, engine_version: METHODOLOGY_VERSION },
       );
-
-      if (ym === latestYm) {
-        signalValues.push(
-          { signal_key: "property.median_price", geo_type: "lsoa", geo_code: lsoa, raw_value: median, raw_value_text: null, normalized_value: null, confidence: conf, confidence_reason: reason, source_snapshot_id: snapshotId, observed_period: ym, engine_version: METHODOLOGY_VERSION },
-          { signal_key: "property.transaction_count", geo_type: "lsoa", geo_code: lsoa, raw_value: count, raw_value_text: null, normalized_value: null, confidence: conf, confidence_reason: reason, source_snapshot_id: snapshotId, observed_period: ym, engine_version: METHODOLOGY_VERSION },
-        );
-      }
     }
+    if (latestYm > (latestPeriod ?? "")) latestPeriod = latestYm;
+
+    // CURRENT = the window median over all the period's sales (robust).
+    const windowMedian = medianOf(allPrices);
+    const windowCount = allPrices.length;
+    const windowConf = priceConfidence(windowCount);
+    const window = earliestYm === latestYm ? latestYm : `${earliestYm} to ${latestYm}`;
+    const reason = `${PRICES_SOURCE}: median of ${windowCount} standard residential sale${windowCount === 1 ? "" : "s"} (${window}).`;
+    signalValues.push(
+      { signal_key: "property.median_price", geo_type: "lsoa", geo_code: lsoa, raw_value: windowMedian, raw_value_text: null, normalized_value: null, confidence: windowConf, confidence_reason: reason, source_snapshot_id: snapshotId, observed_period: window, engine_version: METHODOLOGY_VERSION },
+      { signal_key: "property.transaction_count", geo_type: "lsoa", geo_code: lsoa, raw_value: windowCount, raw_value_text: null, normalized_value: null, confidence: windowConf, confidence_reason: reason, source_snapshot_id: snapshotId, observed_period: window, engine_version: METHODOLOGY_VERSION },
+    );
   }
   return { signalValues, timeseriesRows, latestPeriod };
 }

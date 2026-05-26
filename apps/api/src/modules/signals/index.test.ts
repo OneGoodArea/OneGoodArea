@@ -8,18 +8,32 @@ vi.mock("./data-sources/openstreetmap", () => ({ getNearbyAmenities: vi.fn() }))
 vi.mock("./data-sources/flood", () => ({ getFloodRisk: vi.fn() }));
 vi.mock("./data-sources/land-registry", () => ({ getPropertyPrices: vi.fn() }));
 vi.mock("./data-sources/ofsted", () => ({ getOfstedSchools: vi.fn() }));
-vi.mock("./store-reader", () => ({ readDeprivationFromStore: vi.fn(), readDeprivationNormalization: vi.fn() }));
+vi.mock("./store-reader", () => ({
+  readDeprivationFromStore: vi.fn(),
+  readDeprivationNormalization: vi.fn(),
+  readPropertyFromStore: vi.fn(),
+  readPropertyNormalization: vi.fn(),
+}));
 vi.mock("../tracking/structured-logger", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 
 import { getAreaProfile } from "./index";
 import { geocodeArea } from "./data-sources/postcodes";
 import { getDeprivationData } from "./data-sources/deprivation";
-import { readDeprivationFromStore, readDeprivationNormalization } from "./store-reader";
+import { getPropertyPrices } from "./data-sources/land-registry";
+import {
+  readDeprivationFromStore,
+  readDeprivationNormalization,
+  readPropertyFromStore,
+  readPropertyNormalization,
+} from "./store-reader";
 
 const mockGeocode = vi.mocked(geocodeArea);
 const mockLiveDep = vi.mocked(getDeprivationData);
+const mockLiveProperty = vi.mocked(getPropertyPrices);
 const mockStoreDep = vi.mocked(readDeprivationFromStore);
 const mockStoreNorm = vi.mocked(readDeprivationNormalization);
+const mockStoreProperty = vi.mocked(readPropertyFromStore);
+const mockStorePropertyNorm = vi.mocked(readPropertyNormalization);
 
 const GEO = {
   query: "M1 1AE", latitude: 53.47, longitude: -2.23, admin_district: "Manchester",
@@ -41,6 +55,9 @@ beforeEach(() => {
   mockLiveDep.mockResolvedValue(LIVE_DEP);
   mockStoreDep.mockResolvedValue(null);
   mockStoreNorm.mockResolvedValue({});
+  mockLiveProperty.mockResolvedValue(null);
+  mockStoreProperty.mockResolvedValue(null);
+  mockStorePropertyNorm.mockResolvedValue({});
 });
 
 function signal(signals: import("@onegoodarea/contracts").Signal[], key: string) {
@@ -101,5 +118,24 @@ describe("getAreaProfile (store-read flip)", () => {
     expect(mockLiveDep).toHaveBeenCalledOnce();
     expect(profile.meta.fetch_mode).toBe("live");
     expect(decile(profile.signals)).toBe(6); // live value
+  });
+
+  it("reads property from the store and skips the live property fetch on a hit (hybrid)", async () => {
+    process.env.OGA_SIGNALS_STORE_READ = "true";
+    mockStoreProperty.mockResolvedValue({
+      postcode_area: "E01005207", median_price: 285000, mean_price: 285000, transaction_count: 42,
+      price_change_pct: null, by_property_type: [], tenure_split: { freehold: 0, leasehold: 0 },
+      price_range: { min: 285000, max: 285000 }, period: "2025-01 to 2025-12", prior_median: null,
+    });
+    mockStorePropertyNorm.mockResolvedValue({ "property.median_price": { normalized_value: 0.99, percentile: 99.24 } });
+
+    const profile = (await getAreaProfile("M1 1AE"))!;
+
+    expect(mockStoreProperty).toHaveBeenCalledWith("E01005207");
+    expect(mockLiveProperty).not.toHaveBeenCalled(); // live property fetch skipped
+    expect(profile.meta.fetch_mode).toBe("hybrid");
+    const med = signal(profile.signals, "property.median_price");
+    expect(med.value).toBe(285000);
+    expect(med.percentile).toBe(99.24);
   });
 });

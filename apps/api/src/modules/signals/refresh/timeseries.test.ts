@@ -12,6 +12,9 @@ describe("buildTimeseriesAppendSql (pure)", () => {
     expect(sql).toContain("ON CONFLICT (signal_key, geo_type, geo_code, observed_period) DO NOTHING");
     expect(sql).toContain("WHERE observed_period IS NOT NULL");
   });
+  it("excludes property.* (prices manage their own monthly history)", () => {
+    expect(sql).toContain("signal_key NOT LIKE 'property.%'");
+  });
 });
 
 describe("appendTimeseries", () => {

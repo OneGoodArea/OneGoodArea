@@ -105,7 +105,7 @@ export async function scoreArea(query: ScoreQuery): Promise<ScoreResult | null> 
   );
   const agg = applyWeights(base, query.weights);
 
-  logger.info(`[scoring] /v1/score "${query.area}" preset=${query.preset} weights=${agg.weights_source} dep=${fetched.depFromStore ? "store" : "live"} -> ${agg.score}`);
+  logger.info(`[scoring] /v1/score "${query.area}" preset=${query.preset} weights=${agg.weights_source} dep=${fetched.depFromStore ? "store" : "live"} property=${fetched.propertyFromStore ? "store" : "live"} -> ${agg.score}`);
 
   return {
     area: query.area,
