@@ -26,3 +26,4 @@ and both are kept (the trail matters).
 | [0013](./0013-monitor-change-detection.md) | Monitor change detection (`signal.changed`) — diff time-series periods, alert on material moves | Accepted |
 | [0014](./0014-property-yoy-and-change-denoise.md) | Property YoY from the store (2yr backfill) + change-detection sample-size de-noising | Accepted |
 | [0015](./0015-crime-into-store.md) | Crime into the store (police.uk bulk archive, LSOA-native) — loader + sample; prod load on archive download | Accepted |
+| [0016](./0016-crime-store-read.md) | Serve crime from the store on `/v1/area` — store-read flip mirroring property, real monthly_trend, by_category gap documented | Accepted |

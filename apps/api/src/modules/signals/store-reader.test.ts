@@ -4,6 +4,8 @@ import {
   readDeprivationNormalization,
   readPropertyFromStore,
   readPropertyNormalization,
+  readCrimeFromStore,
+  readCrimeNormalization,
   computeYoY,
   type Reader,
 } from "./store-reader";
@@ -160,6 +162,60 @@ describe("computeYoY", () => {
       { signal_key: "property.transaction_count", observed_period: "2025-06", raw_value: 0 }, // 0 -> skip year 2025
     ]);
     expect(r).toEqual({ price_change_pct: null, prior_median: null }); // only 2024 usable
+  });
+});
+
+describe("readCrimeFromStore", () => {
+  // run distinguishes the signal_values query from the timeseries query
+  const makeRun = (total: number | null, violent: number | null, trend: { p: string; v: number }[]): Reader =>
+    async (text) => {
+      if (text.includes("signal_timeseries")) return trend.map((t) => ({ observed_period: t.p, raw_value: t.v }));
+      const out: Record<string, unknown>[] = [];
+      if (total !== null) out.push({ signal_key: "crime.total_12m", raw_value: total });
+      if (violent !== null) out.push({ signal_key: "crime.violent_12m", raw_value: violent });
+      return out;
+    };
+
+  it("reconstructs CrimeSummary with a real monthly trend (ascending)", async () => {
+    const run = makeRun(240, 40, [
+      { p: "2025-12", v: 22 }, { p: "2025-11", v: 19 }, { p: "2025-10", v: 18 }, // returned DESC by the query
+    ]);
+    const c = (await readCrimeFromStore("E01005207", run))!;
+    expect(c.total_crimes).toBe(240);
+    expect(c.months_covered).toBe(3);
+    expect(c.by_category).toEqual({ "Violence and sexual offences": 40 });
+    expect(c.monthly_trend.map((m) => m.month)).toEqual(["2025-10", "2025-11", "2025-12"]); // ascending
+    expect(c.top_streets).toEqual([]);
+  });
+
+  it("leaves by_category empty when no violent count is stored", async () => {
+    const run = makeRun(100, null, [{ p: "2025-12", v: 10 }]);
+    expect((await readCrimeFromStore("E01000001", run))!.by_category).toEqual({});
+  });
+
+  it("returns null (→ live fallback) when crime.total_12m is absent", async () => {
+    const run = makeRun(null, null, []);
+    expect(await readCrimeFromStore("E01000001", run)).toBeNull();
+  });
+
+  it("returns null for an empty geo code without querying", async () => {
+    const run = vi.fn<Reader>(async () => []);
+    expect(await readCrimeFromStore("", run)).toBeNull();
+    expect(run).not.toHaveBeenCalled();
+  });
+});
+
+describe("readCrimeNormalization", () => {
+  it("maps normalized_value + percentile for crime.total_12m", async () => {
+    const run: Reader = async () => [{ signal_key: "crime.total_12m", normalized_value: 0.42, percentile: "41.50" }];
+    const m = await readCrimeNormalization("E01005207", run);
+    expect(m["crime.total_12m"]).toEqual({ normalized_value: 0.42, percentile: 41.5 });
+  });
+
+  it("returns {} for an empty geo code without querying", async () => {
+    const run = vi.fn<Reader>(async () => []);
+    expect(await readCrimeNormalization("", run)).toEqual({});
+    expect(run).not.toHaveBeenCalled();
   });
 });
 

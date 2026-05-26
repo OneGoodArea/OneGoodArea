@@ -13,6 +13,8 @@ vi.mock("./store-reader", () => ({
   readDeprivationNormalization: vi.fn(),
   readPropertyFromStore: vi.fn(),
   readPropertyNormalization: vi.fn(),
+  readCrimeFromStore: vi.fn(),
+  readCrimeNormalization: vi.fn(),
 }));
 vi.mock("../tracking/structured-logger", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 
@@ -20,20 +22,26 @@ import { getAreaProfile } from "./index";
 import { geocodeArea } from "./data-sources/postcodes";
 import { getDeprivationData } from "./data-sources/deprivation";
 import { getPropertyPrices } from "./data-sources/land-registry";
+import { getCrimeData } from "./data-sources/police";
 import {
   readDeprivationFromStore,
   readDeprivationNormalization,
   readPropertyFromStore,
   readPropertyNormalization,
+  readCrimeFromStore,
+  readCrimeNormalization,
 } from "./store-reader";
 
 const mockGeocode = vi.mocked(geocodeArea);
 const mockLiveDep = vi.mocked(getDeprivationData);
 const mockLiveProperty = vi.mocked(getPropertyPrices);
+const mockLiveCrime = vi.mocked(getCrimeData);
 const mockStoreDep = vi.mocked(readDeprivationFromStore);
 const mockStoreNorm = vi.mocked(readDeprivationNormalization);
 const mockStoreProperty = vi.mocked(readPropertyFromStore);
 const mockStorePropertyNorm = vi.mocked(readPropertyNormalization);
+const mockStoreCrime = vi.mocked(readCrimeFromStore);
+const mockStoreCrimeNorm = vi.mocked(readCrimeNormalization);
 
 const GEO = {
   query: "M1 1AE", latitude: 53.47, longitude: -2.23, admin_district: "Manchester",
@@ -58,6 +66,9 @@ beforeEach(() => {
   mockLiveProperty.mockResolvedValue(null);
   mockStoreProperty.mockResolvedValue(null);
   mockStorePropertyNorm.mockResolvedValue({});
+  mockLiveCrime.mockResolvedValue(null);
+  mockStoreCrime.mockResolvedValue(null);
+  mockStoreCrimeNorm.mockResolvedValue({});
 });
 
 function signal(signals: import("@onegoodarea/contracts").Signal[], key: string) {
@@ -137,5 +148,26 @@ describe("getAreaProfile (store-read flip)", () => {
     const med = signal(profile.signals, "property.median_price");
     expect(med.value).toBe(285000);
     expect(med.percentile).toBe(99.24);
+  });
+
+  it("reads crime from the store and skips the live crime fetch on a hit (hybrid)", async () => {
+    process.env.OGA_SIGNALS_STORE_READ = "true";
+    mockStoreCrime.mockResolvedValue({
+      total_crimes: 240, months_covered: 12, by_category: { "Violence and sexual offences": 40 },
+      top_streets: [], outcome_breakdown: {},
+      monthly_trend: [{ month: "2025-01", count: 18 }, { month: "2025-12", count: 22 }],
+    });
+    mockStoreCrimeNorm.mockResolvedValue({ "crime.total_12m": { normalized_value: 0.42, percentile: 41.5 } });
+
+    const profile = (await getAreaProfile("M1 1AE"))!;
+
+    expect(mockStoreCrime).toHaveBeenCalledWith("E01005207");
+    expect(mockLiveCrime).not.toHaveBeenCalled(); // live crime fetch skipped
+    expect(profile.meta.fetch_mode).toBe("hybrid");
+    const total = signal(profile.signals, "crime.total_12m");
+    expect(total.value).toBe(240);
+    expect(total.percentile).toBe(41.5);
+    // monthly rate derives from the stored total + months_covered
+    expect(signal(profile.signals, "crime.monthly_rate").value).toBe(20); // 240 / 12
   });
 });

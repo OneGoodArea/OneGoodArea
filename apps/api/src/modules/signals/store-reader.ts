@@ -12,7 +12,7 @@
    normalizes boundaries). See ADR 0004. */
 
 import { query as defaultQuery } from "../../infrastructure/db/client";
-import type { DeprivationData, PropertyPriceData } from "./inputs";
+import type { DeprivationData, PropertyPriceData, CrimeSummary } from "./inputs";
 
 /** Parameterized read runner ($1, $2, …). Injected in tests. */
 export type Reader = (text: string, params: unknown[]) => Promise<Record<string, unknown>[]>;
@@ -218,6 +218,96 @@ export async function readPropertyNormalization(
         AND sp.geo_code = sv.geo_code AND sp.scope = 'national'
       WHERE sv.geo_type = 'lsoa' AND sv.geo_code = $1
         AND sv.signal_key = 'property.median_price'`,
+    [geoCode],
+  );
+
+  const out: Record<string, { normalized_value: number | null; percentile: number | null }> = {};
+  for (const r of rows) {
+    const key = r.signal_key as string;
+    out[key] = {
+      normalized_value: r.normalized_value === null || r.normalized_value === undefined ? null : Number(r.normalized_value),
+      percentile: r.percentile === null || r.percentile === undefined ? null : Number(r.percentile),
+    };
+  }
+  return out;
+}
+
+/* ── crime (police.uk) ──
+
+   Reconstructs the CrimeSummary the mapper + scoring engine read from the store
+   (refresh/crime.ts): total_crimes from signal_values + the real monthly_trend
+   from the crime.monthly_count time-series (trailing 12). by_category is
+   reconstructed from a stored violent count (crime.violent_12m) IF present;
+   until a refresh populates that it is empty, which costs the engine only the
+   bounded violent-crime adjustment (the dominant monthly-rate + trend terms are
+   exact). top_streets / outcome_breakdown are not stored. See ADR 0016. */
+
+/** Read crime for an LSOA from the store, or null if absent (caller falls back
+    to a live fetch). */
+export async function readCrimeFromStore(
+  geoCode: string,
+  run: Reader = runDefault,
+): Promise<CrimeSummary | null> {
+  if (!geoCode) return null;
+
+  const valueRows = await run(
+    `SELECT signal_key, raw_value
+       FROM signal_values
+      WHERE geo_type = 'lsoa' AND geo_code = $1
+        AND signal_key IN ('crime.total_12m', 'crime.violent_12m')`,
+    [geoCode],
+  );
+  let total: number | null = null;
+  let violent = 0;
+  for (const r of valueRows) {
+    const v = r.raw_value;
+    if (v === null || v === undefined) continue;
+    if (r.signal_key === "crime.total_12m") total = Number(v);
+    else if (r.signal_key === "crime.violent_12m") violent = Number(v);
+  }
+  if (total === null || Number.isNaN(total)) return null;
+
+  // Real monthly trend from the time-series (trailing 12 months, ascending).
+  const tsRows = await run(
+    `SELECT observed_period, raw_value
+       FROM signal_timeseries
+      WHERE geo_type = 'lsoa' AND geo_code = $1 AND signal_key = 'crime.monthly_count'
+      ORDER BY observed_period DESC
+      LIMIT 12`,
+    [geoCode],
+  );
+  const monthly_trend = tsRows
+    .map((r) => ({ month: r.observed_period as string, count: r.raw_value === null || r.raw_value === undefined ? 0 : Number(r.raw_value) }))
+    .reverse(); // back to ascending (oldest -> newest) for the engine's first/last trend
+
+  const by_category: Record<string, number> = violent > 0 ? { "Violence and sexual offences": violent } : {};
+
+  return {
+    total_crimes: total,
+    months_covered: monthly_trend.length,
+    by_category,
+    top_streets: [],
+    outcome_breakdown: {},
+    monthly_trend,
+  };
+}
+
+/** Normalization for the store-backed crime signals at an LSOA (only
+    crime.total_12m is normalized). Empty when absent. */
+export async function readCrimeNormalization(
+  geoCode: string,
+  run: Reader = runDefault,
+): Promise<Record<string, { normalized_value: number | null; percentile: number | null }>> {
+  if (!geoCode) return {};
+
+  const rows = await run(
+    `SELECT sv.signal_key, sv.normalized_value, sp.percentile
+       FROM signal_values sv
+       LEFT JOIN signal_percentiles sp
+         ON sp.signal_key = sv.signal_key AND sp.geo_type = sv.geo_type
+        AND sp.geo_code = sv.geo_code AND sp.scope = 'national'
+      WHERE sv.geo_type = 'lsoa' AND sv.geo_code = $1
+        AND sv.signal_key = 'crime.total_12m'`,
     [geoCode],
   );
 
