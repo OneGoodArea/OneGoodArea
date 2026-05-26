@@ -1,0 +1,137 @@
+/* modules/intelligence — the planner (NL -> validated QueryPlan).
+
+   The AI's job is NARROW: read a natural-language question, emit a JSON query
+   plan that matches the typed grammar. Nothing else. The plan grammar is the
+   contract; the deterministic executor produces the actual answer from the
+   store.
+
+   Strict by design:
+     - Output MUST be JSON (we strip ```json fences defensively).
+     - Plan MUST validate against QueryPlanSchema (`.strict()` on every object,
+       so unknown ops / unknown params are REJECTED, never silently coerced).
+     - Failures return a typed PlannerError, never throw — the endpoint maps
+       them to 422 with the LLM's raw output for transparency.
+
+   This file is one half of the query plane (the other is the executor). The
+   programmatic path skips this file entirely. See ADR 0017. */
+
+import { QueryPlanSchema, type QueryPlan, type PlannerError } from "@onegoodarea/contracts";
+import type { AiProvider } from "../reports/ai";
+
+/** The set of signal keys the moat currently serves. Embedded in the prompt so
+    the model can only pick from real, indexed signals. Add new keys here when a
+    new source lands (deprivation / property / crime today). */
+export const SUPPORTED_SIGNALS = [
+  "deprivation.imd_decile",
+  "deprivation.imd_rank",
+  "property.median_price",
+  "property.transaction_count",
+  "crime.total_12m",
+  "crime.monthly_rate",
+  "crime.monthly_count",
+] as const;
+
+/** PURE: build the system+user prompt for the planner.
+
+    The prompt is intentionally tight + structured. It says exactly what valid
+    output looks like and refuses to ask for prose, narrative, or commentary. */
+export function buildPlannerPrompt(question: string): string {
+  return [
+    `You are the QUERY PLANNER for the OneGoodArea data layer. Your ONLY job is`,
+    `to translate a user's question into a JSON query plan that matches the`,
+    `grammar below. You DO NOT answer the question. You DO NOT produce prose,`,
+    `narrative, or commentary. You output ONE JSON object, nothing else.`,
+    ``,
+    `## Plan grammar (one of three ops)`,
+    ``,
+    `### rank_areas — rank LSOAs by a signal across a region`,
+    `{"op":"rank_areas","params":{`,
+    `  "signal": "<one of: ${SUPPORTED_SIGNALS.join(", ")}>",`,
+    `  "country": "England"|"Wales"|"Scotland"   (optional),`,
+    `  "lad": "<ONS LAD code, e.g. E08000003 for Manchester>"   (optional),`,
+    `  "sort": "percentile"|"percentile_desc"|"value"|"value_desc"   (optional, default percentile_desc),`,
+    `  "limit": 1..1000   (optional, default 100),`,
+    `  "min_percentile": 0..100   (optional),`,
+    `  "max_percentile": 0..100   (optional),`,
+    `  "min_value": number   (optional),`,
+    `  "max_value": number   (optional)`,
+    `}}`,
+    ``,
+    `### get_area — return the full signal profile for one area`,
+    `{"op":"get_area","params":{"area":"<postcode or place name, e.g. M1 1AE>"}}`,
+    ``,
+    `### score_area — score one area (preset weights or custom)`,
+    `{"op":"score_area","params":{`,
+    `  "area": "<postcode or place name>",`,
+    `  "preset": "moving"|"business"|"investing"|"research"   (optional, default research),`,
+    `  "weights": { "<dimension_key>": <number>, ... }   (optional)`,
+    `}}`,
+    ``,
+    `## Hard rules`,
+    `- Output ONLY the JSON object. No prose. No markdown fences. No commentary.`,
+    `- "signal" MUST be one of the listed keys. Do not invent signal keys.`,
+    `- Unknown / unsupported fields MUST be omitted (any extra field will be rejected).`,
+    `- If the question is ambiguous or unanswerable from the grammar, pick the`,
+    `  CLOSEST conservative plan (e.g. get_area on the obvious area).`,
+    ``,
+    `## Examples`,
+    `Q: "most deprived LSOAs in Manchester"`,
+    `A: {"op":"rank_areas","params":{"signal":"deprivation.imd_decile","lad":"E08000003","sort":"value","limit":20}}`,
+    ``,
+    `Q: "where are the cheapest places to buy in England?"`,
+    `A: {"op":"rank_areas","params":{"signal":"property.median_price","country":"England","sort":"value","limit":20}}`,
+    ``,
+    `Q: "tell me about M1 1AE"`,
+    `A: {"op":"get_area","params":{"area":"M1 1AE"}}`,
+    ``,
+    `Q: "score SW1A 1AA for investment"`,
+    `A: {"op":"score_area","params":{"area":"SW1A 1AA","preset":"investing"}}`,
+    ``,
+    `## The question`,
+    question,
+  ].join("\n");
+}
+
+/** PURE: extract a JSON object from an LLM response. Tolerates leading prose
+    or ```json fences (we asked for clean JSON; we defend against the model's
+    occasional verbosity). Returns null when no parseable object is found. */
+export function extractJson(raw: string): unknown {
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const body = fenced?.[1] ?? raw;
+  const start = body.indexOf("{");
+  const end = body.lastIndexOf("}");
+  if (start < 0 || end <= start) return null;
+  try {
+    return JSON.parse(body.slice(start, end + 1));
+  } catch {
+    return null;
+  }
+}
+
+/** PURE: validate raw LLM output into a typed QueryPlan, or a typed error. */
+export function parsePlanText(raw: string): { ok: true; plan: QueryPlan } | { ok: false; error: PlannerError } {
+  const json = extractJson(raw);
+  if (json === null) {
+    return { ok: false, error: { code: "no_json", message: "Planner did not return parseable JSON.", raw } };
+  }
+  const parsed = QueryPlanSchema.safeParse(json);
+  if (!parsed.success) {
+    return { ok: false, error: { code: "invalid_plan", message: parsed.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; "), raw } };
+  }
+  return { ok: true, plan: parsed.data };
+}
+
+/** I/O: call the AiProvider with the planner prompt for the user's question,
+    then validate. Returns a typed result; never throws on planner failures. */
+export async function plan(
+  question: string,
+  aiProvider: AiProvider,
+): Promise<{ ok: true; plan: QueryPlan } | { ok: false; error: PlannerError }> {
+  let raw: string;
+  try {
+    raw = await aiProvider.generateNarrative(buildPlannerPrompt(question));
+  } catch (err) {
+    return { ok: false, error: { code: "llm_error", message: err instanceof Error ? err.message : String(err) } };
+  }
+  return parsePlanText(raw);
+}

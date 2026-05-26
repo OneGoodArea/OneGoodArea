@@ -20,6 +20,7 @@ import { RATE_LIMITS, BATCH_MAX_ITEMS, APP_URL, getConfig } from "./infrastructu
 import { getAreaProfile, queryAreas, parseAreasQuery } from "./modules/signals";
 import { scoreArea, parseScoreBody } from "./modules/scoring";
 import { createPortfolio, listPortfolios, getPortfolio, deletePortfolio, addAreas, enrichPortfolio, detectPortfolioChanges, PORTFOLIO_ADD_MAX, type Baseline } from "./modules/monitor";
+import { runQuery, parseQueryRequest } from "./modules/intelligence";
 import {
   getUserPlan,
   hasApiAccess,
@@ -708,6 +709,35 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     } catch (error) {
       if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
       logger.error("[v1/portfolios/:id/changes] error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  // ── Intelligence v1: POST /v1/query — the typed query plane (AR-182) ──
+  // Programmatic mode ({plan}) skips the LLM entirely; NL mode ({question})
+  // routes through the planner -> Zod-validated plan -> SAME deterministic
+  // executor. Response always echoes the executed plan + plan_source so
+  // consumers can audit + replay. NOT narrative — see ADR 0017.
+  app.post("/v1/query", async (request, reply) => {
+    try {
+      const userId = await guardSignals(request, reply);
+      if (!userId) return reply;
+      const parsed = parseQueryRequest(request.body);
+      if (!parsed.ok) return reply.code(400).send({ error: parsed.error });
+
+      const result = await runQuery(parsed.req);
+      if (!result.ok) {
+        return reply.code(422).send({ error: result.error.message, code: result.error.code, raw: result.error.raw });
+      }
+      trackEvent("api.query.executed", userId, {
+        op: result.response.plan.op,
+        plan_source: result.response.plan_source,
+      });
+      reply.header("X-Engine-Version", METHODOLOGY_VERSION);
+      return reply.code(200).send(result.response);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/query] error:", error);
       return reply.code(500).send({ error: "Internal server error" });
     }
   });
