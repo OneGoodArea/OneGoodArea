@@ -23,9 +23,18 @@ const runDefault: Reader = (text, params) => defaultQuery(text, params);
 
 export type Baseline = "previous" | "first";
 export const DEFAULT_THRESHOLD_PCT = 5;
+/** Default minimum transactions in BOTH periods for a price move to count as
+    material (de-noises the small-sample LSOA-month medians). 0 = no gating. */
+export const DEFAULT_MIN_TRANSACTIONS = 8;
 /** Areas resolved + checked per request (each resolve is a live geocode). */
 export const CHANGE_AREA_MAX = 100;
 const RESOLVE_CONCURRENCY = 5;
+
+/** Value signal -> the count signal that backs its sample size (for gating). */
+const SAMPLE_SIGNAL: Record<string, string> = { "property.median_price": "property.transaction_count" };
+/** Count series are SAMPLE inputs (used to gate), not headline signals we alert
+    on — a "2 sales became 1" move is noise, not a change worth a webhook. */
+const SAMPLE_SIGNALS = new Set(Object.values(SAMPLE_SIGNAL));
 
 export interface SeriesPoint { period: string; value: number | null }
 
@@ -71,29 +80,55 @@ export interface TimeseriesRow { signal_key: string; label: string | null; geo_c
 
 /** PURE: given the tracked areas (area -> LSOA) and the store rows for those
     LSOAs, produce the MATERIAL changes. One change per (area, signal) that moved
-    >= threshold. Areas sharing an LSOA each get their own row (area-centric). */
+    >= threshold. Areas sharing an LSOA each get their own row (area-centric).
+
+    Sample-size gating (`minTransactions`): a price move is only material if BOTH
+    its periods had at least that many transactions, which filters the noisy
+    small-sample LSOA-month medians (a 47% swing on 2 sales is not signal). Only
+    applies to signals with a backing count series (property.median_price). */
 export function buildChanges(
   areaLsoas: ReadonlyArray<{ area: string; geoCode: string }>,
   storeRows: ReadonlyArray<TimeseriesRow>,
-  opts: { baseline: Baseline; thresholdPct: number },
+  opts: { baseline: Baseline; thresholdPct: number; minTransactions?: number },
 ): SignalChange[] {
+  const minTx = opts.minTransactions ?? 0;
   // index store rows by geoCode -> signalKey -> points (+ remember the label)
   const byGeo = new Map<string, Map<string, { label: string | null; points: SeriesPoint[] }>>();
+  // count lookup for gating: geoCode -> signalKey -> period -> value
+  const counts = new Map<string, Map<string, Map<string, number>>>();
   for (const r of storeRows) {
     let bySignal = byGeo.get(r.geo_code);
     if (!bySignal) { bySignal = new Map(); byGeo.set(r.geo_code, bySignal); }
     let entry = bySignal.get(r.signal_key);
     if (!entry) { entry = { label: r.label, points: [] }; bySignal.set(r.signal_key, entry); }
     entry.points.push({ period: r.observed_period, value: r.raw_value });
+
+    let bySig = counts.get(r.geo_code);
+    if (!bySig) { bySig = new Map(); counts.set(r.geo_code, bySig); }
+    let byPeriod = bySig.get(r.signal_key);
+    if (!byPeriod) { byPeriod = new Map(); bySig.set(r.signal_key, byPeriod); }
+    if (r.raw_value !== null) byPeriod.set(r.observed_period, r.raw_value);
   }
+
+  /** True if the sample at both periods clears minTx (or no gating applies). */
+  const passesSampleGate = (geoCode: string, signalKey: string, c: SignalChange): boolean => {
+    if (minTx <= 0) return true;
+    const sampleKey = SAMPLE_SIGNAL[signalKey];
+    if (!sampleKey) return true; // no backing count series -> not gated
+    const byPeriod = counts.get(geoCode)?.get(sampleKey);
+    const from = byPeriod?.get(c.period_from) ?? 0;
+    const to = byPeriod?.get(c.period_to) ?? 0;
+    return from >= minTx && to >= minTx;
+  };
 
   const changes: SignalChange[] = [];
   for (const { area, geoCode } of areaLsoas) {
     const bySignal = byGeo.get(geoCode);
     if (!bySignal) continue;
     for (const [signalKey, { label, points }] of bySignal) {
+      if (SAMPLE_SIGNALS.has(signalKey)) continue; // the sample series isn't itself a change subject
       const change = diffSeries({ signalKey, label, area, geoCode, points }, opts);
-      if (change && change.material) changes.push(change);
+      if (change && change.material && passesSampleGate(geoCode, signalKey, change)) changes.push(change);
     }
   }
   return changes;
@@ -147,6 +182,8 @@ export async function resolveAreasToLsoa(
 export interface DetectOpts {
   baseline?: Baseline;
   thresholdPct?: number;
+  /** Min transactions in both periods for a price move to count (de-noise). */
+  minTransactions?: number;
   /** Fire signal.changed webhooks for material changes (default true). */
   emit?: boolean;
   run?: Reader;
@@ -166,24 +203,26 @@ export async function detectPortfolioChanges(
 
   const baseline: Baseline = opts.baseline ?? "previous";
   const thresholdPct = opts.thresholdPct ?? DEFAULT_THRESHOLD_PCT;
+  const minTransactions = opts.minTransactions ?? DEFAULT_MIN_TRANSACTIONS;
   const emit = opts.emit ?? true;
 
   const areaLsoas = await resolveAreasToLsoa(detail.areas.slice(0, CHANGE_AREA_MAX), opts.geocode);
   const lsoas = [...new Set(areaLsoas.map((a) => a.geoCode))];
   const storeRows = await readTimeseriesForLsoas(lsoas, opts.run);
-  const changes = buildChanges(areaLsoas, storeRows, { baseline, thresholdPct });
+  const changes = buildChanges(areaLsoas, storeRows, { baseline, thresholdPct, minTransactions });
 
   if (emit && changes.length > 0) {
     const fire = opts.fire ?? ((uid, change) => fireWebhookEvent(uid, "signal.changed", { portfolio_id: portfolioId, ...change }));
     await Promise.allSettled(changes.map((c) => fire(userId, c)));
   }
 
-  logger.info(`[monitor] change-check portfolio ${portfolioId}: ${areaLsoas.length} areas resolved, ${changes.length} material changes (baseline=${baseline}, threshold=${thresholdPct}%)`);
+  logger.info(`[monitor] change-check portfolio ${portfolioId}: ${areaLsoas.length} areas resolved, ${changes.length} material changes (baseline=${baseline}, threshold=${thresholdPct}%, minTx=${minTransactions})`);
 
   return {
     portfolio_id: portfolioId,
     baseline,
     threshold_pct: thresholdPct,
+    min_transactions: minTransactions,
     areas_checked: areaLsoas.length,
     material_count: changes.length,
     changes,

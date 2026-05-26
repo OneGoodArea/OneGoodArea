@@ -675,7 +675,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       const userId = await guardSignals(request, reply);
       if (!userId) return reply;
       const { id } = request.params as { id: string };
-      const body = (request.body ?? {}) as { baseline?: unknown; threshold_pct?: unknown; emit?: unknown };
+      const body = (request.body ?? {}) as { baseline?: unknown; threshold_pct?: unknown; min_transactions?: unknown; emit?: unknown };
 
       if (body.baseline !== undefined && body.baseline !== "previous" && body.baseline !== "first") {
         return reply.code(400).send({ error: "baseline must be 'previous' or 'first'." });
@@ -687,10 +687,18 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
           return reply.code(400).send({ error: "threshold_pct must be a non-negative number." });
         }
       }
+      let minTransactions: number | undefined;
+      if (body.min_transactions !== undefined) {
+        minTransactions = Number(body.min_transactions);
+        if (!Number.isFinite(minTransactions) || minTransactions < 0) {
+          return reply.code(400).send({ error: "min_transactions must be a non-negative number." });
+        }
+      }
 
       const report = await detectPortfolioChanges(userId, id, {
         baseline: body.baseline as Baseline | undefined,
         thresholdPct,
+        minTransactions,
         emit: body.emit === undefined ? true : Boolean(body.emit),
       });
       if (!report) return reply.code(404).send({ error: "Portfolio not found" });

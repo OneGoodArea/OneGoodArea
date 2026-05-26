@@ -65,6 +65,7 @@ export const ChangeReportSchema = z.object({
   portfolio_id: z.string(),
   baseline: z.enum(["previous", "first"]),  // compare latest vs the prior period, or vs the oldest in range
   threshold_pct: z.number(),
+  min_transactions: z.number(),             // sample-size gate for price moves (de-noise)
   areas_checked: z.number(),
   material_count: z.number(),
   changes: z.array(SignalChangeSchema),     // material changes only

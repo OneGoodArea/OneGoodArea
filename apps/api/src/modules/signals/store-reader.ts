@@ -88,16 +88,59 @@ export async function readDeprivationNormalization(
 
    The store holds an LSOA-grained window median (the robust "current" figure,
    from refresh/prices.ts) — a DIFFERENT, finer grain than the live fetcher's
-   postcode-district median. price_change_pct (YoY) is not yet served from the
-   store (it needs a clean cross-year design over the monthly series); it is null
-   here, so the engine's price-trend reasoning is skipped for store-backed areas.
-   See ADR 0012. */
+   postcode-district median. price_change_pct (YoY) is computed from the monthly
+   time-series when two years of history are present (ADR 0014); null otherwise
+   (the engine's price-trend reasoning is simply skipped). See ADR 0012 + 0014. */
+
+/** PURE: year-over-year price change from the monthly time-series.
+
+    Groups the monthly (median, count) points by calendar year, forms a
+    transaction-count-weighted annual figure per year, and compares the two most
+    recent years. Weighting by volume keeps a low-sale month from dominating.
+    Returns nulls when there is fewer than two years of data or the prior year is
+    non-positive. */
+export function computeYoY(
+  points: ReadonlyArray<{ signal_key: string; observed_period: string; raw_value: number | null }>,
+): { price_change_pct: number | null; prior_median: number | null } {
+  const byPeriod = new Map<string, { median?: number; count?: number }>();
+  for (const p of points) {
+    if (p.raw_value === null || p.raw_value === undefined) continue;
+    const e = byPeriod.get(p.observed_period) ?? {};
+    if (p.signal_key === "property.median_price") e.median = Number(p.raw_value);
+    else if (p.signal_key === "property.transaction_count") e.count = Number(p.raw_value);
+    byPeriod.set(p.observed_period, e);
+  }
+
+  const byYear = new Map<string, { wsum: number; csum: number }>();
+  for (const [period, e] of byPeriod) {
+    if (e.median === undefined || !e.count) continue; // need both, count>0
+    const year = period.slice(0, 4);
+    const agg = byYear.get(year) ?? { wsum: 0, csum: 0 };
+    agg.wsum += e.median * e.count;
+    agg.csum += e.count;
+    byYear.set(year, agg);
+  }
+
+  const years = [...byYear.keys()].sort().reverse();
+  if (years.length < 2) return { price_change_pct: null, prior_median: null };
+  const latest = byYear.get(years[0]!)!;
+  const prior = byYear.get(years[1]!)!;
+  if (latest.csum === 0 || prior.csum === 0) return { price_change_pct: null, prior_median: null };
+
+  const annualLatest = latest.wsum / latest.csum;
+  const annualPrior = prior.wsum / prior.csum;
+  if (annualPrior <= 0) return { price_change_pct: null, prior_median: null };
+
+  const pct = ((annualLatest - annualPrior) / annualPrior) * 100;
+  return { price_change_pct: Math.round(pct * 100) / 100, prior_median: Math.round(annualPrior) };
+}
 
 /** Read property prices for an LSOA from the store, or null if absent / no
     usable median (caller falls back to a live fetch). Reconstructs the
     PropertyPriceData fields the mapper + scoring engine actually read
-    (median_price, transaction_count, postcode_area, period); the unused fields
-    get safe fills. */
+    (median_price, transaction_count, postcode_area, period, price_change_pct,
+    prior_median); the unused fields get safe fills. YoY comes from the monthly
+    time-series (computeYoY) when two years are present. */
 export async function readPropertyFromStore(
   geoCode: string,
   run: Reader = runDefault,
@@ -126,18 +169,35 @@ export async function readPropertyFromStore(
   }
   if (median === null || Number.isNaN(median) || median <= 0) return null;
 
+  // YoY from the monthly history (two years needed; null otherwise).
+  const tsRows = await run(
+    `SELECT signal_key, observed_period, raw_value
+       FROM signal_timeseries
+      WHERE geo_type = 'lsoa' AND geo_code = $1
+        AND signal_key IN ('property.median_price', 'property.transaction_count')
+        AND observed_period ~ '^[0-9]{4}-[0-9]{2}$'`,
+    [geoCode],
+  );
+  const { price_change_pct, prior_median } = computeYoY(
+    tsRows.map((r) => ({
+      signal_key: r.signal_key as string,
+      observed_period: r.observed_period as string,
+      raw_value: r.raw_value === null || r.raw_value === undefined ? null : Number(r.raw_value),
+    })),
+  );
+
   const txns = count === null || Number.isNaN(count) ? 0 : count;
   return {
     postcode_area: geoCode, // the LSOA — only used in human-readable reasoning
     median_price: median,
     mean_price: median, // not read by the mapper/engine; safe fill
     transaction_count: txns,
-    price_change_pct: null, // YoY from the store is deferred (ADR 0012)
+    price_change_pct,
     by_property_type: [],
     tenure_split: { freehold: 0, leasehold: 0 },
     price_range: { min: median, max: median },
     period,
-    prior_median: null,
+    prior_median,
   };
 }
 

@@ -4,6 +4,7 @@ import {
   readDeprivationNormalization,
   readPropertyFromStore,
   readPropertyNormalization,
+  computeYoY,
   type Reader,
 } from "./store-reader";
 
@@ -102,6 +103,63 @@ describe("readPropertyFromStore", () => {
     const run = vi.fn<Reader>(async () => []);
     expect(await readPropertyFromStore("", run)).toBeNull();
     expect(run).not.toHaveBeenCalled();
+  });
+
+  it("serves YoY when two years of monthly history are present", async () => {
+    const run: Reader = async (text) => {
+      if (text.includes("signal_timeseries")) {
+        return [
+          // 2024: weighted mean = (200000*10) / 10 = 200000
+          { signal_key: "property.median_price", observed_period: "2024-06", raw_value: 200000 },
+          { signal_key: "property.transaction_count", observed_period: "2024-06", raw_value: 10 },
+          // 2025: weighted mean = (240000*10) / 10 = 240000  -> +20% YoY
+          { signal_key: "property.median_price", observed_period: "2025-06", raw_value: 240000 },
+          { signal_key: "property.transaction_count", observed_period: "2025-06", raw_value: 10 },
+        ];
+      }
+      return [
+        { signal_key: "property.median_price", raw_value: 245000, observed_period: "2025-01 to 2025-12" },
+        { signal_key: "property.transaction_count", raw_value: 30, observed_period: "2025-01 to 2025-12" },
+      ];
+    };
+    const p = await readPropertyFromStore("E01000001", run);
+    expect(p!.median_price).toBe(245000); // headline = the stored annual median
+    expect(p!.price_change_pct).toBe(20); // YoY from the time-series
+    expect(p!.prior_median).toBe(200000);
+  });
+});
+
+describe("computeYoY", () => {
+  it("returns nulls with fewer than two years", () => {
+    expect(computeYoY([
+      { signal_key: "property.median_price", observed_period: "2025-06", raw_value: 200000 },
+      { signal_key: "property.transaction_count", observed_period: "2025-06", raw_value: 5 },
+    ])).toEqual({ price_change_pct: null, prior_median: null });
+  });
+
+  it("volume-weights monthly medians within a year", () => {
+    const r = computeYoY([
+      // 2024: (100*1 + 300*9)/10 = 280
+      { signal_key: "property.median_price", observed_period: "2024-01", raw_value: 100 },
+      { signal_key: "property.transaction_count", observed_period: "2024-01", raw_value: 1 },
+      { signal_key: "property.median_price", observed_period: "2024-02", raw_value: 300 },
+      { signal_key: "property.transaction_count", observed_period: "2024-02", raw_value: 9 },
+      // 2025: 350 flat
+      { signal_key: "property.median_price", observed_period: "2025-01", raw_value: 350 },
+      { signal_key: "property.transaction_count", observed_period: "2025-01", raw_value: 10 },
+    ]);
+    expect(r.prior_median).toBe(280); // 2024 volume-weighted
+    expect(r.price_change_pct).toBe(25); // (350-280)/280
+  });
+
+  it("ignores months with no transactions (can't weight)", () => {
+    const r = computeYoY([
+      { signal_key: "property.median_price", observed_period: "2024-06", raw_value: 200000 },
+      { signal_key: "property.transaction_count", observed_period: "2024-06", raw_value: 8 },
+      { signal_key: "property.median_price", observed_period: "2025-06", raw_value: 250000 },
+      { signal_key: "property.transaction_count", observed_period: "2025-06", raw_value: 0 }, // 0 -> skip year 2025
+    ]);
+    expect(r).toEqual({ price_change_pct: null, prior_median: null }); // only 2024 usable
   });
 });
 

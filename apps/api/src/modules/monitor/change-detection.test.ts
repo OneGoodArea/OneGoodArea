@@ -106,6 +106,31 @@ describe("buildChanges", () => {
   it("skips areas with no stored series", () => {
     expect(buildChanges([{ area: "ZZ", geoCode: "E09999999" }], rows, { baseline: "first", thresholdPct: 5 })).toEqual([]);
   });
+
+  it("de-noises: a big price move on a tiny sample is gated out", () => {
+    const noisy: TimeseriesRow[] = [
+      { signal_key: "property.median_price", label: "Median", geo_code: "E01000001", observed_period: "2025-01", raw_value: 200000 },
+      { signal_key: "property.median_price", label: "Median", geo_code: "E01000001", observed_period: "2025-12", raw_value: 350000 }, // +75%
+      { signal_key: "property.transaction_count", label: "Transactions", geo_code: "E01000001", observed_period: "2025-01", raw_value: 2 },
+      { signal_key: "property.transaction_count", label: "Transactions", geo_code: "E01000001", observed_period: "2025-12", raw_value: 1 },
+    ];
+    // no gating -> the move counts
+    expect(buildChanges([{ area: "A", geoCode: "E01000001" }], noisy, { baseline: "first", thresholdPct: 5 })).toHaveLength(1);
+    // gate at 8 transactions -> filtered out (2 and 1 sales)
+    expect(buildChanges([{ area: "A", geoCode: "E01000001" }], noisy, { baseline: "first", thresholdPct: 5, minTransactions: 8 })).toEqual([]);
+  });
+
+  it("keeps a well-sampled move under gating", () => {
+    const solid: TimeseriesRow[] = [
+      { signal_key: "property.median_price", label: "Median", geo_code: "E01000001", observed_period: "2025-01", raw_value: 200000 },
+      { signal_key: "property.median_price", label: "Median", geo_code: "E01000001", observed_period: "2025-12", raw_value: 260000 },
+      { signal_key: "property.transaction_count", label: "Transactions", geo_code: "E01000001", observed_period: "2025-01", raw_value: 20 },
+      { signal_key: "property.transaction_count", label: "Transactions", geo_code: "E01000001", observed_period: "2025-12", raw_value: 18 },
+    ];
+    const out = buildChanges([{ area: "A", geoCode: "E01000001" }], solid, { baseline: "first", thresholdPct: 5, minTransactions: 8 });
+    expect(out).toHaveLength(1);
+    expect(out[0]!.signal_key).toBe("property.median_price");
+  });
 });
 
 describe("readTimeseriesForLsoas", () => {
@@ -154,6 +179,8 @@ describe("detectPortfolioChanges", () => {
     const run: Reader = async () => [
       { signal_key: "property.median_price", label: "Median sale price", geo_code: "E01005207", observed_period: "2025-01", raw_value: 200000 },
       { signal_key: "property.median_price", label: "Median sale price", geo_code: "E01005207", observed_period: "2025-12", raw_value: 260000 },
+      { signal_key: "property.transaction_count", label: "Transactions", geo_code: "E01005207", observed_period: "2025-01", raw_value: 12 },
+      { signal_key: "property.transaction_count", label: "Transactions", geo_code: "E01005207", observed_period: "2025-12", raw_value: 12 }, // flat -> not material
     ];
     const fire = vi.fn<(userId: string, change: unknown) => Promise<void>>();
 
@@ -180,6 +207,8 @@ describe("detectPortfolioChanges", () => {
     const run: Reader = async () => [
       { signal_key: "property.median_price", label: "M", geo_code: "E01005207", observed_period: "2025-01", raw_value: 100000 },
       { signal_key: "property.median_price", label: "M", geo_code: "E01005207", observed_period: "2025-12", raw_value: 150000 },
+      { signal_key: "property.transaction_count", label: "T", geo_code: "E01005207", observed_period: "2025-01", raw_value: 10 },
+      { signal_key: "property.transaction_count", label: "T", geo_code: "E01005207", observed_period: "2025-12", raw_value: 10 },
     ];
     const fire = vi.fn<(userId: string, change: unknown) => Promise<void>>();
     const report = await detectPortfolioChanges("u1", "pf_2", { baseline: "first", emit: false, run, geocode: async () => ({ lsoa: "E01005207" }), fire });
