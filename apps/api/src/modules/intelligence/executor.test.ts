@@ -4,6 +4,7 @@ vi.mock("../signals/query", () => ({ queryAreas: vi.fn(), queryAreasCompound: vi
 vi.mock("../signals", () => ({ getAreaProfile: vi.fn() }));
 vi.mock("../scoring", () => ({ scoreArea: vi.fn() }));
 vi.mock("../signals/peers", () => ({ findPeers: vi.fn(), parsePeersInput: vi.fn() }));
+vi.mock("../signals/insights", () => ({ findInsights: vi.fn(), parseInsightsInput: vi.fn() }));
 vi.mock("../signals/data-sources/postcodes", () => ({ geocodeArea: vi.fn() }));
 
 import { executePlan } from "./executor";
@@ -11,6 +12,7 @@ import { queryAreas, queryAreasCompound } from "../signals/query";
 import { getAreaProfile } from "../signals";
 import { scoreArea } from "../scoring";
 import { findPeers, parsePeersInput } from "../signals/peers";
+import { findInsights, parseInsightsInput } from "../signals/insights";
 import { geocodeArea } from "../signals/data-sources/postcodes";
 
 const mockQueryAreas = vi.mocked(queryAreas);
@@ -19,6 +21,8 @@ const mockGetAreaProfile = vi.mocked(getAreaProfile);
 const mockScoreArea = vi.mocked(scoreArea);
 const mockFindPeers = vi.mocked(findPeers);
 const mockParsePeersInput = vi.mocked(parsePeersInput);
+const mockFindInsights = vi.mocked(findInsights);
+const mockParseInsightsInput = vi.mocked(parseInsightsInput);
 const mockGeocodeArea = vi.mocked(geocodeArea);
 
 beforeEach(() => { vi.clearAllMocks(); });
@@ -199,6 +203,47 @@ describe("executePlan — find_peers (AR-188 / ADR 0023)", () => {
       { planSource: "client" },
     );
     expect(res.results).toBeNull();
+  });
+});
+
+describe("executePlan — find_insights (AR-189 / ADR 0024)", () => {
+  it("dispatches find_insights to the SAME findInsights used by POST /v1/insights", async () => {
+    mockParseInsightsInput.mockReturnValue({
+      ok: true,
+      input: { signalKey: "crime.total_12m_peer_relative_z", country: "England", k: 50, minAbsZ: 2 },
+    });
+    mockFindInsights.mockResolvedValue([
+      { geo_code: "E01000001", peer_relative_z: 3.5, abs_z: 3.5 },
+      { geo_code: "E01000002", peer_relative_z: -3.2, abs_z: 3.2 },
+    ]);
+    const res = await executePlan(
+      { op: "find_insights", params: { signal_key: "crime.total_12m_peer_relative_z", country: "England", k: 50, min_abs_z: 2 } },
+      { planSource: "client" },
+    );
+    expect(mockParseInsightsInput).toHaveBeenCalledWith(expect.objectContaining({
+      signalKey: "crime.total_12m_peer_relative_z",
+      country: "England",
+      k: 50,
+      minAbsZ: 2,
+    }));
+    expect(mockFindInsights).toHaveBeenCalledOnce();
+    if (res.plan.op === "find_insights" && res.results) {
+      expect(res.results.signal_key).toBe("crime.total_12m_peer_relative_z");
+      expect(res.results.insights).toHaveLength(2);
+      expect(res.results.meta.threshold).toBe(2);
+      expect(res.results.meta.scope).toMatch(/country=England/);
+    } else {
+      throw new Error("expected find_insights result");
+    }
+  });
+  it("returns null results when parseInsightsInput rejects the params", async () => {
+    mockParseInsightsInput.mockReturnValue({ ok: false, error: "test reason" });
+    const res = await executePlan(
+      { op: "find_insights", params: { signal_key: "bad.signal_key" } },
+      { planSource: "nl" },
+    );
+    expect(res.results).toBeNull();
+    expect(mockFindInsights).not.toHaveBeenCalled();
   });
 });
 

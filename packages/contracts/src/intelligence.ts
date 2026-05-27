@@ -170,13 +170,34 @@ export const FindPeersPlanSchema = z.object({
 }).strict();
 export type FindPeersPlan = z.infer<typeof FindPeersPlanSchema>;
 
+/* ── /v1/insights params (AR-189, Increment 7) ─────────────────────────
+   Anomaly screening: rank LSOAs by ABS(peer-relative z-score) on a chosen
+   signal. The signal must be a peer-relative-z derived signal that exists
+   in signal_values (e.g. crime.total_12m_peer_relative_z); we don't compute
+   on the fly. Country / LAD scope mirror the rest of the surface. */
+const insightsParamsBase = {
+  signal_key: z.string().min(1),
+  country: z.enum(["England", "Wales", "Scotland"]).optional(),
+  lad: z.string().optional(),
+  min_abs_z: z.number().min(0).optional(),
+  k: z.number().int().positive().max(500).optional(),
+} as const;
+
+/** Find insights (anomalies) by ranking ABS(peer_relative_z) over LSOAs. */
+export const FindInsightsPlanSchema = z.object({
+  op: z.literal("find_insights"),
+  params: z.object(insightsParamsBase).strict(),
+}).strict();
+export type FindInsightsPlan = z.infer<typeof FindInsightsPlanSchema>;
+
 /** The full plan grammar (v1). Strict discriminated union — unknown ops fail
-    validation. Extension point: insights / forecast land as new ops. */
+    validation. Extension point: forecast lands as a new op. */
 export const QueryPlanSchema = z.discriminatedUnion("op", [
   RankAreasPlanSchema,
   GetAreaPlanSchema,
   ScoreAreaPlanSchema,
   FindPeersPlanSchema,
+  FindInsightsPlanSchema,
 ]);
 export type QueryPlan = z.infer<typeof QueryPlanSchema>;
 
@@ -202,6 +223,25 @@ export const PeersResponseSchema = z.object({
   meta: z.object({ generated_at: z.string(), scope: z.string() }).strict(),
 }).strict();
 export type PeersResponse = z.infer<typeof PeersResponseSchema>;
+
+/* ── /v1/insights DTOs ────────────────────────────────────────────────── */
+
+export const InsightsRequestSchema = z.object(insightsParamsBase).strict();
+export type InsightsRequest = z.infer<typeof InsightsRequestSchema>;
+
+export const InsightResultSchema = z.object({
+  geo_code: z.string(),
+  peer_relative_z: z.number(),  // signed; sign tells direction of the anomaly
+  abs_z: z.number(),             // magnitude; rank by this descending
+}).strict();
+export type InsightResult = z.infer<typeof InsightResultSchema>;
+
+export const InsightsResponseSchema = z.object({
+  signal_key: z.string(),
+  insights: z.array(InsightResultSchema),
+  meta: z.object({ generated_at: z.string(), scope: z.string(), threshold: z.number().nullable() }).strict(),
+}).strict();
+export type InsightsResponse = z.infer<typeof InsightsResponseSchema>;
 
 /* ── area-result row shape (mirrors apps/api queryAreas exactly; declared here
    so the typed response below can reference it without a backend dep).
@@ -267,6 +307,13 @@ export const QueryResponseFindPeers = z.object({
   results: PeersResponseSchema.nullable(),
   meta: z.object({ generated_at: z.string() }),
 }).strict();
+/** find_insights wraps the standalone InsightsResponse shape. */
+export const QueryResponseFindInsights = z.object({
+  plan: FindInsightsPlanSchema,
+  plan_source: z.enum(["client", "nl"]),
+  results: InsightsResponseSchema.nullable(),
+  meta: z.object({ generated_at: z.string() }),
+}).strict();
 /** Flat union over the per-op response shapes. (The plan.op is the natural
     discriminator, but it sits one level down, so a plain z.union keeps the
     schema simple and the inferred type a clean discriminated union.) */
@@ -275,6 +322,7 @@ export const QueryResponseSchema = z.union([
   QueryResponseGetArea,
   QueryResponseScoreArea,
   QueryResponseFindPeers,
+  QueryResponseFindInsights,
 ]);
 export type QueryResponse = z.infer<typeof QueryResponseSchema>;
 

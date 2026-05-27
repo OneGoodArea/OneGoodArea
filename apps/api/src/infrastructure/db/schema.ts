@@ -532,6 +532,29 @@ export const MIGRATIONS: Migration[] = [
         ON signal_timeseries (signal_key, geo_type, geo_code, observed_period DESC)`,
     ],
   },
+  {
+    // Materialized k-NN peer assignments per LSOA (AR-189, ADR 0024). Computed
+    // by refresh:peers from signal_values' normalized vectors, then JOINed by
+    // the peer-relative-z derive AND served by POST /v1/peers / /v1/insights.
+    // Idempotent: refresh re-computes in place. Default k=20, so ~840k rows
+    // (42k LSOAs × 20 peers each).
+    name: "peer_assignments",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS peer_assignments (
+        geo_type TEXT NOT NULL,
+        geo_code TEXT NOT NULL,
+        peer_geo_code TEXT NOT NULL,
+        peer_rank INT NOT NULL,
+        distance DOUBLE PRECISION NOT NULL,
+        n_dims_used INT NOT NULL,
+        computed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        engine_version TEXT NOT NULL,
+        PRIMARY KEY (geo_type, geo_code, peer_geo_code)
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_peer_assignments_target
+        ON peer_assignments (geo_type, geo_code, peer_rank)`,
+    ],
+  },
 
   /* ====================================================================
      MONITOR (restructure Phase 5, the 3rd product — AR-169)

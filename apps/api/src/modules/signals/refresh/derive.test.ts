@@ -1,9 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import {
   buildPropertyYoYSql, buildRollingSumYoYSql, buildRegrSlopeSql,
-  buildCountWeightedMedianDeltaSql, buildRollingSumDeltaSql, runDerivations,
+  buildCountWeightedMedianDeltaSql, buildRollingSumDeltaSql,
+  buildPeerRelativeZSql, runDerivations,
   DERIVED_SIGNALS, DERIVED_NORMALIZE_KEYS, ROLLING_YOY_SPECS, TREND_SLOPE_SPECS,
-  COUNT_WEIGHTED_DELTA_SPECS, ROLLING_SUM_DELTA_SPECS,
+  COUNT_WEIGHTED_DELTA_SPECS, ROLLING_SUM_DELTA_SPECS, PEER_RELATIVE_Z_SPECS,
 } from "./derive";
 import type { QueryRunner } from "./store-writer";
 
@@ -229,6 +230,78 @@ describe("buildRollingSumDeltaSql (pure, AR-187 / ADR 0022)", () => {
   });
 });
 
+describe("buildPeerRelativeZSql (pure, AR-189 / ADR 0024)", () => {
+  const sql = buildPeerRelativeZSql({
+    sourceSignalKey: "crime.total_12m",
+    derivedKey: "crime.total_12m_peer_relative_z",
+    confidenceReason: "test reason",
+  });
+
+  it("reads the target's normalized_value from signal_values for the configured signal", () => {
+    expect(sql).toMatch(/WITH target_norm AS/);
+    expect(sql).toMatch(/SELECT geo_code, normalized_value AS target_value/);
+    expect(sql).toMatch(/signal_key = 'crime\.total_12m'/);
+    expect(sql).toMatch(/normalized_value IS NOT NULL/);
+  });
+  it("aggregates peers via peer_assignments JOIN signal_values + AVG/STDDEV_SAMP per target", () => {
+    expect(sql).toMatch(/FROM peer_assignments pa/);
+    expect(sql).toMatch(/JOIN signal_values psv/);
+    expect(sql).toMatch(/AVG\(psv\.normalized_value\)::float8 AS peer_avg/);
+    expect(sql).toMatch(/STDDEV_SAMP\(psv\.normalized_value\)::float8 AS peer_stddev/);
+  });
+  it("requires HAVING COUNT(peers) >= minPeers (default 5) AND peer_stddev > 0", () => {
+    expect(sql).toMatch(/HAVING COUNT\(psv\.normalized_value\) >= 5/);
+    expect(sql).toMatch(/ps\.peer_stddev > 0/);
+  });
+  it("computes z = (target_norm - peer_avg) / NULLIF(peer_stddev, 0)", () => {
+    expect(sql).toMatch(/\(\(tn\.target_value - ps\.peer_avg\) \/ NULLIF\(ps\.peer_stddev, 0\)\)::float8 AS z_score/);
+  });
+  it("INSERTs into signal_values under the derived key with idempotent ON CONFLICT DO UPDATE", () => {
+    expect(sql).toMatch(/INSERT INTO signal_values/);
+    expect(sql).toMatch(/'crime\.total_12m_peer_relative_z'/);
+    expect(sql).toMatch(/ON CONFLICT \(signal_key, geo_type, geo_code\) DO UPDATE/);
+  });
+  it("stamps observed_period as 'peer-relative z over <n_peers> peers'", () => {
+    expect(sql).toMatch(/'peer-relative z over ' \|\| n_peers \|\| ' peers'/);
+  });
+  it("respects non-default minPeers", () => {
+    const guarded = buildPeerRelativeZSql({
+      sourceSignalKey: "x", derivedKey: "y", confidenceReason: "z", minPeers: 10,
+    });
+    expect(guarded).toMatch(/HAVING COUNT\(psv\.normalized_value\) >= 10/);
+  });
+  it("interpolates engine version + escapes single quotes", () => {
+    const tricky = buildPeerRelativeZSql({
+      sourceSignalKey: "x", derivedKey: "y", confidenceReason: "Pedro's note", engineVersion: "9.9.9-test",
+    });
+    expect(tricky).toContain("'9.9.9-test'");
+    expect(tricky).toContain("Pedro''s note");
+  });
+});
+
+describe("PEER_RELATIVE_Z_SPECS catalog wiring", () => {
+  it("wires crime.total_12m -> crime.total_12m_peer_relative_z", () => {
+    const crime = PEER_RELATIVE_Z_SPECS.find((s) => s.derivedKey === "crime.total_12m_peer_relative_z");
+    expect(crime?.sourceSignalKey).toBe("crime.total_12m");
+  });
+  it("wires property.median_price -> property.median_price_peer_relative_z", () => {
+    const price = PEER_RELATIVE_Z_SPECS.find((s) => s.derivedKey === "property.median_price_peer_relative_z");
+    expect(price?.sourceSignalKey).toBe("property.median_price");
+  });
+  it("registers both new signals in DERIVED_SIGNALS catalog (z_score unit)", () => {
+    const crime = DERIVED_SIGNALS.find((s) => s.key === "crime.total_12m_peer_relative_z");
+    expect(crime?.unit).toBe("z_score");
+    expect(crime?.direction).toBe("lower_is_better");
+    const price = DERIVED_SIGNALS.find((s) => s.key === "property.median_price_peer_relative_z");
+    expect(price?.unit).toBe("z_score");
+    expect(price?.direction).toBe("neutral");
+  });
+  it("includes both in DERIVED_NORMALIZE_KEYS so normalize:signals picks them up", () => {
+    expect(DERIVED_NORMALIZE_KEYS).toContain("crime.total_12m_peer_relative_z");
+    expect(DERIVED_NORMALIZE_KEYS).toContain("property.median_price_peer_relative_z");
+  });
+});
+
 describe("buildRegrSlopeSql (pure, AR-186 / ADR 0021)", () => {
   const sql = buildRegrSlopeSql({
     sourceKey: "crime.monthly_count",
@@ -399,9 +472,11 @@ describe("runDerivations (WRITE-ONLY: catalog -> derive each spec, no normalize)
       "property.median_price_change_pct_6m",
       "property.transaction_count_change_pct_yoy",
       "property.transaction_count_trend_slope_24m",
+      "property.median_price_peer_relative_z",
       "crime.total_12m_change_pct_yoy",
       "crime.total_6m_change_pct",
       "crime.monthly_count_trend_slope_24m",
+      "crime.total_12m_peer_relative_z",
     ]);
     expect(summary.totals["property.price_change_pct_yoy"]).toEqual({ before: 0, after: 35000, appended: 35000 });
     expect(summary.totals["crime.total_12m_change_pct_yoy"]).toEqual({ before: 0, after: 40000, appended: 40000 });

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   QueryPlanSchema, RankAreasPlanSchema, SignalFilterSchema,
   FindPeersPlanSchema, PeersRequestSchema,
+  FindInsightsPlanSchema, InsightsRequestSchema,
 } from "./intelligence";
 
 describe("@onegoodarea/contracts — intelligence query plan", () => {
@@ -119,6 +120,57 @@ describe("@onegoodarea/contracts — find_peers plan + PeersRequest (Increment 6
       signals: ["property.median_price"],
       k: 30,
       min_signals: 1,
+    });
+    expect(r.success).toBe(true);
+  });
+});
+
+describe("@onegoodarea/contracts — find_insights plan + InsightsRequest (Increment 7 / AR-189)", () => {
+  it("accepts a minimal find_insights plan (signal_key only)", () => {
+    const r = FindInsightsPlanSchema.safeParse({
+      op: "find_insights",
+      params: { signal_key: "crime.total_12m_peer_relative_z" },
+    });
+    expect(r.success).toBe(true);
+  });
+  it("accepts a fully-specified find_insights plan", () => {
+    const r = FindInsightsPlanSchema.safeParse({
+      op: "find_insights",
+      params: {
+        signal_key: "property.median_price_peer_relative_z",
+        country: "England",
+        lad: "E08000003",
+        min_abs_z: 2.5,
+        k: 100,
+      },
+    });
+    expect(r.success).toBe(true);
+  });
+  it("rejects missing signal_key", () => {
+    expect(FindInsightsPlanSchema.safeParse({ op: "find_insights", params: {} }).success).toBe(false);
+  });
+  it("rejects k out of range", () => {
+    expect(FindInsightsPlanSchema.safeParse({
+      op: "find_insights", params: { signal_key: "x_peer_relative_z", k: 0 },
+    }).success).toBe(false);
+    expect(FindInsightsPlanSchema.safeParse({
+      op: "find_insights", params: { signal_key: "x_peer_relative_z", k: 501 },
+    }).success).toBe(false);
+  });
+  it("rejects negative min_abs_z", () => {
+    expect(FindInsightsPlanSchema.safeParse({
+      op: "find_insights", params: { signal_key: "x_peer_relative_z", min_abs_z: -0.5 },
+    }).success).toBe(false);
+  });
+  it("QueryPlanSchema discriminated union accepts find_insights under op=find_insights", () => {
+    const r = QueryPlanSchema.safeParse({
+      op: "find_insights", params: { signal_key: "crime.total_12m_peer_relative_z" },
+    });
+    expect(r.success).toBe(true);
+  });
+  it("InsightsRequestSchema accepts the same shape (standalone endpoint)", () => {
+    const r = InsightsRequestSchema.safeParse({
+      signal_key: "crime.total_12m_peer_relative_z", min_abs_z: 2,
     });
     expect(r.success).toBe(true);
   });

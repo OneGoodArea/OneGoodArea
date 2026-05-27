@@ -15,6 +15,7 @@ import { queryAreas, queryAreasCompound, type AreasQuery, type CompoundAreasQuer
 import { getAreaProfile } from "../signals";
 import { scoreArea } from "../scoring";
 import { findPeers, parsePeersInput } from "../signals/peers";
+import { findInsights, parseInsightsInput } from "../signals/insights";
 import { geocodeArea } from "../signals/data-sources/postcodes";
 
 const AREAS_LIMIT_DEFAULT = 100;
@@ -83,6 +84,33 @@ export async function executePlan(plan: QueryPlan, opts: ExecuteOpts): Promise<Q
       weights: plan.params.weights,
     });
     return { plan, plan_source, results: score, meta };
+  }
+  if (plan.op === "find_insights") {
+    // find_insights — anomaly screening by ABS(peer_relative_z) on a chosen
+    // signal. Same parseInsightsInput + findInsights used by POST /v1/insights.
+    const parsed = parseInsightsInput({
+      signalKey: plan.params.signal_key,
+      country: plan.params.country,
+      lad: plan.params.lad,
+      minAbsZ: plan.params.min_abs_z,
+      k: plan.params.k,
+    });
+    if (!parsed.ok) return { plan, plan_source, results: null, meta };
+    const rows = await findInsights(parsed.input);
+    const scope = [
+      parsed.input.country ? `country=${parsed.input.country}` : "",
+      parsed.input.lad ? `lad=${parsed.input.lad}` : "",
+      parsed.input.minAbsZ ? `min_abs_z=${parsed.input.minAbsZ}` : "",
+    ].filter(Boolean).join(" ") || "national";
+    return {
+      plan, plan_source,
+      results: {
+        signal_key: parsed.input.signalKey,
+        insights: rows,
+        meta: { generated_at: meta.generated_at, scope, threshold: parsed.input.minAbsZ ?? null },
+      },
+      meta,
+    };
   }
   // find_peers — resolve target (geo_code | postcode | area) -> LSOA, then
   // dispatch to the SAME findPeers used by POST /v1/peers. Returns null

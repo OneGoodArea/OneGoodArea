@@ -14,6 +14,7 @@
     "refresh:deprivation": "tsx src/modules/signals/refresh/deprivation.ts",
     "refresh:prices": "tsx src/modules/signals/refresh/prices.ts",
     "refresh:crime": "tsx src/modules/signals/refresh/crime.ts",
+    "refresh:peers": "tsx src/modules/signals/refresh/peers-refresh.ts",
     "derive:signals": "tsx src/modules/signals/refresh/derive.ts",
     "normalize:deprivation": "tsx src/modules/signals/refresh/normalize.ts",
     "normalize:signals": "tsx src/modules/signals/refresh/normalize-all.ts",

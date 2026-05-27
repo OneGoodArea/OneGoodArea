@@ -37,6 +37,8 @@ const PROPERTY_6M_SOURCE = "HM Land Registry Price Paid Data (derived: 6-month c
 const CRIME_YOY_SOURCE = "Police.uk street-level crime (derived: 12-month YoY)";
 const CRIME_SLOPE_SOURCE = "Police.uk street-level crime (derived: 24-month trend slope)";
 const CRIME_6M_SOURCE = "Police.uk street-level crime (derived: 6-month rolling-sum delta)";
+const CRIME_PEER_Z_SOURCE = "Police.uk street-level crime (derived: peer-relative z-score over normalized crime.total_12m)";
+const PROPERTY_PRICE_PEER_Z_SOURCE = "HM Land Registry Price Paid Data (derived: peer-relative z-score over normalized property.median_price)";
 
 export const DERIVED_SIGNALS: SignalCatalogRow[] = [
   {
@@ -102,6 +104,24 @@ export const DERIVED_SIGNALS: SignalCatalogRow[] = [
     source: CRIME_SLOPE_SOURCE,
     methodology_version: METHODOLOGY_VERSION,
   },
+  {
+    key: "crime.total_12m_peer_relative_z",
+    category: "crime",
+    label: "Peer-relative z-score on trailing 12-month crime count (vs k-NN peers)",
+    unit: "z_score",
+    direction: "lower_is_better",
+    source: CRIME_PEER_Z_SOURCE,
+    methodology_version: METHODOLOGY_VERSION,
+  },
+  {
+    key: "property.median_price_peer_relative_z",
+    category: "property",
+    label: "Peer-relative z-score on median sale price (vs k-NN peers)",
+    unit: "z_score",
+    direction: "neutral",
+    source: PROPERTY_PRICE_PEER_Z_SOURCE,
+    methodology_version: METHODOLOGY_VERSION,
+  },
 ];
 
 /** Keys that get normalized after derivation (national-within-country percentile,
@@ -111,9 +131,11 @@ export const DERIVED_NORMALIZE_KEYS = [
   "property.median_price_change_pct_6m",
   "property.transaction_count_change_pct_yoy",
   "property.transaction_count_trend_slope_24m",
+  "property.median_price_peer_relative_z",
   "crime.total_12m_change_pct_yoy",
   "crime.total_6m_change_pct",
   "crime.monthly_count_trend_slope_24m",
+  "crime.total_12m_peer_relative_z",
 ] as const;
 
 /* ── pure SQL ── */
@@ -603,6 +625,116 @@ export const ROLLING_SUM_DELTA_SPECS: RollingSumDeltaSpec[] = [
   },
 ];
 
+/* ── parameterized peer-relative z-score (AR-189, ADR 0024) ──
+
+   For each LSOA, computes a z-score on a target signal relative to its k
+   nearest neighbours (the `peer_assignments` materialization). Uses the
+   normalized_value of the target signal so the units are comparable across
+   signals; z stays signed (negative = below peer mean; positive = above)
+   so consumers can rank by ABS(z) for anomaly screening (/v1/insights) or
+   filter by sign for direction.
+
+       z = (target_norm - peer_avg) / peer_stddev_samp
+
+   Defensive: NULLIF(stddev, 0) avoids div-by-zero when all peers are
+   identical; the HAVING n_peers >= minPeers guard ensures the stddev is
+   meaningful. */
+
+export interface PeerRelativeZSpec {
+  /** Source signal in signal_values (e.g. "crime.total_12m"). Must have
+      normalized_value populated for both targets and their peers. */
+  sourceSignalKey: string;
+  /** Output signal in signal_values (e.g. "crime.total_12m_peer_relative_z"). */
+  derivedKey: string;
+  /** Minimum peers required to emit a row (default 5, so the stddev is meaningful). */
+  minPeers?: number;
+  /** Human-readable provenance line stored on each emitted row. */
+  confidenceReason: string;
+  /** Engine version stamp. Defaults to METHODOLOGY_VERSION. */
+  engineVersion?: string;
+}
+
+/** PURE: build the peer-relative z-score SQL. Joins peer_assignments to find
+    each target's peer set, JOINs signal_values to get peers' normalized
+    values, computes AVG + STDDEV_SAMP per target, then joins back to the
+    target's own normalized value to compute z. Idempotent INSERT ON CONFLICT
+    DO UPDATE. */
+export function buildPeerRelativeZSql(spec: PeerRelativeZSpec): string {
+  const ev = (spec.engineVersion ?? METHODOLOGY_VERSION).replace(/'/g, "''");
+  const sourceKey = spec.sourceSignalKey.replace(/'/g, "''");
+  const derivedKey = spec.derivedKey.replace(/'/g, "''");
+  const reason = spec.confidenceReason.replace(/'/g, "''");
+  const minPeers = Number.isFinite(spec.minPeers) && (spec.minPeers ?? 0) > 0 ? Number(spec.minPeers) : 5;
+
+  return `WITH target_norm AS (
+  SELECT geo_code, normalized_value AS target_value
+    FROM signal_values
+   WHERE signal_key = '${sourceKey}'
+     AND geo_type = 'lsoa'
+     AND normalized_value IS NOT NULL
+),
+peer_stats AS (
+  SELECT pa.geo_code AS target_code,
+         AVG(psv.normalized_value)::float8 AS peer_avg,
+         STDDEV_SAMP(psv.normalized_value)::float8 AS peer_stddev,
+         COUNT(psv.normalized_value)::int AS n_peers
+    FROM peer_assignments pa
+    JOIN signal_values psv
+      ON psv.geo_type = pa.geo_type
+     AND psv.geo_code = pa.peer_geo_code
+     AND psv.signal_key = '${sourceKey}'
+     AND psv.normalized_value IS NOT NULL
+   WHERE pa.geo_type = 'lsoa'
+   GROUP BY pa.geo_code
+  HAVING COUNT(psv.normalized_value) >= ${minPeers}
+),
+z AS (
+  SELECT ps.target_code AS geo_code,
+         tn.target_value,
+         ps.peer_avg,
+         ps.peer_stddev,
+         ps.n_peers,
+         ((tn.target_value - ps.peer_avg) / NULLIF(ps.peer_stddev, 0))::float8 AS z_score
+    FROM peer_stats ps
+    JOIN target_norm tn ON tn.geo_code = ps.target_code
+   WHERE ps.peer_stddev > 0
+)
+INSERT INTO signal_values (
+  signal_key, geo_type, geo_code,
+  raw_value, raw_value_text, normalized_value, confidence, confidence_reason,
+  source_snapshot_id, observed_period, engine_version
+)
+SELECT '${derivedKey}', 'lsoa', geo_code,
+       ROUND(z_score::numeric, 4), NULL, NULL,
+       0.80,
+       '${reason}',
+       NULL,
+       'peer-relative z over ' || n_peers || ' peers',
+       '${ev}'
+  FROM z
+ON CONFLICT (signal_key, geo_type, geo_code) DO UPDATE
+   SET raw_value = EXCLUDED.raw_value,
+       confidence = EXCLUDED.confidence,
+       confidence_reason = EXCLUDED.confidence_reason,
+       observed_period = EXCLUDED.observed_period,
+       engine_version = EXCLUDED.engine_version,
+       updated_at = NOW()`;
+}
+
+/** Peer-relative z specs shipped this increment. */
+export const PEER_RELATIVE_Z_SPECS: PeerRelativeZSpec[] = [
+  {
+    sourceSignalKey: "crime.total_12m",
+    derivedKey: "crime.total_12m_peer_relative_z",
+    confidenceReason: "Peer-relative z-score: target's normalized crime.total_12m vs the mean+stddev of its k-NN peers' normalized crime.total_12m.",
+  },
+  {
+    sourceSignalKey: "property.median_price",
+    derivedKey: "property.median_price_peer_relative_z",
+    confidenceReason: "Peer-relative z-score: target's normalized property.median_price vs the mean+stddev of its k-NN peers' normalized property.median_price.",
+  },
+];
+
 /** Trend-slope specs shipped this increment. Adding the next trend slope is
     one entry here + one DERIVED_SIGNALS row + one DERIVED_NORMALIZE_KEYS line
     + one SUPPORTED_SIGNALS line in the planner. */
@@ -684,6 +816,16 @@ export async function runDerivations(run: QueryRunner = runDefault): Promise<Der
   for (const spec of ROLLING_SUM_DELTA_SPECS) {
     const before = await countKey(spec.derivedKey);
     await run(buildRollingSumDeltaSql(spec), []);
+    const after = await countKey(spec.derivedKey);
+    totals[spec.derivedKey] = { before, after, appended: after - before };
+  }
+
+  // Peer-relative z-scores (depend on peer_assignments + normalized_value;
+  // run AFTER refresh:peers and AFTER normalize:signals — the cron orders
+  // these explicitly; ad-hoc runs require peer_assignments to be populated).
+  for (const spec of PEER_RELATIVE_Z_SPECS) {
+    const before = await countKey(spec.derivedKey);
+    await run(buildPeerRelativeZSql(spec), []);
     const after = await countKey(spec.derivedKey);
     totals[spec.derivedKey] = { before, after, appended: after - before };
   }

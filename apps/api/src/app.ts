@@ -19,6 +19,7 @@ import { rateLimit, rateLimitHeaders } from "./infrastructure/rate-limit";
 import { RATE_LIMITS, BATCH_MAX_ITEMS, APP_URL, getConfig } from "./infrastructure/config";
 import { getAreaProfile, queryAreas, parseAreasQuery } from "./modules/signals";
 import { findPeers, parsePeersInput, PEERS_DEFAULT_K, PEERS_DEFAULT_MIN_SIGNALS, type Country as PeersCountry } from "./modules/signals/peers";
+import { findInsights, parseInsightsInput, INSIGHTS_DEFAULT_K } from "./modules/signals/insights";
 import { geocodeArea } from "./modules/signals/data-sources/postcodes";
 import { scoreArea, parseScoreBody } from "./modules/scoring";
 import { createPortfolio, listPortfolios, getPortfolio, deletePortfolio, addAreas, enrichPortfolio, detectPortfolioChanges, PORTFOLIO_ADD_MAX, type Baseline } from "./modules/monitor";
@@ -815,8 +816,58 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   });
   // PeersCountry referenced indirectly (type import) so the import isn't tree-shaken;
   // PEERS_DEFAULT_K / _MIN_SIGNALS surface for tests + are stable constants.
-  void (PEERS_DEFAULT_K + PEERS_DEFAULT_MIN_SIGNALS);
+  void (PEERS_DEFAULT_K + PEERS_DEFAULT_MIN_SIGNALS + INSIGHTS_DEFAULT_K);
   void ({} as PeersCountry);
+
+  // ── Intelligence Increment 7: POST /v1/insights — anomaly screening ──
+  // Ranks LSOAs by ABS(peer_relative_z) on a peer-relative-z derived signal
+  // (e.g. crime.total_12m_peer_relative_z). Reads signal_values; the
+  // expensive peer math runs OFFLINE in refresh:peers + derive:signals.
+  // Country/LAD scope + optional min_abs_z threshold. See ADR 0024.
+  app.post("/v1/insights", async (request, reply) => {
+    try {
+      const userId = await guardSignals(request, reply);
+      if (!userId) return reply;
+
+      const body = (request.body ?? {}) as Record<string, unknown>;
+      const parsed = parseInsightsInput({
+        signalKey: typeof body.signal_key === "string" ? body.signal_key : undefined,
+        country: typeof body.country === "string" ? body.country : undefined,
+        lad: typeof body.lad === "string" ? body.lad : undefined,
+        minAbsZ: typeof body.min_abs_z === "number" ? body.min_abs_z : undefined,
+        k: typeof body.k === "number" ? body.k : undefined,
+      });
+      if (!parsed.ok) return reply.code(400).send({ error: parsed.error });
+
+      const insights = await findInsights(parsed.input);
+      trackEvent("api.insights.queried", userId, {
+        signal_key: parsed.input.signalKey,
+        country: parsed.input.country,
+        lad: parsed.input.lad,
+        k: parsed.input.k,
+        returned: insights.length,
+      });
+      reply.header("X-Engine-Version", METHODOLOGY_VERSION);
+      const scope = [
+        parsed.input.country ? `country=${parsed.input.country}` : "",
+        parsed.input.lad ? `lad=${parsed.input.lad}` : "",
+        parsed.input.minAbsZ ? `min_abs_z=${parsed.input.minAbsZ}` : "",
+      ].filter(Boolean).join(" ") || "national";
+      return reply.code(200).send({
+        signal_key: parsed.input.signalKey,
+        insights,
+        meta: {
+          generated_at: new Date().toISOString(),
+          scope,
+          threshold: parsed.input.minAbsZ ?? null,
+        },
+      });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/insights] error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
 
   // AR-130 bulk scoring: up to BATCH_MAX_ITEMS areas per call, bounded
   // concurrency, per-item result array. Pre-checks total quota (fail fast).
