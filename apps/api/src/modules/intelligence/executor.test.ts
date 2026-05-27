@@ -3,16 +3,23 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("../signals/query", () => ({ queryAreas: vi.fn(), queryAreasCompound: vi.fn() }));
 vi.mock("../signals", () => ({ getAreaProfile: vi.fn() }));
 vi.mock("../scoring", () => ({ scoreArea: vi.fn() }));
+vi.mock("../signals/peers", () => ({ findPeers: vi.fn(), parsePeersInput: vi.fn() }));
+vi.mock("../signals/data-sources/postcodes", () => ({ geocodeArea: vi.fn() }));
 
 import { executePlan } from "./executor";
 import { queryAreas, queryAreasCompound } from "../signals/query";
 import { getAreaProfile } from "../signals";
 import { scoreArea } from "../scoring";
+import { findPeers, parsePeersInput } from "../signals/peers";
+import { geocodeArea } from "../signals/data-sources/postcodes";
 
 const mockQueryAreas = vi.mocked(queryAreas);
 const mockQueryAreasCompound = vi.mocked(queryAreasCompound);
 const mockGetAreaProfile = vi.mocked(getAreaProfile);
 const mockScoreArea = vi.mocked(scoreArea);
+const mockFindPeers = vi.mocked(findPeers);
+const mockParsePeersInput = vi.mocked(parsePeersInput);
+const mockGeocodeArea = vi.mocked(geocodeArea);
 
 beforeEach(() => { vi.clearAllMocks(); });
 
@@ -134,6 +141,64 @@ describe("executePlan — score_area", () => {
     expect(mockScoreArea).toHaveBeenCalledWith({
       area: "SW1A 1AA", preset: "investing", weights: { affordability: 60 },
     });
+  });
+});
+
+describe("executePlan — find_peers (AR-188 / ADR 0023)", () => {
+  it("dispatches a find_peers plan with geo_code target straight to findPeers (no geocoding)", async () => {
+    mockParsePeersInput.mockReturnValue({ ok: true, input: { targetGeoCode: "E01034129", k: 20, minSignals: 3 } });
+    mockFindPeers.mockResolvedValue({
+      signalsUsed: ["property.median_price", "crime.total_12m"],
+      peers: [{ geo_code: "E01034130", distance: 0.1, n_dims_used: 2 }],
+    });
+    const res = await executePlan(
+      { op: "find_peers", params: { target: { geo_code: "E01034129" }, k: 20 } },
+      { planSource: "client" },
+    );
+    expect(mockGeocodeArea).not.toHaveBeenCalled();
+    expect(mockFindPeers).toHaveBeenCalledOnce();
+    if (res.plan.op === "find_peers" && res.results) {
+      expect(res.results.target.geo_code).toBe("E01034129");
+      expect(res.results.peers).toHaveLength(1);
+      expect(res.results.target.signals_used).toEqual(["property.median_price", "crime.total_12m"]);
+    } else {
+      throw new Error("expected find_peers result");
+    }
+  });
+
+  it("resolves a postcode target via geocodeArea before calling findPeers", async () => {
+    mockGeocodeArea.mockResolvedValue({ lsoa: "E01034129" } as never);
+    mockParsePeersInput.mockReturnValue({ ok: true, input: { targetGeoCode: "E01034129", k: 5, minSignals: 3 } });
+    mockFindPeers.mockResolvedValue({
+      signalsUsed: ["crime.total_12m"],
+      peers: [{ geo_code: "E01034130", distance: 0.05, n_dims_used: 1 }],
+    });
+    await executePlan(
+      { op: "find_peers", params: { target: { postcode: "M1 1AE" }, k: 5 } },
+      { planSource: "nl" },
+    );
+    expect(mockGeocodeArea).toHaveBeenCalledWith("M1 1AE");
+    expect(mockFindPeers).toHaveBeenCalledOnce();
+  });
+
+  it("returns null results when the target cannot be geocoded", async () => {
+    mockGeocodeArea.mockResolvedValue(null);
+    const res = await executePlan(
+      { op: "find_peers", params: { target: { area: "Nowhere-on-Sea" } } },
+      { planSource: "nl" },
+    );
+    expect(res.results).toBeNull();
+    expect(mockFindPeers).not.toHaveBeenCalled();
+  });
+
+  it("returns null results when the target has no normalized signals", async () => {
+    mockParsePeersInput.mockReturnValue({ ok: true, input: { targetGeoCode: "E01034129", k: 20, minSignals: 3 } });
+    mockFindPeers.mockResolvedValue({ signalsUsed: [], peers: [] });
+    const res = await executePlan(
+      { op: "find_peers", params: { target: { geo_code: "E01034129" } } },
+      { planSource: "client" },
+    );
+    expect(res.results).toBeNull();
   });
 });
 

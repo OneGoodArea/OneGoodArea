@@ -128,14 +128,80 @@ export const ScoreAreaPlanSchema = z.object({
 }).strict();
 export type ScoreAreaPlan = z.infer<typeof ScoreAreaPlanSchema>;
 
+/* ── /v1/peers params (AR-188, Increment 6) ────────────────────────────
+   k-NN over normalized signals. Target is identified by exactly ONE of:
+     - geo_code   (LSOA code, e.g. E01034129)
+     - postcode   (resolved to LSOA via the geo spine)
+     - area       (free-text — resolved like /v1/area; broadest)
+   Optional signals[] subsets the comparison dimensions (default = all
+   normalized signals available for the target). country / lad scope
+   the candidate set. k = number of peers (default 20, max 200). */
+const TargetByGeoCode = z.object({
+  geo_code: z.string().min(1),
+  postcode: z.undefined().optional(),
+  area: z.undefined().optional(),
+}).strict();
+const TargetByPostcode = z.object({
+  postcode: z.string().min(1),
+  geo_code: z.undefined().optional(),
+  area: z.undefined().optional(),
+}).strict();
+const TargetByArea = z.object({
+  area: z.string().min(1),
+  geo_code: z.undefined().optional(),
+  postcode: z.undefined().optional(),
+}).strict();
+export const PeersTargetSchema = z.union([TargetByGeoCode, TargetByPostcode, TargetByArea]);
+export type PeersTarget = z.infer<typeof PeersTargetSchema>;
+
+const peersParamsBase = {
+  target: PeersTargetSchema,
+  signals: z.array(z.string().min(1)).min(1).max(20).optional(),
+  country: z.enum(["England", "Wales", "Scotland"]).optional(),
+  lad: z.string().optional(),
+  k: z.number().int().positive().max(200).optional(),
+  min_signals: z.number().int().positive().max(20).optional(),
+} as const;
+
+/** Find peers (areas like this one) by k-NN over normalized signal values. */
+export const FindPeersPlanSchema = z.object({
+  op: z.literal("find_peers"),
+  params: z.object(peersParamsBase).strict(),
+}).strict();
+export type FindPeersPlan = z.infer<typeof FindPeersPlanSchema>;
+
 /** The full plan grammar (v1). Strict discriminated union — unknown ops fail
-    validation. Extension point: insights / peers / forecast land as new ops. */
+    validation. Extension point: insights / forecast land as new ops. */
 export const QueryPlanSchema = z.discriminatedUnion("op", [
   RankAreasPlanSchema,
   GetAreaPlanSchema,
   ScoreAreaPlanSchema,
+  FindPeersPlanSchema,
 ]);
 export type QueryPlan = z.infer<typeof QueryPlanSchema>;
+
+/* ── /v1/peers DTOs (independent of the plan op so the standalone
+   endpoint can use the SAME request shape via PeersRequestSchema). ── */
+
+export const PeersRequestSchema = z.object(peersParamsBase).strict();
+export type PeersRequest = z.infer<typeof PeersRequestSchema>;
+
+export const PeerResultSchema = z.object({
+  geo_code: z.string(),
+  distance: z.number(),         // 0 = identical, 1 = maximally distant (over [0,1] normalized space)
+  n_dims_used: z.number().int(), // how many signal dimensions contributed to this peer's distance
+}).strict();
+export type PeerResult = z.infer<typeof PeerResultSchema>;
+
+export const PeersResponseSchema = z.object({
+  target: z.object({
+    geo_code: z.string(),
+    signals_used: z.array(z.string()),
+  }).strict(),
+  peers: z.array(PeerResultSchema),
+  meta: z.object({ generated_at: z.string(), scope: z.string() }).strict(),
+}).strict();
+export type PeersResponse = z.infer<typeof PeersResponseSchema>;
 
 /* ── area-result row shape (mirrors apps/api queryAreas exactly; declared here
    so the typed response below can reference it without a backend dep).
@@ -193,13 +259,22 @@ export const QueryResponseScoreArea = z.object({
   results: ScoreResultSchema.nullable(),
   meta: z.object({ generated_at: z.string() }),
 }).strict();
-/** Flat union over the three per-op response shapes. (The plan.op is the
-    natural discriminator, but it sits one level down, so a plain z.union keeps
-    the schema simple and the inferred type a clean discriminated union.) */
+/** find_peers wraps the standalone PeersResponse shape so it composes
+    through /v1/query identically. */
+export const QueryResponseFindPeers = z.object({
+  plan: FindPeersPlanSchema,
+  plan_source: z.enum(["client", "nl"]),
+  results: PeersResponseSchema.nullable(),
+  meta: z.object({ generated_at: z.string() }),
+}).strict();
+/** Flat union over the per-op response shapes. (The plan.op is the natural
+    discriminator, but it sits one level down, so a plain z.union keeps the
+    schema simple and the inferred type a clean discriminated union.) */
 export const QueryResponseSchema = z.union([
   QueryResponseRankAreas,
   QueryResponseGetArea,
   QueryResponseScoreArea,
+  QueryResponseFindPeers,
 ]);
 export type QueryResponse = z.infer<typeof QueryResponseSchema>;
 

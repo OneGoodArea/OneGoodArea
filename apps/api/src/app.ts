@@ -18,6 +18,8 @@ import {
 import { rateLimit, rateLimitHeaders } from "./infrastructure/rate-limit";
 import { RATE_LIMITS, BATCH_MAX_ITEMS, APP_URL, getConfig } from "./infrastructure/config";
 import { getAreaProfile, queryAreas, parseAreasQuery } from "./modules/signals";
+import { findPeers, parsePeersInput, PEERS_DEFAULT_K, PEERS_DEFAULT_MIN_SIGNALS, type Country as PeersCountry } from "./modules/signals/peers";
+import { geocodeArea } from "./modules/signals/data-sources/postcodes";
 import { scoreArea, parseScoreBody } from "./modules/scoring";
 import { createPortfolio, listPortfolios, getPortfolio, deletePortfolio, addAreas, enrichPortfolio, detectPortfolioChanges, PORTFOLIO_ADD_MAX, type Baseline } from "./modules/monitor";
 import { runQuery, parseQueryRequest } from "./modules/intelligence";
@@ -741,6 +743,80 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       return reply.code(500).send({ error: "Internal server error" });
     }
   });
+
+  // ── Intelligence Increment 6: POST /v1/peers — k-NN over normalized signals ──
+  // "Areas like this one." Target is identified by exactly one of geo_code |
+  // postcode | area (postcode/area resolved through the geo spine). Default
+  // signals = all the target has normalized; default k=20 (max 200); default
+  // min_signals=3. Distance = SQRT(AVG((t_i - c_i)^2)) over dims BOTH have.
+  // See ADR 0023.
+  app.post("/v1/peers", async (request, reply) => {
+    try {
+      const userId = await guardSignals(request, reply);
+      if (!userId) return reply;
+
+      const body = (request.body ?? {}) as Record<string, unknown>;
+      const target = body.target as { geo_code?: string; postcode?: string; area?: string } | undefined;
+      if (!target || typeof target !== "object") {
+        return reply.code(400).send({ error: "Missing 'target' — provide one of {geo_code} | {postcode} | {area}." });
+      }
+      const present = ["geo_code", "postcode", "area"].filter((k) => typeof target[k as keyof typeof target] === "string" && (target[k as keyof typeof target] as string).trim().length > 0);
+      if (present.length !== 1) {
+        return reply.code(400).send({ error: "target must contain EXACTLY one of {geo_code, postcode, area}." });
+      }
+
+      let targetGeoCode: string;
+      let scopeLabel: string;
+      if (target.geo_code) {
+        targetGeoCode = target.geo_code.trim();
+        scopeLabel = `geo_code=${targetGeoCode}`;
+      } else {
+        const q = (target.postcode ?? target.area)!.trim();
+        const geo = await geocodeArea(q);
+        if (!geo) return reply.code(404).send({ error: `Could not resolve "${q}" to an LSOA.` });
+        targetGeoCode = geo.lsoa;
+        scopeLabel = `${target.postcode ? "postcode" : "area"}=${q} -> lsoa=${targetGeoCode}`;
+      }
+
+      const parsed = parsePeersInput({
+        targetGeoCode,
+        signals: Array.isArray(body.signals) ? (body.signals as unknown[]).map(String) : undefined,
+        country: typeof body.country === "string" ? body.country : undefined,
+        lad: typeof body.lad === "string" ? body.lad : undefined,
+        k: typeof body.k === "number" ? body.k : undefined,
+        minSignals: typeof body.min_signals === "number" ? body.min_signals : undefined,
+      });
+      if (!parsed.ok) return reply.code(400).send({ error: parsed.error });
+
+      const result = await findPeers(parsed.input);
+      if (result.signalsUsed.length === 0) {
+        return reply.code(404).send({
+          error: `Target ${targetGeoCode} has no normalized signal values yet; cannot compute peers.`,
+        });
+      }
+
+      trackEvent("api.peers.queried", userId, {
+        target: targetGeoCode,
+        signals_count: result.signalsUsed.length,
+        peers_returned: result.peers.length,
+        k: parsed.input.k,
+      });
+      reply.header("X-Engine-Version", METHODOLOGY_VERSION);
+      return reply.code(200).send({
+        target: { geo_code: targetGeoCode, signals_used: result.signalsUsed },
+        peers: result.peers,
+        meta: { generated_at: new Date().toISOString(), scope: scopeLabel },
+      });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/peers] error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+  // PeersCountry referenced indirectly (type import) so the import isn't tree-shaken;
+  // PEERS_DEFAULT_K / _MIN_SIGNALS surface for tests + are stable constants.
+  void (PEERS_DEFAULT_K + PEERS_DEFAULT_MIN_SIGNALS);
+  void ({} as PeersCountry);
 
   // AR-130 bulk scoring: up to BATCH_MAX_ITEMS areas per call, bounded
   // concurrency, per-item result array. Pre-checks total quota (fail fast).

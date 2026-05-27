@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { QueryPlanSchema, RankAreasPlanSchema, SignalFilterSchema } from "./intelligence";
+import {
+  QueryPlanSchema, RankAreasPlanSchema, SignalFilterSchema,
+  FindPeersPlanSchema, PeersRequestSchema,
+} from "./intelligence";
 
 describe("@onegoodarea/contracts — intelligence query plan", () => {
   it("accepts the singular rank_areas params (backward-compat)", () => {
@@ -54,6 +57,70 @@ describe("@onegoodarea/contracts — intelligence query plan", () => {
     });
     expect(ok1.success).toBe(true);
     expect(ok2.success).toBe(true);
+  });
+});
+
+describe("@onegoodarea/contracts — find_peers plan + PeersRequest (Increment 6 / AR-188)", () => {
+  it("accepts a find_peers plan with geo_code target", () => {
+    const r = FindPeersPlanSchema.safeParse({
+      op: "find_peers",
+      params: { target: { geo_code: "E01034129" }, k: 20 },
+    });
+    expect(r.success).toBe(true);
+  });
+  it("accepts a find_peers plan with postcode target + signal subset", () => {
+    const r = FindPeersPlanSchema.safeParse({
+      op: "find_peers",
+      params: {
+        target: { postcode: "M1 1AE" },
+        signals: ["property.median_price", "crime.total_12m"],
+        country: "England",
+        k: 10,
+      },
+    });
+    expect(r.success).toBe(true);
+  });
+  it("rejects a target with TWO of geo_code/postcode/area", () => {
+    const r = FindPeersPlanSchema.safeParse({
+      op: "find_peers",
+      params: { target: { geo_code: "E01034129", postcode: "M1 1AE" } },
+    });
+    expect(r.success).toBe(false);
+  });
+  it("rejects a target with ZERO identifiers", () => {
+    const r = FindPeersPlanSchema.safeParse({
+      op: "find_peers",
+      params: { target: {} },
+    });
+    expect(r.success).toBe(false);
+  });
+  it("rejects out-of-range k", () => {
+    expect(FindPeersPlanSchema.safeParse({
+      op: "find_peers", params: { target: { geo_code: "E01034129" }, k: 0 },
+    }).success).toBe(false);
+    expect(FindPeersPlanSchema.safeParse({
+      op: "find_peers", params: { target: { geo_code: "E01034129" }, k: 201 },
+    }).success).toBe(false);
+  });
+  it("rejects an empty signals[]", () => {
+    expect(FindPeersPlanSchema.safeParse({
+      op: "find_peers", params: { target: { geo_code: "E01034129" }, signals: [] },
+    }).success).toBe(false);
+  });
+  it("QueryPlanSchema discriminated union accepts find_peers under op=find_peers", () => {
+    const r = QueryPlanSchema.safeParse({
+      op: "find_peers", params: { target: { geo_code: "E01034129" } },
+    });
+    expect(r.success).toBe(true);
+  });
+  it("PeersRequestSchema accepts the same shape as the plan params (standalone endpoint)", () => {
+    const r = PeersRequestSchema.safeParse({
+      target: { area: "Manchester city centre" },
+      signals: ["property.median_price"],
+      k: 30,
+      min_signals: 1,
+    });
+    expect(r.success).toBe(true);
   });
 });
 

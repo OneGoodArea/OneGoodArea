@@ -14,6 +14,8 @@ import type { QueryPlan, QueryResponse } from "@onegoodarea/contracts";
 import { queryAreas, queryAreasCompound, type AreasQuery, type CompoundAreasQuery } from "../signals/query";
 import { getAreaProfile } from "../signals";
 import { scoreArea } from "../scoring";
+import { findPeers, parsePeersInput } from "../signals/peers";
+import { geocodeArea } from "../signals/data-sources/postcodes";
 
 const AREAS_LIMIT_DEFAULT = 100;
 
@@ -74,11 +76,55 @@ export async function executePlan(plan: QueryPlan, opts: ExecuteOpts): Promise<Q
     const profile = await getAreaProfile(plan.params.area);
     return { plan, plan_source, results: profile, meta };
   }
-  // score_area (the discriminator is exhaustive over the union)
-  const score = await scoreArea({
-    area: plan.params.area,
-    preset: plan.params.preset ?? "research",
-    weights: plan.params.weights,
+  if (plan.op === "score_area") {
+    const score = await scoreArea({
+      area: plan.params.area,
+      preset: plan.params.preset ?? "research",
+      weights: plan.params.weights,
+    });
+    return { plan, plan_source, results: score, meta };
+  }
+  // find_peers — resolve target (geo_code | postcode | area) -> LSOA, then
+  // dispatch to the SAME findPeers used by POST /v1/peers. Returns null
+  // results when the target can't be resolved OR has no normalized signals;
+  // the endpoint maps that to 404 separately, but in the query plane we
+  // preserve the typed shape (results: null) for symmetry with get_area /
+  // score_area.
+  const tgt = plan.params.target;
+  let targetGeoCode: string | null = null;
+  if ("geo_code" in tgt && tgt.geo_code) {
+    targetGeoCode = tgt.geo_code.trim();
+  } else {
+    const q = ("postcode" in tgt ? tgt.postcode : "area" in tgt ? tgt.area : "")!.trim();
+    if (q) {
+      const geo = await geocodeArea(q);
+      if (geo) targetGeoCode = geo.lsoa;
+    }
+  }
+  if (!targetGeoCode) return { plan, plan_source, results: null, meta };
+
+  const parsed = parsePeersInput({
+    targetGeoCode,
+    signals: plan.params.signals,
+    country: plan.params.country,
+    lad: plan.params.lad,
+    k: plan.params.k,
+    minSignals: plan.params.min_signals,
   });
-  return { plan, plan_source, results: score, meta };
+  if (!parsed.ok) return { plan, plan_source, results: null, meta };
+
+  const result = await findPeers(parsed.input);
+  if (result.signalsUsed.length === 0) return { plan, plan_source, results: null, meta };
+
+  return {
+    plan,
+    plan_source,
+    results: {
+      target: { geo_code: targetGeoCode, signals_used: result.signalsUsed },
+      peers: result.peers,
+      meta: { generated_at: meta.generated_at, scope: `geo_code=${targetGeoCode}` },
+    },
+    meta,
+  };
 }
+
