@@ -1,7 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import {
-  buildPropertyYoYSql, buildRollingSumYoYSql, buildRegrSlopeSql, runDerivations,
+  buildPropertyYoYSql, buildRollingSumYoYSql, buildRegrSlopeSql,
+  buildCountWeightedMedianDeltaSql, buildRollingSumDeltaSql, runDerivations,
   DERIVED_SIGNALS, DERIVED_NORMALIZE_KEYS, ROLLING_YOY_SPECS, TREND_SLOPE_SPECS,
+  COUNT_WEIGHTED_DELTA_SPECS, ROLLING_SUM_DELTA_SPECS,
 } from "./derive";
 import type { QueryRunner } from "./store-writer";
 
@@ -103,6 +105,127 @@ describe("DERIVED_SIGNALS catalog", () => {
     expect(crime?.minObservations).toBe(18);
     const volume = TREND_SLOPE_SPECS.find((s) => s.derivedKey === "property.transaction_count_trend_slope_24m");
     expect(volume?.sourceKey).toBe("property.transaction_count");
+  });
+  it("declares the 6m short-horizon signals", () => {
+    const price6m = DERIVED_SIGNALS.find((s) => s.key === "property.median_price_change_pct_6m");
+    expect(price6m).toBeDefined();
+    expect(price6m?.unit).toBe("pct");
+    expect(price6m?.category).toBe("property");
+
+    const crime6m = DERIVED_SIGNALS.find((s) => s.key === "crime.total_6m_change_pct");
+    expect(crime6m).toBeDefined();
+    expect(crime6m?.unit).toBe("pct");
+    expect(crime6m?.direction).toBe("lower_is_better");
+    expect(crime6m?.category).toBe("crime");
+  });
+  it("DERIVED_NORMALIZE_KEYS lists the 6m short-horizon signals", () => {
+    expect(DERIVED_NORMALIZE_KEYS).toContain("property.median_price_change_pct_6m");
+    expect(DERIVED_NORMALIZE_KEYS).toContain("crime.total_6m_change_pct");
+  });
+  it("COUNT_WEIGHTED_DELTA_SPECS + ROLLING_SUM_DELTA_SPECS wire 6m sources -> derived keys", () => {
+    const price = COUNT_WEIGHTED_DELTA_SPECS.find((s) => s.derivedKey === "property.median_price_change_pct_6m");
+    expect(price?.sourceKeyValue).toBe("property.median_price");
+    expect(price?.sourceKeyCount).toBe("property.transaction_count");
+    expect(price?.windowMonths).toBe(6);
+
+    const crime = ROLLING_SUM_DELTA_SPECS.find((s) => s.derivedKey === "crime.total_6m_change_pct");
+    expect(crime?.sourceKey).toBe("crime.monthly_count");
+    expect(crime?.windowMonths).toBe(6);
+  });
+});
+
+describe("buildCountWeightedMedianDeltaSql (pure, AR-187 / ADR 0022)", () => {
+  const sql = buildCountWeightedMedianDeltaSql({
+    sourceKeyValue: "property.median_price",
+    sourceKeyCount: "property.transaction_count",
+    derivedKey: "property.median_price_change_pct_6m",
+    windowMonths: 6,
+    confidenceReason: "test reason",
+  });
+
+  it("joins median + count rows from the time-series", () => {
+    expect(sql).toMatch(/FROM signal_timeseries mt/);
+    expect(sql).toMatch(/JOIN signal_timeseries ct/);
+    expect(sql).toMatch(/'property\.median_price'/);
+    expect(sql).toMatch(/'property\.transaction_count'/);
+  });
+  it("filters to monthly periods only (YYYY-MM)", () => {
+    expect(sql).toMatch(/observed_period ~ '\^\[0-9\]\{4\}-\[0-9\]\{2\}\$'/);
+  });
+  it("splits ranked rows into 1..6 (latest) vs 7..12 (prior) for a 6m window", () => {
+    expect(sql).toMatch(/rn BETWEEN 1 AND 6/);
+    expect(sql).toMatch(/rn BETWEEN 7 AND 12/);
+  });
+  it("count-weights each month's median by that month's transaction count", () => {
+    expect(sql).toMatch(/SUM\(CASE WHEN rn BETWEEN 1 AND 6 THEN median \* count ELSE 0 END\) AS latest_num/);
+    expect(sql).toMatch(/SUM\(CASE WHEN rn BETWEEN 7 AND 12 THEN median \* count ELSE 0 END\) AS prior_num/);
+  });
+  it("requires FULL N months on both sides + positive denominators + prior > minPriorValue", () => {
+    expect(sql).toMatch(/latest_months = 6/);
+    expect(sql).toMatch(/prior_months = 6/);
+    expect(sql).toMatch(/latest_den > 0 AND prior_den > 0/);
+    expect(sql).toMatch(/prior_wmedian > 0/);
+  });
+  it("inserts into signal_values with the derived key + idempotent ON CONFLICT DO UPDATE", () => {
+    expect(sql).toMatch(/INSERT INTO signal_values/);
+    expect(sql).toMatch(/'property\.median_price_change_pct_6m'/);
+    expect(sql).toMatch(/ON CONFLICT \(signal_key, geo_type, geo_code\) DO UPDATE/);
+  });
+  it("labels the observed_period as '<N>m <prior_start>..<prior_end> -> <latest_start>..<latest_end>'", () => {
+    expect(sql).toMatch(/'6m ' \|\| prior_window_start \|\| '\.\.' \|\| prior_window_end \|\| ' -> ' \|\| latest_window_start \|\| '\.\.' \|\| latest_period/);
+  });
+  it("scales the window math for non-6 windowMonths (e.g. 3 -> 1..3 vs 4..6)", () => {
+    const tight = buildCountWeightedMedianDeltaSql({
+      sourceKeyValue: "x", sourceKeyCount: "y", derivedKey: "z", windowMonths: 3, confidenceReason: "r",
+    });
+    expect(tight).toMatch(/rn BETWEEN 1 AND 3/);
+    expect(tight).toMatch(/rn BETWEEN 4 AND 6/);
+    expect(tight).toMatch(/latest_months = 3/);
+    expect(tight).toMatch(/prior_months = 3/);
+    expect(tight).toMatch(/'3m '/);
+  });
+});
+
+describe("buildRollingSumDeltaSql (pure, AR-187 / ADR 0022)", () => {
+  const sql = buildRollingSumDeltaSql({
+    sourceKey: "crime.monthly_count",
+    derivedKey: "crime.total_6m_change_pct",
+    windowMonths: 6,
+    confidenceReason: "test reason",
+  });
+
+  it("reads the configured source key from the time-series", () => {
+    expect(sql).toMatch(/signal_key = 'crime\.monthly_count'/);
+    expect(sql).toMatch(/FROM signal_timeseries/);
+  });
+  it("splits ranked rows into 1..6 (latest) vs 7..12 (prior) for a 6m window", () => {
+    expect(sql).toMatch(/rn BETWEEN 1 AND 6/);
+    expect(sql).toMatch(/rn BETWEEN 7 AND 12/);
+  });
+  it("requires FULL N months on both sides + prior_sum > minPriorSum", () => {
+    expect(sql).toMatch(/latest_months = 6/);
+    expect(sql).toMatch(/prior_months = 6/);
+    expect(sql).toMatch(/prior_sum > 0/);
+  });
+  it("inserts into signal_values with the derived key + idempotent ON CONFLICT DO UPDATE", () => {
+    expect(sql).toMatch(/INSERT INTO signal_values/);
+    expect(sql).toMatch(/'crime\.total_6m_change_pct'/);
+    expect(sql).toMatch(/ON CONFLICT \(signal_key, geo_type, geo_code\) DO UPDATE/);
+  });
+  it("labels the observed_period as '<N>m <prior>..<prior_end> -> <latest_start>..<latest_end>'", () => {
+    expect(sql).toMatch(/'6m ' \|\| prior_window_start \|\| '\.\.' \|\| prior_window_end \|\| ' -> ' \|\| latest_window_start \|\| '\.\.' \|\| latest_period/);
+  });
+  it("interpolates engine version + escapes single quotes", () => {
+    const tricky = buildRollingSumDeltaSql({
+      sourceKey: "x", derivedKey: "y", confidenceReason: "Pedro's note", engineVersion: "9.9.9-test",
+    });
+    expect(tricky).toContain("'9.9.9-test'");
+    expect(tricky).toContain("Pedro''s note");
+  });
+  it("defaults windowMonths to 6 when omitted", () => {
+    const def = buildRollingSumDeltaSql({ sourceKey: "x", derivedKey: "y", confidenceReason: "r" });
+    expect(def).toMatch(/rn BETWEEN 1 AND 6/);
+    expect(def).toMatch(/rn BETWEEN 7 AND 12/);
   });
 });
 
@@ -218,15 +341,21 @@ describe("buildRollingSumYoYSql (pure, Increment 3 / AR-185)", () => {
 });
 
 describe("runDerivations (WRITE-ONLY: catalog -> derive each spec, no normalize)", () => {
-  it("runs property YoY + every rolling-YoY spec + every trend-slope spec, never normalizes", async () => {
+  it("runs property YoY + every rolling-YoY + every trend-slope + every N-month delta spec, never normalizes", async () => {
     const calls: string[] = [];
     const run = vi.fn<QueryRunner>(async (text) => {
       if (text.includes("INSERT INTO signals")) calls.push("catalog");
-      else if (text.includes("FROM signal_timeseries mt")) calls.push("derive:property_yoy");
+      // property YoY (calendar-year, distinct shape with `substr(.,1,4)` for year)
+      else if (text.includes("FROM signal_timeseries mt") && text.includes("substr(mt.observed_period, 1, 4)")) calls.push("derive:property_yoy");
+      // 12m rolling YoY (rn 1..12)
       else if (text.includes("'crime.monthly_count'") && text.includes("INSERT INTO signal_values") && text.includes("rn BETWEEN 1 AND 12")) calls.push("derive:crime_yoy");
       else if (text.includes("'property.transaction_count'") && text.includes("INSERT INTO signal_values") && text.includes("rn BETWEEN 1 AND 12")) calls.push("derive:volume_yoy");
+      // trend slope
       else if (text.includes("regr_slope(y, x)") && text.includes("'crime.monthly_count'")) calls.push("derive:crime_slope");
       else if (text.includes("regr_slope(y, x)") && text.includes("'property.transaction_count'")) calls.push("derive:volume_slope");
+      // 6m N-month deltas (rn 1..6 vs 7..12)
+      else if (text.includes("'property.median_price'") && text.includes("rn BETWEEN 1 AND 6") && text.includes("INSERT INTO signal_values")) calls.push("derive:price_6m");
+      else if (text.includes("'crime.monthly_count'") && text.includes("rn BETWEEN 1 AND 6") && text.includes("INSERT INTO signal_values")) calls.push("derive:crime_6m");
       else if (text.includes("PERCENT_RANK()")) calls.push("normalize");
       else if (text.includes("count(*)::int AS n FROM signal_values WHERE signal_key='property.price_change_pct_yoy'")) {
         return [{ n: calls.includes("derive:property_yoy") ? 35000 : 0 }];
@@ -243,6 +372,12 @@ describe("runDerivations (WRITE-ONLY: catalog -> derive each spec, no normalize)
       else if (text.includes("count(*)::int AS n FROM signal_values WHERE signal_key='property.transaction_count_trend_slope_24m'")) {
         return [{ n: calls.includes("derive:volume_slope") ? 2000 : 0 }];
       }
+      else if (text.includes("count(*)::int AS n FROM signal_values WHERE signal_key='property.median_price_change_pct_6m'")) {
+        return [{ n: calls.includes("derive:price_6m") ? 5000 : 0 }];
+      }
+      else if (text.includes("count(*)::int AS n FROM signal_values WHERE signal_key='crime.total_6m_change_pct'")) {
+        return [{ n: calls.includes("derive:crime_6m") ? 33500 : 0 }];
+      }
       return [];
     });
 
@@ -254,14 +389,18 @@ describe("runDerivations (WRITE-ONLY: catalog -> derive each spec, no normalize)
     expect(calls).toContain("derive:volume_yoy");
     expect(calls).toContain("derive:crime_slope");
     expect(calls).toContain("derive:volume_slope");
+    expect(calls).toContain("derive:price_6m");
+    expect(calls).toContain("derive:crime_6m");
     // CRUCIAL: normalize is a SEPARATE step (normalize:signals); derive never calls it.
     expect(calls).not.toContain("normalize");
 
     expect(summary.derivedSignals).toEqual([
       "property.price_change_pct_yoy",
+      "property.median_price_change_pct_6m",
       "property.transaction_count_change_pct_yoy",
       "property.transaction_count_trend_slope_24m",
       "crime.total_12m_change_pct_yoy",
+      "crime.total_6m_change_pct",
       "crime.monthly_count_trend_slope_24m",
     ]);
     expect(summary.totals["property.price_change_pct_yoy"]).toEqual({ before: 0, after: 35000, appended: 35000 });
@@ -269,6 +408,8 @@ describe("runDerivations (WRITE-ONLY: catalog -> derive each spec, no normalize)
     expect(summary.totals["property.transaction_count_change_pct_yoy"]).toEqual({ before: 0, after: 30000, appended: 30000 });
     expect(summary.totals["crime.monthly_count_trend_slope_24m"]).toEqual({ before: 0, after: 33000, appended: 33000 });
     expect(summary.totals["property.transaction_count_trend_slope_24m"]).toEqual({ before: 0, after: 2000, appended: 2000 });
+    expect(summary.totals["property.median_price_change_pct_6m"]).toEqual({ before: 0, after: 5000, appended: 5000 });
+    expect(summary.totals["crime.total_6m_change_pct"]).toEqual({ before: 0, after: 33500, appended: 33500 });
     // Legacy scalars track property.price_change_pct_yoy for back-compat.
     expect(summary.rowsBefore).toBe(0);
     expect(summary.rowsAfter).toBe(35000);
