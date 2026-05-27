@@ -28,10 +28,31 @@ export interface ApiKeyRow {
   id: string;
   key: string;
   user_id: string;
+  /** Levers (AR-193) — nullable during the expand phase of expand-contract.
+      The Foundation migration backfills every existing key; new keys get an
+      explicit org_id at creation time. Legacy `aiq_` keys that haven't been
+      backfilled keep validating with org_id = null. */
+  org_id: string | null;
   name: string;
   created_at: string;
   last_used_at: string | null;
   revoked: boolean;
+}
+
+/** Levers (AR-193) — per-org tenancy primitives. */
+export interface OrgRow {
+  id: string;
+  slug: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrgMemberRow {
+  org_id: string;
+  user_id: string;
+  role: "owner" | "admin" | "member";
+  joined_at: string;
 }
 
 export interface ActivityEventRow {

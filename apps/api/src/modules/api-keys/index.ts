@@ -74,10 +74,20 @@ export async function revokeApiKey(userId: string, keyId: string): Promise<boole
   return result.length > 0;
 }
 
-export async function validateApiKey(key: string): Promise<string | null> {
+/** Result of validating an API key. Includes the org_id the key belongs to
+    so every downstream operation can scope to the caller's tenant. orgId may
+    be null for legacy keys created before Levers (AR-193) — those keys keep
+    validating; org-scoped features just see "no org" and either fall back to
+    the user's primary org (resolved separately) or skip the org-scoped path. */
+export interface ValidatedApiKey {
+  userId: string;
+  orgId: string | null;
+}
+
+export async function validateApiKey(key: string): Promise<ValidatedApiKey | null> {
   const hash = hashApiKey(key);
-  const result = rows<Pick<ApiKeyRow, "user_id">>(await sql`
-    SELECT user_id FROM api_keys
+  const result = rows<Pick<ApiKeyRow, "user_id" | "org_id">>(await sql`
+    SELECT user_id, org_id FROM api_keys
     WHERE key_hash = ${hash} AND revoked = FALSE
   `);
   if (result.length === 0) return null;
@@ -85,5 +95,5 @@ export async function validateApiKey(key: string): Promise<string | null> {
   // Update last_used_at (fire and forget)
   sql`UPDATE api_keys SET last_used_at = NOW() WHERE key_hash = ${hash}`.catch(() => {});
 
-  return result[0].user_id;
+  return { userId: result[0].user_id, orgId: result[0].org_id ?? null };
 }

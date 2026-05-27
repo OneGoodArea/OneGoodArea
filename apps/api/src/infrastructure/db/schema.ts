@@ -78,7 +78,79 @@ export const MIGRATIONS: Migration[] = [
       `ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS key_hash TEXT`,
       `ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS key_prefix TEXT`,
       `ALTER TABLE api_keys ALTER COLUMN key DROP NOT NULL`,
+      // org_id added by the Levers Foundation (AR-193, ADR 0027). Nullable in
+      // this phase of expand-contract so legacy `aiq_` keys + any not-yet-
+      // backfilled rows keep validating. NOT NULL constraint lands in a
+      // follow-up commit after observing prod for a release.
+      `ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS org_id TEXT`,
       `CREATE UNIQUE INDEX IF NOT EXISTS api_keys_key_hash_idx ON api_keys (key_hash)`,
+      `CREATE INDEX IF NOT EXISTS api_keys_org_idx ON api_keys (org_id)`,
+    ],
+  },
+  {
+    // Levers Foundation (AR-193, ADR 0027): per-org tenancy. Every existing
+    // user auto-gets a personal org via the backfill statements at the end of
+    // this migration. New users get one created on signup (handled at the
+    // application layer, not here). Forward-compatible: peer_assignments,
+    // org_signal_bundles, org_score_presets, org_methodology, etc. will all
+    // reference orgs.id via scope_key / org_id columns in later commits.
+    name: "orgs",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS orgs (
+        id TEXT PRIMARY KEY,
+        slug TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS orgs_slug_idx ON orgs (slug)`,
+    ],
+  },
+  {
+    name: "org_members",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS org_members (
+        org_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'member',
+        joined_at TIMESTAMPTZ DEFAULT NOW(),
+        PRIMARY KEY (org_id, user_id)
+      )`,
+      `CREATE INDEX IF NOT EXISTS org_members_user_idx ON org_members (user_id)`,
+    ],
+  },
+  {
+    // BACKFILL — runs after the schema is in place. Idempotent (ON CONFLICT
+    // DO NOTHING / WHERE org_id IS NULL). Re-running this migration on a DB
+    // that already has the orgs backfilled is a no-op. Auto-creates a
+    // personal org for every existing user; auto-adds them as owner; sets
+    // their api_keys.org_id. New users post-merge get this handled in the
+    // application signup flow (TODO in a follow-up commit).
+    name: "orgs_backfill",
+    statements: [
+      // 1. Personal org per user. id = "org_" + user_id (UNIQUE by
+      //    construction); slug = email-local-part + first-12-chars of user_id.
+      //    Target-free ON CONFLICT DO NOTHING catches ANY unique violation
+      //    (id OR slug) so re-runs after partial failure stay idempotent
+      //    even if two users with identical email local-parts collided on
+      //    a shorter slug suffix in a previous attempt.
+      `INSERT INTO orgs (id, slug, name)
+         SELECT 'org_' || u.id,
+                LOWER(REGEXP_REPLACE(SPLIT_PART(u.email, '@', 1), '[^a-z0-9-]', '-', 'g')) || '-' || SUBSTRING(u.id, 1, 12),
+                SPLIT_PART(u.email, '@', 1) || ' workspace'
+           FROM users u
+       ON CONFLICT DO NOTHING`,
+      // 2. User is owner of their personal org.
+      `INSERT INTO org_members (org_id, user_id, role)
+         SELECT 'org_' || u.id, u.id, 'owner'
+           FROM users u
+       ON CONFLICT (org_id, user_id) DO NOTHING`,
+      // 3. Backfill api_keys.org_id (nullable -> populated). Only touches
+      //    rows where org_id IS NULL so this is safe to re-run after future
+      //    keys have been created with explicit org_id.
+      `UPDATE api_keys
+          SET org_id = 'org_' || user_id
+        WHERE org_id IS NULL`,
     ],
   },
   {

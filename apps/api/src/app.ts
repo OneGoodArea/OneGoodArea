@@ -114,12 +114,16 @@ async function authenticate(request: FastifyRequest, reply: FastifyReply): Promi
     reply.code(401).send({ error: "Missing API key. Use: Authorization: Bearer oga_..." });
     return null;
   }
-  const userId = await validateApiKey(header.slice(7));
-  if (!userId) {
+  // validateApiKey returns { userId, orgId } as of Levers AR-193. We only
+  // surface userId from this helper; org-aware endpoints opt into a
+  // separate helper that returns the full shape (added in a follow-up
+  // Levers commit). orgId may be null for legacy keys not yet backfilled.
+  const result = await validateApiKey(header.slice(7));
+  if (!result) {
     reply.code(401).send({ error: "Invalid or revoked API key" });
     return null;
   }
-  return userId;
+  return result.userId;
 }
 
 /** Auth + per-key rate-limit + plan API-access gate shared by the webhooks CRUD
@@ -244,8 +248,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       return reply.code(401).send({ error: "Missing API key. Use: Authorization: Bearer oga_..." });
     }
     const apiKey = authHeader.slice(7);
-    const userId = await validateApiKey(apiKey);
-    if (!userId) return reply.code(401).send({ error: "Invalid or revoked API key" });
+    const result = await validateApiKey(apiKey);
+    if (!result) return reply.code(401).send({ error: "Invalid or revoked API key" });
+    const userId = result.userId;
 
     // Rate-limit /me at the same level as /v1/report (MCP calls it once at
     // startup, but a misbehaving client could spam it).
@@ -296,8 +301,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         return reply.code(401).send({ error: "Missing API key. Use: Authorization: Bearer oga_..." });
       }
       const apiKey = authHeader.slice(7);
-      const userId = await validateApiKey(apiKey);
-      if (!userId) return reply.code(401).send({ error: "Invalid or revoked API key" });
+      const result = await validateApiKey(apiKey);
+      if (!result) return reply.code(401).send({ error: "Invalid or revoked API key" });
+      const userId = result.userId;
 
       // Rate limit by API key.
       const rl = await rateLimit(`api:${apiKey}`, {
@@ -963,8 +969,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         return reply.code(401).send({ error: "Missing API key. Use: Authorization: Bearer oga_..." });
       }
       const apiKey = authHeader.slice(7);
-      const userId = await validateApiKey(apiKey);
-      if (!userId) return reply.code(401).send({ error: "Invalid or revoked API key" });
+      const result = await validateApiKey(apiKey);
+      if (!result) return reply.code(401).send({ error: "Invalid or revoked API key" });
+      const userId = result.userId;
 
       // Batch-specific rate limit: 5 batches/min per key.
       const rl = await rateLimit(`api-batch:${apiKey}`, {

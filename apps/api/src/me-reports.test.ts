@@ -36,7 +36,7 @@ describe("GET /me/reports", () => {
   });
 
   it("returns the caller's reports for a valid key", async () => {
-    mockValidate.mockResolvedValue("user_1");
+    mockValidate.mockResolvedValue({ userId: "user_1", orgId: null });
     mockSql.mockResolvedValue([
       { id: "rpt_1", area: "Manchester", intent: "research", score: 72, created_at: "2026-01-02" },
       { id: "rpt_2", area: "Leeds", intent: "investing", score: 64, created_at: "2026-01-01" },

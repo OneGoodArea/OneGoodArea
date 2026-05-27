@@ -1,0 +1,13 @@
+import { neon } from "@neondatabase/serverless";
+const sql = neon(process.env.DATABASE_URL);
+const userCount = (await sql`SELECT COUNT(*)::int AS n FROM users`)[0].n;
+const orgCount = (await sql`SELECT COUNT(*)::int AS n FROM orgs`)[0].n;
+const memberCount = (await sql`SELECT COUNT(*)::int AS n FROM org_members WHERE role='owner'`)[0].n;
+const keyCount = (await sql`SELECT COUNT(*)::int AS n FROM api_keys`)[0].n;
+const keyBackfilled = (await sql`SELECT COUNT(*)::int AS n FROM api_keys WHERE org_id IS NOT NULL`)[0].n;
+console.log("users:", userCount);
+console.log("orgs:", orgCount, "(expect ~", userCount, ")");
+console.log("org_members (owner role):", memberCount);
+console.log("api_keys total:", keyCount, "/ org_id populated:", keyBackfilled);
+const sampleOrg = await sql`SELECT id, slug, name FROM orgs LIMIT 3`;
+console.log("sample orgs:", sampleOrg);
