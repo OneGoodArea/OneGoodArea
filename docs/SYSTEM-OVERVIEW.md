@@ -211,7 +211,139 @@ Every step is idempotent (`ON CONFLICT DO UPDATE` / `DO NOTHING`); re-running is
 
 ---
 
-## 6. Code organisation (where things live)
+## 6. Complete API endpoint catalog
+
+Every route registered in `apps/api/src/app.ts`. Auth-mode legend:
+- **API key**: `Authorization: Bearer oga_...` (legacy `aiq_` also valid).
+- **Session JWT**: minted by apps/web, verified by apps/api (the BFF bridge — today these endpoints exist on apps/api but are still served by apps/web's own copies until the BFF cutover lands).
+- **CRON_SECRET**: shared secret header.
+- **Stripe sig**: Stripe-signed webhook payload.
+- **Public**: no auth required.
+
+The 🔒 **dark-flag** column marks endpoints gated by `OGA_SIGNALS_API` (404 when the env flag is off; these are the post-restructure additions and the heart of the 4 products).
+
+### 6.1 Health + meta (public)
+
+| Method | Path | Auth | Dark? | What it does |
+|---|---|---|---|---|
+| GET | `/health` | Public | — | Liveness probe; returns `{status:"ok"}`. |
+| GET | `/v1/meta` | Public | — | Methodology version + engine info for clients that pin engine_version. |
+
+### 6.2 Signals product
+
+| Method | Path | Auth | Dark? | What it does |
+|---|---|---|---|---|
+| GET | `/v1/area?postcode=...` | API key | 🔒 | Full signal profile for one area (every signal + normalised value + percentile + confidence + source). |
+| GET | `/v1/signals/:category?area=...` | API key | 🔒 | Category-scoped signals (`property`, `crime`, `deprivation`, etc.). |
+| GET | `/v1/areas?signal=...&country=...` | API key | 🔒 | Cross-area filter+rank. "Most deprived LSOAs in England" = one call. |
+
+### 6.3 Scores product
+
+| Method | Path | Auth | Dark? | What it does |
+|---|---|---|---|---|
+| POST | `/v1/score` | API key | 🔒 | Score one area: `{area, preset}` or `{area, weights}`. Returns dimension breakdown + composite + engine_version. |
+
+### 6.4 Monitor product
+
+| Method | Path | Auth | Dark? | What it does |
+|---|---|---|---|---|
+| POST | `/v1/portfolios` | API key | 🔒 | Create a portfolio (book of tracked areas). |
+| GET | `/v1/portfolios` | API key | 🔒 | List portfolios owned by caller. |
+| GET | `/v1/portfolios/:id` | API key | 🔒 | Get one portfolio + member areas. |
+| DELETE | `/v1/portfolios/:id` | API key | 🔒 | Delete a portfolio. |
+| POST | `/v1/portfolios/:id/areas` | API key | 🔒 | Add areas to a portfolio (bulk, up to `PORTFOLIO_ADD_MAX`). |
+| POST | `/v1/portfolios/:id/enrich` | API key | 🔒 | Bulk-enrich every area with the full signal set. |
+| POST | `/v1/portfolios/:id/changes` | API key | 🔒 | Diff time-series vs baseline, return material moves, fire `signal.changed` webhooks. |
+
+### 6.5 Intelligence product
+
+| Method | Path | Auth | Dark? | What it does |
+|---|---|---|---|---|
+| POST | `/v1/query` | API key | 🔒 | Typed query plane. `{plan}` programmatic OR `{question}` NL → planner. Compound `rank_areas` AND-filters supported. |
+| POST | `/v1/peers` | API key | 🔒 | k-NN over normalised signals: areas like this one. |
+| POST | `/v1/insights` | API key | 🔒 | Anomaly screening: rank LSOAs by `|peer-relative z|` on a chosen signal. |
+| POST | `/v1/forecast` | API key | 🔒 | Linear regression projection for one (signal, area) over N months. |
+
+### 6.6 Legacy report API (pre-restructure, still live)
+
+These pre-date the 4-product restructure but remain the primary live surface today + are how the existing consumer site generates reports.
+
+| Method | Path | Auth | Dark? | What it does |
+|---|---|---|---|---|
+| POST | `/v1/report` | API key | — | Generate a full report (score + AI narrative). The v1 consumer surface. |
+| POST | `/v1/batch` | API key | — | Batch up to `BATCH_MAX_ITEMS` reports per call. |
+| GET | `/v1/me` | API key | — | Caller's plan + entitlements + quota. |
+| GET | `/me/reports` | API key | — | List the caller's recent reports. |
+
+### 6.7 Webhooks (subscription management)
+
+| Method | Path | Auth | Dark? | What it does |
+|---|---|---|---|---|
+| POST | `/v1/webhooks` | API key | — | Create a webhook subscription (`signal.changed`, etc.). |
+| GET | `/v1/webhooks` | API key | — | List caller's active subscriptions. |
+| DELETE | `/v1/webhooks/:id` | API key | — | Revoke a subscription. |
+
+### 6.8 Stripe billing
+
+| Method | Path | Auth | Dark? | What it does |
+|---|---|---|---|---|
+| POST | `/stripe/webhook` | Stripe sig | — | Stripe event handler (subscription state, payment success/fail). |
+| POST | `/stripe/portal` | Session JWT | — | Create Stripe Customer Portal session for self-serve plan management. |
+| POST | `/stripe/checkout` | Session JWT | — | Create main-plan checkout session. |
+| POST | `/stripe/addon-checkout` | Session JWT | — | Create add-on checkout session (e.g. MCP add-on). |
+| POST | `/stripe/cancel` | Session JWT | — | Cancel the active subscription. |
+
+### 6.9 Account dashboard (session JWT — BFF cutover not yet flipped)
+
+These endpoints exist in apps/api but the consumer site at www.onegoodarea.com still serves them via apps/web's own copies (`src/lib/db.ts` direct access). The BFF cutover flips the routing.
+
+| Method | Path | Auth | Dark? | What it does |
+|---|---|---|---|---|
+| GET | `/usage` | Session JWT | — | Caller's usage counters this period. |
+| GET | `/settings/subscription` | Session JWT | — | Current subscription state for the dashboard. |
+| GET | `/keys/usage` | Session JWT | — | Per-API-key usage stats. |
+| GET | `/keys` | Session JWT | — | List caller's API keys. |
+| POST | `/keys` | Session JWT | — | Create a new API key (returns plaintext ONCE; SHA-256 hashed at rest). |
+| DELETE | `/keys/:id` | Session JWT | — | Revoke an API key. |
+| GET | `/report/:id` | Session JWT | — | Fetch a saved report (dashboard view). |
+| DELETE | `/report/:id` | Session JWT | — | Delete a saved report. |
+| POST | `/settings/password` | Session JWT | — | Change password. |
+| DELETE | `/settings/delete-account` | Session JWT | — | Self-serve account deletion. |
+| POST | `/report` | Session JWT | — | Generate report (apps/web session-auth flow; idempotency-wrapped). |
+| GET | `/watchlist` | Session JWT | — | Caller's saved areas (dashboard widget). |
+| POST | `/watchlist` | Session JWT | — | Save an area. |
+| DELETE | `/watchlist/:id` | Session JWT | — | Remove a saved area. |
+
+### 6.10 Auth credentials (no auth on request; sets cookie / issues token)
+
+| Method | Path | Auth | Dark? | What it does |
+|---|---|---|---|---|
+| POST | `/auth/register` | Public | — | Email + password sign-up; sends verification email. |
+| POST | `/auth/resend-verification` | Public | — | Re-send the verification email. |
+| POST | `/auth/forgot-password` | Public | — | Request a password-reset token. |
+| POST | `/auth/reset-password` | Public | — | Consume a reset token + set new password. |
+
+### 6.11 Site helpers + cron
+
+| Method | Path | Auth | Dark? | What it does |
+|---|---|---|---|---|
+| POST | `/track` | Public | — | Analytics event ingest (page views, conversions). |
+| GET | `/widget` | Public | — | Iframe-able widget HTML for embeds. |
+| GET | `/cron/rescore` | CRON_SECRET | — | Legacy in-app cron: re-score every cached report. Gated by header secret. |
+
+### Tally
+
+**51 routes total** in `apps/api/src/app.ts`. Of these:
+- **14 behind `OGA_SIGNALS_API`** — the 4 products' surfaces (Signals + Scores + Monitor + Intelligence). The post-restructure additions; 404 today on any deploy where the flag is off.
+- **37 already-live** — legacy report API, webhooks, Stripe billing, account dashboard, auth credentials, tracking, cron. These pre-date the restructure and were ported into `apps/api` verbatim from the apps/web monolith.
+
+The cron job in `.github/workflows/signal-refresh.yml` is a separate execution surface (not a route in `apps/api`); it runs the refresh/derive/normalize/timeseries pipeline directly against Neon via `npx tsx ...` CLI scripts.
+
+For external/sales documentation, the OpenAPI spec at `apps/web/public/openapi.json` (served at `/openapi.json` and rendered by Scalar at `/docs/api-reference`) is the customer-facing reference — but it is intentionally NOT updated with the dark-flagged endpoints until they leave the flag, so "no invented claims" stays honoured. The spec lists Reports / Webhooks / Account; the 4-product surfaces become spec'd when they go GA.
+
+---
+
+## 7. Code organisation (where things live)
 
 ### Top-level
 
@@ -296,7 +428,7 @@ A few load-bearing highlights:
 
 ---
 
-## 7. Methodology principles (the non-negotiables)
+## 8. Methodology principles (the non-negotiables)
 
 These are the rules that everything in the codebase obeys. They are also what makes the product saleable to regulated buyers.
 
@@ -323,7 +455,7 @@ Marketing copy, /pricing, /docs cannot reference a tier or quota or feature that
 
 ---
 
-## 8. ICP positioning (who buys it)
+## 9. ICP positioning (who buys it)
 
 Per the strategy docs (gitignored at repo root) + the post-restructure refinement (2026-05-27): **"the data and intelligence layer underneath UK property workflows: deterministic signals, configurable scoring, portfolio monitoring, and a typed AI query plane over monthly area time-series."** The earlier "decision-grade area intelligence layer" framing remains true but undersells what shipped; use the four-products-named version externally. ICP ranked by closeable-this-year ACV:
 
@@ -339,7 +471,7 @@ The pricing v2 tiers (live on Stripe today): Sandbox £0 / Starter £49 / Build 
 
 ---
 
-## 9. What's deferred (and why)
+## 10. What's deferred (and why)
 
 These items are tracked in memory + ADRs as deliberately deferred. They are NOT bugs; they are not-yet:
 
@@ -360,7 +492,7 @@ These items are tracked in memory + ADRs as deliberately deferred. They are NOT 
 
 ---
 
-## 10. How to test it — hands-on guide for Pedro + Marcos
+## 11. How to test it — hands-on guide for Pedro + Marcos
 
 The consumer site at https://www.onegoodarea.com is the surface most users see today. To exercise the **new API infrastructure** directly, you need an API key.
 
@@ -494,7 +626,7 @@ Prints a markdown report with overall accuracy %, by-op breakdown, per-case PASS
 
 ---
 
-## 11. Quality bar (the operating loop)
+## 12. Quality bar (the operating loop)
 
 Every change to the codebase follows the same loop, documented in memory at `feedback_working_process.md`:
 
@@ -511,7 +643,7 @@ Test counts on main today: **apps/api 783 / packages/contracts 57 / apps/web 306
 
 ---
 
-## 12. The one-sentence position
+## 13. The one-sentence position
 
 **OneGoodArea is the data and intelligence layer underneath UK property workflows: deterministic signals, configurable scoring, portfolio monitoring, and a typed AI query plane over monthly area time-series** — sold as 4 composable products, audit-defensible by construction, with the math always run by the database and AI confined to picking the question.
 
