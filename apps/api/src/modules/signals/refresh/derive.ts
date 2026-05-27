@@ -32,7 +32,9 @@ const runDefault: QueryRunner = (text, params) => defaultQuery(text, params);
 
 const PROPERTY_YOY_SOURCE = "HM Land Registry Price Paid Data (derived: YoY)";
 const PROPERTY_VOLUME_YOY_SOURCE = "HM Land Registry Price Paid Data (derived: transaction-volume YoY)";
+const PROPERTY_VOLUME_SLOPE_SOURCE = "HM Land Registry Price Paid Data (derived: 24-month transaction-volume trend slope)";
 const CRIME_YOY_SOURCE = "Police.uk street-level crime (derived: 12-month YoY)";
+const CRIME_SLOPE_SOURCE = "Police.uk street-level crime (derived: 24-month trend slope)";
 
 export const DERIVED_SIGNALS: SignalCatalogRow[] = [
   {
@@ -54,12 +56,30 @@ export const DERIVED_SIGNALS: SignalCatalogRow[] = [
     methodology_version: METHODOLOGY_VERSION,
   },
   {
+    key: "property.transaction_count_trend_slope_24m",
+    category: "property",
+    label: "24-month trend slope of monthly transaction volume (transactions / month / month)",
+    unit: "rate_per_month",
+    direction: "neutral",
+    source: PROPERTY_VOLUME_SLOPE_SOURCE,
+    methodology_version: METHODOLOGY_VERSION,
+  },
+  {
     key: "crime.total_12m_change_pct_yoy",
     category: "crime",
     label: "Year-on-year change in trailing 12-month crime count (%)",
     unit: "pct",
     direction: "lower_is_better",
     source: CRIME_YOY_SOURCE,
+    methodology_version: METHODOLOGY_VERSION,
+  },
+  {
+    key: "crime.monthly_count_trend_slope_24m",
+    category: "crime",
+    label: "24-month trend slope of monthly crime count (crimes / month / month)",
+    unit: "rate_per_month",
+    direction: "lower_is_better",
+    source: CRIME_SLOPE_SOURCE,
     methodology_version: METHODOLOGY_VERSION,
   },
 ];
@@ -69,7 +89,9 @@ export const DERIVED_SIGNALS: SignalCatalogRow[] = [
 export const DERIVED_NORMALIZE_KEYS = [
   "property.price_change_pct_yoy",
   "property.transaction_count_change_pct_yoy",
+  "property.transaction_count_trend_slope_24m",
   "crime.total_12m_change_pct_yoy",
+  "crime.monthly_count_trend_slope_24m",
 ] as const;
 
 /* ── pure SQL ── */
@@ -254,6 +276,111 @@ export const ROLLING_YOY_SPECS: RollingSumYoYSpec[] = [
   },
 ];
 
+/* ── parameterized linear-regression trend slope (AR-186, ADR 0021) ──
+
+   YoY answers a two-point question ("year-over-year"); trend slope answers
+   the smoothed question ("what is the direction of this signal over the
+   last N months?"). For any monthly-cadence signal in signal_timeseries we
+   compute Postgres `regr_slope(y, x)` over the trailing windowMonths
+   observations per LSOA. x is a synthetic month index (year*12 + month),
+   so the slope's units are `raw_value-per-month`. HAVING COUNT(*) >=
+   minObservations rejects sparse series (single outliers wreck a slope).
+
+   Unlike rolling-YoY this can run on ANY monthly cadence signal -- it
+   doesn't require an exact 24-month window, just at least minObservations
+   data points inside the window. LSOAs with fewer points get no row. */
+
+export interface RegrSlopeSpec {
+  /** Source signal_key in signal_timeseries (e.g. "crime.monthly_count"). */
+  sourceKey: string;
+  /** Output signal_key in signal_values. */
+  derivedKey: string;
+  /** Trailing window size (months). 24 by default. */
+  windowMonths?: number;
+  /** Minimum observations required for a row (filters out sparse LSOAs). 12 by default. */
+  minObservations?: number;
+  /** Human-readable provenance line stored on each emitted row. */
+  confidenceReason: string;
+  /** Engine version stamp. Defaults to METHODOLOGY_VERSION. */
+  engineVersion?: string;
+}
+
+/** PURE: build the parameterized regression-slope SQL. Strings are escaped + only
+    interpolated for code-controlled values (signal keys, reason). x is computed
+    from observed_period 'YYYY-MM' as year*12 + month (a synthetic integer index),
+    so the slope's units are raw_value per month-step. */
+export function buildRegrSlopeSql(spec: RegrSlopeSpec): string {
+  const ev = (spec.engineVersion ?? METHODOLOGY_VERSION).replace(/'/g, "''");
+  const sourceKey = spec.sourceKey.replace(/'/g, "''");
+  const derivedKey = spec.derivedKey.replace(/'/g, "''");
+  const reason = spec.confidenceReason.replace(/'/g, "''");
+  const windowMonths = Number.isFinite(spec.windowMonths) && (spec.windowMonths ?? 0) > 0 ? Number(spec.windowMonths) : 24;
+  const minObs = Number.isFinite(spec.minObservations) && (spec.minObservations ?? 0) > 0 ? Number(spec.minObservations) : 12;
+  return `WITH ranked AS (
+  SELECT geo_code, observed_period,
+         raw_value::float8 AS y,
+         (substr(observed_period, 1, 4)::int * 12 + substr(observed_period, 6, 2)::int)::float8 AS x,
+         ROW_NUMBER() OVER (PARTITION BY geo_code ORDER BY observed_period DESC) AS rn
+    FROM signal_timeseries
+   WHERE signal_key = '${sourceKey}'
+     AND geo_type = 'lsoa'
+     AND observed_period ~ '^[0-9]{4}-[0-9]{2}$'
+     AND raw_value IS NOT NULL
+),
+slope AS (
+  SELECT geo_code,
+         regr_slope(y, x) AS slope,
+         COUNT(*)::int AS n,
+         MIN(observed_period) AS window_start,
+         MAX(observed_period) AS window_end
+    FROM ranked
+   WHERE rn <= ${windowMonths}
+   GROUP BY geo_code
+  HAVING COUNT(*) >= ${minObs}
+     AND regr_slope(y, x) IS NOT NULL
+)
+INSERT INTO signal_values (
+  signal_key, geo_type, geo_code,
+  raw_value, raw_value_text, normalized_value, confidence, confidence_reason,
+  source_snapshot_id, observed_period, engine_version
+)
+SELECT '${derivedKey}', 'lsoa', geo_code,
+       ROUND(slope::numeric, 6), NULL, NULL,
+       0.8,
+       '${reason}',
+       NULL,
+       'slope ' || window_start || '..' || window_end || ' (n=' || n || ')',
+       '${ev}'
+  FROM slope
+ON CONFLICT (signal_key, geo_type, geo_code) DO UPDATE
+   SET raw_value = EXCLUDED.raw_value,
+       confidence = EXCLUDED.confidence,
+       confidence_reason = EXCLUDED.confidence_reason,
+       observed_period = EXCLUDED.observed_period,
+       engine_version = EXCLUDED.engine_version,
+       updated_at = NOW()`;
+}
+
+/** Trend-slope specs shipped this increment. Adding the next trend slope is
+    one entry here + one DERIVED_SIGNALS row + one DERIVED_NORMALIZE_KEYS line
+    + one SUPPORTED_SIGNALS line in the planner. */
+export const TREND_SLOPE_SPECS: RegrSlopeSpec[] = [
+  {
+    sourceKey: "crime.monthly_count",
+    derivedKey: "crime.monthly_count_trend_slope_24m",
+    windowMonths: 24,
+    minObservations: 18,
+    confidenceReason: "Derived from crime.monthly_count: linear-regression slope over the trailing 24 months (units: crimes/month/month).",
+  },
+  {
+    sourceKey: "property.transaction_count",
+    derivedKey: "property.transaction_count_trend_slope_24m",
+    windowMonths: 24,
+    minObservations: 18,
+    confidenceReason: "Derived from property.transaction_count: linear-regression slope over the trailing 24 months (units: transactions/month/month).",
+  },
+];
+
 /* ── orchestration ── */
 
 export interface DerivationSummary {
@@ -291,6 +418,14 @@ export async function runDerivations(run: QueryRunner = runDefault): Promise<Der
   for (const spec of ROLLING_YOY_SPECS) {
     const before = await countKey(spec.derivedKey);
     await run(buildRollingSumYoYSql(spec), []);
+    const after = await countKey(spec.derivedKey);
+    totals[spec.derivedKey] = { before, after, appended: after - before };
+  }
+
+  // Trend-slope derivations (regr_slope over the trailing windowMonths).
+  for (const spec of TREND_SLOPE_SPECS) {
+    const before = await countKey(spec.derivedKey);
+    await run(buildRegrSlopeSql(spec), []);
     const after = await countKey(spec.derivedKey);
     totals[spec.derivedKey] = { before, after, appended: after - before };
   }
