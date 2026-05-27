@@ -48,8 +48,19 @@ export async function runQuery(
     const response = await executePlan(req.plan, { planSource: "client" });
     return { ok: true, response };
   }
-  // NL mode — strict typed failure on planner errors.
-  const provider = aiProvider ?? getAiProvider();
+  // NL mode — strict typed failure on planner errors. AnthropicAiProvider's
+  // constructor throws when ANTHROPIC_API_KEY is missing; that is a
+  // configuration / runtime issue that belongs in the typed llm_error path
+  // (-> 422) rather than as a 500. We catch the construction here.
+  let provider: AiProvider;
+  if (aiProvider) {
+    provider = aiProvider;
+  } else {
+    try { provider = getAiProvider(); }
+    catch (err) {
+      return { ok: false, error: { code: "llm_error", message: err instanceof Error ? err.message : String(err) } };
+    }
+  }
   const planned = await planFromNl(req.question!, provider);
   if (!planned.ok) return { ok: false, error: planned.error };
   const response = await executePlan(planned.plan, { planSource: "nl" });

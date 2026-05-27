@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../signals/query", () => ({ queryAreas: vi.fn() }));
+vi.mock("../signals/query", () => ({ queryAreas: vi.fn(), queryAreasCompound: vi.fn() }));
 vi.mock("../signals", () => ({ getAreaProfile: vi.fn() }));
 vi.mock("../scoring", () => ({ scoreArea: vi.fn() }));
 
@@ -86,5 +86,27 @@ describe("runQuery — NL mode ({question}) plans then executes", () => {
     );
     expect(out.ok).toBe(false);
     if (!out.ok) expect(out.error.code).toBe("llm_error");
+  });
+
+  it("a compound NL plan from the stub flows through executor as plan_source=nl", async () => {
+    const compoundJson = JSON.stringify({
+      op: "rank_areas",
+      params: {
+        signals: [
+          { key: "property.median_price", filter: { lte: 250000 } },
+          { key: "property.price_change_pct_yoy", filter: { gt: 0 } },
+        ],
+        sort_by: { signal: "property.price_change_pct_yoy", mode: "value", direction: "desc" },
+        country: "England",
+        limit: 5,
+      },
+    });
+    // Wire the compound branch of executor so we can assert it was reached.
+    const { queryAreasCompound } = await import("../signals/query");
+    vi.mocked(queryAreasCompound).mockResolvedValue([]);
+    const out = await runQuery({ question: "compound please" }, stub(compoundJson));
+    expect(out.ok).toBe(true);
+    expect(vi.mocked(queryAreasCompound)).toHaveBeenCalledOnce();
+    if (out.ok) expect(out.response.plan_source).toBe("nl");
   });
 });
