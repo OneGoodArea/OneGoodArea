@@ -1,0 +1,1001 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`scoring-engine golden master > all sources null · graceful degradation > business 1`] = `
+{
+  "area_type": "suburban",
+  "confidence": 0.2,
+  "dimensions": [
+    {
+      "confidence": 0.2,
+      "confidence_reason": "No OpenStreetMap data returned for these coordinates",
+      "label": "Foot Traffic & Demand",
+      "reasoning": "Foot traffic data unavailable",
+      "score": 50,
+      "weight": 30,
+    },
+    {
+      "confidence": 0.2,
+      "confidence_reason": "No OpenStreetMap data returned",
+      "label": "Competition Density",
+      "reasoning": "Competition data unavailable",
+      "score": 50,
+      "weight": 20,
+    },
+    {
+      "confidence": 0.2,
+      "confidence_reason": "No OpenStreetMap data returned for these coordinates",
+      "label": "Transport & Access",
+      "reasoning": "Transport data unavailable",
+      "score": 50,
+      "weight": 15,
+    },
+    {
+      "confidence": 0.2,
+      "confidence_reason": "No deprivation data resolved for the LSOA",
+      "label": "Local Spending Power",
+      "reasoning": "Spending power data unavailable",
+      "score": 50,
+      "weight": 20,
+    },
+    {
+      "confidence": 0.2,
+      "confidence_reason": "Neither HM Land Registry nor deprivation data available",
+      "label": "Commercial Costs",
+      "reasoning": "Commercial cost data unavailable",
+      "score": 50,
+      "weight": 15,
+    },
+  ],
+  "overall": 50,
+}
+`;
+
+exports[`scoring-engine golden master > all sources null · graceful degradation > investing 1`] = `
+{
+  "area_type": "suburban",
+  "confidence": 0.2,
+  "dimensions": [
+    {
+      "confidence": 0.2,
+      "confidence_reason": "No property data and no deprivation data available",
+      "label": "Price Growth",
+      "reasoning": "Insufficient data for price growth assessment",
+      "score": 50,
+      "weight": 25,
+    },
+    {
+      "confidence": 0.2,
+      "confidence_reason": "No property and no deprivation data available",
+      "label": "Rental Yield",
+      "reasoning": "Insufficient data for yield assessment",
+      "score": 50,
+      "weight": 25,
+    },
+    {
+      "confidence": 0.2,
+      "confidence_reason": "No deprivation data resolved for the LSOA",
+      "label": "Regeneration & Infrastructure",
+      "reasoning": "Insufficient data for regeneration assessment",
+      "score": 50,
+      "weight": 20,
+    },
+    {
+      "confidence": 0.2,
+      "confidence_reason": "No OpenStreetMap data returned",
+      "label": "Tenant Demand",
+      "reasoning": "Insufficient data for demand assessment",
+      "score": 50,
+      "weight": 15,
+    },
+    {
+      "confidence": 0.2,
+      "confidence_reason": "Neither crime nor flood data resolved",
+      "label": "Risk Factors",
+      "reasoning": "Limited risk data available",
+      "score": 45,
+      "weight": 15,
+    },
+  ],
+  "overall": 49,
+}
+`;
+
+exports[`scoring-engine golden master > all sources null · graceful degradation > moving 1`] = `
+{
+  "area_type": "suburban",
+  "confidence": 0.2,
+  "dimensions": [
+    {
+      "confidence": 0.2,
+      "confidence_reason": "No police.uk data returned for these coordinates",
+      "label": "Safety & Crime",
+      "reasoning": "Crime data unavailable for this location",
+      "score": 50,
+      "weight": 25,
+    },
+    {
+      "confidence": 0.2,
+      "confidence_reason": "No OpenStreetMap or Ofsted data available for this location",
+      "label": "Schools & Education",
+      "reasoning": "Education data unavailable",
+      "score": 50,
+      "weight": 20,
+    },
+    {
+      "confidence": 0.2,
+      "confidence_reason": "No OpenStreetMap data returned for these coordinates",
+      "label": "Transport & Commute",
+      "reasoning": "Transport data unavailable",
+      "score": 50,
+      "weight": 20,
+    },
+    {
+      "confidence": 0.2,
+      "confidence_reason": "No OpenStreetMap data returned for these coordinates",
+      "label": "Daily Amenities",
+      "reasoning": "Amenities data unavailable",
+      "score": 50,
+      "weight": 15,
+    },
+    {
+      "confidence": 0.2,
+      "confidence_reason": "Neither HM Land Registry nor deprivation data available",
+      "label": "Cost of Living",
+      "reasoning": "Cost data unavailable",
+      "score": 50,
+      "weight": 20,
+    },
+  ],
+  "overall": 50,
+}
+`;
+
+exports[`scoring-engine golden master > all sources null · graceful degradation > research 1`] = `
+{
+  "area_type": "suburban",
+  "confidence": 0.2,
+  "dimensions": [
+    {
+      "confidence": 0.2,
+      "confidence_reason": "No police.uk data returned for these coordinates",
+      "label": "Safety & Crime",
+      "reasoning": "Crime data unavailable for this location",
+      "score": 50,
+      "weight": 20,
+    },
+    {
+      "confidence": 0.2,
+      "confidence_reason": "No OpenStreetMap data returned for these coordinates",
+      "label": "Transport Links",
+      "reasoning": "Transport data unavailable",
+      "score": 50,
+      "weight": 20,
+    },
+    {
+      "confidence": 0.2,
+      "confidence_reason": "No OpenStreetMap data returned for these coordinates",
+      "label": "Amenities & Services",
+      "reasoning": "Amenities data unavailable",
+      "score": 50,
+      "weight": 20,
+    },
+    {
+      "confidence": 0.2,
+      "confidence_reason": "No deprivation data resolved for the LSOA",
+      "label": "Demographics & Economy",
+      "reasoning": "Deprivation data unavailable (non-England or data gap)",
+      "score": 50,
+      "weight": 20,
+    },
+    {
+      "confidence": 0.2,
+      "confidence_reason": "Neither flood nor amenity data available",
+      "label": "Environment & Quality",
+      "reasoning": "Flood data unavailable. 0 parks/green spaces nearby",
+      "score": 40,
+      "weight": 20,
+    },
+  ],
+  "overall": 48,
+}
+`;
+
+exports[`scoring-engine golden master > area-type benchmarks · full data > business · rural 1`] = `
+{
+  "area_type": "rural",
+  "confidence": 0.87,
+  "dimensions": [
+    {
+      "confidence": 0.7,
+      "confidence_reason": "Footfall inferred from 28 retail/food venues + transport. Not actual mobile-derived footfall data — directional only",
+      "label": "Foot Traffic & Demand",
+      "reasoning": "3 transit stations and 12 bus stops drive footfall. 28 retail/food venues indicate a busy commercial area",
+      "score": 95,
+      "weight": 30,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "28 competing venues identified in OSM within 1km — robust signal",
+      "label": "Competition Density",
+      "reasoning": "28 competing food/retail venues within 1km. high competition, differentiation essential",
+      "score": 34,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "3 stations and 12 bus stops with named OSM entries",
+      "label": "Transport & Access",
+      "reasoning": "3 rail/tube stations within 2km. 12 bus stops within 500m. nearby: Test Station, Central Station",
+      "score": 95,
+      "weight": 15,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "IMD 2025 income decile used as direct spending-power proxy",
+      "label": "Local Spending Power",
+      "reasoning": "IMD 2025 decile 5/10 indicates moderate spending power. Less deprived than 50% of England",
+      "score": 53,
+      "weight": 20,
+    },
+    {
+      "confidence": 0.7,
+      "confidence_reason": "Inferred from residential property values. Not actual commercial rent data — proxy signal. Robust sample (150 HM Land Registry transactions) with stable prices (±3.5% YoY)",
+      "label": "Commercial Costs",
+      "reasoning": "Property values £350,000 median (SW1). moderate commercial costs",
+      "score": 42,
+      "weight": 15,
+    },
+  ],
+  "overall": 66,
+}
+`;
+
+exports[`scoring-engine golden master > area-type benchmarks · full data > business · urban 1`] = `
+{
+  "area_type": "urban",
+  "confidence": 0.87,
+  "dimensions": [
+    {
+      "confidence": 0.7,
+      "confidence_reason": "Footfall inferred from 28 retail/food venues + transport. Not actual mobile-derived footfall data — directional only",
+      "label": "Foot Traffic & Demand",
+      "reasoning": "3 transit stations and 12 bus stops drive footfall. 28 retail/food venues indicate a busy commercial area",
+      "score": 92,
+      "weight": 30,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "28 competing venues identified in OSM within 1km — robust signal",
+      "label": "Competition Density",
+      "reasoning": "28 competing food/retail venues within 1km. high competition, differentiation essential",
+      "score": 34,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "3 stations and 12 bus stops with named OSM entries",
+      "label": "Transport & Access",
+      "reasoning": "3 rail/tube stations within 2km. 12 bus stops within 500m. nearby: Test Station, Central Station",
+      "score": 80,
+      "weight": 15,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "IMD 2025 income decile used as direct spending-power proxy",
+      "label": "Local Spending Power",
+      "reasoning": "IMD 2025 decile 5/10 indicates moderate spending power. Less deprived than 50% of England",
+      "score": 53,
+      "weight": 20,
+    },
+    {
+      "confidence": 0.7,
+      "confidence_reason": "Inferred from residential property values. Not actual commercial rent data — proxy signal. Robust sample (150 HM Land Registry transactions) with stable prices (±3.5% YoY)",
+      "label": "Commercial Costs",
+      "reasoning": "Property values £350,000 median (SW1). moderate commercial costs",
+      "score": 42,
+      "weight": 15,
+    },
+  ],
+  "overall": 63,
+}
+`;
+
+exports[`scoring-engine golden master > area-type benchmarks · full data > investing · rural 1`] = `
+{
+  "area_type": "rural",
+  "confidence": 0.82,
+  "dimensions": [
+    {
+      "confidence": 1,
+      "confidence_reason": "Real YoY price change from HM Land Registry. Robust sample (150 HM Land Registry transactions) with stable prices (±3.5% YoY)",
+      "label": "Price Growth",
+      "reasoning": "Prices up 3.5% YoY (£338,000 to £350,000). stable with modest growth. 3 transport links",
+      "score": 73,
+      "weight": 25,
+    },
+    {
+      "confidence": 0.7,
+      "confidence_reason": "Yield inferred from purchase price and amenity demand — not actual rent observations, directional only. Robust sample (150 HM Land Registry transactions) with stable prices (±3.5% YoY)",
+      "label": "Rental Yield",
+      "reasoning": "Median price £350,000 (123% of national median). moderate prices, balanced yield potential. 63 amenities support demand",
+      "score": 62,
+      "weight": 25,
+    },
+    {
+      "confidence": 0.7,
+      "confidence_reason": "Regeneration scoring is forward-looking and inherently uncertain. Based on deprivation level and infrastructure presence, not announced regeneration projects",
+      "label": "Regeneration & Infrastructure",
+      "reasoning": "IMD 2025 decile 5/10: moderate area, incremental improvement likely. 3 transport links support development case",
+      "score": 68,
+      "weight": 20,
+    },
+    {
+      "confidence": 0.7,
+      "confidence_reason": "Demand inferred from 3 stations and 63 local amenities. Not actual lettings volume — directional",
+      "label": "Tenant Demand",
+      "reasoning": "3 stations and 12 bus stops create commuter demand. 63 local amenities support liveability",
+      "score": 95,
+      "weight": 15,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "Crime (police.uk) and flood risk (Environment Agency) both available",
+      "label": "Risk Factors",
+      "reasoning": "100 crimes/month nearby. 2 flood risk zones within 3km",
+      "score": 61,
+      "weight": 15,
+    },
+  ],
+  "overall": 71,
+}
+`;
+
+exports[`scoring-engine golden master > area-type benchmarks · full data > investing · urban 1`] = `
+{
+  "area_type": "urban",
+  "confidence": 0.82,
+  "dimensions": [
+    {
+      "confidence": 1,
+      "confidence_reason": "Real YoY price change from HM Land Registry. Robust sample (150 HM Land Registry transactions) with stable prices (±3.5% YoY)",
+      "label": "Price Growth",
+      "reasoning": "Prices up 3.5% YoY (£338,000 to £350,000). stable with modest growth. 3 transport links",
+      "score": 73,
+      "weight": 25,
+    },
+    {
+      "confidence": 0.7,
+      "confidence_reason": "Yield inferred from purchase price and amenity demand — not actual rent observations, directional only. Robust sample (150 HM Land Registry transactions) with stable prices (±3.5% YoY)",
+      "label": "Rental Yield",
+      "reasoning": "Median price £350,000 (123% of national median). moderate prices, balanced yield potential. 63 amenities support demand",
+      "score": 62,
+      "weight": 25,
+    },
+    {
+      "confidence": 0.7,
+      "confidence_reason": "Regeneration scoring is forward-looking and inherently uncertain. Based on deprivation level and infrastructure presence, not announced regeneration projects",
+      "label": "Regeneration & Infrastructure",
+      "reasoning": "IMD 2025 decile 5/10: moderate area, incremental improvement likely. 3 transport links support development case",
+      "score": 68,
+      "weight": 20,
+    },
+    {
+      "confidence": 0.7,
+      "confidence_reason": "Demand inferred from 3 stations and 63 local amenities. Not actual lettings volume — directional",
+      "label": "Tenant Demand",
+      "reasoning": "3 stations and 12 bus stops create commuter demand. 63 local amenities support liveability",
+      "score": 95,
+      "weight": 15,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "Crime (police.uk) and flood risk (Environment Agency) both available",
+      "label": "Risk Factors",
+      "reasoning": "100 crimes/month nearby. 2 flood risk zones within 3km",
+      "score": 61,
+      "weight": 15,
+    },
+  ],
+  "overall": 71,
+}
+`;
+
+exports[`scoring-engine golden master > area-type benchmarks · full data > moving · rural 1`] = `
+{
+  "area_type": "rural",
+  "confidence": 0.93,
+  "dimensions": [
+    {
+      "confidence": 0.7,
+      "confidence_reason": "300 crimes across 3 months — moderate sample",
+      "label": "Safety & Crime",
+      "reasoning": "300 crimes over 3 months (100/month). most common: shoplifting (70%). violent crime: 20% of total. trend: rising",
+      "score": 38,
+      "weight": 25,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "3 Ofsted-rated schools within radius (quality-weighted)",
+      "label": "Schools & Education",
+      "reasoning": "3 Ofsted-rated schools within 1.5km (1 Outstanding, 1 Good, 1 Requires Improvement). 7 additional educational facilities nearby",
+      "score": 89,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "3 stations and 12 bus stops with named OSM entries",
+      "label": "Transport & Commute",
+      "reasoning": "3 rail/tube stations within 2km. 12 bus stops within 500m. nearby: Test Station, Central Station",
+      "score": 95,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "63 amenities provide a rich, multi-category signal",
+      "label": "Daily Amenities",
+      "reasoning": "63 amenities nearby: 10 schools, 20 food/drink, 4 healthcare, 8 shops, 6 parks/leisure",
+      "score": 95,
+      "weight": 15,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "Robust sample (150 HM Land Registry transactions) with stable prices (±3.5% YoY), SW1 outcode",
+      "label": "Cost of Living",
+      "reasoning": "Median sold price £350,000 (SW1 district, 150 transactions). around national average",
+      "score": 46,
+      "weight": 20,
+    },
+  ],
+  "overall": 70,
+}
+`;
+
+exports[`scoring-engine golden master > area-type benchmarks · full data > moving · urban 1`] = `
+{
+  "area_type": "urban",
+  "confidence": 0.93,
+  "dimensions": [
+    {
+      "confidence": 0.7,
+      "confidence_reason": "300 crimes across 3 months — moderate sample",
+      "label": "Safety & Crime",
+      "reasoning": "300 crimes over 3 months (100/month). most common: shoplifting (70%). violent crime: 20% of total. trend: rising",
+      "score": 38,
+      "weight": 25,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "3 Ofsted-rated schools within radius (quality-weighted)",
+      "label": "Schools & Education",
+      "reasoning": "3 Ofsted-rated schools within 1.5km (1 Outstanding, 1 Good, 1 Requires Improvement). 7 additional educational facilities nearby",
+      "score": 54,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "3 stations and 12 bus stops with named OSM entries",
+      "label": "Transport & Commute",
+      "reasoning": "3 rail/tube stations within 2km. 12 bus stops within 500m. nearby: Test Station, Central Station",
+      "score": 80,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "63 amenities provide a rich, multi-category signal",
+      "label": "Daily Amenities",
+      "reasoning": "63 amenities nearby: 10 schools, 20 food/drink, 4 healthcare, 8 shops, 6 parks/leisure",
+      "score": 89,
+      "weight": 15,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "Robust sample (150 HM Land Registry transactions) with stable prices (±3.5% YoY), SW1 outcode",
+      "label": "Cost of Living",
+      "reasoning": "Median sold price £350,000 (SW1 district, 150 transactions). around national average",
+      "score": 46,
+      "weight": 20,
+    },
+  ],
+  "overall": 59,
+}
+`;
+
+exports[`scoring-engine golden master > area-type benchmarks · full data > research · rural 1`] = `
+{
+  "area_type": "rural",
+  "confidence": 0.94,
+  "dimensions": [
+    {
+      "confidence": 0.7,
+      "confidence_reason": "300 crimes across 3 months — moderate sample",
+      "label": "Safety & Crime",
+      "reasoning": "300 crimes over 3 months (100/month). most common: shoplifting (70%). violent crime: 20% of total. trend: rising",
+      "score": 38,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "3 stations and 12 bus stops with named OSM entries",
+      "label": "Transport Links",
+      "reasoning": "3 rail/tube stations within 2km. 12 bus stops within 500m. nearby: Test Station, Central Station",
+      "score": 95,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "63 amenities provide a rich, multi-category signal",
+      "label": "Amenities & Services",
+      "reasoning": "63 amenities nearby: 10 schools, 20 food/drink, 4 healthcare, 8 shops, 6 parks/leisure",
+      "score": 95,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "Based on IMD 2025 — current English release",
+      "label": "Demographics & Economy",
+      "reasoning": "IMD 2025 decile 5/10 (moderate deprivation). Ranked 16,878 of 33,755 LSOAs (50th percentile). LSOA: Test LSOA",
+      "score": 50,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "Environment Agency flood + OpenStreetMap green-space data both available",
+      "label": "Environment & Quality",
+      "reasoning": "2 flood risk zones within 3km. near: River Test. no active warnings. 6 parks/green spaces nearby",
+      "score": 93,
+      "weight": 20,
+    },
+  ],
+  "overall": 74,
+}
+`;
+
+exports[`scoring-engine golden master > area-type benchmarks · full data > research · urban 1`] = `
+{
+  "area_type": "urban",
+  "confidence": 0.94,
+  "dimensions": [
+    {
+      "confidence": 0.7,
+      "confidence_reason": "300 crimes across 3 months — moderate sample",
+      "label": "Safety & Crime",
+      "reasoning": "300 crimes over 3 months (100/month). most common: shoplifting (70%). violent crime: 20% of total. trend: rising",
+      "score": 38,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "3 stations and 12 bus stops with named OSM entries",
+      "label": "Transport Links",
+      "reasoning": "3 rail/tube stations within 2km. 12 bus stops within 500m. nearby: Test Station, Central Station",
+      "score": 80,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "63 amenities provide a rich, multi-category signal",
+      "label": "Amenities & Services",
+      "reasoning": "63 amenities nearby: 10 schools, 20 food/drink, 4 healthcare, 8 shops, 6 parks/leisure",
+      "score": 89,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "Based on IMD 2025 — current English release",
+      "label": "Demographics & Economy",
+      "reasoning": "IMD 2025 decile 5/10 (moderate deprivation). Ranked 16,878 of 33,755 LSOAs (50th percentile). LSOA: Test LSOA",
+      "score": 50,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "Environment Agency flood + OpenStreetMap green-space data both available",
+      "label": "Environment & Quality",
+      "reasoning": "2 flood risk zones within 3km. near: River Test. no active warnings. 6 parks/green spaces nearby",
+      "score": 93,
+      "weight": 20,
+    },
+  ],
+  "overall": 70,
+}
+`;
+
+exports[`scoring-engine golden master > core data only · default area type > business 1`] = `
+{
+  "area_type": "suburban",
+  "confidence": 0.82,
+  "dimensions": [
+    {
+      "confidence": 0.7,
+      "confidence_reason": "Footfall inferred from 28 retail/food venues + transport. Not actual mobile-derived footfall data — directional only",
+      "label": "Foot Traffic & Demand",
+      "reasoning": "3 transit stations and 12 bus stops drive footfall. 28 retail/food venues indicate a busy commercial area",
+      "score": 95,
+      "weight": 30,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "28 competing venues identified in OSM within 1km — robust signal",
+      "label": "Competition Density",
+      "reasoning": "28 competing food/retail venues within 1km. high competition, differentiation essential",
+      "score": 34,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "3 stations and 12 bus stops with named OSM entries",
+      "label": "Transport & Access",
+      "reasoning": "3 rail/tube stations within 2km. 12 bus stops within 500m. nearby: Test Station, Central Station",
+      "score": 95,
+      "weight": 15,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "IMD 2025 income decile used as direct spending-power proxy",
+      "label": "Local Spending Power",
+      "reasoning": "IMD 2025 decile 5/10 indicates moderate spending power. Less deprived than 50% of England",
+      "score": 53,
+      "weight": 20,
+    },
+    {
+      "confidence": 0.4,
+      "confidence_reason": "No property data available — deprivation index used as second-order proxy. Treat as directional",
+      "label": "Commercial Costs",
+      "reasoning": "IMD 2025 decile 5/10: moderate commercial costs. Commercial rents correlate with area affluence",
+      "score": 59,
+      "weight": 15,
+    },
+  ],
+  "overall": 69,
+}
+`;
+
+exports[`scoring-engine golden master > core data only · default area type > investing 1`] = `
+{
+  "area_type": "suburban",
+  "confidence": 0.6,
+  "dimensions": [
+    {
+      "confidence": 0.4,
+      "confidence_reason": "No HM Land Registry YoY data — deprivation decile used as growth proxy. Treat as directional only",
+      "label": "Price Growth",
+      "reasoning": "IMD 2025 decile 5/10: mid-range area with strong growth potential. 3 transport links support appreciation",
+      "score": 90,
+      "weight": 25,
+    },
+    {
+      "confidence": 0.4,
+      "confidence_reason": "No HM Land Registry data — deprivation decile used as yield proxy. Treat as indicative only",
+      "label": "Rental Yield",
+      "reasoning": "IMD 2025 decile 5/10: moderate property values, balanced yield potential. 63 nearby amenities support tenant demand",
+      "score": 72,
+      "weight": 25,
+    },
+    {
+      "confidence": 0.7,
+      "confidence_reason": "Regeneration scoring is forward-looking and inherently uncertain. Based on deprivation level and infrastructure presence, not announced regeneration projects",
+      "label": "Regeneration & Infrastructure",
+      "reasoning": "IMD 2025 decile 5/10: moderate area, incremental improvement likely. 3 transport links support development case",
+      "score": 68,
+      "weight": 20,
+    },
+    {
+      "confidence": 0.7,
+      "confidence_reason": "Demand inferred from 3 stations and 63 local amenities. Not actual lettings volume — directional",
+      "label": "Tenant Demand",
+      "reasoning": "3 stations and 12 bus stops create commuter demand. 63 local amenities support liveability",
+      "score": 95,
+      "weight": 15,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "Crime (police.uk) and flood risk (Environment Agency) both available",
+      "label": "Risk Factors",
+      "reasoning": "100 crimes/month nearby. 2 flood risk zones within 3km",
+      "score": 61,
+      "weight": 15,
+    },
+  ],
+  "overall": 78,
+}
+`;
+
+exports[`scoring-engine golden master > core data only · default area type > moving 1`] = `
+{
+  "area_type": "suburban",
+  "confidence": 0.75,
+  "dimensions": [
+    {
+      "confidence": 0.7,
+      "confidence_reason": "300 crimes across 3 months — moderate sample",
+      "label": "Safety & Crime",
+      "reasoning": "300 crimes over 3 months (100/month). most common: shoplifting (70%). violent crime: 20% of total. trend: rising",
+      "score": 38,
+      "weight": 25,
+    },
+    {
+      "confidence": 0.7,
+      "confidence_reason": "Count-based score from OpenStreetMap — no Ofsted quality data available (Wales, Scotland, or unseeded). Estyn/Education Scotland integration on roadmap",
+      "label": "Schools & Education",
+      "reasoning": "10 schools and educational facilities within 1.5km",
+      "score": 95,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "3 stations and 12 bus stops with named OSM entries",
+      "label": "Transport & Commute",
+      "reasoning": "3 rail/tube stations within 2km. 12 bus stops within 500m. nearby: Test Station, Central Station",
+      "score": 95,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "63 amenities provide a rich, multi-category signal",
+      "label": "Daily Amenities",
+      "reasoning": "63 amenities nearby: 10 schools, 20 food/drink, 4 healthcare, 8 shops, 6 parks/leisure",
+      "score": 95,
+      "weight": 15,
+    },
+    {
+      "confidence": 0.4,
+      "confidence_reason": "No HM Land Registry data available — deprivation index used as cost proxy. Treat as indicative, not a price signal",
+      "label": "Cost of Living",
+      "reasoning": "IMD 2025 decile 5/10 as cost proxy: moderate cost of living",
+      "score": 58,
+      "weight": 20,
+    },
+  ],
+  "overall": 73,
+}
+`;
+
+exports[`scoring-engine golden master > core data only · default area type > research 1`] = `
+{
+  "area_type": "suburban",
+  "confidence": 0.94,
+  "dimensions": [
+    {
+      "confidence": 0.7,
+      "confidence_reason": "300 crimes across 3 months — moderate sample",
+      "label": "Safety & Crime",
+      "reasoning": "300 crimes over 3 months (100/month). most common: shoplifting (70%). violent crime: 20% of total. trend: rising",
+      "score": 38,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "3 stations and 12 bus stops with named OSM entries",
+      "label": "Transport Links",
+      "reasoning": "3 rail/tube stations within 2km. 12 bus stops within 500m. nearby: Test Station, Central Station",
+      "score": 95,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "63 amenities provide a rich, multi-category signal",
+      "label": "Amenities & Services",
+      "reasoning": "63 amenities nearby: 10 schools, 20 food/drink, 4 healthcare, 8 shops, 6 parks/leisure",
+      "score": 95,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "Based on IMD 2025 — current English release",
+      "label": "Demographics & Economy",
+      "reasoning": "IMD 2025 decile 5/10 (moderate deprivation). Ranked 16,878 of 33,755 LSOAs (50th percentile). LSOA: Test LSOA",
+      "score": 50,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "Environment Agency flood + OpenStreetMap green-space data both available",
+      "label": "Environment & Quality",
+      "reasoning": "2 flood risk zones within 3km. near: River Test. no active warnings. 6 parks/green spaces nearby",
+      "score": 93,
+      "weight": 20,
+    },
+  ],
+  "overall": 74,
+}
+`;
+
+exports[`scoring-engine golden master > full data · suburban · prices + ofsted > business 1`] = `
+{
+  "area_type": "suburban",
+  "confidence": 0.87,
+  "dimensions": [
+    {
+      "confidence": 0.7,
+      "confidence_reason": "Footfall inferred from 28 retail/food venues + transport. Not actual mobile-derived footfall data — directional only",
+      "label": "Foot Traffic & Demand",
+      "reasoning": "3 transit stations and 12 bus stops drive footfall. 28 retail/food venues indicate a busy commercial area",
+      "score": 95,
+      "weight": 30,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "28 competing venues identified in OSM within 1km — robust signal",
+      "label": "Competition Density",
+      "reasoning": "28 competing food/retail venues within 1km. high competition, differentiation essential",
+      "score": 34,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "3 stations and 12 bus stops with named OSM entries",
+      "label": "Transport & Access",
+      "reasoning": "3 rail/tube stations within 2km. 12 bus stops within 500m. nearby: Test Station, Central Station",
+      "score": 95,
+      "weight": 15,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "IMD 2025 income decile used as direct spending-power proxy",
+      "label": "Local Spending Power",
+      "reasoning": "IMD 2025 decile 5/10 indicates moderate spending power. Less deprived than 50% of England",
+      "score": 53,
+      "weight": 20,
+    },
+    {
+      "confidence": 0.7,
+      "confidence_reason": "Inferred from residential property values. Not actual commercial rent data — proxy signal. Robust sample (150 HM Land Registry transactions) with stable prices (±3.5% YoY)",
+      "label": "Commercial Costs",
+      "reasoning": "Property values £350,000 median (SW1). moderate commercial costs",
+      "score": 42,
+      "weight": 15,
+    },
+  ],
+  "overall": 66,
+}
+`;
+
+exports[`scoring-engine golden master > full data · suburban · prices + ofsted > investing 1`] = `
+{
+  "area_type": "suburban",
+  "confidence": 0.82,
+  "dimensions": [
+    {
+      "confidence": 1,
+      "confidence_reason": "Real YoY price change from HM Land Registry. Robust sample (150 HM Land Registry transactions) with stable prices (±3.5% YoY)",
+      "label": "Price Growth",
+      "reasoning": "Prices up 3.5% YoY (£338,000 to £350,000). stable with modest growth. 3 transport links",
+      "score": 73,
+      "weight": 25,
+    },
+    {
+      "confidence": 0.7,
+      "confidence_reason": "Yield inferred from purchase price and amenity demand — not actual rent observations, directional only. Robust sample (150 HM Land Registry transactions) with stable prices (±3.5% YoY)",
+      "label": "Rental Yield",
+      "reasoning": "Median price £350,000 (123% of national median). moderate prices, balanced yield potential. 63 amenities support demand",
+      "score": 62,
+      "weight": 25,
+    },
+    {
+      "confidence": 0.7,
+      "confidence_reason": "Regeneration scoring is forward-looking and inherently uncertain. Based on deprivation level and infrastructure presence, not announced regeneration projects",
+      "label": "Regeneration & Infrastructure",
+      "reasoning": "IMD 2025 decile 5/10: moderate area, incremental improvement likely. 3 transport links support development case",
+      "score": 68,
+      "weight": 20,
+    },
+    {
+      "confidence": 0.7,
+      "confidence_reason": "Demand inferred from 3 stations and 63 local amenities. Not actual lettings volume — directional",
+      "label": "Tenant Demand",
+      "reasoning": "3 stations and 12 bus stops create commuter demand. 63 local amenities support liveability",
+      "score": 95,
+      "weight": 15,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "Crime (police.uk) and flood risk (Environment Agency) both available",
+      "label": "Risk Factors",
+      "reasoning": "100 crimes/month nearby. 2 flood risk zones within 3km",
+      "score": 61,
+      "weight": 15,
+    },
+  ],
+  "overall": 71,
+}
+`;
+
+exports[`scoring-engine golden master > full data · suburban · prices + ofsted > moving 1`] = `
+{
+  "area_type": "suburban",
+  "confidence": 0.93,
+  "dimensions": [
+    {
+      "confidence": 0.7,
+      "confidence_reason": "300 crimes across 3 months — moderate sample",
+      "label": "Safety & Crime",
+      "reasoning": "300 crimes over 3 months (100/month). most common: shoplifting (70%). violent crime: 20% of total. trend: rising",
+      "score": 38,
+      "weight": 25,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "3 Ofsted-rated schools within radius (quality-weighted)",
+      "label": "Schools & Education",
+      "reasoning": "3 Ofsted-rated schools within 1.5km (1 Outstanding, 1 Good, 1 Requires Improvement). 7 additional educational facilities nearby",
+      "score": 63,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "3 stations and 12 bus stops with named OSM entries",
+      "label": "Transport & Commute",
+      "reasoning": "3 rail/tube stations within 2km. 12 bus stops within 500m. nearby: Test Station, Central Station",
+      "score": 95,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "63 amenities provide a rich, multi-category signal",
+      "label": "Daily Amenities",
+      "reasoning": "63 amenities nearby: 10 schools, 20 food/drink, 4 healthcare, 8 shops, 6 parks/leisure",
+      "score": 95,
+      "weight": 15,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "Robust sample (150 HM Land Registry transactions) with stable prices (±3.5% YoY), SW1 outcode",
+      "label": "Cost of Living",
+      "reasoning": "Median sold price £350,000 (SW1 district, 150 transactions). around national average",
+      "score": 46,
+      "weight": 20,
+    },
+  ],
+  "overall": 65,
+}
+`;
+
+exports[`scoring-engine golden master > full data · suburban · prices + ofsted > research 1`] = `
+{
+  "area_type": "suburban",
+  "confidence": 0.94,
+  "dimensions": [
+    {
+      "confidence": 0.7,
+      "confidence_reason": "300 crimes across 3 months — moderate sample",
+      "label": "Safety & Crime",
+      "reasoning": "300 crimes over 3 months (100/month). most common: shoplifting (70%). violent crime: 20% of total. trend: rising",
+      "score": 38,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "3 stations and 12 bus stops with named OSM entries",
+      "label": "Transport Links",
+      "reasoning": "3 rail/tube stations within 2km. 12 bus stops within 500m. nearby: Test Station, Central Station",
+      "score": 95,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "63 amenities provide a rich, multi-category signal",
+      "label": "Amenities & Services",
+      "reasoning": "63 amenities nearby: 10 schools, 20 food/drink, 4 healthcare, 8 shops, 6 parks/leisure",
+      "score": 95,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "Based on IMD 2025 — current English release",
+      "label": "Demographics & Economy",
+      "reasoning": "IMD 2025 decile 5/10 (moderate deprivation). Ranked 16,878 of 33,755 LSOAs (50th percentile). LSOA: Test LSOA",
+      "score": 50,
+      "weight": 20,
+    },
+    {
+      "confidence": 1,
+      "confidence_reason": "Environment Agency flood + OpenStreetMap green-space data both available",
+      "label": "Environment & Quality",
+      "reasoning": "2 flood risk zones within 3km. near: River Test. no active warnings. 6 parks/green spaces nearby",
+      "score": 93,
+      "weight": 20,
+    },
+  ],
+  "overall": 74,
+}
+`;

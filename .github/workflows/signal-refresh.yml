@@ -1,0 +1,67 @@
+# Refresh the signal store on a schedule — the free, host-agnostic cron.
+#
+# Runs our existing CLIs against prod Neon: migrate (idempotent) -> refresh the
+# sources -> normalize. A scale-to-zero container host can't self-schedule, so
+# the periodic refresh lives here instead.
+#
+# IMPORTANT: GitHub only fires `schedule` from the repo's DEFAULT branch (main).
+# Until this workflow is on main, use the manual "Run workflow" button
+# (workflow_dispatch), which works from any branch. The schedule activates
+# automatically once merged to main.
+#
+# Setup: add a repo secret DATABASE_URL (Settings -> Secrets -> Actions) = the
+# Neon connection string.
+
+name: signal-refresh
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # 04:00 UTC on the 1st of each month. Light today (deprivation is static);
+    # becomes meaningful as monthly/quarterly sources (crime, prices) are added.
+    - cron: "0 4 1 * *"
+
+concurrency:
+  group: signal-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --no-audit --no-fund
+      - name: Migrate (idempotent)
+        run: npm run migrate -w @onegoodarea/api
+      - name: Refresh deprivation (write-only)
+        run: npm run refresh:deprivation -w @onegoodarea/api
+      - name: Refresh prices (HM Land Registry, current year, write-only)
+        run: npm run refresh:prices -w @onegoodarea/api -- $(date -u +%Y)
+      # First derive pass: YoY / 6m / trend-slope signals — depend on
+      # time-series + normalized raw values, NOT on peer_assignments.
+      # The peer-relative-z spec in derive.ts is also queued here but
+      # produces zero rows on first run (peer_assignments empty); the
+      # second derive pass below populates it after refresh:peers.
+      - name: Derive signals — non-peer derivations (write-only)
+        run: npm run derive:signals -w @onegoodarea/api
+      - name: Normalize all signals (covers raw + non-peer derived; idempotent)
+        run: npm run normalize:signals -w @onegoodarea/api
+      # Materialize the k-NN peer assignments off the normalized vectors —
+      # ADR 0024. Heavy LATERAL k-NN, idempotent (ON CONFLICT DO UPDATE).
+      - name: Refresh peer assignments (the moat's similarity graph)
+        run: npm run refresh:peers -w @onegoodarea/api
+      # Second derive pass: peer-relative-z signals now have a populated
+      # peer_assignments table to JOIN against. Same CLI; the YoY etc.
+      # specs no-op (idempotent), the peer-relative-z specs populate.
+      - name: Derive signals — peer-relative pass (write-only)
+        run: npm run derive:signals -w @onegoodarea/api
+      - name: Normalize all signals again (covers the peer-relative-z signals; idempotent)
+        run: npm run normalize:signals -w @onegoodarea/api
+      - name: Append time-series (the moat clock — un-backfillable history)
+        run: npm run timeseries:append -w @onegoodarea/api

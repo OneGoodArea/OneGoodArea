@@ -1,0 +1,43 @@
+# Render Blueprint for the standalone backend (apps/api).
+# Render is the fastest free start; the same Dockerfile also runs on Cloud Run /
+# Koyeb with no rework (see docs/DEPLOY.md). Free web services sleep after 15 min
+# idle (30-60s cold start) — fine pre-customer.
+#
+# To use: Render Dashboard → New → Blueprint → connect this repo. Then set the
+# secret env vars (marked sync:false) in the dashboard — they are NOT in git.
+
+services:
+  - type: web
+    name: onegoodarea-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    # Deploy from the restructure branch (main is intentionally untouched).
+    branch: feat/signal-first-restructure
+    healthCheckPath: /health
+    autoDeploy: false # flip to true once you trust the pipeline
+    envVars:
+      # --- secrets: set these in the Render dashboard, never in git ---
+      - key: DATABASE_URL # the Neon connection string (same as apps/web/.env.local)
+        sync: false
+      - key: AUTH_SECRET # MUST equal apps/web's AUTH_SECRET (the JWT bridge)
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      # --- non-secret config ---
+      - key: NODE_ENV
+        value: production
+      - key: NEXTAUTH_URL # the public frontend origin (Stripe redirects, APP_URL)
+        value: https://www.onegoodarea.com
+      # --- signal-first feature flags (the whole point of this deploy) ---
+      - key: OGA_SIGNALS_API
+        value: "true"
+      - key: OGA_SIGNALS_STORE_READ
+        value: "true"

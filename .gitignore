@@ -1,5 +1,6 @@
 # dependencies
 /node_modules
+node_modules/
 LINKEDIN.md
 OVERVIEW.md
 METHODOLOGY-INTERNAL.md
@@ -12,6 +13,9 @@ strategic_brief.md
 AUDIT-ONEGOODAREA.md
 DESIGN-SYSTEM-SPEC.md
 PRICING-V2-PROPOSAL.md
+MASTER-PROPOSAL.md
+EXECUTION-PLAYBOOK.md
+PRODUCT-POSITIONING.md
 STRATEGY.md
 ARCHITECTURE.md
 /.pnp
@@ -21,9 +25,11 @@ ARCHITECTURE.md
 # testing
 /coverage
 /test_reports
-# next.js
-/.next/
+# next.js (app now lives at apps/web; keep these unanchored so the workspace's
+# build output is ignored too)
+.next/
 /out/
+apps/web/out/
 
 # production
 /build
@@ -64,3 +70,9 @@ scripts/uk-paths.json
 # claude code local state
 .claude/
 .aider*
+
+# apps/api production bundle (built in-image / by `npm run build`)
+apps/api/dist/
+
+# Personal narrative / story doc (keep private)
+STORY.md

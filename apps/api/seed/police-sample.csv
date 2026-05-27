@@ -1,0 +1,7 @@
+Crime ID,Month,Reported by,Falls within,Longitude,Latitude,Location,LSOA code,LSOA name,Crime type,Last outcome category,Context
+,2025-11,Greater Manchester Police,Greater Manchester Police,-2.234,53.476,On or near Deansgate,E01005207,Manchester 054C,Anti-social behaviour,,
+,2025-11,Greater Manchester Police,Greater Manchester Police,-2.235,53.477,On or near Whitworth Street,E01005207,Manchester 054C,Violence and sexual offences,Under investigation,
+,2025-12,Greater Manchester Police,Greater Manchester Police,-2.236,53.478,On or near Oxford Road,E01005207,Manchester 054C,Bicycle theft,Investigation complete; no suspect identified,
+abc123,2025-12,Metropolitan Police Service,Metropolitan Police Service,-0.092,51.515,On or near Cheapside,E01000002,City of London 001B,Theft from the person,Under investigation,
+def456,2025-11,Metropolitan Police Service,Metropolitan Police Service,-0.093,51.514,On or near Poultry,E01000002,City of London 001B,Other theft,,
+,2025-12,British Transport Police,British Transport Police,-1.900,52.479,On or near Station,,,Violence and sexual offences,,

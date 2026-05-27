@@ -1,0 +1,129 @@
+/* ============================================================
+   OneGoodArea — Brand v3 (Plotted) — Tokens
+   Foundation for AR-150. Namespaced --oga-* to avoid collision
+   with the design-v2 token set in globals.css.
+   ============================================================ */
+
+:root {
+  /* ---------- Color ----------
+     Forest green scrapped 2026-05-18. Primary ink is now warm dark
+     graphite. Variable name kept as `--oga-green` for minimal-blast-
+     radius refactor; rename to `--oga-ink` in a later cleanup pass. */
+  --oga-green: #1A1C1F;
+  --oga-white: #FAF8F4;
+
+  /* Tints (derived; brand stays 2-color) */
+  --oga-green-95: #DDD9D5;
+  --oga-green-80: #B5B6B8;
+  --oga-green-50: #74757A;
+  --oga-green-30: #454649;
+  --oga-green-10: rgba(26, 28, 31, 0.10);
+  --oga-green-06: rgba(26, 28, 31, 0.06);
+
+  --oga-canvas: #EFECE6;
+
+  /* Semantic */
+  --oga-bg: var(--oga-white);
+  --oga-fg: var(--oga-green);
+  --oga-fg-muted: var(--oga-green-50);
+  --oga-fg-subtle: var(--oga-green-30);
+  --oga-border: var(--oga-green-10);
+  --oga-accent: var(--oga-green);
+
+  /* ---------- Status palette (Pedro 2026-05-16) ----------
+     Only used inside the authed product surface and data-viz.
+     Marketing chrome stays strictly two-color. */
+  --oga-status-red:    #B4361C;
+  --oga-status-amber:  #C77A1F;
+  --oga-status-yellow: #D4A92A;
+  --oga-status-green:  #2E7548;
+
+  --oga-status-red-bg:    rgba(180, 54, 28, 0.08);
+  --oga-status-amber-bg:  rgba(199, 122, 31, 0.08);
+  --oga-status-yellow-bg: rgba(212, 169, 42, 0.10);
+  --oga-status-green-bg:  rgba(46, 117, 72, 0.08);
+
+  /* ---------- Type ---------- */
+  --oga-font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --oga-font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --oga-fs-eyebrow: 0.6875rem;
+  --oga-fs-label:   0.8125rem;
+  --oga-fs-body:    1rem;
+  --oga-fs-lead:    1.125rem;
+  --oga-fs-h4:      1.25rem;
+  --oga-fs-h3:      1.625rem;
+  --oga-fs-h2:      2.25rem;
+  --oga-fs-h1:      3rem;
+  --oga-fs-display: 4.5rem;
+
+  --oga-lh-tight: 1.16;
+  --oga-lh-snug:  1.32;
+  --oga-lh-body:  1.55;
+
+  --oga-tracking-tight:   -0.012em;
+  --oga-tracking-normal:   0;
+  --oga-tracking-mono:     0.18em;
+  --oga-tracking-eyebrow:  0.22em;
+
+  /* ---------- Spacing (4px base) ---------- */
+  --oga-1: 4px;
+  --oga-2: 8px;
+  --oga-3: 12px;
+  --oga-4: 16px;
+  --oga-5: 24px;
+  --oga-6: 32px;
+  --oga-7: 48px;
+  --oga-8: 64px;
+  --oga-9: 96px;
+
+  /* ---------- Radii ---------- */
+  --oga-radius-sm:   4px;
+  --oga-radius-md:   8px;
+  --oga-radius-lg:   14px;
+  --oga-radius-pill: 999px;
+  --oga-radius-icon: 22.37%; /* iOS squircle */
+
+  /* ---------- Elevation (used sparingly) ---------- */
+  --oga-shadow-sm: 0 1px 0 rgba(0,0,0,0.04);
+  --oga-shadow-md: 0 1px 0 rgba(0,0,0,0.04), 0 8px 24px -10px rgba(26, 28, 31,0.18);
+  --oga-shadow-lg: 0 1px 0 rgba(0,0,0,0.04), 0 24px 60px -28px rgba(26, 28, 31,0.35);
+
+  /* ---------- Motion ---------- */
+  --oga-ease:      cubic-bezier(0.2, 0.7, 0.2, 1);
+  --oga-dur-fast:  120ms;
+  --oga-dur:       200ms;
+  --oga-dur-slow:  360ms;
+}
+
+/* ============================================================
+   Dark surface — invert at section OR body level.
+
+   Section: <section class="oga-on-dark"> or <section data-oga-surface="dark">
+   Page-wide: <body data-oga-surface="dark"> (wired up in PR #2)
+   ============================================================ */
+
+.oga-on-dark,
+[data-oga-surface="dark"] {
+  --oga-bg: var(--oga-green);
+  --oga-fg: var(--oga-white);
+  --oga-fg-muted: rgba(250, 248, 244, 0.65);
+  --oga-fg-subtle: rgba(250, 248, 244, 0.5);
+  --oga-border: rgba(250, 248, 244, 0.16);
+
+  background: var(--oga-bg);
+  color: var(--oga-fg);
+}
+
+/* Status palette tweaks for dark surfaces (lift saturation, ease bg fill) */
+[data-oga-surface="dark"] {
+  --oga-status-red:    #E87A65;
+  --oga-status-amber:  #F0B270;
+  --oga-status-yellow: #E8D27A;
+  --oga-status-green:  #7AC295;
+
+  --oga-status-red-bg:    rgba(232, 122, 101, 0.10);
+  --oga-status-amber-bg:  rgba(240, 178, 112, 0.10);
+  --oga-status-yellow-bg: rgba(232, 210, 122, 0.10);
+  --oga-status-green-bg:  rgba(122, 194, 149, 0.10);
+}
