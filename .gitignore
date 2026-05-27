@@ -73,3 +73,6 @@ scripts/uk-paths.json
 
 # apps/api production bundle (built in-image / by `npm run build`)
 apps/api/dist/
+
+# Personal narrative / story doc (keep private)
+STORY.md
