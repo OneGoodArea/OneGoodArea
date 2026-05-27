@@ -21,20 +21,92 @@ import { ScoreResultSchema } from "./scores";
 
 /* ── the plan grammar (each op = one supported operation over the store) ── */
 
-/** Rank LSOAs by a signal (cross-area). Reuses /v1/areas / queryAreas. */
+/* rank_areas params come in TWO shapes (Increment 2, AR-184):
+   - SINGULAR (backward-compat sugar): one `signal` + optional global filters.
+     This is the Increment 1 surface; existing callers + tests keep working
+     byte-identically.
+   - COMPOUND: `signals[]` with per-signal filters + `sort_by`. One signal_values
+     JOIN per filter signal in the executor. AND semantics only in this
+     increment (OR / aggregates deferred to Increment 4).
+   The discriminator stays at `op: "rank_areas"` (top level) so the outer
+   QueryPlanSchema discriminated union is untouched; the params union is local. */
+
+const COUNTRY = z.enum(["England", "Wales", "Scotland"]);
+const SORT = z.enum(["percentile", "percentile_desc", "value", "value_desc"]);
+const PCT = z.number().min(0).max(100);
+const LIMIT = z.number().int().positive().max(1000);
+
+/** Singular params — the Increment 1 shape; kept as backward-compat sugar. */
+export const RankAreasSingularParamsSchema = z.object({
+  signal: z.string().min(1),
+  country: COUNTRY.optional(),
+  lad: z.string().optional(),
+  sort: SORT.optional(),
+  limit: LIMIT.optional(),
+  min_percentile: PCT.optional(),
+  max_percentile: PCT.optional(),
+  min_value: z.number().optional(),
+  max_value: z.number().optional(),
+}).strict();
+export type RankAreasSingularParams = z.infer<typeof RankAreasSingularParamsSchema>;
+
+/** Per-signal filter — EXACTLY ONE operator per filter object. The strict
+    single-key unions reject combined operators (`{lt:5, gt:1}` -> use
+    `{between:[1,5]}` instead). Percentile filters require percentile data
+    available in signal_percentiles for that signal; value filters operate on
+    signal_values.raw_value. */
+export const SignalFilterSchema = z.union([
+  z.object({ eq: z.number() }).strict(),
+  z.object({ lt: z.number() }).strict(),
+  z.object({ lte: z.number() }).strict(),
+  z.object({ gt: z.number() }).strict(),
+  z.object({ gte: z.number() }).strict(),
+  z.object({ between: z.tuple([z.number(), z.number()]) }).strict(),
+  z.object({ percentile_lt: PCT }).strict(),
+  z.object({ percentile_lte: PCT }).strict(),
+  z.object({ percentile_gt: PCT }).strict(),
+  z.object({ percentile_gte: PCT }).strict(),
+  z.object({ percentile_between: z.tuple([PCT, PCT]) }).strict(),
+]);
+export type SignalFilter = z.infer<typeof SignalFilterSchema>;
+
+/** One entry in the compound `signals[]` — a signal key plus an optional
+    per-signal filter. Signals listed without a filter contribute to the
+    response shape (their value/percentile come back per row) but apply no
+    WHERE constraint; useful for "include this column but don't filter on it". */
+export const SignalEntrySchema = z.object({
+  key: z.string().min(1),
+  filter: SignalFilterSchema.optional(),
+}).strict();
+export type SignalEntry = z.infer<typeof SignalEntrySchema>;
+
+/** Compound `sort_by`: pick which of the listed signals ranks the results, and
+    whether to sort by raw value or percentile, ascending or descending. */
+export const SortBySchema = z.object({
+  signal: z.string().min(1),
+  mode: z.enum(["value", "percentile"]).optional(),
+  direction: z.enum(["asc", "desc"]).optional(),
+}).strict();
+export type SortBy = z.infer<typeof SortBySchema>;
+
+/** Compound params — multi-signal AND filter + per-signal sort_by. */
+export const RankAreasCompoundParamsSchema = z.object({
+  signals: z.array(SignalEntrySchema).min(1).max(8),
+  sort_by: SortBySchema.optional(),
+  country: COUNTRY.optional(),
+  lad: z.string().optional(),
+  limit: LIMIT.optional(),
+}).strict().refine(
+  (p) => !p.sort_by || p.signals.some((s) => s.key === p.sort_by!.signal),
+  { message: "sort_by.signal must appear in signals[].key", path: ["sort_by", "signal"] },
+);
+export type RankAreasCompoundParams = z.infer<typeof RankAreasCompoundParamsSchema>;
+
+/** Rank LSOAs by signals (cross-area). Reuses /v1/areas / queryAreas in the
+    singular path; the compound path builds one signal_values JOIN per filter. */
 export const RankAreasPlanSchema = z.object({
   op: z.literal("rank_areas"),
-  params: z.object({
-    signal: z.string().min(1),
-    country: z.enum(["England", "Wales", "Scotland"]).optional(),
-    lad: z.string().optional(),
-    sort: z.enum(["percentile", "percentile_desc", "value", "value_desc"]).optional(),
-    limit: z.number().int().positive().max(1000).optional(),
-    min_percentile: z.number().min(0).max(100).optional(),
-    max_percentile: z.number().min(0).max(100).optional(),
-    min_value: z.number().optional(),
-    max_value: z.number().optional(),
-  }).strict(),
+  params: z.union([RankAreasSingularParamsSchema, RankAreasCompoundParamsSchema]),
 }).strict();
 export type RankAreasPlan = z.infer<typeof RankAreasPlanSchema>;
 
@@ -66,13 +138,27 @@ export const QueryPlanSchema = z.discriminatedUnion("op", [
 export type QueryPlan = z.infer<typeof QueryPlanSchema>;
 
 /* ── area-result row shape (mirrors apps/api queryAreas exactly; declared here
-   so the typed response below can reference it without a backend dep). ── */
+   so the typed response below can reference it without a backend dep).
+
+   Compound queries (Increment 2) add an optional `signals` map keyed by the
+   listed signal keys — each value carries that signal's value/normalized/
+   percentile for the area. The legacy top-level value/normalized/percentile
+   fields mirror the SORT signal (or the first signal when no sort_by is
+   given), so callers built against the singular shape keep working unchanged. ── */
+export const AreaSignalValueSchema = z.object({
+  value: z.number().nullable(),
+  normalized_value: z.number().nullable(),
+  percentile: z.number().nullable(),
+}).strict();
+export type AreaSignalValue = z.infer<typeof AreaSignalValueSchema>;
+
 export const AreaResultSchema = z.object({
   geo_type: z.string(),
   geo_code: z.string(),
   value: z.number().nullable(),
   normalized_value: z.number().nullable(),
   percentile: z.number().nullable(),
+  signals: z.record(z.string(), AreaSignalValueSchema).optional(),
 });
 export type AreaResult = z.infer<typeof AreaResultSchema>;
 

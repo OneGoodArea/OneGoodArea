@@ -44,6 +44,47 @@ describe("parsePlanText (strict)", () => {
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.plan.op).toBe("rank_areas");
   });
+  it("accepts a COMPOUND rank_areas plan with signals[] + sort_by (Increment 2)", () => {
+    const compoundJson = JSON.stringify({
+      op: "rank_areas",
+      params: {
+        signals: [
+          { key: "property.median_price", filter: { lte: 250000 } },
+          { key: "property.price_change_pct_yoy", filter: { gt: 0 } },
+          { key: "crime.total_12m", filter: { percentile_lte: 50 } },
+        ],
+        sort_by: { signal: "property.price_change_pct_yoy", mode: "value", direction: "desc" },
+        country: "England",
+        limit: 50,
+      },
+    });
+    const r = parsePlanText(compoundJson);
+    expect(r.ok).toBe(true);
+    if (r.ok && r.plan.op === "rank_areas" && "signals" in r.plan.params) {
+      expect(r.plan.params.signals).toHaveLength(3);
+      expect(r.plan.params.sort_by?.signal).toBe("property.price_change_pct_yoy");
+    }
+  });
+  it("rejects a compound plan whose sort_by.signal isn't in signals[]", () => {
+    const bad = JSON.stringify({
+      op: "rank_areas",
+      params: {
+        signals: [{ key: "property.median_price", filter: { lte: 250000 } }],
+        sort_by: { signal: "crime.total_12m", mode: "value", direction: "desc" },
+      },
+    });
+    const r = parsePlanText(bad);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error.code).toBe("invalid_plan");
+  });
+  it("rejects a filter with two operators (strict single-key union)", () => {
+    const bad = JSON.stringify({
+      op: "rank_areas",
+      params: { signals: [{ key: "x", filter: { lt: 5, gt: 1 } }] },
+    });
+    const r = parsePlanText(bad);
+    expect(r.ok).toBe(false);
+  });
   it("rejects an unknown op", () => {
     const r = parsePlanText('{"op":"do_a_thing","params":{}}');
     expect(r.ok).toBe(false);

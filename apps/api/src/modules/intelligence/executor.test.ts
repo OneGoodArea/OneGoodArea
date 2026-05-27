@@ -1,15 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../signals/query", () => ({ queryAreas: vi.fn() }));
+vi.mock("../signals/query", () => ({ queryAreas: vi.fn(), queryAreasCompound: vi.fn() }));
 vi.mock("../signals", () => ({ getAreaProfile: vi.fn() }));
 vi.mock("../scoring", () => ({ scoreArea: vi.fn() }));
 
 import { executePlan } from "./executor";
-import { queryAreas } from "../signals/query";
+import { queryAreas, queryAreasCompound } from "../signals/query";
 import { getAreaProfile } from "../signals";
 import { scoreArea } from "../scoring";
 
 const mockQueryAreas = vi.mocked(queryAreas);
+const mockQueryAreasCompound = vi.mocked(queryAreasCompound);
 const mockGetAreaProfile = vi.mocked(getAreaProfile);
 const mockScoreArea = vi.mocked(scoreArea);
 
@@ -49,6 +50,55 @@ describe("executePlan — rank_areas", () => {
       sort: "value", limit: 25,
       minPercentile: 10, maxPercentile: 90, minValue: 50000, maxValue: 5000000,
     });
+  });
+});
+
+describe("executePlan — rank_areas COMPOUND (Increment 2)", () => {
+  it("dispatches a compound plan to queryAreasCompound with mapped params", async () => {
+    mockQueryAreasCompound.mockResolvedValue([
+      { geo_type: "lsoa", geo_code: "E01000001", value: 12, normalized_value: 0.8, percentile: 85,
+        signals: {
+          "property.median_price": { value: 200000, normalized_value: 0.4, percentile: 40 },
+          "property.price_change_pct_yoy": { value: 12, normalized_value: 0.8, percentile: 85 },
+        },
+      },
+    ]);
+    const res = await executePlan(
+      { op: "rank_areas", params: {
+        signals: [
+          { key: "property.median_price", filter: { lte: 250000 } },
+          { key: "property.price_change_pct_yoy", filter: { gt: 0 } },
+        ],
+        sort_by: { signal: "property.price_change_pct_yoy", mode: "value", direction: "desc" },
+        country: "England",
+        limit: 50,
+      } },
+      { planSource: "client" },
+    );
+    expect(mockQueryAreas).not.toHaveBeenCalled();
+    expect(mockQueryAreasCompound).toHaveBeenCalledWith(expect.objectContaining({
+      country: "England",
+      limit: 50,
+      signals: [
+        { key: "property.median_price", filter: { lte: 250000 } },
+        { key: "property.price_change_pct_yoy", filter: { gt: 0 } },
+      ],
+      sortBy: { signal: "property.price_change_pct_yoy", mode: "value", direction: "desc" },
+    }));
+    if (res.plan.op === "rank_areas") {
+      expect("signals" in res.plan.params).toBe(true);
+    }
+    expect(res.results).toHaveLength(1);
+  });
+
+  it("a singular plan still routes through queryAreas (backward compat)", async () => {
+    mockQueryAreas.mockResolvedValue([]);
+    await executePlan(
+      { op: "rank_areas", params: { signal: "deprivation.imd_decile" } },
+      { planSource: "client" },
+    );
+    expect(mockQueryAreas).toHaveBeenCalledOnce();
+    expect(mockQueryAreasCompound).not.toHaveBeenCalled();
   });
 });
 
