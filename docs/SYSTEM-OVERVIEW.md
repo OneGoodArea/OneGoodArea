@@ -10,7 +10,9 @@ It is the post-restructure snapshot. The structure described here is the one tha
 
 ## 1. The one-paragraph version
 
-OneGoodArea is **the decision-grade area intelligence layer for property workflows in the UK**. It exposes 4 composable products — **Signals** (the raw, normalised data), **Scores** (configurable composite scoring with custom weights), **Monitor** (portfolios + change-detection + alerts), and **Intelligence** (typed queries, peers, anomaly detection, forecasts, plus a measured-accuracy AI planner) — over a persisted signal store at LSOA (Lower Super Output Area) grain covering England, Wales, and Scotland. Backend (`apps/api`) is a standalone Fastify service deployed on Render. Frontend (`apps/web`) is a Next.js app on Vercel that today still serves the consumer-facing postcode-report site at https://www.onegoodarea.com. The Intelligence layer's AI is a typed query planner with **92.9% measured accuracy** on a 14-case curated NL→plan corpus — not a chatbot, not narrative; AI never sets the numbers, the DB does.
+**OneGoodArea is the data and intelligence layer underneath UK property workflows: deterministic signals, configurable scoring, portfolio monitoring, and a typed AI query plane over monthly area time-series.** Concretely, that's 4 composable products — **Signals** (the raw normalised data), **Scores** (configurable composite scoring with custom weights), **Monitor** (portfolios + change-detection + alerts), and **Intelligence** (typed queries, peers, anomaly detection, forecasts, plus a measured-accuracy AI planner) — over a persisted signal store at LSOA (Lower Super Output Area) grain covering England, Wales, and Scotland. Backend (`apps/api`) is a standalone Fastify service deployed on Render. Frontend (`apps/web`) is a Next.js app on Vercel that today still serves the consumer-facing postcode-report site at https://www.onegoodarea.com. The Intelligence layer's AI is a typed query planner with **92.9% measured accuracy** on a 14-case curated NL→plan corpus — not a chatbot, not narrative; AI never sets the numbers, the DB does.
+
+The old framing — "structured, scored, source-backed area intelligence" — was accurate but undersold the system. With the moat clock running, peer graphs materialised, and a typed query plane with measured accuracy, OneGoodArea is now a *data layer + intelligence layer*, not a smarter report card.
 
 ---
 
@@ -323,7 +325,7 @@ Marketing copy, /pricing, /docs cannot reference a tier or quota or feature that
 
 ## 8. ICP positioning (who buys it)
 
-Per the strategy docs (gitignored at repo root): "the decision-grade area intelligence layer for property workflows." ICP ranked by closeable-this-year ACV:
+Per the strategy docs (gitignored at repo root) + the post-restructure refinement (2026-05-27): **"the data and intelligence layer underneath UK property workflows: deterministic signals, configurable scoring, portfolio monitoring, and a typed AI query plane over monthly area time-series."** The earlier "decision-grade area intelligence layer" framing remains true but undersells what shipped; use the four-products-named version externally. ICP ranked by closeable-this-year ACV:
 
 1. **PropTech embeds** — the wedge. They want raw signals to feed their own UX + pricing. Land via Signals API.
 2. **InsureTech / MGAs** — comp + monitoring at portfolio level. Land via Signals + Monitor.
@@ -511,7 +513,9 @@ Test counts on main today: **apps/api 783 / packages/contracts 57 / apps/web 306
 
 ## 12. The one-sentence position
 
-**OneGoodArea is the data + intelligence layer underneath UK property workflows: deterministic signals, configurable scoring, portfolio monitoring with alerts, and a measured-accuracy AI query plane over a moat of monthly time-series — sold as 4 composable products, audit-defensible by construction, with the math always run by the database and AI confined to picking the question.**
+**OneGoodArea is the data and intelligence layer underneath UK property workflows: deterministic signals, configurable scoring, portfolio monitoring, and a typed AI query plane over monthly area time-series** — sold as 4 composable products, audit-defensible by construction, with the math always run by the database and AI confined to picking the question.
+
+Use this as the one-line you lead with. Reserve "structured, scored, source-backed area intelligence" for the bottom of the page; it's accurate but it's the v1 framing — the system now has the moat clock, the peer graphs, and the measured-accuracy query plane, none of which that phrase captures.
 
 ---
 
