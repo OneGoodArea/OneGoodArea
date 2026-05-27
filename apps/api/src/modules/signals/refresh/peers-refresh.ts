@@ -163,7 +163,7 @@ export async function runRefreshPeerAssignments(
   const concurrency = Number.isFinite(spec.concurrency) && (spec.concurrency ?? 0) > 0 ? Number(spec.concurrency) : PEERS_REFRESH_DEFAULT_CONCURRENCY;
 
   const list = buildListTargetsSql(spec);
-  const targetRows = await run(list.text, list.params);
+  const targetRows = (await run(list.text, list.params)) as { geo_code: string }[];
   const targets = targetRows.map((r) => String(r.geo_code));
 
   const sql = buildRefreshPeerAssignmentsSql(spec);

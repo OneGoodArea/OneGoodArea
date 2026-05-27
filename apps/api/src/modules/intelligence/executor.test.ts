@@ -16,6 +16,10 @@ import { findPeers, parsePeersInput } from "../signals/peers";
 import { findInsights, parseInsightsInput } from "../signals/insights";
 import { runForecast, parseForecastInput } from "../signals/forecast";
 import { geocodeArea } from "../signals/data-sources/postcodes";
+// QueryResponseSchema is a plain z.union (not discriminatedUnion), so TS
+// can't narrow `res.results` from `res.plan.op` automatically. The tests
+// know which op they invoked; cast at the assertion site.
+import type { PeersResponse, InsightsResponse, ForecastResponse } from "@onegoodarea/contracts";
 
 const mockQueryAreas = vi.mocked(queryAreas);
 const mockQueryAreasCompound = vi.mocked(queryAreasCompound);
@@ -166,9 +170,10 @@ describe("executePlan — find_peers (AR-188 / ADR 0023)", () => {
     expect(mockGeocodeArea).not.toHaveBeenCalled();
     expect(mockFindPeers).toHaveBeenCalledOnce();
     if (res.plan.op === "find_peers" && res.results) {
-      expect(res.results.target.geo_code).toBe("E01034129");
-      expect(res.results.peers).toHaveLength(1);
-      expect(res.results.target.signals_used).toEqual(["property.median_price", "crime.total_12m"]);
+      const results = res.results as PeersResponse;
+      expect(results.target.geo_code).toBe("E01034129");
+      expect(results.peers).toHaveLength(1);
+      expect(results.target.signals_used).toEqual(["property.median_price", "crime.total_12m"]);
     } else {
       throw new Error("expected find_peers result");
     }
@@ -232,10 +237,11 @@ describe("executePlan — find_insights (AR-189 / ADR 0024)", () => {
     }));
     expect(mockFindInsights).toHaveBeenCalledOnce();
     if (res.plan.op === "find_insights" && res.results) {
-      expect(res.results.signal_key).toBe("crime.total_12m_peer_relative_z");
-      expect(res.results.insights).toHaveLength(2);
-      expect(res.results.meta.threshold).toBe(2);
-      expect(res.results.meta.scope).toMatch(/country=England/);
+      const results = res.results as InsightsResponse;
+      expect(results.signal_key).toBe("crime.total_12m_peer_relative_z");
+      expect(results.insights).toHaveLength(2);
+      expect(results.meta.threshold).toBe(2);
+      expect(results.meta.scope).toMatch(/country=England/);
     } else {
       throw new Error("expected find_insights result");
     }
@@ -275,12 +281,13 @@ describe("executePlan — find_forecast (AR-190 / ADR 0025)", () => {
     expect(mockGeocodeArea).not.toHaveBeenCalled();
     expect(mockRunForecast).toHaveBeenCalledOnce();
     if (res.plan.op === "find_forecast" && res.results) {
-      expect(res.results.target.geo_code).toBe("E01034129");
-      expect(res.results.signal_key).toBe("property.median_price");
-      expect(res.results.points).toHaveLength(1);
-      expect(res.results.meta.slope_per_month).toBe(1200);
-      expect(res.results.meta.r2).toBe(0.65);
-      expect(res.results.meta.residual_stderr).toBe(1500);
+      const results = res.results as ForecastResponse;
+      expect(results.target.geo_code).toBe("E01034129");
+      expect(results.signal_key).toBe("property.median_price");
+      expect(results.points).toHaveLength(1);
+      expect(results.meta.slope_per_month).toBe(1200);
+      expect(results.meta.r2).toBe(0.65);
+      expect(results.meta.residual_stderr).toBe(1500);
     } else {
       throw new Error("expected find_forecast result");
     }
