@@ -16,6 +16,7 @@ import { getAreaProfile } from "../signals";
 import { scoreArea } from "../scoring";
 import { findPeers, parsePeersInput } from "../signals/peers";
 import { findInsights, parseInsightsInput } from "../signals/insights";
+import { runForecast, parseForecastInput } from "../signals/forecast";
 import { geocodeArea } from "../signals/data-sources/postcodes";
 
 const AREAS_LIMIT_DEFAULT = 100;
@@ -84,6 +85,57 @@ export async function executePlan(plan: QueryPlan, opts: ExecuteOpts): Promise<Q
       weights: plan.params.weights,
     });
     return { plan, plan_source, results: score, meta };
+  }
+  if (plan.op === "find_forecast") {
+    // find_forecast — resolve target -> LSOA, fit linear regression on the
+    // trailing window of signal_timeseries, project horizon_months ahead.
+    // Returns null when the target can't be resolved OR the window has
+    // < 2 monthly observations.
+    const tgt = plan.params.target;
+    let targetGeoCode: string | null = null;
+    if ("geo_code" in tgt && tgt.geo_code) {
+      targetGeoCode = tgt.geo_code.trim();
+    } else {
+      const q = ("postcode" in tgt ? tgt.postcode : "area" in tgt ? tgt.area : "")!.trim();
+      if (q) {
+        const geo = await geocodeArea(q);
+        if (geo) targetGeoCode = geo.lsoa;
+      }
+    }
+    if (!targetGeoCode) return { plan, plan_source, results: null, meta };
+
+    const parsed = parseForecastInput({
+      targetGeoCode,
+      signalKey: plan.params.signal_key,
+      windowMonths: plan.params.window_months,
+      horizonMonths: plan.params.horizon_months,
+    });
+    if (!parsed.ok) return { plan, plan_source, results: null, meta };
+
+    const result = await runForecast(parsed.input);
+    if (!result) return { plan, plan_source, results: null, meta };
+
+    return {
+      plan, plan_source,
+      results: {
+        target: { geo_code: targetGeoCode },
+        signal_key: parsed.input.signalKey,
+        points: result.points,
+        meta: {
+          generated_at: meta.generated_at,
+          scope: `geo_code=${targetGeoCode}`,
+          window_months: parsed.input.windowMonths,
+          horizon_months: parsed.input.horizonMonths,
+          n_observations: result.stats.n_observations,
+          r2: result.stats.r2,
+          slope_per_month: result.stats.slope,
+          intercept: result.stats.intercept,
+          residual_stderr: result.residualStderr,
+          latest_observed_period: result.stats.latest_observed_period,
+        },
+      },
+      meta,
+    };
   }
   if (plan.op === "find_insights") {
     // find_insights — anomaly screening by ABS(peer_relative_z) on a chosen

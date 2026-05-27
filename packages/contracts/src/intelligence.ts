@@ -190,6 +190,25 @@ export const FindInsightsPlanSchema = z.object({
 }).strict();
 export type FindInsightsPlan = z.infer<typeof FindInsightsPlanSchema>;
 
+/* ── /v1/forecast params (AR-190, Increment 8) ─────────────────────────
+   Linear-regression projection of ONE signal at ONE LSOA over the next
+   horizon_months. Fits over the trailing window_months of the
+   signal_timeseries; projection y = a + b*x for x = latest_x+1..+horizon.
+   Uses the SAME target shape as /v1/peers (geo_code | postcode | area). */
+const forecastParamsBase = {
+  target: PeersTargetSchema,
+  signal_key: z.string().min(1),
+  window_months: z.number().int().min(6).max(120).optional(),
+  horizon_months: z.number().int().positive().max(60).optional(),
+} as const;
+
+/** Forecast a signal for one LSOA. */
+export const FindForecastPlanSchema = z.object({
+  op: z.literal("find_forecast"),
+  params: z.object(forecastParamsBase).strict(),
+}).strict();
+export type FindForecastPlan = z.infer<typeof FindForecastPlanSchema>;
+
 /** The full plan grammar (v1). Strict discriminated union — unknown ops fail
     validation. Extension point: forecast lands as a new op. */
 export const QueryPlanSchema = z.discriminatedUnion("op", [
@@ -198,6 +217,7 @@ export const QueryPlanSchema = z.discriminatedUnion("op", [
   ScoreAreaPlanSchema,
   FindPeersPlanSchema,
   FindInsightsPlanSchema,
+  FindForecastPlanSchema,
 ]);
 export type QueryPlan = z.infer<typeof QueryPlanSchema>;
 
@@ -242,6 +262,38 @@ export const InsightsResponseSchema = z.object({
   meta: z.object({ generated_at: z.string(), scope: z.string(), threshold: z.number().nullable() }).strict(),
 }).strict();
 export type InsightsResponse = z.infer<typeof InsightsResponseSchema>;
+
+/* ── /v1/forecast DTOs ────────────────────────────────────────────────── */
+
+export const ForecastRequestSchema = z.object(forecastParamsBase).strict();
+export type ForecastRequest = z.infer<typeof ForecastRequestSchema>;
+
+export const ForecastPointSchema = z.object({
+  observed_period: z.string(),    // 'YYYY-MM' for the projected month
+  projected_value: z.number(),    // y_pred = intercept + slope*x_future
+  lower_bound: z.number(),        // projected_value - ~2*residual_stderr
+  upper_bound: z.number(),        // projected_value + ~2*residual_stderr
+}).strict();
+export type ForecastPoint = z.infer<typeof ForecastPointSchema>;
+
+export const ForecastResponseSchema = z.object({
+  target: z.object({ geo_code: z.string() }).strict(),
+  signal_key: z.string(),
+  points: z.array(ForecastPointSchema),
+  meta: z.object({
+    generated_at: z.string(),
+    scope: z.string(),
+    window_months: z.number().int(),
+    horizon_months: z.number().int(),
+    n_observations: z.number().int(),
+    r2: z.number().nullable(),
+    slope_per_month: z.number(),
+    intercept: z.number(),
+    residual_stderr: z.number().nullable(),
+    latest_observed_period: z.string(),
+  }).strict(),
+}).strict();
+export type ForecastResponse = z.infer<typeof ForecastResponseSchema>;
 
 /* ── area-result row shape (mirrors apps/api queryAreas exactly; declared here
    so the typed response below can reference it without a backend dep).
@@ -314,6 +366,13 @@ export const QueryResponseFindInsights = z.object({
   results: InsightsResponseSchema.nullable(),
   meta: z.object({ generated_at: z.string() }),
 }).strict();
+/** find_forecast wraps the standalone ForecastResponse shape. */
+export const QueryResponseFindForecast = z.object({
+  plan: FindForecastPlanSchema,
+  plan_source: z.enum(["client", "nl"]),
+  results: ForecastResponseSchema.nullable(),
+  meta: z.object({ generated_at: z.string() }),
+}).strict();
 /** Flat union over the per-op response shapes. (The plan.op is the natural
     discriminator, but it sits one level down, so a plain z.union keeps the
     schema simple and the inferred type a clean discriminated union.) */
@@ -323,6 +382,7 @@ export const QueryResponseSchema = z.union([
   QueryResponseScoreArea,
   QueryResponseFindPeers,
   QueryResponseFindInsights,
+  QueryResponseFindForecast,
 ]);
 export type QueryResponse = z.infer<typeof QueryResponseSchema>;
 

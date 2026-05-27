@@ -3,6 +3,7 @@ import {
   QueryPlanSchema, RankAreasPlanSchema, SignalFilterSchema,
   FindPeersPlanSchema, PeersRequestSchema,
   FindInsightsPlanSchema, InsightsRequestSchema,
+  FindForecastPlanSchema, ForecastRequestSchema,
 } from "./intelligence";
 
 describe("@onegoodarea/contracts — intelligence query plan", () => {
@@ -171,6 +172,61 @@ describe("@onegoodarea/contracts — find_insights plan + InsightsRequest (Incre
   it("InsightsRequestSchema accepts the same shape (standalone endpoint)", () => {
     const r = InsightsRequestSchema.safeParse({
       signal_key: "crime.total_12m_peer_relative_z", min_abs_z: 2,
+    });
+    expect(r.success).toBe(true);
+  });
+});
+
+describe("@onegoodarea/contracts — find_forecast plan + ForecastRequest (Increment 8 / AR-190)", () => {
+  it("accepts a minimal find_forecast plan (target + signal_key)", () => {
+    const r = FindForecastPlanSchema.safeParse({
+      op: "find_forecast",
+      params: { target: { postcode: "M1 1AE" }, signal_key: "property.median_price" },
+    });
+    expect(r.success).toBe(true);
+  });
+  it("accepts a fully-specified find_forecast plan", () => {
+    const r = FindForecastPlanSchema.safeParse({
+      op: "find_forecast",
+      params: {
+        target: { geo_code: "E01034129" },
+        signal_key: "crime.monthly_count",
+        window_months: 36,
+        horizon_months: 24,
+      },
+    });
+    expect(r.success).toBe(true);
+  });
+  it("rejects window_months < 6 (degenerate fit)", () => {
+    expect(FindForecastPlanSchema.safeParse({
+      op: "find_forecast",
+      params: { target: { geo_code: "E01034129" }, signal_key: "x", window_months: 3 },
+    }).success).toBe(false);
+  });
+  it("rejects horizon_months > 60", () => {
+    expect(FindForecastPlanSchema.safeParse({
+      op: "find_forecast",
+      params: { target: { geo_code: "E01034129" }, signal_key: "x", horizon_months: 61 },
+    }).success).toBe(false);
+  });
+  it("rejects a target with TWO of geo_code/postcode/area (re-uses PeersTargetSchema)", () => {
+    expect(FindForecastPlanSchema.safeParse({
+      op: "find_forecast",
+      params: { target: { geo_code: "E01034129", postcode: "M1 1AE" }, signal_key: "x" },
+    }).success).toBe(false);
+  });
+  it("QueryPlanSchema discriminated union accepts find_forecast under op=find_forecast", () => {
+    const r = QueryPlanSchema.safeParse({
+      op: "find_forecast",
+      params: { target: { geo_code: "E01034129" }, signal_key: "property.median_price" },
+    });
+    expect(r.success).toBe(true);
+  });
+  it("ForecastRequestSchema accepts the same shape (standalone endpoint)", () => {
+    const r = ForecastRequestSchema.safeParse({
+      target: { area: "Manchester city centre" },
+      signal_key: "property.median_price",
+      horizon_months: 12,
     });
     expect(r.success).toBe(true);
   });

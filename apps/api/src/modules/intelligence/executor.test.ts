@@ -5,6 +5,7 @@ vi.mock("../signals", () => ({ getAreaProfile: vi.fn() }));
 vi.mock("../scoring", () => ({ scoreArea: vi.fn() }));
 vi.mock("../signals/peers", () => ({ findPeers: vi.fn(), parsePeersInput: vi.fn() }));
 vi.mock("../signals/insights", () => ({ findInsights: vi.fn(), parseInsightsInput: vi.fn() }));
+vi.mock("../signals/forecast", () => ({ runForecast: vi.fn(), parseForecastInput: vi.fn() }));
 vi.mock("../signals/data-sources/postcodes", () => ({ geocodeArea: vi.fn() }));
 
 import { executePlan } from "./executor";
@@ -13,6 +14,7 @@ import { getAreaProfile } from "../signals";
 import { scoreArea } from "../scoring";
 import { findPeers, parsePeersInput } from "../signals/peers";
 import { findInsights, parseInsightsInput } from "../signals/insights";
+import { runForecast, parseForecastInput } from "../signals/forecast";
 import { geocodeArea } from "../signals/data-sources/postcodes";
 
 const mockQueryAreas = vi.mocked(queryAreas);
@@ -23,6 +25,8 @@ const mockFindPeers = vi.mocked(findPeers);
 const mockParsePeersInput = vi.mocked(parsePeersInput);
 const mockFindInsights = vi.mocked(findInsights);
 const mockParseInsightsInput = vi.mocked(parseInsightsInput);
+const mockRunForecast = vi.mocked(runForecast);
+const mockParseForecastInput = vi.mocked(parseForecastInput);
 const mockGeocodeArea = vi.mocked(geocodeArea);
 
 beforeEach(() => { vi.clearAllMocks(); });
@@ -244,6 +248,82 @@ describe("executePlan — find_insights (AR-189 / ADR 0024)", () => {
     );
     expect(res.results).toBeNull();
     expect(mockFindInsights).not.toHaveBeenCalled();
+  });
+});
+
+describe("executePlan — find_forecast (AR-190 / ADR 0025)", () => {
+  it("dispatches with geo_code target to the SAME runForecast used by POST /v1/forecast", async () => {
+    mockParseForecastInput.mockReturnValue({
+      ok: true,
+      input: { targetGeoCode: "E01034129", signalKey: "property.median_price", windowMonths: 24, horizonMonths: 12 },
+    });
+    mockRunForecast.mockResolvedValue({
+      stats: {
+        slope: 1200, intercept: 200000, r2: 0.65, n_observations: 24, y_variance: 5_000_000,
+        latest_observed_period: "2026-05", latest_x: 24317,
+      },
+      residualStderr: 1500,
+      points: [
+        { observed_period: "2026-06", projected_value: 224000, lower_bound: 221000, upper_bound: 227000 },
+      ],
+    });
+
+    const res = await executePlan(
+      { op: "find_forecast", params: { target: { geo_code: "E01034129" }, signal_key: "property.median_price", horizon_months: 12 } },
+      { planSource: "client" },
+    );
+    expect(mockGeocodeArea).not.toHaveBeenCalled();
+    expect(mockRunForecast).toHaveBeenCalledOnce();
+    if (res.plan.op === "find_forecast" && res.results) {
+      expect(res.results.target.geo_code).toBe("E01034129");
+      expect(res.results.signal_key).toBe("property.median_price");
+      expect(res.results.points).toHaveLength(1);
+      expect(res.results.meta.slope_per_month).toBe(1200);
+      expect(res.results.meta.r2).toBe(0.65);
+      expect(res.results.meta.residual_stderr).toBe(1500);
+    } else {
+      throw new Error("expected find_forecast result");
+    }
+  });
+
+  it("resolves postcode target via geocodeArea before runForecast", async () => {
+    mockGeocodeArea.mockResolvedValue({ lsoa: "E01034129" } as never);
+    mockParseForecastInput.mockReturnValue({
+      ok: true, input: { targetGeoCode: "E01034129", signalKey: "crime.monthly_count", windowMonths: 24, horizonMonths: 6 },
+    });
+    mockRunForecast.mockResolvedValue({
+      stats: { slope: 0.3, intercept: 5, r2: 0.4, n_observations: 24, y_variance: 4, latest_observed_period: "2026-03", latest_x: 24315 },
+      residualStderr: 1.55,
+      points: [{ observed_period: "2026-04", projected_value: 7295.4, lower_bound: 7292.3, upper_bound: 7298.5 }],
+    });
+    await executePlan(
+      { op: "find_forecast", params: { target: { postcode: "M1 1AE" }, signal_key: "crime.monthly_count", horizon_months: 6 } },
+      { planSource: "nl" },
+    );
+    expect(mockGeocodeArea).toHaveBeenCalledWith("M1 1AE");
+    expect(mockRunForecast).toHaveBeenCalledOnce();
+  });
+
+  it("returns null results when the target cannot be geocoded", async () => {
+    mockGeocodeArea.mockResolvedValue(null);
+    const res = await executePlan(
+      { op: "find_forecast", params: { target: { area: "Nowhere" }, signal_key: "x" } },
+      { planSource: "nl" },
+    );
+    expect(res.results).toBeNull();
+    expect(mockRunForecast).not.toHaveBeenCalled();
+  });
+
+  it("returns null results when runForecast returns null (e.g. insufficient observations)", async () => {
+    mockParseForecastInput.mockReturnValue({
+      ok: true, input: { targetGeoCode: "E01034129", signalKey: "x", windowMonths: 24, horizonMonths: 12 },
+    });
+    mockRunForecast.mockResolvedValue(null);
+    const res = await executePlan(
+      { op: "find_forecast", params: { target: { geo_code: "E01034129" }, signal_key: "x" } },
+      { planSource: "client" },
+    );
+    expect(res.results).toBeNull();
   });
 });
 

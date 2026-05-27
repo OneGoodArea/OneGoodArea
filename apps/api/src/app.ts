@@ -20,6 +20,7 @@ import { RATE_LIMITS, BATCH_MAX_ITEMS, APP_URL, getConfig } from "./infrastructu
 import { getAreaProfile, queryAreas, parseAreasQuery } from "./modules/signals";
 import { findPeers, parsePeersInput, PEERS_DEFAULT_K, PEERS_DEFAULT_MIN_SIGNALS, type Country as PeersCountry } from "./modules/signals/peers";
 import { findInsights, parseInsightsInput, INSIGHTS_DEFAULT_K } from "./modules/signals/insights";
+import { runForecast, parseForecastInput, FORECAST_DEFAULT_WINDOW, FORECAST_DEFAULT_HORIZON } from "./modules/signals/forecast";
 import { geocodeArea } from "./modules/signals/data-sources/postcodes";
 import { scoreArea, parseScoreBody } from "./modules/scoring";
 import { createPortfolio, listPortfolios, getPortfolio, deletePortfolio, addAreas, enrichPortfolio, detectPortfolioChanges, PORTFOLIO_ADD_MAX, type Baseline } from "./modules/monitor";
@@ -865,6 +866,89 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     } catch (error) {
       if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
       logger.error("[v1/insights] error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  // ── Intelligence Increment 8: POST /v1/forecast — linear projection ──
+  // Time-series projection of ONE signal at ONE LSOA. Linear regression
+  // over the trailing window_months; project horizon_months forward.
+  // CI = ±2 * residual_stderr (constant-width band — see ADR 0025). The
+  // SAME runForecast serves both this endpoint and POST /v1/query's
+  // find_forecast plan op.
+  void (FORECAST_DEFAULT_WINDOW + FORECAST_DEFAULT_HORIZON); // keep imports alive
+  app.post("/v1/forecast", async (request, reply) => {
+    try {
+      const userId = await guardSignals(request, reply);
+      if (!userId) return reply;
+
+      const body = (request.body ?? {}) as Record<string, unknown>;
+      const target = body.target as { geo_code?: string; postcode?: string; area?: string } | undefined;
+      if (!target || typeof target !== "object") {
+        return reply.code(400).send({ error: "Missing 'target' — provide one of {geo_code} | {postcode} | {area}." });
+      }
+      const present = ["geo_code", "postcode", "area"].filter((k) => typeof target[k as keyof typeof target] === "string" && (target[k as keyof typeof target] as string).trim().length > 0);
+      if (present.length !== 1) {
+        return reply.code(400).send({ error: "target must contain EXACTLY one of {geo_code, postcode, area}." });
+      }
+
+      let targetGeoCode: string;
+      let scopeLabel: string;
+      if (target.geo_code) {
+        targetGeoCode = target.geo_code.trim();
+        scopeLabel = `geo_code=${targetGeoCode}`;
+      } else {
+        const q = (target.postcode ?? target.area)!.trim();
+        const geo = await geocodeArea(q);
+        if (!geo) return reply.code(404).send({ error: `Could not resolve "${q}" to an LSOA.` });
+        targetGeoCode = geo.lsoa;
+        scopeLabel = `${target.postcode ? "postcode" : "area"}=${q} -> lsoa=${targetGeoCode}`;
+      }
+
+      const parsed = parseForecastInput({
+        targetGeoCode,
+        signalKey: typeof body.signal_key === "string" ? body.signal_key : undefined,
+        windowMonths: typeof body.window_months === "number" ? body.window_months : undefined,
+        horizonMonths: typeof body.horizon_months === "number" ? body.horizon_months : undefined,
+      });
+      if (!parsed.ok) return reply.code(400).send({ error: parsed.error });
+
+      const result = await runForecast(parsed.input);
+      if (!result) {
+        return reply.code(404).send({
+          error: `No usable time-series for signal_key=${parsed.input.signalKey} at ${targetGeoCode} in the trailing ${parsed.input.windowMonths} months (need >=2 monthly observations).`,
+        });
+      }
+
+      trackEvent("api.forecast.queried", userId, {
+        target: targetGeoCode,
+        signal_key: parsed.input.signalKey,
+        window_months: parsed.input.windowMonths,
+        horizon_months: parsed.input.horizonMonths,
+        n_observations: result.stats.n_observations,
+        r2: result.stats.r2,
+      });
+      reply.header("X-Engine-Version", METHODOLOGY_VERSION);
+      return reply.code(200).send({
+        target: { geo_code: targetGeoCode },
+        signal_key: parsed.input.signalKey,
+        points: result.points,
+        meta: {
+          generated_at: new Date().toISOString(),
+          scope: scopeLabel,
+          window_months: parsed.input.windowMonths,
+          horizon_months: parsed.input.horizonMonths,
+          n_observations: result.stats.n_observations,
+          r2: result.stats.r2,
+          slope_per_month: result.stats.slope,
+          intercept: result.stats.intercept,
+          residual_stderr: result.residualStderr,
+          latest_observed_period: result.stats.latest_observed_period,
+        },
+      });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/forecast] error:", error);
       return reply.code(500).send({ error: "Internal server error" });
     }
   });
