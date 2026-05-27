@@ -30,3 +30,4 @@ and both are kept (the trail matters).
 | [0017](./0017-query-plane.md) | Intelligence v1: `POST /v1/query` — the typed query plane (programmatic + NL), planner/executor split, deterministic principle | Accepted |
 | [0018](./0018-derived-signals-and-write-only-refresh.md) | Derived signals layer + write-only refresh / unified normalize — `property.price_change_pct_yoy` queryable; resilient cron | Accepted |
 | [0019](./0019-compound-rank-areas.md) | Intelligence Increment 2: multi-signal compound `rank_areas` grammar — `signals[]` + `sort_by`, one JOIN per filter signal, AND semantics, backward-compat sugar | Accepted |
+| [0020](./0020-rolling-yoy-derived-signals.md) | Intelligence Increment 3: parameterized rolling-12-month YoY derived signals (`buildRollingSumYoYSql`) — adds `crime.total_12m_change_pct_yoy` + `property.transaction_count_change_pct_yoy` | Accepted |

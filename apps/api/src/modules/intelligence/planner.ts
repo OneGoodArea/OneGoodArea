@@ -27,7 +27,9 @@ export const SUPPORTED_SIGNALS = [
   "property.median_price",
   "property.transaction_count",
   "property.price_change_pct_yoy",
+  "property.transaction_count_change_pct_yoy",
   "crime.total_12m",
+  "crime.total_12m_change_pct_yoy",
   "crime.monthly_rate",
   "crime.monthly_count",
 ] as const;
