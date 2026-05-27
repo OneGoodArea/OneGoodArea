@@ -36,7 +36,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      - run: npm install --no-audit --no-fund
       - name: Migrate (idempotent)
         run: npm run migrate -w @onegoodarea/api
       - name: Refresh deprivation (write-only)
