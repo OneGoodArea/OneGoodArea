@@ -30,7 +30,18 @@ import { METHODOLOGY_VERSION, METHODOLOGY_VERSIONS } from "./methodology";
    - No header           → routes to METHODOLOGY_VERSION (no breaking change)
    - Valid v2.x version  → routes to METHODOLOGY_VERSION; X-Engine-Version
                            response header echoes the *requested* version
-   - Unknown / EOL       → 400 with a payload listing supported_versions */
+   - Unknown / EOL       → 400 with a payload listing supported_versions
+
+   ## Levers AR-197 — org-level methodology pin
+
+   `resolveEngineVersion(header, { orgPin })`. Precedence:
+     1. Explicit valid header → wins (validated as before)
+     2. orgPin (if set, and validated at WRITE time so trusted here)
+        → applies when no header is sent
+     3. METHODOLOGY_VERSION (latest) → default
+
+   The orgPin is fetched once per request by the endpoint and passed
+   in; the resolver stays pure (no DB I/O). See ADR 0031. */
 
 const SUPPORTED_ENGINE_VERSIONS = ["2.0.0", "2.0.1", "2.0.2"] as const;
 export type SupportedEngineVersion = (typeof SUPPORTED_ENGINE_VERSIONS)[number];
@@ -62,9 +73,36 @@ function isKnownButEol(version: string): boolean {
   return METHODOLOGY_VERSIONS.some((m) => m.version === version);
 }
 
-export function resolveEngineVersion(headerValue: unknown): EngineVersionResult {
-  // Treat missing / empty as "no preference" → latest.
+export interface ResolveEngineVersionOptions {
+  /** Levers AR-197: the org's pinned engine_version, if any. Used when
+      no per-request header was sent. Trusted (validated at write time
+      by the PUT /v1/orgs/:id/methodology endpoint). */
+  orgPin?: string | null;
+}
+
+/** PURE: turn an org pin into a resolved result with no per-request
+    header. Returns null if no pin set or pin isn't (still) supported
+    (defense in depth — the pin should always be valid post-write-time
+    validation, but a removed-from-supported-window version surfaces as
+    "no pin" so callers fall back to the latest cleanly). */
+function resolveFromOrgPin(orgPin: string | null | undefined): EngineVersionOk | null {
+  if (!orgPin) return null;
+  if (!(SUPPORTED_ENGINE_VERSIONS as readonly string[]).includes(orgPin)) return null;
+  return {
+    ok: true,
+    requestedVersion: orgPin,
+    resolvedVersion: METHODOLOGY_VERSION,
+  };
+}
+
+export function resolveEngineVersion(
+  headerValue: unknown,
+  opts: ResolveEngineVersionOptions = {},
+): EngineVersionResult {
+  // Treat missing / empty as "no preference" → org pin if set, else latest.
   if (headerValue === null || headerValue === undefined) {
+    const fromPin = resolveFromOrgPin(opts.orgPin);
+    if (fromPin) return fromPin;
     return {
       ok: true,
       requestedVersion: METHODOLOGY_VERSION,
@@ -84,6 +122,8 @@ export function resolveEngineVersion(headerValue: unknown): EngineVersionResult 
 
   const trimmed = headerValue.trim();
   if (trimmed === "") {
+    const fromPin = resolveFromOrgPin(opts.orgPin);
+    if (fromPin) return fromPin;
     return {
       ok: true,
       requestedVersion: METHODOLOGY_VERSION,

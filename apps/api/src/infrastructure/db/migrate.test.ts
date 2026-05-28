@@ -26,7 +26,9 @@ describe("db migrate", () => {
         const s = statement.toUpperCase();
         const idempotent =
           s.includes("IF NOT EXISTS") || // CREATE TABLE / CREATE INDEX / ADD COLUMN
-          s.includes("DROP NOT NULL"); // ALTER COLUMN ... DROP NOT NULL is a no-op when already nullable
+          s.includes("DROP NOT NULL") || // ALTER COLUMN ... DROP NOT NULL is a no-op when already nullable
+          /ON CONFLICT[\s\S]*DO NOTHING/.test(s) || // backfill INSERTs (target-free OR target-keyed e.g. ON CONFLICT (a,b) DO NOTHING)
+          s.includes("WHERE ORG_ID IS NULL"); // backfill UPDATEs guarded by a "not already done" predicate
         expect(idempotent, `non-idempotent statement: ${statement.slice(0, 70)}`).toBe(true);
       }
     }

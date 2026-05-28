@@ -26,6 +26,62 @@ import { scoreArea, parseScoreBody } from "./modules/scoring";
 import { createPortfolio, listPortfolios, getPortfolio, deletePortfolio, addAreas, enrichPortfolio, detectPortfolioChanges, PORTFOLIO_ADD_MAX, type Baseline } from "./modules/monitor";
 import { runQuery, parseQueryRequest } from "./modules/intelligence";
 import {
+  createPersonalOrgForUser,
+  listOrgsForUser,
+  getOrgIfMember,
+  getRoleInOrg,
+  listMembers,
+  createOrgWithOwner,
+  updateOrg,
+  addMember,
+  removeMember,
+  countOwners,
+  hasAtLeastRole,
+} from "./modules/orgs";
+import {
+  CreateOrgRequestSchema,
+  UpdateOrgRequestSchema,
+  AddMemberRequestSchema,
+  CreateBundleRequestSchema,
+  UpdateBundleRequestSchema,
+  CreatePresetRequestSchema,
+  UpdatePresetRequestSchema,
+  SetMethodologyPinRequestSchema,
+  CreateCohortRequestSchema,
+  UpdateCohortRequestSchema,
+} from "@onegoodarea/contracts";
+import {
+  listBundles,
+  getBundle,
+  createBundle,
+  updateBundle,
+  deleteBundle,
+  findUnknownSignalKeys,
+  filterSignalsByBundle,
+  planSignalsOutsideBundle,
+} from "./modules/orgs/bundles";
+import {
+  listPresets,
+  getPreset,
+  createPreset,
+  updatePreset,
+  deletePreset,
+  findUnknownWeightKeys,
+} from "./modules/orgs/presets";
+import {
+  getMethodologyPin,
+  setMethodologyPin,
+  clearMethodologyPin,
+} from "./modules/orgs/methodology";
+import {
+  listCohorts,
+  getCohort,
+  createCohort,
+  updateCohort,
+  deleteCohort,
+} from "./modules/orgs/cohorts";
+import { getSupportedEngineVersions } from "./modules/reports/engine-version";
+import {
   getUserPlan,
   hasApiAccess,
   canGenerateReport,
@@ -88,6 +144,19 @@ function headerString(value: string | string[] | undefined): string | null {
   return value ?? null;
 }
 
+/** Levers AR-200: resolve the request's client IP for IP-allowlist
+    enforcement. Prefers the first segment of `x-forwarded-for`
+    (Render/Vercel/most reverse proxies set this), falls back to
+    Fastify's request.ip. Trimmed. */
+function clientIpOf(request: FastifyRequest): string | null {
+  const xff = headerString(request.headers["x-forwarded-for"]);
+  if (xff) {
+    const first = xff.split(",")[0]?.trim();
+    if (first) return first;
+  }
+  return request.ip ?? null;
+}
+
 /** CORS headers for the public embeddable widget (callable from any site). */
 function widgetCorsHeaders(origin: string | null): Record<string, string> {
   return {
@@ -106,20 +175,34 @@ function widgetCorsHeaders(origin: string | null): Record<string, string> {
    on top of it. /v1/meta imports from @onegoodarea/contracts to prove the
    monorepo wiring (backend consumes the shared package). */
 
-/** Bearer-token auth. Resolves the userId, or sends a 401 and resolves null.
-   Shared by every authenticated route (today /me/reports; soon /v1/report). */
+/** Bearer-token auth. Resolves the userId, or sends a 401/403 and
+   resolves null. Shared by every authenticated route (today /me/reports;
+   soon /v1/report).
+
+   AR-200: also enforces the api_keys.allowed_ip_cidrs gate. A key with
+   a non-empty allowlist whose request IP doesn't match returns a typed
+   "blocked" shape from validateApiKey, which this helper surfaces as
+   403 ip_not_allowed. Empty allowlist = no restriction (existing
+   behaviour). */
 async function authenticate(request: FastifyRequest, reply: FastifyReply): Promise<string | null> {
   const header = request.headers.authorization;
   if (!header || !header.startsWith("Bearer ")) {
     reply.code(401).send({ error: "Missing API key. Use: Authorization: Bearer oga_..." });
     return null;
   }
-  const userId = await validateApiKey(header.slice(7));
-  if (!userId) {
+  const result = await validateApiKey(header.slice(7), clientIpOf(request));
+  if (!result) {
     reply.code(401).send({ error: "Invalid or revoked API key" });
     return null;
   }
-  return userId;
+  if ("blocked" in result) {
+    reply.code(403).send({
+      error: "Request IP is not in the key's allowlist.",
+      code: result.blocked,
+    });
+    return null;
+  }
+  return result.userId;
 }
 
 /** Auth + per-key rate-limit + plan API-access gate shared by the webhooks CRUD
@@ -150,6 +233,36 @@ async function requireApiAccess(request: FastifyRequest, reply: FastifyReply): P
   return userId;
 }
 
+/** Levers (AR-195): variant of `requireApiAccess` that ALSO returns the
+   caller's org context. Same gate semantics (auth → rate-limit → plan
+   API access) — just surfaces `{userId, orgId}` on success.
+
+   orgId comes straight from the api-key row (which AR-193 backfilled).
+   For the legacy edge case of a key with `org_id = NULL`, the actual
+   fallback (first-owner org lookup) is deferred to
+   `resolveBundleForCaller` so endpoints that don't use bundles don't
+   pay for the lookup. */
+async function requireApiAccessWithOrg(
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<{ userId: string; orgId: string | null } | null> {
+  const userId = await requireApiAccess(request, reply);
+  if (!userId) return null;
+  // The key just validated above — re-extract orgId from the same row.
+  // Cheap: a single hash-indexed SELECT. The alternative (passing the
+  // full {userId, orgId} shape through `requireApiAccess`) would churn
+  // 30+ endpoints + their test mocks for a feature only a few endpoints
+  // need.
+  //
+  // AR-200: pass clientIp so the second validateApiKey call has the same
+  // gate behaviour as the first. The `blocked` branch carries orgId too,
+  // so we surface it identically.
+  const header = request.headers.authorization!;
+  const result = await validateApiKey(header.slice(7), clientIpOf(request));
+  if (!result) return { userId, orgId: null };
+  return { userId, orgId: result.orgId ?? null };
+}
+
 /** Session (browser-user) auth via the JWT bridge — the counterpart to
    authenticate() (programmatic api-key auth). Verifies the short-lived token
    apps/web's server mints from its NextAuth session and resolves the userId, or
@@ -166,6 +279,96 @@ async function authenticateSession(request: FastifyRequest, reply: FastifyReply)
     return null;
   }
   return session.userId;
+}
+
+/** Levers (AR-195): resolve a `?bundle=<id>` query param to the bundle's
+   signal_keys whitelist. Returns:
+   - `{ok: true, allowed: undefined}` when no bundle was requested (no filter)
+   - `{ok: true, allowed: keys}` when the bundle exists in the caller's org
+   - `{ok: false}` after sending 404 / 403 / 422 to the reply
+
+   The caller must hold the org membership the bundle belongs to. Cross-org
+   reads are rejected: a 404 covers both "no such bundle" and "wrong org"
+   so no membership enumeration. */
+/** Levers (AR-197): resolve the caller's effective org pin. Same lazy
+   first-owner fallback as the bundle resolver — if the api-key row had
+   `org_id = NULL` (legacy), find the caller's first-owner org and
+   read its pin from there. Returns null when no pin is set (or when
+   no org context is resolvable). */
+async function resolveOrgPinForCaller(
+  orgId: string | null,
+  userId: string,
+): Promise<string | null> {
+  let effectiveOrgId = orgId;
+  if (!effectiveOrgId) {
+    const fallback = rows<{ org_id: string }>(await sql`
+      SELECT org_id FROM org_members WHERE user_id = ${userId} AND role = 'owner'
+       ORDER BY joined_at ASC LIMIT 1
+    `);
+    effectiveOrgId = fallback.length > 0 ? fallback[0].org_id : null;
+  }
+  if (!effectiveOrgId) return null;
+  return await getMethodologyPin(effectiveOrgId);
+}
+
+/** Levers (AR-197): produce the X-Engine-Version stamp for a caller.
+    Returns the org's pin (if set + still supported) else
+    METHODOLOGY_VERSION (latest). Used by every product endpoint that
+    stamps the response header. Pure passthrough of resolveEngineVersion's
+    org-pin path; no per-request header consulted (the legacy AR-131
+    header path on /v1/report continues to take precedence where wired).
+
+    Defensive: a DB hiccup on the pin lookup must not 500 the product
+    endpoint. Pin is opt-in; absent it, fall back to METHODOLOGY_VERSION. */
+async function effectiveEngineVersionForCaller(
+  orgId: string | null,
+  userId: string,
+): Promise<string> {
+  let pin: string | null = null;
+  try {
+    pin = await resolveOrgPinForCaller(orgId, userId);
+  } catch (e) {
+    logger.error("[methodology] pin lookup failed; falling back to latest:", e);
+    return METHODOLOGY_VERSION;
+  }
+  if (!pin) return METHODOLOGY_VERSION;
+  const result = resolveEngineVersion(undefined, { orgPin: pin });
+  return result.ok ? result.requestedVersion : METHODOLOGY_VERSION;
+}
+
+async function resolveBundleForCaller(
+  bundleId: string | undefined,
+  orgId: string | null,
+  userId: string,
+  reply: FastifyReply,
+): Promise<{ ok: true; allowed: string[] | undefined } | { ok: false }> {
+  if (!bundleId) return { ok: true, allowed: undefined };
+  // Legacy-key fallback: if the api-key row had org_id = NULL (pre-
+  // AR-193 backfill, or a future code path that created a key without
+  // setting it), look up the caller's first-owner org. Most production
+  // calls skip this branch because AR-193's backfill populated every
+  // existing key.
+  let effectiveOrgId = orgId;
+  if (!effectiveOrgId) {
+    const fallback = rows<{ org_id: string }>(await sql`
+      SELECT org_id FROM org_members WHERE user_id = ${userId} AND role = 'owner'
+       ORDER BY joined_at ASC LIMIT 1
+    `);
+    effectiveOrgId = fallback.length > 0 ? fallback[0].org_id : null;
+  }
+  if (!effectiveOrgId) {
+    reply.code(422).send({
+      error: "Cannot apply bundle filter: caller has no resolvable org context.",
+      code: "no_org_context",
+    });
+    return { ok: false };
+  }
+  const bundle = await getBundle(effectiveOrgId, bundleId);
+  if (!bundle) {
+    reply.code(404).send({ error: "Bundle not found in your org." });
+    return { ok: false };
+  }
+  return { ok: true, allowed: bundle.signal_keys };
 }
 
 /* Local row shapes for the API-key usage dashboard query (GET /keys/usage). */
@@ -244,8 +447,17 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       return reply.code(401).send({ error: "Missing API key. Use: Authorization: Bearer oga_..." });
     }
     const apiKey = authHeader.slice(7);
-    const userId = await validateApiKey(apiKey);
-    if (!userId) return reply.code(401).send({ error: "Invalid or revoked API key" });
+    const result = await validateApiKey(apiKey, clientIpOf(request));
+    if (!result) return reply.code(401).send({ error: "Invalid or revoked API key" });
+    if ("blocked" in result) {
+      return reply.code(403).send({
+        error: "Request IP is not in the key's allowlist.",
+        code: result.blocked,
+      });
+    }
+    const userId = result.userId;
+    const orgIdFromKey = result.orgId;
+    const allowedIpCidrs = result.allowedIpCidrs ?? [];
 
     // Rate-limit /me at the same level as /v1/report (MCP calls it once at
     // startup, but a misbehaving client could spam it).
@@ -269,6 +481,57 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
     const planConfig = PLANS[plan];
 
+    // Levers AR-200: surface the caller's org (with white-label fields)
+    // + the key's IP allowlist on /v1/me. Resolves the org via the
+    // api-key row's org_id, with the legacy first-owner fallback for
+    // pre-AR-193 keys. Defensive — a DB hiccup on the org lookup
+    // shouldn't 500 a meter / entitlement check that has nothing to
+    // do with branding. Falls back to org: null.
+    let orgInfo: {
+      id: string;
+      slug: string;
+      name: string;
+      display_name: string | null;
+      brand_url: string | null;
+      role: string;
+    } | null = null;
+    try {
+      let effectiveOrgId = orgIdFromKey;
+      if (!effectiveOrgId) {
+        const fallback = rows<{ org_id: string }>(await sql`
+          SELECT org_id FROM org_members WHERE user_id = ${userId} AND role = 'owner'
+           ORDER BY joined_at ASC LIMIT 1
+        `);
+        effectiveOrgId = fallback.length > 0 ? fallback[0].org_id : null;
+      }
+      if (effectiveOrgId) {
+        const orgRow = rows<{
+          id: string; slug: string; name: string;
+          display_name: string | null; brand_url: string | null;
+          role: string;
+        }>(await sql`
+          SELECT o.id, o.slug, o.name, o.display_name, o.brand_url, m.role
+            FROM orgs o
+            JOIN org_members m ON m.org_id = o.id
+           WHERE o.id = ${effectiveOrgId} AND m.user_id = ${userId}
+           LIMIT 1
+        `);
+        if (orgRow.length > 0) {
+          const r = orgRow[0];
+          orgInfo = {
+            id: r.id,
+            slug: r.slug,
+            name: r.name,
+            display_name: r.display_name,
+            brand_url: r.brand_url,
+            role: r.role,
+          };
+        }
+      }
+    } catch (e) {
+      logger.error("[v1/me] org lookup failed; returning org: null:", e);
+    }
+
     return {
       plan,
       plan_name: planConfig?.name ?? plan,
@@ -282,6 +545,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       engine_version: METHODOLOGY_VERSION,
       addons,
       mcp_calls_this_month: mcpUsed,
+      // Levers AR-200: org branding + key allowlist (Enterprise polish).
+      org: orgInfo,
+      key: { allowed_ip_cidrs: allowedIpCidrs },
     };
   });
 
@@ -296,8 +562,15 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         return reply.code(401).send({ error: "Missing API key. Use: Authorization: Bearer oga_..." });
       }
       const apiKey = authHeader.slice(7);
-      const userId = await validateApiKey(apiKey);
-      if (!userId) return reply.code(401).send({ error: "Invalid or revoked API key" });
+      const result = await validateApiKey(apiKey, clientIpOf(request));
+      if (!result) return reply.code(401).send({ error: "Invalid or revoked API key" });
+      if ("blocked" in result) {
+        return reply.code(403).send({
+          error: "Request IP is not in the key's allowlist.",
+          code: result.blocked,
+        });
+      }
+      const userId = result.userId;
 
       // Rate limit by API key.
       const rl = await rateLimit(`api:${apiKey}`, {
@@ -387,15 +660,21 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         return reply.code(404).send({ error: "Not found" });
       }
 
-      const userId = await requireApiAccess(request, reply);
-      if (!userId) return reply; // 401 / 403 / 429 already sent
+      const ctx = await requireApiAccessWithOrg(request, reply);
+      if (!ctx) return reply; // 401 / 403 / 429 already sent
 
-      // Accept ?area= (free text or postcode) or its ?postcode= alias.
-      const q = request.query as { area?: unknown; postcode?: unknown };
+      const q = request.query as { area?: unknown; postcode?: unknown; bundle?: unknown };
       const rawArea =
         typeof q.area === "string" ? q.area : typeof q.postcode === "string" ? q.postcode : undefined;
       const locationCheck = validateLocationInput(rawArea);
       if (!locationCheck.valid) return reply.code(400).send({ error: locationCheck.error });
+
+      // Levers (AR-195): if ?bundle=<id> is set, resolve the bundle for the
+      // caller's org and use its signal_keys as a whitelist over the
+      // response. Absent the param, behaviour is unchanged.
+      const bundleId = typeof q.bundle === "string" ? q.bundle : undefined;
+      const resolved = await resolveBundleForCaller(bundleId, ctx.orgId, ctx.userId, reply);
+      if (!resolved.ok) return reply;
 
       const profile = await getAreaProfile(locationCheck.sanitized);
       if (!profile) {
@@ -404,17 +683,30 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         });
       }
 
-      // Meter early, price late (MASTER §9): every area call emits an org-keyed
-      // usage event from day one. That one event stream later powers quotas,
-      // billing, and the demand-signal moat. Pricing numbers are decided later.
-      trackEvent("api.area.profiled", userId, {
+      const filteredSignals = filterSignalsByBundle(profile.signals, resolved.allowed);
+      const filteredSources = resolved.allowed
+        ? Array.from(new Set(filteredSignals.filter((s) => s.value !== null).map((s) => s.source)))
+        : profile.meta.sources;
+
+      trackEvent("api.area.profiled", ctx.userId, {
         area: locationCheck.sanitized,
-        signals: profile.signals.length,
-        sources: profile.meta.sources.length,
+        signals: filteredSignals.length,
+        sources: filteredSources.length,
+        bundle: bundleId ?? null,
       });
 
-      reply.header("X-Engine-Version", profile.meta.engine_version);
-      return reply.code(200).send(profile);
+      // Levers (AR-197): stamp the org pin (if set) on the response header.
+      // Body `meta.engine_version` still reports what the engine actually
+      // produced — until v3 freezes a separate engine module these are
+      // equivalent in resolvedVersion, just distinguished by which one
+      // the auditor cares about.
+      const stamp = await effectiveEngineVersionForCaller(ctx.orgId, ctx.userId);
+      reply.header("X-Engine-Version", stamp);
+      return reply.code(200).send({
+        geo: profile.geo,
+        signals: filteredSignals,
+        meta: { ...profile.meta, sources: filteredSources },
+      });
     } catch (error) {
       if (isAppError(error)) {
         return reply.code(error.statusCode).send({ error: error.message, code: error.code });
@@ -487,21 +779,38 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       if (!getConfig().signalsApiEnabled) {
         return reply.code(404).send({ error: "Not found" });
       }
-      const userId = await requireApiAccess(request, reply);
-      if (!userId) return reply; // 401 / 403 / 429 already sent
+      const ctx = await requireApiAccessWithOrg(request, reply);
+      if (!ctx) return reply; // 401 / 403 / 429 already sent
 
       const parsed = parseAreasQuery((request.query ?? {}) as Record<string, unknown>);
       if (!parsed.ok) return reply.code(400).send({ error: parsed.error });
 
+      // Levers (AR-195): if ?bundle=<id> is set, the requested ranking
+      // signal MUST be in the bundle's whitelist — 422 otherwise. This is
+      // a gate, not a filter (queryAreas takes one signal). The bundle
+      // param is read from the raw query (parseAreasQuery doesn't expose
+      // it but ignores unknown keys).
+      const rawQuery = (request.query ?? {}) as { bundle?: unknown };
+      const bundleId = typeof rawQuery.bundle === "string" ? rawQuery.bundle : undefined;
+      const resolved = await resolveBundleForCaller(bundleId, ctx.orgId, ctx.userId, reply);
+      if (!resolved.ok) return reply;
+      if (resolved.allowed && !resolved.allowed.includes(parsed.query.signal)) {
+        return reply.code(422).send({
+          error: `Signal "${parsed.query.signal}" is not in bundle ${bundleId}.`,
+          code: "bundle_signal_not_allowed",
+        });
+      }
+
       const areas = await queryAreas(parsed.query);
 
-      trackEvent("api.areas.queried", userId, {
+      trackEvent("api.areas.queried", ctx.userId, {
         signal: parsed.query.signal,
         country: parsed.query.country,
         lad: parsed.query.lad,
         results: areas.length,
+        bundle: bundleId ?? null,
       });
-      reply.header("X-Engine-Version", METHODOLOGY_VERSION);
+      reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(ctx.orgId, ctx.userId));
       return reply.code(200).send({ signal: parsed.query.signal, count: areas.length, areas });
     } catch (error) {
       if (isAppError(error)) {
@@ -522,10 +831,58 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       if (!getConfig().signalsApiEnabled) {
         return reply.code(404).send({ error: "Not found" });
       }
-      const userId = await requireApiAccess(request, reply);
-      if (!userId) return reply; // 401 / 403 / 429 already sent
+      const ctx = await requireApiAccessWithOrg(request, reply);
+      if (!ctx) return reply; // 401 / 403 / 429 already sent
 
-      const parsed = parseScoreBody(request.body);
+      // Levers (AR-196): a `preset_id` body field resolves to an org-
+      // saved preset. Mutually exclusive with explicit `preset` /
+      // `weights` — passing both is ambiguous (which one wins?), so we
+      // 422 rather than silently picking. Absent the field, behaviour
+      // is unchanged.
+      const body = (request.body ?? {}) as Record<string, unknown>;
+      const presetId = typeof body.preset_id === "string" ? body.preset_id : undefined;
+      let bodyForParse: unknown = request.body;
+
+      if (presetId) {
+        if (body.preset !== undefined || body.weights !== undefined) {
+          return reply.code(422).send({
+            error: "preset_id is mutually exclusive with preset / weights.",
+            code: "preset_id_conflict",
+          });
+        }
+        // Resolve the saved preset in the caller's org. Reuses the
+        // lazy first-owner fallback for legacy keys with null org_id.
+        let effectiveOrgId = ctx.orgId;
+        if (!effectiveOrgId) {
+          const fallback = rows<{ org_id: string }>(await sql`
+            SELECT org_id FROM org_members WHERE user_id = ${ctx.userId} AND role = 'owner'
+             ORDER BY joined_at ASC LIMIT 1
+          `);
+          effectiveOrgId = fallback.length > 0 ? fallback[0].org_id : null;
+        }
+        if (!effectiveOrgId) {
+          return reply.code(422).send({
+            error: "Cannot resolve preset_id: caller has no resolvable org context.",
+            code: "no_org_context",
+          });
+        }
+        const saved = await getPreset(effectiveOrgId, presetId);
+        if (!saved) {
+          return reply.code(404).send({ error: "Preset not found in your org." });
+        }
+        // Synthesize the "as if" body: caller passed preset = base + weights.
+        // The response's weights_source will be "custom" — functionally
+        // accurate (saved presets ARE custom weights). The audit trail
+        // for which named preset_id was used lives in the activity event.
+        bodyForParse = {
+          ...body,
+          preset: saved.base_preset,
+          weights: saved.weights,
+          preset_id: undefined,
+        };
+      }
+
+      const parsed = parseScoreBody(bodyForParse);
       if (!parsed.ok) return reply.code(400).send({ error: parsed.error });
 
       const result = await scoreArea(parsed.query);
@@ -535,13 +892,14 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         });
       }
 
-      trackEvent("api.score.computed", userId, {
+      trackEvent("api.score.computed", ctx.userId, {
         area: parsed.query.area,
         preset: parsed.query.preset,
         weights: parsed.query.weights ? "custom" : "preset",
+        preset_id: presetId ?? null,
         score: result.score,
       });
-      reply.header("X-Engine-Version", result.engine_version);
+      reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(ctx.orgId, ctx.userId));
       return reply.code(200).send(result);
     } catch (error) {
       if (isAppError(error)) {
@@ -663,7 +1021,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       const items = await enrichPortfolio(userId, id, (presetRaw as Intent) ?? "research");
       if (!items) return reply.code(404).send({ error: "Portfolio not found" });
       trackEvent("api.portfolio.enriched", userId, { portfolioId: id, areas: items.length });
-      reply.header("X-Engine-Version", METHODOLOGY_VERSION);
+      reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(null, userId));
       return reply.code(200).send({ count: items.length, results: items });
     } catch (error) {
       if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
@@ -708,11 +1066,709 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       });
       if (!report) return reply.code(404).send({ error: "Portfolio not found" });
       trackEvent("api.portfolio.changes_checked", userId, { portfolioId: id, material: report.material_count });
-      reply.header("X-Engine-Version", METHODOLOGY_VERSION);
+      reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(null, userId));
       return reply.code(200).send(report);
     } catch (error) {
       if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
       logger.error("[v1/portfolios/:id/changes] error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  // ── Levers (AR-194): per-org tenancy CRUD ──
+  //
+  // Orgs are the unit of Levers config (custom signal bundles, custom
+  // scoring presets, per-org peer graphs, RBAC, white-label, IP allow).
+  // This commit ships the CRUD primitives; subsequent Levers commits
+  // layer per-org config on top.
+  //
+  // Auth model: api-key (requireApiAccess) on everything. Session-mode
+  // (apps/web dashboard) will route via the BFF bridge → same endpoints.
+  // Mutations are owner-only; reads are member+.
+
+  app.post("/v1/orgs", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const parsed = CreateOrgRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      const org = await createOrgWithOwner({
+        name: parsed.data.name,
+        slug: parsed.data.slug,
+        userId,
+      });
+      trackEvent("api.org.created", userId, { orgId: org.id });
+      return reply.code(201).send(org);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs] create error:", error);
+      // Most likely a slug collision (UNIQUE on orgs.slug). Surface a 409.
+      const msg = error instanceof Error ? error.message : "";
+      if (/duplicate key|unique constraint/i.test(msg)) {
+        return reply.code(409).send({ error: "Slug already in use. Pick a different slug." });
+      }
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/v1/orgs", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const orgs = await listOrgsForUser(userId);
+      return reply.code(200).send({ orgs });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs] list error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/v1/orgs/:id", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id } = request.params as { id: string };
+      const org = await getOrgIfMember(id, userId);
+      if (!org) return reply.code(404).send({ error: "Org not found" });
+      return reply.code(200).send(org);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id] get error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.patch("/v1/orgs/:id", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id } = request.params as { id: string };
+      const role = await getRoleInOrg(id, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
+      const parsed = UpdateOrgRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      const updated = await updateOrg(id, parsed.data);
+      if (!updated) return reply.code(404).send({ error: "Org not found" });
+      trackEvent("api.org.updated", userId, { orgId: id });
+      return reply.code(200).send(updated);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id] update error:", error);
+      const msg = error instanceof Error ? error.message : "";
+      if (/duplicate key|unique constraint/i.test(msg)) {
+        return reply.code(409).send({ error: "Slug already in use. Pick a different slug." });
+      }
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/v1/orgs/:id/members", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id } = request.params as { id: string };
+      const role = await getRoleInOrg(id, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      const members = await listMembers(id);
+      return reply.code(200).send({ members });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/members] list error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/v1/orgs/:id/members", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id } = request.params as { id: string };
+      const role = await getRoleInOrg(id, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
+      const parsed = AddMemberRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      // Levers AR-199: admin can add admin/member but NOT owner. Granting
+      // ownership is the chain-of-authority move that stays owner-only.
+      const targetRole = parsed.data.role ?? "member";
+      if (targetRole === "owner" && !hasAtLeastRole(role, "owner")) {
+        return reply.code(403).send({
+          error: "Only an owner can grant the owner role.",
+          code: "cannot_grant_owner",
+        });
+      }
+      await addMember({
+        orgId: id,
+        userId: parsed.data.user_id,
+        role: targetRole,
+      });
+      trackEvent("api.org.member_added", userId, { orgId: id, addedUserId: parsed.data.user_id });
+      return reply.code(201).send({ ok: true });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/members] add error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/v1/orgs/:id/members/:userId", async (request, reply) => {
+    try {
+      const callerId = await requireApiAccess(request, reply);
+      if (!callerId) return reply;
+      const { id, userId: targetId } = request.params as { id: string; userId: string };
+      const callerRole = await getRoleInOrg(id, callerId);
+      if (!callerRole) return reply.code(404).send({ error: "Org not found" });
+      // Levers AR-199 RBAC:
+      //   self-removal                    -> any role (still bounded by last-owner guard below)
+      //   removing a non-owner member     -> admin+
+      //   removing an owner-role member   -> owner-only (chain-of-authority)
+      const isSelfRemoval = callerId === targetId;
+      const targetRole = await getRoleInOrg(id, targetId);
+      if (!isSelfRemoval) {
+        if (!hasAtLeastRole(callerRole, "admin")) {
+          return reply.code(403).send({
+            error: "Admin or owner required (unless removing yourself).",
+            code: "admin_required",
+          });
+        }
+        if (targetRole === "owner" && !hasAtLeastRole(callerRole, "owner")) {
+          return reply.code(403).send({
+            error: "Only an owner can remove an owner.",
+            code: "cannot_remove_owner_as_admin",
+          });
+        }
+      }
+      // Last-owner guard: never let the org be orphaned. Applies to
+      // self-removal too — an owner removing themselves can't leave
+      // the org without an owner.
+      if (targetRole === "owner") {
+        const owners = await countOwners(id);
+        if (owners <= 1) {
+          return reply.code(409).send({
+            error: "Cannot remove the last owner. Promote another member to owner first.",
+          });
+        }
+      }
+      const ok = await removeMember(id, targetId);
+      if (!ok) return reply.code(404).send({ error: "Member not found in org" });
+      trackEvent("api.org.member_removed", callerId, { orgId: id, removedUserId: targetId });
+      return reply.code(200).send({ deleted: true });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/members/:userId] delete error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  // ── Levers (AR-195): custom signal bundles ──
+  //
+  // A bundle is a named per-org whitelist of signal keys. Callers opt-in
+  // to the whitelist by passing `?bundle=<id>` on /v1/area / /v1/areas
+  // /v1/query — absent the param, behaviour is unchanged. Owner-only
+  // mutations; reads require membership. See ADR 0029.
+
+  app.post("/v1/orgs/:id/bundles", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId } = request.params as { id: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
+      const parsed = CreateBundleRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      const unknown = findUnknownSignalKeys(parsed.data.signal_keys);
+      if (unknown.length > 0) {
+        return reply.code(400).send({
+          error: `Unknown signal keys: ${unknown.join(", ")}. See /docs/api-reference for the active taxonomy.`,
+          code: "unknown_signal_keys",
+        });
+      }
+      const bundle = await createBundle({
+        orgId,
+        name: parsed.data.name,
+        slug: parsed.data.slug,
+        signalKeys: parsed.data.signal_keys,
+      });
+      trackEvent("api.bundle.created", userId, { orgId, bundleId: bundle.id, count: bundle.signal_keys.length });
+      return reply.code(201).send(bundle);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/bundles] create error:", error);
+      const msg = error instanceof Error ? error.message : "";
+      if (/duplicate key|unique constraint/i.test(msg)) {
+        return reply.code(409).send({ error: "A bundle with that slug already exists in this org." });
+      }
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/v1/orgs/:id/bundles", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId } = request.params as { id: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      const bundles = await listBundles(orgId);
+      return reply.code(200).send({ bundles });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/bundles] list error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/v1/orgs/:id/bundles/:bundleId", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId, bundleId } = request.params as { id: string; bundleId: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      const bundle = await getBundle(orgId, bundleId);
+      if (!bundle) return reply.code(404).send({ error: "Bundle not found" });
+      return reply.code(200).send(bundle);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/bundles/:bundleId] get error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.patch("/v1/orgs/:id/bundles/:bundleId", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId, bundleId } = request.params as { id: string; bundleId: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
+      const parsed = UpdateBundleRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      if (parsed.data.signal_keys) {
+        const unknown = findUnknownSignalKeys(parsed.data.signal_keys);
+        if (unknown.length > 0) {
+          return reply.code(400).send({
+            error: `Unknown signal keys: ${unknown.join(", ")}.`,
+            code: "unknown_signal_keys",
+          });
+        }
+      }
+      const updated = await updateBundle(orgId, bundleId, {
+        name: parsed.data.name,
+        slug: parsed.data.slug,
+        signalKeys: parsed.data.signal_keys,
+      });
+      if (!updated) return reply.code(404).send({ error: "Bundle not found" });
+      trackEvent("api.bundle.updated", userId, { orgId, bundleId });
+      return reply.code(200).send(updated);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/bundles/:bundleId] update error:", error);
+      const msg = error instanceof Error ? error.message : "";
+      if (/duplicate key|unique constraint/i.test(msg)) {
+        return reply.code(409).send({ error: "A bundle with that slug already exists in this org." });
+      }
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/v1/orgs/:id/bundles/:bundleId", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId, bundleId } = request.params as { id: string; bundleId: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
+      const ok = await deleteBundle(orgId, bundleId);
+      if (!ok) return reply.code(404).send({ error: "Bundle not found" });
+      trackEvent("api.bundle.deleted", userId, { orgId, bundleId });
+      return reply.code(200).send({ deleted: true });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/bundles/:bundleId] delete error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  // ── Levers (AR-196): custom scoring presets ──
+  //
+  // A preset is a per-org saved {base_preset, weights} bundle. Callers
+  // reference it on POST /v1/score via `preset_id`. The deterministic
+  // engine is reused untouched — Levers config sits on top.
+  // Owner-only mutations; reads require membership. See ADR 0030.
+
+  app.post("/v1/orgs/:id/presets", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId } = request.params as { id: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
+      const parsed = CreatePresetRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      const unknown = findUnknownWeightKeys(parsed.data.base_preset, parsed.data.weights);
+      if (unknown.length > 0) {
+        return reply.code(400).send({
+          error: `Unknown dimension keys for base_preset '${parsed.data.base_preset}': ${unknown.join(", ")}.`,
+          code: "unknown_weight_keys",
+        });
+      }
+      const preset = await createPreset({
+        orgId,
+        name: parsed.data.name,
+        slug: parsed.data.slug,
+        basePreset: parsed.data.base_preset,
+        weights: parsed.data.weights,
+      });
+      trackEvent("api.preset.created", userId, { orgId, presetId: preset.id, basePreset: preset.base_preset });
+      return reply.code(201).send(preset);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/presets] create error:", error);
+      const msg = error instanceof Error ? error.message : "";
+      if (/duplicate key|unique constraint/i.test(msg)) {
+        return reply.code(409).send({ error: "A preset with that slug already exists in this org." });
+      }
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/v1/orgs/:id/presets", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId } = request.params as { id: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      const presets = await listPresets(orgId);
+      return reply.code(200).send({ presets });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/presets] list error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/v1/orgs/:id/presets/:presetId", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId, presetId } = request.params as { id: string; presetId: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      const preset = await getPreset(orgId, presetId);
+      if (!preset) return reply.code(404).send({ error: "Preset not found" });
+      return reply.code(200).send(preset);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/presets/:presetId] get error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.patch("/v1/orgs/:id/presets/:presetId", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId, presetId } = request.params as { id: string; presetId: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
+      const parsed = UpdatePresetRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      // Weights are validated against the EFFECTIVE base_preset after the
+      // patch. If the caller only patches weights, we need the existing
+      // base_preset; if they patch base_preset too, we use the new one.
+      // Fetch once to resolve the effective values.
+      const existing = await getPreset(orgId, presetId);
+      if (!existing) return reply.code(404).send({ error: "Preset not found" });
+      const effectiveBase = parsed.data.base_preset ?? existing.base_preset;
+      const effectiveWeights = parsed.data.weights ?? existing.weights;
+      const unknown = findUnknownWeightKeys(effectiveBase, effectiveWeights);
+      if (unknown.length > 0) {
+        return reply.code(400).send({
+          error: `Unknown dimension keys for base_preset '${effectiveBase}': ${unknown.join(", ")}.`,
+          code: "unknown_weight_keys",
+        });
+      }
+      const updated = await updatePreset(orgId, presetId, {
+        name: parsed.data.name,
+        slug: parsed.data.slug,
+        basePreset: parsed.data.base_preset,
+        weights: parsed.data.weights,
+      });
+      if (!updated) return reply.code(404).send({ error: "Preset not found" });
+      trackEvent("api.preset.updated", userId, { orgId, presetId });
+      return reply.code(200).send(updated);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/presets/:presetId] update error:", error);
+      const msg = error instanceof Error ? error.message : "";
+      if (/duplicate key|unique constraint/i.test(msg)) {
+        return reply.code(409).send({ error: "A preset with that slug already exists in this org." });
+      }
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/v1/orgs/:id/presets/:presetId", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId, presetId } = request.params as { id: string; presetId: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
+      const ok = await deletePreset(orgId, presetId);
+      if (!ok) return reply.code(404).send({ error: "Preset not found" });
+      trackEvent("api.preset.deleted", userId, { orgId, presetId });
+      return reply.code(200).send({ deleted: true });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/presets/:presetId] delete error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  // ── Levers (AR-197): methodology pinning ──
+  //
+  // One row per org. When set, the org's pin is applied as the
+  // effective engine_version on responses for any of the org's keys
+  // (unless they explicitly send X-Engine-Version per request, which
+  // still wins). Validated at WRITE time against
+  // SUPPORTED_ENGINE_VERSIONS so reads never see an invalid pin.
+  // See ADR 0031.
+
+  app.get("/v1/orgs/:id/methodology", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId } = request.params as { id: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      const pin = await getMethodologyPin(orgId);
+      return reply.code(200).send({ engine_version: pin, pinned: pin !== null });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/methodology] get error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.put("/v1/orgs/:id/methodology", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId } = request.params as { id: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      // Methodology pin is owner-only — compliance / audit anchor.
+      if (!hasAtLeastRole(role, "owner")) {
+        return reply.code(403).send({ error: "Owner-only operation.", code: "owner_required" });
+      }
+      const parsed = SetMethodologyPinRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      const supported = getSupportedEngineVersions();
+      if (!supported.includes(parsed.data.engine_version)) {
+        return reply.code(400).send({
+          error: `Unsupported engine_version "${parsed.data.engine_version}". Supported: ${supported.join(", ")}.`,
+          code: "unsupported_engine_version",
+          supported_versions: supported,
+        });
+      }
+      await setMethodologyPin(orgId, parsed.data.engine_version);
+      trackEvent("api.methodology.pinned", userId, { orgId, engineVersion: parsed.data.engine_version });
+      return reply.code(200).send({ engine_version: parsed.data.engine_version, pinned: true });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/methodology] set error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  // ── Levers (AR-198): per-org peer cohorts ──
+  //
+  // A cohort is a named subset of LSOA codes. /v1/peers consumes it as
+  // a candidate filter on the existing global k-NN peer graph. Owner-
+  // only mutations; reads require membership. See ADR 0032.
+
+  app.post("/v1/orgs/:id/cohorts", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId } = request.params as { id: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
+      const parsed = CreateCohortRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      const cohort = await createCohort({
+        orgId,
+        name: parsed.data.name,
+        slug: parsed.data.slug,
+        geoCodes: parsed.data.geo_codes,
+      });
+      trackEvent("api.cohort.created", userId, { orgId, cohortId: cohort.id, size: cohort.geo_codes.length });
+      return reply.code(201).send(cohort);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/cohorts] create error:", error);
+      const msg = error instanceof Error ? error.message : "";
+      if (/duplicate key|unique constraint/i.test(msg)) {
+        return reply.code(409).send({ error: "A cohort with that slug already exists in this org." });
+      }
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/v1/orgs/:id/cohorts", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId } = request.params as { id: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      const cohorts = await listCohorts(orgId);
+      return reply.code(200).send({ cohorts });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/cohorts] list error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/v1/orgs/:id/cohorts/:cohortId", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId, cohortId } = request.params as { id: string; cohortId: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      const cohort = await getCohort(orgId, cohortId);
+      if (!cohort) return reply.code(404).send({ error: "Cohort not found" });
+      return reply.code(200).send(cohort);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/cohorts/:cohortId] get error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.patch("/v1/orgs/:id/cohorts/:cohortId", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId, cohortId } = request.params as { id: string; cohortId: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
+      const parsed = UpdateCohortRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      const updated = await updateCohort(orgId, cohortId, {
+        name: parsed.data.name,
+        slug: parsed.data.slug,
+        geoCodes: parsed.data.geo_codes,
+      });
+      if (!updated) return reply.code(404).send({ error: "Cohort not found" });
+      trackEvent("api.cohort.updated", userId, { orgId, cohortId });
+      return reply.code(200).send(updated);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/cohorts/:cohortId] update error:", error);
+      const msg = error instanceof Error ? error.message : "";
+      if (/duplicate key|unique constraint/i.test(msg)) {
+        return reply.code(409).send({ error: "A cohort with that slug already exists in this org." });
+      }
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/v1/orgs/:id/cohorts/:cohortId", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId, cohortId } = request.params as { id: string; cohortId: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
+      const ok = await deleteCohort(orgId, cohortId);
+      if (!ok) return reply.code(404).send({ error: "Cohort not found" });
+      trackEvent("api.cohort.deleted", userId, { orgId, cohortId });
+      return reply.code(200).send({ deleted: true });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/cohorts/:cohortId] delete error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/v1/orgs/:id/methodology", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId } = request.params as { id: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      // Methodology pin is owner-only — compliance / audit anchor.
+      if (!hasAtLeastRole(role, "owner")) {
+        return reply.code(403).send({ error: "Owner-only operation.", code: "owner_required" });
+      }
+      const removed = await clearMethodologyPin(orgId);
+      if (removed) {
+        trackEvent("api.methodology.unpinned", userId, { orgId });
+      }
+      return reply.code(200).send({ engine_version: null, pinned: false });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/methodology] clear error:", error);
       return reply.code(500).send({ error: "Internal server error" });
     }
   });
@@ -724,20 +1780,46 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // consumers can audit + replay. NOT narrative — see ADR 0017.
   app.post("/v1/query", async (request, reply) => {
     try {
-      const userId = await guardSignals(request, reply);
-      if (!userId) return reply;
+      if (!getConfig().signalsApiEnabled) {
+        return reply.code(404).send({ error: "Not found" });
+      }
+      const ctx = await requireApiAccessWithOrg(request, reply);
+      if (!ctx) return reply;
       const parsed = parseQueryRequest(request.body);
       if (!parsed.ok) return reply.code(400).send({ error: parsed.error });
+
+      // Levers (AR-195): if ?bundle= or body.bundle is set, resolve the
+      // bundle's whitelist for the caller's org. The plan is then
+      // gated AFTER planning — the executed plan (whether programmatic
+      // or NL-derived) must only reference signals in the bundle.
+      const rawQuery = (request.query ?? {}) as { bundle?: unknown };
+      const rawBody = (request.body ?? {}) as { bundle?: unknown };
+      const bundleId =
+        typeof rawQuery.bundle === "string" ? rawQuery.bundle :
+        typeof rawBody.bundle === "string" ? rawBody.bundle : undefined;
+      const resolved = await resolveBundleForCaller(bundleId, ctx.orgId, ctx.userId, reply);
+      if (!resolved.ok) return reply;
 
       const result = await runQuery(parsed.req);
       if (!result.ok) {
         return reply.code(422).send({ error: result.error.message, code: result.error.code, raw: result.error.raw });
       }
-      trackEvent("api.query.executed", userId, {
+      if (resolved.allowed) {
+        const outside = planSignalsOutsideBundle(result.response.plan, resolved.allowed);
+        if (outside.length > 0) {
+          return reply.code(422).send({
+            error: `Plan references signals not in bundle: ${outside.join(", ")}.`,
+            code: "bundle_signal_not_allowed",
+            plan: result.response.plan,
+          });
+        }
+      }
+      trackEvent("api.query.executed", ctx.userId, {
         op: result.response.plan.op,
         plan_source: result.response.plan_source,
+        bundle: bundleId ?? null,
       });
-      reply.header("X-Engine-Version", METHODOLOGY_VERSION);
+      reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(ctx.orgId, ctx.userId));
       return reply.code(200).send(result.response);
     } catch (error) {
       if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
@@ -754,8 +1836,11 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // See ADR 0023.
   app.post("/v1/peers", async (request, reply) => {
     try {
-      const userId = await guardSignals(request, reply);
-      if (!userId) return reply;
+      if (!getConfig().signalsApiEnabled) {
+        return reply.code(404).send({ error: "Not found" });
+      }
+      const ctx = await requireApiAccessWithOrg(request, reply);
+      if (!ctx) return reply;
 
       const body = (request.body ?? {}) as Record<string, unknown>;
       const target = body.target as { geo_code?: string; postcode?: string; area?: string } | undefined;
@@ -780,11 +1865,37 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         scopeLabel = `${target.postcode ? "postcode" : "area"}=${q} -> lsoa=${targetGeoCode}`;
       }
 
+      // Levers (AR-198): cohort_id resolution. When set, the cohort's
+      // geo_codes scope the candidate set inside buildPeersSql. Default
+      // is unchanged (global graph).
+      let cohortGeoCodes: string[] | undefined;
+      if (typeof body.cohort_id === "string" && body.cohort_id.trim().length > 0) {
+        let effectiveOrgId = ctx.orgId;
+        if (!effectiveOrgId) {
+          const fallback = rows<{ org_id: string }>(await sql`
+            SELECT org_id FROM org_members WHERE user_id = ${ctx.userId} AND role = 'owner'
+             ORDER BY joined_at ASC LIMIT 1
+          `);
+          effectiveOrgId = fallback.length > 0 ? fallback[0].org_id : null;
+        }
+        if (!effectiveOrgId) {
+          return reply.code(422).send({
+            error: "Cannot resolve cohort_id: caller has no resolvable org context.",
+            code: "no_org_context",
+          });
+        }
+        const cohort = await getCohort(effectiveOrgId, body.cohort_id.trim());
+        if (!cohort) return reply.code(404).send({ error: "Cohort not found in your org." });
+        cohortGeoCodes = cohort.geo_codes;
+        scopeLabel = `${scopeLabel} cohort=${cohort.slug} (n=${cohort.geo_codes.length})`;
+      }
+
       const parsed = parsePeersInput({
         targetGeoCode,
         signals: Array.isArray(body.signals) ? (body.signals as unknown[]).map(String) : undefined,
         country: typeof body.country === "string" ? body.country : undefined,
         lad: typeof body.lad === "string" ? body.lad : undefined,
+        cohortGeoCodes,
         k: typeof body.k === "number" ? body.k : undefined,
         minSignals: typeof body.min_signals === "number" ? body.min_signals : undefined,
       });
@@ -797,13 +1908,14 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         });
       }
 
-      trackEvent("api.peers.queried", userId, {
+      trackEvent("api.peers.queried", ctx.userId, {
         target: targetGeoCode,
         signals_count: result.signalsUsed.length,
         peers_returned: result.peers.length,
         k: parsed.input.k,
+        cohort_id: typeof body.cohort_id === "string" ? body.cohort_id : null,
       });
-      reply.header("X-Engine-Version", METHODOLOGY_VERSION);
+      reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(ctx.orgId, ctx.userId));
       return reply.code(200).send({
         target: { geo_code: targetGeoCode, signals_used: result.signalsUsed },
         peers: result.peers,
@@ -963,8 +2075,15 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         return reply.code(401).send({ error: "Missing API key. Use: Authorization: Bearer oga_..." });
       }
       const apiKey = authHeader.slice(7);
-      const userId = await validateApiKey(apiKey);
-      if (!userId) return reply.code(401).send({ error: "Invalid or revoked API key" });
+      const result = await validateApiKey(apiKey, clientIpOf(request));
+      if (!result) return reply.code(401).send({ error: "Invalid or revoked API key" });
+      if ("blocked" in result) {
+        return reply.code(403).send({
+          error: "Request IP is not in the key's allowlist.",
+          code: result.blocked,
+        });
+      }
+      const userId = result.userId;
 
       // Batch-specific rate limit: 5 batches/min per key.
       const rl = await rateLimit(`api-batch:${apiKey}`, {
@@ -1911,6 +3030,17 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         INSERT INTO users (id, email, name, password_hash, provider, email_verified)
         VALUES (${id}, ${sanitized}, ${name}, ${hash}, 'credentials', FALSE)
       `;
+
+      // Levers (AR-194): every new user gets a personal org auto-created
+      // (matches the migration backfill formula). Idempotent — safe if the
+      // user re-signs-up after deletion or if the helper races with anything.
+      // Best-effort: a failure here does NOT block account creation; the
+      // lazy ensure-org path on /v1/orgs covers it.
+      try {
+        await createPersonalOrgForUser(id, sanitized);
+      } catch (e) {
+        logger.error("Failed to create personal org for new user:", e);
+      }
 
       // Send verification email (best-effort; account is created regardless).
       try {

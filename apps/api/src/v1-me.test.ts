@@ -31,7 +31,7 @@ const app = buildApp();
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(validateApiKey).mockResolvedValue("user_1");
+  vi.mocked(validateApiKey).mockResolvedValue({ userId: "user_1", orgId: null });
   vi.mocked(rateLimit).mockResolvedValue({ success: true, remaining: 29, reset: 0 });
   vi.mocked(getUserPlan).mockResolvedValue("sandbox");
   vi.mocked(hasApiAccess).mockResolvedValue(true);

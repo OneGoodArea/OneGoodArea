@@ -41,7 +41,7 @@ const AUTH = { authorization: "Bearer oga_good" };
 beforeEach(() => {
   vi.clearAllMocks();
   // Happy-path defaults; individual tests override one gate.
-  mockValidate.mockResolvedValue("user_1");
+  mockValidate.mockResolvedValue({ userId: "user_1", orgId: null });
   mockRate.mockResolvedValue({ success: true, remaining: 29, reset: 0 });
   mockApiAccess.mockResolvedValue(true);
   mockCreate.mockResolvedValue({

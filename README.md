@@ -3,131 +3,146 @@
 ![Website](https://img.shields.io/website?url=https%3A%2F%2Fwww.onegoodarea.com&style=plastic)
 ![GitHub repo size](https://img.shields.io/github/repo-size/OneGoodArea/OneGoodArea)
 ![Vercel](https://vercelbadge.vercel.app/api/OneGoodArea/OneGoodArea)
+
 # OneGoodArea
 
-**The deterministic UK location intelligence layer.**
+**The data and intelligence layer underneath UK property workflows.**
 
-One scoring engine. Four intents (origination, site selection, investment, reference). Five weighted dimensions per intent. Seven authoritative UK public datasets. Source-attributed reasoning, version-pinned methodology, confidence reported per dimension. Built for regulated buyers who need a number they can ship to a model risk register.
+Deterministic signals, configurable scoring, portfolio monitoring, and a typed AI query plane over monthly area time-series. Built for regulated buyers — mortgage lenders, insurers, MGAs, PropTech embeds — who need numbers they can ship to a model risk register.
 
-**Live at [onegoodarea.com](https://www.onegoodarea.com)** · API ref: [`/openapi.json`](https://www.onegoodarea.com/openapi.json) · Methodology: [`/methodology`](https://www.onegoodarea.com/methodology)
+**Live:** [onegoodarea.com](https://www.onegoodarea.com) · **API ref:** [`/docs/api-reference`](https://www.onegoodarea.com/docs/api-reference) · **System overview:** [`docs/SYSTEM-OVERVIEW.md`](docs/SYSTEM-OVERVIEW.md)
 
 ---
 
-## Category
+## What it is
 
-Intent-driven UK area intelligence. Same engine, four reweighted models — origination scoring is not site selection is not investment is not reference. The dimensions are constant; the weights and reasoning change per intent. The methodology document tells you exactly why.
+OneGoodArea is **four composable products** sitting on a persisted signal store + a typed query plane:
 
-## What makes it different
+1. **Signals** — `GET /v1/area` / `/v1/areas` / `/v1/signals/:category`. The atomic primitive: per-LSOA values + normalised + percentile + confidence + source, served from the store with live fallback.
+2. **Scores** — `POST /v1/score`. Deterministic composite over 5 dimensions per intent. Frozen v2 engine, golden-tested. Preset weights or caller weights.
+3. **Monitor** — `POST /v1/portfolios/*`. Portfolio CRUD + bulk enrich + change detection via the time-series moat → `signal.changed` webhooks.
+4. **Intelligence** — `POST /v1/query` / `/v1/peers` / `/v1/insights` / `/v1/forecast`. Typed query plane (programmatic OR NL-planned), k-NN peers, anomaly screening, linear projection. The AI is the INTERFACE; the determinism is the floor.
 
-- **Intent-driven scoring.** Most location intelligence vendors ship one score. We ship four reweighted models of the same engine, one per decision type. The composition is documented; the weights are public.
-- **Deterministic numbers.** Scoring formulas are fixed. Same postcode, same intent, same scores. AI narrates the result; it cannot override the maths. Server-side score lock after AI response.
-- **Confidence per dimension.** Every dimension reports HIGH / MEDIUM / LOW / NONE confidence based on data freshness and completeness. Insurance underwriters can't buy a black-box score; this is the answer.
-- **Version-pinned methodology.** Every report stamps the engine version. Customers can pin to a specific version for procurement / FCA model risk register compliance.
-- **Source-attributed reasoning.** Every dimension cites the upstream public dataset that drove the number. No proprietary indices, no opaque composites.
-- **API-first.** OpenAPI 3.0 spec, interactive reference, MCP server for AI workflows.
+**Levers** (epic AR-192) cross-cuts the four products: per-org tenancy, custom signal bundles, custom scoring presets, methodology pinning, peer cohorts, full RBAC, white-label, IP allowlist. The "fully configurable per client" half of the positioning.
+
+## Why it's different
+
+- **Deterministic numbers.** Scoring formulas are frozen. Same input, same output, every time. AI narrates; never overrides.
+- **Confidence per signal + per dimension.** Every value reports HIGH/MEDIUM/LOW/NONE based on data freshness + completeness. Buyer-grade transparency.
+- **Version-pinned methodology.** `engine_version` stamped on every response; orgs can pin a specific version for their model risk register (ADR 0031).
+- **Source-attributed.** Every value cites the upstream public dataset. No proprietary indices, no opaque composites.
+- **Audit-replayable AI.** `POST /v1/query` returns the executed plan + plan_source ("nl" | "client") with the response — every NL answer is reproducible as a programmatic call.
+- **Typed-everything API.** Zod contracts shared between server and clients via `@onegoodarea/contracts`.
 
 ## Audiences
 
-- **Mortgage lenders** — origination scoring, portfolio risk enrichment
-- **Property insurers** — area risk per postcode (flood, crime, environment)
-- **PropTech platforms** — embed kit, white-label scoring inside their products
-- **Retail and CRE site selection** — programmatic location evaluation at scale
+- **PropTech embeds** — Signals + Scores via white-label keys, `/v1/me.org.brand_url` for "Powered by X" surfaces.
+- **InsureTech MGAs** — Underwriting models powered by per-org bundles + saved scoring presets pinned to a methodology version.
+- **Mortgage lenders** — Origination scoring + portfolio risk enrichment via Monitor (`signal.changed` alerts).
+- **Retail / CRE site selection** — Cross-area ranking via `/v1/areas` + peer cohorts within their pilot footprint.
 
-Consumer surfaces (blog, area pages, /report) exist as an awareness funnel only.
+Consumer surfaces (the report generator, programmatic area pages, blog) remain as a top-of-funnel awareness layer.
 
-## Tech stack
+## Repository layout
 
-| Layer        | Tech |
-|--------------|------|
-| Framework    | Next.js 16, React 19, TypeScript |
-| Styling      | Tailwind 4, design tokens in `globals.css` |
-| Typography   | Fraunces (display), Inter (body), Geist Mono (labels) |
-| Database     | Neon Postgres |
-| Auth         | NextAuth v5 (Google OAuth + Credentials, PBKDF2-SHA256 password hashing) |
-| Payments     | Stripe (idempotent webhooks, 6-tier pricing + add-on architecture) |
-| AI narration | Server-side LLM call, narration only — never alters scoring values |
-| Email        | Resend (transactional, branded templates) |
-| Errors       | Sentry (client + server + edge runtimes) |
-| Observability| `/api/health`, structured logger, request-scoped trace IDs |
-| CI/CD        | GitHub Actions (lint + typecheck + tests), Vercel auto-deploy from `main` |
+This repo is an npm monorepo. Three workspaces:
 
-## Data sources
+```
+apps/
+├── web/                          Next.js 16 consumer + dashboard (renders www.onegoodarea.com)
+│   ├── src/app/                  Routes (design-v2/* is the canonical UI)
+│   ├── src/app/api/              Legacy /api/* routes (gradually migrating to BFF over apps/api)
+│   └── src/lib/                  Direct-DB + auth helpers (BFF cutover replaces these)
+├── api/                          Standalone Fastify backend deployed to Render
+│   ├── src/app.ts                ~75 routes — Signals, Scores, Monitor, Intelligence, Levers, legacy
+│   ├── src/modules/              signals/ scoring/ monitor/ intelligence/ orgs/ reports/ billing/ ...
+│   └── src/infrastructure/       db/ rate-limit/ email/ idempotency/ utils/
+packages/
+└── contracts/                    Zod schemas + types shared by web + api (single source of truth)
+docs/
+├── SYSTEM-OVERVIEW.md            ⭐ Read this. Living architecture doc + complete API catalog.
+├── DEPLOY.md                     Render + Vercel deploy notes.
+└── adr/                          34 ADRs documenting every load-bearing decision (0001-0034).
+mcp/                              @onegoodarea/mcp-server package
+scripts/                          Stripe + seed + ops utilities
+.github/workflows/                CI + signal-refresh cron
+```
 
-| Source | Coverage |
-|--------|----------|
-| [Postcodes.io](https://postcodes.io) | Geocoding, LSOA mapping, urban/suburban/rural classification |
-| [Police.uk](https://data.police.uk) | Street-level crime, 12 months rolling, categorised |
-| [IMD 2025 / WIMD 2019 / SIMD 2020](https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025) | Deprivation indices, 33,755 LSOAs across England, Wales, Scotland |
-| [OpenStreetMap (Overpass)](https://www.openstreetmap.org) | Schools, transport, healthcare, retail, parks, amenities |
-| [Environment Agency](https://environment.data.gov.uk) | Flood risk zones and active warnings |
-| [HM Land Registry](https://landregistry.data.gov.uk) | Price Paid SPARQL — real sold prices, YoY change, transaction volume |
-| [Ofsted](https://www.gov.uk/government/organisations/ofsted) | School inspection ratings, 19,770 English schools, quality-weighted |
+`apps/api` is deployed to **Render** (free tier today; container build via `/Dockerfile`); `apps/web` to **Vercel** (Root Directory `apps/web`). Neon hosts Postgres. The BFF cutover — apps/web's `src/lib/db.ts` direct access → calls into apps/api — is in progress, not yet flipped.
 
-Estyn (Wales) and Education Scotland integration on roadmap.
+## Stack
 
-Reports cached server-side for 24 hours per `area:intent` pair. Cache hits don't count against API quota.
+| Layer | Tech |
+|------|------|
+| Backend | Fastify (apps/api), Node 20, TypeScript 5, Vitest |
+| Frontend | Next.js 16, React 19, Tailwind 4 |
+| Contracts | Zod (runtime-validated, types inferred at compile time) |
+| Database | Neon Postgres (signal store + tenancy + everything else) |
+| Auth | NextAuth v5 on apps/web (Google OAuth + Credentials), HS256 JWT bridge to apps/api |
+| Payments | Stripe — 6 tiers + MCP add-on; idempotent webhooks |
+| AI | Anthropic Claude (planner + narrator); `apps/api/src/modules/intelligence/planner.ts` is the strict typed grammar |
+| Email | Resend |
+| Errors | Sentry (web + api + edge) |
+| CI | GitHub Actions (typecheck + lint + tests across all workspaces) |
+| Deploy | Render (apps/api), Vercel (apps/web) |
+
+## Data sources (signal store provenance)
+
+| Source | Coverage | Status |
+|--------|----------|--------|
+| [Postcodes.io](https://postcodes.io) | UK postcodes → LSOA / MSOA / LAD spine | Live |
+| [ONS NSPL](https://geoportal.statistics.gov.uk) | Geo spine, 1.8M postcodes, 43,916 LSOAs | Loaded into `geo_lookup` |
+| [IMD 2025 / WIMD 2019 / SIMD 2020](https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025) | Deprivation, England + Wales + Scotland | 85,280 store rows + percentiles |
+| [HM Land Registry](https://landregistry.data.gov.uk) | Price Paid — E&W LSOA × month median + count + YoY | 24 months loaded, the first dynamic source |
+| [Police.uk](https://data.police.uk) | Crime, LSOA × month × category | 1.2M rows × 36 months loaded |
+| [OpenStreetMap](https://www.openstreetmap.org) | Amenities + transport | Live fetch (store migration pending) |
+| [Environment Agency](https://environment.data.gov.uk) | Flood zones + active warnings | Live fetch |
+| [Ofsted](https://www.gov.uk/government/organisations/ofsted) | School inspection ratings (England) | 19,770 schools indexed |
+
+A monthly `timeseries:append` cron is the moat clock — every observation snapshot is immutable per `(geo_code, signal_key, observed_period)`. The Intelligence query plane reads against the store; the deterministic scoring engine reads via a shared fetch layer with store-backed read-through + live fallback.
+
+## API surface (75-ish routes)
+
+Full catalog with auth modes + dark-flag status in [`docs/SYSTEM-OVERVIEW.md` §6](docs/SYSTEM-OVERVIEW.md#6-complete-api-endpoint-catalog). Quick map:
+
+- **Public** — `/health`, `/v1/meta`, `/widget`, `/track`
+- **API key (4 products, dark-flagged behind `OGA_SIGNALS_API`)** — `/v1/area`, `/v1/areas`, `/v1/signals/:category`, `/v1/score`, `/v1/portfolios/*`, `/v1/query`, `/v1/peers`, `/v1/insights`, `/v1/forecast`
+- **API key (Levers, always-on)** — 25 endpoints under `/v1/orgs/*` for org tenancy, bundles, presets, methodology, cohorts, members
+- **API key (legacy + always-on)** — `/v1/report`, `/v1/batch`, `/v1/me`, `/me/reports`, `/v1/webhooks/*`
+- **Session JWT (BFF bridge)** — `/usage`, `/settings/*`, `/keys/*`, `/report/*`, `/watchlist/*`, `/stripe/*`
+- **Stripe sig** — `/stripe/webhook`
+- **CRON_SECRET** — `/cron/rescore`
+- **Public auth** — `/auth/register`, `/auth/resend-verification`, `/auth/forgot-password`, `/auth/reset-password`
+
+OpenAPI spec at [`apps/web/public/openapi.json`](apps/web/public/openapi.json), rendered by Scalar at [`/docs/api-reference`](https://www.onegoodarea.com/docs/api-reference). It deliberately omits the dark-flagged surfaces until they leave the flag (no-invented-claims rule).
 
 ## Engine architecture
 
 ```
 Request
   → Geocode (Postcodes.io)
-  → Parallel fetch from 7 data sources
-  → Classify area type (urban / suburban / rural)
-  → Score 5 dimensions for the chosen intent (deterministic, weights sum to 100)
-  → Compute confidence per dimension (HIGH / MEDIUM / LOW / NONE)
-  → Aggregate weighted score + report-level confidence
-  → Narrate (numbers passed in, never recomputed)
-  → Server-side score enforcement (AI cannot drift the numbers)
-  → Stamp engine_version + cache 24h
-  → Return JSON / render web / email / PDF
+  → fetchAreaSources — store read-through, live fallback per source
+  → Score 5 dimensions (frozen v2 engine, golden-tested)
+  → applyWeights — preset or caller weights, deterministic aggregation
+  → Confidence per dimension (HIGH/MEDIUM/LOW/NONE)
+  → Stamp engine_version (org pin honoured per ADR 0031)
+  → Response
 ```
 
-Scoring lives in `src/lib/scoring-engine.ts` (16 functions, 4 intent compositions). Methodology versions registered in `src/lib/methodology-versions.ts`. Current engine version: `2.0.0`.
-
-## Surfaces
-
-**Public API**
-- REST: `POST /api/v1/report` (Bearer auth, OpenAPI 3.0 documented at `/openapi.json`)
-- Interactive reference: `/docs/api-reference` (Scalar embed)
-- Widget: `GET /api/widget` (CORS, cache-only, 60/hr per origin)
-- Entitlement check: `GET /api/v1/me`
-- Time-series re-scoring cron: `/api/cron/rescore`
-
-**MCP server** (Model Context Protocol)
-- Separate npm package: `@onegoodarea/mcp-server` (`mcp/` directory)
-- Four tools: `score_postcode`, `compare_postcodes`, `methodology_for`, `engine_version`
-- For Claude Desktop, Cursor, and any MCP-compatible client
-- Install docs at `/docs/mcp`
-
-**Web product**
-- Generator + permanent SSR report pages
-- Side-by-side area comparison
-- PDF export, email delivery, watchlist + CSV export
-- 32 programmatic SEO area pages
-- Editorial blog with JSON-LD
-
-**Customer dashboard**
-- Report history, watchlist, API key management
-- API usage charts with 30-day rolling window
-- In-app billing surface at `/dashboard/billing` (plan selection, MCP add-on, current plan strip)
-
-**Admin**
-- Traffic analytics (pageviews, devices, countries, referrers)
-- Conversion funnels, MRR tracking, activity feed
+The engine module is `apps/api/src/modules/reports/scoring-engine/v2.ts` — frozen and golden-tested (`scoring-engine.golden.test.ts.snap`). Any refactor that changes one number fails CI.
 
 ## Pricing (v2)
 
-| Tier       | Price/mo | Calls/mo | Effective £/call |
-|------------|----------|----------|------------------|
-| Sandbox    | £0       | 35       | —                |
-| Starter    | £49      | 1,500    | £0.033           |
-| Build      | £149     | 6,000    | £0.025           |
-| Scale      | £499     | 25,000   | £0.020           |
-| Growth     | £1,499   | 100,000  | £0.015           |
-| Enterprise | from £4,999 | from 250,000 | from £0.020 (negotiated) |
+| Tier | Price/mo | Calls/mo |
+|------|---------|---------|
+| Sandbox | £0 | 35 |
+| Starter | £49 | 1,500 |
+| Build | £149 | 6,000 |
+| Scale | £499 | 25,000 |
+| Growth | £1,499 | 100,000 |
+| Enterprise | from £4,999 | from 250,000 (negotiated) |
 
-MCP server access: £29/mo add-on (free on Growth + Enterprise). Annual prepay 17% off on Build / Scale / Growth.
+MCP add-on: £29/mo (free on Growth + Enterprise). Annual prepay 17% off on Build / Scale / Growth.
 
 ## Local development
 
@@ -135,98 +150,66 @@ MCP server access: £29/mo add-on (free on Growth + Enterprise). Annual prepay 1
 git clone https://github.com/OneGoodArea/OneGoodArea.git
 cd OneGoodArea
 npm install
-cp .env.example .env.local   # then fill in keys
-npm run dev
 ```
 
-Required env vars (see `.env.example` for full list):
-
-```env
-AUTH_SECRET=
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-NEXTAUTH_URL=http://localhost:3000
-DATABASE_URL=
-ANTHROPIC_API_KEY=
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
-RESEND_API_KEY=
-```
+Two apps, run from the workspace root:
 
 ```bash
-npm test                # 224 tests across scoring engine, validation, stripe-types, crypto, config, id, methodology versions, MCP server, OpenAPI spec
-npx tsc --noEmit        # typecheck
-npx next build          # production build
+npm run dev -w @onegoodarea/web        # Next on http://localhost:3000
+npm run dev -w @onegoodarea/api        # Fastify on http://localhost:4000
 ```
 
-## Repository structure
+Gates (the operating loop runs all three before any push):
 
+```bash
+npm test                               # all workspaces
+npm run typecheck                      # tsc --noEmit across all workspaces
+npm run lint                           # ESLint across apps + packages
 ```
-src/
-├── app/
-│   ├── page.tsx                    Marketing landing (renders design-v2 client)
-│   ├── layout.tsx                  Root layout, fonts, theme-restore script
-│   ├── design-v2/                  Marketing + app design system (canonical source for nav, footer, shared components)
-│   │   └── _shared/                Wordmark, Mark, Nav, Footer, AppShell, AuthShell, Icons, LoadingStates
-│   ├── report/                     Generator + SSR report pages
-│   ├── dashboard/                  User dashboard
-│   │   └── billing/                In-app billing surface
-│   ├── compare/                    Side-by-side area comparison
-│   ├── api-usage/                  API key management
-│   ├── admin/                      Admin analytics
-│   ├── pricing/                    Pricing
-│   ├── docs/                       API documentation + MCP install + interactive reference
-│   ├── methodology/                Scoring methodology (procurement artifact)
-│   ├── about/                      About
-│   ├── blog/                       Editorial blog
-│   ├── area/[slug]/                Programmatic SEO area pages
-│   ├── changelog/                  Release history
-│   ├── help/                       FAQ + contact
-│   ├── settings/                   Account + subscription
-│   ├── sign-in/ & sign-up/         NextAuth catch-all routes
-│   ├── forgot-password/            Password reset flow
-│   ├── verify/                     Email verification
-│   ├── terms/ & privacy/           Legal
-│   ├── api/
-│   │   ├── v1/                     Public REST API (`/report`, `/me`)
-│   │   ├── widget/                 Embeddable widget endpoint (cache-only)
-│   │   ├── cron/rescore/           Time-series re-scoring (Vercel Cron)
-│   │   ├── stripe/                 Checkout, addon-checkout, webhook, portal, cancel
-│   │   ├── keys/                   API key CRUD
-│   │   ├── auth/                   NextAuth handler + register + verification
-│   │   ├── settings/               Password, delete, subscription
-│   │   ├── report/, watchlist/, usage/, track/, health/
-│   ├── opengraph-image.tsx, icon.tsx
-│   └── globals.css
-├── lib/
-│   ├── scoring-engine.ts           16 scoring functions, 4 intent compositions, confidence rubric
-│   ├── generate-report.ts          Fetch → score → narrate → enforce → stamp pipeline
-│   ├── methodology-versions.ts     Typed registry of engine releases (current: v2.0.0)
-│   ├── data-sources/               Postcodes, Police, Deprivation, OSM, Flood, Land Registry, Ofsted
-│   ├── top-postcodes.ts            Seed list for time-series cron
-│   ├── auth.ts, crypto.ts, with-auth.ts
-│   ├── stripe.ts, stripe-types.ts  V1 legacy + V2 active plans, MCP add-on
-│   ├── usage.ts, api-keys.ts       Quota + entitlement helpers
-│   ├── email.ts, pdf-export.ts     Branded transactional outputs
-│   ├── db.ts, db-schema.ts, db-types.ts
-│   ├── rate-limit.ts, validation.ts, errors.ts, id.ts, logger.ts, config.ts
-│   ├── activity.ts, report-cache.ts, rag.ts
-└── instrumentation.ts              Sentry init
 
-mcp/                                @onegoodarea/mcp-server package (separate tsconfig)
-scripts/                            Stripe utilities, data seeding, cron
-public/openapi.json                 OpenAPI 3.0 spec
+Database migration (idempotent, safe to re-run):
+
+```bash
+npm run migrate -w @onegoodarea/api
 ```
+
+Flag the Signals/Scores/Monitor/Intelligence surface on locally:
+
+```bash
+OGA_SIGNALS_API=true npm run dev -w @onegoodarea/api
+OGA_SIGNALS_STORE_READ=true            # serve store-backed signals (deprivation/property/crime)
+OGA_AI_PROVIDER=mock                   # deterministic AI for tests / local
+```
+
+Required env vars per app — see `apps/api/.env.example` + `apps/web/.env.example`.
+
+Refresh + derive jobs (Pedro / ops only):
+
+```bash
+npm run refresh:deprivation -w @onegoodarea/api
+npm run refresh:property -w @onegoodarea/api
+npm run refresh:crime -w @onegoodarea/api <archive-path>
+npm run timeseries:append -w @onegoodarea/api
+```
+
+## Test counts
+
+- **apps/api**: 868+ tests across 94 files (Vitest)
+- **apps/web**: 306 tests (Vitest + RTL)
+- **contracts**: 57 tests (Vitest, Zod round-trip pinning)
+
+CI green; main branch deployed.
 
 ## Status
 
-- Engine v2.0.0 LIVE — confidence per dimension + version stamping on every report
-- Pricing v2 LIVE on Stripe — 6 tiers + MCP add-on
-- Design system shipped — design-v2 promoted to whole-site production
-- OpenAPI 3.0 spec served at `/openapi.json` with Scalar interactive reference
-- MCP server v0.2.0 built and tested, npm publish pending
-- 224 tests across two packages, CI green
+- **4 of 4 products live** on the post-restructure surface (Signals + Scores + Monitor + Intelligence)
+- **6 of 6 Intelligence surfaces shipped** — query plane, multi-signal compound `rank_areas`, derived signals (9 indicators), peers (k-NN), insights (anomaly), forecast, AI eval harness (baseline 92.9% planner accuracy on a 14-case curated corpus)
+- **Signal store moat-clock running** — monthly `timeseries:append` cron; deprivation + property prices (24 months) + crime (36 months) all in store + served
+- **Levers epic feature-complete** — orgs / members / bundles / presets / methodology pinning / peer cohorts / full RBAC / white-label + IP allowlist (commits AR-193..AR-200 on `feat/levers`, ADRs 0027-0034)
+- **34 ADRs**, **75+ HTTP routes**, **monorepo split deployed on Render + Vercel** with auto-deploys from main
+- **Engine v2 frozen** + golden-tested; methodology version pinned per response
+
+See [`docs/SYSTEM-OVERVIEW.md`](docs/SYSTEM-OVERVIEW.md) for the full system map.
 
 ## License
 

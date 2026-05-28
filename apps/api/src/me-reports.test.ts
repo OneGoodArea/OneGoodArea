@@ -36,7 +36,7 @@ describe("GET /me/reports", () => {
   });
 
   it("returns the caller's reports for a valid key", async () => {
-    mockValidate.mockResolvedValue("user_1");
+    mockValidate.mockResolvedValue({ userId: "user_1", orgId: null });
     mockSql.mockResolvedValue([
       { id: "rpt_1", area: "Manchester", intent: "research", score: 72, created_at: "2026-01-02" },
       { id: "rpt_2", area: "Leeds", intent: "investing", score: 64, created_at: "2026-01-01" },
@@ -49,7 +49,8 @@ describe("GET /me/reports", () => {
     });
 
     expect(res.statusCode).toBe(200);
-    expect(mockValidate).toHaveBeenCalledWith("oga_good");
+    // AR-200: validateApiKey now takes (key, clientIp) — assert the key arg only.
+    expect(mockValidate).toHaveBeenCalledWith("oga_good", expect.anything());
     expect(mockSql).toHaveBeenCalledOnce();
     const body = res.json();
     expect(body.reports).toHaveLength(2);

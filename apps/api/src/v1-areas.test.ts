@@ -30,7 +30,7 @@ function get(url: string, withAuth = true) {
 beforeEach(() => {
   vi.clearAllMocks();
   process.env.OGA_SIGNALS_API = "true";
-  mockValidate.mockResolvedValue("user_1");
+  mockValidate.mockResolvedValue({ userId: "user_1", orgId: null });
   mockRate.mockResolvedValue({ success: true, remaining: 29, reset: 0 });
   mockApiAccess.mockResolvedValue(true);
   mockQuery.mockResolvedValue([

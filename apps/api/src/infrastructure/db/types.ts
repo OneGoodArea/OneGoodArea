@@ -28,10 +28,88 @@ export interface ApiKeyRow {
   id: string;
   key: string;
   user_id: string;
+  /** Levers (AR-193) — nullable during the expand phase of expand-contract.
+      The Foundation migration backfills every existing key; new keys get an
+      explicit org_id at creation time. Legacy `aiq_` keys that haven't been
+      backfilled keep validating with org_id = null. */
+  org_id: string | null;
+  /** Levers (AR-200) — per-key IP allowlist. Empty array (the default) =
+      no restriction; existing keys are unaffected. validateApiKey checks
+      the request IP against each CIDR when non-empty. */
+  allowed_ip_cidrs: string[];
   name: string;
   created_at: string;
   last_used_at: string | null;
   revoked: boolean;
+}
+
+/** Levers (AR-193) — per-org tenancy primitives. White-label fields
+    `display_name` + `brand_url` added by AR-200 (both nullable; reads
+    fall back to `name` when display_name is null). */
+export interface OrgRow {
+  id: string;
+  slug: string;
+  name: string;
+  display_name: string | null;
+  brand_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrgMemberRow {
+  org_id: string;
+  user_id: string;
+  role: "owner" | "admin" | "member";
+  joined_at: string;
+}
+
+/** Levers (AR-195) — signal_bundles row. signal_keys is a Postgres TEXT[]
+    that the Neon driver surfaces as a JS string[]. */
+export interface SignalBundleRow {
+  id: string;
+  org_id: string;
+  slug: string;
+  name: string;
+  signal_keys: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+/** Levers (AR-196) — scoring_presets row. weights is JSONB; the Neon
+    driver surfaces it as the parsed JS object. base_preset is one of
+    moving | business | investing | research (validated at write time). */
+export interface ScoringPresetRow {
+  id: string;
+  org_id: string;
+  slug: string;
+  name: string;
+  base_preset: string;
+  weights: Record<string, number>;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Levers (AR-197) — org_methodology_pins row. One row per org (org_id
+    is the PK). engine_version is validated at write time against
+    SUPPORTED_ENGINE_VERSIONS so reads never have to worry about
+    invalid values. */
+export interface OrgMethodologyPinRow {
+  org_id: string;
+  engine_version: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Levers (AR-198) — peer_cohorts row. geo_codes is a Postgres TEXT[]
+    of LSOA codes; the Neon driver surfaces it as a JS string[]. */
+export interface PeerCohortRow {
+  id: string;
+  org_id: string;
+  slug: string;
+  name: string;
+  geo_codes: string[];
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ActivityEventRow {

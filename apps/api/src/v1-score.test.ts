@@ -14,6 +14,7 @@ import { rateLimit } from "./infrastructure/rate-limit";
 import { hasApiAccess } from "./modules/usage";
 import { scoreArea } from "./modules/scoring";
 import { trackEvent } from "./modules/tracking/activity";
+import { sql } from "./infrastructure/db/client";
 
 const app = buildApp();
 afterAll(() => { app.close(); delete process.env.OGA_SIGNALS_API; });
@@ -40,7 +41,7 @@ function post(body: unknown, withAuth = true) {
 beforeEach(() => {
   vi.clearAllMocks();
   process.env.OGA_SIGNALS_API = "true";
-  mockValidate.mockResolvedValue("user_1");
+  mockValidate.mockResolvedValue({ userId: "user_1", orgId: null });
   mockRate.mockResolvedValue({ success: true, remaining: 29, reset: 0 });
   mockApiAccess.mockResolvedValue(true);
   mockScore.mockResolvedValue(RESULT);
@@ -91,6 +92,80 @@ describe("POST /v1/score", () => {
     expect(body.weights_source).toBe("preset");
     expect(mockScore).toHaveBeenCalledWith(expect.objectContaining({ area: "M1 1AE", preset: "research" }));
     expect(trackEvent).toHaveBeenCalledWith("api.score.computed", "user_1", expect.objectContaining({ preset: "research", score: 62 }));
+    expect(res.headers["x-engine-version"]).toBe("2.0.2");
+  });
+});
+
+/* Levers (AR-196): saved scoring presets via preset_id. */
+describe("POST /v1/score — Levers preset_id (AR-196)", () => {
+  it("resolves preset_id to the saved preset's {base_preset, weights} and calls scoreArea accordingly", async () => {
+    mockValidate.mockResolvedValue({ userId: "user_1", orgId: "org_acme" });
+    // First sql call after auth = getPreset SELECT.
+    vi.mocked(sql).mockResolvedValueOnce([{
+      id: "spr_x", org_id: "org_acme", slug: "underwriting", name: "Underwriting v1",
+      base_preset: "moving",
+      weights: { safety_crime: 0.5, schools_education: 0.2, transport_commute: 0.1, daily_amenities: 0.1, cost_of_living: 0.1 },
+      created_at: "2026-05-28", updated_at: "2026-05-28",
+    }] as never);
+
+    const res = await post({ area: "M1 1AE", preset_id: "spr_x" });
+    expect(res.statusCode).toBe(200);
+    expect(mockScore).toHaveBeenCalledWith(expect.objectContaining({
+      area: "M1 1AE",
+      preset: "moving",
+      weights: expect.objectContaining({ safety_crime: 0.5 }),
+    }));
+    expect(trackEvent).toHaveBeenCalledWith(
+      "api.score.computed",
+      "user_1",
+      expect.objectContaining({ preset_id: "spr_x", weights: "custom" }),
+    );
+  });
+
+  it("422s when preset_id is passed alongside explicit preset (mutually exclusive)", async () => {
+    mockValidate.mockResolvedValue({ userId: "user_1", orgId: "org_acme" });
+    const res = await post({ area: "M1 1AE", preset_id: "spr_x", preset: "moving" });
+    expect(res.statusCode).toBe(422);
+    expect(res.json().code).toBe("preset_id_conflict");
+    expect(mockScore).not.toHaveBeenCalled();
+  });
+
+  it("422s when preset_id is passed alongside explicit weights (mutually exclusive)", async () => {
+    mockValidate.mockResolvedValue({ userId: "user_1", orgId: "org_acme" });
+    const res = await post({ area: "M1 1AE", preset_id: "spr_x", weights: { safety_crime: 1 } });
+    expect(res.statusCode).toBe(422);
+    expect(res.json().code).toBe("preset_id_conflict");
+  });
+
+  it("404s when preset_id is unknown in the caller's org", async () => {
+    mockValidate.mockResolvedValue({ userId: "user_1", orgId: "org_acme" });
+    vi.mocked(sql).mockResolvedValueOnce([] as never); // getPreset -> 0 rows
+    const res = await post({ area: "M1 1AE", preset_id: "spr_nope" });
+    expect(res.statusCode).toBe(404);
+    expect(mockScore).not.toHaveBeenCalled();
+  });
+});
+
+/* Levers (AR-197): per-org methodology pinning stamped on X-Engine-Version. */
+describe("POST /v1/score — Levers methodology pin (AR-197)", () => {
+  it("stamps the org's pinned engine_version on the response header when set", async () => {
+    mockValidate.mockResolvedValue({ userId: "user_1", orgId: "org_acme" });
+    // The pin lookup: getMethodologyPin returns one row.
+    vi.mocked(sql).mockResolvedValueOnce([
+      { org_id: "org_acme", engine_version: "2.0.1", created_at: "2026-05-28", updated_at: "2026-05-28" },
+    ] as never);
+    const res = await post({ area: "M1 1AE", preset: "research" });
+    expect(res.statusCode).toBe(200);
+    expect(res.headers["x-engine-version"]).toBe("2.0.1");
+  });
+
+  it("falls back to METHODOLOGY_VERSION (latest) when no pin is set", async () => {
+    mockValidate.mockResolvedValue({ userId: "user_1", orgId: "org_acme" });
+    // getMethodologyPin -> 0 rows.
+    vi.mocked(sql).mockResolvedValueOnce([] as never);
+    const res = await post({ area: "M1 1AE", preset: "research" });
+    expect(res.statusCode).toBe(200);
+    // Latest is "2.0.2" (the methodology module's tail entry).
     expect(res.headers["x-engine-version"]).toBe("2.0.2");
   });
 });

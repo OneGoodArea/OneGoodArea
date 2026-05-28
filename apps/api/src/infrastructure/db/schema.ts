@@ -78,7 +78,171 @@ export const MIGRATIONS: Migration[] = [
       `ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS key_hash TEXT`,
       `ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS key_prefix TEXT`,
       `ALTER TABLE api_keys ALTER COLUMN key DROP NOT NULL`,
+      // org_id added by the Levers Foundation (AR-193, ADR 0027). Nullable in
+      // this phase of expand-contract so legacy `aiq_` keys + any not-yet-
+      // backfilled rows keep validating. NOT NULL constraint lands in a
+      // follow-up commit after observing prod for a release.
+      `ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS org_id TEXT`,
+      // Levers AR-200: per-key IP allowlist. Empty array = no
+      // restriction (existing keys are byte-identical). When non-empty,
+      // validateApiKey checks the request IP against each CIDR and
+      // surfaces 403 ip_not_allowed if no match. See ADR 0034.
+      `ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS allowed_ip_cidrs TEXT[] NOT NULL DEFAULT '{}'`,
       `CREATE UNIQUE INDEX IF NOT EXISTS api_keys_key_hash_idx ON api_keys (key_hash)`,
+      `CREATE INDEX IF NOT EXISTS api_keys_org_idx ON api_keys (org_id)`,
+    ],
+  },
+  {
+    // Levers Foundation (AR-193, ADR 0027): per-org tenancy. Every existing
+    // user auto-gets a personal org via the backfill statements at the end of
+    // this migration. New users get one created on signup (handled at the
+    // application layer, not here). Forward-compatible: peer_assignments,
+    // org_signal_bundles, org_score_presets, org_methodology, etc. will all
+    // reference orgs.id via scope_key / org_id columns in later commits.
+    name: "orgs",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS orgs (
+        id TEXT PRIMARY KEY,
+        slug TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      // Levers AR-200: white-label fields. Both nullable; null
+      // display_name falls back to `name` on read. brand_url is the
+      // org's public homepage for "Powered by X" links. See ADR 0034.
+      `ALTER TABLE orgs ADD COLUMN IF NOT EXISTS display_name TEXT`,
+      `ALTER TABLE orgs ADD COLUMN IF NOT EXISTS brand_url TEXT`,
+      `CREATE INDEX IF NOT EXISTS orgs_slug_idx ON orgs (slug)`,
+    ],
+  },
+  {
+    name: "org_members",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS org_members (
+        org_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'member',
+        joined_at TIMESTAMPTZ DEFAULT NOW(),
+        PRIMARY KEY (org_id, user_id)
+      )`,
+      `CREATE INDEX IF NOT EXISTS org_members_user_idx ON org_members (user_id)`,
+    ],
+  },
+  {
+    // BACKFILL — runs after the schema is in place. Idempotent (ON CONFLICT
+    // DO NOTHING / WHERE org_id IS NULL). Re-running this migration on a DB
+    // that already has the orgs backfilled is a no-op. Auto-creates a
+    // personal org for every existing user; auto-adds them as owner; sets
+    // their api_keys.org_id. New users post-merge get this handled in the
+    // application signup flow (TODO in a follow-up commit).
+    name: "orgs_backfill",
+    statements: [
+      // 1. Personal org per user. id = "org_" + user_id (UNIQUE by
+      //    construction); slug = email-local-part + first-12-chars of user_id.
+      //    Target-free ON CONFLICT DO NOTHING catches ANY unique violation
+      //    (id OR slug) so re-runs after partial failure stay idempotent
+      //    even if two users with identical email local-parts collided on
+      //    a shorter slug suffix in a previous attempt.
+      `INSERT INTO orgs (id, slug, name)
+         SELECT 'org_' || u.id,
+                LOWER(REGEXP_REPLACE(SPLIT_PART(u.email, '@', 1), '[^a-z0-9-]', '-', 'g')) || '-' || SUBSTRING(u.id, 1, 12),
+                SPLIT_PART(u.email, '@', 1) || ' workspace'
+           FROM users u
+       ON CONFLICT DO NOTHING`,
+      // 2. User is owner of their personal org.
+      `INSERT INTO org_members (org_id, user_id, role)
+         SELECT 'org_' || u.id, u.id, 'owner'
+           FROM users u
+       ON CONFLICT (org_id, user_id) DO NOTHING`,
+      // 3. Backfill api_keys.org_id (nullable -> populated). Only touches
+      //    rows where org_id IS NULL so this is safe to re-run after future
+      //    keys have been created with explicit org_id.
+      `UPDATE api_keys
+          SET org_id = 'org_' || user_id
+        WHERE org_id IS NULL`,
+    ],
+  },
+  {
+    // Levers AR-195 — custom signal bundles. A bundle is a named per-org
+    // whitelist of signal keys that scopes a caller's view of the data
+    // layer when they pass ?bundle=<id> on /v1/area / /v1/areas / /v1/query.
+    // Signal keys are validated against the SUPPORTED_SIGNALS taxonomy at
+    // the application layer (no CHECK constraint — taxonomy evolves).
+    // (slug, org_id) is UNIQUE so two bundles in the same org can't share
+    // a slug; slugs across different orgs can repeat. See ADR 0029.
+    name: "signal_bundles",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS signal_bundles (
+        id TEXT PRIMARY KEY,
+        org_id TEXT NOT NULL,
+        slug TEXT NOT NULL,
+        name TEXT NOT NULL,
+        signal_keys TEXT[] NOT NULL DEFAULT '{}',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE (org_id, slug)
+      )`,
+      `CREATE INDEX IF NOT EXISTS signal_bundles_org_idx ON signal_bundles (org_id)`,
+    ],
+  },
+  {
+    // Levers AR-196 — custom scoring presets. A preset is a saved
+    // {base_preset, weights} bundle keyed by id; callers reference it
+    // on POST /v1/score via `preset_id`. base_preset is one of the
+    // hardcoded intents (selects the dimension set); weights override
+    // the aggregation. The deterministic engine is reused untouched.
+    // See ADR 0030.
+    name: "scoring_presets",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS scoring_presets (
+        id TEXT PRIMARY KEY,
+        org_id TEXT NOT NULL,
+        slug TEXT NOT NULL,
+        name TEXT NOT NULL,
+        base_preset TEXT NOT NULL,
+        weights JSONB NOT NULL DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE (org_id, slug)
+      )`,
+      `CREATE INDEX IF NOT EXISTS scoring_presets_org_idx ON scoring_presets (org_id)`,
+    ],
+  },
+  {
+    // Levers AR-197 — methodology pinning. One row per org (org_id is
+    // the PK). engine_version is validated at WRITE time against the
+    // SUPPORTED_ENGINE_VERSIONS list so a downstream caller never sees
+    // a 400 because their org's pin became EOL. See ADR 0031.
+    name: "org_methodology_pins",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS org_methodology_pins (
+        org_id TEXT PRIMARY KEY,
+        engine_version TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+    ],
+  },
+  {
+    // Levers AR-198 — per-org peer cohorts. A cohort is a named subset
+    // of LSOAs that scopes /v1/peers results when the caller passes
+    // ?cohort_id. The existing global k-NN peer graph is reused;
+    // cohorts act as a candidate filter at query time (no materialized
+    // per-org graph). See ADR 0032.
+    name: "peer_cohorts",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS peer_cohorts (
+        id TEXT PRIMARY KEY,
+        org_id TEXT NOT NULL,
+        slug TEXT NOT NULL,
+        name TEXT NOT NULL,
+        geo_codes TEXT[] NOT NULL DEFAULT '{}',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE (org_id, slug)
+      )`,
+      `CREATE INDEX IF NOT EXISTS peer_cohorts_org_idx ON peer_cohorts (org_id)`,
     ],
   },
   {

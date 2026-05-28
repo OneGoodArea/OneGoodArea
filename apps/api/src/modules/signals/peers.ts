@@ -40,6 +40,11 @@ export interface PeersInput {
   signals?: string[];
   country?: Country;
   lad?: string;
+  /** Levers (AR-198): per-org peer cohort filter. When set, only LSOAs
+      whose geo_code is in this list are considered as candidates. The
+      target is permitted to be outside the cohort — the question is
+      "given THIS area, find peers in MY universe". */
+  cohortGeoCodes?: string[];
   k: number;
   minSignals: number;
 }
@@ -61,6 +66,7 @@ export function parsePeersInput(raw: {
   signals?: string[];
   country?: string;
   lad?: string;
+  cohortGeoCodes?: string[];
   k?: number;
   minSignals?: number;
 }): { ok: true; input: PeersInput } | { ok: false; error: string } {
@@ -103,7 +109,18 @@ export function parsePeersInput(raw: {
     }
   }
 
-  return { ok: true, input: { targetGeoCode, signals, country, lad, k, minSignals } };
+  return {
+    ok: true,
+    input: {
+      targetGeoCode,
+      signals,
+      country,
+      lad,
+      cohortGeoCodes: raw.cohortGeoCodes,
+      k,
+      minSignals,
+    },
+  };
 }
 
 /** PURE: SQL for the target's signal vector. The endpoint runs this first to
@@ -150,6 +167,12 @@ export function buildPeersSql(input: PeersInput): { text: string; params: unknow
   if (input.lad) {
     const lp = push(input.lad);
     candWhere.push(`sv.geo_code IN (SELECT DISTINCT lsoa_code FROM geo_lookup WHERE lad_code = $${lp})`);
+  }
+  // Levers (AR-198): cohort filter — candidates must be in the org's
+  // cohort universe. Stacks with country/lad if both are set.
+  if (input.cohortGeoCodes && input.cohortGeoCodes.length > 0) {
+    const cohortP = push(input.cohortGeoCodes);
+    candWhere.push(`sv.geo_code = ANY($${cohortP}::text[])`);
   }
 
   const text = `WITH target AS (
