@@ -710,7 +710,7 @@ Prints a markdown report with overall accuracy %, by-op breakdown, per-case PASS
 Every change to the codebase follows the same loop, documented in memory at `feedback_working_process.md`:
 
 1. **Orient** — read MEMORY.md + topic file + relevant ADRs + 3 strategy docs (if product/arch work).
-2. **Jira** — Story under the active epic (today: AR-169 for the restructure, will be a new epic for Levers). Transition In Progress at start; progress comments; Done at the merge gate.
+2. **Jira** — Story under the active epic (signal-first restructure ran under AR-169 then merged to main; Levers ran under AR-192 and is feature-complete on `feat/levers`). Transition In Progress at start; progress comments; Done at the merge gate.
 3. **Branch** — feature branch off main (never commit to main directly). Atomic conventional commits with Co-Authored-By trailer.
 4. **Build discipline** — strangler-fig + additive behind dark flags; ADR for every load-bearing decision; Zod contracts for every DTO; no invented claims.
 5. **Gates green** — `npm test -w @onegoodarea/api` + root `typecheck` + `lint`. Counts reported before every commit.
@@ -718,7 +718,7 @@ Every change to the codebase follows the same loop, documented in memory at `fee
 7. **Docs + memory** — `ARCHITECTURE.md` updated at phase milestones; memory topic files updated after every task.
 8. **Push + PR + squash-merge** — CI green; squash-merge via web UI; main stays clean.
 
-Test counts on main today: **apps/api 783 / packages/contracts 57 / apps/web 306 / typecheck clean / lint 0 errors / 20 known pre-existing apps/web warnings**.
+Test counts on `feat/levers` HEAD: **apps/api 868 / packages/contracts 57 / apps/web 306 / typecheck clean / lint 0 errors / 20 known pre-existing apps/web warnings**.
 
 ---
 
