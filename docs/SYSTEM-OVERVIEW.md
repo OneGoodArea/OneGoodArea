@@ -275,7 +275,7 @@ The Levers surface is the "fully configurable per client" layer. Every customer 
 | POST | `/v1/orgs` | API key | — | Create an org; caller becomes owner. |
 | GET | `/v1/orgs` | API key | — | List orgs the caller is a member of (with role). |
 | GET | `/v1/orgs/:id` | API key | — | Get one org (404 if not a member). |
-| PATCH | `/v1/orgs/:id` | API key | — | Rename / re-slug (admin+). |
+| PATCH | `/v1/orgs/:id` | API key | — | Rename / re-slug / set white-label `display_name` + `brand_url` (admin+). |
 | GET | `/v1/orgs/:id/members` | API key | — | List members + roles. |
 | POST | `/v1/orgs/:id/members` | API key | — | Add a member (admin+; owner-only to grant the `owner` role). |
 | DELETE | `/v1/orgs/:id/members/:userId` | API key | — | Remove a member; self-removal allowed for any role. Owner-role members can only be removed by an owner. Last-owner guard always applies. |
@@ -326,6 +326,22 @@ A cohort is a named per-org subset of LSOA codes. `POST /v1/peers` accepts an op
 | PATCH | `/v1/orgs/:id/cohorts/:cohortId` | API key | — | Update name / slug / geo_codes (admin+). |
 | DELETE | `/v1/orgs/:id/cohorts/:cohortId` | API key | — | Remove (admin+). |
 
+#### White-label + IP allowlist (AR-200, ADR 0034)
+
+No new endpoints — both features add columns to existing tables and surface them on existing routes.
+
+- **White-label:** `orgs.display_name` + `orgs.brand_url` set via `PATCH /v1/orgs/:id` (admin+); read on `/v1/me.org`. Null `display_name` falls back to `name` at the consumer.
+- **IP allowlist:** `api_keys.allowed_ip_cidrs TEXT[]` (empty = no restriction). Enforced inside `validateApiKey` via the pure `ipMatchesCidrs` helper (IPv4 prefix matching by integer mask, IPv6 exact-equality fallback, OR-semantics, skip-bad-cidr defensive). A non-matching request IP returns **403 `ip_not_allowed`** distinct from the 401 invalid-key path. Read the current allowlist on `/v1/me.key.allowed_ip_cidrs`. Management endpoint deferred — column settable via SQL today.
+
+#### Full RBAC (AR-199, ADR 0033)
+
+Cross-cutting refactor (no new endpoints). Promoted `admin` from "exists but ignored" to a real mutator role:
+- **member+**: all GET endpoints in §6.6.
+- **admin+**: PATCH org, member CRUD (non-owner targets only), bundles, presets, cohorts.
+- **owner-only**: methodology pin PUT/DELETE, granting the `owner` role, removing an `owner` member, last-owner-guard.
+
+Typed 403 codes: `admin_required`, `owner_required`, `cannot_grant_owner`, `cannot_remove_owner_as_admin`.
+
 ### 6.7 Legacy report API (pre-restructure, still live)
 
 These pre-date the 4-product restructure but remain the primary live surface today + are how the existing consumer site generates reports.
@@ -334,7 +350,7 @@ These pre-date the 4-product restructure but remain the primary live surface tod
 |---|---|---|---|---|
 | POST | `/v1/report` | API key | — | Generate a full report (score + AI narrative). The v1 consumer surface. |
 | POST | `/v1/batch` | API key | — | Batch up to `BATCH_MAX_ITEMS` reports per call. |
-| GET | `/v1/me` | API key | — | Caller's plan + entitlements + quota. |
+| GET | `/v1/me` | API key | — | Caller's plan + entitlements + quota + (AR-200) `org` block (id/slug/name/display_name/brand_url/role) + `key.allowed_ip_cidrs`. |
 | GET | `/me/reports` | API key | — | List the caller's recent reports. |
 
 ### 6.8 Webhooks (subscription management)
