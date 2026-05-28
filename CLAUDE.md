@@ -45,6 +45,7 @@
    - Avoid:
      - `fix stuff`
 
+1. If there any Indication of JIRA in the plan, create the BRANCH using the JIRA Key as prefix
 ---
 
 ## Safety & Reliability
