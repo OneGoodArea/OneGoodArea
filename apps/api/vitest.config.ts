@@ -14,5 +14,14 @@ export default defineConfig({
   test: {
     setupFiles: ["./tests/setup.ts"],
     include: ["tests/**/*.test.ts"],
+    /* Plan 007 phase 0: emit junit + json reports into the repo-root
+       .artifacts/ dir (gitignored). Default reporter stays for
+       human-readable terminal output; junit + json are added for CI
+       upload / regression-analysis tooling. */
+    reporters: ["default", "junit", "json"],
+    outputFile: {
+      junit: "../../.artifacts/test-reports/api/junit.xml",
+      json: "../../.artifacts/test-reports/api/results.json",
+    },
   },
 });

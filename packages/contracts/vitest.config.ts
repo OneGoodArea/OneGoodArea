@@ -7,5 +7,12 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     include: ["tests/**/*.test.ts"],
+    /* Plan 007 phase 0: emit junit + json into repo-root .artifacts/
+       (gitignored). Repo-root is 2 levels up from packages/contracts/. */
+    reporters: ["default", "junit", "json"],
+    outputFile: {
+      junit: "../../.artifacts/test-reports/contracts/junit.xml",
+      json: "../../.artifacts/test-reports/contracts/results.json",
+    },
   },
 });
