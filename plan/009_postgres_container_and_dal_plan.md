@@ -2,13 +2,9 @@
 
 ## 1. JIRA Integration
 
-* **JIRA Ticket Key:** `AR-201`
-* **JIRA Epic:** `Local Development & Security Parity`
-* **JIRA Title:** `AR-201: Setup Persistent Postgres Container and In-Process Data Access Layer (DAL) in Standalone API`
-* **JIRA Status:** `In Progress`
-* **JIRA Description:** Create a persistent, multi-platform, SELinux-compatible Postgres container and an in-process Data Access Layer (DAL) in `apps/api` to isolate database access from HTTP clients.
-* **Link to Plan:** [plan/009_postgres_container_and_dal_plan.md](file:///home/perez/projetos/OneGoodArea/plan/009_postgres_container_and_dal_plan.md)
-* **Target Branch:** `feat/AR-201-postgres-dal-setup`
+- **Jira Issue:** [AR-202](https://podnex.atlassian.net/browse/AR-202)
+- **Plan File (GitHub):** https://github.com/OneGoodArea/OneGoodArea/blob/feat/postgres-dal-setup/plan/009_postgres_container_and_dal_plan.md
+- **Pull Request:** _To be added after PR creation_
 
 ---
 
