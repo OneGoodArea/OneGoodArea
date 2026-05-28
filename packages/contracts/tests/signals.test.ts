@@ -8,7 +8,7 @@ import {
   isSignalCategory,
   type Signal,
   type AreaProfile,
-} from "./signals";
+} from "../src/signals";
 
 const validSignal: Signal = {
   key: "crime.total_12m",

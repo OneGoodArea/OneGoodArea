@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ScoreResultSchema, ScoreDimensionSchema, type ScoreResult } from "./scores";
+import { ScoreResultSchema, ScoreDimensionSchema, type ScoreResult } from "../src/scores";
 
 const dim = { key: "safety_crime", label: "Safety & Crime", score: 79, weight: 20, confidence: 0.4 };
 

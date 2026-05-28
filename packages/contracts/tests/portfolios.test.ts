@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { PortfolioSchema, PortfolioDetailSchema, PortfolioEnrichItemSchema } from "./portfolios";
+import { PortfolioSchema, PortfolioDetailSchema, PortfolioEnrichItemSchema } from "../src/portfolios";
 
 describe("portfolio DTOs", () => {
   it("parses a portfolio summary", () => {

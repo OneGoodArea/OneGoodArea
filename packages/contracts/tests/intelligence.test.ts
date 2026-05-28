@@ -4,7 +4,7 @@ import {
   FindPeersPlanSchema, PeersRequestSchema,
   FindInsightsPlanSchema, InsightsRequestSchema,
   FindForecastPlanSchema, ForecastRequestSchema,
-} from "./intelligence";
+} from "../src/intelligence";
 
 describe("@onegoodarea/contracts — intelligence query plan", () => {
   it("accepts the singular rank_areas params (backward-compat)", () => {

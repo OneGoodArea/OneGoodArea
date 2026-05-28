@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { INTENTS, isIntent, intentLabel, INTENT_WORKFLOW, type Intent } from "./index";
+import { INTENTS, isIntent, intentLabel, INTENT_WORKFLOW, type Intent } from "../src/index";
 
 describe("@onegoodarea/contracts — Intent", () => {
   it("exposes the four canonical intents in a stable order", () => {
