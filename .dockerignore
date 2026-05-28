@@ -19,3 +19,8 @@ DEVELOPMENT-LOG.md
 apps/web/scripts/*.json
 
 apps/api/dist
+
+# Plan 006: tests live in <workspace>/tests/ — never shipped to prod images.
+# The runtime bundle is esbuild-built from src/server.ts and never reaches
+# test files, but excluding tests/ keeps the build context small + clean.
+**/tests
