@@ -43,11 +43,11 @@ describe("createApiKey", () => {
 });
 
 describe("validateApiKey", () => {
-  it("returns the user id for a known hash", async () => {
+  it("returns the user id + org id for a known hash", async () => {
     mockSql
-      .mockResolvedValueOnce([{ user_id: "user_42" }] as never) // SELECT
+      .mockResolvedValueOnce([{ user_id: "user_42", org_id: "org_user_42" }] as never) // SELECT
       .mockResolvedValue([] as never);                          // fire-and-forget UPDATE
-    expect(await validateApiKey("oga_whatever")).toBe("user_42");
+    expect(await validateApiKey("oga_whatever")).toEqual({ userId: "user_42", orgId: "org_user_42" });
   });
 
   it("returns null when no row matches", async () => {
@@ -55,11 +55,14 @@ describe("validateApiKey", () => {
     expect(await validateApiKey("oga_nope")).toBeNull();
   });
 
-  it("still validates a legacy aiq_ key (no prefix gate, pure hash lookup)", async () => {
+  it("still validates a legacy aiq_ key (no prefix gate, pure hash lookup); orgId null if backfill hasn't reached it", async () => {
+    // org_id column is nullable during expand-contract — legacy rows
+    // pre-backfill (or fresh rows in a future code path that doesn't set it)
+    // surface orgId: null. The endpoint can then resolve a fallback org.
     mockSql
-      .mockResolvedValueOnce([{ user_id: "legacy_user" }] as never)
+      .mockResolvedValueOnce([{ user_id: "legacy_user", org_id: null }] as never)
       .mockResolvedValue([] as never);
-    expect(await validateApiKey("aiq_legacy")).toBe("legacy_user");
+    expect(await validateApiKey("aiq_legacy")).toEqual({ userId: "legacy_user", orgId: null });
   });
 });
 

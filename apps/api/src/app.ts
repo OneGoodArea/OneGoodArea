@@ -26,6 +26,23 @@ import { scoreArea, parseScoreBody } from "./modules/scoring";
 import { createPortfolio, listPortfolios, getPortfolio, deletePortfolio, addAreas, enrichPortfolio, detectPortfolioChanges, PORTFOLIO_ADD_MAX, type Baseline } from "./modules/monitor";
 import { runQuery, parseQueryRequest } from "./modules/intelligence";
 import {
+  createPersonalOrgForUser,
+  listOrgsForUser,
+  getOrgIfMember,
+  getRoleInOrg,
+  listMembers,
+  createOrgWithOwner,
+  updateOrg,
+  addMember,
+  removeMember,
+  countOwners,
+} from "./modules/orgs";
+import {
+  CreateOrgRequestSchema,
+  UpdateOrgRequestSchema,
+  AddMemberRequestSchema,
+} from "@onegoodarea/contracts";
+import {
   getUserPlan,
   hasApiAccess,
   canGenerateReport,
@@ -719,6 +736,174 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     } catch (error) {
       if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
       logger.error("[v1/portfolios/:id/changes] error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  // ── Levers (AR-194): per-org tenancy CRUD ──
+  //
+  // Orgs are the unit of Levers config (custom signal bundles, custom
+  // scoring presets, per-org peer graphs, RBAC, white-label, IP allow).
+  // This commit ships the CRUD primitives; subsequent Levers commits
+  // layer per-org config on top.
+  //
+  // Auth model: api-key (requireApiAccess) on everything. Session-mode
+  // (apps/web dashboard) will route via the BFF bridge → same endpoints.
+  // Mutations are owner-only; reads are member+.
+
+  app.post("/v1/orgs", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const parsed = CreateOrgRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      const org = await createOrgWithOwner({
+        name: parsed.data.name,
+        slug: parsed.data.slug,
+        userId,
+      });
+      trackEvent("api.org.created", userId, { orgId: org.id });
+      return reply.code(201).send(org);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs] create error:", error);
+      // Most likely a slug collision (UNIQUE on orgs.slug). Surface a 409.
+      const msg = error instanceof Error ? error.message : "";
+      if (/duplicate key|unique constraint/i.test(msg)) {
+        return reply.code(409).send({ error: "Slug already in use. Pick a different slug." });
+      }
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/v1/orgs", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const orgs = await listOrgsForUser(userId);
+      return reply.code(200).send({ orgs });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs] list error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/v1/orgs/:id", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id } = request.params as { id: string };
+      const org = await getOrgIfMember(id, userId);
+      if (!org) return reply.code(404).send({ error: "Org not found" });
+      return reply.code(200).send(org);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id] get error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.patch("/v1/orgs/:id", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id } = request.params as { id: string };
+      const role = await getRoleInOrg(id, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      const parsed = UpdateOrgRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      const updated = await updateOrg(id, parsed.data);
+      if (!updated) return reply.code(404).send({ error: "Org not found" });
+      trackEvent("api.org.updated", userId, { orgId: id });
+      return reply.code(200).send(updated);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id] update error:", error);
+      const msg = error instanceof Error ? error.message : "";
+      if (/duplicate key|unique constraint/i.test(msg)) {
+        return reply.code(409).send({ error: "Slug already in use. Pick a different slug." });
+      }
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/v1/orgs/:id/members", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id } = request.params as { id: string };
+      const role = await getRoleInOrg(id, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      const members = await listMembers(id);
+      return reply.code(200).send({ members });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/members] list error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/v1/orgs/:id/members", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id } = request.params as { id: string };
+      const role = await getRoleInOrg(id, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      const parsed = AddMemberRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      await addMember({
+        orgId: id,
+        userId: parsed.data.user_id,
+        role: parsed.data.role ?? "member",
+      });
+      trackEvent("api.org.member_added", userId, { orgId: id, addedUserId: parsed.data.user_id });
+      return reply.code(201).send({ ok: true });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/members] add error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/v1/orgs/:id/members/:userId", async (request, reply) => {
+    try {
+      const callerId = await requireApiAccess(request, reply);
+      if (!callerId) return reply;
+      const { id, userId: targetId } = request.params as { id: string; userId: string };
+      const callerRole = await getRoleInOrg(id, callerId);
+      if (!callerRole) return reply.code(404).send({ error: "Org not found" });
+      // Allow: owner removing anyone, OR member removing themselves.
+      const isSelfRemoval = callerId === targetId;
+      if (!isSelfRemoval && callerRole !== "owner") {
+        return reply.code(403).send({ error: "Owner-only operation (unless removing yourself)." });
+      }
+      // Last-owner guard: never let the org be orphaned.
+      const targetRole = await getRoleInOrg(id, targetId);
+      if (targetRole === "owner") {
+        const owners = await countOwners(id);
+        if (owners <= 1) {
+          return reply.code(409).send({
+            error: "Cannot remove the last owner. Promote another member to owner first.",
+          });
+        }
+      }
+      const ok = await removeMember(id, targetId);
+      if (!ok) return reply.code(404).send({ error: "Member not found in org" });
+      trackEvent("api.org.member_removed", callerId, { orgId: id, removedUserId: targetId });
+      return reply.code(200).send({ deleted: true });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/members/:userId] delete error:", error);
       return reply.code(500).send({ error: "Internal server error" });
     }
   });
@@ -1918,6 +2103,17 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         INSERT INTO users (id, email, name, password_hash, provider, email_verified)
         VALUES (${id}, ${sanitized}, ${name}, ${hash}, 'credentials', FALSE)
       `;
+
+      // Levers (AR-194): every new user gets a personal org auto-created
+      // (matches the migration backfill formula). Idempotent — safe if the
+      // user re-signs-up after deletion or if the helper races with anything.
+      // Best-effort: a failure here does NOT block account creation; the
+      // lazy ensure-org path on /v1/orgs covers it.
+      try {
+        await createPersonalOrgForUser(id, sanitized);
+      } catch (e) {
+        logger.error("Failed to create personal org for new user:", e);
+      }
 
       // Send verification email (best-effort; account is created regardless).
       try {
