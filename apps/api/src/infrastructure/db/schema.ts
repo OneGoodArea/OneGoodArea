@@ -83,6 +83,11 @@ export const MIGRATIONS: Migration[] = [
       // backfilled rows keep validating. NOT NULL constraint lands in a
       // follow-up commit after observing prod for a release.
       `ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS org_id TEXT`,
+      // Levers AR-200: per-key IP allowlist. Empty array = no
+      // restriction (existing keys are byte-identical). When non-empty,
+      // validateApiKey checks the request IP against each CIDR and
+      // surfaces 403 ip_not_allowed if no match. See ADR 0034.
+      `ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS allowed_ip_cidrs TEXT[] NOT NULL DEFAULT '{}'`,
       `CREATE UNIQUE INDEX IF NOT EXISTS api_keys_key_hash_idx ON api_keys (key_hash)`,
       `CREATE INDEX IF NOT EXISTS api_keys_org_idx ON api_keys (org_id)`,
     ],
@@ -103,6 +108,11 @@ export const MIGRATIONS: Migration[] = [
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )`,
+      // Levers AR-200: white-label fields. Both nullable; null
+      // display_name falls back to `name` on read. brand_url is the
+      // org's public homepage for "Powered by X" links. See ADR 0034.
+      `ALTER TABLE orgs ADD COLUMN IF NOT EXISTS display_name TEXT`,
+      `ALTER TABLE orgs ADD COLUMN IF NOT EXISTS brand_url TEXT`,
       `CREATE INDEX IF NOT EXISTS orgs_slug_idx ON orgs (slug)`,
     ],
   },

@@ -14,11 +14,18 @@ export type OrgRole = z.infer<typeof OrgRoleSchema>;
 
 /** An org as returned to the public API. id + slug + name; timestamps
     rendered as ISO strings (matching how the rest of the API surface
-    serialises TIMESTAMPTZ). */
+    serialises TIMESTAMPTZ).
+
+    Levers AR-200 added optional white-label fields. `display_name` is
+    the customer-facing label; null means "fall back to `name`". `brand_url`
+    is the org's public homepage URL — for "Powered by X" links on
+    embeds. Both nullable so a caller can clear them with `null`. */
 export const OrgSchema = z.object({
   id: z.string().min(1),
   slug: z.string().min(1),
   name: z.string().min(1),
+  display_name: z.string().nullable().optional(),
+  brand_url: z.string().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
 }).strict();
@@ -52,13 +59,22 @@ export const CreateOrgRequestSchema = z.object({
 }).strict();
 export type CreateOrgRequest = z.infer<typeof CreateOrgRequestSchema>;
 
-/** PATCH /v1/orgs/:id — both fields optional; at least one must be set. */
+/** PATCH /v1/orgs/:id — every field optional; at least one must be set.
+    AR-200 adds white-label fields: `display_name` (customer-facing label;
+    explicit `null` clears it back to `name`) and `brand_url` (homepage
+    URL; explicit `null` clears it). */
 export const UpdateOrgRequestSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   slug: z.string().regex(/^[a-z0-9-]+$/).min(2).max(60).optional(),
+  display_name: z.string().min(1).max(200).nullable().optional(),
+  brand_url: z.string().url().max(500).nullable().optional(),
 }).strict().refine(
-  (b) => b.name !== undefined || b.slug !== undefined,
-  { message: "At least one of name or slug must be provided." },
+  (b) =>
+    b.name !== undefined ||
+    b.slug !== undefined ||
+    b.display_name !== undefined ||
+    b.brand_url !== undefined,
+  { message: "At least one of name, slug, display_name, or brand_url must be provided." },
 );
 export type UpdateOrgRequest = z.infer<typeof UpdateOrgRequestSchema>;
 

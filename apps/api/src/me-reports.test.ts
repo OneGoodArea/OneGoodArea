@@ -49,7 +49,8 @@ describe("GET /me/reports", () => {
     });
 
     expect(res.statusCode).toBe(200);
-    expect(mockValidate).toHaveBeenCalledWith("oga_good");
+    // AR-200: validateApiKey now takes (key, clientIp) — assert the key arg only.
+    expect(mockValidate).toHaveBeenCalledWith("oga_good", expect.anything());
     expect(mockSql).toHaveBeenCalledOnce();
     const body = res.json();
     expect(body.reports).toHaveLength(2);

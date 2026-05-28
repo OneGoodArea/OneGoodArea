@@ -144,6 +144,19 @@ function headerString(value: string | string[] | undefined): string | null {
   return value ?? null;
 }
 
+/** Levers AR-200: resolve the request's client IP for IP-allowlist
+    enforcement. Prefers the first segment of `x-forwarded-for`
+    (Render/Vercel/most reverse proxies set this), falls back to
+    Fastify's request.ip. Trimmed. */
+function clientIpOf(request: FastifyRequest): string | null {
+  const xff = headerString(request.headers["x-forwarded-for"]);
+  if (xff) {
+    const first = xff.split(",")[0]?.trim();
+    if (first) return first;
+  }
+  return request.ip ?? null;
+}
+
 /** CORS headers for the public embeddable widget (callable from any site). */
 function widgetCorsHeaders(origin: string | null): Record<string, string> {
   return {
@@ -162,21 +175,31 @@ function widgetCorsHeaders(origin: string | null): Record<string, string> {
    on top of it. /v1/meta imports from @onegoodarea/contracts to prove the
    monorepo wiring (backend consumes the shared package). */
 
-/** Bearer-token auth. Resolves the userId, or sends a 401 and resolves null.
-   Shared by every authenticated route (today /me/reports; soon /v1/report). */
+/** Bearer-token auth. Resolves the userId, or sends a 401/403 and
+   resolves null. Shared by every authenticated route (today /me/reports;
+   soon /v1/report).
+
+   AR-200: also enforces the api_keys.allowed_ip_cidrs gate. A key with
+   a non-empty allowlist whose request IP doesn't match returns a typed
+   "blocked" shape from validateApiKey, which this helper surfaces as
+   403 ip_not_allowed. Empty allowlist = no restriction (existing
+   behaviour). */
 async function authenticate(request: FastifyRequest, reply: FastifyReply): Promise<string | null> {
   const header = request.headers.authorization;
   if (!header || !header.startsWith("Bearer ")) {
     reply.code(401).send({ error: "Missing API key. Use: Authorization: Bearer oga_..." });
     return null;
   }
-  // validateApiKey returns { userId, orgId } as of Levers AR-193. We only
-  // surface userId from this helper; org-aware endpoints opt into a
-  // separate helper that returns the full shape (added in a follow-up
-  // Levers commit). orgId may be null for legacy keys not yet backfilled.
-  const result = await validateApiKey(header.slice(7));
+  const result = await validateApiKey(header.slice(7), clientIpOf(request));
   if (!result) {
     reply.code(401).send({ error: "Invalid or revoked API key" });
+    return null;
+  }
+  if ("blocked" in result) {
+    reply.code(403).send({
+      error: "Request IP is not in the key's allowlist.",
+      code: result.blocked,
+    });
     return null;
   }
   return result.userId;
@@ -230,9 +253,14 @@ async function requireApiAccessWithOrg(
   // full {userId, orgId} shape through `requireApiAccess`) would churn
   // 30+ endpoints + their test mocks for a feature only a few endpoints
   // need.
+  //
+  // AR-200: pass clientIp so the second validateApiKey call has the same
+  // gate behaviour as the first. The `blocked` branch carries orgId too,
+  // so we surface it identically.
   const header = request.headers.authorization!;
-  const result = await validateApiKey(header.slice(7));
-  return { userId, orgId: result?.orgId ?? null };
+  const result = await validateApiKey(header.slice(7), clientIpOf(request));
+  if (!result) return { userId, orgId: null };
+  return { userId, orgId: result.orgId ?? null };
 }
 
 /** Session (browser-user) auth via the JWT bridge — the counterpart to
@@ -419,9 +447,17 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       return reply.code(401).send({ error: "Missing API key. Use: Authorization: Bearer oga_..." });
     }
     const apiKey = authHeader.slice(7);
-    const result = await validateApiKey(apiKey);
+    const result = await validateApiKey(apiKey, clientIpOf(request));
     if (!result) return reply.code(401).send({ error: "Invalid or revoked API key" });
+    if ("blocked" in result) {
+      return reply.code(403).send({
+        error: "Request IP is not in the key's allowlist.",
+        code: result.blocked,
+      });
+    }
     const userId = result.userId;
+    const orgIdFromKey = result.orgId;
+    const allowedIpCidrs = result.allowedIpCidrs ?? [];
 
     // Rate-limit /me at the same level as /v1/report (MCP calls it once at
     // startup, but a misbehaving client could spam it).
@@ -445,6 +481,57 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
     const planConfig = PLANS[plan];
 
+    // Levers AR-200: surface the caller's org (with white-label fields)
+    // + the key's IP allowlist on /v1/me. Resolves the org via the
+    // api-key row's org_id, with the legacy first-owner fallback for
+    // pre-AR-193 keys. Defensive — a DB hiccup on the org lookup
+    // shouldn't 500 a meter / entitlement check that has nothing to
+    // do with branding. Falls back to org: null.
+    let orgInfo: {
+      id: string;
+      slug: string;
+      name: string;
+      display_name: string | null;
+      brand_url: string | null;
+      role: string;
+    } | null = null;
+    try {
+      let effectiveOrgId = orgIdFromKey;
+      if (!effectiveOrgId) {
+        const fallback = rows<{ org_id: string }>(await sql`
+          SELECT org_id FROM org_members WHERE user_id = ${userId} AND role = 'owner'
+           ORDER BY joined_at ASC LIMIT 1
+        `);
+        effectiveOrgId = fallback.length > 0 ? fallback[0].org_id : null;
+      }
+      if (effectiveOrgId) {
+        const orgRow = rows<{
+          id: string; slug: string; name: string;
+          display_name: string | null; brand_url: string | null;
+          role: string;
+        }>(await sql`
+          SELECT o.id, o.slug, o.name, o.display_name, o.brand_url, m.role
+            FROM orgs o
+            JOIN org_members m ON m.org_id = o.id
+           WHERE o.id = ${effectiveOrgId} AND m.user_id = ${userId}
+           LIMIT 1
+        `);
+        if (orgRow.length > 0) {
+          const r = orgRow[0];
+          orgInfo = {
+            id: r.id,
+            slug: r.slug,
+            name: r.name,
+            display_name: r.display_name,
+            brand_url: r.brand_url,
+            role: r.role,
+          };
+        }
+      }
+    } catch (e) {
+      logger.error("[v1/me] org lookup failed; returning org: null:", e);
+    }
+
     return {
       plan,
       plan_name: planConfig?.name ?? plan,
@@ -458,6 +545,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       engine_version: METHODOLOGY_VERSION,
       addons,
       mcp_calls_this_month: mcpUsed,
+      // Levers AR-200: org branding + key allowlist (Enterprise polish).
+      org: orgInfo,
+      key: { allowed_ip_cidrs: allowedIpCidrs },
     };
   });
 
@@ -472,8 +562,14 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         return reply.code(401).send({ error: "Missing API key. Use: Authorization: Bearer oga_..." });
       }
       const apiKey = authHeader.slice(7);
-      const result = await validateApiKey(apiKey);
+      const result = await validateApiKey(apiKey, clientIpOf(request));
       if (!result) return reply.code(401).send({ error: "Invalid or revoked API key" });
+      if ("blocked" in result) {
+        return reply.code(403).send({
+          error: "Request IP is not in the key's allowlist.",
+          code: result.blocked,
+        });
+      }
       const userId = result.userId;
 
       // Rate limit by API key.
@@ -1979,8 +2075,14 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         return reply.code(401).send({ error: "Missing API key. Use: Authorization: Bearer oga_..." });
       }
       const apiKey = authHeader.slice(7);
-      const result = await validateApiKey(apiKey);
+      const result = await validateApiKey(apiKey, clientIpOf(request));
       if (!result) return reply.code(401).send({ error: "Invalid or revoked API key" });
+      if ("blocked" in result) {
+        return reply.code(403).send({
+          error: "Request IP is not in the key's allowlist.",
+          code: result.blocked,
+        });
+      }
       const userId = result.userId;
 
       // Batch-specific rate limit: 5 batches/min per key.

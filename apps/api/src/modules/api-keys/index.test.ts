@@ -43,11 +43,15 @@ describe("createApiKey", () => {
 });
 
 describe("validateApiKey", () => {
-  it("returns the user id + org id for a known hash", async () => {
+  it("returns the user id + org id + allowlist for a known hash", async () => {
     mockSql
-      .mockResolvedValueOnce([{ user_id: "user_42", org_id: "org_user_42" }] as never) // SELECT
+      .mockResolvedValueOnce([{ user_id: "user_42", org_id: "org_user_42", allowed_ip_cidrs: [] }] as never) // SELECT
       .mockResolvedValue([] as never);                          // fire-and-forget UPDATE
-    expect(await validateApiKey("oga_whatever")).toEqual({ userId: "user_42", orgId: "org_user_42" });
+    expect(await validateApiKey("oga_whatever")).toEqual({
+      userId: "user_42",
+      orgId: "org_user_42",
+      allowedIpCidrs: [],
+    });
   });
 
   it("returns null when no row matches", async () => {
@@ -60,9 +64,54 @@ describe("validateApiKey", () => {
     // pre-backfill (or fresh rows in a future code path that doesn't set it)
     // surface orgId: null. The endpoint can then resolve a fallback org.
     mockSql
-      .mockResolvedValueOnce([{ user_id: "legacy_user", org_id: null }] as never)
+      .mockResolvedValueOnce([{ user_id: "legacy_user", org_id: null, allowed_ip_cidrs: [] }] as never)
       .mockResolvedValue([] as never);
-    expect(await validateApiKey("aiq_legacy")).toEqual({ userId: "legacy_user", orgId: null });
+    expect(await validateApiKey("aiq_legacy")).toEqual({
+      userId: "legacy_user",
+      orgId: null,
+      allowedIpCidrs: [],
+    });
+  });
+
+  it("returns blocked when the key has CIDRs and the request IP doesn't match", async () => {
+    mockSql
+      .mockResolvedValueOnce([{ user_id: "u1", org_id: "org_u1", allowed_ip_cidrs: ["10.0.0.0/8"] }] as never)
+      .mockResolvedValue([] as never);
+    expect(await validateApiKey("oga_x", "8.8.8.8")).toEqual({
+      blocked: "ip_not_allowed",
+      userId: "u1",
+      orgId: "org_u1",
+    });
+  });
+
+  it("returns the validated shape when the key has CIDRs and the IP matches", async () => {
+    mockSql
+      .mockResolvedValueOnce([{ user_id: "u1", org_id: "org_u1", allowed_ip_cidrs: ["10.0.0.0/8"] }] as never)
+      .mockResolvedValue([] as never);
+    expect(await validateApiKey("oga_x", "10.1.2.3")).toEqual({
+      userId: "u1",
+      orgId: "org_u1",
+      allowedIpCidrs: ["10.0.0.0/8"],
+    });
+  });
+
+  it("empty allowlist = no restriction (any IP works, even missing)", async () => {
+    mockSql
+      .mockResolvedValueOnce([{ user_id: "u1", org_id: "org_u1", allowed_ip_cidrs: [] }] as never)
+      .mockResolvedValue([] as never);
+    expect(await validateApiKey("oga_x", "8.8.8.8")).toEqual({
+      userId: "u1",
+      orgId: "org_u1",
+      allowedIpCidrs: [],
+    });
+    mockSql
+      .mockResolvedValueOnce([{ user_id: "u1", org_id: "org_u1", allowed_ip_cidrs: [] }] as never)
+      .mockResolvedValue([] as never);
+    expect(await validateApiKey("oga_x")).toEqual({
+      userId: "u1",
+      orgId: "org_u1",
+      allowedIpCidrs: [],
+    });
   });
 });
 

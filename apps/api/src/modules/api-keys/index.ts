@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { sql } from "../../infrastructure/db/client";
 import { generateId } from "../../infrastructure/utils/id";
 import { type ApiKeyRow, rows } from "../../infrastructure/db/types";
+import { ipMatchesCidrs } from "../../infrastructure/utils/ip-cidr";
 
 /* Migrated from legacy src/lib/api-keys.ts. Changes:
    - imports repointed to apps/api infrastructure;
@@ -82,18 +83,49 @@ export async function revokeApiKey(userId: string, keyId: string): Promise<boole
 export interface ValidatedApiKey {
   userId: string;
   orgId: string | null;
+  /** Levers (AR-200) — the per-key IP allowlist as stored. Empty array
+      means no restriction; non-empty was enforced for THIS call (the
+      function returned a `blocked` shape if the IP failed). Surfaced
+      so /v1/me + key-management UIs can display it.
+
+      Optional in the type so existing test mocks (and any external
+      mock harnesses) keep type-checking; downstream consumers should
+      treat `undefined` as `[]`. The real runtime always returns an
+      array. */
+  allowedIpCidrs?: string[];
 }
 
-export async function validateApiKey(key: string): Promise<ValidatedApiKey | null> {
+/** Levers (AR-200) — discriminated union return shape. A `blocked` result
+    means the key validated but the request IP is outside the key's
+    allowlist; surface as 403 `ip_not_allowed` distinct from the 401
+    "invalid key" path. */
+export type ValidateApiKeyResult =
+  | ValidatedApiKey
+  | { blocked: "ip_not_allowed"; userId: string; orgId: string | null }
+  | null;
+
+export async function validateApiKey(key: string, requestIp?: string | null): Promise<ValidateApiKeyResult> {
   const hash = hashApiKey(key);
-  const result = rows<Pick<ApiKeyRow, "user_id" | "org_id">>(await sql`
-    SELECT user_id, org_id FROM api_keys
+  const result = rows<Pick<ApiKeyRow, "user_id" | "org_id" | "allowed_ip_cidrs">>(await sql`
+    SELECT user_id, org_id, allowed_ip_cidrs FROM api_keys
     WHERE key_hash = ${hash} AND revoked = FALSE
   `);
   if (result.length === 0) return null;
 
-  // Update last_used_at (fire and forget)
+  // Update last_used_at (fire and forget). Done BEFORE the IP gate so a
+  // blocked-by-IP attempt still rotates the timestamp — useful signal
+  // for "someone tried, from an IP that didn't match".
   sql`UPDATE api_keys SET last_used_at = NOW() WHERE key_hash = ${hash}`.catch(() => {});
 
-  return { userId: result[0].user_id, orgId: result[0].org_id ?? null };
+  const userId = result[0].user_id;
+  const orgId = result[0].org_id ?? null;
+  const allowedIpCidrs = result[0].allowed_ip_cidrs ?? [];
+
+  // Enforce IP allowlist when set. Empty list = no restriction (existing
+  // keys are byte-identical to pre-AR-200 behaviour).
+  if (allowedIpCidrs.length > 0 && !ipMatchesCidrs(requestIp ?? null, allowedIpCidrs)) {
+    return { blocked: "ip_not_allowed", userId, orgId };
+  }
+
+  return { userId, orgId, allowedIpCidrs };
 }

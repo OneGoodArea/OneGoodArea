@@ -71,6 +71,8 @@ function orgFromRow(r: OrgRow): Org {
     id: r.id,
     slug: r.slug,
     name: r.name,
+    display_name: r.display_name ?? null,
+    brand_url: r.brand_url ?? null,
     created_at: String(r.created_at),
     updated_at: String(r.updated_at),
   };
@@ -93,7 +95,7 @@ function memberFromRow(r: OrgMemberRow): OrgMember {
     this commit lands). */
 export async function listOrgsForUser(userId: string): Promise<OrgWithRole[]> {
   const result = rows<OrgRow & { role: OrgRole }>(await sql`
-    SELECT o.id, o.slug, o.name, o.created_at, o.updated_at, m.role
+    SELECT o.id, o.slug, o.name, o.display_name, o.brand_url, o.created_at, o.updated_at, m.role
       FROM orgs o
       JOIN org_members m ON m.org_id = o.id
      WHERE m.user_id = ${userId}
@@ -106,7 +108,7 @@ export async function listOrgsForUser(userId: string): Promise<OrgWithRole[]> {
     maps null to 404). */
 export async function getOrgIfMember(orgId: string, userId: string): Promise<Org | null> {
   const result = rows<OrgRow>(await sql`
-    SELECT o.id, o.slug, o.name, o.created_at, o.updated_at
+    SELECT o.id, o.slug, o.name, o.display_name, o.brand_url, o.created_at, o.updated_at
       FROM orgs o
       JOIN org_members m ON m.org_id = o.id
      WHERE o.id = ${orgId} AND m.user_id = ${userId}
@@ -151,7 +153,7 @@ export async function createOrgWithOwner(input: {
   const insertResult = rows<OrgRow>(await sql`
     INSERT INTO orgs (id, slug, name)
     VALUES (${id}, ${slug}, ${input.name})
-    RETURNING id, slug, name, created_at, updated_at
+    RETURNING id, slug, name, display_name, brand_url, created_at, updated_at
   `);
   if (insertResult.length === 0) throw new Error("orgs insert returned no row");
   await sql`
@@ -182,35 +184,49 @@ export async function createPersonalOrgForUser(userId: string, email: string): P
   `;
 }
 
-/** Rename / re-slug an org. Owner-only — caller must be checked upstream.
-    Returns the updated org or null if not found. */
-export async function updateOrg(orgId: string, patch: { name?: string; slug?: string }): Promise<Org | null> {
-  // Three cases: name only, slug only, both. updated_at always bumps.
-  // The Neon tagged template wants typed binds so we branch explicitly
-  // instead of composing dynamic SQL.
-  let result: OrgRow[] = [];
-  if (patch.name !== undefined && patch.slug !== undefined) {
-    result = rows<OrgRow>(await sql`
-      UPDATE orgs SET name = ${patch.name}, slug = ${patch.slug}, updated_at = NOW()
-       WHERE id = ${orgId}
-       RETURNING id, slug, name, created_at, updated_at
-    `);
-  } else if (patch.name !== undefined) {
-    result = rows<OrgRow>(await sql`
-      UPDATE orgs SET name = ${patch.name}, updated_at = NOW()
-       WHERE id = ${orgId}
-       RETURNING id, slug, name, created_at, updated_at
-    `);
-  } else if (patch.slug !== undefined) {
-    result = rows<OrgRow>(await sql`
-      UPDATE orgs SET slug = ${patch.slug}, updated_at = NOW()
-       WHERE id = ${orgId}
-       RETURNING id, slug, name, created_at, updated_at
-    `);
-  } else {
-    // Zod refines this away; defensive no-op.
-    return null;
-  }
+/** Rename / re-slug / re-brand an org. Owner+/admin+ check happens
+    upstream (ADR 0033). Patch semantics:
+      - field absent (undefined) -> keep current value
+      - field set to a string   -> overwrite
+      - display_name / brand_url set to null -> clear to NULL
+
+    Read-modify-write pattern: fetch the current row, apply the patch in
+    JS, write back. One extra SELECT per PATCH, but the alternative is
+    8+ SQL branches across 4 fields × 2 states. Same pattern as
+    updatePreset / updateCohort. */
+export async function updateOrg(
+  orgId: string,
+  patch: {
+    name?: string;
+    slug?: string;
+    display_name?: string | null;
+    brand_url?: string | null;
+  },
+): Promise<Org | null> {
+  const currentRows = rows<OrgRow>(await sql`
+    SELECT id, slug, name, display_name, brand_url, created_at, updated_at
+      FROM orgs
+     WHERE id = ${orgId}
+     LIMIT 1
+  `);
+  if (currentRows.length === 0) return null;
+  const current = currentRows[0];
+  const next = {
+    name: patch.name ?? current.name,
+    slug: patch.slug ?? current.slug,
+    display_name: patch.display_name !== undefined ? patch.display_name : current.display_name,
+    brand_url: patch.brand_url !== undefined ? patch.brand_url : current.brand_url,
+  };
+  const result = rows<OrgRow>(await sql`
+    UPDATE orgs
+       SET name = ${next.name},
+           slug = ${next.slug},
+           display_name = ${next.display_name},
+           brand_url = ${next.brand_url},
+           updated_at = NOW()
+     WHERE id = ${orgId}
+     RETURNING id, slug, name, display_name, brand_url, created_at, updated_at
+  `);
   if (result.length === 0) return null;
   return orgFromRow(result[0]);
 }

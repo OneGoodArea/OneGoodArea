@@ -33,17 +33,25 @@ export interface ApiKeyRow {
       explicit org_id at creation time. Legacy `aiq_` keys that haven't been
       backfilled keep validating with org_id = null. */
   org_id: string | null;
+  /** Levers (AR-200) — per-key IP allowlist. Empty array (the default) =
+      no restriction; existing keys are unaffected. validateApiKey checks
+      the request IP against each CIDR when non-empty. */
+  allowed_ip_cidrs: string[];
   name: string;
   created_at: string;
   last_used_at: string | null;
   revoked: boolean;
 }
 
-/** Levers (AR-193) — per-org tenancy primitives. */
+/** Levers (AR-193) — per-org tenancy primitives. White-label fields
+    `display_name` + `brand_url` added by AR-200 (both nullable; reads
+    fall back to `name` when display_name is null). */
 export interface OrgRow {
   id: string;
   slug: string;
   name: string;
+  display_name: string | null;
+  brand_url: string | null;
   created_at: string;
   updated_at: string;
 }
