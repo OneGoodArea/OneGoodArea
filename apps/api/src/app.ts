@@ -45,6 +45,7 @@ import {
   UpdateBundleRequestSchema,
   CreatePresetRequestSchema,
   UpdatePresetRequestSchema,
+  SetMethodologyPinRequestSchema,
 } from "@onegoodarea/contracts";
 import {
   listBundles,
@@ -64,6 +65,12 @@ import {
   deletePreset,
   findUnknownWeightKeys,
 } from "./modules/orgs/presets";
+import {
+  getMethodologyPin,
+  setMethodologyPin,
+  clearMethodologyPin,
+} from "./modules/orgs/methodology";
+import { getSupportedEngineVersions } from "./modules/reports/engine-version";
 import {
   getUserPlan,
   hasApiAccess,
@@ -245,6 +252,52 @@ async function authenticateSession(request: FastifyRequest, reply: FastifyReply)
    The caller must hold the org membership the bundle belongs to. Cross-org
    reads are rejected: a 404 covers both "no such bundle" and "wrong org"
    so no membership enumeration. */
+/** Levers (AR-197): resolve the caller's effective org pin. Same lazy
+   first-owner fallback as the bundle resolver — if the api-key row had
+   `org_id = NULL` (legacy), find the caller's first-owner org and
+   read its pin from there. Returns null when no pin is set (or when
+   no org context is resolvable). */
+async function resolveOrgPinForCaller(
+  orgId: string | null,
+  userId: string,
+): Promise<string | null> {
+  let effectiveOrgId = orgId;
+  if (!effectiveOrgId) {
+    const fallback = rows<{ org_id: string }>(await sql`
+      SELECT org_id FROM org_members WHERE user_id = ${userId} AND role = 'owner'
+       ORDER BY joined_at ASC LIMIT 1
+    `);
+    effectiveOrgId = fallback.length > 0 ? fallback[0].org_id : null;
+  }
+  if (!effectiveOrgId) return null;
+  return await getMethodologyPin(effectiveOrgId);
+}
+
+/** Levers (AR-197): produce the X-Engine-Version stamp for a caller.
+    Returns the org's pin (if set + still supported) else
+    METHODOLOGY_VERSION (latest). Used by every product endpoint that
+    stamps the response header. Pure passthrough of resolveEngineVersion's
+    org-pin path; no per-request header consulted (the legacy AR-131
+    header path on /v1/report continues to take precedence where wired).
+
+    Defensive: a DB hiccup on the pin lookup must not 500 the product
+    endpoint. Pin is opt-in; absent it, fall back to METHODOLOGY_VERSION. */
+async function effectiveEngineVersionForCaller(
+  orgId: string | null,
+  userId: string,
+): Promise<string> {
+  let pin: string | null = null;
+  try {
+    pin = await resolveOrgPinForCaller(orgId, userId);
+  } catch (e) {
+    logger.error("[methodology] pin lookup failed; falling back to latest:", e);
+    return METHODOLOGY_VERSION;
+  }
+  if (!pin) return METHODOLOGY_VERSION;
+  const result = resolveEngineVersion(undefined, { orgPin: pin });
+  return result.ok ? result.requestedVersion : METHODOLOGY_VERSION;
+}
+
 async function resolveBundleForCaller(
   bundleId: string | undefined,
   orgId: string | null,
@@ -536,7 +589,13 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         bundle: bundleId ?? null,
       });
 
-      reply.header("X-Engine-Version", profile.meta.engine_version);
+      // Levers (AR-197): stamp the org pin (if set) on the response header.
+      // Body `meta.engine_version` still reports what the engine actually
+      // produced — until v3 freezes a separate engine module these are
+      // equivalent in resolvedVersion, just distinguished by which one
+      // the auditor cares about.
+      const stamp = await effectiveEngineVersionForCaller(ctx.orgId, ctx.userId);
+      reply.header("X-Engine-Version", stamp);
       return reply.code(200).send({
         geo: profile.geo,
         signals: filteredSignals,
@@ -645,7 +704,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         results: areas.length,
         bundle: bundleId ?? null,
       });
-      reply.header("X-Engine-Version", METHODOLOGY_VERSION);
+      reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(ctx.orgId, ctx.userId));
       return reply.code(200).send({ signal: parsed.query.signal, count: areas.length, areas });
     } catch (error) {
       if (isAppError(error)) {
@@ -734,7 +793,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         preset_id: presetId ?? null,
         score: result.score,
       });
-      reply.header("X-Engine-Version", result.engine_version);
+      reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(ctx.orgId, ctx.userId));
       return reply.code(200).send(result);
     } catch (error) {
       if (isAppError(error)) {
@@ -856,7 +915,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       const items = await enrichPortfolio(userId, id, (presetRaw as Intent) ?? "research");
       if (!items) return reply.code(404).send({ error: "Portfolio not found" });
       trackEvent("api.portfolio.enriched", userId, { portfolioId: id, areas: items.length });
-      reply.header("X-Engine-Version", METHODOLOGY_VERSION);
+      reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(null, userId));
       return reply.code(200).send({ count: items.length, results: items });
     } catch (error) {
       if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
@@ -901,7 +960,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       });
       if (!report) return reply.code(404).send({ error: "Portfolio not found" });
       trackEvent("api.portfolio.changes_checked", userId, { portfolioId: id, material: report.material_count });
-      reply.header("X-Engine-Version", METHODOLOGY_VERSION);
+      reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(null, userId));
       return reply.code(200).send(report);
     } catch (error) {
       if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
@@ -1360,6 +1419,81 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
+  // ── Levers (AR-197): methodology pinning ──
+  //
+  // One row per org. When set, the org's pin is applied as the
+  // effective engine_version on responses for any of the org's keys
+  // (unless they explicitly send X-Engine-Version per request, which
+  // still wins). Validated at WRITE time against
+  // SUPPORTED_ENGINE_VERSIONS so reads never see an invalid pin.
+  // See ADR 0031.
+
+  app.get("/v1/orgs/:id/methodology", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId } = request.params as { id: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      const pin = await getMethodologyPin(orgId);
+      return reply.code(200).send({ engine_version: pin, pinned: pin !== null });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/methodology] get error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.put("/v1/orgs/:id/methodology", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId } = request.params as { id: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      const parsed = SetMethodologyPinRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      const supported = getSupportedEngineVersions();
+      if (!supported.includes(parsed.data.engine_version)) {
+        return reply.code(400).send({
+          error: `Unsupported engine_version "${parsed.data.engine_version}". Supported: ${supported.join(", ")}.`,
+          code: "unsupported_engine_version",
+          supported_versions: supported,
+        });
+      }
+      await setMethodologyPin(orgId, parsed.data.engine_version);
+      trackEvent("api.methodology.pinned", userId, { orgId, engineVersion: parsed.data.engine_version });
+      return reply.code(200).send({ engine_version: parsed.data.engine_version, pinned: true });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/methodology] set error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/v1/orgs/:id/methodology", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId } = request.params as { id: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      const removed = await clearMethodologyPin(orgId);
+      if (removed) {
+        trackEvent("api.methodology.unpinned", userId, { orgId });
+      }
+      return reply.code(200).send({ engine_version: null, pinned: false });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/methodology] clear error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
   // ── Intelligence v1: POST /v1/query — the typed query plane (AR-182) ──
   // Programmatic mode ({plan}) skips the LLM entirely; NL mode ({question})
   // routes through the planner -> Zod-validated plan -> SAME deterministic
@@ -1406,7 +1540,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         plan_source: result.response.plan_source,
         bundle: bundleId ?? null,
       });
-      reply.header("X-Engine-Version", METHODOLOGY_VERSION);
+      reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(ctx.orgId, ctx.userId));
       return reply.code(200).send(result.response);
     } catch (error) {
       if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });

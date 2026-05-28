@@ -81,6 +81,17 @@ export interface ScoringPresetRow {
   updated_at: string;
 }
 
+/** Levers (AR-197) — org_methodology_pins row. One row per org (org_id
+    is the PK). engine_version is validated at write time against
+    SUPPORTED_ENGINE_VERSIONS so reads never have to worry about
+    invalid values. */
+export interface OrgMethodologyPinRow {
+  org_id: string;
+  engine_version: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ActivityEventRow {
   id: string;
   user_id: string | null;

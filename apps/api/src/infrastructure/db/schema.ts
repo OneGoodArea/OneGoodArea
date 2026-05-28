@@ -200,6 +200,21 @@ export const MIGRATIONS: Migration[] = [
     ],
   },
   {
+    // Levers AR-197 — methodology pinning. One row per org (org_id is
+    // the PK). engine_version is validated at WRITE time against the
+    // SUPPORTED_ENGINE_VERSIONS list so a downstream caller never sees
+    // a 400 because their org's pin became EOL. See ADR 0031.
+    name: "org_methodology_pins",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS org_methodology_pins (
+        org_id TEXT PRIMARY KEY,
+        engine_version TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+    ],
+  },
+  {
     // ORPHANED in production: the live billing routes (stripe/checkout,
     // /cancel, /webhook) read+write `subscriptions`, but no CREATE TABLE for it
     // exists anywhere in the repo (legacy db-schema.ts has no ensureSubscriptionsTable).

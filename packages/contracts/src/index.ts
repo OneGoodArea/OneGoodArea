@@ -18,6 +18,7 @@ export * from "./intelligence";
 export * from "./orgs";
 export * from "./bundles";
 export * from "./presets";
+export * from "./methodology";
 import type { AreaType } from "./signals";
 
 /** The four scoring intents the engine supports. Canonical source of truth. */

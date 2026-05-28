@@ -145,3 +145,27 @@ describe("POST /v1/score — Levers preset_id (AR-196)", () => {
     expect(mockScore).not.toHaveBeenCalled();
   });
 });
+
+/* Levers (AR-197): per-org methodology pinning stamped on X-Engine-Version. */
+describe("POST /v1/score — Levers methodology pin (AR-197)", () => {
+  it("stamps the org's pinned engine_version on the response header when set", async () => {
+    mockValidate.mockResolvedValue({ userId: "user_1", orgId: "org_acme" });
+    // The pin lookup: getMethodologyPin returns one row.
+    vi.mocked(sql).mockResolvedValueOnce([
+      { org_id: "org_acme", engine_version: "2.0.1", created_at: "2026-05-28", updated_at: "2026-05-28" },
+    ] as never);
+    const res = await post({ area: "M1 1AE", preset: "research" });
+    expect(res.statusCode).toBe(200);
+    expect(res.headers["x-engine-version"]).toBe("2.0.1");
+  });
+
+  it("falls back to METHODOLOGY_VERSION (latest) when no pin is set", async () => {
+    mockValidate.mockResolvedValue({ userId: "user_1", orgId: "org_acme" });
+    // getMethodologyPin -> 0 rows.
+    vi.mocked(sql).mockResolvedValueOnce([] as never);
+    const res = await post({ area: "M1 1AE", preset: "research" });
+    expect(res.statusCode).toBe(200);
+    // Latest is "2.0.2" (the methodology module's tail entry).
+    expect(res.headers["x-engine-version"]).toBe("2.0.2");
+  });
+});
