@@ -4,7 +4,7 @@
 
 - **Jira Issue:** [AR-202](https://podnex.atlassian.net/browse/AR-202)
 - **Plan File (GitHub):** https://github.com/OneGoodArea/OneGoodArea/blob/feat/postgres-dal-setup/plan/009_postgres_container_and_dal_plan.md
-- **Pull Request:** _To be added after PR creation_
+- **Pull Request:** https://github.com/OneGoodArea/OneGoodArea/pull/70
 
 ---
 
