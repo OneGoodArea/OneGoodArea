@@ -22,9 +22,16 @@ ARCHITECTURE.md
 .pnp.js
 .yarn/install-state.gz
 
-# testing
+# testing — generated artifacts (vitest reports + coverage). Plan 007
+# phase 0 routes all of these under /.artifacts/ at repo root; per-
+# workspace tools (apps/api, apps/web, packages/contracts) write into
+# .artifacts/{test-reports,coverage}/<workspace>/. The legacy
+# /test_reports (typo, never used) and /coverage paths kept as belt-
+# and-braces in case a tool writes to the old locations.
+/.artifacts/
 /coverage
 /test_reports
+/test-reports
 # next.js (app now lives at apps/web; keep these unanchored so the workspace's
 # build output is ignored too)
 .next/
