@@ -36,7 +36,7 @@ api-run:
 # Leading '-' tells make to ignore exit status; --rm in api-run means stop
 # also removes the container, so api-clean only needs to drop the image.
 api-stop:
-	-@docker stop $(NAME) 2>/dev/null && echo "Stopped $(NAME)" || echo "$(NAME) not running"
+	-docker stop $(NAME)
 
 api-clean: api-stop
-	-@docker rmi $(IMG) 2>/dev/null && echo "Removed image $(IMG)" || echo "Image $(IMG) not present"
+        -docker rmi $(IMG)
