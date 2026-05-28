@@ -264,7 +264,69 @@ The 🔒 **dark-flag** column marks endpoints gated by `OGA_SIGNALS_API` (404 wh
 | POST | `/v1/insights` | API key | 🔒 | Anomaly screening: rank LSOAs by `|peer-relative z|` on a chosen signal. |
 | POST | `/v1/forecast` | API key | 🔒 | Linear regression projection for one (signal, area) over N months. |
 
-### 6.6 Legacy report API (pre-restructure, still live)
+### 6.6 Levers (per-org configuration — AR-192 epic)
+
+The Levers surface is the "fully configurable per client" layer. Every customer (every API key) belongs to an `org`; org owners + admins configure scoped behaviour. None of these endpoints are behind `OGA_SIGNALS_API` — they're always-on. Mutations follow the role matrix in ADR 0033 (member read, admin Levers mutations, owner-only on methodology pin + chain-of-authority).
+
+#### Orgs + members (AR-194, ADR 0028)
+
+| Method | Path | Auth | Dark? | What it does |
+|---|---|---|---|---|
+| POST | `/v1/orgs` | API key | — | Create an org; caller becomes owner. |
+| GET | `/v1/orgs` | API key | — | List orgs the caller is a member of (with role). |
+| GET | `/v1/orgs/:id` | API key | — | Get one org (404 if not a member). |
+| PATCH | `/v1/orgs/:id` | API key | — | Rename / re-slug (admin+). |
+| GET | `/v1/orgs/:id/members` | API key | — | List members + roles. |
+| POST | `/v1/orgs/:id/members` | API key | — | Add a member (admin+; owner-only to grant the `owner` role). |
+| DELETE | `/v1/orgs/:id/members/:userId` | API key | — | Remove a member; self-removal allowed for any role. Owner-role members can only be removed by an owner. Last-owner guard always applies. |
+
+#### Custom signal bundles (AR-195, ADR 0029)
+
+A bundle is a named per-org whitelist of signal keys. When a caller passes `?bundle=<id>` on `/v1/area`, `/v1/areas`, or `/v1/query`, results are filtered to the bundle's signal set. Default behaviour without the param is unchanged.
+
+| Method | Path | Auth | Dark? | What it does |
+|---|---|---|---|---|
+| POST | `/v1/orgs/:id/bundles` | API key | — | Create bundle `{name, signal_keys[]}` (admin+). 400 on unknown signal keys. |
+| GET | `/v1/orgs/:id/bundles` | API key | — | List org's bundles. |
+| GET | `/v1/orgs/:id/bundles/:bundleId` | API key | — | Get one bundle. |
+| PATCH | `/v1/orgs/:id/bundles/:bundleId` | API key | — | Rename / change signal_keys (admin+). |
+| DELETE | `/v1/orgs/:id/bundles/:bundleId` | API key | — | Remove (admin+). |
+
+#### Custom scoring presets (AR-196, ADR 0030)
+
+A preset is a saved `{base_preset, weights}` bundle. `POST /v1/score` accepts an optional `preset_id` to use the saved weights (mutually exclusive with explicit `preset` / `weights`). The deterministic engine is reused untouched.
+
+| Method | Path | Auth | Dark? | What it does |
+|---|---|---|---|---|
+| POST | `/v1/orgs/:id/presets` | API key | — | Create preset `{name, base_preset, weights}` (admin+). 400 on weight keys not in the chosen base_preset's dim set. |
+| GET | `/v1/orgs/:id/presets` | API key | — | List presets. |
+| GET | `/v1/orgs/:id/presets/:presetId` | API key | — | Get one. |
+| PATCH | `/v1/orgs/:id/presets/:presetId` | API key | — | Update any subset (admin+); changing base_preset re-validates weights. |
+| DELETE | `/v1/orgs/:id/presets/:presetId` | API key | — | Remove (admin+). |
+
+#### Methodology pinning (AR-197, ADR 0031)
+
+One row per org. When set, the pin becomes the `X-Engine-Version` stamp for every product-endpoint response from the org's keys (unless a per-request `X-Engine-Version` header overrides). Compliance/audit anchor — kept owner-only.
+
+| Method | Path | Auth | Dark? | What it does |
+|---|---|---|---|---|
+| GET | `/v1/orgs/:id/methodology` | API key | — | `{engine_version, pinned}`. |
+| PUT | `/v1/orgs/:id/methodology` | API key | — | Set the pin (owner-only). Validates against `SUPPORTED_ENGINE_VERSIONS`. |
+| DELETE | `/v1/orgs/:id/methodology` | API key | — | Clear the pin (owner-only); responses fall back to latest. |
+
+#### Peer cohorts (AR-198, ADR 0032)
+
+A cohort is a named per-org subset of LSOA codes. `POST /v1/peers` accepts an optional `cohort_id` to filter the candidate set via `buildPeersSql`'s new `cohortGeoCodes` `ANY($n::text[])` branch. Query-time filtering on the existing global k-NN graph; no materialised per-org graph yet.
+
+| Method | Path | Auth | Dark? | What it does |
+|---|---|---|---|---|
+| POST | `/v1/orgs/:id/cohorts` | API key | — | Create cohort `{name, geo_codes[]}` (admin+; max 10,000 codes). |
+| GET | `/v1/orgs/:id/cohorts` | API key | — | List cohorts. |
+| GET | `/v1/orgs/:id/cohorts/:cohortId` | API key | — | Get one. |
+| PATCH | `/v1/orgs/:id/cohorts/:cohortId` | API key | — | Update name / slug / geo_codes (admin+). |
+| DELETE | `/v1/orgs/:id/cohorts/:cohortId` | API key | — | Remove (admin+). |
+
+### 6.7 Legacy report API (pre-restructure, still live)
 
 These pre-date the 4-product restructure but remain the primary live surface today + are how the existing consumer site generates reports.
 
@@ -275,7 +337,7 @@ These pre-date the 4-product restructure but remain the primary live surface tod
 | GET | `/v1/me` | API key | — | Caller's plan + entitlements + quota. |
 | GET | `/me/reports` | API key | — | List the caller's recent reports. |
 
-### 6.7 Webhooks (subscription management)
+### 6.8 Webhooks (subscription management)
 
 | Method | Path | Auth | Dark? | What it does |
 |---|---|---|---|---|
@@ -283,7 +345,7 @@ These pre-date the 4-product restructure but remain the primary live surface tod
 | GET | `/v1/webhooks` | API key | — | List caller's active subscriptions. |
 | DELETE | `/v1/webhooks/:id` | API key | — | Revoke a subscription. |
 
-### 6.8 Stripe billing
+### 6.9 Stripe billing
 
 | Method | Path | Auth | Dark? | What it does |
 |---|---|---|---|---|
@@ -293,7 +355,7 @@ These pre-date the 4-product restructure but remain the primary live surface tod
 | POST | `/stripe/addon-checkout` | Session JWT | — | Create add-on checkout session (e.g. MCP add-on). |
 | POST | `/stripe/cancel` | Session JWT | — | Cancel the active subscription. |
 
-### 6.9 Account dashboard (session JWT — BFF cutover not yet flipped)
+### 6.10 Account dashboard (session JWT — BFF cutover not yet flipped)
 
 These endpoints exist in apps/api but the consumer site at www.onegoodarea.com still serves them via apps/web's own copies (`src/lib/db.ts` direct access). The BFF cutover flips the routing.
 
@@ -314,7 +376,7 @@ These endpoints exist in apps/api but the consumer site at www.onegoodarea.com s
 | POST | `/watchlist` | Session JWT | — | Save an area. |
 | DELETE | `/watchlist/:id` | Session JWT | — | Remove a saved area. |
 
-### 6.10 Auth credentials (no auth on request; sets cookie / issues token)
+### 6.11 Auth credentials (no auth on request; sets cookie / issues token)
 
 | Method | Path | Auth | Dark? | What it does |
 |---|---|---|---|---|
@@ -323,7 +385,7 @@ These endpoints exist in apps/api but the consumer site at www.onegoodarea.com s
 | POST | `/auth/forgot-password` | Public | — | Request a password-reset token. |
 | POST | `/auth/reset-password` | Public | — | Consume a reset token + set new password. |
 
-### 6.11 Site helpers + cron
+### 6.12 Site helpers + cron
 
 | Method | Path | Auth | Dark? | What it does |
 |---|---|---|---|---|
@@ -333,8 +395,9 @@ These endpoints exist in apps/api but the consumer site at www.onegoodarea.com s
 
 ### Tally
 
-**51 routes total** in `apps/api/src/app.ts`. Of these:
+**76 routes total** in `apps/api/src/app.ts`. Of these:
 - **14 behind `OGA_SIGNALS_API`** — the 4 products' surfaces (Signals + Scores + Monitor + Intelligence). The post-restructure additions; 404 today on any deploy where the flag is off.
+- **25 Levers endpoints** (AR-192 epic) — orgs/members + bundles + presets + methodology pin + peer cohorts. Always-on; role-gated per ADR 0033.
 - **37 already-live** — legacy report API, webhooks, Stripe billing, account dashboard, auth credentials, tracking, cron. These pre-date the restructure and were ported into `apps/api` verbatim from the apps/web monolith.
 
 The cron job in `.github/workflows/signal-refresh.yml` is a separate execution surface (not a route in `apps/api`); it runs the refresh/derive/normalize/timeseries pipeline directly against Neon via `npx tsx ...` CLI scripts.

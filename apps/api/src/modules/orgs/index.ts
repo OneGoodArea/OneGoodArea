@@ -21,6 +21,23 @@ import type {
   Org, OrgMember, OrgWithRole, OrgRole,
 } from "@onegoodarea/contracts";
 
+/* ── RBAC (pure) — Levers AR-199 ─────────────────────────────────────── */
+
+/** Roles in ascending privilege order. The numeric rank is what
+    endpoints compare against. owner > admin > member.
+    See ADR 0033 for the full operation-by-role matrix. */
+export const ROLE_RANK: Record<OrgRole, number> = {
+  member: 1,
+  admin: 2,
+  owner: 3,
+};
+
+/** PURE: does `actual` meet or exceed the required role rank?
+    Used by every Levers endpoint that mutates org state. */
+export function hasAtLeastRole(actual: OrgRole, required: OrgRole): boolean {
+  return ROLE_RANK[actual] >= ROLE_RANK[required];
+}
+
 /* ── slug derivation (pure) ──────────────────────────────────────────── */
 
 /** PURE: turn arbitrary text into a slug-safe form. Lowercases, replaces

@@ -36,6 +36,7 @@ import {
   addMember,
   removeMember,
   countOwners,
+  hasAtLeastRole,
 } from "./modules/orgs";
 import {
   CreateOrgRequestSchema,
@@ -1051,7 +1052,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       const { id } = request.params as { id: string };
       const role = await getRoleInOrg(id, userId);
       if (!role) return reply.code(404).send({ error: "Org not found" });
-      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
       const parsed = UpdateOrgRequestSchema.safeParse(request.body ?? {});
       if (!parsed.success) {
         return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
@@ -1094,15 +1097,26 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       const { id } = request.params as { id: string };
       const role = await getRoleInOrg(id, userId);
       if (!role) return reply.code(404).send({ error: "Org not found" });
-      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
       const parsed = AddMemberRequestSchema.safeParse(request.body ?? {});
       if (!parsed.success) {
         return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
       }
+      // Levers AR-199: admin can add admin/member but NOT owner. Granting
+      // ownership is the chain-of-authority move that stays owner-only.
+      const targetRole = parsed.data.role ?? "member";
+      if (targetRole === "owner" && !hasAtLeastRole(role, "owner")) {
+        return reply.code(403).send({
+          error: "Only an owner can grant the owner role.",
+          code: "cannot_grant_owner",
+        });
+      }
       await addMember({
         orgId: id,
         userId: parsed.data.user_id,
-        role: parsed.data.role ?? "member",
+        role: targetRole,
       });
       trackEvent("api.org.member_added", userId, { orgId: id, addedUserId: parsed.data.user_id });
       return reply.code(201).send({ ok: true });
@@ -1120,13 +1134,29 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       const { id, userId: targetId } = request.params as { id: string; userId: string };
       const callerRole = await getRoleInOrg(id, callerId);
       if (!callerRole) return reply.code(404).send({ error: "Org not found" });
-      // Allow: owner removing anyone, OR member removing themselves.
+      // Levers AR-199 RBAC:
+      //   self-removal                    -> any role (still bounded by last-owner guard below)
+      //   removing a non-owner member     -> admin+
+      //   removing an owner-role member   -> owner-only (chain-of-authority)
       const isSelfRemoval = callerId === targetId;
-      if (!isSelfRemoval && callerRole !== "owner") {
-        return reply.code(403).send({ error: "Owner-only operation (unless removing yourself)." });
-      }
-      // Last-owner guard: never let the org be orphaned.
       const targetRole = await getRoleInOrg(id, targetId);
+      if (!isSelfRemoval) {
+        if (!hasAtLeastRole(callerRole, "admin")) {
+          return reply.code(403).send({
+            error: "Admin or owner required (unless removing yourself).",
+            code: "admin_required",
+          });
+        }
+        if (targetRole === "owner" && !hasAtLeastRole(callerRole, "owner")) {
+          return reply.code(403).send({
+            error: "Only an owner can remove an owner.",
+            code: "cannot_remove_owner_as_admin",
+          });
+        }
+      }
+      // Last-owner guard: never let the org be orphaned. Applies to
+      // self-removal too — an owner removing themselves can't leave
+      // the org without an owner.
       if (targetRole === "owner") {
         const owners = await countOwners(id);
         if (owners <= 1) {
@@ -1160,7 +1190,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
       if (!role) return reply.code(404).send({ error: "Org not found" });
-      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
       const parsed = CreateBundleRequestSchema.safeParse(request.body ?? {});
       if (!parsed.success) {
         return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
@@ -1231,7 +1263,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       const { id: orgId, bundleId } = request.params as { id: string; bundleId: string };
       const role = await getRoleInOrg(orgId, userId);
       if (!role) return reply.code(404).send({ error: "Org not found" });
-      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
       const parsed = UpdateBundleRequestSchema.safeParse(request.body ?? {});
       if (!parsed.success) {
         return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
@@ -1271,7 +1305,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       const { id: orgId, bundleId } = request.params as { id: string; bundleId: string };
       const role = await getRoleInOrg(orgId, userId);
       if (!role) return reply.code(404).send({ error: "Org not found" });
-      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
       const ok = await deleteBundle(orgId, bundleId);
       if (!ok) return reply.code(404).send({ error: "Bundle not found" });
       trackEvent("api.bundle.deleted", userId, { orgId, bundleId });
@@ -1297,7 +1333,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
       if (!role) return reply.code(404).send({ error: "Org not found" });
-      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
       const parsed = CreatePresetRequestSchema.safeParse(request.body ?? {});
       if (!parsed.success) {
         return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
@@ -1369,7 +1407,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       const { id: orgId, presetId } = request.params as { id: string; presetId: string };
       const role = await getRoleInOrg(orgId, userId);
       if (!role) return reply.code(404).send({ error: "Org not found" });
-      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
       const parsed = UpdatePresetRequestSchema.safeParse(request.body ?? {});
       if (!parsed.success) {
         return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
@@ -1416,7 +1456,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       const { id: orgId, presetId } = request.params as { id: string; presetId: string };
       const role = await getRoleInOrg(orgId, userId);
       if (!role) return reply.code(404).send({ error: "Org not found" });
-      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
       const ok = await deletePreset(orgId, presetId);
       if (!ok) return reply.code(404).send({ error: "Preset not found" });
       trackEvent("api.preset.deleted", userId, { orgId, presetId });
@@ -1460,7 +1502,10 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
       if (!role) return reply.code(404).send({ error: "Org not found" });
-      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      // Methodology pin is owner-only — compliance / audit anchor.
+      if (!hasAtLeastRole(role, "owner")) {
+        return reply.code(403).send({ error: "Owner-only operation.", code: "owner_required" });
+      }
       const parsed = SetMethodologyPinRequestSchema.safeParse(request.body ?? {});
       if (!parsed.success) {
         return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
@@ -1496,7 +1541,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
       if (!role) return reply.code(404).send({ error: "Org not found" });
-      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
       const parsed = CreateCohortRequestSchema.safeParse(request.body ?? {});
       if (!parsed.success) {
         return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
@@ -1560,7 +1607,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       const { id: orgId, cohortId } = request.params as { id: string; cohortId: string };
       const role = await getRoleInOrg(orgId, userId);
       if (!role) return reply.code(404).send({ error: "Org not found" });
-      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
       const parsed = UpdateCohortRequestSchema.safeParse(request.body ?? {});
       if (!parsed.success) {
         return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
@@ -1591,7 +1640,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       const { id: orgId, cohortId } = request.params as { id: string; cohortId: string };
       const role = await getRoleInOrg(orgId, userId);
       if (!role) return reply.code(404).send({ error: "Org not found" });
-      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
       const ok = await deleteCohort(orgId, cohortId);
       if (!ok) return reply.code(404).send({ error: "Cohort not found" });
       trackEvent("api.cohort.deleted", userId, { orgId, cohortId });
@@ -1610,7 +1661,10 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
       if (!role) return reply.code(404).send({ error: "Org not found" });
-      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      // Methodology pin is owner-only — compliance / audit anchor.
+      if (!hasAtLeastRole(role, "owner")) {
+        return reply.code(403).send({ error: "Owner-only operation.", code: "owner_required" });
+      }
       const removed = await clearMethodologyPin(orgId);
       if (removed) {
         trackEvent("api.methodology.unpinned", userId, { orgId });

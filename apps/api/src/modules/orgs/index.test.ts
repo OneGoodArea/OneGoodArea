@@ -4,7 +4,7 @@
    acceptance step (see ADR 0028 §Proven on prod). */
 
 import { describe, it, expect } from "vitest";
-import { slugify, personalOrgSlug, personalOrgId } from "./index";
+import { slugify, personalOrgSlug, personalOrgId, hasAtLeastRole, ROLE_RANK } from "./index";
 
 describe("orgs/slugify", () => {
   it("lowercases + replaces non-alphanumeric with single dashes", () => {
@@ -69,5 +69,31 @@ describe("orgs/personalOrgSlug", () => {
     const a = personalOrgSlug("foo@bar.com", "user_zzzzzzzzzzzz");
     const b = personalOrgSlug("foo@bar.com", "user_zzzzzzzzzzzz");
     expect(a).toBe(b);
+  });
+});
+
+/* Levers AR-199 — RBAC role-rank precedence. */
+describe("orgs/hasAtLeastRole", () => {
+  it("owner >= owner | admin | member", () => {
+    expect(hasAtLeastRole("owner", "owner")).toBe(true);
+    expect(hasAtLeastRole("owner", "admin")).toBe(true);
+    expect(hasAtLeastRole("owner", "member")).toBe(true);
+  });
+
+  it("admin >= admin | member, but NOT owner", () => {
+    expect(hasAtLeastRole("admin", "admin")).toBe(true);
+    expect(hasAtLeastRole("admin", "member")).toBe(true);
+    expect(hasAtLeastRole("admin", "owner")).toBe(false);
+  });
+
+  it("member >= member only", () => {
+    expect(hasAtLeastRole("member", "member")).toBe(true);
+    expect(hasAtLeastRole("member", "admin")).toBe(false);
+    expect(hasAtLeastRole("member", "owner")).toBe(false);
+  });
+
+  it("ROLE_RANK is strictly ascending owner > admin > member", () => {
+    expect(ROLE_RANK.owner).toBeGreaterThan(ROLE_RANK.admin);
+    expect(ROLE_RANK.admin).toBeGreaterThan(ROLE_RANK.member);
   });
 });
