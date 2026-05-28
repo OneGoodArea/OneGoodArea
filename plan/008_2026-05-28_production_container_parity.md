@@ -15,7 +15,7 @@ Implement a production-only container strategy where:
 - Be explicit about assumptions and uncertainty; avoid claiming completion without evidence.
 
 ## Current baseline (repo)
-- Existing production Dockerfile builds/runs **API only** at repo root (`/Dockerfile`).
+- Existing production container build file (`Dockerfile`) builds/runs **API only** at repo root.
 - Existing Makefile has Docker-only API local targets.
 - Existing compose file is development/local-test oriented (`container-compose.yml`, `Containerfile.dev`).
 - Env docs and samples are not yet split into a multi-service production-oriented layout.
@@ -40,8 +40,8 @@ Implement a production-only container strategy where:
 4. No destructive git actions without explicit approval.
 
 ### 2) One image per deployable unit
-1. Keep API production image as dedicated artifact (`Dockerfile.api` or keep root Dockerfile but rename/alias clearly).
-2. Add dedicated production web image (`Dockerfile.web`) for `apps/web`.
+1. Keep API production image as dedicated artifact (`Containerfile.api` or equivalent containerfile naming).
+2. Add dedicated production web image (`Containerfile.web`) for `apps/web`.
 3. Add deployment descriptors with separate service images for `api` and `web`.
 4. Define postgres as a separate service contract now (image reference + env contract), without forcing immediate production deployment changes.
 
@@ -97,7 +97,7 @@ Implement a production-only container strategy where:
 3. Add a short “known failure modes” section and exact remediation commands.
 
 ## Decisions to lock before implementation
-1. API image path strategy: keep root `/Dockerfile` as API vs move to `/docker/api/Dockerfile`.
+1. API image path strategy: keep root build file but rename to `Containerfile.api` vs move to `/container/api/Containerfile`.
 2. Web production container runtime: Next standalone output vs `next start` node runtime.
 3. Postgres now: define image/env contract only vs fully runnable target in this phase.
 4. Branching scope: one branch for full change vs stacked branches per commit group.
