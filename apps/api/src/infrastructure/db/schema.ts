@@ -154,6 +154,29 @@ export const MIGRATIONS: Migration[] = [
     ],
   },
   {
+    // Levers AR-195 — custom signal bundles. A bundle is a named per-org
+    // whitelist of signal keys that scopes a caller's view of the data
+    // layer when they pass ?bundle=<id> on /v1/area / /v1/areas / /v1/query.
+    // Signal keys are validated against the SUPPORTED_SIGNALS taxonomy at
+    // the application layer (no CHECK constraint — taxonomy evolves).
+    // (slug, org_id) is UNIQUE so two bundles in the same org can't share
+    // a slug; slugs across different orgs can repeat. See ADR 0029.
+    name: "signal_bundles",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS signal_bundles (
+        id TEXT PRIMARY KEY,
+        org_id TEXT NOT NULL,
+        slug TEXT NOT NULL,
+        name TEXT NOT NULL,
+        signal_keys TEXT[] NOT NULL DEFAULT '{}',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE (org_id, slug)
+      )`,
+      `CREATE INDEX IF NOT EXISTS signal_bundles_org_idx ON signal_bundles (org_id)`,
+    ],
+  },
+  {
     // ORPHANED in production: the live billing routes (stripe/checkout,
     // /cancel, /webhook) read+write `subscriptions`, but no CREATE TABLE for it
     // exists anywhere in the repo (legacy db-schema.ts has no ensureSubscriptionsTable).

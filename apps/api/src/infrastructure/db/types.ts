@@ -55,6 +55,18 @@ export interface OrgMemberRow {
   joined_at: string;
 }
 
+/** Levers (AR-195) — signal_bundles row. signal_keys is a Postgres TEXT[]
+    that the Neon driver surfaces as a JS string[]. */
+export interface SignalBundleRow {
+  id: string;
+  org_id: string;
+  slug: string;
+  name: string;
+  signal_keys: string[];
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ActivityEventRow {
   id: string;
   user_id: string | null;

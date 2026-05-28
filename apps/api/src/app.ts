@@ -41,7 +41,19 @@ import {
   CreateOrgRequestSchema,
   UpdateOrgRequestSchema,
   AddMemberRequestSchema,
+  CreateBundleRequestSchema,
+  UpdateBundleRequestSchema,
 } from "@onegoodarea/contracts";
+import {
+  listBundles,
+  getBundle,
+  createBundle,
+  updateBundle,
+  deleteBundle,
+  findUnknownSignalKeys,
+  filterSignalsByBundle,
+  planSignalsOutsideBundle,
+} from "./modules/orgs/bundles";
 import {
   getUserPlan,
   hasApiAccess,
@@ -171,6 +183,31 @@ async function requireApiAccess(request: FastifyRequest, reply: FastifyReply): P
   return userId;
 }
 
+/** Levers (AR-195): variant of `requireApiAccess` that ALSO returns the
+   caller's org context. Same gate semantics (auth → rate-limit → plan
+   API access) — just surfaces `{userId, orgId}` on success.
+
+   orgId comes straight from the api-key row (which AR-193 backfilled).
+   For the legacy edge case of a key with `org_id = NULL`, the actual
+   fallback (first-owner org lookup) is deferred to
+   `resolveBundleForCaller` so endpoints that don't use bundles don't
+   pay for the lookup. */
+async function requireApiAccessWithOrg(
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<{ userId: string; orgId: string | null } | null> {
+  const userId = await requireApiAccess(request, reply);
+  if (!userId) return null;
+  // The key just validated above — re-extract orgId from the same row.
+  // Cheap: a single hash-indexed SELECT. The alternative (passing the
+  // full {userId, orgId} shape through `requireApiAccess`) would churn
+  // 30+ endpoints + their test mocks for a feature only a few endpoints
+  // need.
+  const header = request.headers.authorization!;
+  const result = await validateApiKey(header.slice(7));
+  return { userId, orgId: result?.orgId ?? null };
+}
+
 /** Session (browser-user) auth via the JWT bridge — the counterpart to
    authenticate() (programmatic api-key auth). Verifies the short-lived token
    apps/web's server mints from its NextAuth session and resolves the userId, or
@@ -187,6 +224,50 @@ async function authenticateSession(request: FastifyRequest, reply: FastifyReply)
     return null;
   }
   return session.userId;
+}
+
+/** Levers (AR-195): resolve a `?bundle=<id>` query param to the bundle's
+   signal_keys whitelist. Returns:
+   - `{ok: true, allowed: undefined}` when no bundle was requested (no filter)
+   - `{ok: true, allowed: keys}` when the bundle exists in the caller's org
+   - `{ok: false}` after sending 404 / 403 / 422 to the reply
+
+   The caller must hold the org membership the bundle belongs to. Cross-org
+   reads are rejected: a 404 covers both "no such bundle" and "wrong org"
+   so no membership enumeration. */
+async function resolveBundleForCaller(
+  bundleId: string | undefined,
+  orgId: string | null,
+  userId: string,
+  reply: FastifyReply,
+): Promise<{ ok: true; allowed: string[] | undefined } | { ok: false }> {
+  if (!bundleId) return { ok: true, allowed: undefined };
+  // Legacy-key fallback: if the api-key row had org_id = NULL (pre-
+  // AR-193 backfill, or a future code path that created a key without
+  // setting it), look up the caller's first-owner org. Most production
+  // calls skip this branch because AR-193's backfill populated every
+  // existing key.
+  let effectiveOrgId = orgId;
+  if (!effectiveOrgId) {
+    const fallback = rows<{ org_id: string }>(await sql`
+      SELECT org_id FROM org_members WHERE user_id = ${userId} AND role = 'owner'
+       ORDER BY joined_at ASC LIMIT 1
+    `);
+    effectiveOrgId = fallback.length > 0 ? fallback[0].org_id : null;
+  }
+  if (!effectiveOrgId) {
+    reply.code(422).send({
+      error: "Cannot apply bundle filter: caller has no resolvable org context.",
+      code: "no_org_context",
+    });
+    return { ok: false };
+  }
+  const bundle = await getBundle(effectiveOrgId, bundleId);
+  if (!bundle) {
+    reply.code(404).send({ error: "Bundle not found in your org." });
+    return { ok: false };
+  }
+  return { ok: true, allowed: bundle.signal_keys };
 }
 
 /* Local row shapes for the API-key usage dashboard query (GET /keys/usage). */
@@ -410,15 +491,21 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         return reply.code(404).send({ error: "Not found" });
       }
 
-      const userId = await requireApiAccess(request, reply);
-      if (!userId) return reply; // 401 / 403 / 429 already sent
+      const ctx = await requireApiAccessWithOrg(request, reply);
+      if (!ctx) return reply; // 401 / 403 / 429 already sent
 
-      // Accept ?area= (free text or postcode) or its ?postcode= alias.
-      const q = request.query as { area?: unknown; postcode?: unknown };
+      const q = request.query as { area?: unknown; postcode?: unknown; bundle?: unknown };
       const rawArea =
         typeof q.area === "string" ? q.area : typeof q.postcode === "string" ? q.postcode : undefined;
       const locationCheck = validateLocationInput(rawArea);
       if (!locationCheck.valid) return reply.code(400).send({ error: locationCheck.error });
+
+      // Levers (AR-195): if ?bundle=<id> is set, resolve the bundle for the
+      // caller's org and use its signal_keys as a whitelist over the
+      // response. Absent the param, behaviour is unchanged.
+      const bundleId = typeof q.bundle === "string" ? q.bundle : undefined;
+      const resolved = await resolveBundleForCaller(bundleId, ctx.orgId, ctx.userId, reply);
+      if (!resolved.ok) return reply;
 
       const profile = await getAreaProfile(locationCheck.sanitized);
       if (!profile) {
@@ -427,17 +514,24 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         });
       }
 
-      // Meter early, price late (MASTER §9): every area call emits an org-keyed
-      // usage event from day one. That one event stream later powers quotas,
-      // billing, and the demand-signal moat. Pricing numbers are decided later.
-      trackEvent("api.area.profiled", userId, {
+      const filteredSignals = filterSignalsByBundle(profile.signals, resolved.allowed);
+      const filteredSources = resolved.allowed
+        ? Array.from(new Set(filteredSignals.filter((s) => s.value !== null).map((s) => s.source)))
+        : profile.meta.sources;
+
+      trackEvent("api.area.profiled", ctx.userId, {
         area: locationCheck.sanitized,
-        signals: profile.signals.length,
-        sources: profile.meta.sources.length,
+        signals: filteredSignals.length,
+        sources: filteredSources.length,
+        bundle: bundleId ?? null,
       });
 
       reply.header("X-Engine-Version", profile.meta.engine_version);
-      return reply.code(200).send(profile);
+      return reply.code(200).send({
+        geo: profile.geo,
+        signals: filteredSignals,
+        meta: { ...profile.meta, sources: filteredSources },
+      });
     } catch (error) {
       if (isAppError(error)) {
         return reply.code(error.statusCode).send({ error: error.message, code: error.code });
@@ -510,19 +604,36 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       if (!getConfig().signalsApiEnabled) {
         return reply.code(404).send({ error: "Not found" });
       }
-      const userId = await requireApiAccess(request, reply);
-      if (!userId) return reply; // 401 / 403 / 429 already sent
+      const ctx = await requireApiAccessWithOrg(request, reply);
+      if (!ctx) return reply; // 401 / 403 / 429 already sent
 
       const parsed = parseAreasQuery((request.query ?? {}) as Record<string, unknown>);
       if (!parsed.ok) return reply.code(400).send({ error: parsed.error });
 
+      // Levers (AR-195): if ?bundle=<id> is set, the requested ranking
+      // signal MUST be in the bundle's whitelist — 422 otherwise. This is
+      // a gate, not a filter (queryAreas takes one signal). The bundle
+      // param is read from the raw query (parseAreasQuery doesn't expose
+      // it but ignores unknown keys).
+      const rawQuery = (request.query ?? {}) as { bundle?: unknown };
+      const bundleId = typeof rawQuery.bundle === "string" ? rawQuery.bundle : undefined;
+      const resolved = await resolveBundleForCaller(bundleId, ctx.orgId, ctx.userId, reply);
+      if (!resolved.ok) return reply;
+      if (resolved.allowed && !resolved.allowed.includes(parsed.query.signal)) {
+        return reply.code(422).send({
+          error: `Signal "${parsed.query.signal}" is not in bundle ${bundleId}.`,
+          code: "bundle_signal_not_allowed",
+        });
+      }
+
       const areas = await queryAreas(parsed.query);
 
-      trackEvent("api.areas.queried", userId, {
+      trackEvent("api.areas.queried", ctx.userId, {
         signal: parsed.query.signal,
         country: parsed.query.country,
         lad: parsed.query.lad,
         results: areas.length,
+        bundle: bundleId ?? null,
       });
       reply.header("X-Engine-Version", METHODOLOGY_VERSION);
       return reply.code(200).send({ signal: parsed.query.signal, count: areas.length, areas });
@@ -908,6 +1019,143 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
+  // ── Levers (AR-195): custom signal bundles ──
+  //
+  // A bundle is a named per-org whitelist of signal keys. Callers opt-in
+  // to the whitelist by passing `?bundle=<id>` on /v1/area / /v1/areas
+  // /v1/query — absent the param, behaviour is unchanged. Owner-only
+  // mutations; reads require membership. See ADR 0029.
+
+  app.post("/v1/orgs/:id/bundles", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId } = request.params as { id: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      const parsed = CreateBundleRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      const unknown = findUnknownSignalKeys(parsed.data.signal_keys);
+      if (unknown.length > 0) {
+        return reply.code(400).send({
+          error: `Unknown signal keys: ${unknown.join(", ")}. See /docs/api-reference for the active taxonomy.`,
+          code: "unknown_signal_keys",
+        });
+      }
+      const bundle = await createBundle({
+        orgId,
+        name: parsed.data.name,
+        slug: parsed.data.slug,
+        signalKeys: parsed.data.signal_keys,
+      });
+      trackEvent("api.bundle.created", userId, { orgId, bundleId: bundle.id, count: bundle.signal_keys.length });
+      return reply.code(201).send(bundle);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/bundles] create error:", error);
+      const msg = error instanceof Error ? error.message : "";
+      if (/duplicate key|unique constraint/i.test(msg)) {
+        return reply.code(409).send({ error: "A bundle with that slug already exists in this org." });
+      }
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/v1/orgs/:id/bundles", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId } = request.params as { id: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      const bundles = await listBundles(orgId);
+      return reply.code(200).send({ bundles });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/bundles] list error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/v1/orgs/:id/bundles/:bundleId", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId, bundleId } = request.params as { id: string; bundleId: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      const bundle = await getBundle(orgId, bundleId);
+      if (!bundle) return reply.code(404).send({ error: "Bundle not found" });
+      return reply.code(200).send(bundle);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/bundles/:bundleId] get error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.patch("/v1/orgs/:id/bundles/:bundleId", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId, bundleId } = request.params as { id: string; bundleId: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      const parsed = UpdateBundleRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      if (parsed.data.signal_keys) {
+        const unknown = findUnknownSignalKeys(parsed.data.signal_keys);
+        if (unknown.length > 0) {
+          return reply.code(400).send({
+            error: `Unknown signal keys: ${unknown.join(", ")}.`,
+            code: "unknown_signal_keys",
+          });
+        }
+      }
+      const updated = await updateBundle(orgId, bundleId, {
+        name: parsed.data.name,
+        slug: parsed.data.slug,
+        signalKeys: parsed.data.signal_keys,
+      });
+      if (!updated) return reply.code(404).send({ error: "Bundle not found" });
+      trackEvent("api.bundle.updated", userId, { orgId, bundleId });
+      return reply.code(200).send(updated);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/bundles/:bundleId] update error:", error);
+      const msg = error instanceof Error ? error.message : "";
+      if (/duplicate key|unique constraint/i.test(msg)) {
+        return reply.code(409).send({ error: "A bundle with that slug already exists in this org." });
+      }
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/v1/orgs/:id/bundles/:bundleId", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId, bundleId } = request.params as { id: string; bundleId: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      const ok = await deleteBundle(orgId, bundleId);
+      if (!ok) return reply.code(404).send({ error: "Bundle not found" });
+      trackEvent("api.bundle.deleted", userId, { orgId, bundleId });
+      return reply.code(200).send({ deleted: true });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/bundles/:bundleId] delete error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
   // ── Intelligence v1: POST /v1/query — the typed query plane (AR-182) ──
   // Programmatic mode ({plan}) skips the LLM entirely; NL mode ({question})
   // routes through the planner -> Zod-validated plan -> SAME deterministic
@@ -915,18 +1163,44 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // consumers can audit + replay. NOT narrative — see ADR 0017.
   app.post("/v1/query", async (request, reply) => {
     try {
-      const userId = await guardSignals(request, reply);
-      if (!userId) return reply;
+      if (!getConfig().signalsApiEnabled) {
+        return reply.code(404).send({ error: "Not found" });
+      }
+      const ctx = await requireApiAccessWithOrg(request, reply);
+      if (!ctx) return reply;
       const parsed = parseQueryRequest(request.body);
       if (!parsed.ok) return reply.code(400).send({ error: parsed.error });
+
+      // Levers (AR-195): if ?bundle= or body.bundle is set, resolve the
+      // bundle's whitelist for the caller's org. The plan is then
+      // gated AFTER planning — the executed plan (whether programmatic
+      // or NL-derived) must only reference signals in the bundle.
+      const rawQuery = (request.query ?? {}) as { bundle?: unknown };
+      const rawBody = (request.body ?? {}) as { bundle?: unknown };
+      const bundleId =
+        typeof rawQuery.bundle === "string" ? rawQuery.bundle :
+        typeof rawBody.bundle === "string" ? rawBody.bundle : undefined;
+      const resolved = await resolveBundleForCaller(bundleId, ctx.orgId, ctx.userId, reply);
+      if (!resolved.ok) return reply;
 
       const result = await runQuery(parsed.req);
       if (!result.ok) {
         return reply.code(422).send({ error: result.error.message, code: result.error.code, raw: result.error.raw });
       }
-      trackEvent("api.query.executed", userId, {
+      if (resolved.allowed) {
+        const outside = planSignalsOutsideBundle(result.response.plan, resolved.allowed);
+        if (outside.length > 0) {
+          return reply.code(422).send({
+            error: `Plan references signals not in bundle: ${outside.join(", ")}.`,
+            code: "bundle_signal_not_allowed",
+            plan: result.response.plan,
+          });
+        }
+      }
+      trackEvent("api.query.executed", ctx.userId, {
         op: result.response.plan.op,
         plan_source: result.response.plan_source,
+        bundle: bundleId ?? null,
       });
       reply.header("X-Engine-Version", METHODOLOGY_VERSION);
       return reply.code(200).send(result.response);
