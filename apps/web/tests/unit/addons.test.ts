@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ADDONS, ADDON_KEYS, PLANS, type AddonKey } from "../lib/stripe";
+import { ADDONS, ADDON_KEYS, PLANS, type AddonKey } from "@/lib/stripe";
 
 /**
  * ADDONS integrity tests for AR-144 Session 5 (MCP add-on flow).

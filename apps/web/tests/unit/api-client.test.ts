@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-vi.mock("./bridge", () => ({ mintBridgeToken: vi.fn(async () => "minted.jwt.token") }));
+vi.mock("@/lib/server/bridge", () => ({ mintBridgeToken: vi.fn(async () => "minted.jwt.token") }));
 
-import { callApi, apiBaseUrl } from "./api-client";
-import { mintBridgeToken } from "./bridge";
+import { callApi, apiBaseUrl } from "@/lib/server/api-client";
+import { mintBridgeToken } from "@/lib/server/bridge";
 
 const fetchMock = vi.fn();
 

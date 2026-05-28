@@ -6,7 +6,7 @@ import {
   V2_PUBLIC_PLANS,
   V2_PAID_PLANS,
   type PlanId,
-} from "../lib/stripe";
+} from "@/lib/stripe";
 
 /**
  * PLANS integrity tests for pricing v2 (AR-143).

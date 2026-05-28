@@ -4,7 +4,7 @@ import {
   METHODOLOGY_VERSIONS,
   getCurrentMethodology,
   getMethodologyByVersion,
-} from "../lib/methodology-versions";
+} from "@/lib/methodology-versions";
 
 describe("methodology-versions", () => {
   describe("METHODOLOGY_VERSIONS registry", () => {

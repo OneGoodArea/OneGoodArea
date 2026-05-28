@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { rateLimitHeaders, type RateLimitResult } from "../lib/rate-limit";
+import { rateLimitHeaders, type RateLimitResult } from "@/lib/rate-limit";
 
 describe("rateLimitHeaders", () => {
   it("emits the standard X-RateLimit-* headers on success", () => {

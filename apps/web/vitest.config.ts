@@ -8,17 +8,17 @@ export default defineConfig({
     },
   },
   test: {
-    include: ["src/**/*.test.ts"],
+    /* Plan 006: tests live in tests/unit/, production strictly in src/. */
+    include: ["tests/unit/**/*.test.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
       reportOnFailure: true,
       include: ["src/**/*.ts"],
       exclude: [
-        "src/**/*.test.ts",
+        "tests/**",
         "src/**/*.d.ts",
         "src/app/**",
-        "src/tests/**",
         "node_modules/**"
       ],
       thresholds: {

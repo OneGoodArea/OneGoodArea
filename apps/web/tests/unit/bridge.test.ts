@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import { jwtVerify } from "jose";
-import { mintBridgeToken } from "./bridge";
+import { mintBridgeToken } from "@/lib/server/bridge";
 
 const SECRET = "test-auth-secret-0123456789";
 

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
-import { METHODOLOGY_VERSION } from "../lib/methodology-versions";
+import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 
 /* OpenAPI spec sanity checks. The spec lives at public/openapi.json and
    is served as-is at https://www.onegoodarea.com/openapi.json. These tests

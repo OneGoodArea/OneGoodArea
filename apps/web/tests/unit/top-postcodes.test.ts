@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { TOP_POSTCODES } from "../lib/top-postcodes";
+import { TOP_POSTCODES } from "@/lib/top-postcodes";
 
 describe("TOP_POSTCODES seed list", () => {
   it("contains entries", () => {

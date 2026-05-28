@@ -2,11 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { NextRequest } from "next/server";
 
 vi.mock("@/lib/auth", () => ({ auth: vi.fn() }));
-vi.mock("./api-client", () => ({ callApi: vi.fn() }));
+vi.mock("@/lib/server/api-client", () => ({ callApi: vi.fn() }));
 
-import { proxySession } from "./proxy";
+import { proxySession } from "@/lib/server/proxy";
 import { auth } from "@/lib/auth";
-import { callApi } from "./api-client";
+import { callApi } from "@/lib/server/api-client";
 
 const mockAuth = vi.mocked(auth as unknown as () => Promise<{ user?: { id?: string } } | null>);
 const mockCallApi = vi.mocked(callApi);
