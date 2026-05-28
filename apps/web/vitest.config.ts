@@ -21,7 +21,7 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json", "html"],
       reportOnFailure: true,
-      reportsDirectory: "../../.artifacts/coverage/web",
+      reportsDirectory: "../../.artifacts/test-reports/coverage/web",
       include: ["src/**/*.ts"],
       exclude: [
         "tests/**",

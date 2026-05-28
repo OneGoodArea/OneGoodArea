@@ -24,3 +24,9 @@ apps/api/dist
 # The runtime bundle is esbuild-built from src/server.ts and never reaches
 # test files, but excluding tests/ keeps the build context small + clean.
 **/tests
+
+# Plan 007 phase 0: generated test artifacts (junit, json, coverage)
+# never belong in a production image. The runtime bundle was already
+# clean via esbuild reachability; excluding .artifacts/ makes it
+# explicit + keeps the build context small.
+.artifacts

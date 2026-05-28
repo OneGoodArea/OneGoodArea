@@ -1,0 +1,4 @@
+Plan 007 phase 0: this file keeps `.artifacts/` tracked so it persists
+through `git clean -fdx` and fresh clones. The directory's *contents*
+(test-reports/, coverage/) stay gitignored via `/.artifacts/` in the
+repo-root `.gitignore` — only this placeholder lives in git.
