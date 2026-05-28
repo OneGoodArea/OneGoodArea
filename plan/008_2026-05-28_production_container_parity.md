@@ -35,9 +35,14 @@ Implement a production-only container strategy where:
    - commit A: runtime abstraction + make portability
    - commit B: api/web image separation
    - commit C: env split structure + examples
-   - commit D: docs updates + checklist
+   - commit D: git hygiene (`**/node_modules` ignored + untracked, `next-env.d.ts` tracked in Next.js workspace files)
+   - commit E: docs updates + checklist
 3. Use intent-based commit messages (no generic “fix/update”).
 4. No destructive git actions without explicit approval.
+5. Dependency and generated-file policy:
+   - Ignore and untrack `node_modules` at every level (`/node_modules`, `**/node_modules`).
+   - Do not preserve `node_modules` in git (including repo root), even if npm workspaces hoist installs to root.
+   - Do not ignore `next-env.d.ts`; track it for each active Next.js app (currently `apps/web/next-env.d.ts`).
 
 ### 2) One image per deployable unit
 1. Keep API production image as dedicated artifact (`Containerfile.api` or equivalent containerfile naming).
