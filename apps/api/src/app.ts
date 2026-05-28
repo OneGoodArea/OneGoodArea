@@ -46,6 +46,8 @@ import {
   CreatePresetRequestSchema,
   UpdatePresetRequestSchema,
   SetMethodologyPinRequestSchema,
+  CreateCohortRequestSchema,
+  UpdateCohortRequestSchema,
 } from "@onegoodarea/contracts";
 import {
   listBundles,
@@ -70,6 +72,13 @@ import {
   setMethodologyPin,
   clearMethodologyPin,
 } from "./modules/orgs/methodology";
+import {
+  listCohorts,
+  getCohort,
+  createCohort,
+  updateCohort,
+  deleteCohort,
+} from "./modules/orgs/cohorts";
 import { getSupportedEngineVersions } from "./modules/reports/engine-version";
 import {
   getUserPlan,
@@ -1474,6 +1483,126 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
+  // ── Levers (AR-198): per-org peer cohorts ──
+  //
+  // A cohort is a named subset of LSOA codes. /v1/peers consumes it as
+  // a candidate filter on the existing global k-NN peer graph. Owner-
+  // only mutations; reads require membership. See ADR 0032.
+
+  app.post("/v1/orgs/:id/cohorts", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId } = request.params as { id: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      const parsed = CreateCohortRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      const cohort = await createCohort({
+        orgId,
+        name: parsed.data.name,
+        slug: parsed.data.slug,
+        geoCodes: parsed.data.geo_codes,
+      });
+      trackEvent("api.cohort.created", userId, { orgId, cohortId: cohort.id, size: cohort.geo_codes.length });
+      return reply.code(201).send(cohort);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/cohorts] create error:", error);
+      const msg = error instanceof Error ? error.message : "";
+      if (/duplicate key|unique constraint/i.test(msg)) {
+        return reply.code(409).send({ error: "A cohort with that slug already exists in this org." });
+      }
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/v1/orgs/:id/cohorts", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId } = request.params as { id: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      const cohorts = await listCohorts(orgId);
+      return reply.code(200).send({ cohorts });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/cohorts] list error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/v1/orgs/:id/cohorts/:cohortId", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId, cohortId } = request.params as { id: string; cohortId: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      const cohort = await getCohort(orgId, cohortId);
+      if (!cohort) return reply.code(404).send({ error: "Cohort not found" });
+      return reply.code(200).send(cohort);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/cohorts/:cohortId] get error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.patch("/v1/orgs/:id/cohorts/:cohortId", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId, cohortId } = request.params as { id: string; cohortId: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      const parsed = UpdateCohortRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      const updated = await updateCohort(orgId, cohortId, {
+        name: parsed.data.name,
+        slug: parsed.data.slug,
+        geoCodes: parsed.data.geo_codes,
+      });
+      if (!updated) return reply.code(404).send({ error: "Cohort not found" });
+      trackEvent("api.cohort.updated", userId, { orgId, cohortId });
+      return reply.code(200).send(updated);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/cohorts/:cohortId] update error:", error);
+      const msg = error instanceof Error ? error.message : "";
+      if (/duplicate key|unique constraint/i.test(msg)) {
+        return reply.code(409).send({ error: "A cohort with that slug already exists in this org." });
+      }
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/v1/orgs/:id/cohorts/:cohortId", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId, cohortId } = request.params as { id: string; cohortId: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      const ok = await deleteCohort(orgId, cohortId);
+      if (!ok) return reply.code(404).send({ error: "Cohort not found" });
+      trackEvent("api.cohort.deleted", userId, { orgId, cohortId });
+      return reply.code(200).send({ deleted: true });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/cohorts/:cohortId] delete error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
   app.delete("/v1/orgs/:id/methodology", async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
@@ -1557,8 +1686,11 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // See ADR 0023.
   app.post("/v1/peers", async (request, reply) => {
     try {
-      const userId = await guardSignals(request, reply);
-      if (!userId) return reply;
+      if (!getConfig().signalsApiEnabled) {
+        return reply.code(404).send({ error: "Not found" });
+      }
+      const ctx = await requireApiAccessWithOrg(request, reply);
+      if (!ctx) return reply;
 
       const body = (request.body ?? {}) as Record<string, unknown>;
       const target = body.target as { geo_code?: string; postcode?: string; area?: string } | undefined;
@@ -1583,11 +1715,37 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         scopeLabel = `${target.postcode ? "postcode" : "area"}=${q} -> lsoa=${targetGeoCode}`;
       }
 
+      // Levers (AR-198): cohort_id resolution. When set, the cohort's
+      // geo_codes scope the candidate set inside buildPeersSql. Default
+      // is unchanged (global graph).
+      let cohortGeoCodes: string[] | undefined;
+      if (typeof body.cohort_id === "string" && body.cohort_id.trim().length > 0) {
+        let effectiveOrgId = ctx.orgId;
+        if (!effectiveOrgId) {
+          const fallback = rows<{ org_id: string }>(await sql`
+            SELECT org_id FROM org_members WHERE user_id = ${ctx.userId} AND role = 'owner'
+             ORDER BY joined_at ASC LIMIT 1
+          `);
+          effectiveOrgId = fallback.length > 0 ? fallback[0].org_id : null;
+        }
+        if (!effectiveOrgId) {
+          return reply.code(422).send({
+            error: "Cannot resolve cohort_id: caller has no resolvable org context.",
+            code: "no_org_context",
+          });
+        }
+        const cohort = await getCohort(effectiveOrgId, body.cohort_id.trim());
+        if (!cohort) return reply.code(404).send({ error: "Cohort not found in your org." });
+        cohortGeoCodes = cohort.geo_codes;
+        scopeLabel = `${scopeLabel} cohort=${cohort.slug} (n=${cohort.geo_codes.length})`;
+      }
+
       const parsed = parsePeersInput({
         targetGeoCode,
         signals: Array.isArray(body.signals) ? (body.signals as unknown[]).map(String) : undefined,
         country: typeof body.country === "string" ? body.country : undefined,
         lad: typeof body.lad === "string" ? body.lad : undefined,
+        cohortGeoCodes,
         k: typeof body.k === "number" ? body.k : undefined,
         minSignals: typeof body.min_signals === "number" ? body.min_signals : undefined,
       });
@@ -1600,13 +1758,14 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         });
       }
 
-      trackEvent("api.peers.queried", userId, {
+      trackEvent("api.peers.queried", ctx.userId, {
         target: targetGeoCode,
         signals_count: result.signalsUsed.length,
         peers_returned: result.peers.length,
         k: parsed.input.k,
+        cohort_id: typeof body.cohort_id === "string" ? body.cohort_id : null,
       });
-      reply.header("X-Engine-Version", METHODOLOGY_VERSION);
+      reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(ctx.orgId, ctx.userId));
       return reply.code(200).send({
         target: { geo_code: targetGeoCode, signals_used: result.signalsUsed },
         peers: result.peers,

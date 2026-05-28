@@ -215,6 +215,27 @@ export const MIGRATIONS: Migration[] = [
     ],
   },
   {
+    // Levers AR-198 — per-org peer cohorts. A cohort is a named subset
+    // of LSOAs that scopes /v1/peers results when the caller passes
+    // ?cohort_id. The existing global k-NN peer graph is reused;
+    // cohorts act as a candidate filter at query time (no materialized
+    // per-org graph). See ADR 0032.
+    name: "peer_cohorts",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS peer_cohorts (
+        id TEXT PRIMARY KEY,
+        org_id TEXT NOT NULL,
+        slug TEXT NOT NULL,
+        name TEXT NOT NULL,
+        geo_codes TEXT[] NOT NULL DEFAULT '{}',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE (org_id, slug)
+      )`,
+      `CREATE INDEX IF NOT EXISTS peer_cohorts_org_idx ON peer_cohorts (org_id)`,
+    ],
+  },
+  {
     // ORPHANED in production: the live billing routes (stripe/checkout,
     // /cancel, /webhook) read+write `subscriptions`, but no CREATE TABLE for it
     // exists anywhere in the repo (legacy db-schema.ts has no ensureSubscriptionsTable).

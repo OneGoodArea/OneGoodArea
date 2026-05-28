@@ -92,6 +92,18 @@ export interface OrgMethodologyPinRow {
   updated_at: string;
 }
 
+/** Levers (AR-198) — peer_cohorts row. geo_codes is a Postgres TEXT[]
+    of LSOA codes; the Neon driver surfaces it as a JS string[]. */
+export interface PeerCohortRow {
+  id: string;
+  org_id: string;
+  slug: string;
+  name: string;
+  geo_codes: string[];
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ActivityEventRow {
   id: string;
   user_id: string | null;
