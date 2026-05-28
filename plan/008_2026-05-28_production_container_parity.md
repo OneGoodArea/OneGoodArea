@@ -1,4 +1,4 @@
-# Plan 009: Production containerization (cross-platform parity, no compose in prod)
+# Plan 008: Production containerization (cross-platform parity, no compose in prod)
 
 ## Objective
 Implement a production-only container strategy where:
