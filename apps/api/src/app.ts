@@ -43,6 +43,8 @@ import {
   AddMemberRequestSchema,
   CreateBundleRequestSchema,
   UpdateBundleRequestSchema,
+  CreatePresetRequestSchema,
+  UpdatePresetRequestSchema,
 } from "@onegoodarea/contracts";
 import {
   listBundles,
@@ -54,6 +56,14 @@ import {
   filterSignalsByBundle,
   planSignalsOutsideBundle,
 } from "./modules/orgs/bundles";
+import {
+  listPresets,
+  getPreset,
+  createPreset,
+  updatePreset,
+  deletePreset,
+  findUnknownWeightKeys,
+} from "./modules/orgs/presets";
 import {
   getUserPlan,
   hasApiAccess,
@@ -656,10 +666,58 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       if (!getConfig().signalsApiEnabled) {
         return reply.code(404).send({ error: "Not found" });
       }
-      const userId = await requireApiAccess(request, reply);
-      if (!userId) return reply; // 401 / 403 / 429 already sent
+      const ctx = await requireApiAccessWithOrg(request, reply);
+      if (!ctx) return reply; // 401 / 403 / 429 already sent
 
-      const parsed = parseScoreBody(request.body);
+      // Levers (AR-196): a `preset_id` body field resolves to an org-
+      // saved preset. Mutually exclusive with explicit `preset` /
+      // `weights` — passing both is ambiguous (which one wins?), so we
+      // 422 rather than silently picking. Absent the field, behaviour
+      // is unchanged.
+      const body = (request.body ?? {}) as Record<string, unknown>;
+      const presetId = typeof body.preset_id === "string" ? body.preset_id : undefined;
+      let bodyForParse: unknown = request.body;
+
+      if (presetId) {
+        if (body.preset !== undefined || body.weights !== undefined) {
+          return reply.code(422).send({
+            error: "preset_id is mutually exclusive with preset / weights.",
+            code: "preset_id_conflict",
+          });
+        }
+        // Resolve the saved preset in the caller's org. Reuses the
+        // lazy first-owner fallback for legacy keys with null org_id.
+        let effectiveOrgId = ctx.orgId;
+        if (!effectiveOrgId) {
+          const fallback = rows<{ org_id: string }>(await sql`
+            SELECT org_id FROM org_members WHERE user_id = ${ctx.userId} AND role = 'owner'
+             ORDER BY joined_at ASC LIMIT 1
+          `);
+          effectiveOrgId = fallback.length > 0 ? fallback[0].org_id : null;
+        }
+        if (!effectiveOrgId) {
+          return reply.code(422).send({
+            error: "Cannot resolve preset_id: caller has no resolvable org context.",
+            code: "no_org_context",
+          });
+        }
+        const saved = await getPreset(effectiveOrgId, presetId);
+        if (!saved) {
+          return reply.code(404).send({ error: "Preset not found in your org." });
+        }
+        // Synthesize the "as if" body: caller passed preset = base + weights.
+        // The response's weights_source will be "custom" — functionally
+        // accurate (saved presets ARE custom weights). The audit trail
+        // for which named preset_id was used lives in the activity event.
+        bodyForParse = {
+          ...body,
+          preset: saved.base_preset,
+          weights: saved.weights,
+          preset_id: undefined,
+        };
+      }
+
+      const parsed = parseScoreBody(bodyForParse);
       if (!parsed.ok) return reply.code(400).send({ error: parsed.error });
 
       const result = await scoreArea(parsed.query);
@@ -669,10 +727,11 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         });
       }
 
-      trackEvent("api.score.computed", userId, {
+      trackEvent("api.score.computed", ctx.userId, {
         area: parsed.query.area,
         preset: parsed.query.preset,
         weights: parsed.query.weights ? "custom" : "preset",
+        preset_id: presetId ?? null,
         score: result.score,
       });
       reply.header("X-Engine-Version", result.engine_version);
@@ -1152,6 +1211,151 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     } catch (error) {
       if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
       logger.error("[v1/orgs/:id/bundles/:bundleId] delete error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  // ── Levers (AR-196): custom scoring presets ──
+  //
+  // A preset is a per-org saved {base_preset, weights} bundle. Callers
+  // reference it on POST /v1/score via `preset_id`. The deterministic
+  // engine is reused untouched — Levers config sits on top.
+  // Owner-only mutations; reads require membership. See ADR 0030.
+
+  app.post("/v1/orgs/:id/presets", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId } = request.params as { id: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      const parsed = CreatePresetRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      const unknown = findUnknownWeightKeys(parsed.data.base_preset, parsed.data.weights);
+      if (unknown.length > 0) {
+        return reply.code(400).send({
+          error: `Unknown dimension keys for base_preset '${parsed.data.base_preset}': ${unknown.join(", ")}.`,
+          code: "unknown_weight_keys",
+        });
+      }
+      const preset = await createPreset({
+        orgId,
+        name: parsed.data.name,
+        slug: parsed.data.slug,
+        basePreset: parsed.data.base_preset,
+        weights: parsed.data.weights,
+      });
+      trackEvent("api.preset.created", userId, { orgId, presetId: preset.id, basePreset: preset.base_preset });
+      return reply.code(201).send(preset);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/presets] create error:", error);
+      const msg = error instanceof Error ? error.message : "";
+      if (/duplicate key|unique constraint/i.test(msg)) {
+        return reply.code(409).send({ error: "A preset with that slug already exists in this org." });
+      }
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/v1/orgs/:id/presets", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId } = request.params as { id: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      const presets = await listPresets(orgId);
+      return reply.code(200).send({ presets });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/presets] list error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/v1/orgs/:id/presets/:presetId", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId, presetId } = request.params as { id: string; presetId: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      const preset = await getPreset(orgId, presetId);
+      if (!preset) return reply.code(404).send({ error: "Preset not found" });
+      return reply.code(200).send(preset);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/presets/:presetId] get error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.patch("/v1/orgs/:id/presets/:presetId", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId, presetId } = request.params as { id: string; presetId: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      const parsed = UpdatePresetRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      // Weights are validated against the EFFECTIVE base_preset after the
+      // patch. If the caller only patches weights, we need the existing
+      // base_preset; if they patch base_preset too, we use the new one.
+      // Fetch once to resolve the effective values.
+      const existing = await getPreset(orgId, presetId);
+      if (!existing) return reply.code(404).send({ error: "Preset not found" });
+      const effectiveBase = parsed.data.base_preset ?? existing.base_preset;
+      const effectiveWeights = parsed.data.weights ?? existing.weights;
+      const unknown = findUnknownWeightKeys(effectiveBase, effectiveWeights);
+      if (unknown.length > 0) {
+        return reply.code(400).send({
+          error: `Unknown dimension keys for base_preset '${effectiveBase}': ${unknown.join(", ")}.`,
+          code: "unknown_weight_keys",
+        });
+      }
+      const updated = await updatePreset(orgId, presetId, {
+        name: parsed.data.name,
+        slug: parsed.data.slug,
+        basePreset: parsed.data.base_preset,
+        weights: parsed.data.weights,
+      });
+      if (!updated) return reply.code(404).send({ error: "Preset not found" });
+      trackEvent("api.preset.updated", userId, { orgId, presetId });
+      return reply.code(200).send(updated);
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/presets/:presetId] update error:", error);
+      const msg = error instanceof Error ? error.message : "";
+      if (/duplicate key|unique constraint/i.test(msg)) {
+        return reply.code(409).send({ error: "A preset with that slug already exists in this org." });
+      }
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/v1/orgs/:id/presets/:presetId", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+      const { id: orgId, presetId } = request.params as { id: string; presetId: string };
+      const role = await getRoleInOrg(orgId, userId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (role !== "owner") return reply.code(403).send({ error: "Owner-only operation." });
+      const ok = await deletePreset(orgId, presetId);
+      if (!ok) return reply.code(404).send({ error: "Preset not found" });
+      trackEvent("api.preset.deleted", userId, { orgId, presetId });
+      return reply.code(200).send({ deleted: true });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/presets/:presetId] delete error:", error);
       return reply.code(500).send({ error: "Internal server error" });
     }
   });

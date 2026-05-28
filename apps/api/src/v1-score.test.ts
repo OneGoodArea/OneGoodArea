@@ -14,6 +14,7 @@ import { rateLimit } from "./infrastructure/rate-limit";
 import { hasApiAccess } from "./modules/usage";
 import { scoreArea } from "./modules/scoring";
 import { trackEvent } from "./modules/tracking/activity";
+import { sql } from "./infrastructure/db/client";
 
 const app = buildApp();
 afterAll(() => { app.close(); delete process.env.OGA_SIGNALS_API; });
@@ -92,5 +93,55 @@ describe("POST /v1/score", () => {
     expect(mockScore).toHaveBeenCalledWith(expect.objectContaining({ area: "M1 1AE", preset: "research" }));
     expect(trackEvent).toHaveBeenCalledWith("api.score.computed", "user_1", expect.objectContaining({ preset: "research", score: 62 }));
     expect(res.headers["x-engine-version"]).toBe("2.0.2");
+  });
+});
+
+/* Levers (AR-196): saved scoring presets via preset_id. */
+describe("POST /v1/score — Levers preset_id (AR-196)", () => {
+  it("resolves preset_id to the saved preset's {base_preset, weights} and calls scoreArea accordingly", async () => {
+    mockValidate.mockResolvedValue({ userId: "user_1", orgId: "org_acme" });
+    // First sql call after auth = getPreset SELECT.
+    vi.mocked(sql).mockResolvedValueOnce([{
+      id: "spr_x", org_id: "org_acme", slug: "underwriting", name: "Underwriting v1",
+      base_preset: "moving",
+      weights: { safety_crime: 0.5, schools_education: 0.2, transport_commute: 0.1, daily_amenities: 0.1, cost_of_living: 0.1 },
+      created_at: "2026-05-28", updated_at: "2026-05-28",
+    }] as never);
+
+    const res = await post({ area: "M1 1AE", preset_id: "spr_x" });
+    expect(res.statusCode).toBe(200);
+    expect(mockScore).toHaveBeenCalledWith(expect.objectContaining({
+      area: "M1 1AE",
+      preset: "moving",
+      weights: expect.objectContaining({ safety_crime: 0.5 }),
+    }));
+    expect(trackEvent).toHaveBeenCalledWith(
+      "api.score.computed",
+      "user_1",
+      expect.objectContaining({ preset_id: "spr_x", weights: "custom" }),
+    );
+  });
+
+  it("422s when preset_id is passed alongside explicit preset (mutually exclusive)", async () => {
+    mockValidate.mockResolvedValue({ userId: "user_1", orgId: "org_acme" });
+    const res = await post({ area: "M1 1AE", preset_id: "spr_x", preset: "moving" });
+    expect(res.statusCode).toBe(422);
+    expect(res.json().code).toBe("preset_id_conflict");
+    expect(mockScore).not.toHaveBeenCalled();
+  });
+
+  it("422s when preset_id is passed alongside explicit weights (mutually exclusive)", async () => {
+    mockValidate.mockResolvedValue({ userId: "user_1", orgId: "org_acme" });
+    const res = await post({ area: "M1 1AE", preset_id: "spr_x", weights: { safety_crime: 1 } });
+    expect(res.statusCode).toBe(422);
+    expect(res.json().code).toBe("preset_id_conflict");
+  });
+
+  it("404s when preset_id is unknown in the caller's org", async () => {
+    mockValidate.mockResolvedValue({ userId: "user_1", orgId: "org_acme" });
+    vi.mocked(sql).mockResolvedValueOnce([] as never); // getPreset -> 0 rows
+    const res = await post({ area: "M1 1AE", preset_id: "spr_nope" });
+    expect(res.statusCode).toBe(404);
+    expect(mockScore).not.toHaveBeenCalled();
   });
 });

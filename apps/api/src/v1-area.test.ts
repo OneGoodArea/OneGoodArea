@@ -123,13 +123,13 @@ describe("GET /v1/area", () => {
    (from requireApiAccessWithOrg) re-uses the same mockResolvedValue. */
 describe("GET /v1/area — Levers bundle filter (AR-195)", () => {
   const PROFILE_MULTI = {
-    ...PROFILE,
+    geo: { query: "M1 1AE", postcode: "M1 1AE", latitude: 53.47, longitude: -2.23, lsoa: "E01005207", msoa: "E02000984", admin_district: "Manchester", region: "North West", country: "England", area_type: "urban" },
     signals: [
       { key: "crime.total_12m", category: "crime", label: "crime", value: 1200, unit: "count", direction: "lower_is_better", confidence: 0.9, confidence_reason: "ok", source: "police.uk", observed_period: "2025" },
       { key: "property.median_price", category: "property", label: "price", value: 250000, unit: "GBP", direction: "neutral", confidence: 0.9, confidence_reason: "ok", source: "land_registry", observed_period: "2025" },
       { key: "deprivation.imd_decile", category: "deprivation", label: "imd", value: 5, unit: "decile", direction: "higher_is_better", confidence: 1, confidence_reason: "ok", source: "imd", observed_period: "2025" },
     ],
-    meta: { ...PROFILE.meta, sources: ["police.uk", "land_registry", "imd"] },
+    meta: { engine_version: "2.0.2", generated_at: "2026-05-25T00:00:00.000Z", sources: ["police.uk", "land_registry", "imd"], fetch_mode: "live" },
   } as never;
 
   it("filters response signals to the bundle whitelist when ?bundle= is set", async () => {

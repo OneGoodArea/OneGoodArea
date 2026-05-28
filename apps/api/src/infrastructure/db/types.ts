@@ -67,6 +67,20 @@ export interface SignalBundleRow {
   updated_at: string;
 }
 
+/** Levers (AR-196) — scoring_presets row. weights is JSONB; the Neon
+    driver surfaces it as the parsed JS object. base_preset is one of
+    moving | business | investing | research (validated at write time). */
+export interface ScoringPresetRow {
+  id: string;
+  org_id: string;
+  slug: string;
+  name: string;
+  base_preset: string;
+  weights: Record<string, number>;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ActivityEventRow {
   id: string;
   user_id: string | null;

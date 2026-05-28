@@ -177,6 +177,29 @@ export const MIGRATIONS: Migration[] = [
     ],
   },
   {
+    // Levers AR-196 — custom scoring presets. A preset is a saved
+    // {base_preset, weights} bundle keyed by id; callers reference it
+    // on POST /v1/score via `preset_id`. base_preset is one of the
+    // hardcoded intents (selects the dimension set); weights override
+    // the aggregation. The deterministic engine is reused untouched.
+    // See ADR 0030.
+    name: "scoring_presets",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS scoring_presets (
+        id TEXT PRIMARY KEY,
+        org_id TEXT NOT NULL,
+        slug TEXT NOT NULL,
+        name TEXT NOT NULL,
+        base_preset TEXT NOT NULL,
+        weights JSONB NOT NULL DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE (org_id, slug)
+      )`,
+      `CREATE INDEX IF NOT EXISTS scoring_presets_org_idx ON scoring_presets (org_id)`,
+    ],
+  },
+  {
     // ORPHANED in production: the live billing routes (stripe/checkout,
     // /cancel, /webhook) read+write `subscriptions`, but no CREATE TABLE for it
     // exists anywhere in the repo (legacy db-schema.ts has no ensureSubscriptionsTable).
