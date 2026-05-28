@@ -18,6 +18,11 @@ const eslintConfig = defineConfig([
     // Dev/ops tooling (seed/stripe/cron scripts). Not part of the app build and
     // never linted before the apps/web relocation; keep it out of lint scope.
     "apps/web/scripts/**",
+    // Build artifacts — apps/api esbuilds to dist/server.cjs; the bundle is
+    // generated output, never source. Was implicitly excluded before because
+    // dist/ rarely existed locally; making it explicit so the workspace runs
+    // clean post `npm run build`.
+    "apps/api/dist/**",
   ]),
 ]);
 

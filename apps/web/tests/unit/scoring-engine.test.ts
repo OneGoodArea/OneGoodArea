@@ -1,0 +1,507 @@
+import { describe, it, expect } from "vitest";
+import { computeScores, propertyConfidence } from "@/lib/scoring-engine";
+import type { CrimeSummary } from "@/lib/data-sources/police";
+import type { DeprivationData } from "@/lib/data-sources/deprivation";
+import type { AmenitiesData } from "@/lib/data-sources/openstreetmap";
+import type { FloodRiskData } from "@/lib/data-sources/flood";
+import type { PropertyPriceData } from "@/lib/data-sources/land-registry";
+import type { OfstedData } from "@/lib/data-sources/ofsted";
+
+/* ── Test fixtures ── */
+
+const crime: CrimeSummary = {
+  total_crimes: 300,
+  months_covered: 3,
+  by_category: { "violent-crime": 60, "burglary": 30, "shoplifting": 210 },
+  top_streets: [{ name: "High Street", count: 50 }],
+  outcome_breakdown: { "Investigation complete": 100 },
+  monthly_trend: [
+    { month: "2025-01", count: 95 },
+    { month: "2025-02", count: 100 },
+    { month: "2025-03", count: 105 },
+  ],
+};
+
+const deprivation: DeprivationData = {
+  lsoa_code: "E01000001",
+  lsoa_name: "Test LSOA",
+  local_authority: "Test LA",
+  imd_rank: 16878,
+  imd_decile: 5,
+};
+
+const amenities: AmenitiesData = {
+  schools: 10,
+  restaurants_cafes: 15,
+  pubs_bars: 5,
+  healthcare: 4,
+  shops: 8,
+  parks_leisure: 6,
+  transport_stations: 3,
+  bus_stops: 12,
+  total: 63,
+  highlights: ["Test Station", "Central Station"],
+};
+
+const flood: FloodRiskData = {
+  flood_areas_nearby: 2,
+  rivers_at_risk: ["River Test"],
+  active_warnings: [],
+};
+
+const propertyPrices: PropertyPriceData = {
+  postcode_area: "SW1",
+  median_price: 350000,
+  mean_price: 400000,
+  transaction_count: 150,
+  price_change_pct: 3.5,
+  by_property_type: [{ type: "Flat", median: 300000, count: 80 }],
+  tenure_split: { freehold: 60, leasehold: 90 },
+  price_range: { min: 150000, max: 2000000 },
+  period: "2024-2025",
+  prior_median: 338000,
+};
+
+const ofsted: OfstedData = {
+  schools: [
+    { urn: 1, school_name: "Test Primary", phase: "Primary", overall_rating: 1, rating_text: "Outstanding", inspection_date: "2024-01-01", distance_km: 0.5 },
+    { urn: 2, school_name: "Test Secondary", phase: "Secondary", overall_rating: 2, rating_text: "Good", inspection_date: "2024-02-01", distance_km: 0.8 },
+    { urn: 3, school_name: "Test Academy", phase: "Primary", overall_rating: 3, rating_text: "Requires Improvement", inspection_date: "2024-03-01", distance_km: 1.2 },
+  ],
+  total_rated: 3,
+  rating_breakdown: { Outstanding: 1, Good: 1, "Requires Improvement": 1 },
+  inspectorate: "Ofsted",
+};
+
+/* ── Core properties ── */
+
+describe("computeScores", () => {
+  describe("general properties", () => {
+    it("returns scores for all 4 intents", () => {
+      for (const intent of ["moving", "business", "investing", "research"] as const) {
+        const result = computeScores(intent, crime, deprivation, amenities, flood);
+        expect(result.overall).toBeGreaterThanOrEqual(0);
+        expect(result.overall).toBeLessThanOrEqual(100);
+        expect(result.dimensions.length).toBe(5);
+        expect(result.area_type).toBe("suburban");
+      }
+    });
+
+    it("is deterministic (same input = same output)", () => {
+      const a = computeScores("moving", crime, deprivation, amenities, flood);
+      const b = computeScores("moving", crime, deprivation, amenities, flood);
+      expect(a).toEqual(b);
+    });
+
+    it("clamps all dimension scores between 5 and 95", () => {
+      for (const intent of ["moving", "business", "investing", "research"] as const) {
+        const result = computeScores(intent, crime, deprivation, amenities, flood);
+        for (const dim of result.dimensions) {
+          expect(dim.score).toBeGreaterThanOrEqual(5);
+          expect(dim.score).toBeLessThanOrEqual(95);
+        }
+      }
+    });
+
+    it("dimension weights sum to 100", () => {
+      for (const intent of ["moving", "business", "investing", "research"] as const) {
+        const result = computeScores(intent, crime, deprivation, amenities, flood);
+        const totalWeight = result.dimensions.reduce((s, d) => s + d.weight, 0);
+        expect(totalWeight).toBe(100);
+      }
+    });
+
+    it("every dimension has a non-empty reasoning string", () => {
+      for (const intent of ["moving", "business", "investing", "research"] as const) {
+        const result = computeScores(intent, crime, deprivation, amenities, flood);
+        for (const dim of result.dimensions) {
+          expect(dim.reasoning.length).toBeGreaterThan(0);
+        }
+      }
+    });
+  });
+
+  /* ── Null / missing data handling ── */
+
+  describe("null data graceful degradation", () => {
+    it("returns fallback scores when everything is null", () => {
+      for (const intent of ["moving", "business", "investing", "research"] as const) {
+        const result = computeScores(intent, null, null, null, null);
+        for (const dim of result.dimensions) {
+          // All null → fallback scores (50 for most, 40-45 for environment/risk composites)
+          expect(dim.score).toBeGreaterThanOrEqual(30);
+          expect(dim.score).toBeLessThanOrEqual(50);
+        }
+      }
+    });
+
+    it("handles partial null data without crashing", () => {
+      expect(() => computeScores("moving", crime, null, amenities, null)).not.toThrow();
+      expect(() => computeScores("investing", null, deprivation, null, flood)).not.toThrow();
+      expect(() => computeScores("business", null, null, amenities, null)).not.toThrow();
+    });
+  });
+
+  /* ── Area type benchmarks ── */
+
+  describe("area type benchmarks", () => {
+    it("produces different scores for different area types", () => {
+      const urban = computeScores("moving", crime, deprivation, amenities, flood, "urban");
+      const rural = computeScores("moving", crime, deprivation, amenities, flood, "rural");
+      // Same data, different benchmarks — at least one dimension should differ
+      const urbanScores = urban.dimensions.map(d => d.score);
+      const ruralScores = rural.dimensions.map(d => d.score);
+      expect(urbanScores).not.toEqual(ruralScores);
+    });
+
+    it("sets area_type on the result", () => {
+      expect(computeScores("moving", crime, deprivation, amenities, flood, "urban").area_type).toBe("urban");
+      expect(computeScores("moving", crime, deprivation, amenities, flood, "rural").area_type).toBe("rural");
+    });
+  });
+
+  /* ── Safety scoring ── */
+
+  describe("safety scoring", () => {
+    it("scores low crime areas higher", () => {
+      const lowCrime: CrimeSummary = { ...crime, total_crimes: 30, by_category: { shoplifting: 30 }, monthly_trend: [] };
+      const highCrime: CrimeSummary = { ...crime, total_crimes: 3000, by_category: { "violent-crime": 1500, shoplifting: 1500 } };
+      const low = computeScores("research", lowCrime, deprivation, amenities, flood);
+      const high = computeScores("research", highCrime, deprivation, amenities, flood);
+      const safetyLow = low.dimensions.find(d => d.label.includes("Safety"))!;
+      const safetyHigh = high.dimensions.find(d => d.label.includes("Safety"))!;
+      expect(safetyLow.score).toBeGreaterThan(safetyHigh.score);
+    });
+
+    it("penalises high violent crime percentage", () => {
+      const peaceful: CrimeSummary = { ...crime, by_category: { shoplifting: 300 } };
+      const violent: CrimeSummary = { ...crime, by_category: { "violent-crime": 300 } };
+      const p = computeScores("research", peaceful, deprivation, amenities, flood);
+      const v = computeScores("research", violent, deprivation, amenities, flood);
+      const safetyP = p.dimensions.find(d => d.label.includes("Safety"))!;
+      const safetyV = v.dimensions.find(d => d.label.includes("Safety"))!;
+      expect(safetyP.score).toBeGreaterThan(safetyV.score);
+    });
+  });
+
+  /* ── Property prices integration ── */
+
+  describe("property price integration", () => {
+    it("uses real prices when available for cost of living", () => {
+      const withPrices = computeScores("moving", crime, deprivation, amenities, flood, "suburban", propertyPrices);
+      const withoutPrices = computeScores("moving", crime, deprivation, amenities, flood, "suburban", null);
+      const costWith = withPrices.dimensions.find(d => d.label.includes("Cost"))!;
+      const costWithout = withoutPrices.dimensions.find(d => d.label.includes("Cost"))!;
+      // Should produce different scores since real prices vs IMD proxy
+      expect(costWith.score).not.toBe(costWithout.score);
+      expect(costWith.reasoning).toContain("Median sold price");
+    });
+
+    it("uses YoY change for price growth in investing", () => {
+      const result = computeScores("investing", crime, deprivation, amenities, flood, "suburban", propertyPrices);
+      const growth = result.dimensions.find(d => d.label.includes("Price Growth"))!;
+      expect(growth.reasoning).toContain("YoY");
+    });
+  });
+
+  /* ── Ofsted integration ── */
+
+  describe("ofsted integration", () => {
+    it("uses quality-weighted scoring when Ofsted data available", () => {
+      const withOfsted = computeScores("moving", crime, deprivation, amenities, flood, "suburban", null, ofsted);
+      const withoutOfsted = computeScores("moving", crime, deprivation, amenities, flood, "suburban", null, null);
+      const schoolsWith = withOfsted.dimensions.find(d => d.label.includes("School"))!;
+      const schoolsWithout = withoutOfsted.dimensions.find(d => d.label.includes("School"))!;
+      expect(schoolsWith.reasoning).toContain("Ofsted");
+      expect(schoolsWithout.reasoning).not.toContain("Ofsted");
+    });
+  });
+
+  /* ── Deprivation context ── */
+
+  describe("deprivation context", () => {
+    it("uses IMD 2025 for English LSOAs", () => {
+      const result = computeScores("research", crime, deprivation, amenities, flood);
+      const demo = result.dimensions.find(d => d.label.includes("Demographics"))!;
+      expect(demo.reasoning).toContain("IMD 2025");
+    });
+
+    it("uses WIMD 2019 for Welsh LSOAs", () => {
+      const welshDep: DeprivationData = { ...deprivation, lsoa_code: "W01000001" };
+      const result = computeScores("research", crime, welshDep, amenities, flood);
+      const demo = result.dimensions.find(d => d.label.includes("Demographics"))!;
+      expect(demo.reasoning).toContain("WIMD 2019");
+    });
+
+    it("uses SIMD 2020 for Scottish data zones", () => {
+      const scottishDep: DeprivationData = { ...deprivation, lsoa_code: "S01000001" };
+      const result = computeScores("research", crime, scottishDep, amenities, flood);
+      const demo = result.dimensions.find(d => d.label.includes("Demographics"))!;
+      expect(demo.reasoning).toContain("SIMD 2020");
+    });
+  });
+
+  /* ── Intent-specific dimensions ── */
+
+  describe("intent-specific dimensions", () => {
+    it("moving includes Safety, Schools, Transport, Amenities, Cost of Living", () => {
+      const result = computeScores("moving", crime, deprivation, amenities, flood);
+      const labels = result.dimensions.map(d => d.label);
+      expect(labels).toContain("Safety & Crime");
+      expect(labels).toContain("Schools & Education");
+      expect(labels).toContain("Transport & Commute");
+      expect(labels).toContain("Daily Amenities");
+      expect(labels).toContain("Cost of Living");
+    });
+
+    it("business includes Foot Traffic, Competition, Transport, Spending Power, Commercial Costs", () => {
+      const result = computeScores("business", crime, deprivation, amenities, flood);
+      const labels = result.dimensions.map(d => d.label);
+      expect(labels).toContain("Foot Traffic & Demand");
+      expect(labels).toContain("Competition Density");
+      expect(labels).toContain("Transport & Access");
+      expect(labels).toContain("Local Spending Power");
+      expect(labels).toContain("Commercial Costs");
+    });
+
+    it("investing includes Price Growth, Rental Yield, Regeneration, Tenant Demand, Risk Factors", () => {
+      const result = computeScores("investing", crime, deprivation, amenities, flood);
+      const labels = result.dimensions.map(d => d.label);
+      expect(labels).toContain("Price Growth");
+      expect(labels).toContain("Rental Yield");
+      expect(labels).toContain("Regeneration & Infrastructure");
+      expect(labels).toContain("Tenant Demand");
+      expect(labels).toContain("Risk Factors");
+    });
+
+    it("research includes Safety, Transport, Amenities, Demographics, Environment", () => {
+      const result = computeScores("research", crime, deprivation, amenities, flood);
+      const labels = result.dimensions.map(d => d.label);
+      expect(labels).toContain("Safety & Crime");
+      expect(labels).toContain("Transport Links");
+      expect(labels).toContain("Amenities & Services");
+      expect(labels).toContain("Demographics & Economy");
+      expect(labels).toContain("Environment & Quality");
+    });
+  });
+
+  /* ── Confidence scoring ── */
+
+  describe("confidence scoring", () => {
+    it("returns a confidence value on every dimension", () => {
+      const result = computeScores("moving", crime, deprivation, amenities, flood, "suburban", propertyPrices, ofsted);
+      for (const d of result.dimensions) {
+        expect(typeof d.confidence).toBe("number");
+        expect(d.confidence).toBeGreaterThanOrEqual(0);
+        expect(d.confidence).toBeLessThanOrEqual(1);
+      }
+    });
+
+    it("returns a confidence_reason string on every dimension", () => {
+      const result = computeScores("moving", crime, deprivation, amenities, flood);
+      for (const d of result.dimensions) {
+        expect(typeof d.confidence_reason).toBe("string");
+        expect(d.confidence_reason.length).toBeGreaterThan(0);
+      }
+    });
+
+    it("returns aggregate overall confidence between 0 and 1", () => {
+      const result = computeScores("moving", crime, deprivation, amenities, flood, "suburban", propertyPrices, ofsted);
+      expect(typeof result.confidence).toBe("number");
+      expect(result.confidence).toBeGreaterThanOrEqual(0);
+      expect(result.confidence).toBeLessThanOrEqual(1);
+    });
+
+    it("aggregate confidence is HIGH when all data sources are present", () => {
+      const result = computeScores("moving", crime, deprivation, amenities, flood, "suburban", propertyPrices, ofsted);
+      expect(result.confidence).toBeGreaterThanOrEqual(0.85);
+    });
+
+    it("aggregate confidence is LOW when most inputs are null", () => {
+      const result = computeScores("moving", null, null, null, null);
+      expect(result.confidence).toBeLessThanOrEqual(0.4);
+    });
+
+    it("Cost of Living confidence is HIGH when Land Registry has many transactions", () => {
+      const result = computeScores("moving", crime, deprivation, amenities, flood, "suburban", propertyPrices, ofsted);
+      const cost = result.dimensions.find(d => d.label === "Cost of Living");
+      expect(cost?.confidence).toBe(1.0);
+    });
+
+    it("Cost of Living confidence falls back to LOW when only IMD is available", () => {
+      const result = computeScores("moving", crime, deprivation, amenities, flood);
+      const cost = result.dimensions.find(d => d.label === "Cost of Living");
+      expect(cost?.confidence).toBe(0.4);
+    });
+
+    it("Schools confidence is HIGH with Ofsted data, MEDIUM without", () => {
+      const withOfsted = computeScores("moving", crime, deprivation, amenities, flood, "suburban", propertyPrices, ofsted);
+      const withoutOfsted = computeScores("moving", crime, deprivation, amenities, flood, "suburban", propertyPrices, null);
+      const sw = withOfsted.dimensions.find(d => d.label === "Schools & Education");
+      const so = withoutOfsted.dimensions.find(d => d.label === "Schools & Education");
+      expect(sw?.confidence).toBe(1.0);
+      expect(so?.confidence).toBe(0.7);
+    });
+
+    it("Demographics confidence is MEDIUM for Welsh and Scottish LSOAs", () => {
+      const welshDep: DeprivationData = { ...deprivation, lsoa_code: "W01000001" };
+      const scottishDep: DeprivationData = { ...deprivation, lsoa_code: "S01000001" };
+      const welsh = computeScores("research", crime, welshDep, amenities, flood);
+      const scottish = computeScores("research", crime, scottishDep, amenities, flood);
+      const wd = welsh.dimensions.find(d => d.label === "Demographics & Economy");
+      const sd = scottish.dimensions.find(d => d.label === "Demographics & Economy");
+      expect(wd?.confidence).toBe(0.7);
+      expect(sd?.confidence).toBe(0.7);
+    });
+
+    it("Demographics confidence is HIGH for English LSOAs", () => {
+      const result = computeScores("research", crime, deprivation, amenities, flood);
+      const dem = result.dimensions.find(d => d.label === "Demographics & Economy");
+      expect(dem?.confidence).toBe(1.0);
+    });
+
+    it("Safety confidence is HIGH with rich crime sample (100+ crimes, 12+ months)", () => {
+      const richCrime: CrimeSummary = { ...crime, months_covered: 12 };
+      const result = computeScores("moving", richCrime, deprivation, amenities, flood);
+      const safety = result.dimensions.find(d => d.label === "Safety & Crime");
+      expect(safety?.confidence).toBe(1.0);
+    });
+
+    it("Safety confidence is MEDIUM when sample is recent but partial", () => {
+      // Default fixture has 3 months coverage and 300 crimes — moderate sample.
+      const result = computeScores("moving", crime, deprivation, amenities, flood);
+      const safety = result.dimensions.find(d => d.label === "Safety & Crime");
+      expect(safety?.confidence).toBe(0.7);
+    });
+
+    it("Safety confidence is LOW when crime sample is sparse", () => {
+      const sparseCrime: CrimeSummary = { ...crime, total_crimes: 5, monthly_trend: [{ month: "2025-01", count: 5 }] };
+      const result = computeScores("moving", sparseCrime, deprivation, amenities, flood);
+      const safety = result.dimensions.find(d => d.label === "Safety & Crime");
+      expect(safety?.confidence).toBe(0.4);
+    });
+
+    it("Safety confidence is NONE when crime data is null", () => {
+      const result = computeScores("moving", null, deprivation, amenities, flood);
+      const safety = result.dimensions.find(d => d.label === "Safety & Crime");
+      expect(safety?.confidence).toBe(0.2);
+    });
+
+    it("aggregate confidence is rounded to 2 decimal places", () => {
+      const result = computeScores("moving", crime, deprivation, amenities, flood);
+      const decimals = result.confidence.toString().split(".")[1] ?? "";
+      expect(decimals.length).toBeLessThanOrEqual(2);
+    });
+
+    it("confidence does not affect score values", () => {
+      const result1 = computeScores("moving", crime, deprivation, amenities, flood);
+      const result2 = computeScores("moving", crime, deprivation, amenities, flood);
+      expect(result1.overall).toBe(result2.overall);
+      result1.dimensions.forEach((d, i) => {
+        expect(d.score).toBe(result2.dimensions[i].score);
+      });
+    });
+  });
+});
+
+/* AR-137: variance-aware property confidence rubric (v2.0.1).
+   Locks in the new HIGH/MEDIUM/LOW gates. */
+
+describe("AR-137: propertyConfidence", () => {
+  it("returns HIGH for >=50 txns with low YoY volatility (<=15%)", () => {
+    expect(propertyConfidence(50, 0).value).toBe(1.0);
+    expect(propertyConfidence(100, 5).value).toBe(1.0);
+    expect(propertyConfidence(200, -15).value).toBe(1.0);
+    expect(propertyConfidence(200, 15).value).toBe(1.0);
+  });
+
+  it("caps at MEDIUM when sample is large but volatility >15%", () => {
+    expect(propertyConfidence(50, 16).value).toBe(0.7);
+    expect(propertyConfidence(83, -21.1).value).toBe(0.7); // York YO1 case
+    expect(propertyConfidence(200, 25).value).toBe(0.7);
+  });
+
+  it("is MEDIUM for moderate samples (20-49 txns) regardless of volatility", () => {
+    expect(propertyConfidence(20, 0).value).toBe(0.7);
+    expect(propertyConfidence(35, 5).value).toBe(0.7);
+    expect(propertyConfidence(49, 100).value).toBe(0.7);
+  });
+
+  it("is LOW for sparse samples (<20 txns)", () => {
+    expect(propertyConfidence(19, 0).value).toBe(0.4);
+    expect(propertyConfidence(5, 5).value).toBe(0.4);
+    expect(propertyConfidence(0, 0).value).toBe(0.4);
+  });
+
+  it("treats null YoY as zero volatility", () => {
+    expect(propertyConfidence(50, null).value).toBe(1.0);
+    expect(propertyConfidence(100, null).value).toBe(1.0);
+  });
+
+  it("includes sample size and volatility in the reason string when HIGH", () => {
+    const result = propertyConfidence(100, 5);
+    expect(result.reason).toMatch(/100/);
+    expect(result.reason).toMatch(/5\.0%/);
+  });
+
+  it("flags volatility as the cap reason when MEDIUM-via-volatility", () => {
+    const result = propertyConfidence(83, -21.1);
+    expect(result.reason).toMatch(/volatility/i);
+    expect(result.reason).toMatch(/21\.1/);
+  });
+
+  it("describes sparse samples honestly in LOW reasons", () => {
+    const result = propertyConfidence(5, 0);
+    expect(result.reason).toMatch(/[Ss]parse/);
+    expect(result.reason).toMatch(/5/);
+  });
+});
+
+/* AR-135: regression — Transport scoring must not return NONE confidence
+   for a realistic city-centre amenities fixture. The bug was Overpass timing
+   out and returning null; this test asserts that GIVEN non-null amenities
+   with the kind of values a city centre would have, the score function
+   produces a confident result. (The upstream Overpass timeout fix in
+   openstreetmap.ts is what makes the non-null amenities reach this function.) */
+
+describe("AR-135: Transport scoring on city-centre amenity fixtures", () => {
+  const cityCentreAmenities: AmenitiesData = {
+    schools: 8,
+    restaurants_cafes: 120,
+    pubs_bars: 25,
+    healthcare: 15,
+    shops: 18,
+    parks_leisure: 6,
+    transport_stations: 3,
+    bus_stops: 45,
+    total: 240,
+    highlights: ["York Station", "King's Cross station", "Manchester Piccadilly station"],
+  };
+
+  it("returns score > 50 for a city-centre fixture (3 stations + 45 bus stops)", () => {
+    const result = computeScores("moving", crime, deprivation, cityCentreAmenities, flood);
+    const transport = result.dimensions.find(d => d.label.toLowerCase().includes("transport"));
+    expect(transport).toBeDefined();
+    expect(transport!.score).toBeGreaterThan(50);
+  });
+
+  it("never returns NONE confidence when amenities object is non-null", () => {
+    const result = computeScores("moving", crime, deprivation, cityCentreAmenities, flood);
+    const transport = result.dimensions.find(d => d.label.toLowerCase().includes("transport"));
+    expect(transport!.confidence).toBeGreaterThan(0.3); // > LOW threshold = at least LOW
+  });
+
+  it("returns HIGH confidence for densely-served city centres", () => {
+    const result = computeScores("moving", crime, deprivation, cityCentreAmenities, flood);
+    const transport = result.dimensions.find(d => d.label.toLowerCase().includes("transport"));
+    // 3 stations + 45 bus stops + 3 named station highlights → should hit HIGH
+    expect(transport!.confidence).toBe(1.0);
+  });
+
+  it("returns NONE only when amenities is null (data source failure)", () => {
+    const result = computeScores("moving", crime, deprivation, null, flood);
+    const transport = result.dimensions.find(d => d.label.toLowerCase().includes("transport"));
+    expect(transport!.confidence).toBe(0.2);
+    expect(transport!.confidence_reason.toLowerCase()).toMatch(/no openstreetmap data/);
+  });
+});
