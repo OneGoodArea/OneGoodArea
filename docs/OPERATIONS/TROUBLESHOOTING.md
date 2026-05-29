@@ -31,7 +31,8 @@ Common production issues + fixes.
 ## Render container fails to start
 
 - Migration may be incomplete. Run `npm run migrate -w @onegoodarea/api` against prod first.
-- The Dockerfile uses esbuild to bundle apps/src/server.ts → dist/server.cjs. If build fails, check the build logs for esbuild errors.
+- `container/api/Containerfile` uses esbuild to bundle `apps/api/src/server.ts` → `dist/server.cjs`. If build fails, check the build logs for esbuild errors.
+- If the dashboard reports "Dockerfile not found", confirm `render.yaml` `dockerfilePath` points at `./container/api/Containerfile` (the old `./Dockerfile` location was retired by plan 008).
 
 ## See also
 

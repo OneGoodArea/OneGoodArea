@@ -185,7 +185,7 @@ Every step is idempotent (`ON CONFLICT DO UPDATE` / `DO NOTHING`); re-running is
 
 ### apps/api — Fastify standalone backend
 - **Host:** Render at https://onegoodarea.onrender.com (free tier; sleeps after 15 min idle).
-- **Build:** Docker image (`Dockerfile`); `esbuild` bundles `src/server.ts` → `dist/server.cjs` at build time; production runs `node dist/server.cjs` (fast boot, low memory — important on free tier's 0.1 CPU/512 MB).
+- **Build:** OCI image (`container/api/Containerfile`); `esbuild` bundles `src/server.ts` → `dist/server.cjs` at build time; production runs `node dist/server.cjs` (fast boot, low memory — important on free tier's 0.1 CPU/512 MB).
 - **Auth modes:**
   - Programmatic: `Authorization: Bearer oga_…` API keys (SHA-256 hashed, prefix-shown). Legacy `aiq_` keys still validate for back-compat.
   - Session (browser): apps/web mints an HS256 JWT (shared `AUTH_SECRET`); apps/api only verifies the signature, no DB session lookup.

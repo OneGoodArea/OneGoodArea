@@ -16,6 +16,8 @@ This folder is the navigation hub. Pick the door that matches your role.
 
 - [`OPERATIONS/`](./OPERATIONS/) — runbooks for everything (local setup · migrations · signal refresh · monitoring · troubleshooting)
 - [`ARCHITECTURE/DEPLOYMENTS.md`](./ARCHITECTURE/DEPLOYMENTS.md) — Render + Vercel + Neon topology
+- [`CONTAINERS.md`](./CONTAINERS.md) — cross-platform container workflow (Podman/Docker), env split, portable `make container-*` interface
+- [`PROD-CONTAINER-CHECKLIST.md`](./PROD-CONTAINER-CHECKLIST.md) — preflight + smoke + rollback before shipping container changes
 
 ## I'm a B2B evaluator / integrating the API
 
