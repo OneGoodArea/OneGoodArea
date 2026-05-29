@@ -37,7 +37,9 @@ ARCHITECTURE.md
 apps/web/out/
 
 # production
-/build
+# (legacy CRA-style /build ignore removed Plan 008 -- this monorepo emits
+#  build artifacts to .next/, apps/api/dist/, and .artifacts/, never /build.
+#  /build/ now holds Make includes -- see build/container.mk.)
 
 # misc
 .DS_Store
