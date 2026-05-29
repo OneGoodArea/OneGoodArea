@@ -1,6 +1,6 @@
-# dependencies
+# dependencies (Plan 008 commit D: explicit, no-ambiguity coverage)
 /node_modules
-node_modules/
+**/node_modules
 LINKEDIN.md
 OVERVIEW.md
 METHODOLOGY-INTERNAL.md
@@ -37,7 +37,9 @@ ARCHITECTURE.md
 apps/web/out/
 
 # production
-/build
+# (legacy CRA-style /build ignore removed Plan 008 -- this monorepo emits
+#  build artifacts to .next/, apps/api/dist/, and .artifacts/, never /build.
+#  /build/ now holds Make includes -- see build/container.mk.)
 
 # misc
 .DS_Store
@@ -55,6 +57,10 @@ yarn-error.log*
 .env.local.test.secrets
 *.secrets
 vercel-import.env
+# Plan 008: env/<env>/<service>.env are real, filled-in env files; only the
+# *.env.example templates are tracked.
+env/**/*.env
+!env/**/*.env.example
 
 # vercel
 .vercel
@@ -62,7 +68,8 @@ vercel-import.env
 # typescript
 *.tsbuildinfo
 tsconfig.tsbuildinfo
-next-env.d.ts
+# Plan 008 commit D: per the Next.js docs, next-env.d.ts SHOULD be tracked
+# in each Next.js workspace. Currently apps/web/next-env.d.ts.
 
 # internal Claude-authored strategy + architecture snapshots
 STRATEGY.md

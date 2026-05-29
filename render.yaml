@@ -10,7 +10,10 @@ services:
   - type: web
     name: onegoodarea-api
     runtime: docker
-    dockerfilePath: ./Dockerfile
+    # Plan 008: API image lives at container/api/Containerfile (was /Dockerfile).
+    # Build context stays the repo root -- the file references workspace
+    # manifests outside its own directory.
+    dockerfilePath: ./container/api/Containerfile
     dockerContext: .
     plan: free
     # Deploy from the restructure branch (main is intentionally untouched).

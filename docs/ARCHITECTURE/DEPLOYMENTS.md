@@ -1,19 +1,27 @@
 # Deploying `apps/api` (the standalone backend)
 
-> The backend is a portable container. The same image (`/Dockerfile`) runs on any
-> OCI host, so the provider choice is **not** a lock-in. Recommendation: start on
-> **Render** (fastest, free, no card), graduate to **Google Cloud Run** later with
+> The backend is a portable container. The same image
+> (`container/api/Containerfile`) runs on any OCI host, so the provider
+> choice is **not** a lock-in. Recommendation: start on **Render**
+> (fastest, free, no card), graduate to **Google Cloud Run** later with
 > zero rework. `apps/web` stays on Vercel — this is only the API.
 
-Nothing here touches the live site: `apps/api` is a separate service. Until the
-BFF cutover, the live monolith keeps serving; this just stands the API up so
-`/v1/area` (and the rest) can be hit directly with an API key.
+For the cross-platform container workflow (Podman/Docker abstraction,
+per-service env split, portable `make container-*` interface), see
+[`../CONTAINERS.md`](../CONTAINERS.md). For pre-deploy verification,
+see [`../PROD-CONTAINER-CHECKLIST.md`](../PROD-CONTAINER-CHECKLIST.md).
+
+Nothing here touches the live site: `apps/api` is a separate service.
 
 ## What's in the repo for this
 
 | File | Purpose |
 |---|---|
-| `/Dockerfile` | the portable image (Node 22, runs `apps/api` via tsx) |
+| `container/api/Containerfile` | the portable API image (Node 22) |
+| `container/web/Containerfile` | parity image for `apps/web` (Vercel stays primary) |
+| `container/postgres/Containerfile` | parity image for postgres (Neon stays primary) |
+| `build/container.mk` | engine abstraction (Podman/Docker, OS detection) |
+| `env/{local,dev,prod}/{api,web,postgres}.env.example` | per-(env x service) templates |
 | `/.dockerignore` | keeps the build context lean |
 | `/render.yaml` | Render Blueprint (one-click-ish) |
 | `/.github/workflows/signal-refresh.yml` | free monthly cron for refresh + normalize |
@@ -43,7 +51,7 @@ For *just* trying `/v1/area`, the minimum is `DATABASE_URL` + `OGA_SIGNALS_API=t
 1. **Render dashboard** → New → **Blueprint** → connect this GitHub repo (authorize
    access to the private repo). It reads `render.yaml`.
 2. It creates the `onegoodarea-api` web service on the **free** plan, building from
-   `/Dockerfile`, deploying the `feat/signal-first-restructure` branch.
+   `container/api/Containerfile`, deploying the configured branch (today: `main`).
 3. In the service's **Environment** tab, fill the secrets marked `sync:false`
    (`DATABASE_URL`, `AUTH_SECRET`, `ANTHROPIC_API_KEY`, `STRIPE_*`, `RESEND_API_KEY`).
    The flags + `NEXTAUTH_URL` come from `render.yaml`.
@@ -54,7 +62,8 @@ For *just* trying `/v1/area`, the minimum is `DATABASE_URL` + `OGA_SIGNALS_API=t
 > Fine pre-customer; upgrade the plan or move to Cloud Run when that matters.
 
 (No-Blueprint alternative: New → **Web Service** → pick the repo → Runtime
-**Docker** → it finds `/Dockerfile` → set branch + env vars manually.)
+**Docker** → set Dockerfile path to `container/api/Containerfile` → set
+branch + env vars manually.)
 
 ---
 
@@ -64,7 +73,7 @@ Prereqs: a GCP project + `gcloud` CLI (`gcloud auth login`). Then, from the repo
 
 ```bash
 gcloud run deploy onegoodarea-api \
-  --source . \                          # builds /Dockerfile via Cloud Build
+  --source . \                          # builds container/api/Containerfile via Cloud Build
   --region europe-west2 \
   --allow-unauthenticated \
   --set-env-vars OGA_SIGNALS_API=true,OGA_SIGNALS_STORE_READ=true,NEXTAUTH_URL=https://www.onegoodarea.com \
@@ -107,7 +116,11 @@ curl -H "Authorization: Bearer oga_xxx" "https://<your-host>/v1/area?postcode=M1
 - **Image size:** the build installs all workspace deps for simplicity (reliable
   first build). Trimming via a JS bundle or selective workspace install is a tested
   optimization once the base deploy is confirmed.
-- **Branch:** we deploy `feat/signal-first-restructure` (main is untouched by the
-  restructure). Repoint to `main` when it merges.
-- **BFF cutover** (browser → apps/web → apps/api) is a separate, later step; this
-  deploy is the API standing on its own (api-key auth) first.
+- **Branch:** Render deploys `main`.
+- **BFF cutover** (browser → apps/web → apps/api) of `apps/web/src/lib/*` callers
+  is plan 010's territory — separate from this deploy story.
+- **Web image:** `container/web/Containerfile` exists for parity / test
+  compatibility (plan 008). `apps/web` continues to deploy on Vercel as primary.
+- **Postgres image:** `container/postgres/Containerfile` exists for parity /
+  integration tests (plan 008). Neon remains the production database. Schema +
+  migrations belong to plan 009.
