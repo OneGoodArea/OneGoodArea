@@ -1,10 +1,15 @@
 # Render Blueprint for the standalone backend (apps/api).
-# Render is the fastest free start; the same Dockerfile also runs on Cloud Run /
-# Koyeb with no rework (see docs/DEPLOY.md). Free web services sleep after 15 min
-# idle (30-60s cold start) — fine pre-customer.
+# Render is the fastest free start; the same OCI image also runs on Cloud Run /
+# Koyeb with no rework (see docs/CONTAINERS.md + docs/ARCHITECTURE/DEPLOYMENTS.md).
+# Free web services sleep after 15 min idle (30-60s cold start) — fine pre-customer.
 #
 # To use: Render Dashboard → New → Blueprint → connect this repo. Then set the
 # secret env vars (marked sync:false) in the dashboard — they are NOT in git.
+#
+# Existing services: dashboard settings (Dockerfile Path, Branch) take precedence
+# over this file after the service is created. After plan 008's path rename, the
+# service's "Dockerfile Path" must be set to `container/api/Containerfile` in the
+# dashboard (Settings → Build & Deploy).
 
 services:
   - type: web
@@ -16,8 +21,9 @@ services:
     dockerfilePath: ./container/api/Containerfile
     dockerContext: .
     plan: free
-    # Deploy from the restructure branch (main is intentionally untouched).
-    branch: feat/signal-first-restructure
+    # Deploy from main. (Signal-first restructure was merged in PR #60 on
+    # 2026-05-27; plan 008 container rename merged in PR #73 on 2026-05-29.)
+    branch: main
     healthCheckPath: /health
     autoDeploy: false # flip to true once you trust the pipeline
     envVars:
