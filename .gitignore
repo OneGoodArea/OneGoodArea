@@ -1,6 +1,6 @@
-# dependencies
+# dependencies (Plan 008 commit D: explicit, no-ambiguity coverage)
 /node_modules
-node_modules/
+**/node_modules
 LINKEDIN.md
 OVERVIEW.md
 METHODOLOGY-INTERNAL.md
@@ -68,7 +68,8 @@ env/**/*.env
 # typescript
 *.tsbuildinfo
 tsconfig.tsbuildinfo
-next-env.d.ts
+# Plan 008 commit D: per the Next.js docs, next-env.d.ts SHOULD be tracked
+# in each Next.js workspace. Currently apps/web/next-env.d.ts.
 
 # internal Claude-authored strategy + architecture snapshots
 STRATEGY.md
