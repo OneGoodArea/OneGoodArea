@@ -1,0 +1,70 @@
+# container/web/Containerfile -- portable image for apps/web (Plan 008).
+#
+# PARITY ONLY. apps/web continues to deploy on Vercel as primary; this image
+# exists so the same web workload can be brought up locally / in CI / on any
+# OCI host with identical behaviour for test compatibility, prod-mirror dev,
+# or backup hosting. Vercel is NOT being replaced.
+#
+# Uses Next.js `output: "standalone"` so the final image carries only the
+# minimal node runtime needed to serve the build -- not the full workspace
+# install. Boots cold in milliseconds.
+#
+# Build context is the repo ROOT (monorepo). See .dockerignore.
+
+FROM node:22-slim AS deps
+WORKDIR /app
+
+# Manifests first for layer caching. Every workspace package.json must be
+# present so npm can resolve the workspace tree.
+COPY package.json package-lock.json ./
+COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
+COPY packages/contracts/package.json ./packages/contracts/
+
+# `npm install`, not `npm ci`: the lockfile is generated on Windows and is
+# missing some Linux-only optional deps (e.g. @emnapi/* via Tailwind native
+# bindings). `npm install` resolves the platform deps. Same reasoning as
+# container/api/Containerfile.
+RUN npm install --no-audit --no-fund
+
+# --- build stage --------------------------------------------------------
+FROM node:22-slim AS build
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/package.json /app/package-lock.json ./
+COPY --from=deps /app/apps/api/package.json ./apps/api/
+COPY --from=deps /app/apps/web/package.json ./apps/web/
+COPY --from=deps /app/packages/contracts/package.json ./packages/contracts/
+
+# Bring in the source the web build actually needs.
+COPY packages/contracts ./packages/contracts
+COPY apps/web ./apps/web
+
+# Next.js standalone build writes a self-contained server bundle to
+# apps/web/.next/standalone + static assets to apps/web/.next/static.
+RUN npm run build -w @onegoodarea/web
+
+# --- runtime stage ------------------------------------------------------
+FROM node:22-slim AS runtime
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+# Vercel / Render / Cloud Run / Koyeb all inject PORT.
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+
+# Standalone output layout copied per Next.js convention:
+#   .next/standalone/   -> minimal node server + traced deps
+#   .next/static/       -> hashed static assets served by the server
+#   public/             -> public assets
+COPY --from=build /app/apps/web/.next/standalone ./
+COPY --from=build /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=build /app/apps/web/public ./apps/web/public
+
+EXPOSE 3000
+CMD ["node", "apps/web/server.js"]

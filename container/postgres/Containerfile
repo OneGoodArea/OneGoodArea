@@ -1,0 +1,28 @@
+# container/postgres/Containerfile -- thin postgres:16-alpine wrapper (Plan 008).
+#
+# PARITY ONLY. Neon remains the production database. This image exists so the
+# same postgres conventions (version, env shape, healthcheck contract) can be
+# brought up locally / in CI for offline development + integration tests.
+# Neon is NOT being replaced.
+#
+# Config conventions only. NO schema, NO seeds, NO migrations baked in --
+# those responsibilities live with plan 009 (DAL + migrations + load).
+
+FROM postgres:16-alpine
+
+# Sensible defaults; every consumer overrides via env file
+# (env/{local,dev,prod}/postgres.env). Names mirror the local-test compose
+# stack so the same DSN works in both worlds.
+ENV POSTGRES_DB=oga
+ENV POSTGRES_USER=oga
+ENV POSTGRES_PASSWORD=change-me
+
+# Built-in postgres image already declares 5432; restated here for visibility.
+EXPOSE 5432
+
+# Healthcheck contract: `pg_isready` is the canonical liveness probe and is
+# already on PATH in the base image. Consumers can reuse this contract in
+# orchestrators (docker run --health-cmd / k8s livenessProbe) without
+# re-deriving it.
+HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=5 \
+  CMD pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" || exit 1

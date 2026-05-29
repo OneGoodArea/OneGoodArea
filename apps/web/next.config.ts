@@ -26,6 +26,10 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Self-contained server bundle in .next/standalone -- powers
+  // container/web/Containerfile (Plan 008). Vercel ignores this flag and
+  // builds its own way, so production deploys are unaffected.
+  output: "standalone",
   async headers() {
     return [
       {
