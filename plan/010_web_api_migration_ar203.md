@@ -424,11 +424,22 @@ Each commit must pass:
 
 ## 8. Branch Strategy
 
-**Single branch:** `feat/AR-203-web-api-separation` (follows CLAUDE.md rule 8)
+**Two branches (separate concerns):**
 
-**10 commits:**
+### Planning Phase: `feat/AR-203-web-api-separation`
+- Contains the detailed implementation plan
+- Includes architecture documentation
+- No code changes
+- Status: ✓ Complete
+
+### Implementation Phase: `impl/AR-203-web-api-separation`
+- Will contain the 10 commits
+- Created from main after prerequisite plans (008, 009) are complete
+- Single branch for implementation (follows CLAUDE.md rule 8)
+
+**10 commits (on impl branch):**
 ```
-feat/AR-203-web-api-separation
+impl/AR-203-web-api-separation
 ├── Commit 1: API endpoint: POST /v1/api-keys/validate
 ├── Commit 2: API endpoints: GET /v1/usage/*, POST /v1/usage/track-mcp
 ├── Commit 3: API endpoints: POST /v1/webhooks/fire, POST /v1/activity/track
@@ -508,14 +519,24 @@ feat/AR-203-web-api-separation
 
 ## 14. Next Steps
 
-1. **Create JIRA issue AR-203** linking to this plan
-2. **Create branch:** `git checkout -b feat/AR-203-web-api-separation`
+### Phase A: Planning (Complete ✓)
+1. ✓ Create JIRA issue AR-203
+2. ✓ Create planning branch: `feat/AR-203-web-api-separation`
+3. ✓ Document plan with CLAUDE.md compliance checks
+4. ✓ Verify prerequisites (Plan 008, Plan 009)
+
+### Phase B: Implementation (Pending)
+1. **Verify prerequisites:** Plans 008 & 009 merged and working
+2. **Create implementation branch:** `impl/AR-203-web-api-separation` (from main)
 3. **Implement Commit 1:** API endpoint for API key validation
 4. **Test Commit 1:** Curl test, build, lint
-5. **Commit 1 → PR:** Small, reviewable PR
+5. **Commit 1 → code review** 
 6. **Repeat for Commits 2-10**
+7. **Create PR** from impl branch → main
 
 ---
 
-**Status:** Plan documented, ready for implementation  
-**Next Action:** Create AR-203 JIRA issue and branch
+**Status:** Planning phase complete, ready for implementation  
+**Current Branch:** `feat/AR-203-web-api-separation` (planning)  
+**Implementation Branch:** `impl/AR-203-web-api-separation` (to be created)  
+**Next Action:** Begin implementation after Plans 008 & 009 complete
