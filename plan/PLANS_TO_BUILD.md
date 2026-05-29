@@ -1,5 +1,9 @@
 # PLans that we think we need to build
 
+## CICD
+* push to oracle cloud
+* build docker
+
 ## Enhance Make
 * identify all command line utlitlies that exist today and potential ones
 * create a make command for each one identified 
