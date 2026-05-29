@@ -57,6 +57,10 @@ yarn-error.log*
 .env.local.test.secrets
 *.secrets
 vercel-import.env
+# Plan 008: env/<env>/<service>.env are real, filled-in env files; only the
+# *.env.example templates are tracked.
+env/**/*.env
+!env/**/*.env.example
 
 # vercel
 .vercel
