@@ -70,6 +70,16 @@ env/**/*.env
 tsconfig.tsbuildinfo
 # Plan 008 commit D: per the Next.js docs, next-env.d.ts SHOULD be tracked
 # in each Next.js workspace. Currently apps/web/next-env.d.ts.
+# Root-level next-env.d.ts is a fossil from before apps/web moved into its
+# own directory; ignore it so it cannot regenerate-and-get-committed.
+/next-env.d.ts
+
+# apps/web/scripts/extract-uk.js inputs + output. Both world-atlas TopoJSON
+# files (large, downloadable from unpkg on demand) and the derived
+# uk-paths.json (the path string gets pasted into a client.tsx, the JSON
+# itself is throwaway) belong out of the tree.
+apps/web/scripts/world-*.json
+apps/web/scripts/uk-paths.json
 
 # internal Claude-authored strategy + architecture snapshots
 STRATEGY.md
