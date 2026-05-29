@@ -45,10 +45,18 @@ Implement a production-only container strategy where:
    - Do not ignore `next-env.d.ts`; track it for each active Next.js app (currently `apps/web/next-env.d.ts`).
 
 ### 2) One image per deployable unit
-1. Keep API production image as dedicated artifact (`Containerfile.api` or equivalent containerfile naming).
-2. Add dedicated production web image (`Containerfile.web`) for `apps/web`.
-3. Add deployment descriptors with separate service images for `api` and `web`.
-4. Define postgres as a separate service contract now (image reference + env contract), without forcing immediate production deployment changes.
+1. **Container layout (locked):** `container/<service>/Containerfile` for each deployable unit. Centralised + symmetric + OCI-native naming (Docker + Podman both honour `Containerfile`):
+   - `container/api/Containerfile` — built from `apps/api` + `packages/contracts` source (`git mv` of the existing root `/Dockerfile`)
+   - `container/web/Containerfile` — built from `apps/web` source (NEW)
+   - `container/postgres/Containerfile` — based on `postgres:16-alpine` (NEW; thin layer for config/env conventions only)
+2. Each image is independently buildable + runnable; no inter-image runtime dependency baked at image build time.
+3. Provider-native runtime wiring (Render dockerfilePath, future Cloud Run/Fly image refs) reads these paths.
+
+#### Web image — explicitly for parity, NOT to replace Vercel
+The `container/web/Containerfile` exists for **test compatibility + cross-platform parity** (local prod-mirror, CI image build validation, future backup-hosting option). **`apps/web` continues to deploy on Vercel as primary**; this plan does not migrate off Vercel. Image uses Next.js `output: 'standalone'` so the container is lean (~40MB layer over node base) regardless of where it eventually runs.
+
+#### Postgres image — explicitly for parity, NOT to replace Neon
+The `container/postgres/Containerfile` exists for **test compatibility + cross-platform parity** (ephemeral local postgres that matches prod conventions for integration tests + offline dev). **Neon remains the production database**; this plan does not introduce a self-hosted prod postgres. The image is config-only (env conventions, no schema bootstrap baked in) — schema / DAL / migration / seed responsibilities live with plans 009 + 010.
 
 ### 3) Production run model (no compose)
 1. Use direct engine commands for production lifecycle (build/run/stop/logs) per service.
@@ -101,12 +109,24 @@ Implement a production-only container strategy where:
    - cross-platform parity checks (same `make` entrypoints on Linux/macOS/Windows)
 3. Add a short “known failure modes” section and exact remediation commands.
 
-## Decisions to lock before implementation
-1. API image path strategy: keep root build file but rename to `Containerfile.api` vs move to `/container/api/Containerfile`.
-2. Web production container runtime: Next standalone output vs `next start` node runtime.
-3. Postgres now: define image/env contract only vs fully runnable target in this phase.
-4. Branching scope: one branch for full change vs stacked branches per commit group.
+## Decisions locked (2026-05-29)
+1. **API image path:** `container/api/Containerfile`. `git mv` from the existing root `/Dockerfile`. Best practice for multi-service monorepos (centralised + symmetric + OCI-native naming that Docker + Podman both honour).
+2. **Web image runtime:** Next.js `output: 'standalone'` mode. Lean image (~40MB layer over node base) + fast cold start. Image exists for parity / test compatibility — `apps/web` continues to deploy on Vercel as primary.
+3. **Postgres image:** Thin wrapper around `postgres:16-alpine` at `container/postgres/Containerfile`. Config conventions only (env shape, healthcheck contract). For parity / test compatibility — Neon remains the production database. **Schema, DAL, migrations, seeds are all explicitly out of scope here** — they belong to plans 009 + 010.
+4. **Branching:** ONE branch (`feat/prod-container-parity`), multiple small reviewable commits per the per-commit-group split in §1.1. Never stacked branches.
 
 ## Deliverable boundaries (this plan)
-- **In scope:** production container workflow, cross-platform parity, multi-image layout, env split, docs, and a concrete checklist file for verification.
-- **Out of scope for now:** production compose, and local/dev runtime refactor.
+
+**In scope** — production container workflow, cross-platform parity, three-image layout (`container/{api,web,postgres}/Containerfile`), env split, Makefile portability, docs, and a concrete verification checklist.
+
+**Out of scope — explicitly NOT this plan:**
+- Production compose
+- Local/dev runtime refactor
+- Replacing Vercel as the production runtime for `apps/web`
+- Replacing Neon as the production database
+- Database schema / migrations / seeds / data load (plan 009)
+- Data Access Layer / repository pattern / in-process DAL boundaries (plan 009)
+- Web → API HTTP migration of `apps/web/src/lib/*` callers (plan 010)
+- Any change to `apps/api`'s runtime behaviour beyond moving its container build file
+
+The postgres + web images here are for **parity + test compatibility** — they sit alongside the production Vercel/Neon surfaces, they do not displace them. Plans 009 + 010 own the displacement work.
