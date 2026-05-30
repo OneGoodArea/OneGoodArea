@@ -237,11 +237,6 @@ input:focus, select:focus {
       .aiq *::selection { background: var(--signal); color: var(--signal-ink); }
       html { scroll-behavior: smooth; }
 
-      /* Theme-aware nav scroll overlay */
-      .aiq-nav-top { background: transparent; }
-      .aiq-nav-scrolled { background: rgba(255,255,255,0.86); }
-      [data-theme="dark"] .aiq-nav-scrolled { background: rgba(10,23,19,0.86); }
-
       /* .aiq-force-light · lock tokens to light-theme values for mock
          surfaces that should always look the same regardless of theme
          (embedded widget preview, listing-page illustration, etc.).
@@ -327,12 +322,10 @@ input:focus, select:focus {
         }
       }
 
-      /* Mobile: single column, smaller text, nav compacts */
+      /* Mobile: hero headline + for-line + report grid layout helpers.
+         The marketing nav's own responsive rules now live co-located
+         in apps/web/src/app/design-v2/_shared/nav.css (AR-204 PR 1). */
       @media (max-width: 720px) {
-        .aiq-nav-links,
-        .aiq-nav-div {
-          display: none !important;
-        }
         .aiq-headline {
           margin-top: 20px !important;
         }
@@ -344,54 +337,6 @@ input:focus, select:focus {
           gap: 28px !important;
           padding: 24px !important;
         }
-        .aiq-nav-cta-label {
-          display: none !important;
-        }
-      }
-
-      /* Marketing nav · hamburger visible only on mobile, drawer slides in
-         from the right with all links + theme + CTA. */
-      @media (min-width: 721px) {
-        .aiq-nav-mobile-btn { display: none !important; }
-        .aiq-nav-drawer { display: none !important; }
-        .aiq-nav-backdrop { display: none !important; }
-      }
-      @media (max-width: 720px) {
-        .aiq-nav-mobile-btn {
-          display: inline-flex !important;
-        }
-        .aiq-nav-drawer {
-          position: fixed;
-          top: 0; right: 0; bottom: 0;
-          width: 320px; max-width: 88vw;
-          background: var(--bg);
-          border-left: 1px solid var(--border);
-          z-index: 60;
-          transform: translateX(100%);
-          transition: transform 260ms cubic-bezier(0.16,1,0.3,1);
-          display: flex !important;
-          flex-direction: column;
-          padding: 20px 22px 24px;
-          overflow-y: auto;
-        }
-        .aiq-nav-drawer.aiq-drawer-open {
-          transform: translateX(0);
-          box-shadow: -20px 0 48px -8px rgba(6,42,30,0.35);
-        }
-        .aiq-nav-backdrop {
-          position: fixed; inset: 0;
-          background: rgba(6,42,30,0.48);
-          backdrop-filter: blur(2px);
-          z-index: 55;
-          animation: aiq-fade-up 200ms ease;
-        }
-        .aiq-nav-cta-desktop {
-          display: none !important;
-        }
-      }
-
-      @media (max-width: 520px) {
-        .aiq-nav-beta { display: none !important; }
       }
 
       /* Who + Why 2-col: stack on narrow viewports */
