@@ -16,7 +16,7 @@ type MarkProps = { size?: number; tone?: "light" | "dark"; className?: string };
 export function Mark({ size = 36, tone, className }: MarkProps) {
   const fill =
     tone === "dark" ? "var(--oga-white)" :
-    tone === "light" ? "var(--oga-green)" :
+    tone === "light" ? "var(--oga-ink)" :
     "currentColor";
 
   return (

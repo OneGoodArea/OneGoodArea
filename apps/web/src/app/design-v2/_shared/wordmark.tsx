@@ -34,7 +34,7 @@ export function Wordmark({
   const resolvedMarkSize = markSize ?? Math.max(Math.round(size * 2), 40);
   const color =
     tone === "dark" ? "var(--oga-white)" :
-    tone === "light" ? "var(--oga-green)" :
+    tone === "light" ? "var(--oga-ink)" :
     "currentColor";
 
   const isInteractive = interactive ?? Boolean(href);

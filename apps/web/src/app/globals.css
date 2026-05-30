@@ -193,9 +193,9 @@ input:focus, select:focus {
         --signal-dim: var(--oga-status-green-bg);
         --bg:         var(--oga-white);
         --bg-off:     var(--oga-canvas);
-        --bg-ink:     var(--oga-green);
+        --bg-ink:     var(--oga-ink);
         --border:     var(--oga-border);
-        --border-dim: var(--oga-green-06);
+        --border-dim: var(--oga-ink-06);
         --text:       var(--oga-fg);
         --text-2:     var(--oga-fg-subtle);
         --text-3:     var(--oga-fg-muted);
@@ -221,11 +221,11 @@ input:focus, select:focus {
         --ink-deep:   var(--oga-white);
         --ink-soft:   rgba(250, 248, 244, 0.65);
         --signal:     var(--oga-status-green);
-        --signal-ink: var(--oga-green);
+        --signal-ink: var(--oga-ink);
         --signal-dim: var(--oga-status-green-bg);
-        --bg:         var(--oga-green);
+        --bg:         var(--oga-ink);
         --bg-off:     #232529;
-        --bg-ink:     var(--oga-green);
+        --bg-ink:     var(--oga-ink);
         --border:     rgba(250, 248, 244, 0.14);
         --border-dim: rgba(250, 248, 244, 0.08);
         --text:       var(--oga-white);
@@ -251,9 +251,9 @@ input:focus, select:focus {
         --signal-dim: var(--oga-status-green-bg);
         --bg:         var(--oga-white);
         --bg-off:     var(--oga-canvas);
-        --bg-ink:     var(--oga-green);
+        --bg-ink:     var(--oga-ink);
         --border:     var(--oga-border);
-        --border-dim: var(--oga-green-06);
+        --border-dim: var(--oga-ink-06);
         --text:       var(--oga-fg);
         --text-2:     var(--oga-fg-subtle);
         --text-3:     var(--oga-fg-muted);

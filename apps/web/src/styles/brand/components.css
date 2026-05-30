@@ -71,7 +71,7 @@
 
 /* Primary — solid fill + visible darker hairline edge. */
 .oga-btn-primary {
-  background: var(--oga-green);
+  background: var(--oga-ink);
   color: var(--oga-white);
   border-color: #0F1014;
 }
@@ -84,16 +84,16 @@
 /* Secondary — outline only, clearly visible. */
 .oga-btn-secondary {
   background: transparent;
-  color: var(--oga-green);
+  color: var(--oga-ink);
   border-color: rgba(26, 28, 31, 0.40);
 }
-.oga-btn-secondary:hover:not(:disabled) { border-color: var(--oga-green); }
+.oga-btn-secondary:hover:not(:disabled) { border-color: var(--oga-ink); }
 .oga-btn-secondary:active:not(:disabled) { transform: scale(0.98); }
 
 /* Ghost — invisible until needed */
 .oga-btn-ghost {
   background: transparent;
-  color: var(--oga-green);
+  color: var(--oga-ink);
   padding: 0 12px;
   border-color: transparent;
 }
@@ -109,7 +109,7 @@
 [data-oga-surface="dark"] .oga-btn-primary,
 .oga-on-dark .oga-btn-primary {
   background: var(--oga-white);
-  color: var(--oga-green);
+  color: var(--oga-ink);
   border-color: rgba(26, 28, 31, 0.45);
 }
 [data-oga-surface="dark"] .oga-btn-primary:hover:not(:disabled),
@@ -179,7 +179,7 @@
    ============================================================ */
 
 .oga-dot-field {
-  background-image: radial-gradient(circle, var(--oga-green-06) 1.2px, transparent 1.4px);
+  background-image: radial-gradient(circle, var(--oga-ink-06) 1.2px, transparent 1.4px);
   background-size: 14px 14px;
   background-position: 0 0;
 }
@@ -201,7 +201,7 @@
    THE MARK — Plotted logo
    Inline SVG with currentColor; set color on the parent.
    ============================================================ */
-.oga-mark    { width: 1em; height: 1em; display: inline-block; color: var(--oga-green); }
+.oga-mark    { width: 1em; height: 1em; display: inline-block; color: var(--oga-ink); }
 .oga-mark-sm { width: 24px;  height: 24px; }
 .oga-mark-md { width: 40px;  height: 40px; }
 .oga-mark-lg { width: 72px;  height: 72px; }
@@ -216,11 +216,11 @@
   width: 128px; height: 128px;
   border-radius: var(--oga-radius-icon);
   background: var(--oga-white);
-  color: var(--oga-green);
+  color: var(--oga-ink);
   box-shadow: var(--oga-shadow-md);
 }
 .oga-icon-tile[data-variant="dark"] {
-  background: var(--oga-green);
+  background: var(--oga-ink);
   color: var(--oga-white);
 }
 .oga-icon-tile > .oga-mark { width: 66%; height: 66%; }
@@ -403,7 +403,7 @@ nav[data-oga-surface="dark"] {
 [data-oga-surface="dark"] .oga-nav-search__submit,
 .oga-on-dark .oga-nav-search__submit {
   background: linear-gradient(180deg, #FFFFFF 0%, #EFECE6 100%);
-  color: var(--oga-green);
+  color: var(--oga-ink);
   border-color: rgba(26, 28, 31, 0.18);
 }
 
@@ -1938,7 +1938,7 @@ nav[data-oga-surface="dark"] {
 
 /* ---------- Focus ring (macOS-tight) ---------- */
 :where(.oga-btn, .oga-root a, .oga-root button, .oga-root input, .oga-root select, .oga-root textarea):focus-visible {
-  outline: 1.5px solid var(--oga-green);
+  outline: 1.5px solid var(--oga-ink);
   outline-offset: 2px;
   border-radius: var(--oga-radius-sm);
 }
