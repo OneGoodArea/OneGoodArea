@@ -7,7 +7,6 @@
 :root {
   --bg: #09090b;
   --bg-elevated: #0f0f12;
-  --bg-hover: #16161a;
   --bg-active: #1a1a20;
   --border: #1c1c22;
   --border-hover: #2a2a32;
@@ -18,7 +17,9 @@
   --accent: #3b82f6;
   --accent-dim: rgba(59, 130, 246, 0.08);
 
-  /* Neon RAG system */
+  /* Neon RAG system. KEEP — consumed by src/lib/rag.ts (score color
+     mapping), src/components/toast.tsx, src/app/docs/playground.tsx,
+     and src/app/design-v2/area/[slug]/client.tsx. */
   --neon-green: #00ff88;
   --neon-green-dim: rgba(0, 255, 136, 0.06);
   --neon-green-glow: rgba(0, 255, 136, 0.15);
@@ -28,11 +29,6 @@
   --neon-red: #ff3344;
   --neon-red-dim: rgba(255, 51, 68, 0.06);
   --neon-red-glow: rgba(255, 51, 68, 0.15);
-
-  /* Shimmer / grid */
-  --shimmer-from: #0f0f12;
-  --shimmer-mid: #1c1c22;
-  --grid-line: rgba(255, 255, 255, 0.02);
 }
 
 [data-theme="light"] {
@@ -59,10 +55,6 @@
   --neon-red: #dc2626;
   --neon-red-dim: rgba(220, 38, 38, 0.06);
   --neon-red-glow: rgba(220, 38, 38, 0.12);
-
-  --shimmer-from: #f0f0f4;
-  --shimmer-mid: #e0e0e6;
-  --grid-line: rgba(0, 0, 0, 0.04);
 }
 
 * {
@@ -105,15 +97,6 @@ input:focus, select:focus {
   border-color: var(--border-active) !important;
 }
 
-/* ── Grid background ── */
-.bg-grid {
-  background-color: var(--bg);
-  background-image:
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: 48px 48px;
-}
-
 /* ── Neon glow utilities ── */
 .neon-green-glow {
   text-shadow: 0 0 6px var(--neon-green-glow), 0 0 20px rgba(0, 255, 136, 0.08);
@@ -146,22 +129,10 @@ input:focus, select:focus {
   background: rgba(37, 99, 235, 0.15);
 }
 
-/* ── Animations ── */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideIn {
-  from { opacity: 0; transform: translateX(-8px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
+/* ── Animations — toast slide-in/out kept (consumed by toast.tsx).
+   fadeIn/fadeInUp/slideIn/shimmer/blink + their .animate-* classes
+   were zero-reference and stripped here. .bg-grid + .score-ring*
+   were zero-reference and stripped above (Brand v3 migration). ── */
 @keyframes toastIn {
   from { opacity: 0; transform: translateX(40px); }
   to { opacity: 1; transform: translateX(0); }
@@ -170,58 +141,6 @@ input:focus, select:focus {
 @keyframes toastOut {
   from { opacity: 1; transform: translateX(0); }
   to { opacity: 0; transform: translateX(40px); }
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
-}
-
-.animate-fade-in-up {
-  opacity: 0;
-  animation: fadeInUp 0.4s ease-out forwards;
-}
-
-.animate-slide-in {
-  opacity: 0;
-  animation: slideIn 0.3s ease-out forwards;
-}
-
-.animate-shimmer {
-  background: linear-gradient(90deg, var(--shimmer-from) 25%, var(--shimmer-mid) 50%, var(--shimmer-from) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-}
-
-.animate-blink {
-  animation: blink 1s step-end infinite;
-}
-
-/* ── Score ring ── */
-.score-ring {
-  transform: rotate(-90deg);
-}
-
-.score-ring-track {
-  fill: none;
-  stroke: var(--border);
-  stroke-width: 3;
-}
-
-.score-ring-fill {
-  fill: none;
-  stroke-width: 3;
-  stroke-linecap: square;
-  transition: stroke-dashoffset 1s ease-out;
 }
 
 /* ── Scrollbar ── */
