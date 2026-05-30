@@ -29,7 +29,11 @@ import "./world-map.css";
 const UK_ISO = "826"; // United Kingdom (ISO 3166-1 numeric)
 
 interface World {
-  countries: Array<{ id: string; d: string }>;
+  /* `key` is the stable array index from the topology, not an ISO
+     code. Some features in Natural Earth 110m have no `id` (notably
+     Antarctica and a few small islands); falling back to index keeps
+     React keys unique without inventing IDs. */
+  countries: Array<{ key: number; d: string }>;
   ukPath: string;
   ukCenter: { x: number; y: number };
 }
@@ -54,22 +58,22 @@ function buildWorld(): World {
     .translate([500, 260]);
   const pathGen = geoPath(projection);
 
-  const countries: Array<{ id: string; d: string }> = [];
+  const countries: Array<{ key: number; d: string }> = [];
   let ukPath = "";
   let ukCenter = { x: 482, y: 154 };
 
-  for (const f of collection.features) {
+  collection.features.forEach((f, i) => {
     const id = String(f.id ?? "");
     const d = pathGen(f as Feature<Geometry, { name?: string }>) ?? "";
-    if (!d) continue;
+    if (!d) return;
     if (id === UK_ISO) {
       ukPath = d;
       const [cx, cy] = projection(geoCentroid(f as Feature<Geometry, { name?: string }>)) ?? [482, 154];
       ukCenter = { x: cx, y: cy };
     } else {
-      countries.push({ id, d });
+      countries.push({ key: i, d });
     }
-  }
+  });
 
   return { countries, ukPath, ukCenter };
 }
@@ -88,7 +92,7 @@ export function WorldMap() {
           "world in periphery." */}
       <g className="oga-world-map__countries">
         {world.countries.map((c) => (
-          <path key={c.id} d={c.d} className="oga-world-map__country" />
+          <path key={c.key} d={c.d} className="oga-world-map__country" />
         ))}
       </g>
 

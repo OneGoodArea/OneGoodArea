@@ -1,0 +1,218 @@
+/* ============================================================
+   Footer — Plotted brand v3, AR-204 PR 2 commit 8.
+
+   Reorganized columns: Brand · Products (Coming soon) · Docs ·
+   Company. Tagline updated to v3 positioning. CTA changed from
+   "Try a postcode" → "Get an API key". Social row uses real brand
+   logos (X, LinkedIn, Email) — GitHub removed.
+
+   No inline styles in footer.tsx — all here. Marcos's rule.
+   ============================================================ */
+
+.oga-footer {
+  background: var(--oga-bg);
+  color: var(--oga-fg);
+  border-top: 1px solid var(--oga-border);
+  padding: 96px 0 32px;
+}
+
+.oga-footer__inner {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+/* ---------- Top grid: Brand + 3 link columns ---------- */
+
+.oga-footer__top {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  gap: 48px;
+  margin-bottom: 84px;
+}
+
+/* Brand cell */
+.oga-footer__brand-wrap {
+  margin-bottom: 24px;
+}
+.oga-footer__tagline {
+  font-family: var(--oga-font-sans);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--oga-fg-subtle);
+  letter-spacing: -0.005em;
+  margin: 0 0 26px;
+  max-width: 36ch;
+  text-wrap: pretty;
+}
+
+/* Brand cell CTA — small ghost-style button. Drops the legacy
+   "Try a postcode" consumer-tool framing. */
+.oga-footer__cta {
+  align-self: flex-start;
+}
+
+/* ---------- Column ---------- */
+
+.oga-footer__col-title {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: 22px;
+}
+.oga-footer__col-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.oga-footer__col-item {
+  margin-bottom: 12px;
+}
+
+.oga-footer__link {
+  font-family: var(--oga-font-sans);
+  font-size: 14.5px;
+  font-weight: 400;
+  color: var(--oga-fg-subtle);
+  text-decoration: none;
+  letter-spacing: -0.005em;
+  transition: color var(--oga-dur-fast) var(--oga-ease);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+.oga-footer__link:hover:not(:disabled):not([aria-disabled="true"]) {
+  color: var(--oga-fg);
+}
+.oga-footer__link[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.oga-footer__link-pill {
+  font-family: var(--oga-font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 2px 6px 1px;
+  border-radius: var(--oga-radius-pill);
+  border: 1px solid var(--oga-border);
+  color: var(--oga-fg-muted);
+  background: transparent;
+}
+
+/* ---------- Bottom strip: copyright + legal + social ---------- */
+
+.oga-footer__bottom {
+  border-top: 1px solid var(--oga-border);
+  padding-top: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.oga-footer__bottom-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.oga-footer__copy {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+.oga-footer__mini-sep {
+  display: inline-block;
+  width: 1px;
+  height: 10px;
+  background: var(--oga-border);
+}
+.oga-footer__legal {
+  display: flex;
+  gap: 14px;
+}
+.oga-footer__mini-link {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  text-decoration: none;
+  transition: color var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-footer__mini-link:hover { color: var(--oga-fg); }
+
+/* Social icons row */
+.oga-footer__social {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.oga-footer__social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--oga-fg-muted);
+  text-decoration: none;
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-sm);
+  background: transparent;
+  transition:
+    color var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-footer__social-link:hover {
+  color: var(--oga-fg);
+  border-color: var(--oga-fg);
+  background: rgba(26, 28, 31, 0.04);
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 900px) {
+  .oga-footer__top {
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+    margin-bottom: 56px;
+  }
+  .oga-footer__brand {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .oga-footer {
+    padding: 64px 0 28px;
+  }
+  .oga-footer__inner {
+    padding: 0 24px;
+  }
+  .oga-footer__top {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .oga-footer__bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+}
