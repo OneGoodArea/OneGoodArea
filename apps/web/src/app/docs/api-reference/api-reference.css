@@ -1,0 +1,521 @@
+/* /docs/api-reference — Brand v3 (Plotted) — AR-204 PR B.
+
+   Honest interim page. The previous Scalar embed of /openapi.json
+   documented 5 of ~70 endpoints, with stale path prefixes
+   (`/api/v1/...` vs Fastify's `/v1/...`) and stale auth prefix
+   (`aiq_` vs `oga_`). Track B per docs/AR-204-methodology-docs-
+   delta.md: reskin the wrapper, replace the body with an honest
+   placeholder + surface map + pointers to what works today.
+   Track A (regenerate the spec from live Fastify schemas) lands
+   as a separate ticket. */
+
+/* ============================================================
+   Page container
+   ============================================================ */
+
+.oga-apiref {
+  min-height: 100vh;
+  background: var(--oga-white);
+  color: var(--oga-fg);
+}
+
+.oga-apiref section {
+  padding: var(--oga-9) clamp(20px, 4vw, var(--oga-7));
+}
+
+.oga-apiref__container {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.oga-apiref__container--narrow {
+  max-width: 880px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ============================================================
+   Section header pattern (shared with /methodology)
+   ============================================================ */
+
+.oga-apiref__header { margin-bottom: var(--oga-7); }
+
+.oga-apiref__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-3);
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-4);
+}
+
+.oga-apiref__eyebrow-num { color: var(--oga-fg); font-weight: 500; }
+.oga-apiref__eyebrow-line { display: inline-block; width: 32px; height: 1px; background: var(--oga-border); }
+
+.oga-apiref__h2 {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-h2);
+  line-height: var(--oga-lh-tight);
+  letter-spacing: var(--oga-tracking-tight);
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 0 var(--oga-4);
+  max-width: 840px;
+}
+
+.oga-apiref__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  color: var(--oga-fg-muted);
+  margin: 0;
+  max-width: 720px;
+}
+
+/* ============================================================
+   Hero
+   ============================================================ */
+
+.oga-apiref-hero {
+  position: relative;
+  padding-top: var(--oga-9);
+  padding-bottom: var(--oga-9);
+}
+
+.oga-apiref-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-3);
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-5);
+}
+
+.oga-apiref-hero__eyebrow-sep {
+  width: 4px; height: 4px;
+  background: var(--oga-fg-muted);
+  border-radius: 50%;
+  opacity: 0.5;
+}
+
+.oga-apiref-hero__status-dot {
+  width: 6px; height: 6px;
+  background: var(--oga-status-amber);
+  border-radius: 50%;
+}
+
+.oga-apiref-hero__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  line-height: var(--oga-lh-tight);
+  letter-spacing: var(--oga-tracking-tight);
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 0 var(--oga-5);
+  max-width: 780px;
+}
+
+.oga-apiref-hero__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-7);
+  max-width: 680px;
+}
+
+.oga-apiref-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--oga-3);
+}
+
+/* ============================================================
+   § 1 — Honest status banner (call-out card)
+   ============================================================ */
+
+.oga-apiref-status {
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-lg);
+  background: var(--oga-white);
+  padding: var(--oga-6);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--oga-6);
+}
+
+@media (max-width: 900px) {
+  .oga-apiref-status { grid-template-columns: 1fr; }
+}
+
+.oga-apiref-status__col-label {
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-3);
+}
+
+.oga-apiref-status__col h3 {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-h4);
+  line-height: var(--oga-lh-snug);
+  font-weight: 500;
+  margin: 0 0 var(--oga-3);
+  color: var(--oga-fg);
+}
+
+.oga-apiref-status__col p {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--oga-fg);
+  margin: 0 0 var(--oga-3);
+}
+
+.oga-apiref-status__col code {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  background: var(--oga-ink-06);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--oga-fg);
+}
+
+.oga-apiref-status__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-fg);
+}
+
+.oga-apiref-status__list-item {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: var(--oga-3);
+  align-items: baseline;
+}
+
+.oga-apiref-status__list-tag {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 3px;
+  text-align: center;
+}
+
+.oga-apiref-status__list-tag--stale {
+  color: var(--oga-status-amber);
+  background: var(--oga-status-amber-bg);
+}
+.oga-apiref-status__list-tag--wrong {
+  color: var(--oga-status-red);
+  background: var(--oga-status-red-bg);
+}
+.oga-apiref-status__list-tag--missing {
+  color: var(--oga-fg-muted);
+  background: var(--oga-ink-06);
+}
+
+/* ============================================================
+   § 2 — Surface map (5 cards)
+   ============================================================ */
+
+.oga-apiref-surfaces__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--oga-4);
+}
+
+.oga-apiref-surfaces__card {
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  background: var(--oga-white);
+  padding: var(--oga-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+}
+
+.oga-apiref-surfaces__card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--oga-3);
+}
+
+.oga-apiref-surfaces__card-num {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-apiref-surfaces__card-count {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-fg);
+  background: var(--oga-ink-06);
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+.oga-apiref-surfaces__card-name {
+  font-family: var(--oga-font-sans);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0;
+}
+
+.oga-apiref-surfaces__card-body {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+.oga-apiref-surfaces__endpoints {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--oga-1);
+}
+
+.oga-apiref-surfaces__endpoint {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: var(--oga-fg);
+  display: flex;
+  align-items: baseline;
+  gap: var(--oga-2);
+  padding: 4px 0;
+  border-top: 1px dashed var(--oga-border);
+}
+
+.oga-apiref-surfaces__endpoint:first-child { border-top: 0; padding-top: 0; }
+
+.oga-apiref-surfaces__endpoint-verb {
+  font-weight: 500;
+  min-width: 48px;
+}
+
+.oga-apiref-surfaces__endpoint-verb--get { color: var(--oga-status-green); }
+.oga-apiref-surfaces__endpoint-verb--post { color: var(--oga-status-amber); }
+.oga-apiref-surfaces__endpoint-verb--put { color: var(--oga-status-yellow); }
+.oga-apiref-surfaces__endpoint-verb--delete { color: var(--oga-status-red); }
+.oga-apiref-surfaces__endpoint-verb--patch { color: var(--oga-status-amber); }
+
+.oga-apiref-surfaces__endpoint-path { color: var(--oga-fg); }
+
+.oga-apiref-surfaces__more {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-fg-muted);
+  padding-top: var(--oga-2);
+  border-top: 1px dashed var(--oga-border);
+}
+
+.oga-apiref-surfaces__card-cta {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  padding-top: var(--oga-3);
+  border-top: 1px solid var(--oga-border);
+}
+
+.oga-apiref-surfaces__card-cta-pill {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--oga-status-amber-bg);
+  color: var(--oga-status-amber);
+}
+
+/* ============================================================
+   § 3 — What you can use today (4 cards)
+   ============================================================ */
+
+.oga-apiref-today__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--oga-3);
+}
+
+@media (max-width: 960px) {
+  .oga-apiref-today__grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 580px) {
+  .oga-apiref-today__grid { grid-template-columns: 1fr; }
+}
+
+.oga-apiref-today__item {
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  background: var(--oga-white);
+  padding: var(--oga-5) var(--oga-4);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--oga-dur) var(--oga-ease), transform var(--oga-dur) var(--oga-ease);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-2);
+}
+
+.oga-apiref-today__item:hover {
+  border-color: var(--oga-ink);
+  transform: translateY(-1px);
+}
+
+.oga-apiref-today__item-num {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-apiref-today__item-name {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0;
+}
+
+.oga-apiref-today__item-desc {
+  font-family: var(--oga-font-sans);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+.oga-apiref-today__item-cta {
+  margin-top: auto;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--oga-fg);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+}
+
+/* ============================================================
+   § 4 — Roadmap card
+   ============================================================ */
+
+.oga-apiref-roadmap__card {
+  border: 1px solid var(--oga-border);
+  border-left: 3px solid var(--oga-ink);
+  border-radius: var(--oga-radius-md);
+  background: var(--oga-white);
+  padding: var(--oga-6);
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: var(--oga-6);
+  align-items: start;
+}
+
+@media (max-width: 760px) {
+  .oga-apiref-roadmap__card { grid-template-columns: 1fr; gap: var(--oga-4); }
+}
+
+.oga-apiref-roadmap__label {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-apiref-roadmap__body h3 {
+  font-family: var(--oga-font-sans);
+  font-size: 20px;
+  font-weight: 500;
+  margin: 0 0 var(--oga-3);
+  color: var(--oga-fg);
+  line-height: 1.25;
+}
+
+.oga-apiref-roadmap__body p {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--oga-fg);
+  margin: 0 0 var(--oga-3);
+}
+
+.oga-apiref-roadmap__body code {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  background: var(--oga-ink-06);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* ============================================================
+   Final CTA (DARK)
+   ============================================================ */
+
+.oga-apiref-cta__inner {
+  text-align: center;
+  padding: var(--oga-7) 0;
+}
+
+.oga-apiref-cta__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: var(--oga-lh-tight);
+  letter-spacing: var(--oga-tracking-tight);
+  font-weight: 500;
+  color: var(--oga-white);
+  margin: 0 auto var(--oga-4);
+  max-width: 760px;
+}
+
+.oga-apiref-cta__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  color: rgba(250,248,244,0.7);
+  margin: 0 auto var(--oga-7);
+  max-width: 580px;
+}
+
+.oga-apiref-cta__buttons {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--oga-3);
+}
