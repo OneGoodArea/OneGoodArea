@@ -1,0 +1,753 @@
+/* /docs — Brand v3 (Plotted) — AR-204 PR (docs index, last small docs page).
+
+   Co-located styles. No inline styles permitted in client.tsx.
+   Uses .oga-* tokens (tokens.css), section shells + rule-marks
+   (backgrounds.css), and the shared .oga-code-panel + .oga-status
+   families in components.css.
+
+   Page IA is 5 numbered sections + hero + CTA:
+     § 01 The 4 products            DARK
+     § 02 Levers control plane      cream
+     § 03 Reference + spec          white
+     § 04 Quickstart                DARK
+     § 05 Code examples             cream
+     CTA                            DARK
+
+   Pattern matches the merged /methodology + /docs/api-reference +
+   /docs/mcp + /changelog pages. */
+
+/* ============================================================
+   Page container
+   ============================================================ */
+
+.oga-docs {
+  min-height: 100vh;
+  background: var(--oga-white);
+  color: var(--oga-fg);
+}
+
+.oga-docs section {
+  padding: var(--oga-9) clamp(20px, 4vw, var(--oga-7));
+}
+
+.oga-docs__container {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.oga-docs__container--narrow {
+  max-width: 880px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ============================================================
+   Section header pattern — eyebrow + rule + h2 + lead
+   ============================================================ */
+
+.oga-docs__header {
+  margin-bottom: var(--oga-7);
+}
+
+.oga-docs__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-3);
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-4);
+}
+
+.oga-docs__eyebrow-num {
+  color: var(--oga-fg);
+  font-weight: 500;
+}
+
+.oga-docs__eyebrow-line {
+  display: inline-block;
+  width: 32px;
+  height: 1px;
+  background: var(--oga-border);
+}
+
+.oga-docs__h2 {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-h2);
+  line-height: var(--oga-lh-tight);
+  letter-spacing: var(--oga-tracking-tight);
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 0 var(--oga-4);
+  max-width: 840px;
+}
+
+.oga-docs__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  color: var(--oga-fg-muted);
+  margin: 0;
+  max-width: 720px;
+}
+
+/* ============================================================
+   Hero — engine state + dual-mode framing
+   ============================================================ */
+
+.oga-docs-hero {
+  position: relative;
+  padding-top: var(--oga-9);
+  padding-bottom: var(--oga-9);
+}
+
+.oga-docs-hero__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: var(--oga-8);
+  align-items: end;
+}
+
+@media (max-width: 880px) {
+  .oga-docs-hero__grid { grid-template-columns: 1fr; gap: var(--oga-6); }
+}
+
+.oga-docs-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-3);
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-5);
+}
+
+.oga-docs-hero__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--oga-fg);
+  animation: oga-docs-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes oga-docs-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
+.oga-docs-hero__h1 {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(38px, 5vw, 64px);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 0 var(--oga-5);
+  max-width: 18ch;
+}
+
+.oga-docs-hero__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-6);
+  max-width: 56ch;
+}
+
+.oga-docs-hero__ctas {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--oga-3);
+}
+
+.oga-docs-hero__sidecard {
+  border: 1px solid var(--oga-border);
+  background: var(--oga-white);
+  padding: var(--oga-6);
+  position: relative;
+}
+
+.oga-docs-hero__sidecard-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-4);
+}
+
+.oga-docs-hero__sidecard-version {
+  font-family: var(--oga-font-mono);
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.oga-docs-hero__sidecard-released {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  color: var(--oga-fg-muted);
+  margin: var(--oga-2) 0 var(--oga-5);
+}
+
+.oga-docs-hero__sidecard-rows {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--oga-3);
+  padding-top: var(--oga-4);
+  border-top: 1px solid var(--oga-border);
+}
+
+.oga-docs-hero__sidecard-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--oga-3);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+}
+
+.oga-docs-hero__sidecard-row-k {
+  color: var(--oga-fg-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 10.5px;
+}
+
+.oga-docs-hero__sidecard-row-v {
+  color: var(--oga-fg);
+  text-align: right;
+}
+
+/* ============================================================
+   § 01 — The 4 products (DARK)
+   ============================================================ */
+
+.oga-docs-products__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: rgba(250, 248, 244, 0.16);
+  border: 1px solid rgba(250, 248, 244, 0.16);
+}
+
+@media (max-width: 880px) {
+  .oga-docs-products__grid { grid-template-columns: 1fr; }
+}
+
+.oga-docs-product {
+  background: var(--oga-ink);
+  padding: var(--oga-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-4);
+  min-height: 320px;
+}
+
+.oga-docs-product__head {
+  display: flex;
+  align-items: center;
+  gap: var(--oga-4);
+}
+
+.oga-docs-product__icon {
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.oga-docs-product__title-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-1);
+}
+
+.oga-docs-product__num {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-docs-product__title {
+  font-family: var(--oga-font-sans);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--oga-white);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.oga-docs-product__body {
+  font-family: var(--oga-font-sans);
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.78);
+  margin: 0;
+  max-width: 56ch;
+}
+
+.oga-docs-product__caps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--oga-2);
+}
+
+.oga-docs-product__caps li {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  color: rgba(250, 248, 244, 0.72);
+  padding-left: var(--oga-4);
+  position: relative;
+  line-height: 1.55;
+}
+
+.oga-docs-product__caps li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--oga-white);
+}
+
+.oga-docs-product__foot {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--oga-3);
+  align-items: center;
+  padding-top: var(--oga-4);
+  border-top: 1px solid rgba(250, 248, 244, 0.12);
+}
+
+.oga-docs-product__endpoint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: rgba(250, 248, 244, 0.85);
+  background: rgba(250, 248, 244, 0.05);
+  border: 1px solid rgba(250, 248, 244, 0.12);
+  padding: 4px 10px;
+  border-radius: 2px;
+}
+
+.oga-docs-product__endpoint-verb {
+  font-weight: 500;
+  color: var(--oga-status-green);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 10.5px;
+}
+
+.oga-docs-product__cta-disabled {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.55);
+  background: transparent;
+  border: 1px solid rgba(250, 248, 244, 0.18);
+  padding: 6px 12px;
+  border-radius: 2px;
+  cursor: not-allowed;
+}
+
+.oga-docs-product__cta-soon {
+  font-size: 10px;
+  color: rgba(250, 248, 244, 0.65);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  background: rgba(250, 248, 244, 0.08);
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+/* ============================================================
+   § 02 — Levers control plane (cream)
+   ============================================================ */
+
+.oga-docs-levers__intro {
+  margin-bottom: var(--oga-7);
+}
+
+.oga-docs-levers__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--oga-border);
+  border: 1px solid var(--oga-border);
+}
+
+@media (max-width: 1080px) {
+  .oga-docs-levers__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .oga-docs-levers__grid { grid-template-columns: 1fr; }
+}
+
+.oga-docs-lever {
+  background: var(--oga-white);
+  padding: var(--oga-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+  min-height: 220px;
+}
+
+.oga-docs-lever__num {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-docs-lever__title {
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0;
+  letter-spacing: -0.005em;
+}
+
+.oga-docs-lever__body {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+.oga-docs-lever__foot {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--oga-2);
+  align-items: center;
+}
+
+.oga-docs-lever__rbac {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oga-fg);
+  background: rgba(26, 28, 31, 0.05);
+  border: 1px solid var(--oga-border);
+  padding: 3px 7px;
+  border-radius: 2px;
+}
+
+.oga-docs-levers__cta-row {
+  margin-top: var(--oga-6);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--oga-3);
+  align-items: center;
+}
+
+/* ============================================================
+   § 03 — Reference + spec (white)
+   ============================================================ */
+
+.oga-docs-ref__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--oga-border);
+  border: 1px solid var(--oga-border);
+}
+
+@media (max-width: 960px) {
+  .oga-docs-ref__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .oga-docs-ref__grid { grid-template-columns: 1fr; }
+}
+
+.oga-docs-ref-tile {
+  background: var(--oga-white);
+  padding: var(--oga-5);
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+  min-height: 200px;
+  transition: background 140ms ease;
+}
+
+.oga-docs-ref-tile--link {
+  cursor: pointer;
+}
+
+.oga-docs-ref-tile--link:hover {
+  background: var(--oga-canvas);
+}
+
+.oga-docs-ref-tile--disabled {
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.oga-docs-ref-tile__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--oga-3);
+}
+
+.oga-docs-ref-tile__num {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-docs-ref-tile__status {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.oga-docs-ref-tile__status--live {
+  color: #2F7A3D;
+  background: rgba(47, 122, 61, 0.08);
+}
+
+.oga-docs-ref-tile__status--soon {
+  color: var(--oga-fg-muted);
+  background: rgba(26, 28, 31, 0.05);
+}
+
+.oga-docs-ref-tile__status--regen {
+  color: #B36400;
+  background: rgba(179, 100, 0, 0.08);
+}
+
+.oga-docs-ref-tile__title {
+  font-family: var(--oga-font-sans);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.oga-docs-ref-tile__body {
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+.oga-docs-ref-tile__foot {
+  margin-top: auto;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-fg);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+}
+
+/* ============================================================
+   § 04 — Quickstart (DARK)
+   ============================================================ */
+
+.oga-docs-qs__steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  background: rgba(250, 248, 244, 0.16);
+  border: 1px solid rgba(250, 248, 244, 0.16);
+  margin-bottom: var(--oga-6);
+}
+
+@media (max-width: 880px) {
+  .oga-docs-qs__steps { grid-template-columns: 1fr; }
+}
+
+.oga-docs-qs-step {
+  background: var(--oga-ink);
+  padding: var(--oga-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+}
+
+.oga-docs-qs-step__num {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-docs-qs-step__title {
+  font-family: var(--oga-font-sans);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--oga-white);
+  margin: 0;
+  letter-spacing: -0.005em;
+}
+
+.oga-docs-qs-step__body {
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.75);
+  margin: 0;
+}
+
+/* Code panel dark-surface override — § 04 sits on graphite. The
+   global .oga-code-panel chrome is cream-tuned; we override the
+   shell colours here so the panel reads on dark without losing
+   the corner-tick + line-number aesthetic. */
+[data-oga-surface="dark"] .oga-code-panel {
+  background: rgba(250, 248, 244, 0.04);
+  border-color: rgba(250, 248, 244, 0.14);
+  color: rgba(250, 248, 244, 0.92);
+}
+
+[data-oga-surface="dark"] .oga-code-panel pre {
+  color: rgba(250, 248, 244, 0.9);
+}
+
+[data-oga-surface="dark"] .oga-code-panel__num {
+  color: rgba(250, 248, 244, 0.35);
+}
+
+[data-oga-surface="dark"] .oga-code-panel__head {
+  color: rgba(250, 248, 244, 0.55);
+  border-bottom-color: rgba(250, 248, 244, 0.12);
+}
+
+/* ============================================================
+   § 05 — Code examples (cream, tabbed)
+   ============================================================ */
+
+.oga-docs-ex__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--oga-2);
+  margin-bottom: var(--oga-4);
+}
+
+.oga-docs-ex__tab {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  background: transparent;
+  border: 1px solid var(--oga-border);
+  padding: 8px 14px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: color 140ms ease, background 140ms ease, border-color 140ms ease;
+}
+
+.oga-docs-ex__tab:hover {
+  color: var(--oga-fg);
+  border-color: var(--oga-fg);
+}
+
+.oga-docs-ex__tab--active {
+  color: var(--oga-white);
+  background: var(--oga-fg);
+  border-color: var(--oga-fg);
+}
+
+.oga-docs-ex__lang-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--oga-3);
+  margin-bottom: var(--oga-4);
+  align-items: baseline;
+}
+
+.oga-docs-ex__lang-name {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oga-fg);
+}
+
+.oga-docs-ex__lang-note {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  color: var(--oga-fg-muted);
+}
+
+/* ============================================================
+   Final CTA (DARK)
+   ============================================================ */
+
+.oga-docs-cta {
+  text-align: center;
+}
+
+.oga-docs-cta__h2 {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.5vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.018em;
+  font-weight: 500;
+  color: var(--oga-white);
+  margin: 0 auto var(--oga-4);
+  max-width: 18ch;
+}
+
+.oga-docs-cta__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  color: rgba(250, 248, 244, 0.68);
+  margin: 0 auto var(--oga-6);
+  max-width: 56ch;
+}
+
+.oga-docs-cta__ctas {
+  display: inline-flex;
+  gap: var(--oga-3);
+  flex-wrap: wrap;
+  justify-content: center;
+}

@@ -1,1258 +1,790 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Styles } from "../_shared/styles";
 import { Nav } from "../_shared/nav";
 import { Footer } from "../_shared/footer";
-import { AiqIcon, type IconName } from "../_shared/icons";
+import {
+  SignalsIcon,
+  ScoresIcon,
+  MonitorIcon,
+  IntelligenceIcon,
+} from "../_shared/product-icons";
+import {
+  METHODOLOGY_VERSION,
+  getCurrentMethodology,
+} from "@/lib/methodology-versions";
+import "./docs.css";
 
-/* ═══════════════════════════════════════════════════════════════
-   OneGoodArea · Design V2 · /docs
-   REST API + widget reference. Sticky sidebar scrollspy, dark code
-   blocks with chartreuse accents, language tabs on examples.
-   ═══════════════════════════════════════════════════════════════ */
+/* /docs — Brand v3 (Plotted) — AR-204.
 
-const SECTIONS: { id: string; label: string }[] = [
-  { id: "quickstart",     label: "Quickstart" },
-  { id: "authentication", label: "Authentication" },
-  { id: "endpoint",       label: "Endpoint" },
-  { id: "request",        label: "Request body" },
-  { id: "response",       label: "Response" },
-  { id: "errors",         label: "Errors" },
-  { id: "rate-limits",    label: "Rate limits" },
-  { id: "data-sources",   label: "Data sources" },
-  { id: "widget",         label: "Drop-in widget" },
-  { id: "examples",       label: "Code examples" },
-  { id: "openapi",        label: "OpenAPI" },
-];
+   Index page for the documentation surface. Replaces the previous
+   single-endpoint /v1/report guide (1,260 LOC Fraunces, inline-
+   styled, `aiq_` prefix, "7 sources" block).
+
+   Per the delta doc + Pedro's locked D3 (option c): this page is
+   the four-product TOC; per-surface sub-pages (/docs/signals,
+   /docs/scores, /docs/monitor, /docs/intelligence, /docs/levers,
+   /docs/webhooks, /docs/auth) ship later as follow-up PRs and are
+   linked here as disabled "Coming soon" tiles per the wiring rule.
+
+   Every fact below was verified against ADRs 0001-0035 + the
+   apps/api Fastify routes (see workflow recon 2026-05-31).
+   No source names enumerated here — that detail lives on
+   /methodology only (AR-204 §5, NO EXCEPTIONS). */
+
+const current = getCurrentMethodology();
 
 export default function DocsClient() {
   return (
-    <div className="aiq">
-      <Styles />
+    <div className="oga-root oga-docs">
       <Nav />
       <Hero />
-      <Body />
+      <SectionProducts />
+      <SectionLevers />
+      <SectionReference />
+      <SectionQuickstart />
+      <SectionExamples />
       <FinalCta />
       <Footer />
     </div>
   );
 }
 
-/* ─────── Hero ─────── */
+/* ============================================================
+   Hero — engine state + dual-mode framing
+   ============================================================ */
 
 function Hero() {
   return (
-    <section style={{
-      position: "relative",
-      background: "var(--bg)",
-      borderBottom: "1px solid var(--border)",
-      overflow: "hidden",
-    }}>
-      <div aria-hidden style={{
-        position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0,
-      }}>
-        <div style={{
-          position: "absolute", top: -220, right: -160,
-          width: 760, height: 560,
-          background: "radial-gradient(ellipse at center, rgba(212,243,58,0.14) 0%, rgba(212,243,58,0) 62%)",
-        }} />
-      </div>
-      <div style={{
-        maxWidth: 1000, margin: "0 auto",
-        padding: "100px 40px 56px",
-        position: "relative", zIndex: 1,
-      }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-          letterSpacing: "0.24em", textTransform: "uppercase",
-          color: "var(--text-2)",
-          display: "inline-flex", alignItems: "center", gap: 9,
-          marginBottom: 26,
-        }}>
-          <span aria-hidden style={{
-            width: 6, height: 6, borderRadius: 6,
-            background: "var(--signal)",
-            animation: "aiq-pulse-dot 1.6s ease-in-out infinite",
-          }} />
-          API v1 · Stable · JSON over HTTPS
-        </div>
-        <h1 style={{
-          fontFamily: "var(--display)", fontWeight: 400,
-          fontSize: "clamp(40px, 5vw, 62px)", lineHeight: 1.04,
-          letterSpacing: "-0.02em", color: "var(--ink-deep)",
-          margin: "0 0 20px", maxWidth: "22ch",
-        }}>
-          A postcode in, a{" "}
-          <span style={{
-            fontStyle: "italic", color: "var(--ink)",
-            borderBottom: "3px solid var(--signal)", paddingBottom: 2,
-          }}>full read</span>
-          {" "}out.
-        </h1>
-        <p style={{
-          fontFamily: "var(--sans)", fontSize: 17, fontWeight: 400,
-          lineHeight: 1.55, color: "var(--text-2)",
-          letterSpacing: "-0.005em",
-          margin: 0, maxWidth: "62ch",
-        }}>
-          REST endpoint, Bearer token auth, JSON in and out. Every response is cached for 24 hours. Cached hits don&apos;t count against your quota. The full API contract is published as an OpenAPI 3.0 spec for procurement and integration teams.
-        </p>
-        <div style={{
-          marginTop: 28, display: "flex", gap: 22, flexWrap: "wrap",
-          fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-          letterSpacing: "0.18em", textTransform: "uppercase",
-          color: "var(--text-3)",
-        }}>
-          <span>✓ REST</span>
-          <span>✓ JSON</span>
-          <span>✓ Bearer auth</span>
-          <span>✓ 30 req/min</span>
-          <span>✓ 24h cache</span>
-          <span>✓ HTTPS only</span>
+    <section className="oga-section-hero oga-docs-hero">
+      <div className="oga-docs__container">
+        <div className="oga-docs-hero__grid">
+          <div>
+            <div className="oga-docs-hero__eyebrow">
+              <span aria-hidden className="oga-docs-hero__dot" />
+              <span>Docs · Engine v{METHODOLOGY_VERSION}</span>
+            </div>
+            <h1 className="oga-docs-hero__h1">
+              Build on UK area intelligence.
+            </h1>
+            <p className="oga-docs-hero__lead">
+              Four composable products on one signal-first data layer. Reach the API
+              directly from your stack, or use the dashboard to configure how the
+              API behaves per organisation. This index points to every reference
+              we publish today; per-surface guides are landing one by one.
+            </p>
+            <div className="oga-docs-hero__ctas">
+              <Link href="/sign-up" className="oga-btn oga-btn-primary">
+                Get an API key
+                <span aria-hidden>→</span>
+              </Link>
+              <Link href="/methodology" className="oga-btn oga-btn-secondary">
+                Read the methodology
+              </Link>
+            </div>
+          </div>
+
+          <aside className="oga-docs-hero__sidecard" aria-label="Current engine state">
+            <div className="oga-docs-hero__sidecard-eyebrow">
+              <span aria-hidden className="oga-docs-hero__dot" />
+              <span>Engine state</span>
+            </div>
+            <p className="oga-docs-hero__sidecard-version">v{METHODOLOGY_VERSION}</p>
+            <p className="oga-docs-hero__sidecard-released">
+              Released {current.released_at}
+            </p>
+            <div className="oga-docs-hero__sidecard-rows">
+              <div className="oga-docs-hero__sidecard-row">
+                <span className="oga-docs-hero__sidecard-row-k">Path prefix</span>
+                <span className="oga-docs-hero__sidecard-row-v">/v1/...</span>
+              </div>
+              <div className="oga-docs-hero__sidecard-row">
+                <span className="oga-docs-hero__sidecard-row-k">Auth</span>
+                <span className="oga-docs-hero__sidecard-row-v">oga_ bearer</span>
+              </div>
+              <div className="oga-docs-hero__sidecard-row">
+                <span className="oga-docs-hero__sidecard-row-k">Content</span>
+                <span className="oga-docs-hero__sidecard-row-v">application/json</span>
+              </div>
+              <div className="oga-docs-hero__sidecard-row">
+                <span className="oga-docs-hero__sidecard-row-k">Version header</span>
+                <span className="oga-docs-hero__sidecard-row-v">X-Engine-Version</span>
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
     </section>
   );
 }
 
-/* ─────── Body ─────── */
+/* ============================================================
+   § 01 — The 4 products (DARK)
+   ============================================================ */
 
-function Body() {
+type Product = {
+  num: string;
+  name: "Signals" | "Scores" | "Monitor" | "Intelligence";
+  Icon: typeof SignalsIcon;
+  body: string;
+  caps: string[];
+  endpoint: { verb: string; path: string };
+};
+
+const PRODUCTS: Product[] = [
+  {
+    num: "01",
+    name: "Signals",
+    Icon: SignalsIcon,
+    body:
+      "The deterministic, addressable UK area-data layer. Every signal is a typed primitive with value, normalised value, national-within-country percentile, source period, and per-signal confidence. LSOA grain, monthly cadence on the dynamic series.",
+    caps: [
+      "Typed Signal primitive (Zod-validated in packages/contracts)",
+      "Honest provenance via meta.fetch_mode (live, store, hybrid)",
+      "Append-only monthly time-series, immutable per observed_period",
+      "Derived signals are first-class store rows (YoY, momentum, slope, peer-relative z)",
+    ],
+    endpoint: { verb: "GET", path: "/v1/area" },
+  },
+  {
+    num: "02",
+    name: "Scores",
+    Icon: ScoresIcon,
+    body:
+      "Deterministic composite scoring. Pick one of four presets (moving, business, investing, research), each with its own five dimensions. Override the weights per request, or save a preset against your org. No AI in the scoring path; the engine version is stamped on every response.",
+    caps: [
+      "Four presets, each with a different five-dimension set",
+      "Custom per-request weights or saved preset_id (per org)",
+      "Per-dimension confidence plus aggregate confidence",
+      "engine_version on the body and X-Engine-Version response header",
+    ],
+    endpoint: { verb: "POST", path: "/v1/score" },
+  },
+  {
+    num: "03",
+    name: "Monitor",
+    Icon: MonitorIcon,
+    body:
+      "Portfolios plus change detection. Save a book of areas (postcodes or LSOAs), bulk-enrich through the scoring engine, and detect material moves across the time-series. Signed webhook alerts (HMAC-SHA256) when something material shifts.",
+    caps: [
+      "Portfolios as named collections of areas (CRUD, dedup)",
+      "On-demand period-vs-period change detection",
+      "Sample-size gated (default min 8 transactions on price moves)",
+      "Three webhook events: report.created, score.changed, signal.changed",
+    ],
+    endpoint: { verb: "POST", path: "/v1/portfolios" },
+  },
+  {
+    num: "04",
+    name: "Intelligence",
+    Icon: IntelligenceIcon,
+    body:
+      "A typed query plus insight plane over the moat. Six plan ops (rank_areas, get_area, score_area, find_peers, find_insights, find_forecast) reachable as a Zod-strict programmatic plan, or as natural language that the planner translates into the same plan.",
+    caps: [
+      "POST /v1/query with {plan} (programmatic) or {question} (NL)",
+      "k-NN peers with materialised ~840k-row peer graph",
+      "Anomaly screening via pre-materialised peer-relative z-scores",
+      "Linear-regression forecast — not a learned model, not ARIMA, not Prophet",
+    ],
+    endpoint: { verb: "POST", path: "/v1/query" },
+  },
+];
+
+function SectionProducts() {
   return (
-    <section style={{
-      background: "var(--bg)",
-      borderBottom: "1px solid var(--border)",
-      padding: "56px 0 120px",
-    }}>
-      <div className="aiq-docs-wrap" style={{
-        maxWidth: 1240, margin: "0 auto", padding: "0 40px",
-        display: "grid",
-        gridTemplateColumns: "220px 1fr",
-        gap: 72, alignItems: "start",
-      }}>
-        <Sidebar />
-        <div style={{ minWidth: 0 }}>
-          <Quickstart />
-          <Authentication />
-          <Endpoint />
-          <RequestBody />
-          <ResponseShape />
-          <Errors />
-          <RateLimits />
-          <DataSources />
-          <Widget />
-          <CodeExamples />
-          <OpenApiSpec />
+    <section
+      className="oga-section-dark"
+      data-oga-surface="dark"
+      aria-labelledby="docs-products-title"
+    >
+      <div className="oga-docs__container">
+        <div className="oga-docs__header">
+          <div className="oga-docs__eyebrow">
+            <span className="oga-docs__eyebrow-num">01</span>
+            <span aria-hidden className="oga-docs__eyebrow-line" />
+            <span>The 4 products</span>
+          </div>
+          <h2 id="docs-products-title" className="oga-docs__h2">
+            One signal-first data layer. Four composable products.
+          </h2>
+          <p className="oga-docs__lead">
+            Each product sits on shared infrastructure and can be consumed in
+            isolation or composed. Per-surface guides land as separate pages over
+            the coming weeks.
+          </p>
         </div>
-      </div>
-    </section>
-  );
-}
 
-function Sidebar() {
-  const [active, setActive] = useState<string>(SECTIONS[0].id);
-
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter(e => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        if (visible.length > 0) setActive(visible[0].target.id);
-      },
-      { rootMargin: "-30% 0% -55% 0%", threshold: [0, 0.25, 0.5] }
-    );
-    SECTIONS.forEach(s => {
-      const el = document.getElementById(s.id);
-      if (el) obs.observe(el);
-    });
-    return () => obs.disconnect();
-  }, []);
-
-  return (
-    <aside className="aiq-docs-sidebar" style={{
-      position: "sticky", top: 96, alignSelf: "start",
-    }}>
-      <div style={{
-        fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-        letterSpacing: "0.22em", textTransform: "uppercase",
-        color: "var(--text-3)", marginBottom: 18,
-      }}>
-        On this page
-      </div>
-      <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 2 }}>
-        {SECTIONS.map((s) => {
-          const isActive = active === s.id;
-          return (
-            <li key={s.id}>
-              <a href={`#${s.id}`} style={{
-                display: "inline-block",
-                fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-                letterSpacing: "0.14em", textTransform: "uppercase",
-                color: isActive ? "var(--ink-deep)" : "var(--text-2)",
-                textDecoration: "none",
-                padding: "6px 0 7px",
-                transition: "color 140ms ease",
-                borderBottom: isActive ? "2px solid var(--signal)" : "2px solid transparent",
-              }}>
-                {s.label}
-              </a>
-            </li>
-          );
-        })}
-      </ul>
-      <div style={{
-        marginTop: 32, padding: "18px 16px",
-        background: "var(--bg-off)", border: "1px solid var(--border)",
-        borderRadius: 4,
-      }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-          letterSpacing: "0.2em", textTransform: "uppercase",
-          color: "var(--text-3)", marginBottom: 8,
-        }}>Get a key</div>
-        <p style={{
-          fontFamily: "var(--sans)", fontSize: 12.5, fontWeight: 400,
-          lineHeight: 1.45, color: "var(--text-2)",
-          margin: "0 0 12px",
-        }}>
-          API access requires a Developer, Business, or Growth plan.
-        </p>
-        <Link href="/pricing" style={{
-          fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-          letterSpacing: "0.16em", textTransform: "uppercase",
-          color: "var(--ink-deep)", textDecoration: "none",
-          display: "inline-flex", alignItems: "center", gap: 6,
-          borderBottom: "1px solid var(--ink-deep)", paddingBottom: 2,
-        }}>
-          See the plans
-          <span aria-hidden>→</span>
-        </Link>
-      </div>
-    </aside>
-  );
-}
-
-/* ─────── Section wrapper + text primitives ─────── */
-
-function Block({ id, eyebrow, title, children }: {
-  id: string; eyebrow: string; title: React.ReactNode; children: React.ReactNode;
-}) {
-  return (
-    <section id={id} style={{
-      padding: "48px 0 56px",
-      scrollMarginTop: 80,
-      borderBottom: "1px solid var(--border-dim)",
-    }}>
-      <div style={{
-        fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-        letterSpacing: "0.22em", textTransform: "uppercase",
-        color: "var(--text-2)",
-        display: "inline-flex", alignItems: "center", gap: 9,
-        marginBottom: 16,
-      }}>
-        <span aria-hidden style={{
-          width: 6, height: 6, borderRadius: 6, background: "var(--signal)",
-        }} />
-        {eyebrow}
-      </div>
-      <h2 style={{
-        fontFamily: "var(--display)", fontWeight: 400,
-        fontSize: "clamp(26px, 3vw, 36px)", lineHeight: 1.08,
-        letterSpacing: "-0.014em", color: "var(--ink-deep)",
-        margin: "0 0 22px", maxWidth: "30ch",
-      }}>
-        {title}
-      </h2>
-      {children}
-    </section>
-  );
-}
-
-function P({ children }: { children: React.ReactNode }) {
-  return (
-    <p style={{
-      fontFamily: "var(--sans)", fontSize: 15, fontWeight: 400,
-      lineHeight: 1.6, color: "var(--text-2)",
-      letterSpacing: "-0.003em",
-      margin: "0 0 14px", maxWidth: "68ch",
-    }}>{children}</p>
-  );
-}
-
-function IC({ children }: { children: React.ReactNode }) {
-  return (
-    <code style={{
-      fontFamily: "var(--mono)", fontSize: 12.5, fontWeight: 500,
-      background: "var(--bg-off)",
-      border: "1px solid var(--border)",
-      padding: "1px 6px", borderRadius: 2,
-      color: "var(--ink-deep)",
-    }}>{children}</code>
-  );
-}
-
-/* ─────── Dark code block with copy + optional language tab(s) ─────── */
-
-function CodeBlock({ lang, snippet, copyable = true }: {
-  lang?: string; snippet: string; copyable?: boolean;
-}) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <div style={{
-      background: "var(--bg-ink)", borderRadius: 6,
-      padding: "16px 20px 20px",
-      position: "relative", overflow: "hidden",
-      marginBottom: 16,
-    }}>
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        marginBottom: 12, paddingBottom: 12,
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
-      }}>
-        <span style={{
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-          letterSpacing: "0.2em", textTransform: "uppercase",
-          color: "rgba(255,255,255,0.48)",
-        }}>{lang || "snippet"}</span>
-        {copyable && (
-          <button
-            onClick={() => {
-              navigator.clipboard?.writeText(snippet);
-              setCopied(true);
-              setTimeout(() => setCopied(false), 1600);
-            }}
-            style={{
-              fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-              letterSpacing: "0.18em", textTransform: "uppercase",
-              color: copied ? "var(--signal)" : "rgba(255,255,255,0.6)",
-              background: "transparent",
-              border: "1px solid rgba(255,255,255,0.14)",
-              padding: "5px 10px", borderRadius: 3, cursor: "pointer",
-              transition: "color 140ms ease, border-color 140ms ease",
-            }}
-          >
-            {copied ? "Copied" : "Copy"}
-          </button>
-        )}
-      </div>
-      <pre style={{
-        margin: 0, fontFamily: "var(--mono)", fontSize: 12.5,
-        lineHeight: 1.65, color: "rgba(255,255,255,0.82)",
-        whiteSpace: "pre", overflow: "auto",
-      }}>{snippet}</pre>
-    </div>
-  );
-}
-
-/* ─────── Tabbed code block for SDK examples ─────── */
-
-function TabbedCode({ tabs }: {
-  tabs: { label: string; lang: string; snippet: string }[];
-}) {
-  const [idx, setIdx] = useState(0);
-  const active = tabs[idx];
-  return (
-    <div style={{
-      background: "var(--bg-ink)", borderRadius: 6,
-      padding: "14px 20px 20px", overflow: "hidden",
-      marginBottom: 16,
-    }}>
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        marginBottom: 14, paddingBottom: 14,
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
-        gap: 16, flexWrap: "wrap",
-      }}>
-        <div style={{ display: "flex", gap: 4 }}>
-          {tabs.map((t, i) => {
-            const isActive = i === idx;
+        <div className="oga-docs-products__grid">
+          {PRODUCTS.map((p) => {
+            const Icon = p.Icon;
             return (
-              <button
-                key={t.label}
-                onClick={() => setIdx(i)}
-                style={{
-                  fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-                  letterSpacing: "0.14em", textTransform: "uppercase",
-                  color: isActive ? "var(--signal-ink)" : "rgba(255,255,255,0.6)",
-                  background: isActive ? "var(--signal)" : "transparent",
-                  border: "none",
-                  padding: "6px 12px", borderRadius: 3, cursor: "pointer",
-                  transition: "background 140ms ease, color 140ms ease",
-                }}
-              >
-                {t.label}
-              </button>
+              <article key={p.name} className="oga-docs-product">
+                <header className="oga-docs-product__head">
+                  <div className="oga-docs-product__icon">
+                    <Icon width={48} height={48} />
+                  </div>
+                  <div className="oga-docs-product__title-block">
+                    <span className="oga-docs-product__num">§ {p.num}</span>
+                    <h3 className="oga-docs-product__title">{p.name}</h3>
+                  </div>
+                </header>
+                <p className="oga-docs-product__body">{p.body}</p>
+                <ul className="oga-docs-product__caps">
+                  {p.caps.map((c) => (
+                    <li key={c}>{c}</li>
+                  ))}
+                </ul>
+                <div className="oga-docs-product__foot">
+                  <span className="oga-docs-product__endpoint" aria-label={`Primary endpoint: ${p.endpoint.verb} ${p.endpoint.path}`}>
+                    <span className="oga-docs-product__endpoint-verb">
+                      {p.endpoint.verb}
+                    </span>
+                    {p.endpoint.path}
+                  </span>
+                  <button
+                    type="button"
+                    className="oga-docs-product__cta-disabled"
+                    disabled
+                    aria-disabled
+                    aria-label={`${p.name} docs coming soon`}
+                  >
+                    Docs
+                    <span className="oga-docs-product__cta-soon">Soon</span>
+                  </button>
+                </div>
+              </article>
             );
           })}
         </div>
-        <CopySnippet text={active.snippet} />
       </div>
-      <pre style={{
-        margin: 0, fontFamily: "var(--mono)", fontSize: 12.5,
-        lineHeight: 1.65, color: "rgba(255,255,255,0.82)",
-        whiteSpace: "pre", overflow: "auto",
-      }}>{active.snippet}</pre>
+    </section>
+  );
+}
+
+/* ============================================================
+   § 02 — Levers control plane (cream)
+   ============================================================ */
+
+type Lever = {
+  num: string;
+  title: string;
+  body: string;
+  rbac: "Owner" | "Admin+" | "Any member";
+};
+
+const LEVERS: Lever[] = [
+  {
+    num: "01",
+    title: "Orgs and members",
+    body:
+      "Every account gets a personal org on signup. Add teammates, list members, remove them. Three-tier RBAC: member, admin, owner.",
+    rbac: "Admin+",
+  },
+  {
+    num: "02",
+    title: "Custom signal bundles",
+    body:
+      "Named whitelists of signal keys. Pass ?bundle=<id> on /v1/area, /v1/areas, or /v1/query and only those signals come back. LLM-planned queries are governed by the same gate.",
+    rbac: "Admin+",
+  },
+  {
+    num: "03",
+    title: "Custom scoring presets",
+    body:
+      "Save a {base_preset, weights} recipe under your org and call /v1/score with preset_id. Mutually exclusive with preset and weights on the same request.",
+    rbac: "Admin+",
+  },
+  {
+    num: "04",
+    title: "Methodology pinning",
+    body:
+      "Lock the engine version your org consumes. Sets the X-Engine-Version response header on /v1/area, /v1/areas, /v1/score, /v1/query, /v1/peers, and portfolio enrich and changes.",
+    rbac: "Owner",
+  },
+  {
+    num: "05",
+    title: "Peer cohorts",
+    body:
+      "Named lists of LSOA codes (up to 10,000 per cohort) that constrain the candidate set on /v1/peers. Areas like THIS one, but only inside your universe.",
+    rbac: "Admin+",
+  },
+  {
+    num: "06",
+    title: "Full RBAC",
+    body:
+      "Three roles. Admin drives day-to-day Levers config. Owner-only retained for methodology pinning, granting owner, and removing owner-role members.",
+    rbac: "Any member",
+  },
+  {
+    num: "07",
+    title: "White-label",
+    body:
+      "display_name and brand_url on the org, surfaced on /v1/me so downstream consumers can render your brand instead of OneGoodArea’s.",
+    rbac: "Admin+",
+  },
+  {
+    num: "08",
+    title: "Per-key IP allowlist",
+    body:
+      "allowed_ip_cidrs on each API key. Mismatch returns 403 ip_not_allowed, distinct from a 401 invalid-key. IPv4 CIDR matching with hand-rolled integer-mask helper.",
+    rbac: "Owner",
+  },
+];
+
+function SectionLevers() {
+  return (
+    <section
+      className="oga-section-hero"
+      aria-labelledby="docs-levers-title"
+    >
+      <div className="oga-docs__container">
+        <div className="oga-docs__header">
+          <div className="oga-docs__eyebrow">
+            <span className="oga-docs__eyebrow-num">02</span>
+            <span aria-hidden className="oga-docs__eyebrow-line" />
+            <span>Levers</span>
+          </div>
+          <h2 id="docs-levers-title" className="oga-docs__h2">
+            Multi-tenant control plane. Opt-in, additive.
+          </h2>
+          <p className="oga-docs__lead">
+            Eight capabilities for configuring OneGoodArea per organisation. With
+            no bundle, preset_id, pin, cohort or allowlist set, every product
+            endpoint behaves byte-identically to the pre-Levers baseline.
+          </p>
+        </div>
+
+        <div className="oga-docs-levers__grid">
+          {LEVERS.map((l) => (
+            <article key={l.title} className="oga-docs-lever">
+              <span className="oga-docs-lever__num">§ {l.num}</span>
+              <h3 className="oga-docs-lever__title">{l.title}</h3>
+              <p className="oga-docs-lever__body">{l.body}</p>
+              <div className="oga-docs-lever__foot">
+                <span className="oga-docs-lever__rbac">{l.rbac}</span>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className="oga-docs-levers__cta-row">
+          <button
+            type="button"
+            className="oga-btn oga-btn-secondary"
+            disabled
+            aria-disabled
+          >
+            Levers guide
+            <span className="oga-docs-product__cta-soon">Soon</span>
+          </button>
+          <Link href="/methodology#per-org-methodology" className="oga-btn oga-btn-ghost">
+            Methodology pinning rationale
+            <span aria-hidden>→</span>
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   § 03 — Reference + spec (white)
+   ============================================================ */
+
+type RefTile = {
+  num: string;
+  title: string;
+  body: string;
+  status: "live" | "soon" | "regen";
+  href: string | null;
+  cta: string;
+};
+
+const REFERENCES: RefTile[] = [
+  {
+    num: "01",
+    title: "Interactive API reference",
+    body:
+      "The structured endpoint catalogue across all six surfaces. Honest placeholder today; the OpenAPI spec is being regenerated from the Fastify route schemas.",
+    status: "regen",
+    href: "/docs/api-reference",
+    cta: "Open reference",
+  },
+  {
+    num: "02",
+    title: "MCP server",
+    body:
+      "Add OneGoodArea to Claude Desktop, Cursor, or any MCP-compatible client. Four tools, stdio transport, npm-distributed.",
+    status: "live",
+    href: "/docs/mcp",
+    cta: "Install guide",
+  },
+  {
+    num: "03",
+    title: "Methodology",
+    body:
+      "How we compute signals, scores, peers, insights, and forecasts. The 7-source disclosure, normalisation rules, time-series cadence, every audit artefact.",
+    status: "live",
+    href: "/methodology",
+    cta: "Read methodology",
+  },
+  {
+    num: "04",
+    title: "Changelog",
+    body:
+      "Buyer-facing release log. What capability landed when, tagged feature, improvement or fix.",
+    status: "live",
+    href: "/changelog",
+    cta: "View changelog",
+  },
+  {
+    num: "05",
+    title: "OpenAPI snapshot",
+    body:
+      "The current /openapi.json file. Structurally being rebuilt against the live Fastify schemas; use the API reference page for the regenerated version when it lands.",
+    status: "regen",
+    href: "/openapi.json",
+    cta: "Download .json",
+  },
+  {
+    num: "06",
+    title: "Webhooks reference",
+    body:
+      "Stripe-style signed deliveries, HMAC-SHA256, the event catalogue, retry semantics, signing-secret rotation. Page coming soon.",
+    status: "soon",
+    href: null,
+    cta: "Webhooks docs",
+  },
+];
+
+function statusLabel(s: RefTile["status"]) {
+  if (s === "live") return "Live";
+  if (s === "regen") return "Regenerating";
+  return "Soon";
+}
+
+function statusClass(s: RefTile["status"]) {
+  if (s === "live") return "oga-docs-ref-tile__status--live";
+  if (s === "regen") return "oga-docs-ref-tile__status--regen";
+  return "oga-docs-ref-tile__status--soon";
+}
+
+function SectionReference() {
+  return (
+    <section
+      className="oga-section-quiet"
+      aria-labelledby="docs-ref-title"
+    >
+      <div className="oga-docs__container">
+        <div className="oga-docs__header">
+          <div className="oga-docs__eyebrow">
+            <span className="oga-docs__eyebrow-num">03</span>
+            <span aria-hidden className="oga-docs__eyebrow-line" />
+            <span>Reference</span>
+          </div>
+          <h2 id="docs-ref-title" className="oga-docs__h2">
+            Everything we publish today.
+          </h2>
+          <p className="oga-docs__lead">
+            What is shipped, what is regenerating, what is on the way. We mark
+            each tile honestly so you can integrate against the surfaces that
+            exist and plan around the ones that will.
+          </p>
+        </div>
+
+        <div className="oga-docs-ref__grid">
+          {REFERENCES.map((r) => {
+            const inner = (
+              <>
+                <header className="oga-docs-ref-tile__head">
+                  <span className="oga-docs-ref-tile__num">§ {r.num}</span>
+                  <span
+                    className={`oga-docs-ref-tile__status ${statusClass(r.status)}`}
+                  >
+                    {statusLabel(r.status)}
+                  </span>
+                </header>
+                <h3 className="oga-docs-ref-tile__title">{r.title}</h3>
+                <p className="oga-docs-ref-tile__body">{r.body}</p>
+                <span className="oga-docs-ref-tile__foot">
+                  {r.cta}
+                  <span aria-hidden>→</span>
+                </span>
+              </>
+            );
+
+            if (r.status === "soon" || !r.href) {
+              return (
+                <div
+                  key={r.title}
+                  className="oga-docs-ref-tile oga-docs-ref-tile--disabled"
+                  aria-disabled
+                >
+                  {inner}
+                </div>
+              );
+            }
+
+            return (
+              <Link
+                key={r.title}
+                href={r.href}
+                className="oga-docs-ref-tile oga-docs-ref-tile--link"
+              >
+                {inner}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   § 04 — Quickstart (DARK)
+   ============================================================ */
+
+const QS_STEPS: { num: string; title: string; body: string }[] = [
+  {
+    num: "01",
+    title: "Get a key",
+    body:
+      "Sign up. A personal org and an API key are created for you. The key is prefixed oga_ and shown once at creation time.",
+  },
+  {
+    num: "02",
+    title: "Send a request",
+    body:
+      "Bearer auth, JSON over HTTPS, all routes under /v1/. The simplest read is GET /v1/area with a postcode query parameter.",
+  },
+  {
+    num: "03",
+    title: "Read the response",
+    body:
+      "Every payload carries an engine_version, source provenance, and a meta.fetch_mode (live, store, hybrid) so you always know how a signal was served.",
+  },
+];
+
+const QS_CURL = `curl https://api.onegoodarea.com/v1/area?postcode=SW1A%201AA \\
+  -H "Authorization: Bearer oga_your_api_key"`;
+
+function SectionQuickstart() {
+  return (
+    <section
+      className="oga-section-dark"
+      data-oga-surface="dark"
+      aria-labelledby="docs-qs-title"
+    >
+      <div className="oga-docs__container">
+        <div className="oga-docs__header">
+          <div className="oga-docs__eyebrow">
+            <span className="oga-docs__eyebrow-num">04</span>
+            <span aria-hidden className="oga-docs__eyebrow-line" />
+            <span>Quickstart</span>
+          </div>
+          <h2 id="docs-qs-title" className="oga-docs__h2">
+            Three steps from zero to your first signal read.
+          </h2>
+          <p className="oga-docs__lead">
+            The fastest way to feel the API: one read against /v1/area to see a
+            full area profile with normalised values and provenance.
+          </p>
+        </div>
+
+        <div className="oga-docs-qs__steps">
+          {QS_STEPS.map((s) => (
+            <div key={s.num} className="oga-docs-qs-step">
+              <span className="oga-docs-qs-step__num">Step {s.num}</span>
+              <h3 className="oga-docs-qs-step__title">{s.title}</h3>
+              <p className="oga-docs-qs-step__body">{s.body}</p>
+            </div>
+          ))}
+        </div>
+
+        <CodePanel lang="bash" path="GET /v1/area" snippet={QS_CURL} />
+      </div>
+    </section>
+  );
+}
+
+/* Shared code panel — canonical .oga-code-panel structure with corner
+   ticks, header strip, and one-line-per-row body for parity with the
+   methodology page. */
+
+function CodePanel({ lang, path, snippet }: { lang: string; path: string; snippet: string }) {
+  const lines = snippet.split("\n");
+  return (
+    <div className="oga-code-panel" aria-label={`${lang} example`}>
+      <span className="oga-code-panel__tick oga-code-panel__tick--tl" aria-hidden />
+      <span className="oga-code-panel__tick oga-code-panel__tick--tr" aria-hidden />
+      <span className="oga-code-panel__tick oga-code-panel__tick--bl" aria-hidden />
+      <span className="oga-code-panel__tick oga-code-panel__tick--br" aria-hidden />
+      <div className="oga-code-panel__header">
+        <span className="oga-code-panel__path">{path}</span>
+        <span className="oga-code-panel__meta">{lang}</span>
+      </div>
+      <div className="oga-code-panel__body">
+        {lines.map((line, i) => (
+          <div key={i} className="oga-code-panel__line">
+            <span className="oga-code-panel__num">{String(i + 1).padStart(2, "0")}</span>
+            <span className="oga-code-panel__text">{line || " "}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-function CopySnippet({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <button
-      onClick={() => {
-        navigator.clipboard?.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1600);
-      }}
-      style={{
-        fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-        letterSpacing: "0.18em", textTransform: "uppercase",
-        color: copied ? "var(--signal)" : "rgba(255,255,255,0.6)",
-        background: "transparent",
-        border: "1px solid rgba(255,255,255,0.14)",
-        padding: "5px 10px", borderRadius: 3, cursor: "pointer",
-        transition: "color 140ms ease, border-color 140ms ease",
-      }}
-    >
-      {copied ? "Copied" : "Copy"}
-    </button>
-  );
-}
+/* ============================================================
+   § 05 — Code examples (cream)
+   ============================================================ */
 
-/* ─────── Quickstart ─────── */
+type LangKey = "curl" | "node" | "python" | "go";
 
-function Quickstart() {
-  return (
-    <Block
-      id="quickstart"
-      eyebrow="Quickstart"
-      title={<>Three steps, <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>under two minutes.</em></>}
-    >
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(3, 1fr)",
-        gap: 0, border: "1px solid var(--border)", marginBottom: 24,
-      }} className="aiq-quickstart-grid">
-        {[
-          { step: "01", title: "Get a key",       body: "Subscribe to a Developer, Business, or Growth plan. Generate a key from the dashboard." },
-          { step: "02", title: "Send a request",  body: "POST a postcode and an intent to /api/v1/report with your Bearer token." },
-          { step: "03", title: "Read the report", body: "Back comes a score, five weighted dimensions, a narrative, recommendations, and citations." },
-        ].map((s, i) => (
-          <div key={s.step} style={{
-            padding: "22px 22px 24px",
-            borderRight: i < 2 ? "1px solid var(--border)" : "none",
-            background: "var(--bg)",
-          }}>
-            <div style={{
-              fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-              letterSpacing: "0.2em", color: "var(--text-3)",
-              marginBottom: 10,
-            }}>{s.step}</div>
-            <div style={{
-              fontFamily: "var(--display)", fontSize: 18, fontWeight: 500,
-              letterSpacing: "-0.012em", color: "var(--ink-deep)",
-              marginBottom: 6,
-            }}>{s.title}</div>
-            <p style={{
-              fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 400,
-              lineHeight: 1.5, color: "var(--text-2)",
-              margin: 0,
-            }}>{s.body}</p>
-          </div>
-        ))}
-      </div>
-      <CodeBlock lang="bash" snippet={`curl -X POST https://www.onegoodarea.com/api/v1/report \\
-  -H "Authorization: Bearer aiq_your_api_key" \\
-  -H "Content-Type: application/json" \\
-  -d '{"area": "Shoreditch", "intent": "business"}'`} />
-    </Block>
-  );
-}
-
-/* ─────── Authentication ─────── */
-
-function Authentication() {
-  return (
-    <Block
-      id="authentication"
-      eyebrow="Authentication"
-      title={<>Bearer token <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>on every request.</em></>}
-    >
-      <P>
-        Every request carries an <IC>Authorization</IC> header with a 48-character hex token prefixed with <IC>aiq_</IC>. Generate and revoke keys from your{" "}
-        <Link href="/dashboard" style={{ color: "var(--ink)", textDecoration: "underline" }}>dashboard</Link>.
-      </P>
-      <CodeBlock lang="http" snippet={`Authorization: Bearer aiq_your_api_key_here`} />
-      <div style={{
-        marginTop: 20, padding: "16px 20px",
-        background: "var(--signal-dim)",
-        border: "1px solid var(--ink)",
-        borderRadius: 4,
-      }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-          letterSpacing: "0.22em", textTransform: "uppercase",
-          color: "var(--ink-deep)", marginBottom: 6,
-          display: "inline-flex", alignItems: "center", gap: 8,
-        }}>
-          <AiqIcon name="key" size={14} />
-          Security
-        </div>
-        <p style={{
-          fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 400,
-          lineHeight: 1.55, color: "var(--ink-deep)",
-          margin: 0,
-        }}>
-          Keys carry full account access. Do not ship them in client-side code or public repositories. If a key is exposed, revoke it from the dashboard. Revocation is instant.
-        </p>
-      </div>
-    </Block>
-  );
-}
-
-/* ─────── Endpoint ─────── */
-
-function Endpoint() {
-  return (
-    <Block
-      id="endpoint"
-      eyebrow="Endpoint"
-      title={<>One endpoint. <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>One verb.</em></>}
-    >
-      <div style={{
-        border: "1px solid var(--border)",
-        background: "var(--bg-off)",
-        padding: "16px 18px",
-        display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap",
-      }}>
-        <span style={{
-          fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-          letterSpacing: "0.18em", textTransform: "uppercase",
-          color: "var(--signal-ink)", background: "var(--signal)",
-          padding: "4px 9px", borderRadius: 2,
-        }}>POST</span>
-        <code style={{
-          fontFamily: "var(--mono)", fontSize: 14, fontWeight: 500,
-          color: "var(--ink-deep)", letterSpacing: "0.02em",
-        }}>
-          https://www.onegoodarea.com/api/v1/report
-        </code>
-      </div>
-      <P>
-        HTTPS only. Plain HTTP is rejected. Content-Type must be <IC>application/json</IC>.
-      </P>
-    </Block>
-  );
-}
-
-/* ─────── Request body ─────── */
-
-const FIELDS: { name: string; type: string; required: boolean; desc: React.ReactNode }[] = [
-  { name: "area",   type: "string", required: true, desc: <>UK area name or postcode. e.g. <IC>&quot;Shoreditch&quot;</IC>, <IC>&quot;SW1A 1AA&quot;</IC>, <IC>&quot;Manchester city centre&quot;</IC>. Max 100 characters.</> },
-  { name: "intent", type: "string", required: true, desc: <>One of: <IC>moving</IC> · <IC>business</IC> · <IC>investing</IC> · <IC>research</IC>. Determines which five dimensions get computed and how they&apos;re weighted.</> },
-];
-
-const INTENT_TABLE: { code: string; label: string; dims: string }[] = [
-  { code: "moving",    label: "Origination",    dims: "Safety · Schools · Transport · Amenities · Cost of Living" },
-  { code: "business",  label: "Site selection", dims: "Foot Traffic · Competition · Access · Spending Power · Costs" },
-  { code: "investing", label: "Investment",     dims: "Price Growth · Rental Yield · Regeneration · Demand · Risk" },
-  { code: "research",  label: "Reference",      dims: "Safety · Transport · Amenities · Demographics · Environment" },
-];
-
-function RequestBody() {
-  return (
-    <Block
-      id="request"
-      eyebrow="Request body"
-      title={<>Two fields. <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>That&apos;s the contract.</em></>}
-    >
-      <div style={{
-        border: "1px solid var(--border)", marginBottom: 24,
-      }} className="aiq-field-table">
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "120px 80px 90px 1fr",
-          gap: 16, padding: "12px 18px",
-          background: "var(--bg-off)",
-          borderBottom: "1px solid var(--border)",
-          fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
-          letterSpacing: "0.22em", textTransform: "uppercase",
-          color: "var(--text-3)",
-        }}>
-          <span>Field</span><span>Type</span><span>Required</span><span>Description</span>
-        </div>
-        {FIELDS.map((f, i) => (
-          <div key={f.name} style={{
-            display: "grid",
-            gridTemplateColumns: "120px 80px 90px 1fr",
-            gap: 16, padding: "14px 18px", alignItems: "flex-start",
-            borderBottom: i === FIELDS.length - 1 ? "none" : "1px solid var(--border-dim)",
-            background: "var(--bg)",
-          }}>
-            <code style={{
-              fontFamily: "var(--mono)", fontSize: 13, fontWeight: 500,
-              color: "var(--ink-deep)",
-            }}>{f.name}</code>
-            <span style={{
-              fontFamily: "var(--mono)", fontSize: 12,
-              color: "var(--text-3)",
-            }}>{f.type}</span>
-            <span style={{
-              fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-              letterSpacing: "0.16em", textTransform: "uppercase",
-              color: f.required ? "var(--ink)" : "var(--text-3)",
-            }}>{f.required ? "Yes" : "No"}</span>
-            <span style={{
-              fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 400,
-              lineHeight: 1.5, color: "var(--text-2)",
-            }}>{f.desc}</span>
-          </div>
-        ))}
-      </div>
-
-      <h3 style={{
-        fontFamily: "var(--display)", fontSize: 20, fontWeight: 500,
-        letterSpacing: "-0.012em", color: "var(--ink-deep)",
-        margin: "0 0 14px",
-      }}>Intent types + their dimensions</h3>
-      <div style={{ border: "1px solid var(--border)" }}>
-        {INTENT_TABLE.map((it, i) => (
-          <div key={it.code} style={{
-            display: "grid",
-            gridTemplateColumns: "120px 200px 1fr",
-            gap: 20, padding: "14px 18px", alignItems: "center",
-            borderBottom: i === INTENT_TABLE.length - 1 ? "none" : "1px solid var(--border-dim)",
-            background: i % 2 === 0 ? "var(--bg)" : "var(--bg-off)",
-          }}>
-            <code style={{
-              fontFamily: "var(--mono)", fontSize: 12, fontWeight: 500,
-              color: "var(--signal-ink)", background: "var(--signal)",
-              padding: "3px 8px", borderRadius: 2,
-              justifySelf: "start",
-            }}>{it.code}</code>
-            <span style={{
-              fontFamily: "var(--display)", fontSize: 16, fontWeight: 500,
-              letterSpacing: "-0.01em", color: "var(--ink-deep)",
-            }}>{it.label}</span>
-            <span style={{
-              fontFamily: "var(--mono)", fontSize: 12, fontWeight: 400,
-              color: "var(--text-2)",
-            }}>{it.dims}</span>
-          </div>
-        ))}
-      </div>
-    </Block>
-  );
-}
-
-/* ─────── Response ─────── */
-
-const RESPONSE_JSON = `{
-  "id": "rpt_1709834567_a1b2c3",
-  "report": {
-    "area":          "Shoreditch, London",
-    "intent":        "business",
-    "area_type":     "urban",
-    "areaiq_score":  74,
-    "sub_scores": [
-      {
-        "label":     "Foot Traffic & Demand",
-        "score":     82,
-        "weight":    30,
-        "reasoning": "45,000 daily commuters via Liverpool Street station. 23 restaurants within 500m suggests strong baseline footfall."
-      },
-      { "label": "Competition Density", "score": 68, "weight": 20, "reasoning": "…" },
-      { "label": "Transport & Access",  "score": 79, "weight": 15, "reasoning": "…" },
-      { "label": "Local Spending Power","score": 71, "weight": 20, "reasoning": "…" },
-      { "label": "Commercial Costs",    "score": 62, "weight": 15, "reasoning": "…" }
-    ],
-    "summary":         "Shoreditch scores 74/100 for business viability …",
-    "sections":        [ { "title": "Location & Demographics", "content": "…" } ],
-    "recommendations": [ "Consider locations east of Shoreditch High Street …" ],
-    "property_data":   { "median_price": 645000, "price_change_pct": 1.8 },
-    "schools_data":    { "rating_breakdown": { ... } },
-    "data_sources":    [ "postcodes.io", "police.uk", "IMD 2025", "OpenStreetMap",
-                         "Environment Agency", "HM Land Registry", "Ofsted" ],
-    "data_freshness":  [ { "source": "Police", "period": "12mo", "status": "live" } ],
-    "generated_at":    "2026-04-23T12:34:56.789Z"
-  }
-}`;
-
-const RESPONSE_FIELDS: { path: string; type: string; desc: string }[] = [
-  { path: "id",                             type: "string",      desc: "Unique report ID. Prefixed rpt_." },
-  { path: "report.area",                    type: "string",      desc: "Normalised area name." },
-  { path: "report.intent",                  type: "string",      desc: "Intent type used for scoring." },
-  { path: "report.area_type",               type: "string",      desc: "urban | suburban | rural. Benchmark category." },
-  { path: "report.areaiq_score",            type: "number",      desc: "Overall weighted score 0–100 (integer)." },
-  { path: "report.confidence",              type: "number",      desc: "Aggregate confidence across dimensions, weight-weighted. Range 0.0–1.0." },
-  { path: "report.engine_version",          type: "string",      desc: "Methodology version that produced this report. Pin in your model risk register. Format: semver, e.g. 2.0.0." },
-  { path: "report.sub_scores[]",            type: "SubScore[]",  desc: "Exactly five dimensions keyed to the intent." },
-  { path: "report.sub_scores[].label",      type: "string",      desc: "Dimension name. Varies per intent." },
-  { path: "report.sub_scores[].score",      type: "number",      desc: "Dimension score 0–100 (integer)." },
-  { path: "report.sub_scores[].weight",     type: "number",      desc: "Relative weight. Sums to 100 across all five." },
-  { path: "report.sub_scores[].reasoning",  type: "string",      desc: "Data-backed explanation for this score." },
-  { path: "report.sub_scores[].confidence", type: "number",      desc: "Per-dimension confidence. Range 0.0–1.0. Reflects data coverage and source freshness." },
-  { path: "report.sub_scores[].confidence_reason", type: "string", desc: "Human-readable explanation of the per-dimension confidence value." },
-  { path: "report.summary",                 type: "string",      desc: "2–3 sentence executive summary." },
-  { path: "report.sections[]",              type: "Section[]",   desc: "4–6 detailed analysis sections." },
-  { path: "report.recommendations[]",       type: "string[]",    desc: "3+ actionable recommendations." },
-  { path: "report.property_data",           type: "object",      desc: "Median sold price + YoY change + transaction counts." },
-  { path: "report.schools_data",            type: "object",      desc: "Schools within 1.5km with Ofsted ratings (England)." },
-  { path: "report.data_sources[]",          type: "string[]",    desc: "Datasets that contributed to this report." },
-  { path: "report.data_freshness[]",        type: "Freshness[]", desc: "Per-source period + status (live/recent/static)." },
-  { path: "report.generated_at",            type: "string",      desc: "ISO 8601 timestamp." },
-];
-
-function ResponseShape() {
-  return (
-    <Block
-      id="response"
-      eyebrow="Response"
-      title={<>A score, five dimensions, <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>and the reasoning.</em></>}
-    >
-      <P>
-        A successful request returns <IC>200 OK</IC> with a report ID and the full report object.
-      </P>
-
-      <h3 style={{
-        fontFamily: "var(--display)", fontSize: 20, fontWeight: 500,
-        letterSpacing: "-0.012em", color: "var(--ink-deep)",
-        margin: "22px 0 14px",
-      }}>Schema</h3>
-
-      <div style={{ border: "1px solid var(--border)", marginBottom: 28 }}>
-        {RESPONSE_FIELDS.map((f, i) => (
-          <div key={f.path} style={{
-            display: "grid",
-            gridTemplateColumns: "240px 120px 1fr",
-            gap: 16, padding: "10px 18px", alignItems: "flex-start",
-            borderBottom: i === RESPONSE_FIELDS.length - 1 ? "none" : "1px solid var(--border-dim)",
-            background: i % 2 === 0 ? "var(--bg)" : "var(--bg-off)",
-          }}>
-            <code style={{
-              fontFamily: "var(--mono)", fontSize: 12.5, fontWeight: 500,
-              color: "var(--ink-deep)",
-              paddingLeft: f.path.split(".").length > 2 ? 16 : 0,
-            }}>{f.path}</code>
-            <span style={{
-              fontFamily: "var(--mono)", fontSize: 11.5,
-              color: "var(--text-3)",
-            }}>{f.type}</span>
-            <span style={{
-              fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 400,
-              lineHeight: 1.5, color: "var(--text-2)",
-            }}>{f.desc}</span>
-          </div>
-        ))}
-      </div>
-
-      <h3 style={{
-        fontFamily: "var(--display)", fontSize: 20, fontWeight: 500,
-        letterSpacing: "-0.012em", color: "var(--ink-deep)",
-        margin: "0 0 14px",
-      }}>Example response</h3>
-      <CodeBlock lang="json" snippet={RESPONSE_JSON} />
-    </Block>
-  );
-}
-
-/* ─────── Errors ─────── */
-
-const ERRORS: { code: string; status: string; desc: string }[] = [
-  { code: "200", status: "OK",           desc: "Report generated." },
-  { code: "400", status: "Bad Request",  desc: "Missing or invalid area / intent field." },
-  { code: "401", status: "Unauthorized", desc: "Missing, invalid, or revoked API key." },
-  { code: "403", status: "Forbidden",    desc: "Active API plan required (Developer / Business / Growth)." },
-  { code: "429", status: "Rate Limited", desc: "30 req/min exceeded. Retry-After header included." },
-  { code: "500", status: "Server Error", desc: "Internal error. Retry, or contact support." },
-];
-
-function Errors() {
-  return (
-    <Block
-      id="errors"
-      eyebrow="Errors"
-      title={<>Clear codes, <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>one error field.</em></>}
-    >
-      <P>
-        Non-2xx responses return a JSON object with a single <IC>error</IC> field describing the issue.
-      </P>
-      <div style={{ border: "1px solid var(--border)", marginBottom: 20 }}>
-        {ERRORS.map((e, i) => {
-          const colour = e.code.startsWith("2") ? "var(--ink)"
-                        : e.code.startsWith("4") ? "#b38700"
-                        : "#b42318";
-          return (
-            <div key={e.code} style={{
-              display: "grid",
-              gridTemplateColumns: "60px 170px 1fr",
-              gap: 16, padding: "12px 18px", alignItems: "center",
-              borderBottom: i === ERRORS.length - 1 ? "none" : "1px solid var(--border-dim)",
-              background: i % 2 === 0 ? "var(--bg)" : "var(--bg-off)",
-            }}>
-              <code style={{
-                fontFamily: "var(--mono)", fontSize: 13, fontWeight: 500,
-                color: colour,
-              }}>{e.code}</code>
-              <span style={{
-                fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-                letterSpacing: "0.14em", textTransform: "uppercase",
-                color: "var(--ink-deep)",
-              }}>{e.status}</span>
-              <span style={{
-                fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 400,
-                lineHeight: 1.5, color: "var(--text-2)",
-              }}>{e.desc}</span>
-            </div>
-          );
-        })}
-      </div>
-      <CodeBlock lang="json" snippet={`{\n  "error": "Missing required field: area (string)"\n}`} />
-    </Block>
-  );
-}
-
-/* ─────── Rate limits ─────── */
-
-function RateLimits() {
-  return (
-    <Block
-      id="rate-limits"
-      eyebrow="Rate limits"
-      title={<>Per key, <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>sliding window.</em></>}
-    >
-      <P>
-        The API allows 30 requests per minute per key, tracked as a sliding window. Every response carries <IC>X-RateLimit-Limit</IC>, <IC>X-RateLimit-Remaining</IC>, and <IC>X-RateLimit-Reset</IC> headers. 429 responses include a <IC>Retry-After</IC> header.
-      </P>
-      <P>
-        The embeddable widget has its own ceiling: 60 requests per hour per origin, cache-only, so public embeds on your property listings never consume API quota.
-      </P>
-      <div style={{
-        display: "grid", gridTemplateColumns: "repeat(3, 1fr)",
-        gap: 0, border: "1px solid var(--border)",
-        marginTop: 8,
-      }} className="aiq-rl-grid">
-        {[
-          { metric: "API",          limit: "30 req / minute", note: "Per key, sliding window" },
-          { metric: "Widget",       limit: "60 req / hour",   note: "Per origin, cache-only" },
-          { metric: "Cache TTL",    limit: "24 hours",        note: "Cache hits don't count against quota" },
-        ].map((r, i) => (
-          <div key={r.metric} style={{
-            padding: "20px 22px",
-            borderRight: i < 2 ? "1px solid var(--border)" : "none",
-            background: "var(--bg)",
-          }}>
-            <div style={{
-              fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-              letterSpacing: "0.22em", textTransform: "uppercase",
-              color: "var(--text-3)", marginBottom: 10,
-            }}>{r.metric}</div>
-            <div style={{
-              fontFamily: "var(--display)", fontSize: 22, fontWeight: 500,
-              letterSpacing: "-0.014em", color: "var(--ink-deep)",
-              marginBottom: 4,
-            }}>{r.limit}</div>
-            <div style={{
-              fontFamily: "var(--sans)", fontSize: 13, fontWeight: 400,
-              color: "var(--text-2)", lineHeight: 1.45,
-            }}>{r.note}</div>
-          </div>
-        ))}
-      </div>
-    </Block>
-  );
-}
-
-/* ─────── Data sources ─────── */
-
-const DOCS_DS: { icon: IconName; name: string; provider: string; use: string }[] = [
-  { icon: "map",        name: "Postcodes.io",        provider: "ONS / Royal Mail",        use: "Geocoding, ward, LSOA, constituency, region, country." },
-  { icon: "support",    name: "Police.uk",           provider: "Home Office",             use: "Street-level crime, 12-month rolling window, category breakdown." },
-  { icon: "researcher", name: "IMD 2025 / WIMD / SIMD", provider: "MHCLG via ArcGIS",     use: "Deprivation rank + decile. Covers England, Wales, Scotland." },
-  { icon: "operator",   name: "OpenStreetMap",       provider: "Overpass API",            use: "Schools, amenities, transport stops within 0.5–2km." },
-  { icon: "intent",     name: "Environment Agency",  provider: "Defra",                   use: "Flood risk zones + active flood warnings." },
-  { icon: "investor",   name: "HM Land Registry",    provider: "SPARQL endpoint",         use: "Sold prices by postcode district, property types, YoY trends." },
-  { icon: "read",       name: "Ofsted",              provider: "Dept for Education",      use: "School inspections within 1.5km. England today." },
-];
-
-function DataSources() {
-  return (
-    <Block
-      id="data-sources"
-      eyebrow="Data sources"
-      title={<>Seven datasets. <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>All public.</em></>}
-    >
-      <P>
-        Every response carries a <IC>data_sources</IC> array and a <IC>data_freshness</IC> block so you can audit exactly which dataset contributed to which claim.
-      </P>
-      <div style={{
-        border: "1px solid var(--border)", marginTop: 8,
-      }}>
-        {DOCS_DS.map((d, i) => (
-          <div key={d.name} style={{
-            display: "grid",
-            gridTemplateColumns: "44px 200px 1fr",
-            gap: 18, alignItems: "center",
-            padding: "14px 18px",
-            borderBottom: i === DOCS_DS.length - 1 ? "none" : "1px solid var(--border-dim)",
-            background: i % 2 === 0 ? "var(--bg)" : "var(--bg-off)",
-          }}>
-            <AiqIcon name={d.icon} size={20} />
-            <div>
-              <div style={{
-                fontFamily: "var(--display)", fontSize: 16, fontWeight: 500,
-                letterSpacing: "-0.01em", color: "var(--ink-deep)",
-              }}>{d.name}</div>
-              <div style={{
-                fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-                letterSpacing: "0.14em", textTransform: "uppercase",
-                color: "var(--text-3)", marginTop: 2,
-              }}>{d.provider}</div>
-            </div>
-            <div style={{
-              fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 400,
-              lineHeight: 1.5, color: "var(--text-2)",
-            }}>{d.use}</div>
-          </div>
-        ))}
-      </div>
-    </Block>
-  );
-}
-
-/* ─────── Widget ─────── */
-
-const WIDGET_HTML = `<!-- Where the widget should render -->
-<div
-  data-areaiq-postcode="SW1A 1AA"
-  data-areaiq-intent="moving"
-></div>
-
-<!-- Before </body> -->
-<script src="https://www.onegoodarea.com/widget.js"></script>`;
-
-const WIDGET_MULTI = `<div data-areaiq-postcode="E1 6AN"   data-areaiq-intent="investing"></div>
-<div data-areaiq-postcode="SW11 1AA" data-areaiq-intent="moving"></div>
-<div data-areaiq-postcode="M1 1AD"   data-areaiq-intent="business"
-     data-areaiq-theme="light"></div>
-
-<script src="https://www.onegoodarea.com/widget.js"></script>`;
-
-const WIDGET_ATTRS: { attr: string; required: boolean; desc: string }[] = [
-  { attr: "data-areaiq-postcode", required: true,  desc: "UK postcode or area name." },
-  { attr: "data-areaiq-intent",   required: false, desc: "moving (default) · business · investing · research." },
-  { attr: "data-areaiq-theme",    required: false, desc: "dark (default) · light." },
-];
-
-function Widget() {
-  return (
-    <Block
-      id="widget"
-      eyebrow="Drop-in widget"
-      title={<>One script tag. <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>No API key on the client.</em></>}
-    >
-      <P>
-        The widget renders a score card on any page. It reads from the 24-hour cache only, so embed traffic never hits live compute and your quota stays intact.
-      </P>
-      <h3 style={{
-        fontFamily: "var(--display)", fontSize: 18, fontWeight: 500,
-        letterSpacing: "-0.012em", color: "var(--ink-deep)",
-        margin: "18px 0 10px",
-      }}>Basic usage</h3>
-      <CodeBlock lang="html" snippet={WIDGET_HTML} />
-
-      <h3 style={{
-        fontFamily: "var(--display)", fontSize: 18, fontWeight: 500,
-        letterSpacing: "-0.012em", color: "var(--ink-deep)",
-        margin: "26px 0 10px",
-      }}>Attributes</h3>
-      <div style={{ border: "1px solid var(--border)", marginBottom: 8 }}>
-        {WIDGET_ATTRS.map((a, i) => (
-          <div key={a.attr} style={{
-            display: "grid",
-            gridTemplateColumns: "240px 100px 1fr",
-            gap: 16, padding: "12px 18px", alignItems: "center",
-            borderBottom: i === WIDGET_ATTRS.length - 1 ? "none" : "1px solid var(--border-dim)",
-            background: i % 2 === 0 ? "var(--bg)" : "var(--bg-off)",
-          }}>
-            <code style={{
-              fontFamily: "var(--mono)", fontSize: 12.5, fontWeight: 500,
-              color: "var(--ink-deep)",
-            }}>{a.attr}</code>
-            <span style={{
-              fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-              letterSpacing: "0.16em", textTransform: "uppercase",
-              color: a.required ? "var(--ink)" : "var(--text-3)",
-            }}>{a.required ? "Required" : "Optional"}</span>
-            <span style={{
-              fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 400,
-              lineHeight: 1.5, color: "var(--text-2)",
-            }}>{a.desc}</span>
-          </div>
-        ))}
-      </div>
-
-      <h3 style={{
-        fontFamily: "var(--display)", fontSize: 18, fontWeight: 500,
-        letterSpacing: "-0.012em", color: "var(--ink-deep)",
-        margin: "26px 0 10px",
-      }}>Multiple widgets on one page</h3>
-      <CodeBlock lang="html" snippet={WIDGET_MULTI} />
-    </Block>
-  );
-}
-
-/* ─────── Code examples ─────── */
-
-const EX_CURL = `curl -X POST https://www.onegoodarea.com/api/v1/report \\
-  -H "Authorization: Bearer aiq_your_api_key" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "area":   "Shoreditch",
-    "intent": "business"
-  }'`;
-
-const EX_NODE = `const response = await fetch("https://www.onegoodarea.com/api/v1/report", {
-  method: "POST",
-  headers: {
-    "Authorization": "Bearer aiq_your_api_key",
-    "Content-Type": "application/json",
+const EXAMPLES: Record<LangKey, { label: string; lang: string; snippet: string; note: string }> = {
+  curl: {
+    label: "cURL",
+    lang: "bash",
+    snippet: `curl https://api.onegoodarea.com/v1/area?postcode=SW1A%201AA \\
+  -H "Authorization: Bearer oga_your_api_key" \\
+  -H "Accept: application/json"`,
+    note: "Plain HTTP rejected. HTTPS only. JSON over the wire.",
   },
-  body: JSON.stringify({
-    area:   "Camden",
-    intent: "investing",
-  }),
-});
+  node: {
+    label: "Node",
+    lang: "typescript",
+    snippet: `const response = await fetch(
+  "https://api.onegoodarea.com/v1/area?postcode=SW1A%201AA",
+  {
+    headers: {
+      "Authorization": "Bearer oga_your_api_key",
+      "Accept": "application/json",
+    },
+  }
+);
 
-const { id, report } = await response.json();
+const profile = await response.json();
+const engineVersion = response.headers.get("X-Engine-Version");
+console.log(profile.meta.fetch_mode); // 'live' | 'store' | 'hybrid'`,
+    note: "Any runtime with fetch. The X-Engine-Version header reflects your org pin if set.",
+  },
+  python: {
+    label: "Python",
+    lang: "python",
+    snippet: `import httpx
 
-console.log(report.areaiq_score);       // 72
-console.log(report.sub_scores.length);  // 5
-console.log(report.recommendations);    // ["Consider …", …]`;
-
-const EX_PY = `import requests
-
-response = requests.post(
-    "https://www.onegoodarea.com/api/v1/report",
-    headers={"Authorization": "Bearer aiq_your_api_key"},
-    json={"area": "Camden", "intent": "investing"},
+response = httpx.get(
+    "https://api.onegoodarea.com/v1/area",
+    params={"postcode": "SW1A 1AA"},
+    headers={"Authorization": "Bearer oga_your_api_key"},
 )
-
-data = response.json()
-report = data["report"]
-
-print(f"Score: {report['areaiq_score']}/100")
-print(f"Dimensions: {len(report['sub_scores'])}")
-
-for sub in report["sub_scores"]:
-    print(f"  {sub['label']}: {sub['score']}/100")`;
-
-const EX_GO = `payload := map[string]string{
-    "area":   "Manchester",
-    "intent": "moving",
-}
-
-body, _ := json.Marshal(payload)
-req, _ := http.NewRequest("POST", "https://www.onegoodarea.com/api/v1/report", bytes.NewBuffer(body))
-req.Header.Set("Authorization", "Bearer aiq_your_api_key")
-req.Header.Set("Content-Type", "application/json")
+profile = response.json()
+print(profile["meta"]["fetch_mode"])`,
+    note: "httpx or requests. Same shapes regardless of client.",
+  },
+  go: {
+    label: "Go",
+    lang: "go",
+    snippet: `req, _ := http.NewRequest(
+    "GET",
+    "https://api.onegoodarea.com/v1/area?postcode=SW1A%201AA",
+    nil,
+)
+req.Header.Set("Authorization", "Bearer oga_your_api_key")
 
 resp, _ := http.DefaultClient.Do(req)
 defer resp.Body.Close()
 
-var result map[string]interface{}
-json.NewDecoder(resp.Body).Decode(&result)`;
+var profile map[string]any
+json.NewDecoder(resp.Body).Decode(&profile)`,
+    note: "Standard library is enough. Decode into your own typed struct for ergonomics.",
+  },
+};
 
-function CodeExamples() {
+const LANG_ORDER: LangKey[] = ["curl", "node", "python", "go"];
+
+function SectionExamples() {
+  const [lang, setLang] = useState<LangKey>("curl");
+  const active = useMemo(() => EXAMPLES[lang], [lang]);
+
   return (
-    <Block
-      id="examples"
-      eyebrow="Code examples"
-      title={<>Any HTTP client. <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>No SDK required.</em></>}
+    <section
+      className="oga-section-hero"
+      aria-labelledby="docs-ex-title"
     >
-      <P>
-        The API speaks plain JSON over HTTPS. Use whatever HTTP client your stack prefers. Below: cURL, Node.js, Python, and Go.
-      </P>
-      <TabbedCode tabs={[
-        { label: "cURL",       lang: "bash",       snippet: EX_CURL },
-        { label: "Node.js",    lang: "typescript", snippet: EX_NODE },
-        { label: "Python",     lang: "python",     snippet: EX_PY   },
-        { label: "Go",         lang: "go",         snippet: EX_GO   },
-      ]} />
-    </Block>
-  );
-}
+      <div className="oga-docs__container">
+        <div className="oga-docs__header">
+          <div className="oga-docs__eyebrow">
+            <span className="oga-docs__eyebrow-num">05</span>
+            <span aria-hidden className="oga-docs__eyebrow-line" />
+            <span>Code examples</span>
+          </div>
+          <h2 id="docs-ex-title" className="oga-docs__h2">
+            One endpoint, four languages.
+          </h2>
+          <p className="oga-docs__lead">
+            Every example reads the same area profile. Swap the postcode, swap
+            the surface, swap the language — the shape is the same. No SDK is
+            required, no client library is shipped today.
+          </p>
+        </div>
 
-/* ─────── OpenAPI 3.0 spec ─────── */
+        <div className="oga-docs-ex__tabs" role="tablist" aria-label="Language selector">
+          {LANG_ORDER.map((k) => (
+            <button
+              key={k}
+              type="button"
+              role="tab"
+              aria-selected={lang === k}
+              onClick={() => setLang(k)}
+              className={`oga-docs-ex__tab ${lang === k ? "oga-docs-ex__tab--active" : ""}`}
+            >
+              {EXAMPLES[k].label}
+            </button>
+          ))}
+        </div>
 
-const OPENAPI_GEN_CMD = `openapi-generator-cli generate \\
-  -i https://www.onegoodarea.com/openapi.json \\
-  -g python \\
-  -o ./client`;
+        <div className="oga-docs-ex__lang-meta">
+          <span className="oga-docs-ex__lang-name">{active.label}</span>
+          <span className="oga-docs-ex__lang-note">{active.note}</span>
+        </div>
 
-function OpenApiSpec() {
-  return (
-    <Block
-      id="openapi"
-      eyebrow="OpenAPI"
-      title={<>Machine-readable, <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>contract first.</em></>}
-    >
-      <P>
-        OneGoodArea ships a full OpenAPI 3.0 spec at{" "}
-        <a
-          href="https://www.onegoodarea.com/openapi.json"
-          style={{ color: "var(--ink)", textDecoration: "underline" }}
-        >
-          https://www.onegoodarea.com/openapi.json
-        </a>
-        . It documents both endpoints (the live <IC>/api/v1/report</IC> route and the widget cache route), every error response (400, 401, 403, 429, 500), the full request and response schemas including the new <IC>confidence</IC> and <IC>engine_version</IC> fields, and the Bearer auth scheme.
-      </P>
-      <P>
-        The spec version is pinned to the scoring engine version (currently 2.0.0), so a procurement or model-risk team can lock against a specific contract. Postman, Insomnia, and curl users can import the URL directly. SDK teams can generate a typed client in any supported language.
-      </P>
-      <h3 style={{
-        fontFamily: "var(--display)", fontSize: 18, fontWeight: 500,
-        letterSpacing: "-0.012em", color: "var(--ink-deep)",
-        margin: "22px 0 10px",
-      }}>Generate a client</h3>
-      <CodeBlock lang="bash" snippet={OPENAPI_GEN_CMD} />
-      <div style={{
-        marginTop: 18, display: "flex", gap: 12, flexWrap: "wrap",
-        alignItems: "center",
-      }}>
-        <a
-          href="/docs/api-reference"
-          style={{
-            fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-            letterSpacing: "0.14em", textTransform: "uppercase",
-            color: "var(--signal-ink)", background: "var(--signal)",
-            padding: "12px 22px", borderRadius: 999, textDecoration: "none",
-            border: "1px solid var(--signal)",
-            display: "inline-flex", alignItems: "center", gap: 9,
-            transition: "transform 140ms cubic-bezier(0.16,1,0.3,1)",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-1px)")}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-        >
-          Open interactive reference
-          <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
-        </a>
-        <a
-          href="https://www.onegoodarea.com/openapi.json"
-          download="onegoodarea-openapi.json"
-          style={{
-            fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-            letterSpacing: "0.14em", textTransform: "uppercase",
-            color: "var(--ink-deep)", background: "transparent",
-            padding: "12px 22px", borderRadius: 999, textDecoration: "none",
-            border: "1px solid var(--border)",
-            display: "inline-flex", alignItems: "center", gap: 9,
-          }}
-        >
-          Download spec
-          <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>↓</span>
-        </a>
-        <a
-          href="https://www.onegoodarea.com/openapi.json"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-            letterSpacing: "0.14em", textTransform: "uppercase",
-            color: "var(--ink-deep)", background: "transparent",
-            padding: "12px 22px", borderRadius: 999, textDecoration: "none",
-            border: "1px solid var(--border)",
-            display: "inline-flex", alignItems: "center", gap: 9,
-          }}
-        >
-          View raw JSON
-          <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
-        </a>
+        <CodePanel lang={active.lang} path="GET /v1/area" snippet={active.snippet} />
       </div>
-    </Block>
+    </section>
   );
 }
 
-/* ─────── Final CTA ─────── */
+/* ============================================================
+   Final CTA (DARK)
+   ============================================================ */
 
 function FinalCta() {
   return (
-    <section style={{
-      background: "var(--bg-ink)",
-      padding: "100px 0 120px",
-      position: "relative", overflow: "hidden",
-    }}>
-      <div aria-hidden style={{
-        position: "absolute", inset: 0, pointerEvents: "none",
-      }}>
-        <div style={{
-          position: "absolute", top: -180, left: "50%",
-          transform: "translateX(-50%)",
-          width: 880, height: 560,
-          background: "radial-gradient(ellipse at center, rgba(212,243,58,0.12) 0%, rgba(212,243,58,0) 60%)",
-        }} />
-      </div>
-      <div style={{
-        maxWidth: 820, margin: "0 auto", padding: "0 40px",
-        textAlign: "center", position: "relative", zIndex: 1,
-      }}>
-        <h2 style={{
-          fontFamily: "var(--display)", fontWeight: 400,
-          fontSize: "clamp(34px, 4.4vw, 52px)", lineHeight: 1.04,
-          letterSpacing: "-0.02em", color: "#FFFFFF",
-          margin: "0 0 16px",
-        }}>
-          Grab a key. <em style={{
-            fontStyle: "italic", color: "var(--signal)",
-          }}>Start building.</em>
+    <section
+      className="oga-section-dark oga-docs-cta"
+      data-oga-surface="dark"
+      aria-labelledby="docs-cta-title"
+    >
+      <div className="oga-docs__container--narrow">
+        <h2 id="docs-cta-title" className="oga-docs-cta__h2">
+          Build on the data layer underneath UK property workflows.
         </h2>
-        <p style={{
-          fontFamily: "var(--sans)", fontSize: 16, fontWeight: 400,
-          lineHeight: 1.55, color: "rgba(255,255,255,0.64)",
-          margin: "0 auto 30px", maxWidth: "48ch",
-        }}>
-          Developer plan starts at £49/mo for 100 reports. Cached hits and widget embeds are free on top.
+        <p className="oga-docs-cta__lead">
+          Generate a key, integrate against the API, and configure how it behaves
+          per organisation through the dashboard. Per-surface guides are coming;
+          everything live is linked above.
         </p>
-        <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href="/pricing" style={{
-            fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-            letterSpacing: "0.14em", textTransform: "uppercase",
-            color: "var(--signal-ink)", background: "var(--signal)",
-            padding: "14px 24px", borderRadius: 999, textDecoration: "none",
-            border: "1px solid var(--signal)",
-            display: "inline-flex", alignItems: "center", gap: 9,
-            transition: "transform 140ms cubic-bezier(0.16,1,0.3,1)",
-          }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-1px)")}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-          >
-            See the plans
-            <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
+        <div className="oga-docs-cta__ctas">
+          <Link href="/sign-up" className="oga-btn oga-btn-primary">
+            Get an API key
+            <span aria-hidden>→</span>
           </Link>
-          <a href="mailto:hello@onegoodarea.com?subject=Enterprise API enquiry" style={{
-            fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-            letterSpacing: "0.14em", textTransform: "uppercase",
-            color: "rgba(255,255,255,0.88)", background: "transparent",
-            padding: "14px 24px", borderRadius: 999, textDecoration: "none",
-            border: "1px solid rgba(255,255,255,0.22)",
-            display: "inline-flex", alignItems: "center", gap: 9,
-            transition: "border-color 140ms ease, background 140ms ease",
-          }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)";
-              e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)";
-              e.currentTarget.style.background = "transparent";
-            }}
-          >
-            Talk to sales
-          </a>
+          <Link href="/methodology" className="oga-btn oga-btn-secondary">
+            Read the methodology
+          </Link>
         </div>
       </div>
     </section>
