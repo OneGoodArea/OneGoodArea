@@ -4,7 +4,7 @@ import { Nav } from "./_shared/nav";
 import { Footer } from "./_shared/footer";
 import { HeroPlotted } from "./_shared/hero-plotted";
 import { BuiltForSection } from "./_shared/built-for-section";
-import { DefensibleSection } from "./_shared/defensible-section";
+import { ProductsSection } from "./_shared/products-section";
 import { IntegrationSection } from "./_shared/integration-section";
 import { CoverageSection } from "./_shared/coverage-section";
 import { CtaSection } from "./_shared/cta-section";
@@ -28,7 +28,7 @@ export default function DesignV2Client() {
       <Nav />
       <HeroPlotted />
       <BuiltForSection />
-      <DefensibleSection />
+      <ProductsSection />
       <IntegrationSection />
       <CoverageSection />
       <CtaSection />
