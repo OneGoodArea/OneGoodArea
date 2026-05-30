@@ -138,102 +138,7 @@
 }
 
 /* ============================================================
-   § 1 — Honest status banner (call-out card)
-   ============================================================ */
-
-.oga-apiref-status {
-  border: 1px solid var(--oga-border);
-  border-radius: var(--oga-radius-lg);
-  background: var(--oga-white);
-  padding: var(--oga-6);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: var(--oga-6);
-}
-
-@media (max-width: 900px) {
-  .oga-apiref-status { grid-template-columns: 1fr; }
-}
-
-.oga-apiref-status__col-label {
-  font-family: var(--oga-font-mono);
-  font-size: var(--oga-fs-eyebrow);
-  letter-spacing: var(--oga-tracking-eyebrow);
-  text-transform: uppercase;
-  color: var(--oga-fg-muted);
-  margin-bottom: var(--oga-3);
-}
-
-.oga-apiref-status__col h3 {
-  font-family: var(--oga-font-sans);
-  font-size: var(--oga-fs-h4);
-  line-height: var(--oga-lh-snug);
-  font-weight: 500;
-  margin: 0 0 var(--oga-3);
-  color: var(--oga-fg);
-}
-
-.oga-apiref-status__col p {
-  font-family: var(--oga-font-sans);
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--oga-fg);
-  margin: 0 0 var(--oga-3);
-}
-
-.oga-apiref-status__col code {
-  font-family: var(--oga-font-mono);
-  font-size: 12px;
-  background: var(--oga-ink-06);
-  padding: 1px 5px;
-  border-radius: 3px;
-  color: var(--oga-fg);
-}
-
-.oga-apiref-status__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: var(--oga-2);
-  font-family: var(--oga-font-sans);
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--oga-fg);
-}
-
-.oga-apiref-status__list-item {
-  display: grid;
-  grid-template-columns: 90px 1fr;
-  gap: var(--oga-3);
-  align-items: baseline;
-}
-
-.oga-apiref-status__list-tag {
-  font-family: var(--oga-font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  padding: 3px 8px;
-  border-radius: 3px;
-  text-align: center;
-}
-
-.oga-apiref-status__list-tag--stale {
-  color: var(--oga-status-amber);
-  background: var(--oga-status-amber-bg);
-}
-.oga-apiref-status__list-tag--wrong {
-  color: var(--oga-status-red);
-  background: var(--oga-status-red-bg);
-}
-.oga-apiref-status__list-tag--missing {
-  color: var(--oga-fg-muted);
-  background: var(--oga-ink-06);
-}
-
-/* ============================================================
-   § 2 — Surface map (5 cards)
+   § 1 — Surface map (6 cards, dark surface)
    ============================================================ */
 
 .oga-apiref-surfaces__grid {
@@ -358,6 +263,57 @@
   background: var(--oga-status-amber-bg);
   color: var(--oga-status-amber);
 }
+
+/* Dark-surface variant — § 01 punctuates with .oga-section-dark
+   to mirror the homepage products-on-dark moment. Cards drop the
+   cream fill, lean on hairline borders + a faint translucent
+   panel. Token overrides on [data-oga-surface="dark"] flip
+   --oga-fg + --oga-fg-muted (see tokens.css), so card name +
+   body colors adapt automatically; we only need overrides for
+   the literal-color rules. */
+
+[data-oga-surface="dark"] .oga-apiref-surfaces__card {
+  background: rgba(250, 248, 244, 0.03);
+  border-color: rgba(250, 248, 244, 0.16);
+}
+
+[data-oga-surface="dark"] .oga-apiref-surfaces__card-name {
+  color: var(--oga-white);
+}
+
+[data-oga-surface="dark"] .oga-apiref-surfaces__card-body {
+  color: rgba(250, 248, 244, 0.72);
+}
+
+[data-oga-surface="dark"] .oga-apiref-surfaces__card-count {
+  background: rgba(250, 248, 244, 0.10);
+  color: var(--oga-white);
+}
+
+[data-oga-surface="dark"] .oga-apiref-surfaces__endpoint {
+  border-top-color: rgba(250, 248, 244, 0.12);
+}
+
+[data-oga-surface="dark"] .oga-apiref-surfaces__endpoint-path {
+  color: rgba(250, 248, 244, 0.92);
+}
+
+[data-oga-surface="dark"] .oga-apiref-surfaces__card-cta {
+  border-top-color: rgba(250, 248, 244, 0.16);
+  color: rgba(250, 248, 244, 0.65);
+}
+
+[data-oga-surface="dark"] .oga-apiref-surfaces__more {
+  border-top-color: rgba(250, 248, 244, 0.12);
+  color: rgba(250, 248, 244, 0.55);
+}
+
+/* HTTP-verb colours brighten slightly on dark for legibility */
+[data-oga-surface="dark"] .oga-apiref-surfaces__endpoint-verb--get    { color: #7AC295; }
+[data-oga-surface="dark"] .oga-apiref-surfaces__endpoint-verb--post,
+[data-oga-surface="dark"] .oga-apiref-surfaces__endpoint-verb--patch  { color: #F0B270; }
+[data-oga-surface="dark"] .oga-apiref-surfaces__endpoint-verb--put    { color: #E8D27A; }
+[data-oga-surface="dark"] .oga-apiref-surfaces__endpoint-verb--delete { color: #E87A65; }
 
 /* ============================================================
    § 3 — What you can use today (4 cards)
