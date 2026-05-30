@@ -1170,7 +1170,144 @@
 }
 
 /* ============================================================
-   § 12 — Scope and limitations (5 cards)
+   § 12 — Per-org methodology (Levers)
+   ============================================================ */
+
+.oga-meth-levers__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--oga-4);
+}
+
+@media (max-width: 900px) {
+  .oga-meth-levers__grid { grid-template-columns: 1fr; }
+}
+
+.oga-meth-levers__card {
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  background: var(--oga-white);
+  padding: var(--oga-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+}
+
+.oga-meth-levers__card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--oga-3);
+}
+
+.oga-meth-levers__card-num {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-meth-levers__card-rbac {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-status-amber);
+  background: var(--oga-status-amber-bg);
+  padding: 3px 8px;
+  border-radius: 3px;
+}
+
+.oga-meth-levers__card-name {
+  font-family: var(--oga-font-sans);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0;
+}
+
+.oga-meth-levers__card-endpoint {
+  align-self: flex-start;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-fg);
+  padding: 4px 8px;
+  background: var(--oga-ink-06);
+  border-radius: 3px;
+}
+
+.oga-meth-levers__card-verb {
+  color: var(--oga-status-green);
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+.oga-meth-levers__card-body {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--oga-fg);
+  margin: 0;
+}
+
+.oga-meth-levers__card-honest {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+  margin: 0;
+  padding-top: var(--oga-3);
+  border-top: 1px dashed var(--oga-border);
+}
+
+.oga-meth-levers__card-adr {
+  margin-top: auto;
+  align-self: flex-start;
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-meth-levers__foot {
+  margin-top: var(--oga-6);
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--oga-fg);
+}
+
+.oga-meth-levers__foot code {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  background: var(--oga-ink-06);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--oga-fg);
+}
+
+.oga-meth-levers__foot-link {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--oga-fg);
+  text-decoration: none;
+  border-bottom: 1px solid var(--oga-ink);
+  padding-bottom: 1px;
+}
+
+.oga-meth-levers__foot-link:hover { background: var(--oga-ink-06); }
+
+.oga-meth-levers__foot-note {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-fg-muted);
+}
+
+/* ============================================================
+   § 13 — Scope and limitations (5 cards)
    ============================================================ */
 
 .oga-meth-scope__grid {

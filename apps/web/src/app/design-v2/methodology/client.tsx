@@ -316,32 +316,32 @@ const SCOPE_NOT: { tag: string; title: string; body: string }[] = [
 
 const AUDIT: { num: string; name: string; desc: string; href: string; external?: boolean; disabled?: boolean }[] = [
   {
-    num: "13.1",
+    num: "14.1",
     name: "Methodology page",
     desc: "You are here. Stamped on every release with engine_version + released_at.",
     href: "/methodology",
   },
   {
-    num: "13.2",
+    num: "14.2",
     name: "Changelog",
     desc: "Public release history. Every shipped MAJOR / MINOR / PATCH bump documented.",
     href: "/changelog",
   },
   {
-    num: "13.3",
+    num: "14.3",
     name: "API reference",
     desc: "OpenAPI 3.0 spec rendered as an interactive reference. Currently being regenerated against the live backend.",
     href: "/docs/api-reference",
   },
   {
-    num: "13.4",
+    num: "14.4",
     name: "ADR repository",
     desc: "Every architectural decision since signal-first, with rationale and trade-offs.",
     href: "https://github.com/OneGoodArea/OneGoodArea/tree/main/docs/adr",
     external: true,
   },
   {
-    num: "13.5",
+    num: "14.5",
     name: "AI eval harness",
     desc: "Measured planner accuracy. 92.9% on a 14-case curated corpus against claude-sonnet-4-20250514.",
     href: "https://github.com/OneGoodArea/OneGoodArea/tree/main/apps/api/src/modules/intelligence/eval",
@@ -371,6 +371,7 @@ export default function MethodologyClient() {
       <SectionIntelligence />
       <SectionConfidence />
       <SectionVersioning />
+      <SectionLevers />
       <SectionScope />
       <SectionAudit />
 
@@ -419,6 +420,10 @@ function Hero() {
             </Link>
             <Link href="#versioning" className="oga-meth-hero__anchor">
               Versioning
+              <span className="oga-meth-hero__anchor-arrow" aria-hidden>↓</span>
+            </Link>
+            <Link href="#levers" className="oga-meth-hero__anchor">
+              Levers
               <span className="oga-meth-hero__anchor-arrow" aria-hidden>↓</span>
             </Link>
           </div>
@@ -1135,7 +1140,108 @@ function SectionVersioning() {
   );
 }
 
-/* ─────── § 12 — Scope and limitations ─────── */
+/* ─────── § 12 — Per-org methodology (Levers) ─────── */
+
+type Lever = {
+  num: string;
+  name: string;
+  endpoint: { verb: string; path: string };
+  rbac: "Owner" | "Admin";
+  body: string;
+  honest: string;
+  adr: string;
+};
+
+const LEVERS: Lever[] = [
+  {
+    num: "12.1",
+    name: "Signal bundles",
+    endpoint: { verb: "POST", path: "/v1/orgs/:id/bundles" },
+    rbac: "Admin",
+    body: "Named whitelist of signal_keys. Scopes /v1/area, /v1/areas, and /v1/query — the API exposes only the bundle's signals to your keys.",
+    honest: "A request for an out-of-bundle signal returns 422 bundle_signal_not_allowed. No silent omission.",
+    adr: "ADR 0029",
+  },
+  {
+    num: "12.2",
+    name: "Scoring presets",
+    endpoint: { verb: "POST", path: "/v1/orgs/:id/presets" },
+    rbac: "Admin",
+    body: "Save a (base_preset, weights) pair server-side. Call by preset_id from POST /v1/score. Reusable across team members and replayable in audits.",
+    honest: "Frozen v2 engine unchanged. weights_source surfaces as \"custom\" on response.",
+    adr: "ADR 0030",
+  },
+  {
+    num: "12.3",
+    name: "Methodology pinning",
+    endpoint: { verb: "PUT", path: "/v1/orgs/:id/methodology" },
+    rbac: "Owner",
+    body: "Pin the whole org to a specific engine_version. Every scoring response from the org's keys stamps that version in X-Engine-Version.",
+    honest: "Owner-only by design: misclicking a pin has high cost for regulator-facing audits. Explicit request header still wins.",
+    adr: "ADR 0031",
+  },
+  {
+    num: "12.4",
+    name: "Peer cohorts",
+    endpoint: { verb: "POST", path: "/v1/orgs/:id/cohorts" },
+    rbac: "Admin",
+    body: "Named list of LSOA codes (max 10,000). Scopes the candidate pool on /v1/peers — \"find peers in MY universe.\"",
+    honest: "Cohorts ship today; per-cohort percentile recompute (scope=peer_group) is on the roadmap.",
+    adr: "ADR 0032",
+  },
+];
+
+function SectionLevers() {
+  return (
+    <section id="levers" className="oga-section-hero">
+      <div className="oga-meth__container">
+        <header className="oga-meth__header">
+          <div className="oga-meth__eyebrow">
+            <span className="oga-meth__eyebrow-num">12</span>
+            <span className="oga-meth__eyebrow-line" aria-hidden />
+            <span>Per-organisation methodology</span>
+          </div>
+          <h2 className="oga-meth__h2">Four Levers shape how the API behaves for your keys.</h2>
+          <p className="oga-meth__lead">
+            Levers are the per-organisation methodology controls. All four are opt-in: no bundle, no
+            preset_id, no pin, no cohort means default behaviour. RBAC, white-label, and IP allowlist
+            live alongside on the operational side.
+          </p>
+        </header>
+
+        <div className="oga-meth-levers__grid">
+          {LEVERS.map((l) => (
+            <article key={l.num} className="oga-meth-levers__card">
+              <div className="oga-meth-levers__card-head">
+                <span className="oga-meth-levers__card-num">{l.num}</span>
+                <span className="oga-meth-levers__card-rbac">{l.rbac}-only</span>
+              </div>
+              <h3 className="oga-meth-levers__card-name">{l.name}</h3>
+              <code className="oga-meth-levers__card-endpoint">
+                <span className="oga-meth-levers__card-verb">{l.endpoint.verb}</span> {l.endpoint.path}
+              </code>
+              <p className="oga-meth-levers__card-body">{l.body}</p>
+              <p className="oga-meth-levers__card-honest">{l.honest}</p>
+              <span className="oga-meth-levers__card-adr">{l.adr}</span>
+            </article>
+          ))}
+        </div>
+
+        <p className="oga-meth-levers__foot">
+          Three-tier RBAC (<code>member</code> / <code>admin</code> / <code>owner</code>),
+          per-org white-label (<code>display_name</code> + <code>brand_url</code>), and
+          per-key IP allowlist (<code>allowed_ip_cidrs</code>) are documented in full on{" "}
+          <Link href="/docs/levers" className="oga-meth-levers__foot-link">
+            /docs/levers <span aria-hidden>→</span>
+          </Link>{" "}
+          <span className="oga-meth-levers__foot-note">(landing in this workstream)</span>.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/* ─────── § 13 — Scope and limitations ─────── */
 
 function SectionScope() {
   return (
@@ -1143,7 +1249,7 @@ function SectionScope() {
       <div className="oga-meth__container">
         <header className="oga-meth__header">
           <div className="oga-meth__eyebrow">
-            <span className="oga-meth__eyebrow-num">12</span>
+            <span className="oga-meth__eyebrow-num">13</span>
             <span className="oga-meth__eyebrow-line" aria-hidden />
             <span>Scope &amp; limitations</span>
           </div>
@@ -1168,7 +1274,7 @@ function SectionScope() {
   );
 }
 
-/* ─────── § 13 — Audit artefacts ─────── */
+/* ─────── § 14 — Audit artefacts ─────── */
 
 function SectionAudit() {
   return (
@@ -1176,7 +1282,7 @@ function SectionAudit() {
       <div className="oga-meth__container">
         <header className="oga-meth__header">
           <div className="oga-meth__eyebrow">
-            <span className="oga-meth__eyebrow-num">13</span>
+            <span className="oga-meth__eyebrow-num">14</span>
             <span className="oga-meth__eyebrow-line" aria-hidden />
             <span>Audit artefacts</span>
           </div>
