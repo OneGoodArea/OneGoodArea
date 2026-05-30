@@ -6,29 +6,29 @@
 
 :root {
   /* ---------- Color ----------
-     Forest green scrapped 2026-05-18. Primary ink is now warm dark
-     graphite. Variable name kept as `--oga-green` for minimal-blast-
-     radius refactor; rename to `--oga-ink` in a later cleanup pass. */
-  --oga-green: #1A1C1F;
+     Primary ink: warm dark graphite (forest green scrapped 2026-05-18).
+     Renamed from --oga-ink to --oga-ink at AR-204 cleanup
+     (Workstream 4 piece 2) — names now describe what the value IS. */
+  --oga-ink: #1A1C1F;
   --oga-white: #FAF8F4;
 
   /* Tints (derived; brand stays 2-color) */
-  --oga-green-95: #DDD9D5;
-  --oga-green-80: #B5B6B8;
-  --oga-green-50: #74757A;
-  --oga-green-30: #454649;
-  --oga-green-10: rgba(26, 28, 31, 0.10);
-  --oga-green-06: rgba(26, 28, 31, 0.06);
+  --oga-ink-95: #DDD9D5;
+  --oga-ink-80: #B5B6B8;
+  --oga-ink-50: #74757A;
+  --oga-ink-30: #454649;
+  --oga-ink-10: rgba(26, 28, 31, 0.10);
+  --oga-ink-06: rgba(26, 28, 31, 0.06);
 
   --oga-canvas: #EFECE6;
 
   /* Semantic */
   --oga-bg: var(--oga-white);
-  --oga-fg: var(--oga-green);
-  --oga-fg-muted: var(--oga-green-50);
-  --oga-fg-subtle: var(--oga-green-30);
-  --oga-border: var(--oga-green-10);
-  --oga-accent: var(--oga-green);
+  --oga-fg: var(--oga-ink);
+  --oga-fg-muted: var(--oga-ink-50);
+  --oga-fg-subtle: var(--oga-ink-30);
+  --oga-border: var(--oga-ink-10);
+  --oga-accent: var(--oga-ink);
 
   /* ---------- Status palette (Pedro 2026-05-16) ----------
      Only used inside the authed product surface and data-viz.
@@ -105,7 +105,7 @@
 
 .oga-on-dark,
 [data-oga-surface="dark"] {
-  --oga-bg: var(--oga-green);
+  --oga-bg: var(--oga-ink);
   --oga-fg: var(--oga-white);
   --oga-fg-muted: rgba(250, 248, 244, 0.65);
   --oga-fg-subtle: rgba(250, 248, 244, 0.5);
