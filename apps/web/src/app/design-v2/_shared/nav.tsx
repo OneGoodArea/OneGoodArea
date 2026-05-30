@@ -4,7 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Wordmark } from "./wordmark";
-import { ThemeDot } from "./theme-dot";
+/* ThemeDot intentionally NOT imported here (Workstream 3, 2026-05-30).
+   The Plotted homepage is a stage-managed composition of always-dark
+   and always-light sections — it is not a theme-able surface. The
+   theme toggle lives in the authenticated app-shell (SidebarThemeRow)
+   where light/dark genuinely matters for the user. */
 
 /* Nav — Plotted brand v3 (AR-152).
 
@@ -136,11 +140,6 @@ export function Nav() {
             <Link href={ctaHref} className="oga-btn oga-btn-primary">
               {ctaLabel}
             </Link>
-            <span aria-hidden style={{
-              width: 1, height: 20, background: "var(--oga-border)",
-              marginLeft: 4, marginRight: 4,
-            }} />
-            <ThemeDot />
           </div>
 
           <button
@@ -240,13 +239,6 @@ export function Nav() {
           borderTop: "1px solid var(--oga-border)",
           display: "flex", flexDirection: "column", gap: 16,
         }}>
-          <div className="oga-label" style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-          }}>
-            Theme
-            <ThemeDot />
-          </div>
-
           <Link
             href={ctaHref}
             onClick={() => setDrawerOpen(false)}

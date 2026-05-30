@@ -172,30 +172,38 @@ input:focus, select:focus {
          --font-mono). No @import here - that caused FOUC. The .aiq
          tokens below alias those vars under their semantic names. */
 
+      /* Brand v3 migration (Workstream 3, 2026-05-30): the .aiq token
+         names are kept (29 pages read from them) but each one now
+         aliases an --oga-* token from styles/brand/tokens.css. Result:
+         every aiq-* page renders graphite + warm white + Geist without
+         touching its source.
+         Notes:
+         - --signal aliases to oga-status-green (Brand v3 is strictly
+           two-color; chartreuse aliveness becomes status-green
+           aliveness). Easy to remap if Pedro wants strict 2-color.
+         - --display + --sans both alias to oga-font-sans (Geist).
+           Fraunces / Inter retire as font dependencies in a later
+           pass once the layout-level <link> tag can drop them. */
       .aiq {
-        /* Ink · forest green primary */
-        --ink:        #0A4D3A;
-        --ink-deep:   #062A1E;
-        --ink-soft:   #1C5E4A;
-        /* Signal · chartreuse (the alive accent) */
-        --signal:     #D4F33A;
-        --signal-ink: #1A2600;
-        --signal-dim: #E9F69E;
-        /* Surface */
-        --bg:         #FFFFFF;
-        --bg-off:     #F6F9F4;
-        --bg-ink:     #062A1E;
-        /* Line + text */
-        --border:     #E4EAE3;
-        --border-dim: #F0F3EE;
-        --text:       #0B2018;
-        --text-2:     #445A51;
-        --text-3:     #6E8278;
-        --text-4:     #9CAFA5;
+        --ink:        var(--oga-fg);
+        --ink-deep:   var(--oga-fg);
+        --ink-soft:   var(--oga-fg-subtle);
+        --signal:     var(--oga-status-green);
+        --signal-ink: var(--oga-white);
+        --signal-dim: var(--oga-status-green-bg);
+        --bg:         var(--oga-white);
+        --bg-off:     var(--oga-canvas);
+        --bg-ink:     var(--oga-green);
+        --border:     var(--oga-border);
+        --border-dim: var(--oga-green-06);
+        --text:       var(--oga-fg);
+        --text-2:     var(--oga-fg-subtle);
+        --text-3:     var(--oga-fg-muted);
+        --text-4:     var(--oga-fg-muted);
 
-        --display: 'Fraunces', 'Times New Roman', serif;
-        --sans:    'Inter', -apple-system, system-ui, sans-serif;
-        --mono:    'Geist Mono', ui-monospace, 'SF Mono', monospace;
+        --display: var(--oga-font-sans);
+        --sans:    var(--oga-font-sans);
+        --mono:    var(--oga-font-mono);
 
         background: var(--bg);
         color: var(--text);
@@ -204,25 +212,26 @@ input:focus, select:focus {
         text-rendering: optimizeLegibility;
       }
 
-      /* Dark theme · flips all tokens when data-theme="dark" is on <html>.
-         Chartreuse stays (it's brand signal on both). Surfaces go dark-forest,
-         text vars go light. Components reading from these vars adapt. */
+      /* Dark theme · Brand v3 graphite-on-warm-white inverts to
+         warm-white-on-graphite via the [data-oga-surface="dark"] block
+         in styles/brand/tokens.css. We re-alias the .aiq tokens here so
+         the same pattern applies to aiq-* pages in dark mode. */
       [data-theme="dark"] .aiq {
-        --ink:        #C4F5D4;
-        --ink-deep:   #F5F8F6;
-        --ink-soft:   #8FB8A5;
-        --signal:     #D4F33A;
-        --signal-ink: #1A2600;
-        --signal-dim: #2E4310;
-        --bg:         #0A1713;
-        --bg-off:     #0F201A;
-        --bg-ink:     #062A1E;  /* same as light · dark panels stay consistent across themes */
-        --border:     #1F2E28;
-        --border-dim: #172520;
-        --text:       #E4EAE3;
-        --text-2:     #A8B8B0;
-        --text-3:     #7D908A;
-        --text-4:     #556864;
+        --ink:        var(--oga-white);
+        --ink-deep:   var(--oga-white);
+        --ink-soft:   rgba(250, 248, 244, 0.65);
+        --signal:     var(--oga-status-green);
+        --signal-ink: var(--oga-green);
+        --signal-dim: var(--oga-status-green-bg);
+        --bg:         var(--oga-green);
+        --bg-off:     #232529;
+        --bg-ink:     var(--oga-green);
+        --border:     rgba(250, 248, 244, 0.14);
+        --border-dim: rgba(250, 248, 244, 0.08);
+        --text:       var(--oga-white);
+        --text-2:     rgba(250, 248, 244, 0.65);
+        --text-3:     rgba(250, 248, 244, 0.50);
+        --text-4:     rgba(250, 248, 244, 0.38);
       }
 
       .aiq *::selection { background: var(--signal); color: var(--signal-ink); }
@@ -235,24 +244,25 @@ input:focus, select:focus {
 
       /* .aiq-force-light · lock tokens to light-theme values for mock
          surfaces that should always look the same regardless of theme
-         (embedded widget preview, listing-page illustration, etc.) */
+         (embedded widget preview, listing-page illustration, etc.).
+         Mirrors the .aiq light-mode aliases verbatim. */
       .aiq .aiq-force-light,
       [data-theme="dark"] .aiq .aiq-force-light {
-        --ink:        #0A4D3A;
-        --ink-deep:   #062A1E;
-        --ink-soft:   #1C5E4A;
-        --signal:     #D4F33A;
-        --signal-ink: #1A2600;
-        --signal-dim: #E9F69E;
-        --bg:         #FFFFFF;
-        --bg-off:     #F6F9F4;
-        --bg-ink:     #062A1E;
-        --border:     #E4EAE3;
-        --border-dim: #F0F3EE;
-        --text:       #0B2018;
-        --text-2:     #445A51;
-        --text-3:     #6E8278;
-        --text-4:     #9CAFA5;
+        --ink:        var(--oga-fg);
+        --ink-deep:   var(--oga-fg);
+        --ink-soft:   var(--oga-fg-subtle);
+        --signal:     var(--oga-status-green);
+        --signal-ink: var(--oga-white);
+        --signal-dim: var(--oga-status-green-bg);
+        --bg:         var(--oga-white);
+        --bg-off:     var(--oga-canvas);
+        --bg-ink:     var(--oga-green);
+        --border:     var(--oga-border);
+        --border-dim: var(--oga-green-06);
+        --text:       var(--oga-fg);
+        --text-2:     var(--oga-fg-subtle);
+        --text-3:     var(--oga-fg-muted);
+        --text-4:     var(--oga-fg-muted);
       }
 
       @keyframes aiq-fade-up {
