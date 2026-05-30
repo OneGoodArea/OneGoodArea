@@ -1,0 +1,455 @@
+/* /changelog — Brand v3 (Plotted) — AR-204 PR D.
+
+   Buyer-facing changelog only. Internal architectural moves
+   (monorepo split, Fastify cutover, container parity, DAL work)
+   stay off this page per Pedro 2026-05-30 — they're not shipping
+   capability from a buyer's view. The data lives in the CHANGELOG
+   constant in client.tsx; this file is only visual concerns. */
+
+/* ============================================================
+   Page container
+   ============================================================ */
+
+.oga-changelog {
+  min-height: 100vh;
+  background: var(--oga-white);
+  color: var(--oga-fg);
+}
+
+.oga-changelog section {
+  padding: var(--oga-9) clamp(20px, 4vw, var(--oga-7));
+}
+
+/* ------------------------------------------------------------
+   Dot-field override — match homepage IntegrationSection.
+
+   The global .oga-section-hero ships with a left-fading dot
+   field at 14px spacing and 0.10 alpha. That reads heavy on
+   long pages where two .oga-section-hero stack back-to-back
+   (hero + timeline). Override with the homepage's softer
+   recipe: 28px spacing, 0.07 alpha, radial ellipse fade from
+   top-centre outward, so dots breathe at the top and disappear
+   into clean cream below.
+   ------------------------------------------------------------ */
+.oga-changelog .oga-section-hero::before {
+  background-image: radial-gradient(circle, rgba(26, 28, 31, 0.07) 1.1px, transparent 1.3px);
+  background-size: 28px 28px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 0%, transparent 72%);
+          mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 0%, transparent 72%);
+}
+
+.oga-changelog__container {
+  max-width: 1080px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.oga-changelog__container--narrow {
+  max-width: 820px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ============================================================
+   Section header pattern (shared with other docs pages)
+   ============================================================ */
+
+.oga-changelog__header { margin-bottom: var(--oga-7); }
+
+.oga-changelog__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-3);
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-4);
+}
+
+.oga-changelog__eyebrow-num { color: var(--oga-fg); font-weight: 500; }
+.oga-changelog__eyebrow-line {
+  display: inline-block;
+  width: 32px;
+  height: 1px;
+  background: var(--oga-border);
+}
+
+.oga-changelog__h2 {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-h2);
+  line-height: var(--oga-lh-tight);
+  letter-spacing: var(--oga-tracking-tight);
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 0 var(--oga-4);
+  max-width: 760px;
+}
+
+.oga-changelog__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  color: var(--oga-fg-muted);
+  margin: 0;
+  max-width: 680px;
+}
+
+/* ============================================================
+   Hero
+   ============================================================ */
+
+.oga-changelog-hero { padding-top: var(--oga-9); padding-bottom: var(--oga-9); }
+
+.oga-changelog-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-3);
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-5);
+}
+
+.oga-changelog-hero__dot {
+  width: 6px; height: 6px;
+  background: var(--oga-status-green);
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 var(--oga-status-green);
+  animation: oga-changelog-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes oga-changelog-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(46, 117, 72, 0.45); }
+  50%      { box-shadow: 0 0 0 6px rgba(46, 117, 72, 0); }
+}
+
+.oga-changelog-hero__eyebrow-sep {
+  width: 4px; height: 4px;
+  background: var(--oga-fg-muted);
+  border-radius: 50%;
+  opacity: 0.5;
+}
+
+.oga-changelog-hero__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  line-height: var(--oga-lh-tight);
+  letter-spacing: var(--oga-tracking-tight);
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 0 var(--oga-5);
+  max-width: 760px;
+}
+
+.oga-changelog-hero__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-7);
+  max-width: 640px;
+}
+
+.oga-changelog-hero__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  padding: 7px 12px;
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-pill);
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-fg);
+  background: var(--oga-white);
+}
+
+.oga-changelog-hero__meta-dot {
+  width: 5px; height: 5px;
+  background: var(--oga-fg);
+  border-radius: 50%;
+  opacity: 0.55;
+}
+
+/* ============================================================
+   § 01 — Timeline (all months collapsible)
+   ============================================================ */
+
+.oga-changelog-archive__list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  position: relative;
+}
+
+.oga-changelog-archive__rail {
+  position: absolute;
+  left: 11px;
+  top: 16px;
+  bottom: 16px;
+  width: 1px;
+  background: var(--oga-border);
+  pointer-events: none;
+}
+
+.oga-changelog-archive__month {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: var(--oga-5);
+  align-items: start;
+  padding: var(--oga-4) 0;
+}
+
+.oga-changelog-archive__node {
+  width: 24px;
+  display: flex;
+  justify-content: center;
+  padding-top: 20px;
+}
+
+.oga-changelog-archive__node-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--oga-ink);
+  box-shadow: 0 0 0 4px var(--oga-canvas);
+}
+
+.oga-changelog-archive__toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--oga-4);
+  padding: var(--oga-4) 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--oga-border);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+}
+
+.oga-changelog-archive__toggle-label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oga-3);
+  flex-wrap: wrap;
+}
+
+.oga-changelog-archive__toggle-month {
+  font-family: var(--oga-font-sans);
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: var(--oga-tracking-tight);
+  color: var(--oga-fg);
+}
+
+.oga-changelog-archive__toggle-counts {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--oga-2);
+}
+
+.oga-changelog-archive__toggle-glyph {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--oga-border);
+  border-radius: 50%;
+  color: var(--oga-fg);
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  background: transparent;
+  transition: transform var(--oga-dur-slow) var(--oga-ease),
+              background var(--oga-dur) var(--oga-ease),
+              border-color var(--oga-dur) var(--oga-ease);
+}
+
+.oga-changelog-archive__toggle[aria-expanded="true"] .oga-changelog-archive__toggle-glyph {
+  transform: rotate(45deg);
+  background: var(--oga-ink-06);
+  border-color: var(--oga-ink);
+}
+
+.oga-changelog-archive__panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height var(--oga-dur-slow) var(--oga-ease);
+}
+
+.oga-changelog-archive__panel--open {
+  max-height: 9999px;
+}
+
+.oga-changelog-archive__entries {
+  padding: var(--oga-3) 0 var(--oga-2);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.oga-changelog-archive__entry {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--oga-5);
+  padding: var(--oga-4) 0;
+  border-bottom: 1px solid var(--oga-border);
+}
+
+.oga-changelog-archive__entry:last-child { border-bottom: 0; }
+
+@media (max-width: 720px) {
+  .oga-changelog-archive__entry { grid-template-columns: 1fr; gap: var(--oga-2); }
+}
+
+.oga-changelog-archive__entry-title {
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--oga-fg);
+  margin: 0 0 var(--oga-2);
+}
+
+.oga-changelog-archive__entry-desc {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0;
+  max-width: 62ch;
+}
+
+/* ============================================================
+   Type badge (chip) — shared between latest + archive rows
+   ============================================================ */
+
+.oga-changelog-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 3px;
+  align-self: start;
+}
+
+.oga-changelog-badge::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.oga-changelog-badge--feature {
+  color: var(--oga-fg);
+  background: var(--oga-ink-06);
+}
+.oga-changelog-badge--feature::before { background: var(--oga-ink); }
+
+.oga-changelog-badge--fix {
+  color: var(--oga-status-red);
+  background: var(--oga-status-red-bg);
+}
+.oga-changelog-badge--fix::before { background: var(--oga-status-red); }
+
+.oga-changelog-badge--improvement {
+  color: var(--oga-status-amber);
+  background: var(--oga-status-amber-bg);
+}
+.oga-changelog-badge--improvement::before { background: var(--oga-status-amber); }
+
+/* Dark-surface badge variants — § 01 "This month" punctuates with
+   .oga-section-dark. Token overrides on [data-oga-surface="dark"]
+   handle most colours; badges need explicit overrides because
+   .oga-ink-06 etc are literal-color rules. */
+[data-oga-surface="dark"] .oga-changelog-badge--feature {
+  color: var(--oga-white);
+  background: rgba(250, 248, 244, 0.10);
+}
+[data-oga-surface="dark"] .oga-changelog-badge--feature::before { background: var(--oga-white); }
+
+[data-oga-surface="dark"] .oga-changelog-badge--fix {
+  color: #E87A65;
+  background: rgba(232, 122, 101, 0.12);
+}
+[data-oga-surface="dark"] .oga-changelog-badge--fix::before { background: #E87A65; }
+
+[data-oga-surface="dark"] .oga-changelog-badge--improvement {
+  color: #F0B270;
+  background: rgba(240, 178, 112, 0.12);
+}
+[data-oga-surface="dark"] .oga-changelog-badge--improvement::before { background: #F0B270; }
+
+/* MonthBlock on dark surface — § 01 "This month".
+   The node dot's outer ring uses var(--oga-canvas) which is the
+   light cream — wrong on dark. Toggle border and glyph use named
+   borders that adapt via --oga-border, but the node-dot needs an
+   explicit override to swap the outer ring to ink-graphite. */
+[data-oga-surface="dark"] .oga-changelog-archive__node-dot {
+  background: var(--oga-white);
+  box-shadow: 0 0 0 4px var(--oga-ink);
+}
+
+/* Single-block variant: no vertical rail (only one item, rail
+   visually pointless), no left node indent — title sits flush. */
+.oga-changelog-archive__list--single {
+  padding-left: 0;
+}
+.oga-changelog-archive__list--single .oga-changelog-archive__month {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+.oga-changelog-archive__list--single .oga-changelog-archive__node {
+  display: none;
+}
+
+/* ============================================================
+   Final CTA (DARK)
+   ============================================================ */
+
+.oga-changelog-cta__inner {
+  text-align: center;
+  padding: var(--oga-7) 0;
+}
+
+.oga-changelog-cta__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: var(--oga-lh-tight);
+  letter-spacing: var(--oga-tracking-tight);
+  font-weight: 500;
+  color: var(--oga-white);
+  margin: 0 auto var(--oga-4);
+  max-width: 720px;
+}
+
+.oga-changelog-cta__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  color: rgba(250,248,244,0.7);
+  margin: 0 auto var(--oga-7);
+  max-width: 560px;
+}
+
+.oga-changelog-cta__buttons {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--oga-3);
+}

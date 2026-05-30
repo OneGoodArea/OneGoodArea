@@ -38,6 +38,13 @@ interface World {
   ukCenter: { x: number; y: number };
 }
 
+/* Round to a fixed decimal precision. Critical for hydration: d3-geo
+   trig math produces floats that differ in the 13th decimal between
+   Node (SSR) and V8 (client), which React's prop diff catches as a
+   hydration mismatch. 2 decimals is well above any SVG-visible
+   precision on a 1000x500 viewBox. */
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
 function buildWorld(): World {
   /* Cast: topojson-specification types are loose around objects. */
   const topo = worldTopo as unknown as Topology<{
@@ -52,11 +59,15 @@ function buildWorld(): World {
   /* Equal Earth projection, scaled to fit a 1000x500 viewBox.
      Centered on Greenwich (lon 0) + slight pan north so the
      equator sits below the visual midpoint (Europe / UK get
-     more vertical room). */
+     more vertical room).
+
+     .digits(2) rounds every coordinate in the generated path
+     strings to 2 decimals, killing the per-environment trig
+     drift that breaks hydration. */
   const projection = geoEqualEarth()
     .scale(180)
     .translate([500, 260]);
-  const pathGen = geoPath(projection);
+  const pathGen = geoPath(projection).digits(2);
 
   const countries: Array<{ key: number; d: string }> = [];
   let ukPath = "";
@@ -69,7 +80,7 @@ function buildWorld(): World {
     if (id === UK_ISO) {
       ukPath = d;
       const [cx, cy] = projection(geoCentroid(f as Feature<Geometry, { name?: string }>)) ?? [482, 154];
-      ukCenter = { x: cx, y: cy };
+      ukCenter = { x: round2(cx), y: round2(cy) };
     } else {
       countries.push({ key: i, d });
     }
