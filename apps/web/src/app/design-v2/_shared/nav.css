@@ -210,6 +210,18 @@
 .oga-nav__item--product {
   align-items: flex-start;
 }
+
+/* Docs row — single-line label next to a small bespoke icon.
+   Optional NEW pill on the right (e.g. MCP server). */
+.oga-nav__item--docs {
+  align-items: center;
+}
+.oga-nav__item-text-single {
+  flex: 1;
+  font-size: 13.5px;
+  color: var(--oga-fg);
+  letter-spacing: -0.005em;
+}
 .oga-nav__item-icon {
   flex: 0 0 28px;
   width: 28px;
