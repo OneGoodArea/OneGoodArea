@@ -1,41 +1,379 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Styles } from "../_shared/styles";
 import { Nav } from "../_shared/nav";
 import { Footer } from "../_shared/footer";
-import { AiqIcon, type IconName } from "../_shared/icons";
-import { METHODOLOGY_VERSIONS } from "@/lib/methodology-versions";
+import {
+  METHODOLOGY_VERSION,
+  METHODOLOGY_VERSIONS,
+  getCurrentMethodology,
+} from "@/lib/methodology-versions";
+import "./methodology.css";
 
-/* ═══════════════════════════════════════════════════════════════
-   OneGoodArea · Design V2 · /methodology
-   Long-form reference page. Content mirrors the live site:
-   data sources, intent types, scoring functions (named, not exposed),
-   role of AI, overall score, score scale (RAG).
-   ═══════════════════════════════════════════════════════════════ */
+/* /methodology — Brand v3 (Plotted) — AR-204 PR A.
 
-const SECTIONS: { id: string; label: string }[] = [
-  { id: "data-sources", label: "Data sources" },
-  { id: "scope-limits", label: "Scope and limitations" },
-  { id: "intents",      label: "Intent types" },
-  { id: "scoring",      label: "Scoring functions" },
-  { id: "ai-role",      label: "Role of AI" },
-  { id: "confidence",   label: "Confidence per dimension" },
-  { id: "boundaries",   label: "Boundaries and MAUP" },
-  { id: "calibration",  label: "Calibration and validation" },
-  { id: "versioning",   label: "Methodology versioning" },
-  { id: "overall",      label: "Overall score" },
-  { id: "scale",        label: "Score scale" },
+   Full rewrite from the previous Fraunces-themed inline-style
+   methodology page. Reflects the system we actually shipped:
+   Signal-first primitive (ADR 0001), persisted store (0002-0006,
+   0011-0016), normalization (0005), time-series moat (0010),
+   derived signals (0018-0024), Scores presets (0008, 0030),
+   Peers/Insights/Forecast (0023, 0024, 0025), the Intelligence
+   query plane (0017, 0019), AI eval harness (0026), org-level
+   methodology pinning (0031).
+
+   Wraps in <div className="oga-root"> to match the homepage
+   (apps/web/src/app/design-v2/client.tsx); no .aiq wrapper, no
+   <Styles /> no-op. All styling in ./methodology.css — zero
+   inline style objects per the AR-204 hygiene rule. */
+
+const current = getCurrentMethodology();
+
+/* ───────────────────────────── 7 data sources */
+
+type SourceTile = {
+  num: string;
+  name: string;
+  provider: string;
+  body: string;
+  coverage: string;
+  cadence: string;
+  grain: string;
+};
+
+const DATA_SOURCES: SourceTile[] = [
+  {
+    num: "01",
+    name: "Deprivation indices",
+    provider: "MHCLG (IMD 2025), StatsWales (WIMD 2019), Scottish Gov (SIMD 2020)",
+    body: "Decile, rank, and the seven IMD domain scores per LSOA. Country-specific methodologies; we never compare across the border.",
+    coverage: "England · Wales · Scotland",
+    cadence: "Static per release",
+    grain: "LSOA",
+  },
+  {
+    num: "02",
+    name: "HM Land Registry Price Paid",
+    provider: "HM Land Registry",
+    body: "Standard residential sales (PPD category A, types D/S/T/F, non-deleted, positive prices). Median price + transaction count per LSOA per month.",
+    coverage: "England & Wales",
+    cadence: "Monthly",
+    grain: "LSOA × month",
+  },
+  {
+    num: "03",
+    name: "Police.uk crime archive",
+    provider: "Home Office",
+    body: "Bulk street-level archive joined to LSOA codes carried on each record. Aggregated to monthly count per LSOA. No spatial join needed.",
+    coverage: "England · Wales · Scotland",
+    cadence: "Monthly",
+    grain: "LSOA × month",
+  },
+  {
+    num: "04",
+    name: "Ofsted inspections",
+    provider: "Department for Education",
+    body: "School inspection ratings — Outstanding, Good, Requires Improvement, Inadequate — within 1.5km of postcode. England only.",
+    coverage: "England",
+    cadence: "Live (Ofsted API)",
+    grain: "School (1.5km radius)",
+  },
+  {
+    num: "05",
+    name: "OpenStreetMap",
+    provider: "OSM contributors via Overpass",
+    body: "Schools, food/shops, transport stations, bus stops, parks, healthcare. Live amenity counts at radius bands around the postcode.",
+    coverage: "United Kingdom",
+    cadence: "Live (Overpass)",
+    grain: "0.5km - 2km radius",
+  },
+  {
+    num: "06",
+    name: "Environment Agency flood",
+    provider: "Defra",
+    body: "Flood risk zones and active warnings around the postcode. Distinguishes river-at-risk from active-warning states.",
+    coverage: "United Kingdom",
+    cadence: "Live (EA API)",
+    grain: "3km - 5km radius",
+  },
+  {
+    num: "07",
+    name: "Postcodes.io geocoding",
+    provider: "ONS / Royal Mail (postcodes.io)",
+    body: "Postcode resolution: lat/long, LSOA, local authority, ward, constituency, region, country, rural-urban classification.",
+    coverage: "United Kingdom",
+    cadence: "Live (postcodes.io)",
+    grain: "Postcode",
+  },
 ];
+
+/* ───────────────────────────── store tables (ADR 0002) */
+
+const STORE_TABLES: { name: string; desc: string }[] = [
+  { name: "geo_entities", desc: "Canonical area registry: LSOAs, MSOAs, LADs, regions, with boundary version (2011 / 2021)." },
+  { name: "geo_lookup", desc: "ONS NSPL/ONSPD spine: postcode → OA / LSOA / MSOA / LAD / region. 1.8M postcodes loaded." },
+  { name: "source_snapshots", desc: "One row per refresh run. Captures source name, captured_at, record count, optional sha. The audit anchor." },
+  { name: "signals", desc: "Catalog of every signal we expose. signal_key, label, direction, unit, source, description." },
+  { name: "signal_values", desc: "One row per (signal_key, geo_type, geo_code). Current value, normalized_value, source_snapshot_id, engine_version." },
+  { name: "signal_percentiles", desc: "Per-scope percentile rank, 0 to 100. Computed in-DB via PERCENT_RANK() window function." },
+  { name: "signal_timeseries", desc: "Append-only history. PK includes observed_period; INSERT … ON CONFLICT DO NOTHING — corrections surface as next period, never overwrite." },
+];
+
+/* ───────────────────────────── store fetch modes */
+
+const STORE_MODES: { tag: string; body: string }[] = [
+  { tag: "live", body: "Every contributing signal was fetched from a live source on this request. The fallback path; happens when the store has no row for an area." },
+  { tag: "store", body: "Every contributing signal was read from the persisted store. No live calls were made. The path that scales." },
+  { tag: "hybrid", body: "A mix — some signals store-served, some live-served on this request. Honest about partial coverage during the live-to-store migration." },
+];
+
+/* ───────────────────────────── derived signals (ADRs 0018, 0020-0024) */
+
+type DerivedSignal = {
+  key: string;
+  desc: string;
+  window: string;
+  conf: string;
+};
+
+const DERIVED_SIGNALS: DerivedSignal[] = [
+  {
+    key: "property.price_change_pct_yoy",
+    desc: "Count-weighted calendar-year YoY. Median weighted by transaction count, latest year vs prior year.",
+    window: "calendar",
+    conf: "0.85",
+  },
+  {
+    key: "crime.total_12m_change_pct_yoy",
+    desc: "Rolling 12-month sum vs prior 12-month sum. Like-for-like windows; full-coverage guard.",
+    window: "rolling 12m",
+    conf: "0.85",
+  },
+  {
+    key: "property.transaction_count_change_pct_yoy",
+    desc: "Rolling 12-month transaction-count YoY. Surfaces market liquidity shifts independent of price.",
+    window: "rolling 12m",
+    conf: "0.85",
+  },
+  {
+    key: "property.median_price_change_pct_6m",
+    desc: "Latest 6-month window vs prior 6-month window. Count-weighted; full-window guard each side.",
+    window: "6m",
+    conf: "0.85",
+  },
+  {
+    key: "crime.total_6m_change_pct",
+    desc: "6-month crime momentum. Strict full-window guard on both sides.",
+    window: "6m",
+    conf: "0.85",
+  },
+  {
+    key: "crime.monthly_count_trend_slope_24m",
+    desc: "Postgres regr_slope over a synthetic monthly index. More robust than two-point YoY at LSOA grain.",
+    window: "24m (min 18)",
+    conf: "0.80",
+  },
+  {
+    key: "property.transaction_count_trend_slope_24m",
+    desc: "24-month linear-regression slope of transaction count. Multiply by 12 for annualized direction.",
+    window: "24m (min 18)",
+    conf: "0.80",
+  },
+  {
+    key: "crime.total_12m_peer_relative_z",
+    desc: "Z-score against the area's 20-LSOA peer cohort: (target − peer_avg) / peer_stddev. Min 5 peers.",
+    window: "current",
+    conf: "0.80",
+  },
+  {
+    key: "property.median_price_peer_relative_z",
+    desc: "Peer-relative price z-score. Materialized peer graph; same distance metric as POST /v1/peers.",
+    window: "current",
+    conf: "0.80",
+  },
+];
+
+/* ───────────────────────────── 4 scoring presets (ADR 0008) */
+
+type Preset = {
+  slug: string;
+  name: string;
+  purpose: string;
+  dims: string[];
+};
+
+const PRESETS: Preset[] = [
+  {
+    slug: "moving",
+    name: "Moving",
+    purpose: "Origination. For someone choosing where to live.",
+    dims: ["Safety", "Schools", "Transport", "Amenities", "Cost of Living"],
+  },
+  {
+    slug: "business",
+    name: "Business",
+    purpose: "Site selection. For commercial location decisions.",
+    dims: ["Foot Traffic", "Competition", "Transport", "Spending Power", "Commercial Costs"],
+  },
+  {
+    slug: "investing",
+    name: "Investing",
+    purpose: "Investment underwrite. For acquisitions and portfolio.",
+    dims: ["Price Growth", "Rental Yield", "Regeneration", "Tenant Demand", "Risk Factors"],
+  },
+  {
+    slug: "research",
+    name: "Research",
+    purpose: "Reference baseline. The default preset.",
+    dims: ["Safety", "Transport", "Amenities", "Demographics", "Environment"],
+  },
+];
+
+/* ───────────────────────────── intelligence plan ops (ADR 0017, 0019, 0023-0025) */
+
+const PLAN_OPS: { name: string; desc: string }[] = [
+  { name: "rank_areas",     desc: "Filter + sort LSOAs across signals with AND semantics (eq, lt, lte, gt, gte, between, percentile_*)" },
+  { name: "get_area",       desc: "Full signal catalog for an area (geo_code, postcode, or area name)" },
+  { name: "score_area",     desc: "Composite score for an area; preset, custom weights, or saved preset_id" },
+  { name: "find_peers",     desc: "k-NN similarity search over normalized signal vectors (default k=20)" },
+  { name: "find_insights",  desc: "Rank LSOAs by |peer-relative z| for a derived signal (anomaly screening)" },
+  { name: "find_forecast",  desc: "Linear-regression projection of one monthly signal at one LSOA (default 24m window, 12m horizon)" },
+];
+
+/* ───────────────────────────── peers / insights / forecast (§ 8) */
+
+const DERIVED_THREE: { num: string; name: string; endpoint: string; body: string; honest: string }[] = [
+  {
+    num: "08.1",
+    name: "Peers",
+    endpoint: "POST /v1/peers",
+    body: "k nearest LSOAs to a target. Euclidean distance over normalized values, dimension-mean-squared (AVG, not SUM), default k=20, max k=200, min 3 overlapping signals.",
+    honest: "Distance is symmetric and bounded in [0,1]. No per-signal weighting in v1.",
+  },
+  {
+    num: "08.2",
+    name: "Insights",
+    endpoint: "POST /v1/insights",
+    body: "Anomaly screening: rank LSOAs by |peer-relative z|. Materialized peer graph (~840k assignments). Default k=50, max k=500. Optional |z| threshold.",
+    honest: "Peer math is precomputed offline. No request-time recompute.",
+  },
+  {
+    num: "08.3",
+    name: "Forecast",
+    endpoint: "POST /v1/forecast",
+    body: "Linear regression over signal_timeseries: regr_slope, regr_intercept, regr_r2, regr_syy. Default window 24 months, horizon 12. Constant ±2·residual_stderr confidence band.",
+    honest: "This is not a learned model. Not ARIMA, not Holt-Winters, not Prophet. CI does not widen with horizon distance.",
+  },
+];
+
+/* ───────────────────────────── confidence rubric (v2.0.0, refined v2.0.1) */
+
+const CONFIDENCE_BANDS: { band: string; value: string; criteria: string; example: string }[] = [
+  { band: "HIGH",   value: "1.0", criteria: "Fresh primary data, sufficient sample, low volatility.", example: "Crime from Police.uk last 12 months; Prices with ≥50 transactions and ≤15% YoY swing." },
+  { band: "MEDIUM", value: "0.7", criteria: "Partial fallback, older dataset, smaller sample, or higher volatility.", example: "WIMD 2019 / SIMD 2020 (older than IMD 2025); Schools in Wales/Scotland; Property with 20-50 transactions or wide YoY swing." },
+  { band: "LOW",    value: "0.4", criteria: "Full proxy fallback or sparse sample.", example: "Property with fewer than 20 transactions per period." },
+  { band: "NONE",   value: "0.2", criteria: "No usable data; signal returns null with reason.", example: "Service unavailable, coverage gap, or out-of-region postcode." },
+];
+
+/* ───────────────────────────── semver convention */
+
+const SEMVER: { tag: string; desc: string }[] = [
+  { tag: "MAJOR", desc: "Breaking change to dimension structure, intent set, or core weight. Anything that would invalidate prior scores." },
+  { tag: "MINOR", desc: "New dimension, new data source, new intent. Additive — old responses still parse." },
+  { tag: "PATCH", desc: "Formula tuning, threshold adjustment, confidence rubric refinement. Score values stay byte-identical." },
+];
+
+/* ───────────────────────────── scope-not (§ 12) */
+
+const SCOPE_NOT: { tag: string; title: string; body: string }[] = [
+  {
+    tag: "Not",
+    title: "An automated valuation model",
+    body: "OneGoodArea does not predict the market value of a specific property. Use a dedicated AVM for that.",
+  },
+  {
+    tag: "Not",
+    title: "A credit decisioning model",
+    body: "Not a predictor of individual default, affordability, or creditworthiness. Tier-3 enrichment input only.",
+  },
+  {
+    tag: "Not",
+    title: "Address-level",
+    body: "LSOA grain is the floor today. Address-level scoring via OS AddressBase Premium + UPRN is on the roadmap (AR-134).",
+  },
+  {
+    tag: "MAUP",
+    title: "Modifiable Areal Unit Problem",
+    body: "Scores within 100m of an LSOA boundary deserve a closer look. Postcode and LSOA boundaries are administrative, not behavioural.",
+  },
+  {
+    tag: "Fair lending",
+    title: "Protected-characteristic correlation",
+    body: "Deprivation indices correlate with protected characteristics. Buyers are responsible for FCA / CONC / SS1/23 compliance in regulated workflows.",
+  },
+];
+
+/* ───────────────────────────── audit artefacts (§ 13) */
+
+const AUDIT: { num: string; name: string; desc: string; href: string; external?: boolean; disabled?: boolean }[] = [
+  {
+    num: "13.1",
+    name: "Methodology page",
+    desc: "You are here. Stamped on every release with engine_version + released_at.",
+    href: "/methodology",
+  },
+  {
+    num: "13.2",
+    name: "Changelog",
+    desc: "Public release history. Every shipped MAJOR / MINOR / PATCH bump documented.",
+    href: "/changelog",
+  },
+  {
+    num: "13.3",
+    name: "API reference",
+    desc: "OpenAPI 3.0 spec rendered as an interactive reference. Currently being regenerated against the live backend.",
+    href: "/docs/api-reference",
+  },
+  {
+    num: "13.4",
+    name: "ADR repository",
+    desc: "Every architectural decision since signal-first, with rationale and trade-offs.",
+    href: "https://github.com/OneGoodArea/OneGoodArea/tree/main/docs/adr",
+    external: true,
+  },
+  {
+    num: "13.5",
+    name: "AI eval harness",
+    desc: "Measured planner accuracy. 92.9% on a 14-case curated corpus against claude-sonnet-4-20250514.",
+    href: "https://github.com/OneGoodArea/OneGoodArea/tree/main/apps/api/src/modules/intelligence/eval",
+    external: true,
+  },
+];
+
+/* ============================================================
+   Page
+   ============================================================ */
 
 export default function MethodologyClient() {
   return (
-    <div className="aiq">
-      <Styles />
+    <div className="oga-root oga-meth">
       <Nav />
+
       <Hero />
-      <Body />
+
+      <SectionSignal />
+      <SectionDataSources />
+      <SectionStore />
+      <SectionNormalization />
+      <SectionMoat />
+      <SectionDerived />
+      <SectionScoring />
+      <SectionPeersInsightsForecast />
+      <SectionIntelligence />
+      <SectionConfidence />
+      <SectionVersioning />
+      <SectionScope />
+      <SectionAudit />
+
       <FinalCta />
       <Footer />
     </div>
@@ -46,1210 +384,845 @@ export default function MethodologyClient() {
 
 function Hero() {
   return (
-    <section style={{
-      position: "relative",
-      background: "var(--bg)",
-      borderBottom: "1px solid var(--border)",
-      overflow: "hidden",
-    }}>
-      <div aria-hidden style={{
-        position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0,
-      }}>
-        <div style={{
-          position: "absolute", top: -220, left: "50%",
-          transform: "translateX(-50%)",
-          width: 880, height: 560,
-          background: "radial-gradient(ellipse at center, rgba(212,243,58,0.14) 0%, rgba(212,243,58,0) 60%)",
-        }} />
-      </div>
-      <div style={{
-        maxWidth: 1000, margin: "0 auto",
-        padding: "100px 40px 56px",
-        position: "relative", zIndex: 1,
-      }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-          letterSpacing: "0.24em", textTransform: "uppercase",
-          color: "var(--text-2)",
-          display: "inline-flex", alignItems: "center", gap: 9,
-          marginBottom: 26,
-        }}>
-          <span aria-hidden style={{
-            width: 6, height: 6, borderRadius: 6,
-            background: "var(--signal)",
-            animation: "aiq-pulse-dot 1.6s ease-in-out infinite",
-          }} />
-          Methodology
+    <section className="oga-meth-hero oga-section-hero">
+      <div className="oga-meth__container oga-meth-hero__row">
+        <div>
+          <div className="oga-meth-hero__eyebrow">
+            <span>Methodology</span>
+            <span className="oga-meth-hero__eyebrow-sep" aria-hidden />
+            <span>v{METHODOLOGY_VERSION}</span>
+            <span className="oga-meth-hero__eyebrow-sep" aria-hidden />
+            <span>Released {current.released_at}</span>
+          </div>
+
+          <h1 className="oga-meth-hero__title">
+            How OneGoodArea computes a UK area&rsquo;s signals, scores, and trends.
+          </h1>
+
+          <p className="oga-meth-hero__lead">
+            Signal-first infrastructure. Country-scoped percentiles. Monthly time-series snapshots that
+            cannot be backfilled. Deterministic engine, version stamped on every response.
+          </p>
+
+          <div className="oga-meth-hero__anchors">
+            <Link href="#signal" className="oga-meth-hero__anchor">
+              Signal primitive
+              <span className="oga-meth-hero__anchor-arrow" aria-hidden>↓</span>
+            </Link>
+            <Link href="#data-sources" className="oga-meth-hero__anchor">
+              Data sources
+              <span className="oga-meth-hero__anchor-arrow" aria-hidden>↓</span>
+            </Link>
+            <Link href="#intelligence" className="oga-meth-hero__anchor">
+              Query plane
+              <span className="oga-meth-hero__anchor-arrow" aria-hidden>↓</span>
+            </Link>
+            <Link href="#versioning" className="oga-meth-hero__anchor">
+              Versioning
+              <span className="oga-meth-hero__anchor-arrow" aria-hidden>↓</span>
+            </Link>
+          </div>
         </div>
-        <h1 style={{
-          fontFamily: "var(--display)", fontWeight: 400,
-          fontSize: "clamp(40px, 5vw, 62px)", lineHeight: 1.04,
-          letterSpacing: "-0.02em", color: "var(--ink-deep)",
-          margin: "0 0 20px", maxWidth: "26ch",
-        }}>
-          How OneGoodArea{" "}
-          <span style={{
-            fontStyle: "italic", color: "var(--ink)",
-            borderBottom: "3px solid var(--signal)", paddingBottom: 2,
-          }}>scores a UK postcode.</span>
-        </h1>
-        <p style={{
-          fontFamily: "var(--sans)", fontSize: 17, fontWeight: 400,
-          lineHeight: 1.55, color: "var(--text-2)",
-          letterSpacing: "-0.005em",
-          margin: 0, maxWidth: "66ch",
-        }}>
-          The methodology record for regulated buyers. Documents the seven datasets the engine reads, the formulas that produce each score, the confidence rubric that grades them, the version pinning that locks every report to a specific engine, and the limitations a model risk reviewer should know about before relying on a score.
+
+        <aside className="oga-meth-hero__card" aria-label="Current engine state">
+          <div className="oga-meth-hero__card-label">
+            <span className="oga-meth-hero__card-dot" aria-hidden />
+            Engine in production
+          </div>
+          <div className="oga-meth-hero__card-row">
+            <span className="oga-meth-hero__card-key">engine_version</span>
+            <span className="oga-meth-hero__card-val">{METHODOLOGY_VERSION}</span>
+          </div>
+          <div className="oga-meth-hero__card-row">
+            <span className="oga-meth-hero__card-key">released</span>
+            <span className="oga-meth-hero__card-val">{current.released_at}</span>
+          </div>
+          <div className="oga-meth-hero__card-row">
+            <span className="oga-meth-hero__card-key">supported</span>
+            <span className="oga-meth-hero__card-val">{METHODOLOGY_VERSIONS.length} versions</span>
+          </div>
+          <div className="oga-meth-hero__card-row">
+            <span className="oga-meth-hero__card-key">pinning</span>
+            <span className="oga-meth-hero__card-val">X-Engine-Version</span>
+          </div>
+        </aside>
+      </div>
+    </section>
+  );
+}
+
+/* ─────── § 1 — Signal ─────── */
+
+function SectionSignal() {
+  return (
+    <section id="signal" className="oga-section-quiet">
+      <div className="oga-meth__container">
+        <header className="oga-meth__header">
+          <div className="oga-meth__eyebrow">
+            <span className="oga-meth__eyebrow-num">01</span>
+            <span className="oga-meth__eyebrow-line" aria-hidden />
+            <span>The primitive</span>
+          </div>
+          <h2 className="oga-meth__h2">Signal is the public primitive.</h2>
+          <p className="oga-meth__lead">
+            A signal is one measured, sourced, normalized, percentiled, time-stamped attribute of a UK
+            area. Everything above signals is composition. Reports, scores, peers, insights, and
+            forecasts are surfaces built on top.
+          </p>
+        </header>
+
+        <div className="oga-meth-signal__grid">
+          <div className="oga-meth-signal__attrs">
+            <div className="oga-meth-signal__attr">
+              <div className="oga-meth-signal__attr-name">value</div>
+              <p className="oga-meth-signal__attr-body">
+                The raw measurement in its native unit. number, string, or null with a reason.
+              </p>
+            </div>
+            <div className="oga-meth-signal__attr">
+              <div className="oga-meth-signal__attr-name">normalized_value</div>
+              <p className="oga-meth-signal__attr-body">
+                Direction-agnostic position 0&ndash;1 within country. Ascending: 0 = lowest, 1 = highest. Read
+                with the signal&rsquo;s direction field.
+              </p>
+            </div>
+            <div className="oga-meth-signal__attr">
+              <div className="oga-meth-signal__attr-name">percentile</div>
+              <p className="oga-meth-signal__attr-body">
+                Per-scope rank 0&ndash;100 from PERCENT_RANK(). Today: national-within-country. Regional and
+                per-cohort recompute on the roadmap.
+              </p>
+            </div>
+            <div className="oga-meth-signal__attr">
+              <div className="oga-meth-signal__attr-name">confidence</div>
+              <p className="oga-meth-signal__attr-body">
+                0.0&ndash;1.0 with confidence_reason. Source-driven (sample size, freshness, fallback path).
+                Honest, not aspirational.
+              </p>
+            </div>
+          </div>
+
+          <SignalSampleCode />
+        </div>
+
+        <p className="oga-meth-signal__lineage">
+          Every signal_value and timeseries row carries <code>source_snapshot_id</code> and
+          <code> engine_version</code>. Re-running the same query against the same engine version returns
+          the same number. Always.
         </p>
       </div>
     </section>
   );
 }
 
-/* ─────── Body: sidebar + content ─────── */
-
-function Body() {
+function SignalSampleCode() {
   return (
-    <section style={{
-      background: "var(--bg)",
-      borderBottom: "1px solid var(--border)",
-      padding: "64px 0 120px",
-    }}>
-      <div className="aiq-meth-wrap" style={{
-        maxWidth: 1240, margin: "0 auto", padding: "0 40px",
-        display: "grid",
-        gridTemplateColumns: "220px 1fr",
-        gap: 72, alignItems: "start",
-      }}>
-        <Sidebar />
-        <div style={{ minWidth: 0 }}>
-          <DataSources />
-          <ScopeAndLimits />
-          <IntentTypes />
-          <ScoringFunctions />
-          <RoleOfAi />
-          <ConfidencePerDimension />
-          <BoundariesAndMaup />
-          <CalibrationAndValidation />
-          <MethodologyVersioning />
-          <OverallScore />
-          <ScoreScale />
-        </div>
+    <div className="oga-code-panel" aria-label="Sample Signal JSON">
+      <span className="oga-code-panel__tick oga-code-panel__tick--tl" aria-hidden />
+      <span className="oga-code-panel__tick oga-code-panel__tick--tr" aria-hidden />
+      <span className="oga-code-panel__tick oga-code-panel__tick--bl" aria-hidden />
+      <span className="oga-code-panel__tick oga-code-panel__tick--br" aria-hidden />
+      <div className="oga-code-panel__header">
+        <span className="oga-code-panel__live">SIGNAL</span>
+        <span className="oga-code-panel__path">deprivation.imd_decile</span>
+        <span className="oga-code-panel__meta">E01000002 · v{METHODOLOGY_VERSION}</span>
       </div>
-    </section>
-  );
-}
-
-function Sidebar() {
-  const [active, setActive] = useState<string>(SECTIONS[0].id);
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter(e => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        if (visible.length > 0) setActive(visible[0].target.id);
-      },
-      { rootMargin: "-30% 0% -55% 0%", threshold: [0, 0.25, 0.5] }
-    );
-    SECTIONS.forEach(s => {
-      const el = document.getElementById(s.id);
-      if (el) obs.observe(el);
-    });
-    return () => obs.disconnect();
-  }, []);
-
-  return (
-    <aside className="aiq-meth-sidebar" style={{
-      position: "sticky", top: 96, alignSelf: "start",
-    }}>
-      <div style={{
-        fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-        letterSpacing: "0.22em", textTransform: "uppercase",
-        color: "var(--text-3)", marginBottom: 18,
-      }}>
-        On this page
-      </div>
-      <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 2 }}>
-        {SECTIONS.map((s) => {
-          const isActive = active === s.id;
-          return (
-            <li key={s.id}>
-              <a href={`#${s.id}`} style={{
-                display: "inline-block",
-                fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-                letterSpacing: "0.14em", textTransform: "uppercase",
-                color: isActive ? "var(--ink-deep)" : "var(--text-2)",
-                textDecoration: "none",
-                padding: "6px 0 7px",
-                transition: "color 140ms ease",
-                borderBottom: isActive ? "2px solid var(--signal)" : "2px solid transparent",
-              }}>
-                {s.label}
-              </a>
-            </li>
-          );
-        })}
-      </ul>
-    </aside>
-  );
-}
-
-/* ─────── Section primitives ─────── */
-
-function SectionBlock({ id, eyebrow, title, children }: {
-  id: string; eyebrow: string; title: React.ReactNode; children: React.ReactNode;
-}) {
-  return (
-    <section id={id} style={{
-      padding: "56px 0 64px",
-      scrollMarginTop: 80,
-      borderBottom: "1px solid var(--border-dim)",
-    }}>
-      <div style={{
-        fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-        letterSpacing: "0.22em", textTransform: "uppercase",
-        color: "var(--text-2)",
-        display: "inline-flex", alignItems: "center", gap: 9,
-        marginBottom: 16,
-      }}>
-        <span aria-hidden style={{
-          width: 6, height: 6, borderRadius: 6, background: "var(--signal)",
-        }} />
-        {eyebrow}
-      </div>
-      <h2 style={{
-        fontFamily: "var(--display)", fontWeight: 400,
-        fontSize: "clamp(28px, 3.2vw, 40px)", lineHeight: 1.08,
-        letterSpacing: "-0.016em", color: "var(--ink-deep)",
-        margin: "0 0 24px", maxWidth: "30ch",
-      }}>
-        {title}
-      </h2>
-      {children}
-    </section>
-  );
-}
-
-function P({ children }: { children: React.ReactNode }) {
-  return (
-    <p style={{
-      fontFamily: "var(--sans)", fontSize: 15.5, fontWeight: 400,
-      lineHeight: 1.62, color: "var(--text-2)",
-      letterSpacing: "-0.003em",
-      margin: "0 0 14px", maxWidth: "66ch",
-    }}>{children}</p>
-  );
-}
-
-/* ─────── Data sources ─────── */
-
-const DATA_SOURCES: {
-  icon: IconName; name: string; provider: string; radius: string; data: string;
-}[] = [
-  { icon: "map",        name: "Postcodes.io",       provider: "ONS / Royal Mail",       radius: "Point lookup",       data: "Geocoding (latitude/longitude), LSOA code and name, local authority, ward, constituency, and region. Acts as the entry point for all other lookups." },
-  { icon: "support",    name: "Police.uk",          provider: "Home Office",            radius: "1 mile",             data: "Street-level crime incidents from the last 3 months, broken down by category (theft, violence, burglary, and so on). Includes monthly trend data for direction-of-travel analysis." },
-  { icon: "researcher", name: "ONS / IMD 2025",     provider: "MHCLG via ArcGIS",       radius: "LSOA boundary",      data: "Index of Multiple Deprivation. Ranks 33,755 Lower Super Output Areas across income, employment, health, education, and living environment. Decile 1 = most deprived, decile 10 = least deprived." },
-  { icon: "operator",   name: "OpenStreetMap",      provider: "Overpass API",           radius: "500m to 2km",        data: "Nearby amenities: schools within 1.5km, food and shops within 1km, transport stations within 2km, bus stops within 500m, parks and healthcare facilities." },
-  { icon: "intent",     name: "Environment Agency", provider: "Defra",                  radius: "3km / 5km",          data: "Flood risk zones within 3km, active flood warnings within 5km, and identified rivers at risk. Data is fetched live per request." },
-  { icon: "investor",   name: "HM Land Registry",   provider: "Price Paid Data",        radius: "Postcode district",  data: "Actual sold prices from the last 12 months via SPARQL query. Median and mean prices, year-on-year change, property type breakdown (detached, semi, terraced, flat), tenure split, and price range." },
-  { icon: "read",       name: "Ofsted",             provider: "Department for Education", radius: "1.5km",            data: "School inspection ratings (Outstanding, Good, Requires Improvement, Inadequate). England only." },
-];
-
-function DataSources() {
-  return (
-    <SectionBlock
-      id="data-sources"
-      eyebrow="Data sources"
-      title={<>Seven public sources, <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>one report.</em></>}
-    >
-      <P>
-        Every report is built from seven live UK government and open data sources, fetched in parallel at the time of request. No cached data. No estimates. No surveys.
-      </P>
-      <div style={{
-        marginTop: 28,
-        border: "1px solid var(--border)", background: "var(--bg)",
-      }}>
-        {DATA_SOURCES.map((s, i) => (
-          <div key={s.name} style={{
-            padding: "22px 24px",
-            borderBottom: i === DATA_SOURCES.length - 1 ? "none" : "1px solid var(--border-dim)",
-            background: i % 2 === 0 ? "var(--bg)" : "var(--bg-off)",
-            display: "grid",
-            gridTemplateColumns: "44px 1fr",
-            gap: 18, alignItems: "flex-start",
-          }}>
-            <div style={{ paddingTop: 2 }}>
-              <AiqIcon name={s.icon} size={22} />
-            </div>
-            <div>
-              <div style={{
-                display: "flex", alignItems: "center", gap: 12,
-                flexWrap: "wrap", marginBottom: 6,
-              }}>
-                <span style={{
-                  fontFamily: "var(--display)", fontSize: 18, fontWeight: 500,
-                  letterSpacing: "-0.012em", color: "var(--ink-deep)",
-                }}>{s.name}</span>
-                <span style={{
-                  fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-                  letterSpacing: "0.14em", textTransform: "uppercase",
-                  color: "var(--text-3)",
-                }}>{s.provider}</span>
-                <span style={{
-                  fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
-                  letterSpacing: "0.2em", textTransform: "uppercase",
-                  color: "var(--ink)", background: "var(--signal-dim)",
-                  padding: "3px 8px", borderRadius: 2,
-                }}>{s.radius}</span>
-              </div>
-              <p style={{
-                fontFamily: "var(--sans)", fontSize: 14.5, fontWeight: 400,
-                lineHeight: 1.55, color: "var(--text-2)",
-                letterSpacing: "-0.003em",
-                margin: 0, maxWidth: "66ch",
-              }}>{s.data}</p>
-            </div>
+      <div className="oga-code-panel__body">
+        {SIGNAL_LINES.map((line, i) => (
+          <div key={i} className="oga-code-panel__line">
+            <span className="oga-code-panel__num">{String(i + 1).padStart(2, "0")}</span>
+            <span
+              className="oga-code-panel__text"
+              dangerouslySetInnerHTML={{ __html: line }}
+            />
           </div>
         ))}
       </div>
-    </SectionBlock>
-  );
-}
-
-/* ─────── Intent types ─────── */
-
-const INTENTS: { code: string; label: string; desc: string; dimensions: string[] }[] = [
-  { code: "moving",    label: "Origination",    desc: "Residential mortgage suitability + demand-side risk", dimensions: ["Safety", "Schools", "Transport", "Amenities", "Cost of Living"] },
-  { code: "business",  label: "Site selection", desc: "Footfall, competition, commercial viability",         dimensions: ["Foot Traffic", "Competition", "Transport", "Spending Power", "Commercial Costs"] },
-  { code: "investing", label: "Investment",     desc: "Yield, growth, regeneration, tenant risk",            dimensions: ["Price Growth", "Rental Yield", "Regeneration", "Tenant Demand", "Risk Factors"] },
-  { code: "research",  label: "Reference",      desc: "Neutral baseline for analysts and planning",          dimensions: ["Safety", "Transport", "Amenities", "Demographics", "Environment"] },
-];
-
-function IntentTypes() {
-  return (
-    <SectionBlock
-      id="intents"
-      eyebrow="Intent types + dimension weights"
-      title={<>Four intents. <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>Different priorities.</em></>}
-    >
-      <P>
-        The intent determines which dimensions are scored and how they are weighted. Different use cases care about different things. Moving prioritises safety and schools. Business prioritises foot traffic and spending power.
-      </P>
-      <P>
-        Weights are calibrated internally and are not published.
-      </P>
-      <div className="aiq-intent-cards" style={{
-        display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginTop: 32,
-      }}>
-        {INTENTS.map((it) => (
-          <div key={it.code} style={{
-            border: "1px solid var(--border)",
-            padding: "22px 22px 20px",
-            background: "var(--bg)",
-          }}>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 14 }}>
-              <code style={{
-                fontFamily: "var(--mono)", fontSize: 12, fontWeight: 500,
-                letterSpacing: "0.04em",
-                color: "var(--signal-ink)", background: "var(--signal)",
-                padding: "3px 9px", borderRadius: 2,
-              }}>{it.code}</code>
-              <span style={{
-                fontFamily: "var(--display)", fontSize: 18, fontWeight: 500,
-                color: "var(--ink-deep)", letterSpacing: "-0.012em",
-              }}>{it.label}</span>
-              <span style={{
-                fontFamily: "var(--mono)", fontSize: 10.5,
-                color: "var(--text-3)", letterSpacing: "0.04em",
-              }}>· {it.desc}</span>
-            </div>
-            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-              {it.dimensions.map((d) => (
-                <li key={d} style={{
-                  display: "flex", alignItems: "center", gap: 10,
-                  fontFamily: "var(--mono)", fontSize: 12, fontWeight: 500,
-                  color: "var(--text)", letterSpacing: "0.02em",
-                }}>
-                  <span aria-hidden style={{
-                    width: 5, height: 5, borderRadius: 5,
-                    background: "var(--signal)", opacity: 0.7,
-                  }} />
-                  {d}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-    </SectionBlock>
-  );
-}
-
-/* ─────── Scoring functions ─────── */
-
-const CORE_FNS: { label: string; intents: string; icon: IconName; body: string }[] = [
-  { label: "Safety",          intents: "Origination · Reference",                       icon: "support",    body: "Uses the last 3 months of police.uk crime data. Rising crime is penalised, falling crime is rewarded, and violent crime concentration is weighted appropriately." },
-  { label: "Transport",       intents: "Origination · Site selection · Reference",      icon: "map",        body: "Rail and bus connectivity combined into a single accessibility score. Benchmarked against area type so rural postcodes are judged against other rural postcodes." },
-  { label: "Schools",         intents: "Origination",                                    icon: "read",       body: "School and educational facility density nearby, with a diminishing returns curve. One good school matters more than many middling ones." },
-  { label: "Amenities",       intents: "Origination · Reference",                       icon: "operator",   body: "Weighted composite across education, food and drink, healthcare, retail, and green spaces. Each category normalised against area-type benchmarks." },
-  { label: "Demographics",    intents: "Reference",                                      icon: "researcher", body: "Official deprivation indices (IMD for England, WIMD for Wales, SIMD for Scotland). Maps decile ranking to a score that reflects the socioeconomic profile of the neighbourhood." },
-  { label: "Environment",     intents: "Origination · Reference",                       icon: "intent",     body: "Combines flood risk zones, active flood warnings, and green space availability. Areas with no flood risk and good park access score highest." },
-  { label: "Cost of Living",  intents: "Origination",                                    icon: "investor",   body: "Uses Land Registry sold prices as the primary input. Scored as a ratio of local median to national median. Falls back to deprivation data when price data is unavailable." },
-];
-
-const BIZ_FNS: { label: string; body: string }[] = [
-  { label: "Foot Traffic",      body: "Transport connectivity combined with commercial activity density. Strong rail, bus, and retail presence indicates higher natural footfall." },
-  { label: "Competition",       body: "Measures commercial saturation nearby. Lower density scores higher. Useful for identifying underserved areas with unmet demand." },
-  { label: "Spending Power",    body: "Derived from deprivation indices as a proxy for local disposable income. Correlates with footfall quality, not just volume." },
-  { label: "Commercial Costs",  body: "Uses Land Registry property values as a proxy for commercial rents and overheads. Higher local property prices mean higher commercial costs." },
-];
-
-const INV_FNS: { label: string; body: string }[] = [
-  { label: "Price Growth",   body: "Real year-on-year price changes from Land Registry. Moderate growth scores highest, sharp declines and flat markets score lower." },
-  { label: "Rental Yield",   body: "Uses Land Registry median prices as the yield denominator. Adjusts upward for strong local amenities and transport that drive tenant demand." },
-  { label: "Regeneration",   body: "Development potential. Higher-deprivation areas with good transport links score highest. Already-developed premium areas score lower." },
-  { label: "Tenant Demand",  body: "Composite of transport connectivity, local amenities, bus coverage, and commercial activity." },
-  { label: "Risk Factors",   body: "Crime and environmental risk combined into a single downside metric. Active flood warnings or elevated crime see significant reductions." },
-];
-
-function ScoringFunctions() {
-  return (
-    <SectionBlock
-      id="scoring"
-      eyebrow="Scoring functions"
-      title={<>How each dimension becomes <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>a number.</em></>}
-    >
-      <P>
-        Each dimension has a dedicated scoring function. Inputs go in, a number between 0 and 100 comes out. No randomness. No AI-generated numbers. Below is a plain-English breakdown of what each function considers.
-      </P>
-
-      <SubHead eyebrow="Core dimensions" />
-      <FunctionList items={CORE_FNS.map((f) => ({
-        icon: f.icon, title: f.label, tag: f.intents, body: f.body,
-      }))} />
-
-      <SubHead eyebrow="Business intent · derived dimensions" />
-      <P>
-        Business reports use derived scores that combine transport, amenity, and deprivation data into commercially relevant metrics.
-      </P>
-      <FunctionList items={BIZ_FNS.map((f) => ({
-        icon: "gauge" as IconName, title: f.label, body: f.body,
-      }))} />
-
-      <SubHead eyebrow="Investing intent · derived dimensions" />
-      <P>
-        Investing reports combine deprivation data, transport connectivity, crime statistics, and flood risk into investment-focused metrics.
-      </P>
-      <FunctionList items={INV_FNS.map((f) => ({
-        icon: "investor" as IconName, title: f.label, body: f.body,
-      }))} />
-    </SectionBlock>
-  );
-}
-
-function SubHead({ eyebrow }: { eyebrow: string }) {
-  return (
-    <div style={{
-      fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-      letterSpacing: "0.22em", textTransform: "uppercase",
-      color: "var(--text-3)",
-      marginTop: 28, marginBottom: 14,
-    }}>{eyebrow}</div>
-  );
-}
-
-function FunctionList({ items }: {
-  items: { icon: IconName; title: string; tag?: string; body: string }[];
-}) {
-  return (
-    <div style={{
-      border: "1px solid var(--border)", background: "var(--bg)",
-      marginBottom: 20,
-    }}>
-      {items.map((it, i) => (
-        <div key={it.title + i} style={{
-          padding: "20px 22px",
-          borderBottom: i === items.length - 1 ? "none" : "1px solid var(--border-dim)",
-          background: i % 2 === 0 ? "var(--bg)" : "var(--bg-off)",
-          display: "grid",
-          gridTemplateColumns: "40px 1fr",
-          gap: 16, alignItems: "flex-start",
-        }}>
-          <div style={{ paddingTop: 2 }}>
-            <AiqIcon name={it.icon} size={20} />
-          </div>
-          <div>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 12,
-              flexWrap: "wrap", marginBottom: 6,
-            }}>
-              <span style={{
-                fontFamily: "var(--display)", fontSize: 17, fontWeight: 500,
-                letterSpacing: "-0.012em", color: "var(--ink-deep)",
-              }}>{it.title}</span>
-              {it.tag && (
-                <span style={{
-                  fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
-                  letterSpacing: "0.18em", textTransform: "uppercase",
-                  color: "var(--text-3)",
-                  border: "1px solid var(--border)",
-                  padding: "3px 7px", borderRadius: 2,
-                }}>{it.tag}</span>
-              )}
-            </div>
-            <p style={{
-              fontFamily: "var(--sans)", fontSize: 14, fontWeight: 400,
-              lineHeight: 1.58, color: "var(--text-2)",
-              letterSpacing: "-0.003em",
-              margin: 0, maxWidth: "64ch",
-            }}>{it.body}</p>
-          </div>
-        </div>
-      ))}
     </div>
   );
 }
 
-/* ─────── Role of AI ─────── */
-
-const PIPELINE: { step: string; title: string; body: string }[] = [
-  { step: "01", title: "Fetch data",       body: "Seven APIs queried in parallel for the target location." },
-  { step: "02", title: "Compute scores",   body: "Every dimension scored from 0 to 100 by its own function." },
-  { step: "03", title: "AI narrates",      body: "The AI engine receives the scores and the raw data, and writes the report." },
-  { step: "04", title: "Numbers protected", body: "Any AI-generated numbers are replaced server-side with the computed scores before the report is saved." },
+const SIGNAL_LINES: string[] = [
+  '<span class="oga-code-panel__punct">{</span>',
+  '  <span class="oga-code-panel__key">"signal_key"</span><span class="oga-code-panel__punct">:</span> <span class="oga-code-panel__str">"deprivation.imd_decile"</span><span class="oga-code-panel__punct">,</span>',
+  '  <span class="oga-code-panel__key">"value"</span><span class="oga-code-panel__punct">:</span> <span class="oga-code-panel__num-val">9</span><span class="oga-code-panel__punct">,</span>',
+  '  <span class="oga-code-panel__key">"normalized_value"</span><span class="oga-code-panel__punct">:</span> <span class="oga-code-panel__num-val">0.967</span><span class="oga-code-panel__punct">,</span>',
+  '  <span class="oga-code-panel__key">"percentile"</span><span class="oga-code-panel__punct">:</span> <span class="oga-code-panel__num-val">96.7</span><span class="oga-code-panel__punct">,</span>',
+  '  <span class="oga-code-panel__key">"confidence"</span><span class="oga-code-panel__punct">:</span> <span class="oga-code-panel__num-val">1.0</span><span class="oga-code-panel__punct">,</span>',
+  '  <span class="oga-code-panel__key">"confidence_reason"</span><span class="oga-code-panel__punct">:</span> <span class="oga-code-panel__str">"IMD 2025, England, fresh primary"</span><span class="oga-code-panel__punct">,</span>',
+  '  <span class="oga-code-panel__key">"direction"</span><span class="oga-code-panel__punct">:</span> <span class="oga-code-panel__str">"higher_is_better"</span><span class="oga-code-panel__punct">,</span>',
+  '  <span class="oga-code-panel__key">"observed_period"</span><span class="oga-code-panel__punct">:</span> <span class="oga-code-panel__str">"2025"</span><span class="oga-code-panel__punct">,</span>',
+  '  <span class="oga-code-panel__key">"source_snapshot_id"</span><span class="oga-code-panel__punct">:</span> <span class="oga-code-panel__str">"snap_imd2025_en_…"</span><span class="oga-code-panel__punct">,</span>',
+  `  <span class="oga-code-panel__key">"engine_version"</span><span class="oga-code-panel__punct">:</span> <span class="oga-code-panel__str">"${METHODOLOGY_VERSION}"</span>`,
+  '<span class="oga-code-panel__punct">}</span>',
 ];
 
-const AI_DOES = [
-  "Writes the executive summary",
-  "Authors the detailed analysis sections",
-  "Generates actionable recommendations",
-  "Interprets raw data points in context",
-  "Explains what the scores mean for your use case",
-];
+/* ─────── § 2 — Data sources ─────── */
 
-const AI_DOES_NOT = [
-  "Sets or modifies any numerical score",
-  "Chooses dimension weights",
-  "Invents data points or statistics",
-  "Overrides the scoring engine",
-  "Influences the overall OneGoodArea score",
-];
-
-function RoleOfAi() {
+function SectionDataSources() {
   return (
-    <SectionBlock
-      id="ai-role"
-      eyebrow="Role of AI"
-      title={<>What our AI engine <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>does (and doesn&apos;t).</em></>}
-    >
-      <P>
-        The numbers on a report are computed. The words around them are written. Those are two different jobs, and our AI engine only does the second one.
-      </P>
-
-      <SubHead eyebrow="The pipeline" />
-      <div className="aiq-pipeline" style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(4, 1fr)",
-        gap: 0, border: "1px solid var(--border)",
-        marginBottom: 24,
-      }}>
-        {PIPELINE.map((s, i) => (
-          <div key={s.step} style={{
-            padding: "22px 20px",
-            borderRight: i < 3 ? "1px solid var(--border)" : "none",
-            background: "var(--bg)",
-          }}>
-            <div style={{
-              fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-              letterSpacing: "0.22em", color: "var(--text-3)",
-              marginBottom: 10,
-            }}>{s.step}</div>
-            <div style={{
-              fontFamily: "var(--display)", fontSize: 17, fontWeight: 500,
-              letterSpacing: "-0.012em", color: "var(--ink-deep)",
-              marginBottom: 6,
-            }}>{s.title}</div>
-            <p style={{
-              fontFamily: "var(--sans)", fontSize: 13, fontWeight: 400,
-              lineHeight: 1.5, color: "var(--text-2)",
-              margin: 0,
-            }}>{s.body}</p>
+    <section id="data-sources" className="oga-section-hero">
+      <div className="oga-meth__container">
+        <header className="oga-meth__header">
+          <div className="oga-meth__eyebrow">
+            <span className="oga-meth__eyebrow-num">02</span>
+            <span className="oga-meth__eyebrow-line" aria-hidden />
+            <span>Data sources</span>
           </div>
-        ))}
-      </div>
+          <h2 className="oga-meth__h2">Seven public-record sources back every signal.</h2>
+          <p className="oga-meth__lead">
+            We name every source on this page. Marketing copy elsewhere says &ldquo;multiple sources&rdquo;;
+            full provenance lives here and in <code>source_snapshots</code> on every API response.
+          </p>
+        </header>
 
-      <SubHead eyebrow="AI does / AI doesn't" />
-      <div className="aiq-ai-split" style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 0, border: "1px solid var(--border)",
-      }}>
-        <div style={{
-          padding: "22px 24px",
-          borderRight: "1px solid var(--border)",
-          background: "var(--bg)",
-        }}>
-          <div style={{
-            fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-            letterSpacing: "0.22em", textTransform: "uppercase",
-            color: "var(--ink)", marginBottom: 14,
-            display: "inline-flex", alignItems: "center", gap: 8,
-          }}>
-            <span aria-hidden style={{
-              width: 6, height: 6, borderRadius: 6, background: "var(--signal)",
-            }} />
-            AI does
-          </div>
-          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 9 }}>
-            {AI_DOES.map((item) => (
-              <li key={item} style={{
-                display: "flex", alignItems: "flex-start", gap: 10,
-                fontFamily: "var(--sans)", fontSize: 14,
-                color: "var(--text-2)", lineHeight: 1.5,
-              }}>
-                <span aria-hidden style={{
-                  flexShrink: 0, marginTop: 6,
-                  width: 10, height: 2, background: "var(--signal)",
-                  borderRadius: 1,
-                }} />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div style={{
-          padding: "22px 24px",
-          background: "var(--bg-off)",
-        }}>
-          <div style={{
-            fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-            letterSpacing: "0.22em", textTransform: "uppercase",
-            color: "#b42318", marginBottom: 14,
-            display: "inline-flex", alignItems: "center", gap: 8,
-          }}>
-            <span aria-hidden style={{
-              width: 6, height: 6, borderRadius: 6, background: "#b42318",
-            }} />
-            AI doesn&apos;t
-          </div>
-          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 9 }}>
-            {AI_DOES_NOT.map((item) => (
-              <li key={item} style={{
-                display: "flex", alignItems: "flex-start", gap: 10,
-                fontFamily: "var(--sans)", fontSize: 14,
-                color: "var(--text-2)", lineHeight: 1.5,
-              }}>
-                <span aria-hidden style={{
-                  flexShrink: 0, marginTop: 6,
-                  width: 10, height: 2, background: "#b42318",
-                  opacity: 0.6, borderRadius: 1,
-                }} />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      <div style={{
-        marginTop: 22,
-        background: "var(--signal-dim)",
-        border: "1px solid var(--ink)",
-        padding: "16px 20px", borderRadius: 4,
-      }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-          letterSpacing: "0.22em", textTransform: "uppercase",
-          color: "var(--ink-deep)", marginBottom: 6,
-        }}>Numbers protected server-side</div>
-        <p style={{
-          fontFamily: "var(--sans)", fontSize: 14, fontWeight: 400,
-          lineHeight: 1.5, color: "var(--ink-deep)",
-          margin: 0,
-        }}>
-          Even if the AI model returns different numbers in its response, the server replaces them with the pre-computed scores before the report is saved. The numbers you see are always the output of the scoring engine.
-        </p>
-      </div>
-    </SectionBlock>
-  );
-}
-
-/* ─────── Confidence per dimension ─────── */
-
-const CONFIDENCE_LEVELS: {
-  level: string; value: string; tone: "strong" | "moderate" | "weak" | "none"; meaning: string; example: string;
-}[] = [
-  { level: "HIGH",   value: "1.0", tone: "strong",
-    meaning: "Fresh primary data from the named source.",
-    example: "Crime: police.uk street-level incidents in the last three months. Prices: HM Land Registry sold prices in the last twelve months." },
-  { level: "MEDIUM", value: "0.7", tone: "moderate",
-    meaning: "Partial fallback or older underlying dataset.",
-    example: "Demographics in Wales (WIMD 2019) and Scotland (SIMD 2020) sit here because the underlying releases are older than IMD 2025. Schools in Wales and Scotland sit here because Ofsted does not cover them." },
-  { level: "LOW",    value: "0.4", tone: "weak",
-    meaning: "Full proxy fallback. The dimension was inferred from related signals, not measured directly.",
-    example: "Cost of Living when Land Registry has no recent sales for the postcode district and the score is derived from deprivation data instead." },
-  { level: "NONE",   value: "0.2", tone: "none",
-    meaning: "No usable data was returned for that dimension.",
-    example: "An upstream source timed out or returned an empty result. The score still renders, but you should treat the number as directional." },
-];
-
-const INFERRED_DIMENSIONS: string[] = [
-  "Foot Traffic",
-  "Rental Yield",
-  "Regeneration",
-  "Tenant Demand",
-];
-
-function ConfidencePerDimension() {
-  return (
-    <SectionBlock
-      id="confidence"
-      eyebrow="Confidence per dimension"
-      title={<>Every score ships with <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>a confidence band.</em></>}
-    >
-      <P>
-        A score on its own is a black box. Lenders, insurers, and any FCA-regulated buyer cannot trust-band a single number without knowing how solid the underlying evidence was. So OneGoodArea returns a confidence value alongside every dimension score, plus a short reason explaining why that band was chosen.
-      </P>
-      <P>
-        Confidence is not a hedge. It is a structural property of the evidence the engine had at the time of the request. Every dimension is graded against the same four-level rubric.
-      </P>
-
-      <SubHead eyebrow="The four-level rubric" />
-      <div style={{
-        marginTop: 4,
-        border: "1px solid var(--border)", background: "var(--bg)",
-      }}>
-        {CONFIDENCE_LEVELS.map((c, i) => {
-          const bg    = c.tone === "strong"   ? "var(--signal-dim)"
-                      : c.tone === "moderate" ? "#FFF4D1"
-                      : c.tone === "weak"     ? "#FFE8E2"
-                      :                          "var(--bg-off)";
-          const fg    = c.tone === "strong"   ? "var(--ink-deep)"
-                      : c.tone === "moderate" ? "#6E5300"
-                      : c.tone === "weak"     ? "#A01B00"
-                      :                          "var(--text-3)";
-          const dotBg = c.tone === "strong"   ? "var(--ink)"
-                      : c.tone === "moderate" ? "#D49900"
-                      : c.tone === "weak"     ? "#D13A1E"
-                      :                          "var(--text-3)";
-          return (
-            <div key={c.level} style={{
-              padding: "22px 24px",
-              borderBottom: i === CONFIDENCE_LEVELS.length - 1 ? "none" : "1px solid var(--border-dim)",
-              display: "grid",
-              gridTemplateColumns: "170px 1fr",
-              gap: 20, alignItems: "start",
-            }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <span style={{
-                  fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
-                  letterSpacing: "0.06em",
-                  color: fg, background: bg,
-                  padding: "4px 10px", borderRadius: 2,
-                  alignSelf: "flex-start",
-                  display: "inline-flex", alignItems: "center", gap: 8,
-                }}>
-                  <span aria-hidden style={{
-                    width: 6, height: 6, borderRadius: 6, background: dotBg,
-                  }} />
-                  {c.level} · {c.value}
-                </span>
-                <span style={{
-                  fontFamily: "var(--display)", fontSize: 17, fontWeight: 500,
-                  letterSpacing: "-0.012em",
-                  color: "var(--ink-deep)",
-                }}>{c.meaning}</span>
+        <div className="oga-meth-sources__grid">
+          {DATA_SOURCES.map((s) => (
+            <article key={s.num} className="oga-meth-sources__tile">
+              <div className="oga-meth-sources__tile-head">
+                <span className="oga-meth-sources__tile-num">{s.num}</span>
+                <span className="oga-status oga-status-green oga-meth-sources__tile-status">In production</span>
               </div>
-              <p style={{
-                fontFamily: "var(--sans)", fontSize: 14.5, fontWeight: 400,
-                lineHeight: 1.55, color: "var(--text-2)",
-                letterSpacing: "-0.003em",
-                margin: 0, maxWidth: "66ch",
-              }}>{c.example}</p>
+              <div>
+                <h3 className="oga-meth-sources__tile-name">{s.name}</h3>
+                <p className="oga-meth-sources__tile-provider">{s.provider}</p>
+              </div>
+              <p className="oga-meth-sources__tile-body">{s.body}</p>
+              <div className="oga-meth-sources__tile-meta">
+                <div>
+                  <div className="oga-meth-sources__meta-key">Coverage</div>
+                  <div className="oga-meth-sources__meta-val">{s.coverage}</div>
+                </div>
+                <div>
+                  <div className="oga-meth-sources__meta-key">Cadence</div>
+                  <div className="oga-meth-sources__meta-val">{s.cadence}</div>
+                </div>
+                <div>
+                  <div className="oga-meth-sources__meta-key">Grain</div>
+                  <div className="oga-meth-sources__meta-val">{s.grain}</div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─────── § 3 — Store + fetch modes ─────── */
+
+function SectionStore() {
+  return (
+    <section id="store" className="oga-section-quiet">
+      <div className="oga-meth__container">
+        <header className="oga-meth__header">
+          <div className="oga-meth__eyebrow">
+            <span className="oga-meth__eyebrow-num">03</span>
+            <span className="oga-meth__eyebrow-line" aria-hidden />
+            <span>How we store it</span>
+          </div>
+          <h2 className="oga-meth__h2">Live fetch, persisted store, geographic spine.</h2>
+          <p className="oga-meth__lead">
+            Slow-moving signals (deprivation, prices, crime) live in a persisted store. Live signals
+            (Ofsted, OpenStreetMap, flood) call the source on every request. The geographic spine joins
+            them.
+          </p>
+        </header>
+
+        <div className="oga-meth-store__grid">
+          <section className="oga-meth-store__panel" aria-label="Store schema">
+            <h3 className="oga-meth-store__panel-title">Store tables</h3>
+            <div className="oga-meth-store__tables">
+              {STORE_TABLES.map((t) => (
+                <div key={t.name} className="oga-meth-store__table-row">
+                  <div className="oga-meth-store__table-name">{t.name}</div>
+                  <p className="oga-meth-store__table-desc">{t.desc}</p>
+                </div>
+              ))}
             </div>
-          );
-        })}
-      </div>
+          </section>
 
-      <SubHead eyebrow="Inferred, not measured" />
-      <P>
-        Some dimensions cannot be measured from any public UK dataset. They are inferred from related signals (transport, amenities, deprivation, sold prices) using stable formulas. They are useful, but they are not direct observations, and we will not pretend otherwise. The following dimensions are capped at MEDIUM confidence by design:
-      </P>
-      <div style={{
-        display: "flex", flexWrap: "wrap", gap: 8,
-        marginTop: 4, marginBottom: 18,
-      }}>
-        {INFERRED_DIMENSIONS.map((d) => (
-          <span key={d} style={{
-            fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-            letterSpacing: "0.06em",
-            color: "#6E5300", background: "#FFF4D1",
-            padding: "5px 10px", borderRadius: 2,
-            display: "inline-flex", alignItems: "center", gap: 8,
-          }}>
-            <span aria-hidden style={{
-              width: 6, height: 6, borderRadius: 6, background: "#D49900",
-            }} />
-            {d}
-          </span>
-        ))}
+          <section className="oga-meth-store__modes" aria-label="meta.fetch_mode enum">
+            <h3 className="oga-meth-store__panel-title">meta.fetch_mode on every response</h3>
+            {STORE_MODES.map((m) => (
+              <div key={m.tag} className="oga-meth-store__mode">
+                <div className="oga-meth-store__mode-head">
+                  <span className="oga-meth-store__mode-tag">{m.tag}</span>
+                </div>
+                <p className="oga-meth-store__mode-desc">{m.body}</p>
+              </div>
+            ))}
+          </section>
+        </div>
       </div>
-      <P>
-        If a future data source lets us measure one of these directly (live mobility data for Foot Traffic, listings-based asking-rent feeds for Rental Yield), the ceiling lifts and the rubric is updated in a versioned release.
-      </P>
-
-      <SubHead eyebrow="Aggregate confidence" />
-      <P>
-        The report itself carries a single aggregate confidence value. It is the weight-weighted average of the per-dimension confidence values, using the same weights as the overall score. A report dominated by HIGH-confidence inputs lands near 1.0. A report leaning on proxies and older datasets lands lower, and the per-dimension breakdown shows you exactly where.
-      </P>
-
-      <div style={{
-        marginTop: 18,
-        border: "1px solid var(--border)",
-        background: "var(--bg-off)",
-        padding: "16px 20px", borderRadius: 4,
-      }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-          letterSpacing: "0.22em", textTransform: "uppercase",
-          color: "var(--text-3)", marginBottom: 6,
-        }}>In the API</div>
-        <p style={{
-          fontFamily: "var(--sans)", fontSize: 14, fontWeight: 400,
-          lineHeight: 1.55, color: "var(--text-2)",
-          margin: 0,
-        }}>
-          Every <code style={{ fontFamily: "var(--mono)", fontSize: 13, color: "var(--ink-deep)" }}>sub_score</code> object exposes <code style={{ fontFamily: "var(--mono)", fontSize: 13, color: "var(--ink-deep)" }}>confidence</code> (0.0 to 1.0) and <code style={{ fontFamily: "var(--mono)", fontSize: 13, color: "var(--ink-deep)" }}>confidence_reason</code> (a short string). The top-level report carries an aggregate <code style={{ fontFamily: "var(--mono)", fontSize: 13, color: "var(--ink-deep)" }}>confidence</code>. Persist these fields next to the score in your model risk register.
-        </p>
-      </div>
-    </SectionBlock>
+    </section>
   );
 }
 
-/* --- Scope and limitations --- */
+/* ─────── § 4 — Normalization ─────── */
 
-function ScopeAndLimits() {
+function SectionNormalization() {
   return (
-    <SectionBlock
-      id="scope-limits"
-      eyebrow="Scope and limitations"
-      title={<>What this is, <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>and what it isn&apos;t.</em></>}
-    >
-      <P>
-        OneGoodArea is decision-support enrichment for UK property workflows. A regulated buyer uses the report as one input among several, alongside surveyor reports, internal credit scoring, valuation models, and the buyer&apos;s own risk framework. The platform does not replace any of those inputs.
-      </P>
-
-      <SubHead eyebrow="Specifically, this is NOT" />
-      <div style={{
-        marginTop: 4,
-        border: "1px solid var(--border)", background: "var(--bg)",
-      }}>
-        {[
-          {
-            label: "An AVM (Automated Valuation Model)",
-            body: "OneGoodArea does not predict the market value of a specific property. It scores the area around the postcode against five dimensions. Land Registry sold-price data is read at postcode-district level for context, not address-level valuation.",
-          },
-          {
-            label: "A credit decisioning model",
-            body: "Scores do not predict individual default risk, individual affordability, or individual creditworthiness. They describe the area, not the applicant. Lender model risk teams should classify OneGoodArea as a Tier 3 / non-decisioning enrichment input.",
-          },
-          {
-            label: "A replacement for underwriting",
-            body: "Reports do not approve or reject applications. They surface area-level risk and demand signals that an underwriter or origination analyst weighs alongside their own decisioning model.",
-          },
-          {
-            label: "Individual-property scoring",
-            body: "Scoring is at postcode and LSOA granularity today. Address-level scoring via OS AddressBase Premium and UPRN-keyed property attributes is on the roadmap (AR-134) but not live in the v2 engine.",
-          },
-        ].map((item, i, arr) => (
-          <div key={item.label} style={{
-            padding: "20px 24px",
-            borderBottom: i === arr.length - 1 ? "none" : "1px solid var(--border-dim)",
-            background: i % 2 === 0 ? "var(--bg)" : "var(--bg-off)",
-          }}>
-            <div style={{
-              fontFamily: "var(--display)", fontSize: 17, fontWeight: 500,
-              letterSpacing: "-0.012em", color: "var(--ink-deep)",
-              marginBottom: 6,
-            }}>{item.label}</div>
-            <p style={{
-              fontFamily: "var(--sans)", fontSize: 14.5, fontWeight: 400,
-              lineHeight: 1.55, color: "var(--text-2)",
-              letterSpacing: "-0.003em",
-              margin: 0, maxWidth: "68ch",
-            }}>{item.body}</p>
+    <section id="normalization" className="oga-section-hero">
+      <div className="oga-meth__container">
+        <header className="oga-meth__header">
+          <div className="oga-meth__eyebrow">
+            <span className="oga-meth__eyebrow-num">04</span>
+            <span className="oga-meth__eyebrow-line" aria-hidden />
+            <span>Normalization</span>
           </div>
-        ))}
-      </div>
+          <h2 className="oga-meth__h2">Country-scoped percentiles, never cross-border.</h2>
+          <p className="oga-meth__lead">
+            Percentiles are computed in the database with PERCENT_RANK() window functions and persisted.
+            Each country (England, Wales, Scotland) normalizes within itself. IMD 2025, WIMD 2019, and
+            SIMD 2020 are different methodologies; we never compare across.
+          </p>
+        </header>
 
-      <SubHead eyebrow="Ecological fallacy disclosure" />
-      <P>
-        An area-level signal describes an area average. It is not a reliable predictor for any specific household, property, or business inside that area. Underwriters and pricing analysts using OneGoodArea must apply this caveat when treating a score as an input to an individual decision. A postcode scoring 78 for Origination does not mean the specific property at that postcode carries the safety, school, or transport profile of an 78-rated area; it means the area averages do.
-      </P>
+        <div className="oga-meth-norm__scopes">
+          <article className="oga-meth-norm__scope">
+            <div className="oga-meth-norm__scope-head">
+              <span className="oga-meth-norm__scope-name">scope = &ldquo;national&rdquo;</span>
+              <span className="oga-status oga-status-green oga-meth-norm__scope-status">Live</span>
+            </div>
+            <p className="oga-meth-norm__scope-body">
+              Rank within country. The current production scope. England LSOAs ranked against England;
+              Wales against Wales; Scotland against Scotland.
+            </p>
+          </article>
+          <article className="oga-meth-norm__scope">
+            <div className="oga-meth-norm__scope-head">
+              <span className="oga-meth-norm__scope-name">scope = &ldquo;regional&rdquo;</span>
+              <span className="oga-status oga-status-yellow oga-meth-norm__scope-status">Roadmap</span>
+            </div>
+            <p className="oga-meth-norm__scope-body">
+              Rank within ONS region (North West, South East, &hellip;). The geographic spine is loaded;
+              the per-region percentile recompute job is not yet built.
+            </p>
+          </article>
+          <article className="oga-meth-norm__scope">
+            <div className="oga-meth-norm__scope-head">
+              <span className="oga-meth-norm__scope-name">scope = &ldquo;peer_group&rdquo;</span>
+              <span className="oga-status oga-status-yellow oga-meth-norm__scope-status">Roadmap</span>
+            </div>
+            <p className="oga-meth-norm__scope-body">
+              Rank within a customer-defined Levers cohort. Cohorts themselves ship today (<code>POST
+              /v1/orgs/:id/cohorts</code>); per-cohort percentile recompute is the planned step. The
+              k-NN peer graph already drives the peer-relative z-score derived signals (see &sect; 06).
+            </p>
+          </article>
+        </div>
 
-      <SubHead eyebrow="Fair-lending note" />
-      <P>
-        OneGoodArea reads area-level deprivation indices (IMD 2025, WIMD 2019, SIMD 2020) as inputs to several dimensions. These indices correlate with protected characteristics in some local markets. Buyers operating in FCA-regulated lending workflows remain responsible for ensuring their use of OneGoodArea outputs complies with their own fair-lending obligations and CONC/SS1-23 controls. Where a postcode-level score would create a discriminatory outcome at individual-application level, the report should not be the deciding input.
-      </P>
-    </SectionBlock>
-  );
-}
-
-/* --- Boundaries and MAUP --- */
-
-function BoundariesAndMaup() {
-  return (
-    <SectionBlock
-      id="boundaries"
-      eyebrow="Boundaries and MAUP"
-      title={<>Postcode and LSOA <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>boundaries are administrative.</em></>}
-    >
-      <P>
-        LSOAs (Lower Super Output Areas) and UK postcode districts are administrative units. They were drawn for census collection and mail delivery, not around natural neighbourhoods, school catchments, or commercial activity zones. England has roughly 33,755 LSOAs (2021 census); Wales has 1,917 (2011); Scotland has 6,976 data zones (2011, used by SIMD). Boundaries occasionally shift between census cycles.
-      </P>
-
-      <SubHead eyebrow="The Modifiable Areal Unit Problem" />
-      <P>
-        Scores depend on the boundary used. A property 50 metres outside an LSOA edge can return a measurably different score from a property 50 metres inside, even when the actual local conditions are nearly identical. This is the Modifiable Areal Unit Problem (MAUP), a well-documented limitation of all area-level geographic analysis. It is not specific to OneGoodArea; it applies to every UK product that scores at LSOA, MSOA, or postcode level (Hometrack, WhenFresh, CACI, Mosaic, Experian Acorn).
-      </P>
-      <P>
-        A related effect, the ecological fallacy, is addressed in the Scope and limitations section above. Together, MAUP and the ecological fallacy mean an area-level score should be read as a property of the AREA, not a property of any specific household inside it.
-      </P>
-
-      <SubHead eyebrow="How OneGoodArea handles boundary effects" />
-      <P>
-        Every postcode is classified urban, suburban, or rural from the postcodes.io rural-urban classification codes and benchmarked against its peer group. This stops a London high-street postcode from being unfairly compared to a Cumbrian village. The classification is exposed in the response as <code style={inlineCodeStyle}>area_type</code> and the per-dimension reasoning strings reference it explicitly.
-      </P>
-      <P>
-        OneGoodArea does not currently apply spatial smoothing across LSOA boundaries. A score reported for postcode AB12 1CD reflects the LSOA the postcode centroid falls inside; it does not blend with the neighbouring LSOAs. Spatial smoothing for the dimensions where boundary effects matter most (Schools, Transport, Crime) is on the v3 engine roadmap and will be a flagged methodology change.
-      </P>
-
-      <SubHead eyebrow="What this means in practice" />
-      <P>
-        Scores within 100 metres of an LSOA boundary should be reviewed with awareness that the administrative line introduces variance. The confidence band already reflects sample-size limitations for dimensions where the underlying dataset has thin coverage near the boundary. For mortgage origination workflows where the property is materially close to a boundary edge, lenders should treat the dimensional scores as directional rather than precise.
-      </P>
-    </SectionBlock>
-  );
-}
-
-/* --- Calibration and validation --- */
-
-function CalibrationAndValidation() {
-  return (
-    <SectionBlock
-      id="calibration"
-      eyebrow="Calibration and validation"
-      title={<>How the numbers are <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>anchored to reality.</em></>}
-    >
-      <P>
-        Each scoring function is calibrated against an area-type peer benchmark. A 78 for Safety in an urban LSOA means the postcode falls in the top quartile of urban LSOAs nationally on the relevant crime indicators; it does not mean 78 against a national average that mixes urban and rural baselines. Calibration anchors keep the score band meaningful across the UK.
-      </P>
-
-      <SubHead eyebrow="What OneGoodArea currently publishes" />
-      <P>
-        Per-dimension scoring approach in the Scoring functions section above. The dataset behind each dimension, the radius queried, and the formula structure are all documented on this page. The exact threshold constants inside each function (where a Safety score crosses from band 60 into band 70, for example) are not published; this is a deliberate boundary that protects the calibration without preventing third-party audit.
-      </P>
-
-      <SubHead eyebrow="What OneGoodArea does NOT yet publish" />
-      <P>
-        Longitudinal backtesting against outcome data. The honest answer to the question &quot;is a score of 80 for Investment predictive of price growth above the area-type average over the next 3 years?&quot; is: that is a separate, longitudinal claim, and we are not making it yet. The time-series corpus required for this kind of validation is being built by the monthly engine re-score job introduced in AR-132. Once 18 to 24 months of clean re-score data is in the corpus, an outcome-based validation pack will be published and audited.
-      </P>
-      <P>
-        In the interim, buyers needing predictive validation evidence should treat OneGoodArea as a calibrated descriptive layer rather than a predictive model. A descriptive area-intelligence input is still useful for portfolio screening, exposure monitoring, and decision-support enrichment in many regulated workflows. It is not yet a substitute for a buyer&apos;s own predictive risk model.
-      </P>
-
-      <SubHead eyebrow="PRA SS1/23 alignment" />
-      <P>
-        Every report ships with four artefacts that a Bank-of-England model risk register can ingest directly:
-      </P>
-      <ol style={{
-        margin: "10px 0 18px 22px", padding: 0,
-        fontFamily: "var(--sans)", fontSize: 15, lineHeight: 1.6,
-        color: "var(--text-2)", maxWidth: "66ch",
-      }}>
-        <li><strong>Input dataset list</strong>: the <code style={inlineCodeStyle}>data_sources</code> array on the response declares every dataset the engine read.</li>
-        <li><strong>Per-dimension confidence band</strong>: the <code style={inlineCodeStyle}>confidence</code> and <code style={inlineCodeStyle}>confidence_reason</code> fields surface the trust band for each dimension.</li>
-        <li><strong>Engine version stamp</strong>: <code style={inlineCodeStyle}>engine_version</code> on the response and <code style={inlineCodeStyle}>X-Engine-Version</code> response header identify the methodology that produced the score.</li>
-        <li><strong>Public change log</strong>: the Methodology versioning section below lists every methodology change with rationale, alongside the date released.</li>
-      </ol>
-      <P>
-        Pinning a request to a specific engine version with <code style={inlineCodeStyle}>X-Engine-Version: 2.0.2</code> locks the methodology for that request, so a model risk team can review and approve a specific version before allowing dependent workflows to consume it.
-      </P>
-
-      <SubHead eyebrow="Change control" />
-      <P>
-        Methodology updates follow semver. PATCH changes (rubric refinement, threshold adjustment) keep scores byte-identical to the previous patch. MINOR changes (new dimension, new data source) extend the engine without breaking prior scores. MAJOR changes (breaking change to dimension structure, intent set, or core weight) are reserved for material model changes and trigger a frozen prior-version module so buyers pinned to the older version continue to receive their original methodology.
-      </P>
-    </SectionBlock>
-  );
-}
-
-const inlineCodeStyle: React.CSSProperties = {
-  fontFamily: "var(--mono)", fontSize: 12.5, fontWeight: 500,
-  color: "var(--ink-deep)",
-  background: "var(--bg-off)",
-  border: "1px solid var(--border)",
-  padding: "1px 6px", borderRadius: 2,
-};
-
-/* --- Methodology versioning --- */
-
-function MethodologyVersioning() {
-  const versionsNewestFirst = [...METHODOLOGY_VERSIONS].reverse();
-  const current = versionsNewestFirst[0];
-
-  return (
-    <SectionBlock
-      id="versioning"
-      eyebrow="Methodology versioning"
-      title={<>Every report is stamped with <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>an engine version.</em></>}
-    >
-      <P>
-        Every report carries an <code style={{ fontFamily: "var(--mono)", fontSize: 14, color: "var(--ink-deep)" }}>engine_version</code> field. The current version is <strong style={{ color: "var(--ink-deep)" }}>{current.version}</strong>. If the methodology changes, the version changes. Old reports keep the version they were produced with, so a score from last quarter can always be reproduced from the methodology that generated it.
-      </P>
-      <P>
-        FCA-regulated buyers (lenders, insurers, valuers) keep model risk registers that demand exactly this. A score with no version stamp is unauditable. A score with a version stamp can be tied to a dated, public methodology entry.
-      </P>
-
-      <SubHead eyebrow="Semver convention" />
-      <div style={{
-        border: "1px solid var(--border)", background: "var(--bg)",
-        marginBottom: 24,
-      }}>
-        {[
-          { tag: "MAJOR", body: "Breaking change to dimension structure, intent set, or core weight. Anything that would invalidate prior scores." },
-          { tag: "MINOR", body: "Additive change. New dimension, new data source, new intent. Existing scores remain valid." },
-          { tag: "PATCH", body: "Formula tuning, threshold adjustment, confidence rubric refinement." },
-        ].map((row, i, arr) => (
-          <div key={row.tag} style={{
-            padding: "18px 22px",
-            borderBottom: i === arr.length - 1 ? "none" : "1px solid var(--border-dim)",
-            background: i % 2 === 0 ? "var(--bg)" : "var(--bg-off)",
-            display: "grid",
-            gridTemplateColumns: "120px 1fr",
-            gap: 18, alignItems: "start",
-          }}>
-            <span style={{
-              fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
-              letterSpacing: "0.18em", textTransform: "uppercase",
-              color: "var(--signal-ink)", background: "var(--signal)",
-              padding: "4px 10px", borderRadius: 2,
-              alignSelf: "flex-start",
-            }}>{row.tag}</span>
-            <p style={{
-              fontFamily: "var(--sans)", fontSize: 14.5, fontWeight: 400,
-              lineHeight: 1.55, color: "var(--text-2)",
-              margin: 0, maxWidth: "66ch",
-            }}>{row.body}</p>
+        <dl className="oga-meth-stats">
+          <div className="oga-meth-stats__cell">
+            <dt className="oga-meth-stats__label">Direction</dt>
+            <dd className="oga-meth-stats__val">Ascending</dd>
+            <div className="oga-meth-stats__sub">0 lowest · 1 highest</div>
           </div>
-        ))}
+          <div className="oga-meth-stats__cell">
+            <dt className="oga-meth-stats__label">England LSOAs</dt>
+            <dd className="oga-meth-stats__val">33,755</dd>
+            <div className="oga-meth-stats__sub">2021 boundaries</div>
+          </div>
+          <div className="oga-meth-stats__cell">
+            <dt className="oga-meth-stats__label">Wales LSOAs</dt>
+            <dd className="oga-meth-stats__val">1,917</dd>
+            <div className="oga-meth-stats__sub">2011 boundaries</div>
+          </div>
+          <div className="oga-meth-stats__cell">
+            <dt className="oga-meth-stats__label">Scotland data zones</dt>
+            <dd className="oga-meth-stats__val">6,976</dd>
+            <div className="oga-meth-stats__sub">2011 boundaries</div>
+          </div>
+        </dl>
       </div>
+    </section>
+  );
+}
 
-      <SubHead eyebrow="Version registry" />
-      <div style={{
-        border: "1px solid var(--border)", background: "var(--bg)",
-      }}>
-        {versionsNewestFirst.map((v, i) => {
-          const isCurrent = i === 0;
-          return (
-            <article key={v.version} style={{
-              padding: "26px 26px 28px",
-              borderBottom: i === versionsNewestFirst.length - 1 ? "none" : "1px solid var(--border-dim)",
-              background: isCurrent ? "var(--bg)" : "var(--bg-off)",
-            }}>
-              <header style={{
-                display: "flex", alignItems: "baseline", gap: 12,
-                flexWrap: "wrap", marginBottom: 10,
-              }}>
-                <span style={{
-                  fontFamily: "var(--display)", fontSize: 22, fontWeight: 500,
-                  letterSpacing: "-0.014em", color: "var(--ink-deep)",
-                }}>v{v.version}</span>
-                <span style={{
-                  fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-                  letterSpacing: "0.18em", textTransform: "uppercase",
-                  color: "var(--text-3)",
-                }}>{v.released_at}</span>
-                {isCurrent && (
-                  <span style={{
-                    fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
-                    letterSpacing: "0.2em", textTransform: "uppercase",
-                    color: "var(--signal-ink)", background: "var(--signal)",
-                    padding: "3px 8px", borderRadius: 2,
-                  }}>Current</span>
-                )}
+/* ─────── § 5 — Time-series moat (DARK) ─────── */
+
+function SectionMoat() {
+  return (
+    <section id="moat" className="oga-section-dark" data-oga-surface="dark">
+      <div className="oga-meth__container">
+        <header className="oga-meth__header">
+          <div className="oga-meth__eyebrow">
+            <span className="oga-meth__eyebrow-num">05</span>
+            <span className="oga-meth__eyebrow-line" aria-hidden />
+            <span>The moat</span>
+          </div>
+          <h2 className="oga-meth__h2">Monthly snapshots, immutable per period.</h2>
+          <p className="oga-meth__lead">
+            Every month, a CLI job appends one row per signal per area to{" "}
+            <code>signal_timeseries</code>, keyed by <code>observed_period</code>. INSERT &hellip; ON
+            CONFLICT DO NOTHING. Corrections surface as next period&rsquo;s value, never overwrite the past.
+            Un-backfillable history that compounds every month.
+          </p>
+        </header>
+
+        <div className="oga-meth-moat__row">
+          <article className="oga-meth-moat__card">
+            <div className="oga-meth-moat__card-name">Append-only</div>
+            <p className="oga-meth-moat__card-body">
+              History is immutable per (signal_key, geo_type, geo_code, observed_period). The primary
+              key prevents duplication; the conflict policy prevents overwrite.
+            </p>
+          </article>
+          <article className="oga-meth-moat__card">
+            <div className="oga-meth-moat__card-name">Idempotent</div>
+            <p className="oga-meth-moat__card-body">
+              The append job is one set-based INSERT &hellip; SELECT statement. Re-running a period is a
+              no-op. Safe under partial failure and re-deploy.
+            </p>
+          </article>
+          <article className="oga-meth-moat__card">
+            <div className="oga-meth-moat__card-name">Granular</div>
+            <p className="oga-meth-moat__card-body">
+              Prices and crime ingest write monthly history directly; the static-source job (deprivation)
+              snapshots at refresh time. Each signal&rsquo;s observed_period reflects its actual cadence.
+            </p>
+          </article>
+        </div>
+
+        <dl className="oga-meth-stats">
+          <div className="oga-meth-stats__cell">
+            <dt className="oga-meth-stats__label">Prices history</dt>
+            <dd className="oga-meth-stats__val">24 months</dd>
+            <div className="oga-meth-stats__sub">35,606 E&amp;W LSOAs</div>
+          </div>
+          <div className="oga-meth-stats__cell">
+            <dt className="oga-meth-stats__label">Price history rows</dt>
+            <dd className="oga-meth-stats__val">626k+</dd>
+            <div className="oga-meth-stats__sub">2024-2025 backfill</div>
+          </div>
+          <div className="oga-meth-stats__cell">
+            <dt className="oga-meth-stats__label">Deprivation snapshot</dt>
+            <dd className="oga-meth-stats__val">85,280 rows</dd>
+            <div className="oga-meth-stats__sub">IMD 2025 · WIMD · SIMD</div>
+          </div>
+          <div className="oga-meth-stats__cell">
+            <dt className="oga-meth-stats__label">Append cadence</dt>
+            <dd className="oga-meth-stats__val">Monthly</dd>
+            <div className="oga-meth-stats__sub">GitHub Actions cron</div>
+          </div>
+        </dl>
+      </div>
+    </section>
+  );
+}
+
+/* ─────── § 6 — Derived signals ─────── */
+
+function SectionDerived() {
+  return (
+    <section id="derived" className="oga-section-quiet">
+      <div className="oga-meth__container">
+        <header className="oga-meth__header">
+          <div className="oga-meth__eyebrow">
+            <span className="oga-meth__eyebrow-num">06</span>
+            <span className="oga-meth__eyebrow-line" aria-hidden />
+            <span>Derived signals</span>
+          </div>
+          <h2 className="oga-meth__h2">YoY, momentum, trend slope, peer-relative.</h2>
+          <p className="oga-meth__lead">
+            Computed in the database from the time-series, persisted alongside raw signals, immediately
+            queryable through the typed query plane. Each derived signal carries a documented window and a
+            sample-size guard.
+          </p>
+        </header>
+
+        <div className="oga-meth-derived__table" role="table" aria-label="Derived signals">
+          <div className="oga-meth-derived__row oga-meth-derived__row--head" role="row">
+            <div className="oga-meth-derived__key" role="columnheader">signal_key</div>
+            <div className="oga-meth-derived__desc" role="columnheader">Methodology</div>
+            <div className="oga-meth-derived__window" role="columnheader">Window</div>
+            <div className="oga-meth-derived__conf" role="columnheader">Confidence</div>
+          </div>
+          {DERIVED_SIGNALS.map((s) => (
+            <div key={s.key} className="oga-meth-derived__row" role="row">
+              <div className="oga-meth-derived__key" role="cell">{s.key}</div>
+              <div className="oga-meth-derived__desc" role="cell">{s.desc}</div>
+              <div className="oga-meth-derived__row-meta">
+                <div className="oga-meth-derived__window" role="cell">{s.window}</div>
+                <div className="oga-meth-derived__conf" role="cell">{s.conf}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─────── § 7 — Scoring presets ─────── */
+
+function SectionScoring() {
+  return (
+    <section id="scoring" className="oga-section-hero">
+      <div className="oga-meth__container">
+        <header className="oga-meth__header">
+          <div className="oga-meth__eyebrow">
+            <span className="oga-meth__eyebrow-num">07</span>
+            <span className="oga-meth__eyebrow-line" aria-hidden />
+            <span>Scoring</span>
+          </div>
+          <h2 className="oga-meth__h2">Deterministic composites, four presets.</h2>
+          <p className="oga-meth__lead">
+            <code>POST /v1/score</code> aggregates the signal catalog into a 0&ndash;100 composite. Same input,
+            same engine version, same output. Four presets cover the canonical workflows; custom weights
+            and saved org presets layer on top.
+          </p>
+        </header>
+
+        <div className="oga-meth-scoring__grid">
+          {PRESETS.map((p) => (
+            <article key={p.slug} className="oga-meth-scoring__preset">
+              <header className="oga-meth-scoring__preset-head">
+                <h3 className="oga-meth-scoring__preset-name">{p.name}</h3>
+                <span className="oga-meth-scoring__preset-slug">{p.slug}</span>
               </header>
-              <p style={{
-                fontFamily: "var(--sans)", fontSize: 15, fontWeight: 400,
-                lineHeight: 1.55, color: "var(--text)",
-                letterSpacing: "-0.003em",
-                margin: "0 0 14px", maxWidth: "66ch",
-              }}>{v.summary}</p>
-              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-                {v.changes.map((c) => (
-                  <li key={c} style={{
-                    display: "flex", alignItems: "flex-start", gap: 12,
-                    fontFamily: "var(--sans)", fontSize: 14, fontWeight: 400,
-                    color: "var(--text-2)", lineHeight: 1.55,
-                    maxWidth: "66ch",
-                  }}>
-                    <span aria-hidden style={{
-                      flexShrink: 0, marginTop: 7,
-                      width: 10, height: 2, background: "var(--signal)",
-                      borderRadius: 1,
-                    }} />
-                    {c}
-                  </li>
-                ))}
+              <p className="oga-meth-scoring__preset-purpose">{p.purpose}</p>
+              <ul className="oga-meth-scoring__preset-dims">
+                {p.dims.map((d) => <li key={d} className="oga-meth-scoring__preset-dim">{d}</li>)}
               </ul>
             </article>
-          );
-        })}
-      </div>
-    </SectionBlock>
-  );
-}
-
-/* ─────── Overall score ─────── */
-
-function OverallScore() {
-  return (
-    <SectionBlock
-      id="overall"
-      eyebrow="Overall score"
-      title={<>One number, <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>keyed to your intent.</em></>}
-    >
-      <P>
-        The overall OneGoodArea score is a weighted average of all dimension scores for the selected intent. Each dimension contributes proportionally to its internally calibrated weight. The result is a single 0 to 100 number representing how well the area suits your stated purpose.
-      </P>
-      <div style={{
-        border: "1px solid var(--border)",
-        padding: "22px 24px",
-        background: "var(--bg)",
-        marginTop: 8,
-      }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-          letterSpacing: "0.22em", textTransform: "uppercase",
-          color: "var(--text-3)", marginBottom: 14,
-        }}>
-          How it works
-        </div>
-        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
-          {[
-            "Each dimension is scored independently from 0 to 100.",
-            "Dimensions are weighted according to the selected intent.",
-            "The weighted scores are combined into a single overall score.",
-            "The same postcode with the same data always produces the same number.",
-          ].map((item) => (
-            <li key={item} style={{
-              display: "flex", alignItems: "flex-start", gap: 12,
-              fontFamily: "var(--sans)", fontSize: 14.5, fontWeight: 400,
-              color: "var(--text-2)", lineHeight: 1.55,
-            }}>
-              <span aria-hidden style={{
-                flexShrink: 0, marginTop: 7,
-                width: 12, height: 2, background: "var(--signal)",
-                borderRadius: 1,
-              }} />
-              {item}
-            </li>
           ))}
-        </ul>
-      </div>
-    </SectionBlock>
-  );
-}
+        </div>
 
-/* ─────── Score scale (RAG) ─────── */
-
-const BANDS: { range: string; label: string; tone: "strong" | "moderate" | "weak"; note: string }[] = [
-  { range: "70 – 100", label: "Strong",   tone: "strong",
-    note: "The area performs well in this dimension. A strong foundation with no major concerns. For overall scores, this indicates a highly suitable location for your stated intent." },
-  { range: "45 – 69",  label: "Moderate", tone: "moderate",
-    note: "The area is adequate but has room for improvement. Some trade-offs to consider. Worth investigating further before making decisions." },
-  { range: "0 – 44",   label: "Weak",     tone: "weak",
-    note: "The area underperforms in this dimension. Significant challenges identified. Does not necessarily disqualify the area, but indicates a specific weakness worth understanding." },
-];
-
-function ScoreScale() {
-  return (
-    <SectionBlock
-      id="scale"
-      eyebrow="Score scale"
-      title={<>Green, amber, red. <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>Three bands.</em></>}
-    >
-      <P>
-        Scores are colour-coded using a Red / Amber / Green system across every report. This applies to both dimension scores and the overall OneGoodArea score.
-      </P>
-      <div style={{
-        marginTop: 20,
-        border: "1px solid var(--border)", background: "var(--bg)",
-      }}>
-        {BANDS.map((b, i) => {
-          const bg    = b.tone === "strong"   ? "var(--signal-dim)" : b.tone === "moderate" ? "#FFF4D1" : "#FFE8E2";
-          const fg    = b.tone === "strong"   ? "var(--ink-deep)"   : b.tone === "moderate" ? "#6E5300" : "#A01B00";
-          const dotBg = b.tone === "strong"   ? "var(--ink)"        : b.tone === "moderate" ? "#D49900" : "#D13A1E";
-          return (
-            <div key={b.label} style={{
-              padding: "22px 24px",
-              borderBottom: i === BANDS.length - 1 ? "none" : "1px solid var(--border-dim)",
-              display: "grid",
-              gridTemplateColumns: "170px 1fr",
-              gap: 20, alignItems: "start",
-            }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <span style={{
-                  fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
-                  letterSpacing: "0.06em",
-                  color: fg, background: bg,
-                  padding: "4px 10px", borderRadius: 2,
-                  alignSelf: "flex-start",
-                  display: "inline-flex", alignItems: "center", gap: 8,
-                }}>
-                  <span aria-hidden style={{
-                    width: 6, height: 6, borderRadius: 6, background: dotBg,
-                  }} />
-                  {b.range}
-                </span>
-                <span style={{
-                  fontFamily: "var(--display)", fontSize: 20, fontWeight: 500,
-                  letterSpacing: "-0.012em",
-                  color: fg,
-                }}>{b.label}</span>
-              </div>
-              <p style={{
-                fontFamily: "var(--sans)", fontSize: 14.5, fontWeight: 400,
-                lineHeight: 1.55, color: "var(--text-2)",
-                letterSpacing: "-0.003em",
-                margin: 0, maxWidth: "66ch",
-              }}>{b.note}</p>
-            </div>
-          );
-        })}
-      </div>
-
-      <div style={{
-        marginTop: 22,
-        border: "1px solid var(--border)",
-        background: "var(--bg-off)",
-        padding: "16px 20px", borderRadius: 4,
-      }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-          letterSpacing: "0.22em", textTransform: "uppercase",
-          color: "var(--text-3)", marginBottom: 6,
-        }}>A note on interpretation</div>
-        <p style={{
-          fontFamily: "var(--sans)", fontSize: 14, fontWeight: 400,
-          lineHeight: 1.55, color: "var(--text-2)",
-          margin: 0,
-        }}>
-          A low score in one dimension does not make an area unsuitable. Context matters. A business location with a low competition score (meaning heavy saturation) might still succeed with strong differentiation. Read the narrative sections alongside the numbers.
+        <p className="oga-meth-scoring__foot">
+          The frozen v2 engine computes every dimension. Custom weights pass <code>{`{ preset, weights }`}</code>;
+          saved organisation presets pass <code>{`{ preset_id }`}</code>. Response carries <code>weights_source</code>
+          {" "}(<code>&quot;preset&quot;</code> or <code>&quot;custom&quot;</code>) and the engine version that produced the number.
         </p>
       </div>
-    </SectionBlock>
+    </section>
+  );
+}
+
+/* ─────── § 8 — Peers / insights / forecast ─────── */
+
+function SectionPeersInsightsForecast() {
+  return (
+    <section id="peers-insights-forecast" className="oga-section-quiet">
+      <div className="oga-meth__container">
+        <header className="oga-meth__header">
+          <div className="oga-meth__eyebrow">
+            <span className="oga-meth__eyebrow-num">08</span>
+            <span className="oga-meth__eyebrow-line" aria-hidden />
+            <span>Derived surfaces</span>
+          </div>
+          <h2 className="oga-meth__h2">Similarity, anomaly, projection.</h2>
+          <p className="oga-meth__lead">
+            Three derived surfaces over the store. Each one is honest about what it is, what it isn&rsquo;t,
+            and what the defaults assume.
+          </p>
+        </header>
+
+        <div className="oga-meth-derived3">
+          {DERIVED_THREE.map((c) => (
+            <article key={c.num} className="oga-meth-derived3__card">
+              <div className="oga-meth-derived3__card-num">{c.num}</div>
+              <h3 className="oga-meth-derived3__card-name">{c.name}</h3>
+              <code className="oga-meth-derived3__card-endpoint">{c.endpoint}</code>
+              <p className="oga-meth-derived3__card-body">{c.body}</p>
+              <p className="oga-meth-derived3__card-honest">{c.honest}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─────── § 9 — Intelligence query plane (DARK) ─────── */
+
+function SectionIntelligence() {
+  return (
+    <section id="intelligence" className="oga-section-dark" data-oga-surface="dark">
+      <div className="oga-meth__container">
+        <header className="oga-meth__header">
+          <div className="oga-meth__eyebrow">
+            <span className="oga-meth__eyebrow-num">09</span>
+            <span className="oga-meth__eyebrow-line" aria-hidden />
+            <span>Query plane</span>
+          </div>
+          <h2 className="oga-meth__h2">AI emits the plan. The database answers.</h2>
+          <p className="oga-meth__lead">
+            <code>POST /v1/query</code> is a typed JSON grammar with six plan ops. Programmatic <code>{`{plan}`}</code>{" "}
+            never touches the LLM. Natural-language <code>{`{question}`}</code> routes through a planner that emits
+            the same typed grammar. Every response echoes the executed plan and <code>plan_source</code> so
+            every result is replayable.
+          </p>
+        </header>
+
+        <div className="oga-meth-intel__row">
+          <ul className="oga-meth-intel__ops">
+            {PLAN_OPS.map((op) => (
+              <li key={op.name} className="oga-meth-intel__op">
+                <span className="oga-meth-intel__op-name">{op.name}</span>
+                <span className="oga-meth-intel__op-desc">{op.desc}</span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="oga-meth-intel__sample">
+            <div className="oga-meth-intel__sample-head">
+              <span>POST /v1/query</span>
+              <span>plan_source: nl</span>
+            </div>
+            <div className="oga-meth-intel__sample-body">
+              <span className="oga-meth-intel__nl">
+                &ldquo;England LSOAs with price ≤ £250k AND YoY &gt; 0 AND crime_pct ≤ 50 AND imd_pct ≥ 50,
+                sort by YoY desc, limit 5&rdquo;
+              </span>
+
+              <div className="oga-meth-intel__sample-divider">
+{`{
+  "op": "rank_areas",
+  "params": {
+    "country": "E",
+    "signals": [
+      { "key": "property.median_price",                  "filter": { "lte": 250000 } },
+      { "key": "property.price_change_pct_yoy",          "filter": { "gt": 0 } },
+      { "key": "crime.total_12m",                        "filter": { "percentile_lte": 50 } },
+      { "key": "deprivation.imd_decile",                 "filter": { "percentile_gte": 50 } }
+    ],
+    "sort_by": { "signal": "property.price_change_pct_yoy", "direction": "desc" },
+    "limit": 5
+  }
+}`}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <dl className="oga-meth-stats">
+          <div className="oga-meth-stats__cell">
+            <dt className="oga-meth-stats__label">Planner accuracy</dt>
+            <dd className="oga-meth-stats__val">92.9%</dd>
+            <div className="oga-meth-stats__sub">14-case curated corpus</div>
+          </div>
+          <div className="oga-meth-stats__cell">
+            <dt className="oga-meth-stats__label">Plan ops</dt>
+            <dd className="oga-meth-stats__val">6</dd>
+            <div className="oga-meth-stats__sub">rank · get · score · peers · insights · forecast</div>
+          </div>
+          <div className="oga-meth-stats__cell">
+            <dt className="oga-meth-stats__label">Filter ops</dt>
+            <dd className="oga-meth-stats__val">11</dd>
+            <div className="oga-meth-stats__sub">eq · lt · lte · gt · gte · between · percentile_*</div>
+          </div>
+          <div className="oga-meth-stats__cell">
+            <dt className="oga-meth-stats__label">Model under test</dt>
+            <dd className="oga-meth-stats__val">claude-sonnet-4</dd>
+            <div className="oga-meth-stats__sub">harness measures the seam, not the model</div>
+          </div>
+        </dl>
+      </div>
+    </section>
+  );
+}
+
+/* ─────── § 10 — Confidence ─────── */
+
+function SectionConfidence() {
+  return (
+    <section id="confidence" className="oga-section-quiet">
+      <div className="oga-meth__container">
+        <header className="oga-meth__header">
+          <div className="oga-meth__eyebrow">
+            <span className="oga-meth__eyebrow-num">10</span>
+            <span className="oga-meth__eyebrow-line" aria-hidden />
+            <span>Confidence</span>
+          </div>
+          <h2 className="oga-meth__h2">Per-signal, source-driven, honest.</h2>
+          <p className="oga-meth__lead">
+            Every signal value and every score dimension carries <code>confidence</code> (0.0&ndash;1.0) and a
+            human-readable <code>confidence_reason</code>. The rubric is fixed; the inputs are sample size,
+            freshness, fallback path, and (for property) YoY volatility.
+          </p>
+        </header>
+
+        <div className="oga-meth-conf__rubric" role="table" aria-label="Confidence rubric">
+          <div className="oga-meth-conf__row" role="row">
+            <div role="columnheader">Band</div>
+            <div role="columnheader">Value</div>
+            <div role="columnheader">Criteria</div>
+            <div role="columnheader">Example</div>
+          </div>
+          {CONFIDENCE_BANDS.map((b) => (
+            <div key={b.band} className="oga-meth-conf__row" role="row">
+              <div className="oga-meth-conf__band" role="cell">{b.band}</div>
+              <div className="oga-meth-conf__value" role="cell">{b.value}</div>
+              <div className="oga-meth-conf__criteria" role="cell">{b.criteria}</div>
+              <div className="oga-meth-conf__example" role="cell">{b.example}</div>
+            </div>
+          ))}
+        </div>
+
+        <p className="oga-meth-conf__gating">
+          Inferred-not-measured dimensions (Foot Traffic, Rental Yield, Regeneration, Tenant Demand) cap
+          at <code>MEDIUM</code> by design. Monitor change detection gates on{" "}
+          <code>min_transactions</code> (default <code>8</code>) so a 2-sale move never fires a webhook.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/* ─────── § 11 — Reproducibility + versioning ─────── */
+
+function SectionVersioning() {
+  return (
+    <section id="versioning" className="oga-section-hero">
+      <div className="oga-meth__container">
+        <header className="oga-meth__header">
+          <div className="oga-meth__eyebrow">
+            <span className="oga-meth__eyebrow-num">11</span>
+            <span className="oga-meth__eyebrow-line" aria-hidden />
+            <span>Reproducibility &amp; versioning</span>
+          </div>
+          <h2 className="oga-meth__h2">Engine version stamped on every response.</h2>
+          <p className="oga-meth__lead">
+            Every response carries <code>engine_version</code> in the body and{" "}
+            <code>X-Engine-Version</code> in the headers. Pin a request to a specific version with the
+            request header. Pin a whole organisation through Levers methodology pinning.
+          </p>
+        </header>
+
+        <div className="oga-meth-versioning__grid">
+          <div className="oga-meth-versioning__semver">
+            <div className="oga-meth-versioning__semver-row">
+              <div>Bump</div>
+              <div>Meaning</div>
+            </div>
+            {SEMVER.map((s) => (
+              <div key={s.tag} className="oga-meth-versioning__semver-row">
+                <div className="oga-meth-versioning__semver-tag">{s.tag}</div>
+                <div className="oga-meth-versioning__semver-desc">{s.desc}</div>
+              </div>
+            ))}
+          </div>
+
+          <article className="oga-meth-versioning__current">
+            <div className="oga-meth-versioning__current-label">Current engine</div>
+            <div className="oga-meth-versioning__current-version">v{METHODOLOGY_VERSION}</div>
+            <p className="oga-meth-versioning__current-summary">{current.summary}</p>
+            <div className="oga-meth-versioning__current-meta">
+              <span>
+                <span className="oga-meth-versioning__current-meta-key">released</span>
+                <span className="oga-meth-versioning__current-meta-val">{current.released_at}</span>
+              </span>
+              <span>
+                <span className="oga-meth-versioning__current-meta-key">history</span>
+                <span className="oga-meth-versioning__current-meta-val">{METHODOLOGY_VERSIONS.length} versions</span>
+              </span>
+            </div>
+          </article>
+        </div>
+
+        <p className="oga-meth-versioning__pin">
+          Org-level methodology pinning is owner-only. <code>PUT /v1/orgs/:id/methodology</code> sets the
+          pin; every scoring response from that org&rsquo;s keys stamps the pinned version in{" "}
+          <code>X-Engine-Version</code>. Explicit request headers still win over the org pin. The pinned
+          row stays in the database even after a version ages out of support, for audit; runtime
+          gracefully falls back to latest rather than 500.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/* ─────── § 12 — Scope and limitations ─────── */
+
+function SectionScope() {
+  return (
+    <section id="scope" className="oga-section-quiet">
+      <div className="oga-meth__container">
+        <header className="oga-meth__header">
+          <div className="oga-meth__eyebrow">
+            <span className="oga-meth__eyebrow-num">12</span>
+            <span className="oga-meth__eyebrow-line" aria-hidden />
+            <span>Scope &amp; limitations</span>
+          </div>
+          <h2 className="oga-meth__h2">What this is, and what it isn&rsquo;t.</h2>
+          <p className="oga-meth__lead">
+            Said up front to save reviewer time. The system is decision-grade screening + analysis; not
+            valuation, not lending, not address-level today.
+          </p>
+        </header>
+
+        <div className="oga-meth-scope__grid">
+          {SCOPE_NOT.map((s) => (
+            <article key={s.title} className="oga-meth-scope__card">
+              <span className="oga-meth-scope__card-tag">{s.tag}</span>
+              <h3 className="oga-meth-scope__card-title">{s.title}</h3>
+              <p className="oga-meth-scope__card-body">{s.body}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─────── § 13 — Audit artefacts ─────── */
+
+function SectionAudit() {
+  return (
+    <section id="audit" className="oga-section-hero">
+      <div className="oga-meth__container">
+        <header className="oga-meth__header">
+          <div className="oga-meth__eyebrow">
+            <span className="oga-meth__eyebrow-num">13</span>
+            <span className="oga-meth__eyebrow-line" aria-hidden />
+            <span>Audit artefacts</span>
+          </div>
+          <h2 className="oga-meth__h2">Everything we publish for audit.</h2>
+          <p className="oga-meth__lead">
+            Five public artefacts, four of them outside this page. The fifth is this page.
+          </p>
+        </header>
+
+        <div className="oga-meth-audit__grid">
+          {AUDIT.map((a) => {
+            const inner = (
+              <>
+                <span className="oga-meth-audit__item-num">{a.num}</span>
+                <h3 className="oga-meth-audit__item-name">{a.name}</h3>
+                <p className="oga-meth-audit__item-desc">{a.desc}</p>
+                <span className="oga-meth-audit__item-link">
+                  {a.external ? "Open on GitHub" : "Open"}
+                  <span aria-hidden>→</span>
+                </span>
+              </>
+            );
+
+            if (a.external) {
+              return (
+                <a
+                  key={a.num}
+                  className="oga-meth-audit__item"
+                  href={a.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {inner}
+                </a>
+              );
+            }
+
+            return (
+              <Link key={a.num} className="oga-meth-audit__item" href={a.href}>
+                {inner}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -1257,67 +1230,23 @@ function ScoreScale() {
 
 function FinalCta() {
   return (
-    <section style={{
-      background: "var(--bg-off)",
-      padding: "100px 0 120px",
-    }}>
-      <div style={{
-        maxWidth: 820, margin: "0 auto", padding: "0 40px",
-        textAlign: "center",
-      }}>
-        <h2 style={{
-          fontFamily: "var(--display)", fontWeight: 400,
-          fontSize: "clamp(32px, 4vw, 46px)", lineHeight: 1.06,
-          letterSpacing: "-0.018em", color: "var(--ink-deep)",
-          margin: "0 0 14px",
-        }}>
-          See the engine <em style={{
-            fontStyle: "italic", color: "var(--ink)",
-            borderBottom: "2.5px solid var(--signal)", paddingBottom: 1,
-          }}>in action.</em>
+    <section className="oga-section-dark" data-oga-surface="dark">
+      <div className="oga-meth__container--narrow oga-meth-cta__inner">
+        <h2 className="oga-meth-cta__title">
+          Build on the data layer underneath UK property workflows.
         </h2>
-        <p style={{
-          fontFamily: "var(--sans)", fontSize: 16, fontWeight: 400,
-          lineHeight: 1.5, color: "var(--text-2)",
-          margin: "0 auto 30px", maxWidth: "52ch",
-        }}>
-          Run a free report for any UK postcode. Read the numbers, read the reasoning, decide.
+        <p className="oga-meth-cta__lead">
+          A typed signal API, four product surfaces, monthly time-series history, and org-level
+          methodology pinning. Same answer, every time you ask.
         </p>
-        <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href="/" style={{
-            fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-            letterSpacing: "0.16em", textTransform: "uppercase",
-            color: "var(--signal-ink)", background: "var(--signal)",
-            padding: "14px 22px", borderRadius: 999, textDecoration: "none",
-            border: "1px solid var(--ink-deep)",
-            display: "inline-flex", alignItems: "center", gap: 9,
-            transition: "transform 140ms cubic-bezier(0.16,1,0.3,1)",
-          }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-1px)")}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-          >
-            Try a postcode
-            <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
+        <div className="oga-meth-cta__buttons">
+          <Link href="/sign-up" className="oga-btn oga-btn-primary">
+            Get an API key
+            <span aria-hidden>→</span>
           </Link>
-          <Link href="/docs" style={{
-            fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-            letterSpacing: "0.16em", textTransform: "uppercase",
-            color: "var(--ink)", background: "transparent",
-            padding: "14px 22px", borderRadius: 999, textDecoration: "none",
-            border: "1px solid var(--border)",
-            display: "inline-flex", alignItems: "center", gap: 9,
-            transition: "border-color 140ms ease, background 140ms ease",
-          }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "var(--ink)";
-              e.currentTarget.style.background = "var(--bg)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "var(--border)";
-              e.currentTarget.style.background = "transparent";
-            }}
-          >
-            Read the API docs
+          <Link href="/docs" className="oga-btn oga-btn-secondary">
+            Read the docs
+            <span aria-hidden>→</span>
           </Link>
         </div>
       </div>

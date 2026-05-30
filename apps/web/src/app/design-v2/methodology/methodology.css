@@ -1,0 +1,1350 @@
+/* /methodology — Brand v3 (Plotted) — AR-204 PR A.
+
+   Co-located styles. No inline styles permitted in client.tsx.
+   Uses .oga-* tokens (tokens.css), section shells + rule-marks
+   (backgrounds.css), and reaches into shared components.css for
+   the .oga-code-panel and .oga-status families.
+
+   Page IA is 13 numbered sections. Each section is one of three
+   shells: .oga-section-hero (cream + dot fade), .oga-section-quiet
+   (white + corner mark watermark), .oga-section-dark (graphite +
+   top-right dot fade). Sections 05 and 09 punctuate as DARK to
+   anchor the moat + the Intelligence plane visually. */
+
+/* ============================================================
+   Page container
+   ============================================================ */
+
+.oga-meth {
+  min-height: 100vh;
+  background: var(--oga-white);
+  color: var(--oga-fg);
+}
+
+.oga-meth section {
+  padding: var(--oga-9) clamp(20px, 4vw, var(--oga-7));
+}
+
+.oga-meth__container {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.oga-meth__container--narrow {
+  max-width: 880px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ============================================================
+   Section header pattern — eyebrow + rule + h2 + lead
+   ============================================================ */
+
+.oga-meth__header {
+  margin-bottom: var(--oga-7);
+}
+
+.oga-meth__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-3);
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-4);
+}
+
+.oga-meth__eyebrow-num {
+  color: var(--oga-fg);
+  font-weight: 500;
+}
+
+.oga-meth__eyebrow-line {
+  display: inline-block;
+  width: 32px;
+  height: 1px;
+  background: var(--oga-border);
+}
+
+.oga-meth__h2 {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-h2);
+  line-height: var(--oga-lh-tight);
+  letter-spacing: var(--oga-tracking-tight);
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 0 var(--oga-4);
+  max-width: 840px;
+}
+
+.oga-meth__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  color: var(--oga-fg-muted);
+  margin: 0;
+  max-width: 720px;
+}
+
+/* ============================================================
+   Hero (00) — the page opening
+   ============================================================ */
+
+.oga-meth-hero {
+  position: relative;
+  padding-top: var(--oga-9);
+  padding-bottom: var(--oga-9);
+}
+
+.oga-meth-hero__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 380px);
+  gap: var(--oga-8);
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .oga-meth-hero__row { grid-template-columns: 1fr; gap: var(--oga-7); }
+}
+
+.oga-meth-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-3);
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-5);
+}
+
+.oga-meth-hero__eyebrow-sep {
+  width: 4px; height: 4px;
+  background: var(--oga-fg-muted);
+  border-radius: 50%;
+  opacity: 0.5;
+}
+
+.oga-meth-hero__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(2.25rem, 5vw, 3.75rem);
+  line-height: var(--oga-lh-tight);
+  letter-spacing: var(--oga-tracking-tight);
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 0 var(--oga-5);
+  max-width: 780px;
+}
+
+.oga-meth-hero__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-7);
+  max-width: 640px;
+}
+
+.oga-meth-hero__anchors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--oga-3);
+}
+
+.oga-meth-hero__anchor {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-pill);
+  background: transparent;
+  color: var(--oga-fg);
+  text-decoration: none;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: border-color var(--oga-dur) var(--oga-ease), background var(--oga-dur) var(--oga-ease);
+}
+
+.oga-meth-hero__anchor:hover {
+  border-color: var(--oga-ink);
+  background: var(--oga-ink-06);
+}
+
+.oga-meth-hero__anchor-arrow { opacity: 0.6; transition: transform var(--oga-dur) var(--oga-ease); }
+.oga-meth-hero__anchor:hover .oga-meth-hero__anchor-arrow { transform: translateY(1px); }
+
+.oga-meth-hero__card {
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-lg);
+  background: var(--oga-white);
+  padding: var(--oga-6);
+  position: relative;
+}
+
+.oga-meth-hero__card-label {
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-3);
+  display: flex;
+  align-items: center;
+  gap: var(--oga-2);
+}
+
+.oga-meth-hero__card-dot {
+  width: 6px; height: 6px;
+  background: var(--oga-status-green);
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 var(--oga-status-green);
+  animation: oga-meth-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes oga-meth-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(46, 117, 72, 0.45); }
+  50%      { box-shadow: 0 0 0 6px rgba(46, 117, 72, 0); }
+}
+
+.oga-meth-hero__card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--oga-3);
+  padding: var(--oga-3) 0;
+  border-top: 1px solid var(--oga-border);
+}
+
+.oga-meth-hero__card-row:first-of-type { border-top: 0; }
+
+.oga-meth-hero__card-key {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-meth-hero__card-val {
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
+  color: var(--oga-fg);
+}
+
+/* ============================================================
+   § 1 — Signal as the primitive
+   ============================================================ */
+
+.oga-meth-signal__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 560px);
+  gap: var(--oga-7);
+  align-items: start;
+}
+
+@media (max-width: 1000px) {
+  .oga-meth-signal__grid { grid-template-columns: 1fr; }
+}
+
+.oga-meth-signal__attrs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--oga-3);
+}
+
+.oga-meth-signal__attr {
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  padding: var(--oga-4);
+  background: var(--oga-white);
+}
+
+.oga-meth-signal__attr-name {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-2);
+}
+
+.oga-meth-signal__attr-body {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--oga-fg);
+  margin: 0;
+}
+
+.oga-meth-signal__lineage {
+  margin-top: var(--oga-5);
+  padding: var(--oga-4);
+  border-left: 2px solid var(--oga-ink);
+  background: var(--oga-ink-06);
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--oga-fg);
+}
+
+.oga-meth-signal__lineage code {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* ============================================================
+   § 2 — Data sources (7 tiles)
+   ============================================================ */
+
+.oga-meth-sources__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--oga-4);
+}
+
+@media (max-width: 880px) {
+  .oga-meth-sources__grid { grid-template-columns: 1fr; }
+}
+
+.oga-meth-sources__tile {
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  background: var(--oga-white);
+  padding: var(--oga-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+}
+
+.oga-meth-sources__tile-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--oga-3);
+}
+
+.oga-meth-sources__tile-num {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-meth-sources__tile-status {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.oga-meth-sources__tile-name {
+  font-family: var(--oga-font-sans);
+  font-size: 18px;
+  line-height: 1.25;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0;
+}
+
+.oga-meth-sources__tile-provider {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+.oga-meth-sources__tile-body {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--oga-fg);
+  margin: 0;
+}
+
+.oga-meth-sources__tile-meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--oga-3);
+  padding-top: var(--oga-3);
+  border-top: 1px solid var(--oga-border);
+}
+
+.oga-meth-sources__meta-key {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: 2px;
+}
+
+.oga-meth-sources__meta-val {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-fg);
+}
+
+/* ============================================================
+   § 3 — How we store it
+   ============================================================ */
+
+.oga-meth-store__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: var(--oga-7);
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .oga-meth-store__grid { grid-template-columns: 1fr; }
+}
+
+.oga-meth-store__panel {
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  background: var(--oga-white);
+  padding: var(--oga-5);
+}
+
+.oga-meth-store__panel-title {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-3);
+}
+
+.oga-meth-store__tables {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--oga-2);
+}
+
+.oga-meth-store__table-row {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: var(--oga-3);
+  padding: var(--oga-2) 0;
+  border-top: 1px dashed var(--oga-border);
+}
+
+.oga-meth-store__table-row:first-child { border-top: 0; padding-top: 0; }
+
+.oga-meth-store__table-name {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-fg);
+}
+
+.oga-meth-store__table-desc {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+.oga-meth-store__modes {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--oga-3);
+}
+
+.oga-meth-store__mode {
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  background: var(--oga-white);
+  padding: var(--oga-4);
+}
+
+.oga-meth-store__mode-head {
+  display: flex;
+  align-items: center;
+  gap: var(--oga-3);
+  margin-bottom: var(--oga-2);
+}
+
+.oga-meth-store__mode-tag {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: var(--oga-ink-06);
+  color: var(--oga-fg);
+}
+
+.oga-meth-store__mode-desc {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+/* ============================================================
+   Stats strip — reused on § 4, § 5, § 9
+   ============================================================ */
+
+.oga-meth-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--oga-border);
+  margin-top: var(--oga-6);
+}
+
+[data-oga-surface="dark"] .oga-meth-stats { border-top-color: rgba(250,248,244,0.16); }
+
+@media (max-width: 720px) {
+  .oga-meth-stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+.oga-meth-stats__cell {
+  padding: var(--oga-5) var(--oga-4);
+  border-right: 1px solid var(--oga-border);
+}
+
+.oga-meth-stats__cell:last-child { border-right: 0; }
+
+[data-oga-surface="dark"] .oga-meth-stats__cell { border-right-color: rgba(250,248,244,0.16); }
+
+@media (max-width: 720px) {
+  .oga-meth-stats__cell:nth-child(2n) { border-right: 0; }
+  .oga-meth-stats__cell:nth-child(-n+2) { border-bottom: 1px solid var(--oga-border); }
+  [data-oga-surface="dark"] .oga-meth-stats__cell:nth-child(-n+2) { border-bottom-color: rgba(250,248,244,0.16); }
+}
+
+.oga-meth-stats__label {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-2);
+}
+
+.oga-meth-stats__val {
+  font-family: var(--oga-font-sans);
+  font-size: 1.625rem;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  font-weight: 500;
+  color: var(--oga-fg);
+}
+
+.oga-meth-stats__sub {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-fg-muted);
+  margin-top: var(--oga-1);
+}
+
+/* ============================================================
+   § 4 — Normalization (scopes)
+   ============================================================ */
+
+.oga-meth-norm__scopes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--oga-4);
+}
+
+@media (max-width: 880px) {
+  .oga-meth-norm__scopes { grid-template-columns: 1fr; }
+}
+
+.oga-meth-norm__scope {
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  background: var(--oga-white);
+  padding: var(--oga-5);
+}
+
+.oga-meth-norm__scope-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--oga-3);
+  margin-bottom: var(--oga-3);
+}
+
+.oga-meth-norm__scope-name {
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
+  color: var(--oga-fg);
+}
+
+.oga-meth-norm__scope-status {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.oga-meth-norm__scope-body {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+/* ============================================================
+   § 5 — Time-series moat (DARK)
+   ============================================================ */
+
+.oga-meth-moat__row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--oga-4);
+  margin-top: var(--oga-6);
+}
+
+@media (max-width: 880px) {
+  .oga-meth-moat__row { grid-template-columns: 1fr; }
+}
+
+.oga-meth-moat__card {
+  border: 1px solid rgba(250,248,244,0.16);
+  border-radius: var(--oga-radius-md);
+  padding: var(--oga-5);
+}
+
+.oga-meth-moat__card-name {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(250,248,244,0.65);
+  margin-bottom: var(--oga-3);
+}
+
+.oga-meth-moat__card-body {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--oga-white);
+  margin: 0;
+}
+
+/* ============================================================
+   § 6 — Derived signals (table)
+   ============================================================ */
+
+.oga-meth-derived__table {
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  background: var(--oga-white);
+  overflow: hidden;
+}
+
+.oga-meth-derived__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 2fr) 120px 90px;
+  align-items: center;
+  gap: var(--oga-4);
+  padding: var(--oga-4) var(--oga-5);
+  border-top: 1px solid var(--oga-border);
+}
+
+@media (max-width: 880px) {
+  .oga-meth-derived__row { grid-template-columns: 1fr; padding: var(--oga-4); }
+  .oga-meth-derived__row-meta { display: flex; gap: var(--oga-3); }
+}
+
+.oga-meth-derived__row--head {
+  border-top: 0;
+  background: var(--oga-ink-06);
+}
+
+.oga-meth-derived__row--head .oga-meth-derived__key,
+.oga-meth-derived__row--head .oga-meth-derived__desc,
+.oga-meth-derived__row--head .oga-meth-derived__window,
+.oga-meth-derived__row--head .oga-meth-derived__conf {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-meth-derived__key {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-fg);
+  word-break: break-word;
+}
+
+.oga-meth-derived__desc {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--oga-fg-muted);
+}
+
+.oga-meth-derived__window {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-fg);
+}
+
+.oga-meth-derived__conf {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-fg);
+  text-align: right;
+}
+
+/* ============================================================
+   § 7 — Scoring presets (4 cards)
+   ============================================================ */
+
+.oga-meth-scoring__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--oga-4);
+}
+
+@media (max-width: 880px) {
+  .oga-meth-scoring__grid { grid-template-columns: 1fr; }
+}
+
+.oga-meth-scoring__preset {
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  background: var(--oga-white);
+  padding: var(--oga-5);
+}
+
+.oga-meth-scoring__preset-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--oga-3);
+  margin-bottom: var(--oga-4);
+  padding-bottom: var(--oga-3);
+  border-bottom: 1px solid var(--oga-border);
+}
+
+.oga-meth-scoring__preset-name {
+  font-family: var(--oga-font-sans);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0;
+}
+
+.oga-meth-scoring__preset-slug {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-meth-scoring__preset-purpose {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-4);
+}
+
+.oga-meth-scoring__preset-dims {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--oga-1);
+}
+
+.oga-meth-scoring__preset-dim {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-fg);
+  display: flex;
+  align-items: center;
+  gap: var(--oga-2);
+}
+
+.oga-meth-scoring__preset-dim::before {
+  content: "";
+  display: block;
+  width: 4px; height: 4px;
+  background: var(--oga-ink);
+  opacity: 0.5;
+}
+
+.oga-meth-scoring__foot {
+  margin-top: var(--oga-5);
+  padding-top: var(--oga-4);
+  border-top: 1px solid var(--oga-border);
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+}
+
+.oga-meth-scoring__foot code {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  background: var(--oga-ink-06);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--oga-fg);
+}
+
+/* ============================================================
+   § 8 — Peers / insights / forecast (3 cards)
+   ============================================================ */
+
+.oga-meth-derived3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--oga-4);
+}
+
+@media (max-width: 1000px) {
+  .oga-meth-derived3 { grid-template-columns: 1fr; }
+}
+
+.oga-meth-derived3__card {
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  background: var(--oga-white);
+  padding: var(--oga-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+}
+
+.oga-meth-derived3__card-num {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-meth-derived3__card-name {
+  font-family: var(--oga-font-sans);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0;
+}
+
+.oga-meth-derived3__card-endpoint {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-fg);
+  padding: 4px 8px;
+  background: var(--oga-ink-06);
+  border-radius: 3px;
+  align-self: flex-start;
+}
+
+.oga-meth-derived3__card-body {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+.oga-meth-derived3__card-honest {
+  margin-top: auto;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--oga-fg-muted);
+  padding-top: var(--oga-3);
+  border-top: 1px dashed var(--oga-border);
+}
+
+/* ============================================================
+   § 9 — Intelligence plane (DARK)
+   ============================================================ */
+
+.oga-meth-intel__row {
+  display: grid;
+  grid-template-columns: minmax(0, 280px) minmax(0, 1fr);
+  gap: var(--oga-7);
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .oga-meth-intel__row { grid-template-columns: 1fr; }
+}
+
+.oga-meth-intel__ops {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--oga-1);
+}
+
+.oga-meth-intel__op {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-white);
+  padding: var(--oga-2) 0;
+  border-top: 1px solid rgba(250,248,244,0.16);
+}
+
+.oga-meth-intel__op:first-child { border-top: 0; }
+
+.oga-meth-intel__op-name { color: var(--oga-white); }
+.oga-meth-intel__op-desc {
+  color: rgba(250,248,244,0.65);
+  font-family: var(--oga-font-sans);
+  font-size: 12px;
+  display: block;
+  margin-top: 2px;
+}
+
+/* Code-panel-like block, dark-surface variant */
+.oga-meth-intel__sample {
+  border: 1px solid rgba(250,248,244,0.16);
+  border-radius: var(--oga-radius-md);
+  background: rgba(0,0,0,0.25);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(250,248,244,0.92);
+  overflow: hidden;
+}
+
+.oga-meth-intel__sample-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--oga-3) var(--oga-4);
+  border-bottom: 1px solid rgba(250,248,244,0.16);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(250,248,244,0.6);
+}
+
+.oga-meth-intel__sample-body {
+  padding: var(--oga-4);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+}
+
+.oga-meth-intel__nl {
+  color: var(--oga-status-amber);
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.oga-meth-intel__sample-divider {
+  border-top: 1px dashed rgba(250,248,244,0.16);
+  margin: var(--oga-3) 0;
+  padding-top: var(--oga-3);
+}
+
+/* ============================================================
+   § 10 — Confidence rubric (table-card)
+   ============================================================ */
+
+.oga-meth-conf__rubric {
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  background: var(--oga-white);
+  overflow: hidden;
+}
+
+.oga-meth-conf__row {
+  display: grid;
+  grid-template-columns: 100px 90px minmax(0, 1fr) minmax(0, 1.6fr);
+  align-items: center;
+  gap: var(--oga-4);
+  padding: var(--oga-4) var(--oga-5);
+  border-top: 1px solid var(--oga-border);
+}
+
+.oga-meth-conf__row:first-child { border-top: 0; background: var(--oga-ink-06); }
+
+@media (max-width: 880px) {
+  .oga-meth-conf__row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .oga-meth-conf__row > *:nth-child(3),
+  .oga-meth-conf__row > *:nth-child(4) {
+    grid-column: 1 / -1;
+  }
+}
+
+.oga-meth-conf__row > * {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-meth-conf__row .oga-meth-conf__band {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--oga-fg);
+}
+
+.oga-meth-conf__row .oga-meth-conf__value {
+  font-size: 12px;
+  color: var(--oga-fg);
+  letter-spacing: 0.06em;
+  text-transform: none;
+}
+
+.oga-meth-conf__row .oga-meth-conf__criteria,
+.oga-meth-conf__row .oga-meth-conf__example {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-fg);
+  letter-spacing: var(--oga-tracking-normal);
+  text-transform: none;
+}
+
+.oga-meth-conf__row .oga-meth-conf__example {
+  color: var(--oga-fg-muted);
+}
+
+.oga-meth-conf__gating {
+  margin-top: var(--oga-5);
+  padding: var(--oga-4);
+  border-left: 2px solid var(--oga-ink);
+  background: var(--oga-ink-06);
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--oga-fg);
+}
+
+.oga-meth-conf__gating code {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* ============================================================
+   § 11 — Versioning
+   ============================================================ */
+
+.oga-meth-versioning__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: var(--oga-7);
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .oga-meth-versioning__grid { grid-template-columns: 1fr; }
+}
+
+.oga-meth-versioning__semver {
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  background: var(--oga-white);
+}
+
+.oga-meth-versioning__semver-row {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  align-items: center;
+  gap: var(--oga-4);
+  padding: var(--oga-4) var(--oga-5);
+  border-top: 1px solid var(--oga-border);
+}
+
+.oga-meth-versioning__semver-row:first-child { border-top: 0; background: var(--oga-ink-06); }
+
+.oga-meth-versioning__semver-tag {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-fg);
+}
+
+.oga-meth-versioning__semver-desc {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+}
+
+.oga-meth-versioning__semver-row:first-child > * {
+  color: var(--oga-fg-muted);
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.oga-meth-versioning__current {
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  background: var(--oga-white);
+  padding: var(--oga-5);
+}
+
+.oga-meth-versioning__current-label {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-2);
+}
+
+.oga-meth-versioning__current-version {
+  font-family: var(--oga-font-mono);
+  font-size: 28px;
+  letter-spacing: -0.01em;
+  color: var(--oga-fg);
+  margin-bottom: var(--oga-4);
+}
+
+.oga-meth-versioning__current-summary {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--oga-fg);
+  margin: 0 0 var(--oga-4);
+}
+
+.oga-meth-versioning__current-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--oga-3) var(--oga-5);
+  padding-top: var(--oga-3);
+  border-top: 1px solid var(--oga-border);
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-fg-muted);
+}
+
+.oga-meth-versioning__current-meta-key { text-transform: uppercase; letter-spacing: 0.12em; }
+.oga-meth-versioning__current-meta-val { color: var(--oga-fg); margin-left: var(--oga-2); }
+
+.oga-meth-versioning__pin {
+  margin-top: var(--oga-5);
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--oga-fg);
+}
+
+.oga-meth-versioning__pin code {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  background: var(--oga-ink-06);
+  border: 1px solid var(--oga-border);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* ============================================================
+   § 12 — Scope and limitations (5 cards)
+   ============================================================ */
+
+.oga-meth-scope__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--oga-4);
+}
+
+@media (max-width: 1000px) {
+  .oga-meth-scope__grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 700px) {
+  .oga-meth-scope__grid { grid-template-columns: 1fr; }
+}
+
+.oga-meth-scope__card {
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  background: var(--oga-white);
+  padding: var(--oga-5);
+}
+
+.oga-meth-scope__card-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oga-status-red);
+  background: var(--oga-status-red-bg);
+  padding: 4px 8px;
+  border-radius: 3px;
+  margin-bottom: var(--oga-3);
+}
+
+.oga-meth-scope__card-title {
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 0 var(--oga-2);
+  line-height: 1.3;
+}
+
+.oga-meth-scope__card-body {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+/* ============================================================
+   § 13 — Audit artefacts
+   ============================================================ */
+
+.oga-meth-audit__grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--oga-3);
+}
+
+@media (max-width: 1100px) {
+  .oga-meth-audit__grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 720px) {
+  .oga-meth-audit__grid { grid-template-columns: 1fr; }
+}
+
+.oga-meth-audit__item {
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  background: var(--oga-white);
+  padding: var(--oga-5) var(--oga-4);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--oga-dur) var(--oga-ease), transform var(--oga-dur) var(--oga-ease);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-2);
+}
+
+.oga-meth-audit__item:hover {
+  border-color: var(--oga-ink);
+  transform: translateY(-1px);
+}
+
+.oga-meth-audit__item-num {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-meth-audit__item-name {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0;
+}
+
+.oga-meth-audit__item-desc {
+  font-family: var(--oga-font-sans);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+.oga-meth-audit__item-link {
+  margin-top: auto;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--oga-fg);
+  display: flex;
+  align-items: center;
+  gap: var(--oga-2);
+}
+
+.oga-meth-audit__item--disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.oga-meth-audit__item--disabled .oga-meth-audit__item-link::after {
+  content: "Not wired";
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-status-amber);
+  margin-left: var(--oga-2);
+}
+
+/* ============================================================
+   Final CTA (DARK)
+   ============================================================ */
+
+.oga-meth-cta__inner {
+  text-align: center;
+  padding: var(--oga-7) 0;
+}
+
+.oga-meth-cta__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: var(--oga-lh-tight);
+  letter-spacing: var(--oga-tracking-tight);
+  font-weight: 500;
+  color: var(--oga-white);
+  margin: 0 auto var(--oga-4);
+  max-width: 760px;
+}
+
+.oga-meth-cta__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  color: rgba(250,248,244,0.7);
+  margin: 0 auto var(--oga-7);
+  max-width: 580px;
+}
+
+.oga-meth-cta__buttons {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--oga-3);
+}
