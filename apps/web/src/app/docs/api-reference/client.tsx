@@ -3,34 +3,25 @@
 import Link from "next/link";
 import { Nav } from "../../design-v2/_shared/nav";
 import { Footer } from "../../design-v2/_shared/footer";
-import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 import "./api-reference.css";
 
-/* /docs/api-reference — Brand v3 (Plotted) — AR-204 PR B.
+/* /docs/api-reference — Brand v3 (Plotted) — AR-204 PR B + cleanup.
 
-   Honest interim. The previous Scalar embed rendered /openapi.json
-   v2.0.0 which documents 5 of ~70 endpoints, with stale path
-   prefixes (`/api/v1/...` vs Fastify's `/v1/...`) and stale auth
-   prefix (`aiq_` vs `oga_`). Showing a broken reference is worse
-   than showing none.
+   The interactive reference is being regenerated from live Fastify
+   schemas (each route file under apps/api/src/modules). While that
+   ships, this page presents a surface map of every product endpoint
+   and pointers to what works today: /methodology, ADR repo, source.
 
-   Track B per docs/AR-204-methodology-docs-delta.md: replace the
-   embed with an honest surface map + pointers to what works today
-   (/methodology, ADR repo, live route source). Track A (regenerate
-   the spec from Fastify schemas) lands as a separate ticket. */
+   Per Pedro 2026-05-30: dropped the previous "what the previous
+   spec got wrong" callout. Pre-launch, that section read as
+   apology to nobody; the hero pill "API reference, being
+   regenerated" already conveys the rebuild without dwelling.
 
-/* ───────────────────────────── current spec gaps */
-
-const SPEC_GAPS: { tag: "stale" | "wrong" | "missing"; body: string }[] = [
-  { tag: "wrong",   body: "Every documented path is prefixed /api/v1/. The live Fastify backend serves /v1/ — no /api prefix." },
-  { tag: "wrong",   body: "Auth scheme references aiq_ keys. The current prefix is oga_." },
-  { tag: "stale",   body: "info.version is 2.0.0. The current engine version is " + METHODOLOGY_VERSION + "." },
-  { tag: "missing", body: "Signals primitive: /v1/area, /v1/signals/:category, /v1/areas (cross-area query)." },
-  { tag: "missing", body: "Scores: /v1/score (deterministic composite with presets, custom weights, saved preset_id)." },
-  { tag: "missing", body: "Monitor: 7 /v1/portfolios endpoints (CRUD + bulk areas + enrich + change detection)." },
-  { tag: "missing", body: "Intelligence query plane: /v1/query, /v1/peers, /v1/insights, /v1/forecast." },
-  { tag: "missing", body: "Levers admin: ~20 endpoints under /v1/orgs/:id/* (members, bundles, presets, cohorts, methodology pinning)." },
-];
+   While here, flipped § 01 Surface map to .oga-section-dark to
+   address the related "no mid-page dark anchor" issue Pedro
+   flagged on /docs/mcp. Surface cards get translucent-on-dark
+   styling per the data-oga-surface override block in
+   api-reference.css. */
 
 /* ───────────────────────────── surface map */
 
@@ -188,7 +179,6 @@ export default function ApiReferenceClient() {
       <Nav />
 
       <Hero />
-      <SectionStatus />
       <SectionSurfaces />
       <SectionToday />
       <SectionRoadmap />
@@ -215,10 +205,9 @@ function Hero() {
         </h1>
 
         <p className="oga-apiref-hero__lead">
-          The previous OpenAPI spec captured 5 of the live system&rsquo;s ~70 endpoints, with stale path
-          prefixes and the old <code>aiq_</code> auth scheme. We&rsquo;ve removed it rather than mislead.
-          Below: a surface map of what&rsquo;s live, with pointers to the methodology, ADRs, and source
-          today.
+          We&rsquo;re regenerating the interactive reference from the live Fastify backend. While that
+          ships, here&rsquo;s a surface map of every product endpoint, with pointers to the methodology,
+          ADRs, and source.
         </p>
 
         <div className="oga-apiref-hero__actions">
@@ -236,72 +225,13 @@ function Hero() {
   );
 }
 
-function SectionStatus() {
+function SectionSurfaces() {
   return (
-    <section id="status" className="oga-section-quiet">
+    <section id="surfaces" className="oga-section-dark" data-oga-surface="dark">
       <div className="oga-apiref__container">
         <header className="oga-apiref__header">
           <div className="oga-apiref__eyebrow">
             <span className="oga-apiref__eyebrow-num">01</span>
-            <span className="oga-apiref__eyebrow-line" aria-hidden />
-            <span>What the previous spec got wrong</span>
-          </div>
-          <h2 className="oga-apiref__h2">The old spec was 7% complete and wrong on the rest.</h2>
-          <p className="oga-apiref__lead">
-            Said up front so buyers don&rsquo;t hand-copy stale paths into new integrations. The fix is a
-            full regenerate from live Fastify schemas, tracked separately.
-          </p>
-        </header>
-
-        <article className="oga-apiref-status">
-          <div className="oga-apiref-status__col">
-            <div className="oga-apiref-status__col-label">Stale / wrong</div>
-            <h3>The 5 endpoints it did document.</h3>
-            <p>
-              Every documented path used the legacy Next.js <code>/api/v1/&hellip;</code> prefix. The
-              backend now lives at <code>apps/api</code> on Fastify and exposes <code>/v1/&hellip;</code>{" "}
-              with no <code>/api</code> prefix. Auth still says <code>aiq_</code>; the current prefix is{" "}
-              <code>oga_</code>.
-            </p>
-            <ul className="oga-apiref-status__list">
-              {SPEC_GAPS.filter((g) => g.tag !== "missing").map((g, i) => (
-                <li key={i} className="oga-apiref-status__list-item">
-                  <span className={`oga-apiref-status__list-tag oga-apiref-status__list-tag--${g.tag}`}>{g.tag}</span>
-                  <span>{g.body}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="oga-apiref-status__col">
-            <div className="oga-apiref-status__col-label">Missing entirely</div>
-            <h3>~65 endpoints across 5 surfaces.</h3>
-            <p>
-              Everything shipped since signal-first was undocumented in the spec. Surface map below
-              shows what&rsquo;s live today.
-            </p>
-            <ul className="oga-apiref-status__list">
-              {SPEC_GAPS.filter((g) => g.tag === "missing").map((g, i) => (
-                <li key={i} className="oga-apiref-status__list-item">
-                  <span className={`oga-apiref-status__list-tag oga-apiref-status__list-tag--${g.tag}`}>{g.tag}</span>
-                  <span>{g.body}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </article>
-      </div>
-    </section>
-  );
-}
-
-function SectionSurfaces() {
-  return (
-    <section id="surfaces" className="oga-section-hero">
-      <div className="oga-apiref__container">
-        <header className="oga-apiref__header">
-          <div className="oga-apiref__eyebrow">
-            <span className="oga-apiref__eyebrow-num">02</span>
             <span className="oga-apiref__eyebrow-line" aria-hidden />
             <span>Surface map</span>
           </div>
@@ -351,11 +281,11 @@ function SectionSurfaces() {
 
 function SectionToday() {
   return (
-    <section id="today" className="oga-section-quiet">
+    <section id="today" className="oga-section-hero">
       <div className="oga-apiref__container">
         <header className="oga-apiref__header">
           <div className="oga-apiref__eyebrow">
-            <span className="oga-apiref__eyebrow-num">03</span>
+            <span className="oga-apiref__eyebrow-num">02</span>
             <span className="oga-apiref__eyebrow-line" aria-hidden />
             <span>What you can use today</span>
           </div>
@@ -408,11 +338,11 @@ function SectionToday() {
 
 function SectionRoadmap() {
   return (
-    <section id="roadmap" className="oga-section-hero">
+    <section id="roadmap" className="oga-section-quiet">
       <div className="oga-apiref__container">
         <header className="oga-apiref__header">
           <div className="oga-apiref__eyebrow">
-            <span className="oga-apiref__eyebrow-num">04</span>
+            <span className="oga-apiref__eyebrow-num">03</span>
             <span className="oga-apiref__eyebrow-line" aria-hidden />
             <span>Track to the new spec</span>
           </div>
