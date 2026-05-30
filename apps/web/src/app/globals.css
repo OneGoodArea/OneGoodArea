@@ -7,7 +7,6 @@
 :root {
   --bg: #09090b;
   --bg-elevated: #0f0f12;
-  --bg-hover: #16161a;
   --bg-active: #1a1a20;
   --border: #1c1c22;
   --border-hover: #2a2a32;
@@ -18,7 +17,9 @@
   --accent: #3b82f6;
   --accent-dim: rgba(59, 130, 246, 0.08);
 
-  /* Neon RAG system */
+  /* Neon RAG system. KEEP — consumed by src/lib/rag.ts (score color
+     mapping), src/components/toast.tsx, src/app/docs/playground.tsx,
+     and src/app/design-v2/area/[slug]/client.tsx. */
   --neon-green: #00ff88;
   --neon-green-dim: rgba(0, 255, 136, 0.06);
   --neon-green-glow: rgba(0, 255, 136, 0.15);
@@ -28,11 +29,6 @@
   --neon-red: #ff3344;
   --neon-red-dim: rgba(255, 51, 68, 0.06);
   --neon-red-glow: rgba(255, 51, 68, 0.15);
-
-  /* Shimmer / grid */
-  --shimmer-from: #0f0f12;
-  --shimmer-mid: #1c1c22;
-  --grid-line: rgba(255, 255, 255, 0.02);
 }
 
 [data-theme="light"] {
@@ -59,10 +55,6 @@
   --neon-red: #dc2626;
   --neon-red-dim: rgba(220, 38, 38, 0.06);
   --neon-red-glow: rgba(220, 38, 38, 0.12);
-
-  --shimmer-from: #f0f0f4;
-  --shimmer-mid: #e0e0e6;
-  --grid-line: rgba(0, 0, 0, 0.04);
 }
 
 * {
@@ -105,15 +97,6 @@ input:focus, select:focus {
   border-color: var(--border-active) !important;
 }
 
-/* ── Grid background ── */
-.bg-grid {
-  background-color: var(--bg);
-  background-image:
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: 48px 48px;
-}
-
 /* ── Neon glow utilities ── */
 .neon-green-glow {
   text-shadow: 0 0 6px var(--neon-green-glow), 0 0 20px rgba(0, 255, 136, 0.08);
@@ -146,22 +129,10 @@ input:focus, select:focus {
   background: rgba(37, 99, 235, 0.15);
 }
 
-/* ── Animations ── */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideIn {
-  from { opacity: 0; transform: translateX(-8px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
+/* ── Animations — toast slide-in/out kept (consumed by toast.tsx).
+   fadeIn/fadeInUp/slideIn/shimmer/blink + their .animate-* classes
+   were zero-reference and stripped here. .bg-grid + .score-ring*
+   were zero-reference and stripped above (Brand v3 migration). ── */
 @keyframes toastIn {
   from { opacity: 0; transform: translateX(40px); }
   to { opacity: 1; transform: translateX(0); }
@@ -170,58 +141,6 @@ input:focus, select:focus {
 @keyframes toastOut {
   from { opacity: 1; transform: translateX(0); }
   to { opacity: 0; transform: translateX(40px); }
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
-}
-
-.animate-fade-in-up {
-  opacity: 0;
-  animation: fadeInUp 0.4s ease-out forwards;
-}
-
-.animate-slide-in {
-  opacity: 0;
-  animation: slideIn 0.3s ease-out forwards;
-}
-
-.animate-shimmer {
-  background: linear-gradient(90deg, var(--shimmer-from) 25%, var(--shimmer-mid) 50%, var(--shimmer-from) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-}
-
-.animate-blink {
-  animation: blink 1s step-end infinite;
-}
-
-/* ── Score ring ── */
-.score-ring {
-  transform: rotate(-90deg);
-}
-
-.score-ring-track {
-  fill: none;
-  stroke: var(--border);
-  stroke-width: 3;
-}
-
-.score-ring-fill {
-  fill: none;
-  stroke-width: 3;
-  stroke-linecap: square;
-  transition: stroke-dashoffset 1s ease-out;
 }
 
 /* ── Scrollbar ── */
@@ -253,30 +172,38 @@ input:focus, select:focus {
          --font-mono). No @import here - that caused FOUC. The .aiq
          tokens below alias those vars under their semantic names. */
 
+      /* Brand v3 migration (Workstream 3, 2026-05-30): the .aiq token
+         names are kept (29 pages read from them) but each one now
+         aliases an --oga-* token from styles/brand/tokens.css. Result:
+         every aiq-* page renders graphite + warm white + Geist without
+         touching its source.
+         Notes:
+         - --signal aliases to oga-status-green (Brand v3 is strictly
+           two-color; chartreuse aliveness becomes status-green
+           aliveness). Easy to remap if Pedro wants strict 2-color.
+         - --display + --sans both alias to oga-font-sans (Geist).
+           Fraunces / Inter retire as font dependencies in a later
+           pass once the layout-level <link> tag can drop them. */
       .aiq {
-        /* Ink · forest green primary */
-        --ink:        #0A4D3A;
-        --ink-deep:   #062A1E;
-        --ink-soft:   #1C5E4A;
-        /* Signal · chartreuse (the alive accent) */
-        --signal:     #D4F33A;
-        --signal-ink: #1A2600;
-        --signal-dim: #E9F69E;
-        /* Surface */
-        --bg:         #FFFFFF;
-        --bg-off:     #F6F9F4;
-        --bg-ink:     #062A1E;
-        /* Line + text */
-        --border:     #E4EAE3;
-        --border-dim: #F0F3EE;
-        --text:       #0B2018;
-        --text-2:     #445A51;
-        --text-3:     #6E8278;
-        --text-4:     #9CAFA5;
+        --ink:        var(--oga-fg);
+        --ink-deep:   var(--oga-fg);
+        --ink-soft:   var(--oga-fg-subtle);
+        --signal:     var(--oga-status-green);
+        --signal-ink: var(--oga-white);
+        --signal-dim: var(--oga-status-green-bg);
+        --bg:         var(--oga-white);
+        --bg-off:     var(--oga-canvas);
+        --bg-ink:     var(--oga-green);
+        --border:     var(--oga-border);
+        --border-dim: var(--oga-green-06);
+        --text:       var(--oga-fg);
+        --text-2:     var(--oga-fg-subtle);
+        --text-3:     var(--oga-fg-muted);
+        --text-4:     var(--oga-fg-muted);
 
-        --display: 'Fraunces', 'Times New Roman', serif;
-        --sans:    'Inter', -apple-system, system-ui, sans-serif;
-        --mono:    'Geist Mono', ui-monospace, 'SF Mono', monospace;
+        --display: var(--oga-font-sans);
+        --sans:    var(--oga-font-sans);
+        --mono:    var(--oga-font-mono);
 
         background: var(--bg);
         color: var(--text);
@@ -285,25 +212,26 @@ input:focus, select:focus {
         text-rendering: optimizeLegibility;
       }
 
-      /* Dark theme · flips all tokens when data-theme="dark" is on <html>.
-         Chartreuse stays (it's brand signal on both). Surfaces go dark-forest,
-         text vars go light. Components reading from these vars adapt. */
+      /* Dark theme · Brand v3 graphite-on-warm-white inverts to
+         warm-white-on-graphite via the [data-oga-surface="dark"] block
+         in styles/brand/tokens.css. We re-alias the .aiq tokens here so
+         the same pattern applies to aiq-* pages in dark mode. */
       [data-theme="dark"] .aiq {
-        --ink:        #C4F5D4;
-        --ink-deep:   #F5F8F6;
-        --ink-soft:   #8FB8A5;
-        --signal:     #D4F33A;
-        --signal-ink: #1A2600;
-        --signal-dim: #2E4310;
-        --bg:         #0A1713;
-        --bg-off:     #0F201A;
-        --bg-ink:     #062A1E;  /* same as light · dark panels stay consistent across themes */
-        --border:     #1F2E28;
-        --border-dim: #172520;
-        --text:       #E4EAE3;
-        --text-2:     #A8B8B0;
-        --text-3:     #7D908A;
-        --text-4:     #556864;
+        --ink:        var(--oga-white);
+        --ink-deep:   var(--oga-white);
+        --ink-soft:   rgba(250, 248, 244, 0.65);
+        --signal:     var(--oga-status-green);
+        --signal-ink: var(--oga-green);
+        --signal-dim: var(--oga-status-green-bg);
+        --bg:         var(--oga-green);
+        --bg-off:     #232529;
+        --bg-ink:     var(--oga-green);
+        --border:     rgba(250, 248, 244, 0.14);
+        --border-dim: rgba(250, 248, 244, 0.08);
+        --text:       var(--oga-white);
+        --text-2:     rgba(250, 248, 244, 0.65);
+        --text-3:     rgba(250, 248, 244, 0.50);
+        --text-4:     rgba(250, 248, 244, 0.38);
       }
 
       .aiq *::selection { background: var(--signal); color: var(--signal-ink); }
@@ -316,24 +244,25 @@ input:focus, select:focus {
 
       /* .aiq-force-light · lock tokens to light-theme values for mock
          surfaces that should always look the same regardless of theme
-         (embedded widget preview, listing-page illustration, etc.) */
+         (embedded widget preview, listing-page illustration, etc.).
+         Mirrors the .aiq light-mode aliases verbatim. */
       .aiq .aiq-force-light,
       [data-theme="dark"] .aiq .aiq-force-light {
-        --ink:        #0A4D3A;
-        --ink-deep:   #062A1E;
-        --ink-soft:   #1C5E4A;
-        --signal:     #D4F33A;
-        --signal-ink: #1A2600;
-        --signal-dim: #E9F69E;
-        --bg:         #FFFFFF;
-        --bg-off:     #F6F9F4;
-        --bg-ink:     #062A1E;
-        --border:     #E4EAE3;
-        --border-dim: #F0F3EE;
-        --text:       #0B2018;
-        --text-2:     #445A51;
-        --text-3:     #6E8278;
-        --text-4:     #9CAFA5;
+        --ink:        var(--oga-fg);
+        --ink-deep:   var(--oga-fg);
+        --ink-soft:   var(--oga-fg-subtle);
+        --signal:     var(--oga-status-green);
+        --signal-ink: var(--oga-white);
+        --signal-dim: var(--oga-status-green-bg);
+        --bg:         var(--oga-white);
+        --bg-off:     var(--oga-canvas);
+        --bg-ink:     var(--oga-green);
+        --border:     var(--oga-border);
+        --border-dim: var(--oga-green-06);
+        --text:       var(--oga-fg);
+        --text-2:     var(--oga-fg-subtle);
+        --text-3:     var(--oga-fg-muted);
+        --text-4:     var(--oga-fg-muted);
       }
 
       @keyframes aiq-fade-up {

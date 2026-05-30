@@ -54,9 +54,17 @@ export default function RootLayout({
             rel="stylesheet"
             href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap"
           />
+          {/* Pre-paint theme restore. Sets <html data-theme> from
+              localStorage so the authenticated app-shell renders in the
+              right mode without flash. Marketing pages are intentionally
+              not theme-able (the Plotted composition is fixed per
+              section), so we deliberately do NOT mirror to
+              data-oga-surface on <body> anymore — that previously caused
+              half-inverted marketing pages when a user had dark saved
+              from the app. (Workstream 3, 2026-05-30) */}
           <script
             dangerouslySetInnerHTML={{
-              __html: `(function(){try{var t=localStorage.getItem("aiq-theme");if(t==="dark"||t==="light"){document.documentElement.setAttribute("data-theme",t);if(t==="dark"){var b=function(){document.body&&document.body.setAttribute("data-oga-surface","dark")};if(document.body){b()}else{document.addEventListener("DOMContentLoaded",b,{once:true})}}}}catch(e){}})()`,
+              __html: `(function(){try{var t=localStorage.getItem("aiq-theme");if(t==="dark"||t==="light"){document.documentElement.setAttribute("data-theme",t)}}catch(e){}})()`,
             }}
           />
           <meta name="msvalidate.01" content="PENDING" />
