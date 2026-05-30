@@ -1,0 +1,306 @@
+/* ============================================================
+   INTEGRATION SECTION (04) — code-first reskin (AR-204 PR 2 commit 5)
+   Light surface for contrast after the dark Products section.
+   Tab strip across the top selects one of 4 surfaces (REST, Bulk,
+   Query plane, Webhooks). Featured panel below renders a real curl
+   + response in the existing .oga-code-panel vocabulary, with the
+   surface's name + body + docs CTA on the right.
+   ============================================================ */
+
+.oga-int {
+  position: relative;
+  background: var(--oga-white);
+  color: var(--oga-fg);
+  padding: clamp(72px, 10vh, 120px) clamp(20px, 4vw, 56px);
+  overflow: hidden;
+  isolation: isolate;
+  border-top: 1px solid var(--oga-border);
+}
+
+/* Top-anchored ambient dot field — same vocabulary as the other
+   light shells but distinct rhythm (28px pitch). */
+.oga-int__field {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(26, 28, 31, 0.07) 1.1px, transparent 1.3px);
+  background-size: 28px 28px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 0%, transparent 72%);
+          mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 0%, transparent 72%);
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.oga-int__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(32px, 5vh, 56px);
+}
+
+/* ---------- Header ---------- */
+
+.oga-int__header {
+  max-width: 760px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.oga-int__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+.oga-int__eyebrow-num { color: var(--oga-fg); }
+.oga-int__eyebrow-line { width: 36px; height: 1px; background: var(--oga-border); }
+.oga-int__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(34px, 5vw, 60px);
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  color: var(--oga-fg);
+  margin: 0;
+  text-wrap: balance;
+  max-width: 20ch;
+}
+.oga-int__sub {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(15px, 1.2vw, 17px);
+  line-height: 1.55;
+  color: var(--oga-fg-subtle);
+  margin: 0;
+  letter-spacing: -0.005em;
+  max-width: 58ch;
+  text-wrap: pretty;
+}
+
+/* ---------- Tab strip ---------- */
+
+.oga-int__tabs {
+  display: flex;
+  gap: 0;
+  border-top: 1px solid var(--oga-border);
+  border-bottom: 1px solid var(--oga-border);
+  overflow-x: auto;
+}
+.oga-int__tab {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+  padding: 18px 18px 16px;
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--oga-border);
+  cursor: pointer;
+  position: relative;
+  text-align: left;
+  transition: background var(--oga-dur-fast) var(--oga-ease);
+  min-width: 160px;
+  font-family: inherit;
+  color: var(--oga-fg);
+}
+.oga-int__tab:last-child { border-right: 0; }
+.oga-int__tab:hover { background: rgba(26, 28, 31, 0.03); }
+.oga-int__tab-glyph {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--oga-fg-muted);
+  transition: color var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-int__tab-glyph > svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.oga-int__tab--active .oga-int__tab-glyph { color: var(--oga-fg); }
+.oga-int__tab-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.oga-int__tab-method {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--oga-fg-muted);
+  transition: color var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-int__tab-name {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--oga-fg-subtle);
+  letter-spacing: -0.01em;
+  transition: color var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-int__tab--active .oga-int__tab-method { color: var(--oga-fg); }
+.oga-int__tab--active .oga-int__tab-name { color: var(--oga-fg); }
+
+/* ---------- Featured panel ---------- */
+
+.oga-int__panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: clamp(32px, 4vw, 64px);
+  padding: clamp(36px, 5vh, 56px) 0 0;
+  align-items: start;
+}
+
+.oga-int__panel-text {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 44ch;
+}
+.oga-int__panel-name {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(24px, 2.8vw, 32px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.024em;
+  color: var(--oga-fg);
+  margin: 0;
+}
+.oga-int__panel-body {
+  font-family: var(--oga-font-sans);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--oga-fg-subtle);
+  margin: 0;
+  letter-spacing: -0.005em;
+  text-wrap: pretty;
+}
+.oga-int__panel-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  text-decoration: none;
+  border-bottom: 1px solid var(--oga-fg);
+  padding-bottom: 3px;
+  align-self: flex-start;
+  margin-top: 4px;
+  transition: padding-bottom var(--oga-dur-fast) var(--oga-ease);
+  background: transparent;
+  border-left: 0; border-right: 0; border-top: 0;
+  cursor: pointer;
+}
+.oga-int__panel-cta:hover:not(:disabled):not([aria-disabled="true"]) { padding-bottom: 4px; }
+.oga-int__panel-cta-arrow { display: inline-block; transition: transform var(--oga-dur-fast) var(--oga-ease); }
+.oga-int__panel-cta:hover:not([aria-disabled="true"]) .oga-int__panel-cta-arrow { transform: translateX(2px); }
+
+.oga-int__panel-meta {
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--oga-border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.oga-int__panel-meta-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+.oga-int__panel-meta-val {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  letter-spacing: -0.005em;
+}
+
+/* Code panel scaling — we use the existing .oga-code-panel from
+   components.css; just constrain its height in this section. */
+.oga-int__panel-code {
+  min-width: 0;
+}
+.oga-int__panel-code .oga-code-panel__body {
+  font-size: 12.5px;
+  line-height: 1.65;
+  padding: 18px 0 20px;
+}
+.oga-int__panel-code .oga-code-panel__line {
+  grid-template-columns: 40px 1fr;
+  padding: 1px 0;
+}
+.oga-int__panel-code .oga-code-panel__num {
+  padding-right: 12px;
+  font-size: 10.5px;
+}
+
+/* ---------- Footer strip ---------- */
+
+.oga-int__foot {
+  margin-top: clamp(28px, 4vh, 40px);
+  padding-top: clamp(20px, 3vh, 28px);
+  border-top: 1px solid var(--oga-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.oga-int__foot-text {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--oga-fg-subtle);
+  margin: 0;
+  max-width: 56ch;
+  letter-spacing: -0.005em;
+}
+.oga-int__foot-text strong {
+  color: var(--oga-fg);
+  font-weight: 500;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 900px) {
+  .oga-int__panel {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .oga-int__panel-text {
+    max-width: none;
+  }
+}
+@media (max-width: 600px) {
+  .oga-int__tab {
+    padding: 14px 12px 12px;
+    min-width: 140px;
+    gap: 10px;
+  }
+  .oga-int__tab-glyph {
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+  }
+  .oga-int__tab-name { font-size: 13px; }
+}

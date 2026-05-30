@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Wordmark } from "./wordmark";
 import { SignalsIcon, ScoresIcon, MonitorIcon, IntelligenceIcon } from "./product-icons";
+import { ApiReferenceIcon, McpServerIcon, ChangelogIcon } from "./docs-icons";
 import "./nav.css";
 
 /* Marketing nav — Brand v3 Plotted (AR-204 PR 1).
@@ -53,12 +54,13 @@ interface DocsLink {
   label: string;
   href: string;
   badge?: "NEW";
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
 }
 
 const DOCS: DocsLink[] = [
-  { label: "API reference", href: "/docs/api-reference" },
-  { label: "MCP server",    href: "/docs/mcp", badge: "NEW" },
-  { label: "Changelog",     href: "/changelog" },
+  { label: "API reference", href: "/docs/api-reference",                icon: ApiReferenceIcon },
+  { label: "MCP server",    href: "/docs/mcp",          badge: "NEW",   icon: McpServerIcon },
+  { label: "Changelog",     href: "/changelog",                         icon: ChangelogIcon },
 ];
 
 export function Nav() {
@@ -211,19 +213,27 @@ export function Nav() {
 
         <div className="oga-nav__drawer-section">
           <div className="oga-nav__drawer-section-head">Docs</div>
-          {DOCS.map((d) => (
-            <Link
-              key={d.href}
-              href={d.href}
-              onClick={() => setDrawerOpen(false)}
-              className="oga-nav__drawer-link"
-            >
-              <span>{d.label}</span>
-              {d.badge && (
-                <span className="oga-nav__item-pill oga-nav__item-pill--new">{d.badge}</span>
-              )}
-            </Link>
-          ))}
+          {DOCS.map((d) => {
+            const Icon = d.icon;
+            return (
+              <Link
+                key={d.href}
+                href={d.href}
+                onClick={() => setDrawerOpen(false)}
+                className="oga-nav__drawer-link oga-nav__drawer-product"
+              >
+                <span className="oga-nav__drawer-product-icon"><Icon /></span>
+                <span className="oga-nav__drawer-product-text">
+                  <span className="oga-nav__drawer-product-title">{d.label}</span>
+                </span>
+                {d.badge ? (
+                  <span className="oga-nav__item-pill oga-nav__item-pill--new">{d.badge}</span>
+                ) : (
+                  <span aria-hidden className="oga-nav__drawer-link-arrow">→</span>
+                )}
+              </Link>
+            );
+          })}
         </div>
 
         <div className="oga-nav__drawer-spacer" />
@@ -375,19 +385,23 @@ function ProductsPanel() {
 function DocsPanel() {
   return (
     <>
-      {DOCS.map((d) => (
-        <Link
-          key={d.href}
-          href={d.href}
-          role="menuitem"
-          className="oga-nav__item"
-        >
-          <span>{d.label}</span>
-          {d.badge && (
-            <span className="oga-nav__item-pill oga-nav__item-pill--new">{d.badge}</span>
-          )}
-        </Link>
-      ))}
+      {DOCS.map((d) => {
+        const Icon = d.icon;
+        return (
+          <Link
+            key={d.href}
+            href={d.href}
+            role="menuitem"
+            className="oga-nav__item oga-nav__item--docs"
+          >
+            <span className="oga-nav__item-icon"><Icon /></span>
+            <span className="oga-nav__item-text-single">{d.label}</span>
+            {d.badge && (
+              <span className="oga-nav__item-pill oga-nav__item-pill--new">{d.badge}</span>
+            )}
+          </Link>
+        );
+      })}
     </>
   );
 }

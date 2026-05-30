@@ -2,18 +2,18 @@
 
 import Link from "next/link";
 
-/* HeroPlotted — bold dark hero with vertically-rotating ICP word.
-   "Property intelligence for [cycling]". 5 ICPs cycle on a 16s loop.
-   Pure CSS keyframes (no JS state), perfectly smooth, GPU-friendly.
+/* HeroPlotted — bold dark hero with vertically-rotating workflow word.
+   "The area intelligence layer for [cycling]." 5 workflows cycle on
+   a 14s loop. Pure CSS keyframes (no JS state). Centered layout.
 
-   Pedro 2026-05-16: scrap the safe spec, give your best work. This
-   is the answer — confident dark hero, the kind Cursor / Vercel /
-   Trigger.dev / fmovieds.gd ship. */
+   AR-204 PR 2 / commit 3:
+   - Dropped the legacy "Sourced from: Police.uk · Ofsted · ..." foot
+     strip per the "multiple sources" rule. Specific sources live on
+     /methodology, not on the marketing hero.
+   - Stripped inline-style arrow margin (Marcos's rule); the .oga-btn
+     class already provides gap: 6px between flex children so the
+     arrow inherits natural spacing. */
 
-/* Workflows cycle, not ICPs. Each workflow is a real job the engine
-   answers for — and most workflows are done by multiple ICPs, so the
-   audience compounds. "Origination" covers lenders + brokers + building
-   societies; "underwriting" covers insurers + lenders; etc. */
 const WORKFLOWS = [
   "origination.",
   "underwriting.",
@@ -50,32 +50,13 @@ export function HeroPlotted() {
         <div className="oga-hero-dark__cta">
           <Link href="/sign-up" className="oga-btn oga-btn-primary">
             Get started
-            <span aria-hidden style={{ marginLeft: 4 }}>→</span>
+            <span aria-hidden>→</span>
           </Link>
           <Link href="/methodology" className="oga-btn oga-btn-secondary">
             Read the methodology
-            <span aria-hidden style={{ marginLeft: 4 }}>→</span>
+            <span aria-hidden>→</span>
           </Link>
         </div>
-      </div>
-
-      <div className="oga-hero-dark__foot" aria-hidden>
-        <span className="oga-hero-dark__foot-label">
-          <span className="oga-status-dot" /> Sourced from
-        </span>
-        <span className="oga-hero-dark__foot-item">Police.uk</span>
-        <span className="oga-hero-dark__foot-sep" />
-        <span className="oga-hero-dark__foot-item">Ofsted</span>
-        <span className="oga-hero-dark__foot-sep" />
-        <span className="oga-hero-dark__foot-item">Environment Agency</span>
-        <span className="oga-hero-dark__foot-sep" />
-        <span className="oga-hero-dark__foot-item">HM Land Registry</span>
-        <span className="oga-hero-dark__foot-sep" />
-        <span className="oga-hero-dark__foot-item">ONS</span>
-        <span className="oga-hero-dark__foot-sep" />
-        <span className="oga-hero-dark__foot-item">OpenStreetMap</span>
-        <span className="oga-hero-dark__foot-sep" />
-        <span className="oga-hero-dark__foot-item">Postcodes.io</span>
       </div>
     </section>
   );

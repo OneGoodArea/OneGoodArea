@@ -1167,6 +1167,7 @@ nav[data-oga-surface="dark"] {
 .oga-built__panel-link {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   font-family: var(--oga-font-sans);
   font-size: 14px;
   font-weight: 500;
@@ -1174,11 +1175,75 @@ nav[data-oga-surface="dark"] {
   text-decoration: none;
   border-bottom: 1px solid var(--oga-fg);
   padding-bottom: 3px;
+  background: transparent;
+  border-left: 0; border-right: 0; border-top: 0;
+  cursor: pointer;
   align-self: flex-start;
-  margin-top: 8px;
   transition: padding-bottom var(--oga-dur-fast) var(--oga-ease);
+  font-family: var(--oga-font-sans);
 }
-.oga-built__panel-link:hover { padding-bottom: 4px; }
+.oga-built__panel-link:hover:not(:disabled):not([aria-disabled="true"]) { padding-bottom: 4px; }
+.oga-built__panel-link[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.62;
+  border-bottom-color: rgba(26, 28, 31, 0.30);
+  color: var(--oga-fg-subtle);
+}
+.oga-built__panel-link-arrow {
+  display: inline-block;
+  transition: transform var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-built__panel-link:hover:not(:disabled):not([aria-disabled="true"]) .oga-built__panel-link-arrow {
+  transform: translateX(2px);
+}
+
+/* Endpoint chip — the mono "example API call" for this workflow.
+   Same vocabulary as the products section endpoint chip but on the
+   light Built-for surface. */
+.oga-built__panel-endpoint {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--oga-fg);
+  padding: 7px 11px;
+  background: rgba(26, 28, 31, 0.04);
+  border: 1px solid var(--oga-border);
+  border-radius: 3px;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.oga-built__panel-endpoint-verb {
+  color: var(--oga-status-green);
+  font-weight: 500;
+}
+
+/* CTA row — link + optional "Coming soon" pill side-by-side */
+.oga-built__panel-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.oga-built__panel-cta-pill {
+  font-family: var(--oga-font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 3px 7px 2px;
+  border-radius: var(--oga-radius-pill);
+  border: 1px solid var(--oga-border);
+  color: var(--oga-fg-muted);
+  background: transparent;
+  flex-shrink: 0;
+}
 
 /* Visual — dot mark floats free on the section bg, no wrapper card.
    Inherits color from currentColor which adapts to surface tokens. */
@@ -2259,6 +2324,37 @@ nav[data-oga-surface="dark"] {
   letter-spacing: 0.20em;
   text-transform: uppercase;
   color: rgba(250, 248, 244, 0.55);
+}
+
+/* CTA row — bridge to /methodology (AR-204 PR 2). The one explicit
+   exception to the "multiple sources" rule: this section IS the
+   bridge to where the 7 are detailed. */
+.oga-coverage__cta-row {
+  display: flex;
+  justify-content: center;
+  margin-top: clamp(24px, 4vh, 36px);
+}
+.oga-coverage__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--oga-font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--oga-white);
+  text-decoration: none;
+  border-bottom: 1px solid var(--oga-white);
+  padding-bottom: 3px;
+  letter-spacing: -0.005em;
+  transition: padding-bottom var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-coverage__cta:hover { padding-bottom: 4px; }
+.oga-coverage__cta-arrow {
+  display: inline-block;
+  transition: transform var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-coverage__cta:hover .oga-coverage__cta-arrow {
+  transform: translateX(2px);
 }
 
 @media (max-width: 680px) {

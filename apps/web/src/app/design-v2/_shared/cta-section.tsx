@@ -3,12 +3,30 @@
 import Link from "next/link";
 import { Mark } from "./mark";
 
-/* CtaSection — the close. Canvas surface (contrast with dark Coverage
-   above, subtle step to the white footer below). Centered, the brand
-   mark as a closing signature with a soft pulsing ring. Headline
-   bookends the hero: hero opens "the area intelligence layer for
-   [workflow]", this closes "for your stack". Ambient strip mirrors
-   the hero foot strip. */
+/* CtaSection — the close (06).
+   AR-204 PR 2 / commit 7.
+
+   Canvas surface (contrast with dark Coverage above, subtle step
+   to the footer below). Centered: brand mark + headline + sub +
+   B2B CTAs + a small live-state strip.
+
+   Updated from v1:
+   - Title bookends the hero's positioning thesis (no "for your stack"
+     consumer framing).
+   - Sub drops the "scoring areas this afternoon" marketing claim
+     (same energy as the "Live in an afternoon" we cut from
+     section 4).
+   - Primary CTA: "Get an API key" (was "Get started"). Matches the
+     hero CTA, makes the action concrete.
+   - Secondary CTA: "Read the methodology" (was "Browse the docs").
+     Methodology is where the real trust artefacts live.
+   - Foot strip: real numbers, NO source count or source names
+     (locked rule, NO EXCEPTIONS). Replaces the outdated
+     "7 public sources · 42,640 neighbourhoods" with the v3
+     measurement set.
+   - Stripped inline-style arrow margins (Marcos's rule — the
+     .oga-btn class already provides gap: 6px between flex
+     children). */
 
 export function CtaSection() {
   return (
@@ -20,27 +38,29 @@ export function CtaSection() {
           <Mark size={46} />
         </div>
 
-        <h2 className="oga-cta__title">The area intelligence layer for your stack.</h2>
+        <h2 className="oga-cta__title">
+          Build on the data layer underneath UK property workflows.
+        </h2>
 
         <p className="oga-cta__sub">
-          Free to start. Versioned, documented, and callable from any workflow.
-          You could be scoring areas this afternoon.
+          API plus a dashboard control plane. Deterministic, version-pinned,
+          source-attributed on every response.
         </p>
 
         <div className="oga-cta__buttons">
           <Link href="/sign-up" className="oga-btn oga-btn-lg oga-btn-primary">
-            Get started
-            <span aria-hidden style={{ marginLeft: 4 }}>→</span>
+            Get an API key
+            <span aria-hidden>→</span>
           </Link>
-          <Link href="/docs" className="oga-btn oga-btn-lg oga-btn-secondary">
-            Browse the docs
-            <span aria-hidden style={{ marginLeft: 4 }}>→</span>
+          <Link href="/methodology" className="oga-btn oga-btn-lg oga-btn-secondary">
+            Read the methodology
+            <span aria-hidden>→</span>
           </Link>
         </div>
 
         <div className="oga-cta__foot" aria-hidden>
           <span className="oga-status-dot" />
-          Engine v2.0.2 · 7 public sources · 42,640 neighbourhoods · deterministic
+          Engine v2.0.2 · 1.8M postcodes · 43,916 LSOAs · monthly snapshots
         </div>
       </div>
     </section>

@@ -1,111 +1,162 @@
 "use client";
 
-import React, { useState } from "react";
+import type { ComponentType, SVGProps } from "react";
 import Link from "next/link";
 import { Wordmark } from "./wordmark";
+import { XIcon, LinkedInIcon, EmailIcon } from "./social-icons";
+import "./footer.css";
 
-/* Footer — Plotted brand v3 (AR-152).
+/* Footer — Plotted brand v3, reorganized (AR-204 PR 2 commit 8).
 
-   Same IA as before: Areas · Business · API · Methodology · Pricing ·
-   About · Blog · Changelog · Help · Terms · Privacy across three editorial
-   columns. Plotted treatment: Geist throughout, no chartreuse, no italic
-   tagline. Tagline carries the new category sentence. */
+   Column reorg:
+     Brand  |  Products  |  Docs  |  Company
+
+   - Brand cell carries v3 positioning + "Get an API key" CTA
+     (was "Try a postcode" — Pedro: consumer-tool framing).
+   - Products column surfaces the 4 composable products. Each link
+     points to /products/<slug>; since those pages do not exist yet
+     they render disabled with a "Soon" pill (wiring rule).
+   - Docs column = the real route surface (API ref, MCP server,
+     Methodology, Changelog).
+   - Company column = About, Business, Pricing, Help, Blog, Contact.
+   - Social row: real brand-logo silhouettes for X, LinkedIn, Email.
+     GitHub removed.
+   - Zero inline styles (Marcos's rule). All visuals in ./footer.css. */
+
+interface ProductLink {
+  label: string;
+  href: string;
+  ready: boolean;
+}
+
+const PRODUCTS: ProductLink[] = [
+  { label: "Signals",      href: "/products/signals",      ready: false },
+  { label: "Scores",       href: "/products/scores",       ready: false },
+  { label: "Monitor",      href: "/products/monitor",      ready: false },
+  { label: "Intelligence", href: "/products/intelligence", ready: false },
+];
+
+const DOCS: Array<{ label: string; href: string }> = [
+  { label: "API reference", href: "/docs/api-reference" },
+  { label: "MCP server",    href: "/docs/mcp" },
+  { label: "Methodology",   href: "/methodology" },
+  { label: "Changelog",     href: "/changelog" },
+];
+
+const COMPANY: Array<{ label: string; href: string }> = [
+  { label: "About",    href: "/about" },
+  { label: "Business", href: "/business" },
+  { label: "Pricing",  href: "/pricing" },
+  { label: "Help",     href: "/help" },
+  { label: "Blog",     href: "/blog" },
+  { label: "Contact",  href: "mailto:hello@onegoodarea.com" },
+];
+
+const LEGAL: Array<{ label: string; href: string }> = [
+  { label: "Terms",   href: "/terms" },
+  { label: "Privacy", href: "/privacy" },
+];
+
+interface SocialLink {
+  label: string;
+  href: string;
+  Icon: ComponentType<SVGProps<SVGSVGElement>>;
+}
+
+const SOCIAL: SocialLink[] = [
+  { label: "X",        href: "https://x.com/onegoodarea",              Icon: XIcon },
+  { label: "LinkedIn", href: "https://www.linkedin.com/company/onegoodarea", Icon: LinkedInIcon },
+  { label: "Email",    href: "mailto:hello@onegoodarea.com",           Icon: EmailIcon },
+];
 
 export function Footer() {
-  const productLinks: { label: string; href: string }[] = [
-    { label: "Areas",        href: "/area/london" },
-    { label: "Methodology",  href: "/methodology" },
-    { label: "Changelog",    href: "/changelog" },
-    { label: "Blog",         href: "/blog" },
-  ];
-  const businessLinks: { label: string; href: string }[] = [
-    { label: "For business", href: "/business" },
-    { label: "API",          href: "/docs" },
-    { label: "Pricing",      href: "/pricing" },
-  ];
-  const companyLinks: { label: string; href: string }[] = [
-    { label: "About",   href: "/about" },
-    { label: "Help",    href: "/help" },
-    { label: "Contact", href: "mailto:hello@onegoodarea.com" },
-  ];
-  const legalLinks: { label: string; href: string }[] = [
-    { label: "Terms",   href: "/terms" },
-    { label: "Privacy", href: "/privacy" },
-  ];
-  const socialLinks: { label: string; href: string }[] = [
-    { label: "Email",    href: "mailto:hello@onegoodarea.com" },
-    { label: "GitHub",   href: "https://github.com/OneGoodArea/OneGoodArea" },
-    { label: "LinkedIn", href: "#" },
-    { label: "X",        href: "#" },
-  ];
-
   return (
-    <footer className="oga-root" data-oga-surface="dark" style={{
-      background: "var(--oga-bg)",
-      color: "var(--oga-fg)",
-      borderTop: "1px solid var(--oga-border)",
-      padding: "96px 0 32px",
-    }}>
-      <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 40px" }}>
-        <div className="aiq-footer-top" style={{
-          display: "grid",
-          gridTemplateColumns: "1.6fr 1fr 1fr 1fr",
-          gap: 48,
-          marginBottom: 84,
-        }}>
-          <div className="aiq-footer-brand">
-            <div style={{ marginBottom: 24 }}>
+    <footer className="oga-footer oga-root" data-oga-surface="dark">
+      <div className="oga-footer__inner">
+        <div className="oga-footer__top">
+          <div className="oga-footer__brand">
+            <div className="oga-footer__brand-wrap">
               <Wordmark href="/" size={24} />
             </div>
-            <p style={{
-              fontFamily: "var(--oga-font-sans)", fontSize: 17, fontWeight: 400,
-              lineHeight: 1.4,
-              color: "var(--oga-fg-subtle)", letterSpacing: "-0.005em",
-              margin: "0 0 26px", maxWidth: "32ch",
-              textWrap: "pretty",
-            }}>
-              the decision-grade area intelligence layer for property workflows.
+            <p className="oga-footer__tagline">
+              The data and intelligence layer underneath UK property workflows.
             </p>
-            <Link href="/" className="oga-btn oga-btn-sm oga-btn-secondary" style={{ alignSelf: "flex-start" }}>
-              Try a postcode
-              <span aria-hidden style={{ marginLeft: 4 }}>→</span>
+            <Link href="/sign-up" className="oga-btn oga-btn-sm oga-btn-secondary oga-footer__cta">
+              Get an API key
+              <span aria-hidden>→</span>
             </Link>
           </div>
 
-          <FooterColumn title="Product"  links={productLinks} />
-          <FooterColumn title="Business" links={businessLinks} />
-          <FooterColumn title="Company"  links={companyLinks} />
+          <FooterColumn title="Products">
+            {PRODUCTS.map((p) => (
+              <li key={p.label} className="oga-footer__col-item">
+                {p.ready ? (
+                  <Link href={p.href} className="oga-footer__link">{p.label}</Link>
+                ) : (
+                  <span className="oga-footer__link" aria-disabled="true">
+                    {p.label}
+                    <span className="oga-footer__link-pill">Soon</span>
+                  </span>
+                )}
+              </li>
+            ))}
+          </FooterColumn>
+
+          <FooterColumn title="Docs">
+            {DOCS.map((d) => (
+              <li key={d.label} className="oga-footer__col-item">
+                <Link href={d.href} className="oga-footer__link">{d.label}</Link>
+              </li>
+            ))}
+          </FooterColumn>
+
+          <FooterColumn title="Company">
+            {COMPANY.map((c) => (
+              <li key={c.label} className="oga-footer__col-item">
+                {c.href.startsWith("mailto:") ? (
+                  <a href={c.href} className="oga-footer__link">{c.label}</a>
+                ) : (
+                  <Link href={c.href} className="oga-footer__link">{c.label}</Link>
+                )}
+              </li>
+            ))}
+          </FooterColumn>
         </div>
 
-        <div className="aiq-footer-bottom" style={{
-          borderTop: "1px solid var(--oga-border)",
-          paddingTop: 26,
-          display: "flex", alignItems: "center",
-          justifyContent: "space-between", gap: 20, flexWrap: "wrap",
-        }}>
-          <div style={{
-            display: "flex", alignItems: "center",
-            gap: 16, flexWrap: "wrap",
-          }}>
-            <span className="oga-label" style={{
-              fontSize: 10,
-              letterSpacing: "0.2em",
-              color: "var(--oga-fg-muted)",
-            }}>© 2026 OneGoodArea · Built in the UK</span>
-            <span aria-hidden style={{
-              width: 1, height: 10, background: "var(--oga-border)",
-            }} />
-            <div style={{ display: "flex", gap: 14 }}>
-              {legalLinks.map((l) => (
-                <FooterMiniLink key={l.label} href={l.href} label={l.label} />
+        <div className="oga-footer__bottom">
+          <div className="oga-footer__bottom-left">
+            <span className="oga-footer__copy">© 2026 OneGoodArea · Built in the UK</span>
+            <span aria-hidden className="oga-footer__mini-sep" />
+            <div className="oga-footer__legal">
+              {LEGAL.map((l) => (
+                <Link key={l.label} href={l.href} className="oga-footer__mini-link">{l.label}</Link>
               ))}
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: 18, alignItems: "center" }}>
-            {socialLinks.map((s) => (
-              <FooterMiniLink key={s.label} href={s.href} label={s.label} />
-            ))}
+          <div className="oga-footer__social">
+            {SOCIAL.map((s) => {
+              const Icon = s.Icon;
+              const external = s.href.startsWith("http") || s.href.startsWith("mailto:");
+              const className = "oga-footer__social-link";
+              const inner = <Icon />;
+              return external ? (
+                <a
+                  key={s.label}
+                  href={s.href}
+                  aria-label={s.label}
+                  className={className}
+                  target={s.href.startsWith("http") ? "_blank" : undefined}
+                  rel={s.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                >
+                  {inner}
+                </a>
+              ) : (
+                <Link key={s.label} href={s.href} aria-label={s.label} className={className}>
+                  {inner}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -114,64 +165,16 @@ export function Footer() {
 }
 
 function FooterColumn({
-  title, links,
+  title,
+  children,
 }: {
   title: string;
-  links: { label: string; href: string }[];
+  children: React.ReactNode;
 }) {
   return (
     <div>
-      <div className="oga-label" style={{
-        fontSize: 10,
-        letterSpacing: "0.24em",
-        color: "var(--oga-fg-muted)",
-        marginBottom: 22,
-      }}>{title}</div>
-      <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-        {links.map((l) => (
-          <li key={l.label} style={{ marginBottom: 12 }}>
-            <FooterColumnLink href={l.href} label={l.label} />
-          </li>
-        ))}
-      </ul>
+      <div className="oga-footer__col-title">{title}</div>
+      <ul className="oga-footer__col-list">{children}</ul>
     </div>
   );
-}
-
-function FooterColumnLink({ href, label }: { href: string; label: string }) {
-  const [hover, setHover] = useState(false);
-  const isExternal = href.startsWith("http") || href.startsWith("mailto:");
-  const shared = {
-    onMouseEnter: () => setHover(true),
-    onMouseLeave: () => setHover(false),
-    style: {
-      fontFamily: "var(--oga-font-sans)", fontSize: 14.5, fontWeight: 400,
-      color: hover ? "var(--oga-fg)" : "var(--oga-fg-subtle)",
-      textDecoration: "none", letterSpacing: "-0.005em",
-      transition: "color var(--oga-dur-fast) var(--oga-ease)",
-      display: "inline-block",
-    },
-  };
-  return isExternal
-    ? <a href={href} {...shared}>{label}</a>
-    : <Link href={href} {...shared}>{label}</Link>;
-}
-
-function FooterMiniLink({ href, label }: { href: string; label: string }) {
-  const isExternal = href.startsWith("http") || href.startsWith("mailto:");
-  const shared = {
-    style: {
-      fontFamily: "var(--oga-font-mono)", fontSize: 10, fontWeight: 500,
-      letterSpacing: "0.2em", textTransform: "uppercase" as const,
-      color: "var(--oga-fg-muted)", textDecoration: "none",
-      transition: "color var(--oga-dur-fast) var(--oga-ease)",
-    },
-    onMouseEnter: (e: React.MouseEvent<HTMLAnchorElement>) =>
-      (e.currentTarget.style.color = "var(--oga-fg)"),
-    onMouseLeave: (e: React.MouseEvent<HTMLAnchorElement>) =>
-      (e.currentTarget.style.color = "var(--oga-fg-muted)"),
-  };
-  return isExternal
-    ? <a href={href} {...shared}>{label}</a>
-    : <Link href={href} {...shared}>{label}</Link>;
 }
