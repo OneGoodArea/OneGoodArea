@@ -1,0 +1,477 @@
+/* ============================================================
+   OneGoodArea — Marketing nav (AR-204 PR 1)
+   Co-located CSS for the design-v2/_shared/nav.tsx component.
+   Brand v3 Plotted vocabulary; no inline styles in the TSX.
+   ============================================================ */
+
+/* ---------- Shell ---------- */
+
+.oga-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  transition:
+    background var(--oga-dur) var(--oga-ease),
+    border-color var(--oga-dur) var(--oga-ease),
+    color var(--oga-dur) var(--oga-ease);
+}
+
+/* The glass treatment activates when the nav scrolls past the top.
+   Definition lives in styles/brand/components.css (.oga-nav-glass)
+   and inverts on data-oga-surface="dark". */
+
+.oga-nav__row {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 28px 0 56px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--oga-fg);
+}
+
+.oga-nav__spacer { flex: 1; }
+
+.oga-nav__center {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.oga-nav__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---------- Sign-in text link (right cluster) ---------- */
+
+.oga-nav__signin {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-fg-subtle);
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 2px;
+  transition: color var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-nav__signin:hover { color: var(--oga-fg); }
+
+[data-oga-surface="dark"] .oga-nav__signin {
+  color: rgba(250, 248, 244, 0.7);
+}
+[data-oga-surface="dark"] .oga-nav__signin:hover {
+  color: var(--oga-white);
+}
+
+/* ---------- Mobile hamburger button ---------- */
+
+.oga-nav__burger {
+  display: none;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--oga-border);
+  background: transparent;
+  border-radius: var(--oga-radius-md);
+  cursor: pointer;
+  color: var(--oga-fg);
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   Desktop dropdowns (Products mega-menu + Docs)
+   Trigger is a button; menu is absolutely positioned underneath.
+   Hover/keyboard-focus opens; ESC + click-outside closes.
+   ============================================================ */
+
+.oga-nav__trigger {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-fg-subtle);
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 6px 10px;
+  border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-nav__trigger:hover,
+.oga-nav__trigger[data-open="true"] {
+  color: var(--oga-fg);
+  background: rgba(26, 28, 31, 0.06);
+}
+[data-oga-surface="dark"] .oga-nav__trigger:hover,
+[data-oga-surface="dark"] .oga-nav__trigger[data-open="true"] {
+  background: rgba(250, 248, 244, 0.08);
+}
+
+.oga-nav__trigger-caret {
+  font-size: 9px;
+  margin-left: 2px;
+  transform: translateY(-1px);
+  transition: transform var(--oga-dur) var(--oga-ease);
+}
+.oga-nav__trigger[data-open="true"] .oga-nav__trigger-caret {
+  transform: translateY(-1px) rotate(180deg);
+}
+
+.oga-nav__dropdown-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.oga-nav__dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: var(--oga-bg);
+  border: 1px solid var(--oga-border);
+  border-radius: 4px;
+  box-shadow: var(--oga-shadow-md);
+  padding: 6px;
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition:
+    opacity var(--oga-dur) var(--oga-ease),
+    transform var(--oga-dur) var(--oga-ease);
+  z-index: 60;
+}
+.oga-nav__dropdown[data-open="true"] {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Docs dropdown is narrow + single column */
+.oga-nav__dropdown--docs {
+  min-width: 220px;
+}
+
+/* Products mega-menu is wider; rows have icon + title + sub */
+.oga-nav__dropdown--products {
+  min-width: 380px;
+}
+
+/* ---------- Dropdown items ---------- */
+
+.oga-nav__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  background: transparent;
+  border-radius: 3px;
+  text-decoration: none;
+  letter-spacing: -0.005em;
+  transition: background var(--oga-dur-fast) var(--oga-ease);
+  width: 100%;
+  text-align: left;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+.oga-nav__item:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: rgba(26, 28, 31, 0.06);
+}
+[data-oga-surface="dark"] .oga-nav__item:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: rgba(250, 248, 244, 0.08);
+}
+
+/* Disabled = "Coming soon" — clearly indicated, not silently broken */
+.oga-nav__item[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+/* Product row layout (icon left, text middle, status pill right) */
+.oga-nav__item--product {
+  align-items: flex-start;
+}
+.oga-nav__item-icon {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--oga-fg);
+}
+.oga-nav__item-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.oga-nav__item-title {
+  font-size: 13.5px;
+  color: var(--oga-fg);
+  letter-spacing: -0.005em;
+}
+.oga-nav__item-sub {
+  font-size: 11.5px;
+  color: var(--oga-fg-muted);
+  font-weight: 400;
+  letter-spacing: -0.003em;
+  line-height: 1.35;
+}
+
+.oga-nav__item-pill {
+  font-family: var(--oga-font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 3px 7px 2px;
+  border-radius: var(--oga-radius-pill);
+  border: 1px solid currentColor;
+  flex-shrink: 0;
+}
+.oga-nav__item-pill--soon {
+  color: var(--oga-fg-muted);
+  background: transparent;
+}
+.oga-nav__item-pill--new {
+  color: var(--oga-status-green);
+  background: var(--oga-status-green-bg);
+  border-color: var(--oga-status-green);
+}
+
+/* ============================================================
+   Direct nav links (Methodology, Pricing) — same hover treatment
+   as triggers, no caret.
+   ============================================================ */
+
+.oga-nav__link {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-fg-subtle);
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 2px;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+  transition:
+    color var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-nav__link:hover,
+.oga-nav__link[data-active="true"] {
+  color: var(--oga-fg);
+  background: rgba(26, 28, 31, 0.06);
+}
+[data-oga-surface="dark"] .oga-nav__link:hover,
+[data-oga-surface="dark"] .oga-nav__link[data-active="true"] {
+  background: rgba(250, 248, 244, 0.08);
+}
+
+/* ============================================================
+   Mobile drawer
+   ============================================================ */
+
+.oga-nav__backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 28, 31, 0.48);
+  -webkit-backdrop-filter: blur(2px);
+          backdrop-filter: blur(2px);
+  z-index: 55;
+}
+.oga-nav__backdrop[data-open="true"] {
+  display: block;
+  animation: oga-nav-fade-in 200ms var(--oga-ease);
+}
+@keyframes oga-nav-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.oga-nav__drawer {
+  display: none;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 320px;
+  max-width: 88vw;
+  background: var(--oga-bg);
+  color: var(--oga-fg);
+  border-left: 1px solid var(--oga-border);
+  z-index: 60;
+  transform: translateX(100%);
+  transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  flex-direction: column;
+  padding: 20px 22px 24px;
+  overflow-y: auto;
+}
+.oga-nav__drawer[data-open="true"] {
+  transform: translateX(0);
+  box-shadow: -20px 0 48px -8px rgba(26, 28, 31, 0.35);
+}
+
+.oga-nav__drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.oga-nav__drawer-close {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--oga-border);
+  background: transparent;
+  border-radius: var(--oga-radius-md);
+  cursor: pointer;
+  color: var(--oga-fg);
+}
+
+.oga-nav__drawer-section {
+  border-top: 1px solid var(--oga-border);
+  padding: 18px 0 6px;
+}
+.oga-nav__drawer-section-head {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  padding: 0 4px 12px;
+}
+.oga-nav__drawer-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 4px;
+  font-family: var(--oga-font-sans);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  letter-spacing: -0.012em;
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  border-bottom: 1px solid var(--oga-border);
+  text-align: left;
+  width: 100%;
+}
+.oga-nav__drawer-link[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+.oga-nav__drawer-link-arrow {
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  color: var(--oga-fg-muted);
+  flex-shrink: 0;
+}
+
+/* Product rows in drawer get the icon on the left */
+.oga-nav__drawer-product {
+  padding: 12px 4px;
+}
+.oga-nav__drawer-product-icon {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--oga-fg);
+}
+.oga-nav__drawer-product-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.oga-nav__drawer-product-title {
+  font-size: 16px;
+  color: var(--oga-fg);
+  letter-spacing: -0.012em;
+}
+.oga-nav__drawer-product-sub {
+  font-size: 12px;
+  color: var(--oga-fg-muted);
+  font-weight: 400;
+  letter-spacing: -0.003em;
+  line-height: 1.35;
+}
+
+.oga-nav__drawer-spacer { flex: 1; }
+
+.oga-nav__drawer-foot {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--oga-border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ============================================================
+   Responsive — hamburger appears at <=720px, desktop nav hides
+   ============================================================ */
+
+@media (min-width: 721px) {
+  .oga-nav__burger,
+  .oga-nav__drawer,
+  .oga-nav__backdrop {
+    display: none !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .oga-nav__center,
+  .oga-nav__right {
+    display: none !important;
+  }
+  .oga-nav__burger {
+    display: inline-flex !important;
+  }
+  .oga-nav__drawer {
+    display: flex !important;
+  }
+  /* Backdrop visibility is driven by [data-open="true"] attribute,
+     not the breakpoint — see base rule above. The drawer itself
+     stays display:flex on mobile and slides off-screen via transform
+     when closed, which keeps the slide animation smooth. */
+  .oga-nav__row {
+    padding: 0 20px;
+  }
+}
