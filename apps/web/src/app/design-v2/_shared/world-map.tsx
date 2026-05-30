@@ -79,7 +79,9 @@ function buildWorld(): World {
 }
 
 export function WorldMap() {
-  const world = useMemo(buildWorld, []);
+  /* useMemo wants an inline function expression so react-hooks plugin
+     can analyse deps. buildWorld is pure + deps-free; wrap inline. */
+  const world = useMemo(() => buildWorld(), []);
 
   return (
     <svg
