@@ -2326,6 +2326,37 @@ nav[data-oga-surface="dark"] {
   color: rgba(250, 248, 244, 0.55);
 }
 
+/* CTA row — bridge to /methodology (AR-204 PR 2). The one explicit
+   exception to the "multiple sources" rule: this section IS the
+   bridge to where the 7 are detailed. */
+.oga-coverage__cta-row {
+  display: flex;
+  justify-content: center;
+  margin-top: clamp(24px, 4vh, 36px);
+}
+.oga-coverage__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--oga-font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--oga-white);
+  text-decoration: none;
+  border-bottom: 1px solid var(--oga-white);
+  padding-bottom: 3px;
+  letter-spacing: -0.005em;
+  transition: padding-bottom var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-coverage__cta:hover { padding-bottom: 4px; }
+.oga-coverage__cta-arrow {
+  display: inline-block;
+  transition: transform var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-coverage__cta:hover .oga-coverage__cta-arrow {
+  transform: translateX(2px);
+}
+
 @media (max-width: 680px) {
   .oga-coverage__stats { grid-template-columns: 1fr 1fr; }
   .oga-coverage__stat:nth-child(odd) { border-left: 0; }

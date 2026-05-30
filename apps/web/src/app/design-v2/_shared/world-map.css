@@ -1,0 +1,64 @@
+/* WorldMap — real geography in Plotted brand styling.
+   Hairline strokes (no fills) for the "world in periphery."
+   UK gets filled + stroked + a pulsing double halo + label.
+   currentColor everywhere — inverts on dark surface.
+
+   AR-204 PR 2 / commit 6 (section 5). */
+
+.oga-world-map {
+  width: 100%;
+  height: auto;
+  display: block;
+  color: currentColor;
+}
+
+.oga-world-map__countries {
+  color: currentColor;
+}
+
+.oga-world-map__country {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 0.6;
+  opacity: 0.28;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+/* UK — filled + stroked at full opacity. The focal point. */
+.oga-world-map__uk {
+  fill: currentColor;
+  fill-opacity: 0.88;
+  stroke: currentColor;
+  stroke-width: 0.6;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Double halo around UK centroid — outer breathes, inner stays. */
+.oga-world-map__halo {
+  fill: none;
+  stroke: currentColor;
+  vector-effect: non-scaling-stroke;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.oga-world-map__halo--inner {
+  stroke-width: 0.9;
+  opacity: 0.48;
+}
+.oga-world-map__halo--outer {
+  stroke-width: 0.6;
+  opacity: 0.24;
+  animation: oga-world-map-halo 3.6s ease-in-out infinite;
+}
+@keyframes oga-world-map-halo {
+  0%, 100% { opacity: 0.24; transform: scale(1); }
+  50%      { opacity: 0.42; transform: scale(1.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oga-world-map__halo--outer {
+    animation: none;
+    opacity: 0.32;
+  }
+}
