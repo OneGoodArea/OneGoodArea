@@ -52,7 +52,7 @@ This is not a reskin. **The content is materially wrong everywhere except /docs/
 - **"33,755 LSOAs"** for England — correct (2021), but the page misses that we now hold 24 months of monthly history for prices across 35,606 E&W LSOAs (ADR 0011, 0014).
 - **Intent table presents 5 dimensions per intent** — true for `/v1/report` (the v2 engine). But Scores v3 (ADR 0008) is a separate endpoint where the dimension set per preset is fixed AND callers can pass `weights` (overrides) AND now `preset_id` (saved org preset, ADR 0030). The page doesn't mention any of this.
 - **"Same postcode, same score, every time"** — still true, but now stronger: every `signal_value` and timeseries row carries `source_snapshot_id` + `engine_version` for full lineage (ADR 0002).
-- **OG metadata: "7 live UK data sources"** — should be "deterministic UK area intelligence layer" or similar product-level statement; "7 sources" is implementation detail per the locked rule in `docs/AR-204-app-redesign.md`.
+- **OG metadata: "7 live UK data sources"** — should be "deterministic UK area intelligence layer" or similar product-level statement; "7 sources" is implementation detail per the locked rule in `docs/DESIGN/AR-204-app-redesign.md`.
 
 ### What's missing entirely (and material)
 
@@ -325,7 +325,7 @@ Code uses `oga_` (validateApiKey, 401 messages, /v1/me). Marketing copy still sa
 
 ### 3. "7 sources" rule
 
-Per locked rule in `docs/AR-204-app-redesign.md`: NO "7 sources" anywhere except `/methodology` itself + API responses (`source_snapshots`). Currently `/methodology` mentions it in `<meta description>` for SEO too — needs to move to a product-level statement.
+Per locked rule in `docs/DESIGN/AR-204-app-redesign.md`: NO "7 sources" anywhere except `/methodology` itself + API responses (`source_snapshots`). Currently `/methodology` mentions it in `<meta description>` for SEO too — needs to move to a product-level statement.
 
 ### 4. Brand v3 design vocabulary
 

@@ -30,6 +30,10 @@ This folder is the navigation hub. Pick the door that matches your role.
 - [`DECISIONS/`](./DECISIONS/) — ADRs by category + timeline
 - [`adr/`](./adr/) — the full 35-ADR trail
 
+## I'm working on a design / re-narrative epic
+
+- [`DESIGN/`](./DESIGN/) — living design briefs (AR-204 Brand v3 reskin + per-epic spec packs)
+
 ## I want a searchable index
 
 - [`INDEX.md`](./INDEX.md) — "How do I X?" → which doc to read
