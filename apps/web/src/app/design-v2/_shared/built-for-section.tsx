@@ -60,7 +60,7 @@ const WORKFLOWS: Workflow[] = [
     usedBy: "Specialist insurers · MGAs · InsureTech rating engines",
     icpLabel: "Insurance",
     icpSlug: "insurance",
-    ready: false,
+    ready: true,
     highlight: [[18, 60], [32, 60], [46, 60], [60, 60], [74, 60], [88, 60], [102, 60]],
     caption: "Risk classification + continuous drift",
   },
