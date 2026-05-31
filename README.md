@@ -2,6 +2,7 @@
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/OneGoodArea/OneGoodArea?style=plastic)
 ![Website](https://img.shields.io/website?url=https%3A%2F%2Fwww.onegoodarea.com&style=plastic)
 ![GitHub repo size](https://img.shields.io/github/repo-size/OneGoodArea/OneGoodArea)
+[![SafeSkill 50/100](https://img.shields.io/badge/SafeSkill-50%2F100_Use%20with%20Caution-orange)](https://safeskill.dev/scan/onegoodarea-onegoodarea)
 ![Vercel](https://vercelbadge.vercel.app/api/OneGoodArea/OneGoodArea)
 
 # OneGoodArea
