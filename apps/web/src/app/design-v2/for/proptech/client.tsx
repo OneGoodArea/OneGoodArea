@@ -455,7 +455,7 @@ function FinalCta() {
     >
       <div className="oga-icp__wrap--narrow">
         <h2 id="proptech-cta-title" className="oga-icp-cta__h2">
-          Ship richer area context than your competitor's roadmap.
+          Ship richer area context than your competitor&rsquo;s roadmap.
         </h2>
         <p className="oga-icp-cta__lead">
           One endpoint, one API key, one engine version stamped on every
