@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { SessionProvider } from "@/components/session-provider";
 import { ToastProvider } from "@/components/toast";
 import { PageviewTracker } from "@/components/pageview-tracker";
@@ -54,22 +55,31 @@ export default function RootLayout({
             rel="stylesheet"
             href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap"
           />
+          <meta name="msvalidate.01" content="PENDING" />
+        </head>
+        <body className="antialiased">
           {/* Pre-paint theme restore. Sets <html data-theme> from
               localStorage so the authenticated app-shell renders in the
               right mode without flash. Marketing pages are intentionally
               not theme-able (the Plotted composition is fixed per
               section), so we deliberately do NOT mirror to
-              data-oga-surface on <body> anymore — that previously caused
+              data-oga-surface on <body> anymore: that previously caused
               half-inverted marketing pages when a user had dark saved
-              from the app. (Workstream 3, 2026-05-30) */}
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `(function(){try{var t=localStorage.getItem("aiq-theme");if(t==="dark"||t==="light"){document.documentElement.setAttribute("data-theme",t)}}catch(e){}})()`,
-            }}
-          />
-          <meta name="msvalidate.01" content="PENDING" />
-          <script
+              from the app. (Workstream 3, 2026-05-30)
+
+              Migrated to next/script with strategy="beforeInteractive"
+              on 2026-05-31 to silence the React-19 / Next-16 warning
+              "Scripts inside React components are never executed when
+              rendering on the client." The Script component injects
+              this into the SSR HTML pre-hydration; identical runtime
+              behaviour to the previous inline <script>. */}
+          <Script id="theme-bootstrap" strategy="beforeInteractive">
+            {`(function(){try{var t=localStorage.getItem("aiq-theme");if(t==="dark"||t==="light"){document.documentElement.setAttribute("data-theme",t)}}catch(e){}})()`}
+          </Script>
+          <Script
+            id="ld-webapplication"
             type="application/ld+json"
+            strategy="beforeInteractive"
             dangerouslySetInnerHTML={{
               __html: JSON.stringify({
                 "@context": "https://schema.org",
@@ -89,8 +99,10 @@ export default function RootLayout({
               }),
             }}
           />
-          <script
+          <Script
+            id="ld-organization"
             type="application/ld+json"
+            strategy="beforeInteractive"
             dangerouslySetInnerHTML={{
               __html: JSON.stringify({
                 "@context": "https://schema.org",
@@ -107,8 +119,6 @@ export default function RootLayout({
               }),
             }}
           />
-        </head>
-        <body className="antialiased">
           <ToastProvider>
             {children}
           </ToastProvider>
