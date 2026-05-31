@@ -28,15 +28,15 @@ make container-logs  ENV=local SERVICE=api
 
 | Host OS | Default engine | Why |
 |---|---|---|
-| Linux | **Podman** | Rootless, daemonless, no Docker Desktop licence pressure |
+| Linux | **Podman** if installed, otherwise **Docker** | Prefer rootless Podman, but keep Docker as a fallback when that is the only engine present |
 | macOS | **Docker** | Docker Desktop is the path of least resistance |
 | Windows | **Docker** | Same; works through Docker Desktop or WSL2 |
 
 Override either default on the CLI:
 
 ```bash
-CONTAINER_ENGINE=docker make container-build ENV=prod SERVICE=api    # force Docker on Linux
-CONTAINER_ENGINE=podman make container-build ENV=prod SERVICE=api    # force Podman elsewhere
+CONTAINER_ENGINE=docker make container-build ENV=prod SERVICE=api    # force Docker
+CONTAINER_ENGINE=podman make container-build ENV=prod SERVICE=api    # force Podman
 ```
 
 Both engines honour the `Containerfile` filename, so the image

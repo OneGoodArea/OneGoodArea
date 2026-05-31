@@ -2,7 +2,7 @@
 # This file contains HTTP requests for testing AreaIQ API endpoints
 # Use with VS Code REST Client extension or similar HTTP client
 
-@baseUrl = http://localhost:3000
+@baseUrl = http://localhost:8080
 # For production testing, change to:
 # @baseUrl = https://www.onegoodarea.com
 
@@ -24,14 +24,14 @@
 ### ============================================================================
 
 ### Health Check
-GET {{baseUrl}}/api/health
+GET {{baseUrl}}/health
 
 ### ============================================================================
 ### AUTHENTICATION ENDPOINTS (NextAuth)
 ### ============================================================================
 
 ### Sign In with Credentials
-POST {{baseUrl}}/api/auth/signin/credentials
+POST {{baseUrl}}/auth/signin/credentials
 Content-Type: application/json
 
 {
@@ -41,7 +41,7 @@ Content-Type: application/json
 }
 
 ### Sign Up
-POST {{baseUrl}}/api/auth/register
+POST {{baseUrl}}/auth/register
 Content-Type: application/json
 
 {
@@ -51,7 +51,7 @@ Content-Type: application/json
 }
 
 ### Forgot Password
-POST {{baseUrl}}/api/auth/forgot-password
+POST {{baseUrl}}/auth/forgot-password
 Content-Type: application/json
 
 {
@@ -59,7 +59,7 @@ Content-Type: application/json
 }
 
 ### Reset Password
-POST {{baseUrl}}/api/auth/reset-password
+POST {{baseUrl}}/auth/reset-password
 Content-Type: application/json
 
 {
@@ -68,7 +68,7 @@ Content-Type: application/json
 }
 
 ### Resend Verification Email
-POST {{baseUrl}}/api/auth/resend-verification
+POST {{baseUrl}}/auth/resend-verification
 Content-Type: application/json
 
 {
@@ -80,7 +80,7 @@ Content-Type: application/json
 ### ============================================================================
 
 ### Generate Report - Moving Intent
-POST {{baseUrl}}/api/report
+POST {{baseUrl}}/report
 Content-Type: application/json
 Authorization: Bearer {{sessionToken}}
 
@@ -90,7 +90,7 @@ Authorization: Bearer {{sessionToken}}
 }
 
 ### Generate Report - Business Intent
-POST {{baseUrl}}/api/report
+POST {{baseUrl}}/report
 Content-Type: application/json
 Authorization: Bearer {{sessionToken}}
 
@@ -100,7 +100,7 @@ Authorization: Bearer {{sessionToken}}
 }
 
 ### Generate Report - Investing Intent
-POST {{baseUrl}}/api/report
+POST {{baseUrl}}/report
 Content-Type: application/json
 Authorization: Bearer {{sessionToken}}
 
@@ -110,7 +110,7 @@ Authorization: Bearer {{sessionToken}}
 }
 
 ### Generate Report - Research Intent
-POST {{baseUrl}}/api/report
+POST {{baseUrl}}/report
 Content-Type: application/json
 Authorization: Bearer {{sessionToken}}
 

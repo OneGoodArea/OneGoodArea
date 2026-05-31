@@ -1,10 +1,10 @@
 # build/container.mk -- container runtime abstraction (Plan 008 Commit A).
 #
-# Single source of truth for which OCI engine the Makefile invokes. Linux
-# defaults to Podman (rootless, daemonless, no Docker Desktop license). macOS
-# and Windows default to Docker (Docker Desktop is the path of least resistance
-# there). Both engines honour the "Containerfile" filename, so the image
-# definitions are engine-agnostic.
+# Single source of truth for which OCI engine the Makefile invokes. Prefer
+# Podman on Linux when it is installed; otherwise fall back to Docker if that
+# is the available engine. macOS and Windows default to Docker. Both engines
+# honour the "Containerfile" filename, so the image definitions are
+# engine-agnostic.
 #
 # Override either var on the command line (highest precedence) or via env:
 #   make api-build CONTAINER_ENGINE=docker
@@ -22,11 +22,26 @@ else
   CONTAINER_HOST_OS := $(shell uname -s 2>/dev/null | tr A-Z a-z)
 endif
 
-# Engine default: Podman on Linux, Docker on macOS/Windows.
-ifeq ($(CONTAINER_HOST_OS),linux)
-  CONTAINER_ENGINE ?= podman
-else
-  CONTAINER_ENGINE ?= docker
+# Engine default: prefer Podman on Linux, but fall back to Docker when Podman
+# is unavailable. On macOS/Windows, prefer Docker and fall back to Podman.
+ifeq ($(origin CONTAINER_ENGINE), undefined)
+  ifeq ($(CONTAINER_HOST_OS),linux)
+    ifneq ($(shell command -v podman 2>/dev/null),)
+      CONTAINER_ENGINE := podman
+    else ifneq ($(shell command -v docker 2>/dev/null),)
+      CONTAINER_ENGINE := docker
+    else
+      $(error No container engine found in PATH; install podman or docker, or set CONTAINER_ENGINE)
+    endif
+  else
+    ifneq ($(shell command -v docker 2>/dev/null),)
+      CONTAINER_ENGINE := docker
+    else ifneq ($(shell command -v podman 2>/dev/null),)
+      CONTAINER_ENGINE := podman
+    else
+      $(error No container engine found in PATH; install docker or podman, or set CONTAINER_ENGINE)
+    endif
+  endif
 endif
 
 # Compose binding follows the engine. `docker compose` (v2 plugin) and

@@ -37,8 +37,8 @@ on top.
 
 A single Make include (`build/container.mk`) defines:
 
-- `CONTAINER_ENGINE` -- defaults to `podman` on Linux, `docker` elsewhere;
-  overridable on the CLI or via env.
+- `CONTAINER_ENGINE` -- auto-detects a usable engine (`podman` preferred on
+  Linux, `docker` otherwise); overridable on the CLI or via env.
 - `CONTAINER_COMPOSE` -- derived from the engine (`podman compose` or
   `docker compose`); only used by local/dev targets.
 
@@ -112,8 +112,9 @@ The production lifecycle is direct engine invocations per service.
 
 Positive:
 
-- Same Make commands work on Linux (Podman), macOS, and Windows. No
-  Docker Desktop licence pressure on Linux.
+- Same Make commands work on Linux (Podman when available, Docker as a
+  fallback), macOS, and Windows. No Docker Desktop licence pressure on
+  Linux when Podman is installed.
 - Each service has a clear, independently buildable image + env contract.
 - Prod-mirror smoke testing of `apps/web` or `apps/api` locally is now a
   single Make invocation.
