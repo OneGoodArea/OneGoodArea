@@ -72,6 +72,15 @@ Phrase-search map. Find your question on the left; the doc on the right has the 
 | Where are the .http files? | [`TESTING/http/`](./TESTING/http/) |
 | Where are known bugs tracked? | [`TESTING/bugs/`](./TESTING/bugs/) |
 
+## Design (visual + narrative)
+
+| Question | Doc |
+|---|---|
+| What's the active design brief? | [`DESIGN/AR-204-app-redesign.md`](./DESIGN/AR-204-app-redesign.md) |
+| Where are AR-204 locked decisions? | [`DESIGN/AR-204-app-redesign.md`](./DESIGN/AR-204-app-redesign.md) §6-§11 |
+| What's the methodology / docs reskin context? | [`DESIGN/AR-204-methodology-docs-delta.md`](./DESIGN/AR-204-methodology-docs-delta.md) |
+| What's the product-pages spec pack? | [`DESIGN/AR-204-product-pages-spec-pack.md`](./DESIGN/AR-204-product-pages-spec-pack.md) |
+
 ## See also
 
 - [`GLOSSARY.md`](./GLOSSARY.md) — what's a term mean?

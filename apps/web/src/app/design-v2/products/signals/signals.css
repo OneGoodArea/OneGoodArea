@@ -1,0 +1,1054 @@
+/* /products/signals — Brand v3 (Plotted) — AR-204 product page #1.
+
+   Rewrite v2 after Pedro's feedback ("templated, not custom branded").
+   Centred icon-forward hero, prebaked live specimen, anatomy diagram,
+   7-category constellation, compact endpoint panel, equal-weight ICPs.
+
+   No inline styles. .oga-* tokens. Dot-and-hairline brand vocab used
+   structurally, not just decoratively. */
+
+.oga-sig {
+  min-height: 100vh;
+  background: var(--oga-white);
+  color: var(--oga-fg);
+}
+
+.oga-sig section {
+  padding: var(--oga-9) clamp(20px, 4vw, var(--oga-7));
+}
+
+.oga-sig__wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.oga-sig__wrap--narrow {
+  max-width: 880px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ============================================================
+   Hero — centred, icon-forward
+   ============================================================ */
+
+.oga-sig-hero {
+  text-align: center;
+  padding-top: var(--oga-9);
+  padding-bottom: var(--oga-8);
+}
+
+.oga-sig-hero__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 132px;
+  height: 132px;
+  margin: 0 auto var(--oga-7);
+  color: var(--oga-fg);
+}
+
+.oga-sig-hero__h1 {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(36px, 4.6vw, 56px);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 auto var(--oga-5);
+  max-width: 22ch;
+}
+
+.oga-sig-hero__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  color: var(--oga-fg-muted);
+  margin: 0 auto var(--oga-6);
+  max-width: 60ch;
+}
+
+.oga-sig-hero__ctas {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--oga-3);
+  justify-content: center;
+}
+
+/* ============================================================
+   § 01 — Live specimen (DARK)
+   ============================================================ */
+
+.oga-sig-spec {
+  padding-top: var(--oga-8);
+  padding-bottom: var(--oga-9);
+}
+
+.oga-sig-spec__head {
+  text-align: center;
+  margin-bottom: var(--oga-7);
+}
+
+.oga-sig-spec__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.55);
+  margin-bottom: var(--oga-4);
+}
+
+.oga-sig-spec__eyebrow-mark {
+  width: 16px;
+  height: 1px;
+  background: rgba(250, 248, 244, 0.3);
+}
+
+.oga-sig-spec__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+  color: var(--oga-white);
+  margin: 0 auto var(--oga-3);
+  max-width: 22ch;
+}
+
+.oga-sig-spec__sub {
+  font-family: var(--oga-font-sans);
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.7);
+  margin: 0 auto;
+  max-width: 56ch;
+}
+
+.oga-sig-spec__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--oga-2);
+  justify-content: center;
+  margin: var(--oga-6) auto;
+  max-width: 720px;
+}
+
+.oga-sig-spec__chip {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: rgba(250, 248, 244, 0.7);
+  background: transparent;
+  border: 1px solid rgba(250, 248, 244, 0.22);
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+}
+
+.oga-sig-spec__chip:hover {
+  color: var(--oga-white);
+  border-color: rgba(250, 248, 244, 0.5);
+}
+
+.oga-sig-spec__chip--active {
+  color: var(--oga-ink);
+  background: var(--oga-white);
+  border-color: var(--oga-white);
+}
+
+/* Specimen — corner-ticked card with internal sections */
+.oga-sig-spec__card {
+  position: relative;
+  background: rgba(250, 248, 244, 0.03);
+  border: 1px solid rgba(250, 248, 244, 0.16);
+  max-width: 980px;
+  margin: 0 auto;
+  padding: var(--oga-6);
+}
+
+.oga-sig-spec__tick {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+
+.oga-sig-spec__tick::before,
+.oga-sig-spec__tick::after {
+  content: "";
+  position: absolute;
+  background: rgba(250, 248, 244, 0.5);
+}
+
+.oga-sig-spec__tick--tl { top: 8px; left: 8px; }
+.oga-sig-spec__tick--tr { top: 8px; right: 8px; }
+.oga-sig-spec__tick--bl { bottom: 8px; left: 8px; }
+.oga-sig-spec__tick--br { bottom: 8px; right: 8px; }
+
+.oga-sig-spec__tick--tl::before { top: 0; left: 0; width: 14px; height: 1px; }
+.oga-sig-spec__tick--tl::after  { top: 0; left: 0; width: 1px; height: 14px; }
+.oga-sig-spec__tick--tr::before { top: 0; right: 0; width: 14px; height: 1px; }
+.oga-sig-spec__tick--tr::after  { top: 0; right: 0; width: 1px; height: 14px; }
+.oga-sig-spec__tick--bl::before { bottom: 0; left: 0; width: 14px; height: 1px; }
+.oga-sig-spec__tick--bl::after  { bottom: 0; left: 0; width: 1px; height: 14px; }
+.oga-sig-spec__tick--br::before { bottom: 0; right: 0; width: 14px; height: 1px; }
+.oga-sig-spec__tick--br::after  { bottom: 0; right: 0; width: 1px; height: 14px; }
+
+.oga-sig-spec__resp {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--oga-4);
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.6);
+  padding-bottom: var(--oga-4);
+  border-bottom: 1px solid rgba(250, 248, 244, 0.16);
+  margin-bottom: var(--oga-5);
+}
+
+.oga-sig-spec__resp-method {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  color: var(--oga-white);
+}
+
+.oga-sig-spec__resp-method-verb {
+  background: rgba(120, 200, 130, 0.18);
+  color: rgba(170, 230, 180, 0.95);
+  padding: 3px 8px;
+  border-radius: 2px;
+  font-size: 10.5px;
+}
+
+.oga-sig-spec__resp-toggle {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.7);
+  background: transparent;
+  border: 1px solid rgba(250, 248, 244, 0.22);
+  padding: 5px 10px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.oga-sig-spec__resp-toggle:hover {
+  color: var(--oga-white);
+  border-color: rgba(250, 248, 244, 0.5);
+}
+
+/* Geo resolution rail */
+.oga-sig-spec__geo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--oga-3);
+  padding: var(--oga-4) 0;
+  border-bottom: 1px dashed rgba(250, 248, 244, 0.16);
+  margin-bottom: var(--oga-5);
+}
+
+.oga-sig-spec__geo-step {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: rgba(250, 248, 244, 0.85);
+}
+
+.oga-sig-spec__geo-step-k {
+  color: rgba(250, 248, 244, 0.45);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+.oga-sig-spec__geo-arrow {
+  font-family: var(--oga-font-mono);
+  color: rgba(250, 248, 244, 0.35);
+}
+
+.oga-sig-spec__geo-area-type {
+  margin-left: auto;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.7);
+  border: 1px solid rgba(250, 248, 244, 0.22);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+/* Signal rows */
+.oga-sig-spec__rows {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.oga-sig-spec__row {
+  display: grid;
+  grid-template-columns: 180px 100px 1fr 120px;
+  gap: var(--oga-4);
+  align-items: center;
+  padding: var(--oga-3) 0;
+  border-bottom: 1px solid rgba(250, 248, 244, 0.08);
+}
+
+.oga-sig-spec__row:last-child {
+  border-bottom: none;
+}
+
+@media (max-width: 720px) {
+  .oga-sig-spec__row {
+    grid-template-columns: 1fr;
+    gap: var(--oga-1);
+    padding: var(--oga-4) 0;
+  }
+}
+
+.oga-sig-spec__row-key {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-white);
+}
+
+.oga-sig-spec__row-val {
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
+  color: var(--oga-white);
+  font-weight: 500;
+}
+
+.oga-sig-spec__row-val-unit {
+  margin-left: 4px;
+  color: rgba(250, 248, 244, 0.5);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+/* Percentile bar */
+.oga-sig-spec__bar {
+  position: relative;
+  height: 6px;
+  background: rgba(250, 248, 244, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.oga-sig-spec__bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--oga-white);
+  border-radius: 3px;
+  transition: width 240ms ease;
+}
+
+.oga-sig-spec__bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.oga-sig-spec__bar-meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: rgba(250, 248, 244, 0.5);
+}
+
+.oga-sig-spec__bar-meta-dir {
+  color: rgba(250, 248, 244, 0.45);
+}
+
+/* Confidence + source */
+.oga-sig-spec__row-conf {
+  display: flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: rgba(250, 248, 244, 0.7);
+  justify-content: flex-end;
+}
+
+.oga-sig-spec__conf-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(250, 248, 244, 0.85);
+  flex: 0 0 auto;
+}
+
+.oga-sig-spec__conf-dot--med {
+  background: rgba(250, 248, 244, 0.5);
+}
+
+.oga-sig-spec__conf-dot--low {
+  background: rgba(250, 248, 244, 0.25);
+}
+
+/* Meta footer */
+.oga-sig-spec__meta-foot {
+  margin-top: var(--oga-5);
+  padding-top: var(--oga-4);
+  border-top: 1px solid rgba(250, 248, 244, 0.16);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--oga-5);
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-sig-spec__meta-foot-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+}
+
+.oga-sig-spec__meta-foot-k {
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.4);
+}
+
+.oga-sig-spec__meta-foot-v {
+  color: rgba(250, 248, 244, 0.85);
+}
+
+/* JSON view */
+.oga-sig-spec__json {
+  font-family: var(--oga-font-mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: rgba(250, 248, 244, 0.9);
+  white-space: pre;
+  overflow-x: auto;
+  margin: 0;
+  padding: var(--oga-3) 0 0;
+}
+
+.oga-sig-spec__note {
+  text-align: center;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: rgba(250, 248, 244, 0.45);
+  margin: var(--oga-5) auto 0;
+  max-width: 60ch;
+}
+
+/* Fallback row — softer rendering when no store coverage */
+.oga-sig-spec__row--fallback .oga-sig-spec__row-key {
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-sig-spec__row-val--fallback {
+  font-style: italic;
+  font-weight: 400;
+  color: rgba(250, 248, 244, 0.65);
+  font-size: 12px;
+}
+
+.oga-sig-spec__bar-empty {
+  display: flex;
+  gap: 4px;
+  height: 6px;
+  align-items: center;
+}
+
+.oga-sig-spec__bar-empty-mark {
+  flex: 1;
+  height: 1px;
+  background: rgba(250, 248, 244, 0.18);
+}
+
+/* Legend — explains fetch_mode + fallback rows */
+.oga-sig-spec__legend {
+  max-width: 980px;
+  margin: var(--oga-6) auto 0;
+  padding: var(--oga-5);
+  border: 1px solid rgba(250, 248, 244, 0.14);
+  background: rgba(250, 248, 244, 0.02);
+}
+
+.oga-sig-spec__legend-title {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.55);
+  margin: 0 0 var(--oga-3);
+}
+
+.oga-sig-spec__legend-rows {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: var(--oga-3) var(--oga-5);
+  margin: 0;
+  align-items: baseline;
+}
+
+@media (max-width: 720px) {
+  .oga-sig-spec__legend-rows {
+    grid-template-columns: 1fr;
+    gap: var(--oga-1);
+  }
+  .oga-sig-spec__legend-rows > dt {
+    margin-top: var(--oga-3);
+  }
+}
+
+.oga-sig-spec__legend-rows dt {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-white);
+  margin: 0;
+}
+
+.oga-sig-spec__legend-rows dt code {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-white);
+  background: rgba(250, 248, 244, 0.08);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+.oga-sig-spec__legend-rows dd {
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.75);
+  margin: 0;
+}
+
+.oga-sig-spec__legend-rows dd strong {
+  color: var(--oga-white);
+  font-weight: 500;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+}
+
+/* ============================================================
+   § 02 — Anatomy of a Signal (cream)
+   ============================================================ */
+
+.oga-sig-anatomy {
+  padding-top: var(--oga-9);
+}
+
+.oga-sig-anatomy__head {
+  text-align: center;
+  margin-bottom: var(--oga-8);
+}
+
+.oga-sig-anatomy__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-3);
+}
+
+.oga-sig-anatomy__eyebrow-mark {
+  width: 16px;
+  height: 1px;
+  background: var(--oga-border);
+}
+
+.oga-sig-anatomy__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 auto var(--oga-3);
+  max-width: 22ch;
+}
+
+.oga-sig-anatomy__sub {
+  font-family: var(--oga-font-sans);
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0 auto;
+  max-width: 56ch;
+}
+
+.oga-sig-anatomy__diagram {
+  position: relative;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--oga-6);
+}
+
+.oga-sig-anatomy__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 580px;
+}
+
+/* ============================================================
+   § 03 — The 7 categories (DARK)
+   ============================================================ */
+
+.oga-sig-cats {
+  padding-top: var(--oga-9);
+  padding-bottom: var(--oga-9);
+}
+
+.oga-sig-cats__head {
+  text-align: center;
+  margin-bottom: var(--oga-8);
+}
+
+.oga-sig-cats__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+  color: var(--oga-white);
+  margin: 0 auto var(--oga-3);
+  max-width: 22ch;
+}
+
+.oga-sig-cats__sub {
+  font-family: var(--oga-font-sans);
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.7);
+  margin: 0 auto;
+  max-width: 56ch;
+}
+
+.oga-sig-cats__stage {
+  position: relative;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.oga-sig-cats__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.oga-sig-cats__list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--oga-3) var(--oga-4);
+  list-style: none;
+  padding: 0;
+  margin: var(--oga-7) auto 0;
+  max-width: 1000px;
+}
+
+@media (max-width: 720px) {
+  .oga-sig-cats__list { grid-template-columns: repeat(2, 1fr); }
+}
+
+.oga-sig-cats__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-1);
+  padding: var(--oga-3) 0;
+  border-top: 1px solid rgba(250, 248, 244, 0.16);
+}
+
+.oga-sig-cats__item-name {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-white);
+}
+
+.oga-sig-cats__item-desc {
+  font-family: var(--oga-font-sans);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.7);
+  margin: 0;
+}
+
+/* ============================================================
+   § 04 — Endpoints (cream, compact panel)
+   ============================================================ */
+
+.oga-sig-ep {
+  padding-top: var(--oga-9);
+}
+
+.oga-sig-ep__head {
+  text-align: center;
+  margin-bottom: var(--oga-7);
+}
+
+.oga-sig-ep__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 auto var(--oga-3);
+  max-width: 24ch;
+}
+
+.oga-sig-ep__sub {
+  font-family: var(--oga-font-sans);
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0 auto;
+  max-width: 56ch;
+}
+
+.oga-sig-ep__panel {
+  max-width: 1000px;
+  margin: 0 auto;
+  border: 1px solid var(--oga-border);
+  background: var(--oga-white);
+}
+
+.oga-sig-ep__tabs {
+  display: flex;
+  border-bottom: 1px solid var(--oga-border);
+}
+
+.oga-sig-ep__tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--oga-border);
+  padding: var(--oga-4) var(--oga-3);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--oga-font-mono);
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.oga-sig-ep__tab:last-child {
+  border-right: none;
+}
+
+.oga-sig-ep__tab:hover {
+  background: var(--oga-canvas);
+}
+
+.oga-sig-ep__tab--active {
+  background: var(--oga-ink);
+  color: var(--oga-white);
+}
+
+.oga-sig-ep__tab-verb {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--oga-status-green);
+  margin-bottom: 4px;
+}
+
+.oga-sig-ep__tab--active .oga-sig-ep__tab-verb {
+  color: rgba(170, 230, 180, 0.95);
+}
+
+.oga-sig-ep__tab-path {
+  display: block;
+  font-size: 13px;
+  color: var(--oga-fg);
+}
+
+.oga-sig-ep__tab--active .oga-sig-ep__tab-path {
+  color: var(--oga-white);
+}
+
+.oga-sig-ep__body {
+  padding: var(--oga-6);
+}
+
+.oga-sig-ep__what {
+  font-family: var(--oga-font-sans);
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-5);
+}
+
+.oga-sig-ep__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--oga-6);
+}
+
+@media (max-width: 720px) {
+  .oga-sig-ep__grid { grid-template-columns: 1fr; gap: var(--oga-5); }
+}
+
+.oga-sig-ep__col-title {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-3);
+}
+
+.oga-sig-ep__params {
+  display: grid;
+  gap: var(--oga-3);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.oga-sig-ep__params li {
+  padding: var(--oga-2) 0;
+  border-bottom: 1px solid var(--oga-border-dim);
+}
+
+.oga-sig-ep__params li:last-child {
+  border-bottom: none;
+}
+
+.oga-sig-ep__params-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--oga-2);
+}
+
+.oga-sig-ep__params-name {
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
+  color: var(--oga-fg);
+  font-weight: 500;
+}
+
+.oga-sig-ep__params-type {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  color: var(--oga-fg-muted);
+}
+
+.oga-sig-ep__params-req {
+  font-family: var(--oga-font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--oga-status-amber);
+}
+
+.oga-sig-ep__params-desc {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+  margin: 4px 0 0;
+}
+
+.oga-sig-ep__response {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-4);
+}
+
+.oga-sig-ep__codes {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--oga-1) var(--oga-3);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  margin: 0;
+}
+
+.oga-sig-ep__codes dt {
+  color: var(--oga-fg);
+  font-weight: 500;
+}
+
+.oga-sig-ep__codes dd {
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+/* ============================================================
+   § 05 — Built for (cream, equal-weight ICPs)
+   ============================================================ */
+
+.oga-sig-icps {
+  padding-top: var(--oga-9);
+}
+
+.oga-sig-icps__head {
+  text-align: center;
+  margin-bottom: var(--oga-8);
+}
+
+.oga-sig-icps__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 auto var(--oga-3);
+  max-width: 24ch;
+}
+
+.oga-sig-icps__sub {
+  font-family: var(--oga-font-sans);
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0 auto;
+  max-width: 56ch;
+}
+
+.oga-sig-icps__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 1080px;
+  margin: 0 auto;
+  border-top: 1px solid var(--oga-border);
+}
+
+.oga-sig-icp {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: var(--oga-5) var(--oga-6);
+  padding: var(--oga-7) var(--oga-3);
+  border-bottom: 1px solid var(--oga-border);
+  align-items: start;
+}
+
+@media (max-width: 880px) {
+  .oga-sig-icp {
+    grid-template-columns: 1fr;
+    gap: var(--oga-4);
+    padding: var(--oga-6) var(--oga-2);
+  }
+}
+
+.oga-sig-icp__viz {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.oga-sig-icp__viz-svg {
+  width: 100%;
+  max-width: 120px;
+  height: auto;
+  color: var(--oga-fg);
+}
+
+.oga-sig-icp__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+}
+
+.oga-sig-icp__name {
+  font-family: var(--oga-font-sans);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.oga-sig-icp__row-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+.oga-sig-icp__row-text {
+  font-family: var(--oga-font-sans);
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--oga-fg);
+  margin: 4px 0 0;
+}
+
+.oga-sig-icp__sales {
+  margin-top: var(--oga-2);
+  padding: var(--oga-3) var(--oga-4);
+  background: var(--oga-canvas);
+  border-left: 2px solid var(--oga-fg);
+  font-family: var(--oga-font-sans);
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--oga-fg);
+}
+
+/* ============================================================
+   Final CTA (DARK)
+   ============================================================ */
+
+.oga-sig-cta {
+  text-align: center;
+}
+
+.oga-sig-cta__h2 {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.5vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.018em;
+  font-weight: 500;
+  color: var(--oga-white);
+  margin: 0 auto var(--oga-4);
+  max-width: 22ch;
+}
+
+.oga-sig-cta__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  color: rgba(250, 248, 244, 0.68);
+  margin: 0 auto var(--oga-6);
+  max-width: 56ch;
+}
+
+.oga-sig-cta__ctas {
+  display: inline-flex;
+  gap: var(--oga-3);
+  flex-wrap: wrap;
+  justify-content: center;
+}
