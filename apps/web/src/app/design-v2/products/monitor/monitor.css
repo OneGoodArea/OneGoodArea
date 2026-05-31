@@ -168,7 +168,8 @@
   border-color: rgba(250, 248, 244, 0.45);
 }
 
-.oga-mon-spec__knob-chip--active {
+.oga-mon-spec__knob-chip--active,
+.oga-mon-spec__knob-chip--active:hover {
   color: var(--oga-ink);
   background: var(--oga-white);
   border-color: var(--oga-white);

@@ -79,7 +79,7 @@ const PRODUCTS: Product[] = [
       "Plan echoed on every response for full auditability",
     ],
     icon: IntelligenceIcon,
-    ready: false,
+    ready: true,
   },
 ];
 
