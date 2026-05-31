@@ -241,7 +241,7 @@ function SectionSpecimen() {
           </h2>
           <p className="oga-mon-spec__sub">
             Turn the knobs and watch material moves drop in or out. The
-            baseline picks what "from" means; the threshold sets what counts
+            baseline picks what &ldquo;from&rdquo; means; the threshold sets what counts
             as material; the sample gate keeps a 2-sale swing from earning an
             alert.
           </p>
