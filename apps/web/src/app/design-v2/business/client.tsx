@@ -29,7 +29,7 @@ type ProductSlug = (typeof PRODUCTS)[number]["slug"];
 /* ICPs whose /for/<anchor> page exists today. The "See more for <ICP>"
    CTA on each section flips from a disabled "Soon" pill to a live
    link as each ICP page lands. Add anchors here as new ICP pages ship. */
-const READY_ICPS = new Set<string>(["proptech"]);
+const READY_ICPS = new Set<string>(["proptech", "lenders"]);
 
 /* ============================================================
    ICP DEFINITIONS
@@ -118,7 +118,7 @@ X-OneGoodArea-Signature: t=...,v1=<sha256>
   },
   {
     num: "03",
-    anchor: "lender",
+    anchor: "lenders",
     shortName: "Lender",
     fullName: "Lenders",
     tagline:
