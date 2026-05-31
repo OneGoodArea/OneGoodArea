@@ -37,7 +37,7 @@ const PRODUCTS: Product[] = [
       "Source lineage on every value",
     ],
     icon: SignalsIcon,
-    ready: false,
+    ready: true,
   },
   {
     slug: "scores",

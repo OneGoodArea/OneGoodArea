@@ -30,7 +30,7 @@ interface ProductLink {
 }
 
 const PRODUCTS: ProductLink[] = [
-  { label: "Signals",      href: "/products/signals",      ready: false },
+  { label: "Signals",      href: "/products/signals",      ready: true  },
   { label: "Scores",       href: "/products/scores",       ready: false },
   { label: "Monitor",      href: "/products/monitor",      ready: false },
   { label: "Intelligence", href: "/products/intelligence", ready: false },
