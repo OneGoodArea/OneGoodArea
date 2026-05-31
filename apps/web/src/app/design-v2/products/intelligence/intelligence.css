@@ -1,41 +1,42 @@
-/* /products/scores — Brand v3 (Plotted) — AR-204 product page #2.
+/* /products/intelligence — Brand v3 (Plotted) — AR-204 product page #4.
 
-   Pattern parity with /products/signals, Scores-specific visual
-   treatment per section. Zero inline styles. */
+   Flagship. Pattern parity w/ /products/{signals,scores,monitor},
+   Intelligence-specific bespoke treatment per section. Zero inline
+   styles. */
 
-.oga-scr {
+.oga-int {
   min-height: 100vh;
   background: var(--oga-white);
   color: var(--oga-fg);
 }
 
-.oga-scr section {
+.oga-int section {
   padding: var(--oga-9) clamp(20px, 4vw, var(--oga-7));
 }
 
-.oga-scr__wrap {
+.oga-int__wrap {
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
 }
 
-.oga-scr__wrap--narrow {
+.oga-int__wrap--narrow {
   max-width: 880px;
   margin: 0 auto;
   width: 100%;
 }
 
 /* ============================================================
-   Hero — centred, icon-forward (ScoresIcon)
+   Hero
    ============================================================ */
 
-.oga-scr-hero {
+.oga-int-hero {
   text-align: center;
   padding-top: var(--oga-9);
   padding-bottom: var(--oga-8);
 }
 
-.oga-scr-hero__icon {
+.oga-int-hero__icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -45,7 +46,7 @@
   color: var(--oga-fg);
 }
 
-.oga-scr-hero__h1 {
+.oga-int-hero__h1 {
   font-family: var(--oga-font-sans);
   font-size: clamp(36px, 4.6vw, 56px);
   line-height: 1.04;
@@ -56,16 +57,16 @@
   max-width: 22ch;
 }
 
-.oga-scr-hero__lead {
+.oga-int-hero__lead {
   font-family: var(--oga-font-sans);
   font-size: var(--oga-fs-lead);
   line-height: var(--oga-lh-snug);
   color: var(--oga-fg-muted);
   margin: 0 auto var(--oga-6);
-  max-width: 60ch;
+  max-width: 62ch;
 }
 
-.oga-scr-hero__ctas {
+.oga-int-hero__ctas {
   display: inline-flex;
   flex-wrap: wrap;
   gap: var(--oga-3);
@@ -73,20 +74,20 @@
 }
 
 /* ============================================================
-   § 01 — Live specimen (DARK) — preset × postcode = score
+   § 01 — Live specimen (DARK) — NL question → typed plan → results
    ============================================================ */
 
-.oga-scr-spec {
+.oga-int-spec {
   padding-top: var(--oga-8);
   padding-bottom: var(--oga-9);
 }
 
-.oga-scr-spec__head {
+.oga-int-spec__head {
   text-align: center;
   margin-bottom: var(--oga-7);
 }
 
-.oga-scr-spec__eyebrow {
+.oga-int-spec__eyebrow {
   display: inline-flex;
   align-items: center;
   gap: var(--oga-2);
@@ -98,13 +99,13 @@
   margin-bottom: var(--oga-4);
 }
 
-.oga-scr-spec__eyebrow-mark {
+.oga-int-spec__eyebrow-mark {
   width: 16px;
   height: 1px;
   background: rgba(250, 248, 244, 0.3);
 }
 
-.oga-scr-spec__title {
+.oga-int-spec__title {
   font-family: var(--oga-font-sans);
   font-size: clamp(26px, 3vw, 36px);
   line-height: 1.1;
@@ -112,108 +113,94 @@
   font-weight: 500;
   color: var(--oga-white);
   margin: 0 auto var(--oga-3);
-  max-width: 22ch;
+  max-width: 30ch;
 }
 
-.oga-scr-spec__sub {
+.oga-int-spec__sub {
   font-family: var(--oga-font-sans);
   font-size: 15.5px;
   line-height: 1.55;
   color: rgba(250, 248, 244, 0.7);
   margin: 0 auto;
-  max-width: 56ch;
+  max-width: 60ch;
 }
 
-/* Picker rows — two axes (postcode + preset) */
-.oga-scr-spec__pickers {
+/* NL question selector */
+.oga-int-spec__questions {
   max-width: 980px;
   margin: var(--oga-6) auto;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--oga-4);
-}
-
-.oga-scr-spec__picker {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: var(--oga-3);
+  gap: var(--oga-2);
   justify-content: center;
 }
 
-.oga-scr-spec__picker-label {
-  font-family: var(--oga-font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(250, 248, 244, 0.5);
-}
-
-.oga-scr-spec__chip {
-  font-family: var(--oga-font-mono);
-  font-size: 12px;
-  letter-spacing: 0.04em;
-  color: rgba(250, 248, 244, 0.7);
+.oga-int-spec__question {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  color: rgba(250, 248, 244, 0.75);
   background: transparent;
-  border: 1px solid rgba(250, 248, 244, 0.22);
-  padding: 7px 12px;
+  border: 1px solid rgba(250, 248, 244, 0.2);
+  padding: 8px 14px;
   border-radius: 999px;
   cursor: pointer;
-  transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+  text-align: left;
+  max-width: 360px;
+  line-height: 1.4;
+  transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
 }
 
-.oga-scr-spec__chip:hover {
+.oga-int-spec__question:hover {
   color: var(--oga-white);
   border-color: rgba(250, 248, 244, 0.5);
 }
 
-.oga-scr-spec__chip--active,
-.oga-scr-spec__chip--active:hover {
+.oga-int-spec__question--active,
+.oga-int-spec__question--active:hover {
   color: var(--oga-ink);
   background: var(--oga-white);
   border-color: var(--oga-white);
 }
 
-/* Specimen card — corner ticks + score panel + dim breakdown */
-.oga-scr-spec__card {
+/* Specimen card — two-pane layout */
+.oga-int-spec__card {
   position: relative;
   background: rgba(250, 248, 244, 0.03);
   border: 1px solid rgba(250, 248, 244, 0.16);
-  max-width: 980px;
+  max-width: 1080px;
   margin: 0 auto;
   padding: var(--oga-6);
 }
 
-.oga-scr-spec__tick {
+.oga-int-spec__tick {
   position: absolute;
   width: 14px;
   height: 14px;
   pointer-events: none;
 }
 
-.oga-scr-spec__tick::before,
-.oga-scr-spec__tick::after {
+.oga-int-spec__tick::before,
+.oga-int-spec__tick::after {
   content: "";
   position: absolute;
   background: rgba(250, 248, 244, 0.5);
 }
 
-.oga-scr-spec__tick--tl { top: 8px; left: 8px; }
-.oga-scr-spec__tick--tr { top: 8px; right: 8px; }
-.oga-scr-spec__tick--bl { bottom: 8px; left: 8px; }
-.oga-scr-spec__tick--br { bottom: 8px; right: 8px; }
+.oga-int-spec__tick--tl { top: 8px; left: 8px; }
+.oga-int-spec__tick--tr { top: 8px; right: 8px; }
+.oga-int-spec__tick--bl { bottom: 8px; left: 8px; }
+.oga-int-spec__tick--br { bottom: 8px; right: 8px; }
 
-.oga-scr-spec__tick--tl::before { top: 0; left: 0; width: 14px; height: 1px; }
-.oga-scr-spec__tick--tl::after  { top: 0; left: 0; width: 1px; height: 14px; }
-.oga-scr-spec__tick--tr::before { top: 0; right: 0; width: 14px; height: 1px; }
-.oga-scr-spec__tick--tr::after  { top: 0; right: 0; width: 1px; height: 14px; }
-.oga-scr-spec__tick--bl::before { bottom: 0; left: 0; width: 14px; height: 1px; }
-.oga-scr-spec__tick--bl::after  { bottom: 0; left: 0; width: 1px; height: 14px; }
-.oga-scr-spec__tick--br::before { bottom: 0; right: 0; width: 14px; height: 1px; }
-.oga-scr-spec__tick--br::after  { bottom: 0; right: 0; width: 1px; height: 14px; }
+.oga-int-spec__tick--tl::before { top: 0; left: 0; width: 14px; height: 1px; }
+.oga-int-spec__tick--tl::after  { top: 0; left: 0; width: 1px; height: 14px; }
+.oga-int-spec__tick--tr::before { top: 0; right: 0; width: 14px; height: 1px; }
+.oga-int-spec__tick--tr::after  { top: 0; right: 0; width: 1px; height: 14px; }
+.oga-int-spec__tick--bl::before { bottom: 0; left: 0; width: 14px; height: 1px; }
+.oga-int-spec__tick--bl::after  { bottom: 0; left: 0; width: 1px; height: 14px; }
+.oga-int-spec__tick--br::before { bottom: 0; right: 0; width: 14px; height: 1px; }
+.oga-int-spec__tick--br::after  { bottom: 0; right: 0; width: 1px; height: 14px; }
 
-/* Top bar — verb + path + JSON toggle */
-.oga-scr-spec__resp {
+.oga-int-spec__resp {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -228,14 +215,14 @@
   margin-bottom: var(--oga-5);
 }
 
-.oga-scr-spec__resp-method {
+.oga-int-spec__resp-method {
   display: inline-flex;
   align-items: center;
   gap: var(--oga-2);
   color: var(--oga-white);
 }
 
-.oga-scr-spec__resp-method-verb {
+.oga-int-spec__resp-method-verb {
   background: rgba(230, 180, 120, 0.18);
   color: rgba(255, 220, 170, 0.95);
   padding: 3px 8px;
@@ -243,232 +230,187 @@
   font-size: 10.5px;
 }
 
-.oga-scr-spec__resp-toggle {
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(250, 248, 244, 0.7);
-  background: transparent;
-  border: 1px solid rgba(250, 248, 244, 0.22);
-  padding: 5px 10px;
-  border-radius: 2px;
-  cursor: pointer;
-}
-
-.oga-scr-spec__resp-toggle:hover {
-  color: var(--oga-white);
-  border-color: rgba(250, 248, 244, 0.5);
-}
-
-/* Big score panel */
-.oga-scr-spec__score-panel {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap: var(--oga-7);
+.oga-int-spec__resp-source {
+  display: inline-flex;
   align-items: center;
-  margin-bottom: var(--oga-6);
-  padding-bottom: var(--oga-6);
-  border-bottom: 1px solid rgba(250, 248, 244, 0.16);
-}
-
-@media (max-width: 720px) {
-  .oga-scr-spec__score-panel { grid-template-columns: 1fr; gap: var(--oga-5); }
-}
-
-.oga-scr-spec__score-number {
-  display: flex;
-  align-items: baseline;
-  gap: var(--oga-3);
-}
-
-.oga-scr-spec__score-number-val {
-  font-family: var(--oga-font-sans);
-  font-size: clamp(72px, 10vw, 120px);
-  line-height: 1;
-  letter-spacing: -0.04em;
-  font-weight: 500;
-  color: var(--oga-white);
-}
-
-.oga-scr-spec__score-number-denom {
-  font-family: var(--oga-font-mono);
-  font-size: 16px;
-  color: rgba(250, 248, 244, 0.45);
-}
-
-.oga-scr-spec__score-meta {
-  display: grid;
-  grid-template-columns: 1fr;
   gap: var(--oga-2);
   font-family: var(--oga-font-mono);
-  font-size: 12px;
-}
-
-.oga-scr-spec__score-meta-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: var(--oga-3);
-  padding: var(--oga-2) 0;
-  border-bottom: 1px solid rgba(250, 248, 244, 0.08);
-}
-
-.oga-scr-spec__score-meta-row:last-child {
-  border-bottom: none;
-}
-
-.oga-scr-spec__score-meta-k {
-  color: rgba(250, 248, 244, 0.45);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.7);
 }
 
-.oga-scr-spec__score-meta-v {
+.oga-int-spec__resp-source-mode {
+  background: rgba(250, 248, 244, 0.08);
+  padding: 3px 8px;
+  border-radius: 2px;
   color: var(--oga-white);
-  font-weight: 500;
 }
 
-/* Dimension breakdown rows */
-.oga-scr-spec__dims-title {
+/* NL question shown */
+.oga-int-spec__question-shown {
+  padding: var(--oga-3) var(--oga-4);
+  background: rgba(250, 248, 244, 0.04);
+  border-left: 2px solid rgba(250, 248, 244, 0.45);
+  margin-bottom: var(--oga-5);
+  font-family: var(--oga-font-sans);
+  font-size: 15px;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--oga-white);
+}
+
+.oga-int-spec__question-shown-k {
+  font-style: normal;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.5);
+  display: block;
+  margin-bottom: var(--oga-2);
+}
+
+/* Two-pane layout: plan emitted (left) + results (right) */
+.oga-int-spec__panes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: var(--oga-5);
+}
+
+@media (max-width: 880px) {
+  .oga-int-spec__panes { grid-template-columns: 1fr; }
+}
+
+.oga-int-spec__pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+  min-width: 0;
+}
+
+.oga-int-spec__pane-title {
   font-family: var(--oga-font-mono);
   font-size: 10.5px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: rgba(250, 248, 244, 0.55);
-  margin: 0 0 var(--oga-4);
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--oga-2);
 }
 
-.oga-scr-spec__dims {
+.oga-int-spec__pane-title-tag {
+  font-size: 9.5px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  letter-spacing: 0.18em;
+  background: rgba(250, 248, 244, 0.08);
+  color: rgba(250, 248, 244, 0.7);
+}
+
+.oga-int-spec__plan-pre {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  line-height: 1.65;
+  color: rgba(250, 248, 244, 0.9);
+  background: rgba(250, 248, 244, 0.04);
+  border: 1px solid rgba(250, 248, 244, 0.1);
+  padding: var(--oga-4);
+  white-space: pre;
+  overflow-x: auto;
+  margin: 0;
+  min-height: 100%;
+}
+
+/* Results pane */
+.oga-int-spec__results {
+  border: 1px solid rgba(250, 248, 244, 0.1);
+  background: rgba(250, 248, 244, 0.02);
+  padding: var(--oga-4);
+}
+
+.oga-int-spec__result-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--oga-2) var(--oga-4);
+  margin-bottom: var(--oga-3);
+  padding-bottom: var(--oga-3);
+  border-bottom: 1px solid rgba(250, 248, 244, 0.1);
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: rgba(250, 248, 244, 0.65);
+}
+
+.oga-int-spec__result-meta-k {
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.45);
+  font-size: 10px;
+}
+
+.oga-int-spec__result-meta-v {
+  color: var(--oga-white);
+  margin-left: 4px;
+}
+
+.oga-int-spec__rows {
   display: grid;
   grid-template-columns: 1fr;
   gap: 0;
 }
 
-.oga-scr-spec__dim {
+.oga-int-spec__row {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) 60px 1fr 80px;
-  gap: var(--oga-4);
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 80px;
+  gap: var(--oga-3);
   align-items: center;
   padding: var(--oga-3) 0;
   border-bottom: 1px solid rgba(250, 248, 244, 0.08);
 }
 
-.oga-scr-spec__dim:last-child {
+.oga-int-spec__row:last-child {
   border-bottom: none;
 }
 
 @media (max-width: 720px) {
-  .oga-scr-spec__dim {
+  .oga-int-spec__row {
     grid-template-columns: 1fr;
     gap: var(--oga-1);
-    padding: var(--oga-4) 0;
+    padding: var(--oga-3) 0;
   }
 }
 
-.oga-scr-spec__dim-name {
-  font-family: var(--oga-font-sans);
-  font-size: 13.5px;
+.oga-int-spec__row-id {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
   color: var(--oga-white);
 }
 
-.oga-scr-spec__dim-name-slug {
-  display: block;
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  color: rgba(250, 248, 244, 0.45);
-  margin-top: 2px;
+.oga-int-spec__row-label {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  color: rgba(250, 248, 244, 0.78);
 }
 
-.oga-scr-spec__dim-val {
+.oga-int-spec__row-value {
   font-family: var(--oga-font-mono);
-  font-size: 16px;
+  font-size: 13px;
   color: var(--oga-white);
   font-weight: 500;
   text-align: right;
 }
 
-.oga-scr-spec__dim-bar-row {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+/* Replay-as-curl strip */
+.oga-int-spec__replay {
+  margin-top: var(--oga-5);
+  padding-top: var(--oga-4);
+  border-top: 1px solid rgba(250, 248, 244, 0.12);
 }
 
-.oga-scr-spec__dim-bar {
-  position: relative;
-  height: 4px;
-  background: rgba(250, 248, 244, 0.08);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.oga-scr-spec__dim-bar-fill {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  background: var(--oga-white);
-  border-radius: 2px;
-  transition: width 240ms ease;
-}
-
-.oga-scr-spec__dim-bar-meta {
-  display: flex;
-  justify-content: space-between;
-  font-family: var(--oga-font-mono);
-  font-size: 10.5px;
-  color: rgba(250, 248, 244, 0.55);
-}
-
-.oga-scr-spec__dim-conf {
-  display: flex;
-  align-items: center;
-  gap: var(--oga-2);
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  color: rgba(250, 248, 244, 0.7);
-  justify-content: flex-end;
-}
-
-.oga-scr-spec__conf-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(250, 248, 244, 0.85);
-  flex: 0 0 auto;
-}
-
-.oga-scr-spec__conf-dot--med {
-  background: rgba(250, 248, 244, 0.5);
-}
-
-.oga-scr-spec__conf-dot--low {
-  background: rgba(250, 248, 244, 0.25);
-}
-
-/* JSON view */
-.oga-scr-spec__json {
-  font-family: var(--oga-font-mono);
-  font-size: 12.5px;
-  line-height: 1.7;
-  color: rgba(250, 248, 244, 0.9);
-  white-space: pre;
-  overflow-x: auto;
-  margin: 0;
-  padding: var(--oga-3) 0 0;
-}
-
-/* Legend */
-.oga-scr-spec__legend {
-  max-width: 980px;
-  margin: var(--oga-6) auto 0;
-  padding: var(--oga-5);
-  border: 1px solid rgba(250, 248, 244, 0.14);
-  background: rgba(250, 248, 244, 0.02);
-}
-
-.oga-scr-spec__legend-title {
+.oga-int-spec__replay-title {
   font-family: var(--oga-font-mono);
   font-size: 10.5px;
   letter-spacing: 0.22em;
@@ -477,32 +419,62 @@
   margin: 0 0 var(--oga-3);
 }
 
-.oga-scr-spec__legend-rows {
+.oga-int-spec__replay-pre {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  line-height: 1.65;
+  color: rgba(250, 248, 244, 0.85);
+  background: rgba(250, 248, 244, 0.04);
+  padding: var(--oga-4);
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+}
+
+/* Legend */
+.oga-int-spec__legend {
+  max-width: 1080px;
+  margin: var(--oga-6) auto 0;
+  padding: var(--oga-5);
+  border: 1px solid rgba(250, 248, 244, 0.14);
+  background: rgba(250, 248, 244, 0.02);
+}
+
+.oga-int-spec__legend-title {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.55);
+  margin: 0 0 var(--oga-3);
+}
+
+.oga-int-spec__legend-rows {
   display: grid;
-  grid-template-columns: 160px minmax(0, 1fr);
+  grid-template-columns: 180px minmax(0, 1fr);
   gap: var(--oga-3) var(--oga-5);
   margin: 0;
   align-items: baseline;
 }
 
 @media (max-width: 720px) {
-  .oga-scr-spec__legend-rows {
+  .oga-int-spec__legend-rows {
     grid-template-columns: 1fr;
     gap: var(--oga-1);
   }
-  .oga-scr-spec__legend-rows > dt {
+  .oga-int-spec__legend-rows > dt {
     margin-top: var(--oga-3);
   }
 }
 
-.oga-scr-spec__legend-rows dt {
+.oga-int-spec__legend-rows dt {
   font-family: var(--oga-font-mono);
   font-size: 12px;
   color: var(--oga-white);
   margin: 0;
 }
 
-.oga-scr-spec__legend-rows dt code {
+.oga-int-spec__legend-rows dt code {
   font-family: var(--oga-font-mono);
   font-size: 12px;
   color: var(--oga-white);
@@ -511,7 +483,7 @@
   border-radius: 2px;
 }
 
-.oga-scr-spec__legend-rows dd {
+.oga-int-spec__legend-rows dd {
   font-family: var(--oga-font-sans);
   font-size: 13.5px;
   line-height: 1.55;
@@ -519,14 +491,14 @@
   margin: 0;
 }
 
-.oga-scr-spec__legend-rows dd strong {
+.oga-int-spec__legend-rows dd strong {
   color: var(--oga-white);
   font-weight: 500;
   font-family: var(--oga-font-mono);
   font-size: 12px;
 }
 
-.oga-scr-spec__note {
+.oga-int-spec__note {
   text-align: center;
   font-family: var(--oga-font-mono);
   font-size: 11px;
@@ -537,19 +509,19 @@
 }
 
 /* ============================================================
-   § 02 — The four presets (cream) — bespoke "4 columns of 5 dims"
+   § 02 — Six plan ops (cream) — the typed grammar
    ============================================================ */
 
-.oga-scr-presets {
+.oga-int-ops {
   padding-top: var(--oga-9);
 }
 
-.oga-scr-presets__head {
+.oga-int-ops__head {
   text-align: center;
   margin-bottom: var(--oga-7);
 }
 
-.oga-scr-presets__title {
+.oga-int-ops__title {
   font-family: var(--oga-font-sans);
   font-size: clamp(26px, 3vw, 36px);
   line-height: 1.1;
@@ -557,10 +529,10 @@
   font-weight: 500;
   color: var(--oga-fg);
   margin: 0 auto var(--oga-3);
-  max-width: 26ch;
+  max-width: 28ch;
 }
 
-.oga-scr-presets__sub {
+.oga-int-ops__sub {
   font-family: var(--oga-font-sans);
   font-size: 15.5px;
   line-height: 1.55;
@@ -569,9 +541,9 @@
   max-width: 60ch;
 }
 
-.oga-scr-presets__grid {
+.oga-int-ops__grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1px;
   background: var(--oga-border);
   border: 1px solid var(--oga-border);
@@ -580,29 +552,29 @@
 }
 
 @media (max-width: 880px) {
-  .oga-scr-presets__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .oga-int-ops__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 480px) {
-  .oga-scr-presets__grid { grid-template-columns: 1fr; }
+  .oga-int-ops__grid { grid-template-columns: 1fr; }
 }
 
-.oga-scr-preset {
+.oga-int-op {
   background: var(--oga-white);
   padding: var(--oga-5);
   display: flex;
   flex-direction: column;
   gap: var(--oga-3);
+  min-height: 220px;
 }
 
-.oga-scr-preset__glyph {
+.oga-int-op__glyph {
   width: 36px;
   height: 36px;
-  margin-bottom: var(--oga-2);
   color: var(--oga-fg);
 }
 
-.oga-scr-preset__slug {
+.oga-int-op__slug {
   display: inline-block;
   font-family: var(--oga-font-mono);
   font-size: 11px;
@@ -614,76 +586,58 @@
   align-self: flex-start;
 }
 
-.oga-scr-preset__name {
+.oga-int-op__name {
   font-family: var(--oga-font-sans);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 500;
   letter-spacing: -0.005em;
   color: var(--oga-fg);
   margin: 0;
 }
 
-.oga-scr-preset__use {
+.oga-int-op__body {
   font-family: var(--oga-font-sans);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 13.5px;
+  line-height: 1.55;
   color: var(--oga-fg-muted);
-  margin: 0 0 var(--oga-4);
+  margin: 0;
 }
 
-.oga-scr-preset__dims-title {
+.oga-int-op__example {
+  margin-top: auto;
+  padding-top: var(--oga-3);
+  border-top: 1px solid var(--oga-border-dim);
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: var(--oga-fg);
+  line-height: 1.55;
+}
+
+.oga-int-op__example-k {
   font-family: var(--oga-font-mono);
   font-size: 10px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--oga-fg-muted);
-  margin: 0 0 var(--oga-2);
-  padding-top: var(--oga-3);
-  border-top: 1px solid var(--oga-border-dim);
-}
-
-.oga-scr-preset__dims {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--oga-1);
-}
-
-.oga-scr-preset__dims li {
-  font-family: var(--oga-font-mono);
-  font-size: 12px;
-  color: var(--oga-fg);
-  padding: 4px 0;
-  display: flex;
-  align-items: center;
-  gap: var(--oga-2);
-}
-
-.oga-scr-preset__dim-dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--oga-fg);
-  flex: 0 0 auto;
+  display: block;
+  margin-bottom: 4px;
 }
 
 /* ============================================================
-   § 03 — Anatomy / pipeline (DARK)
+   § 03 — Pipeline (DARK) — planner → executor seam
    ============================================================ */
 
-.oga-scr-anat {
+.oga-int-pipe {
   padding-top: var(--oga-9);
   padding-bottom: var(--oga-9);
 }
 
-.oga-scr-anat__head {
+.oga-int-pipe__head {
   text-align: center;
   margin-bottom: var(--oga-7);
 }
 
-.oga-scr-anat__title {
+.oga-int-pipe__title {
   font-family: var(--oga-font-sans);
   font-size: clamp(26px, 3vw, 36px);
   line-height: 1.1;
@@ -691,10 +645,10 @@
   font-weight: 500;
   color: var(--oga-white);
   margin: 0 auto var(--oga-3);
-  max-width: 26ch;
+  max-width: 30ch;
 }
 
-.oga-scr-anat__sub {
+.oga-int-pipe__sub {
   font-family: var(--oga-font-sans);
   font-size: 15.5px;
   line-height: 1.55;
@@ -703,33 +657,33 @@
   max-width: 60ch;
 }
 
-.oga-scr-anat__stage {
+.oga-int-pipe__stage {
   position: relative;
   max-width: 1080px;
   margin: 0 auto;
 }
 
-.oga-scr-anat__svg {
+.oga-int-pipe__svg {
   display: block;
   width: 100%;
   height: auto;
 }
 
-.oga-scr-anat__notes {
+.oga-int-pipe__notes {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--oga-5);
   list-style: none;
   padding: 0;
   margin: var(--oga-7) auto 0;
-  max-width: 1000px;
+  max-width: 1080px;
 }
 
 @media (max-width: 720px) {
-  .oga-scr-anat__notes { grid-template-columns: 1fr; }
+  .oga-int-pipe__notes { grid-template-columns: 1fr; }
 }
 
-.oga-scr-anat__note {
+.oga-int-pipe__note {
   display: flex;
   flex-direction: column;
   gap: var(--oga-2);
@@ -737,7 +691,7 @@
   border-top: 1px solid rgba(250, 248, 244, 0.16);
 }
 
-.oga-scr-anat__note-num {
+.oga-int-pipe__note-num {
   font-family: var(--oga-font-mono);
   font-size: 10.5px;
   letter-spacing: 0.22em;
@@ -745,7 +699,7 @@
   color: rgba(250, 248, 244, 0.55);
 }
 
-.oga-scr-anat__note-title {
+.oga-int-pipe__note-title {
   font-family: var(--oga-font-sans);
   font-size: 16px;
   font-weight: 500;
@@ -753,7 +707,7 @@
   margin: 0;
 }
 
-.oga-scr-anat__note-body {
+.oga-int-pipe__note-body {
   font-family: var(--oga-font-sans);
   font-size: 13.5px;
   line-height: 1.55;
@@ -762,19 +716,19 @@
 }
 
 /* ============================================================
-   § 04 — Endpoints (cream) — tabbed panel
+   § 04 — Measured accuracy (cream) — 92.9% baseline strip
    ============================================================ */
 
-.oga-scr-ep {
+.oga-int-eval {
   padding-top: var(--oga-9);
 }
 
-.oga-scr-ep__head {
+.oga-int-eval__head {
   text-align: center;
   margin-bottom: var(--oga-7);
 }
 
-.oga-scr-ep__title {
+.oga-int-eval__title {
   font-family: var(--oga-font-sans);
   font-size: clamp(26px, 3vw, 36px);
   line-height: 1.1;
@@ -782,10 +736,10 @@
   font-weight: 500;
   color: var(--oga-fg);
   margin: 0 auto var(--oga-3);
-  max-width: 26ch;
+  max-width: 30ch;
 }
 
-.oga-scr-ep__sub {
+.oga-int-eval__sub {
   font-family: var(--oga-font-sans);
   font-size: 15.5px;
   line-height: 1.55;
@@ -794,20 +748,143 @@
   max-width: 60ch;
 }
 
-.oga-scr-ep__panel {
-  max-width: 1000px;
+.oga-int-eval__card {
+  max-width: 1080px;
+  margin: 0 auto;
+  border: 1px solid var(--oga-border);
+  background: var(--oga-white);
+  padding: var(--oga-6);
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: var(--oga-6);
+  align-items: center;
+}
+
+@media (max-width: 720px) {
+  .oga-int-eval__card { grid-template-columns: 1fr; }
+}
+
+.oga-int-eval__headline {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oga-3);
+}
+
+.oga-int-eval__headline-num {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(56px, 8vw, 96px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-weight: 500;
+  color: var(--oga-fg);
+}
+
+.oga-int-eval__headline-denom {
+  font-family: var(--oga-font-mono);
+  font-size: 14px;
+  color: var(--oga-fg-muted);
+  max-width: 22ch;
+  line-height: 1.4;
+}
+
+.oga-int-eval__breakdown {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--oga-2);
+  border-left: 1px solid var(--oga-border-dim);
+  padding-left: var(--oga-5);
+}
+
+@media (max-width: 720px) {
+  .oga-int-eval__breakdown {
+    border-left: none;
+    border-top: 1px solid var(--oga-border-dim);
+    padding-left: 0;
+    padding-top: var(--oga-4);
+  }
+}
+
+.oga-int-eval__breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--oga-font-mono);
+  font-size: 12.5px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--oga-border-dim);
+}
+
+.oga-int-eval__breakdown-row:last-child {
+  border-bottom: none;
+}
+
+.oga-int-eval__breakdown-k {
+  color: var(--oga-fg);
+}
+
+.oga-int-eval__breakdown-v {
+  color: var(--oga-fg-muted);
+}
+
+.oga-int-eval__caveat {
+  max-width: 1080px;
+  margin: var(--oga-5) auto 0;
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--oga-fg-muted);
+  padding-left: var(--oga-3);
+  border-left: 2px solid var(--oga-border);
+}
+
+/* ============================================================
+   § 05 — Endpoints (cream) — tabbed panel
+   ============================================================ */
+
+.oga-int-ep {
+  padding-top: var(--oga-9);
+}
+
+.oga-int-ep__head {
+  text-align: center;
+  margin-bottom: var(--oga-7);
+}
+
+.oga-int-ep__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 auto var(--oga-3);
+  max-width: 28ch;
+}
+
+.oga-int-ep__sub {
+  font-family: var(--oga-font-sans);
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0 auto;
+  max-width: 60ch;
+}
+
+.oga-int-ep__panel {
+  max-width: 1080px;
   margin: 0 auto;
   border: 1px solid var(--oga-border);
   background: var(--oga-white);
 }
 
-.oga-scr-ep__tabs {
+.oga-int-ep__tabs {
   display: flex;
   border-bottom: 1px solid var(--oga-border);
+  flex-wrap: wrap;
 }
 
-.oga-scr-ep__tab {
+.oga-int-ep__tab {
   flex: 1;
+  min-width: 180px;
   background: transparent;
   border: none;
   border-right: 1px solid var(--oga-border);
@@ -818,20 +895,20 @@
   transition: background 140ms ease, color 140ms ease;
 }
 
-.oga-scr-ep__tab:last-child {
+.oga-int-ep__tab:last-child {
   border-right: none;
 }
 
-.oga-scr-ep__tab:hover {
+.oga-int-ep__tab:hover {
   background: var(--oga-canvas);
 }
 
-.oga-scr-ep__tab--active {
+.oga-int-ep__tab--active {
   background: var(--oga-ink);
   color: var(--oga-white);
 }
 
-.oga-scr-ep__tab-verb {
+.oga-int-ep__tab-verb {
   display: block;
   font-size: 10px;
   letter-spacing: 0.18em;
@@ -840,25 +917,25 @@
   margin-bottom: 4px;
 }
 
-.oga-scr-ep__tab--active .oga-scr-ep__tab-verb {
+.oga-int-ep__tab--active .oga-int-ep__tab-verb {
   color: rgba(255, 220, 170, 0.95);
 }
 
-.oga-scr-ep__tab-path {
+.oga-int-ep__tab-path {
   display: block;
   font-size: 12.5px;
   color: var(--oga-fg);
 }
 
-.oga-scr-ep__tab--active .oga-scr-ep__tab-path {
+.oga-int-ep__tab--active .oga-int-ep__tab-path {
   color: var(--oga-white);
 }
 
-.oga-scr-ep__body {
+.oga-int-ep__body {
   padding: var(--oga-6);
 }
 
-.oga-scr-ep__what {
+.oga-int-ep__what {
   font-family: var(--oga-font-sans);
   font-size: 14.5px;
   line-height: 1.55;
@@ -866,17 +943,17 @@
   margin: 0 0 var(--oga-5);
 }
 
-.oga-scr-ep__grid {
+.oga-int-ep__grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--oga-6);
 }
 
 @media (max-width: 720px) {
-  .oga-scr-ep__grid { grid-template-columns: 1fr; gap: var(--oga-5); }
+  .oga-int-ep__grid { grid-template-columns: 1fr; gap: var(--oga-5); }
 }
 
-.oga-scr-ep__col-title {
+.oga-int-ep__col-title {
   font-family: var(--oga-font-mono);
   font-size: 10.5px;
   letter-spacing: 0.22em;
@@ -885,7 +962,7 @@
   margin: 0 0 var(--oga-3);
 }
 
-.oga-scr-ep__params {
+.oga-int-ep__params {
   display: grid;
   gap: var(--oga-3);
   list-style: none;
@@ -893,36 +970,36 @@
   margin: 0;
 }
 
-.oga-scr-ep__params li {
+.oga-int-ep__params li {
   padding: var(--oga-2) 0;
   border-bottom: 1px solid var(--oga-border-dim);
 }
 
-.oga-scr-ep__params li:last-child {
+.oga-int-ep__params li:last-child {
   border-bottom: none;
 }
 
-.oga-scr-ep__params-head {
+.oga-int-ep__params-head {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
   gap: var(--oga-2);
 }
 
-.oga-scr-ep__params-name {
+.oga-int-ep__params-name {
   font-family: var(--oga-font-mono);
   font-size: 13px;
   color: var(--oga-fg);
   font-weight: 500;
 }
 
-.oga-scr-ep__params-type {
+.oga-int-ep__params-type {
   font-family: var(--oga-font-mono);
   font-size: 10.5px;
   color: var(--oga-fg-muted);
 }
 
-.oga-scr-ep__params-req {
+.oga-int-ep__params-req {
   font-family: var(--oga-font-mono);
   font-size: 9.5px;
   letter-spacing: 0.18em;
@@ -930,7 +1007,7 @@
   color: var(--oga-status-amber);
 }
 
-.oga-scr-ep__params-desc {
+.oga-int-ep__params-desc {
   font-family: var(--oga-font-sans);
   font-size: 13px;
   line-height: 1.5;
@@ -938,7 +1015,7 @@
   margin: 4px 0 0;
 }
 
-.oga-scr-ep__response {
+.oga-int-ep__response {
   font-family: var(--oga-font-sans);
   font-size: 13px;
   line-height: 1.55;
@@ -946,7 +1023,7 @@
   margin: 0 0 var(--oga-4);
 }
 
-.oga-scr-ep__codes {
+.oga-int-ep__codes {
   display: grid;
   grid-template-columns: max-content 1fr;
   gap: var(--oga-1) var(--oga-3);
@@ -955,30 +1032,30 @@
   margin: 0;
 }
 
-.oga-scr-ep__codes dt {
+.oga-int-ep__codes dt {
   color: var(--oga-fg);
   font-weight: 500;
 }
 
-.oga-scr-ep__codes dd {
+.oga-int-ep__codes dd {
   color: var(--oga-fg-muted);
   margin: 0;
 }
 
 /* ============================================================
-   § 05 — Built for (cream) — 5 ICPs equal weight
+   § 06 — Built for (cream) — 5 ICPs, CRE leads
    ============================================================ */
 
-.oga-scr-icps {
+.oga-int-icps {
   padding-top: var(--oga-9);
 }
 
-.oga-scr-icps__head {
+.oga-int-icps__head {
   text-align: center;
   margin-bottom: var(--oga-8);
 }
 
-.oga-scr-icps__title {
+.oga-int-icps__title {
   font-family: var(--oga-font-sans);
   font-size: clamp(26px, 3vw, 36px);
   line-height: 1.1;
@@ -986,10 +1063,10 @@
   font-weight: 500;
   color: var(--oga-fg);
   margin: 0 auto var(--oga-3);
-  max-width: 26ch;
+  max-width: 28ch;
 }
 
-.oga-scr-icps__sub {
+.oga-int-icps__sub {
   font-family: var(--oga-font-sans);
   font-size: 15.5px;
   line-height: 1.55;
@@ -998,7 +1075,7 @@
   max-width: 60ch;
 }
 
-.oga-scr-icps__list {
+.oga-int-icps__list {
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -1007,7 +1084,7 @@
   border-top: 1px solid var(--oga-border);
 }
 
-.oga-scr-icp {
+.oga-int-icp {
   display: grid;
   grid-template-columns: 140px minmax(0, 1fr);
   gap: var(--oga-5) var(--oga-6);
@@ -1017,33 +1094,33 @@
 }
 
 @media (max-width: 880px) {
-  .oga-scr-icp {
+  .oga-int-icp {
     grid-template-columns: 1fr;
     gap: var(--oga-4);
     padding: var(--oga-6) var(--oga-2);
   }
 }
 
-.oga-scr-icp__viz {
+.oga-int-icp__viz {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.oga-scr-icp__viz-svg {
+.oga-int-icp__viz-svg {
   width: 100%;
   max-width: 120px;
   height: auto;
   color: var(--oga-fg);
 }
 
-.oga-scr-icp__body {
+.oga-int-icp__body {
   display: flex;
   flex-direction: column;
   gap: var(--oga-3);
 }
 
-.oga-scr-icp__name {
+.oga-int-icp__name {
   font-family: var(--oga-font-sans);
   font-size: 22px;
   font-weight: 500;
@@ -1052,7 +1129,7 @@
   margin: 0;
 }
 
-.oga-scr-icp__row-label {
+.oga-int-icp__row-label {
   font-family: var(--oga-font-mono);
   font-size: 10px;
   letter-spacing: 0.22em;
@@ -1061,7 +1138,7 @@
   margin: 0;
 }
 
-.oga-scr-icp__row-text {
+.oga-int-icp__row-text {
   font-family: var(--oga-font-sans);
   font-size: 14.5px;
   line-height: 1.55;
@@ -1069,7 +1146,7 @@
   margin: 4px 0 0;
 }
 
-.oga-scr-icp__sales {
+.oga-int-icp__sales {
   margin-top: var(--oga-2);
   padding: var(--oga-3) var(--oga-4);
   background: var(--oga-canvas);
@@ -1086,11 +1163,11 @@
    Final CTA (DARK)
    ============================================================ */
 
-.oga-scr-cta {
+.oga-int-cta {
   text-align: center;
 }
 
-.oga-scr-cta__h2 {
+.oga-int-cta__h2 {
   font-family: var(--oga-font-sans);
   font-size: clamp(28px, 3.5vw, 44px);
   line-height: 1.05;
@@ -1098,10 +1175,10 @@
   font-weight: 500;
   color: var(--oga-white);
   margin: 0 auto var(--oga-4);
-  max-width: 22ch;
+  max-width: 24ch;
 }
 
-.oga-scr-cta__lead {
+.oga-int-cta__lead {
   font-family: var(--oga-font-sans);
   font-size: var(--oga-fs-lead);
   line-height: var(--oga-lh-snug);
@@ -1110,7 +1187,7 @@
   max-width: 56ch;
 }
 
-.oga-scr-cta__ctas {
+.oga-int-cta__ctas {
   display: inline-flex;
   gap: var(--oga-3);
   flex-wrap: wrap;

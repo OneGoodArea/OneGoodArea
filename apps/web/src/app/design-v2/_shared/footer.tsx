@@ -33,7 +33,7 @@ const PRODUCTS: ProductLink[] = [
   { label: "Signals",      href: "/products/signals",      ready: true  },
   { label: "Scores",       href: "/products/scores",       ready: true  },
   { label: "Monitor",      href: "/products/monitor",      ready: true  },
-  { label: "Intelligence", href: "/products/intelligence", ready: false },
+  { label: "Intelligence", href: "/products/intelligence", ready: true  },
 ];
 
 const DOCS: Array<{ label: string; href: string }> = [
