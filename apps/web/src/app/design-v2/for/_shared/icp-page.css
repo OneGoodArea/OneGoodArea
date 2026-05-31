@@ -1,0 +1,533 @@
+/* /for/<icp> — shared CSS for the 5 ICP buyer pages.
+
+   Each ICP page imports this file. Layout is consistent across the
+   five pages so a buyer-skim across them is predictable. Per-page
+   content + accents diverge inside; layout doesn't.
+
+   Brand v3 (Plotted). Zero inline styles. */
+
+.oga-icp {
+  min-height: 100vh;
+  background: var(--oga-white);
+  color: var(--oga-fg);
+}
+
+.oga-icp section {
+  padding: var(--oga-9) clamp(20px, 4vw, var(--oga-7));
+}
+
+.oga-icp__wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.oga-icp__wrap--narrow {
+  max-width: 880px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ============================================================
+   Hero
+   ============================================================ */
+
+.oga-icp-hero {
+  text-align: center;
+  padding-top: var(--oga-9);
+  padding-bottom: var(--oga-8);
+}
+
+.oga-icp-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-3);
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-5);
+}
+
+.oga-icp-hero__eyebrow-mark {
+  width: 16px;
+  height: 1px;
+  background: var(--oga-border);
+}
+
+.oga-icp-hero__h1 {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(38px, 5vw, 60px);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 auto var(--oga-5);
+  max-width: 22ch;
+}
+
+.oga-icp-hero__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  color: var(--oga-fg-muted);
+  margin: 0 auto var(--oga-6);
+  max-width: 60ch;
+}
+
+.oga-icp-hero__ctas {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--oga-3);
+  justify-content: center;
+}
+
+/* ============================================================
+   Section header pattern (eyebrow + h2 + lead)
+   ============================================================ */
+
+.oga-icp__header {
+  text-align: center;
+  margin-bottom: var(--oga-7);
+}
+
+.oga-icp__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-4);
+}
+
+.oga-icp__h2 {
+  color: var(--oga-fg);
+}
+
+.oga-icp__lead {
+  color: var(--oga-fg-muted);
+}
+
+.oga-icp__eyebrow-mark {
+  width: 16px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.4;
+}
+
+.oga-icp__h2 {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3vw, 38px);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+  margin: 0 auto var(--oga-3);
+  max-width: 28ch;
+}
+
+.oga-icp__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  margin: 0 auto;
+  max-width: 60ch;
+}
+
+/* ============================================================
+   § 01 — The problem (cream)
+   ============================================================ */
+
+.oga-icp-problem__body {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-4);
+}
+
+.oga-icp-problem__body p {
+  font-family: var(--oga-font-sans);
+  font-size: 16.5px;
+  line-height: 1.6;
+  color: var(--oga-fg);
+  margin: 0;
+}
+
+/* ============================================================
+   § 02 — Workflow walkthrough (DARK)
+   ============================================================ */
+
+.oga-icp-flow {
+  padding-top: var(--oga-9);
+  padding-bottom: var(--oga-9);
+}
+
+.oga-icp-flow__head {
+  text-align: center;
+  margin-bottom: var(--oga-7);
+}
+
+.oga-icp-flow__head .oga-icp__eyebrow {
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-icp-flow__head .oga-icp__h2 {
+  color: var(--oga-white);
+}
+
+.oga-icp-flow__head .oga-icp__lead {
+  color: rgba(250, 248, 244, 0.7);
+}
+
+.oga-icp-flow__steps {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--oga-5);
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.oga-icp-flow__step {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1.1fr) minmax(0, 1.2fr);
+  gap: var(--oga-5);
+  align-items: start;
+  padding: var(--oga-5) 0;
+  border-bottom: 1px solid rgba(250, 248, 244, 0.16);
+}
+
+.oga-icp-flow__step:last-child {
+  border-bottom: none;
+}
+
+@media (max-width: 880px) {
+  .oga-icp-flow__step {
+    grid-template-columns: 1fr;
+    gap: var(--oga-4);
+  }
+}
+
+.oga-icp-flow__step-num {
+  font-family: var(--oga-font-mono);
+  font-size: 14px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-icp-flow__step-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-2);
+}
+
+.oga-icp-flow__step-title {
+  font-family: var(--oga-font-sans);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-white);
+  margin: 0;
+}
+
+.oga-icp-flow__step-text {
+  font-family: var(--oga-font-sans);
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.78);
+  margin: 0;
+}
+
+.oga-icp-flow__step-code {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  color: rgba(250, 248, 244, 0.9);
+  background: rgba(250, 248, 244, 0.04);
+  border: 1px solid rgba(250, 248, 244, 0.1);
+  padding: var(--oga-4);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+/* ============================================================
+   § 03 — Products you reach for (cream)
+   ============================================================ */
+
+.oga-icp-products__head {
+  text-align: center;
+  margin-bottom: var(--oga-7);
+}
+
+.oga-icp-products__head .oga-icp__eyebrow {
+  color: var(--oga-fg-muted);
+}
+
+.oga-icp-products__head .oga-icp__h2 {
+  color: var(--oga-fg);
+}
+
+.oga-icp-products__head .oga-icp__lead {
+  color: var(--oga-fg-muted);
+}
+
+.oga-icp-products__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--oga-5);
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.oga-icp-product {
+  border: 1px solid var(--oga-border);
+  background: var(--oga-white);
+  padding: var(--oga-6);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: var(--oga-6);
+  align-items: start;
+}
+
+@media (max-width: 880px) {
+  .oga-icp-product {
+    grid-template-columns: 1fr;
+    gap: var(--oga-4);
+  }
+}
+
+.oga-icp-product__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oga-3);
+  margin-bottom: var(--oga-3);
+  padding-bottom: var(--oga-3);
+  border-bottom: 1px solid var(--oga-border-dim);
+}
+
+.oga-icp-product__num {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-icp-product__name {
+  font-family: var(--oga-font-sans);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--oga-fg);
+  margin: 0;
+}
+
+.oga-icp-product__name-link {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-fg);
+  margin-left: auto;
+  text-decoration: none;
+  border-bottom: 1px solid var(--oga-fg);
+  padding-bottom: 1px;
+}
+
+.oga-icp-product__use {
+  font-family: var(--oga-font-sans);
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--oga-fg);
+  margin: 0;
+}
+
+.oga-icp-product__code {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--oga-fg);
+  background: var(--oga-canvas);
+  border: 1px solid var(--oga-border);
+  padding: var(--oga-4);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+/* ============================================================
+   § 04 — What you can defend (cream-quiet)
+   ============================================================ */
+
+.oga-icp-defend__head {
+  text-align: center;
+  margin-bottom: var(--oga-7);
+}
+
+.oga-icp-defend__head .oga-icp__eyebrow {
+  color: var(--oga-fg-muted);
+}
+
+.oga-icp-defend__head .oga-icp__h2 {
+  color: var(--oga-fg);
+}
+
+.oga-icp-defend__head .oga-icp__lead {
+  color: var(--oga-fg-muted);
+}
+
+.oga-icp-defend__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--oga-border);
+  border: 1px solid var(--oga-border);
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+@media (max-width: 720px) {
+  .oga-icp-defend__grid { grid-template-columns: 1fr; }
+}
+
+.oga-icp-defend-card {
+  background: var(--oga-white);
+  padding: var(--oga-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+  min-height: 220px;
+}
+
+.oga-icp-defend-card__num {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-icp-defend-card__title {
+  font-family: var(--oga-font-sans);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-fg);
+  margin: 0;
+}
+
+.oga-icp-defend-card__body {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+.oga-icp-defend-card__cite {
+  margin-top: auto;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-fg);
+}
+
+/* ============================================================
+   § 05 — FAQs (DARK)
+   ============================================================ */
+
+.oga-icp-faqs {
+  padding-top: var(--oga-9);
+  padding-bottom: var(--oga-9);
+}
+
+.oga-icp-faqs__head {
+  text-align: center;
+  margin-bottom: var(--oga-7);
+}
+
+.oga-icp-faqs__head .oga-icp__eyebrow {
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-icp-faqs__head .oga-icp__h2 {
+  color: var(--oga-white);
+}
+
+.oga-icp-faqs__head .oga-icp__lead {
+  color: rgba(250, 248, 244, 0.7);
+}
+
+.oga-icp-faqs__list {
+  max-width: 880px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.oga-icp-faq {
+  padding: var(--oga-5) 0;
+  border-bottom: 1px solid rgba(250, 248, 244, 0.16);
+}
+
+.oga-icp-faq:last-child {
+  border-bottom: none;
+}
+
+.oga-icp-faq__q {
+  font-family: var(--oga-font-sans);
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-white);
+  margin: 0 0 var(--oga-3);
+}
+
+.oga-icp-faq__a {
+  font-family: var(--oga-font-sans);
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.78);
+  margin: 0;
+  max-width: 70ch;
+}
+
+/* ============================================================
+   Final CTA (DARK)
+   ============================================================ */
+
+.oga-icp-cta {
+  text-align: center;
+}
+
+.oga-icp-cta__h2 {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.5vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.018em;
+  font-weight: 500;
+  color: var(--oga-white);
+  margin: 0 auto var(--oga-4);
+  max-width: 26ch;
+}
+
+.oga-icp-cta__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  color: rgba(250, 248, 244, 0.68);
+  margin: 0 auto var(--oga-6);
+  max-width: 56ch;
+}
+
+.oga-icp-cta__ctas {
+  display: inline-flex;
+  gap: var(--oga-3);
+  flex-wrap: wrap;
+  justify-content: center;
+}
