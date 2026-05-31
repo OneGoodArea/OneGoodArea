@@ -26,6 +26,11 @@ const PRODUCTS = [
 ] as const;
 type ProductSlug = (typeof PRODUCTS)[number]["slug"];
 
+/* ICPs whose /for/<anchor> page exists today. The "See more for <ICP>"
+   CTA on each section flips from a disabled "Soon" pill to a live
+   link as each ICP page lands. Add anchors here as new ICP pages ship. */
+const READY_ICPS = new Set<string>(["proptech"]);
+
 /* ============================================================
    ICP DEFINITIONS
    ============================================================ */
@@ -411,16 +416,23 @@ function SectionIcp({ icp, altSurface }: { icp: Icp; altSurface: boolean }) {
           <p className="oga-biz-icp__sales">{icp.sales}</p>
 
           <div className="oga-biz-icp__cta-row">
-            <button
-              type="button"
-              className="oga-biz-icp__cta-disabled"
-              disabled
-              aria-disabled
-              aria-label={`See more for ${icp.shortName} (coming soon)`}
-            >
-              See more for {icp.shortName}
-              <span className="oga-biz-icp__cta-soon-pill">Soon</span>
-            </button>
+            {READY_ICPS.has(icp.anchor) ? (
+              <Link href={`/for/${icp.anchor}`} className="oga-btn oga-btn-primary">
+                See more for {icp.shortName}
+                <span aria-hidden>→</span>
+              </Link>
+            ) : (
+              <button
+                type="button"
+                className="oga-biz-icp__cta-disabled"
+                disabled
+                aria-disabled
+                aria-label={`See more for ${icp.shortName} (coming soon)`}
+              >
+                See more for {icp.shortName}
+                <span className="oga-biz-icp__cta-soon-pill">Soon</span>
+              </button>
+            )}
             <Link href="/sign-up" className="oga-btn oga-btn-secondary">
               Get an API key
               <span aria-hidden>→</span>

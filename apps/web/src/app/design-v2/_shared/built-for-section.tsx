@@ -2,18 +2,21 @@
 
 import { useEffect, useRef, useState } from "react";
 
-/* BuiltForSection v3 — interactive featured panel for the 5 workflows.
-   Tabs across top, one workflow visible at a time. Each tab's panel:
+/* BuiltForSection v4 — re-cut from 5 workflows to 5 ICPs (PropTech /
+   Insurance / Lenders / CRE / Public sector). Mirrors the ICP cut on
+   /business and the /for/<slug> page set so a buyer sees a consistent
+   set of buyer types across the site.
+
+   Tabs across top, one ICP visible at a time. Each tab's panel:
 
    - tightened body (no specific source names — they live on
      /methodology only, per the "multiple sources" rule)
-   - mono "example endpoint" chip (real API call for this workflow)
+   - mono "example endpoint" chip (the primary endpoint that ICP
+     reaches for)
    - "Used by" meta line
-   - "Build for [icp] →" CTA disabled w/ "Coming soon" pill (the
-     /icps/<slug> pages do not exist yet — per the wiring rule, never
-     a fake link)
-
-   AR-204 PR 2 / commit 4. */
+   - "See more for [icp] →" CTA. Flips live as each /for/<slug>
+     page ships; stays disabled with "Soon" pill in the meantime
+     (wiring rule). */
 
 type Workflow = {
   id: string;
@@ -25,8 +28,8 @@ type Workflow = {
   usedBy: string;
   icpLabel: string;
   icpSlug: string;
-  /* ICP pages are pending (PRs after this epic). While ready=false,
-     the CTA renders disabled with "Coming soon". */
+  /* Flips to true as the matching /for/<slug> ICP page ships. While
+     false, the CTA renders disabled with a "Soon" pill. */
   ready: boolean;
   highlight: Array<[number, number]>;
   caption: string;
@@ -34,74 +37,74 @@ type Workflow = {
 
 const WORKFLOWS: Workflow[] = [
   {
-    id: "origination",
+    id: "proptech",
     index: "01",
-    title: "Origination",
-    body: "Score every applicant's postcode at decision time. Bulk-score whole portfolios overnight. Version-pinned methodology your model risk team can defend in front of regulators.",
-    endpointVerb: "POST",
-    endpointPath: "/v1/score",
-    usedBy: "Challenger banks · building societies",
-    icpLabel: "lenders",
-    icpSlug: "lenders",
-    ready: false,
-    highlight: [[60, 60]],
-    caption: "One score per decision",
-  },
-  {
-    id: "underwriting",
-    index: "02",
-    title: "Underwriting",
-    body: "Area-risk signals returned in milliseconds at quote time. Confidence on every dimension, source-attributed per call, fast enough for inline rating engines and pre-bind workflows.",
+    title: "PropTech",
+    body: "Drop one endpoint into your property detail render and ship richer area context than a competitor's roadmap. LSOA-grain signals across seven categories with country-scoped percentiles, per-signal confidence, and source attribution on every response.",
     endpointVerb: "GET",
     endpointPath: "/v1/area",
-    usedBy: "Specialist insurers · MGAs",
-    icpLabel: "insurers",
-    icpSlug: "insurers",
-    ready: false,
-    highlight: [[18, 60], [32, 60], [46, 60], [60, 60], [74, 60], [88, 60], [102, 60]],
-    caption: "Risk classification across dimensions",
+    usedBy: "Listing portals · valuation tools · agent CRMs",
+    icpLabel: "PropTech",
+    icpSlug: "proptech",
+    ready: true,
+    highlight: [[60, 60]],
+    caption: "Area context per listing",
   },
   {
-    id: "site-selection",
+    id: "insurance",
+    index: "02",
+    title: "Insurance and InsureTech",
+    body: "Area-risk signals at quote time, plus continuous portfolio monitoring with sample-size-gated change alerts. Configurable composite scoring the actuary can audit. Signed webhooks the day a tracked LSOA moves materially.",
+    endpointVerb: "POST",
+    endpointPath: "/v1/portfolios/:id/changes",
+    usedBy: "Specialist insurers · MGAs · InsureTech rating engines",
+    icpLabel: "Insurance",
+    icpSlug: "insurance",
+    ready: false,
+    highlight: [[18, 60], [32, 60], [46, 60], [60, 60], [74, 60], [88, 60], [102, 60]],
+    caption: "Risk classification + continuous drift",
+  },
+  {
+    id: "lenders",
     index: "03",
-    title: "Site selection",
-    body: "Rank thousands of candidate postcodes by your own criteria. One API instead of stitching disparate sources. Confidence bands per area so you know how much to trust each comparison.",
+    title: "Lenders",
+    body: "Version-pinned methodology your model risk team can defend. Bulk-score portfolios; track drift across the time-series; replay any AI-assisted query as a deterministic plan. The engine version is stamped on every response.",
+    endpointVerb: "POST",
+    endpointPath: "/v1/score",
+    usedBy: "Challenger banks · building societies · BTL lenders",
+    icpLabel: "Lenders",
+    icpSlug: "lenders",
+    ready: false,
+    highlight: [[60, 18], [60, 32], [60, 46], [60, 60], [60, 74]],
+    caption: "Versioned, pinnable, auditable",
+  },
+  {
+    id: "cre",
+    index: "04",
+    title: "CRE and site selection",
+    body: "Rank thousands of catchments by your own compound criteria in one typed call. Up to eight AND-joined signal filters; sort by any of them; country or LAD scope. The shortlist is reproducible because every result echoes the executed plan.",
     endpointVerb: "POST",
     endpointPath: "/v1/query",
-    usedBy: "Retail · CRE · leasing",
+    usedBy: "Retail expansion · CRE platforms · leasing analytics",
     icpLabel: "CRE",
     icpSlug: "cre",
     ready: false,
     highlight: [[46, 32], [88, 32], [32, 60], [74, 60], [60, 88]],
-    caption: "Compare every candidate area",
+    caption: "Compound rank across the universe",
   },
   {
-    id: "portfolio-monitoring",
-    index: "04",
-    title: "Portfolio monitoring",
-    body: "Track a book of areas; get webhooks the month a signal moves past your threshold. Monthly snapshots are the moat: every change is auditable back to the underlying time-series.",
-    endpointVerb: "POST",
-    endpointPath: "/v1/portfolios/:id/changes",
-    usedBy: "Lender model risk · portfolio teams",
-    icpLabel: "portfolio teams",
-    icpSlug: "portfolio-teams",
-    ready: false,
-    highlight: [[32, 88], [32, 74], [46, 60], [60, 46], [74, 32], [88, 46]],
-    caption: "Time-series anomaly detection",
-  },
-  {
-    id: "planning",
+    id: "public-sector",
     index: "05",
-    title: "Planning decisions",
-    body: "Score areas with your own weighted methodology for housing and regeneration decisions. Same engine, transparent weighting, version-pinned outputs you can defend in a public meeting.",
+    title: "Public sector and research",
+    body: "Defensible, sourced, dated metrics that survive FOI and procurement scrutiny. Country-scoped percentiles by design (England's IMD is not Scotland's SIMD). Sample-size honesty built in: the system says when it cannot tell instead of hallucinating a move.",
     endpointVerb: "POST",
     endpointPath: "/v1/score",
-    usedBy: "Councils · Homes England · MHCLG",
-    icpLabel: "public sector",
+    usedBy: "Councils · Homes England · MHCLG · research units",
+    icpLabel: "Public sector",
     icpSlug: "public-sector",
     ready: false,
     highlight: [[60, 18], [46, 32], [60, 32], [74, 32], [32, 46], [88, 46]],
-    caption: "Hierarchical, defensible methodology",
+    caption: "Defensible, FOI-survivable evidence",
   },
 ];
 
@@ -213,10 +216,10 @@ export function BuiltForSection() {
             <div className="oga-built__panel-cta">
               {current.ready ? (
                 <a
-                  href={`/icps/${current.icpSlug}`}
+                  href={`/for/${current.icpSlug}`}
                   className="oga-built__panel-link"
                 >
-                  Build for {current.icpLabel}
+                  See more for {current.icpLabel}
                   <span aria-hidden className="oga-built__panel-link-arrow">→</span>
                 </a>
               ) : (
@@ -226,7 +229,7 @@ export function BuiltForSection() {
                   aria-disabled="true"
                   className="oga-built__panel-link"
                 >
-                  Build for {current.icpLabel}
+                  See more for {current.icpLabel}
                   <span aria-hidden className="oga-built__panel-link-arrow">→</span>
                 </button>
               )}
