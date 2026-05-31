@@ -74,7 +74,7 @@ const WORKFLOWS: Workflow[] = [
     usedBy: "Challenger banks · building societies · BTL lenders",
     icpLabel: "Lenders",
     icpSlug: "lenders",
-    ready: false,
+    ready: true,
     highlight: [[60, 18], [60, 32], [60, 46], [60, 60], [60, 74]],
     caption: "Versioned, pinnable, auditable",
   },
