@@ -51,7 +51,7 @@ const PRODUCTS: Product[] = [
       "Org-level methodology pinning for compliance",
     ],
     icon: ScoresIcon,
-    ready: false,
+    ready: true,
   },
   {
     slug: "monitor",
