@@ -102,7 +102,7 @@ const WORKFLOWS: Workflow[] = [
     usedBy: "Councils · Homes England · MHCLG · research units",
     icpLabel: "Public sector",
     icpSlug: "public-sector",
-    ready: false,
+    ready: true,
     highlight: [[60, 18], [46, 32], [60, 32], [74, 32], [32, 46], [88, 46]],
     caption: "Defensible, FOI-survivable evidence",
   },
