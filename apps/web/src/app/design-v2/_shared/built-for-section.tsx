@@ -88,7 +88,7 @@ const WORKFLOWS: Workflow[] = [
     usedBy: "Retail expansion · CRE platforms · leasing analytics",
     icpLabel: "CRE",
     icpSlug: "cre",
-    ready: false,
+    ready: true,
     highlight: [[46, 32], [88, 32], [32, 60], [74, 60], [60, 88]],
     caption: "Compound rank across the universe",
   },

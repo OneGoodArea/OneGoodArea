@@ -29,7 +29,7 @@ type ProductSlug = (typeof PRODUCTS)[number]["slug"];
 /* ICPs whose /for/<anchor> page exists today. The "See more for <ICP>"
    CTA on each section flips from a disabled "Soon" pill to a live
    link as each ICP page lands. Add anchors here as new ICP pages ship. */
-const READY_ICPS = new Set<string>(["proptech", "lenders", "insurance"]);
+const READY_ICPS = new Set<string>(["proptech", "lenders", "insurance", "cre"]);
 
 /* ============================================================
    ICP DEFINITIONS
