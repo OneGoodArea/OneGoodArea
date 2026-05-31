@@ -43,12 +43,13 @@ Full templates at `apps/web/.env.example` and `apps/api/.env.example`.
 
 ## Run
 
-Two apps, workspace-scoped commands:
+Standalone API server:
 
 ```bash
-npm run dev -w @onegoodarea/web        # Next.js on http://localhost:3000
-npm run dev -w @onegoodarea/api        # Fastify on http://localhost:4000
+npm run dev -w @onegoodarea/api        # Fastify on http://localhost:8080
 ```
+
+The web app is deployed separately; this local flow is API-only.
 
 Flag the post-restructure surface on for `apps/api`:
 

@@ -18,6 +18,9 @@ The complete catalog grouped by the four products + cross-cutting Levers + legac
 
 ## Monitor
 
+These routes are dark-flagged behind `OGA_SIGNALS_API=true`. When the flag is
+off, they 404 by design.
+
 | Method | Path | Notes |
 |---|---|---|
 | POST | `/v1/portfolios` | Create a portfolio |

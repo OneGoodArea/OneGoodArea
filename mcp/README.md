@@ -105,10 +105,10 @@ npm test             # vitest
 npm run build        # tsc to dist/
 ```
 
-Override the API base for local dev against a `npm run dev` Next.js server:
+Override the API base for local dev against the standalone API server:
 
 ```sh
-OOGA_API_BASE=http://localhost:3000 OOGA_API_KEY=aiq_dev npm run dev
+OOGA_API_BASE=http://localhost:8080 OOGA_API_KEY=aiq_dev npm run dev
 ```
 
 ---

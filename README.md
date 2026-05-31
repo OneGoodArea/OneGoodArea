@@ -29,8 +29,7 @@ Deterministic signals · configurable scoring · portfolio monitoring · a typed
 git clone https://github.com/OneGoodArea/OneGoodArea.git
 cd OneGoodArea
 npm install
-npm run dev -w @onegoodarea/web       # http://localhost:3000
-npm run dev -w @onegoodarea/api       # http://localhost:4000
+npm run dev -w @onegoodarea/api       # http://localhost:8080
 ```
 
 Full setup + env vars in [`docs/OPERATIONS/LOCAL-SETUP.md`](./docs/OPERATIONS/LOCAL-SETUP.md).

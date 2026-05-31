@@ -2,13 +2,13 @@
 # Compatible with httpyac CLI tool
 # Run with: httpyac send tests_files/area-iq-api-tests-httpyac.http --all
 
-@baseUrl = http://localhost:3000
+@baseUrl = http://localhost:8080
 
 ### Health Check
-GET {{baseUrl}}/api/health
+GET {{baseUrl}}/health
 
 ### Sign In with Credentials
-POST {{baseUrl}}/api/auth/signin/credentials
+POST {{baseUrl}}/auth/signin/credentials
 Content-Type: application/json
 
 {
@@ -18,7 +18,7 @@ Content-Type: application/json
 }
 
 ### Generate Report - Moving Intent (will fail without auth)
-POST {{baseUrl}}/api/report
+POST {{baseUrl}}/report
 Content-Type: application/json
 
 {
@@ -27,7 +27,7 @@ Content-Type: application/json
 }
 
 ### Generate Report via API - Invalid API Key
-POST {{baseUrl}}/api/v1/report
+POST {{baseUrl}}/v1/report
 Content-Type: application/json
 Authorization: Bearer invalid-api-key
 
@@ -37,17 +37,17 @@ Authorization: Bearer invalid-api-key
 }
 
 ### Get Settings - Unauthorized
-GET {{baseUrl}}/api/settings
+GET {{baseUrl}}/settings
 
 ### Invalid Endpoint
-GET {{baseUrl}}/api/invalid-endpoint
+GET {{baseUrl}}/invalid-endpoint
 
 ### ============================================================================
 ### AUTHENTICATION TESTS
 ### ============================================================================
 
 ### Sign Up
-POST {{baseUrl}}/api/auth/register
+POST {{baseUrl}}/auth/register
 Content-Type: application/json
 
 {
@@ -57,7 +57,7 @@ Content-Type: application/json
 }
 
 ### Forgot Password
-POST {{baseUrl}}/api/auth/forgot-password
+POST {{baseUrl}}/auth/forgot-password
 Content-Type: application/json
 
 {
@@ -69,7 +69,7 @@ Content-Type: application/json
 ### ============================================================================
 
 ### Report with Invalid Location
-POST {{baseUrl}}/api/report
+POST {{baseUrl}}/report
 Content-Type: application/json
 
 {
@@ -78,7 +78,7 @@ Content-Type: application/json
 }
 
 ### Report with Business Intent
-POST {{baseUrl}}/api/report
+POST {{baseUrl}}/report
 Content-Type: application/json
 
 {
@@ -91,7 +91,7 @@ Content-Type: application/json
 ### ============================================================================
 
 ### API Report - Free Plan (expect 403)
-POST {{baseUrl}}/api/v1/report
+POST {{baseUrl}}/v1/report
 Content-Type: application/json
 Authorization: Bearer aiq_test_free_key
 
@@ -105,10 +105,10 @@ Authorization: Bearer aiq_test_free_key
 ### ============================================================================
 
 ### Method Not Allowed
-GET {{baseUrl}}/api/report
+GET {{baseUrl}}/report
 
 ### Malformed JSON
-POST {{baseUrl}}/api/report
+POST {{baseUrl}}/report
 Content-Type: application/json
 
 {

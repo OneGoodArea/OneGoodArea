@@ -29,7 +29,7 @@ include build/container.mk
 IMG     ?= onegoodarea/api:local
 NAME    ?= oga-api
 PORT    ?= 8080
-ENVFILE ?= apps/web/.env.local
+ENVFILE ?= .env.local
 
 .PHONY: help api-build api-run api-stop api-clean \
         container-build container-run container-stop container-logs \
