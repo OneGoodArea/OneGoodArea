@@ -1,0 +1,751 @@
+/* /business — Brand v3 (Plotted) — AR-204 B2B sales surface.
+
+   Full rewrite over the old .aiq + Fraunces + inline-style /business
+   page. Buyer-centric (not product-centric) view: which product an
+   ICP reaches for, why, and what value they get.
+
+   Per-ICP sub-pages (/business/lender, /business/insurer, etc.) ship
+   as a later PR with SEO tuning. For now each ICP section ends in a
+   disabled "See more for <ICP>" CTA per the wiring rule.
+
+   Zero inline styles. .oga-* tokens. Drops .aiq from globals.css
+   dependency list (was one of 21 files holding the strip back). */
+
+.oga-biz {
+  min-height: 100vh;
+  background: var(--oga-white);
+  color: var(--oga-fg);
+}
+
+.oga-biz section {
+  padding: var(--oga-9) clamp(20px, 4vw, var(--oga-7));
+}
+
+.oga-biz__wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.oga-biz__wrap--narrow {
+  max-width: 880px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ============================================================
+   Hero — centred + anchor strip
+   ============================================================ */
+
+.oga-biz-hero {
+  text-align: center;
+  padding-top: var(--oga-9);
+  padding-bottom: var(--oga-8);
+}
+
+.oga-biz-hero__eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-4);
+}
+
+.oga-biz-hero__h1 {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(40px, 5vw, 64px);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 auto var(--oga-5);
+  max-width: 24ch;
+}
+
+.oga-biz-hero__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  color: var(--oga-fg-muted);
+  margin: 0 auto var(--oga-6);
+  max-width: 62ch;
+}
+
+.oga-biz-hero__ctas {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--oga-3);
+  justify-content: center;
+  margin-bottom: var(--oga-7);
+}
+
+.oga-biz-hero__anchor-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--oga-2);
+  justify-content: center;
+  max-width: 880px;
+  margin: 0 auto;
+  padding-top: var(--oga-5);
+  border-top: 1px solid var(--oga-border);
+}
+
+.oga-biz-hero__anchor-strip-label {
+  width: 100%;
+  text-align: center;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-3);
+}
+
+.oga-biz-hero__anchor {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--oga-fg);
+  background: transparent;
+  border: 1px solid var(--oga-border);
+  padding: 7px 13px;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.oga-biz-hero__anchor:hover {
+  background: var(--oga-canvas);
+  border-color: var(--oga-fg);
+}
+
+/* ============================================================
+   § 01 — Two ways to integrate (DARK)
+   ============================================================ */
+
+.oga-biz-modes {
+  padding-top: var(--oga-9);
+  padding-bottom: var(--oga-9);
+}
+
+.oga-biz-modes__head {
+  text-align: center;
+  margin-bottom: var(--oga-7);
+}
+
+.oga-biz-modes__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.55);
+  margin-bottom: var(--oga-4);
+}
+
+.oga-biz-modes__eyebrow-mark {
+  width: 16px;
+  height: 1px;
+  background: rgba(250, 248, 244, 0.3);
+}
+
+.oga-biz-modes__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.5vw, 40px);
+  line-height: 1.05;
+  letter-spacing: -0.018em;
+  font-weight: 500;
+  color: var(--oga-white);
+  margin: 0 auto var(--oga-3);
+  max-width: 26ch;
+}
+
+.oga-biz-modes__sub {
+  font-family: var(--oga-font-sans);
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.7);
+  margin: 0 auto;
+  max-width: 60ch;
+}
+
+.oga-biz-modes__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: rgba(250, 248, 244, 0.16);
+  border: 1px solid rgba(250, 248, 244, 0.16);
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+@media (max-width: 720px) {
+  .oga-biz-modes__grid { grid-template-columns: 1fr; }
+}
+
+.oga-biz-mode {
+  background: var(--oga-ink);
+  padding: var(--oga-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-4);
+  min-height: 320px;
+}
+
+.oga-biz-mode__num {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-biz-mode__title {
+  font-family: var(--oga-font-sans);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-white);
+  margin: 0;
+}
+
+.oga-biz-mode__body {
+  font-family: var(--oga-font-sans);
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.78);
+  margin: 0;
+}
+
+.oga-biz-mode__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--oga-2);
+}
+
+.oga-biz-mode__list li {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  color: rgba(250, 248, 244, 0.72);
+  padding-left: var(--oga-4);
+  position: relative;
+  line-height: 1.55;
+}
+
+.oga-biz-mode__list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--oga-white);
+}
+
+.oga-biz-mode__foot {
+  margin-top: auto;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.65);
+  padding-top: var(--oga-4);
+  border-top: 1px solid rgba(250, 248, 244, 0.12);
+}
+
+/* ============================================================
+   § 02 — Built for (alternating cream / white per ICP)
+   ============================================================ */
+
+.oga-biz-icp {
+  position: relative;
+  scroll-margin-top: var(--oga-7);
+}
+
+.oga-biz-icp--alt {
+  background: var(--oga-canvas);
+}
+
+.oga-biz-icp__inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: var(--oga-7);
+  align-items: start;
+}
+
+@media (max-width: 880px) {
+  .oga-biz-icp__inner { grid-template-columns: 1fr; gap: var(--oga-5); }
+}
+
+.oga-biz-icp__head {
+  margin-bottom: var(--oga-5);
+}
+
+.oga-biz-icp__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-3);
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-3);
+}
+
+.oga-biz-icp__eyebrow-num {
+  color: var(--oga-fg);
+  font-weight: 500;
+}
+
+.oga-biz-icp__eyebrow-line {
+  display: inline-block;
+  width: 32px;
+  height: 1px;
+  background: var(--oga-border);
+}
+
+.oga-biz-icp__name {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.4vw, 40px);
+  line-height: 1.05;
+  letter-spacing: -0.018em;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 0 var(--oga-3);
+  max-width: 22ch;
+}
+
+.oga-biz-icp__tagline {
+  font-family: var(--oga-font-sans);
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0;
+  max-width: 56ch;
+}
+
+.oga-biz-icp__rows {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--oga-4);
+}
+
+.oga-biz-icp__row {
+  padding: var(--oga-4) 0;
+  border-top: 1px solid var(--oga-border);
+}
+
+.oga-biz-icp__row:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.oga-biz-icp__row-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-2);
+}
+
+.oga-biz-icp__row-text {
+  font-family: var(--oga-font-sans);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--oga-fg);
+  margin: 0;
+  max-width: 64ch;
+}
+
+.oga-biz-icp__products {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--oga-2);
+}
+
+.oga-biz-icp__product {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-fg);
+  background: var(--oga-white);
+  border: 1px solid var(--oga-fg);
+  padding: 6px 12px;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.oga-biz-icp__product:hover {
+  background: var(--oga-fg);
+  color: var(--oga-white);
+}
+
+.oga-biz-icp--alt .oga-biz-icp__product {
+  background: var(--oga-canvas);
+}
+
+.oga-biz-icp--alt .oga-biz-icp__product:hover {
+  background: var(--oga-fg);
+  color: var(--oga-white);
+}
+
+.oga-biz-icp__sales {
+  margin-top: var(--oga-4);
+  padding: var(--oga-4) var(--oga-5);
+  background: var(--oga-fg);
+  color: var(--oga-white);
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.oga-biz-icp__cta-row {
+  margin-top: var(--oga-5);
+  display: flex;
+  align-items: center;
+  gap: var(--oga-3);
+  flex-wrap: wrap;
+}
+
+.oga-biz-icp__cta-disabled {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  background: transparent;
+  border: 1px solid var(--oga-border);
+  padding: 8px 14px;
+  border-radius: 2px;
+  cursor: not-allowed;
+}
+
+.oga-biz-icp__cta-soon-pill {
+  font-size: 10px;
+  color: var(--oga-fg-muted);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  background: var(--oga-canvas);
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.oga-biz-icp--alt .oga-biz-icp__cta-disabled {
+  background: var(--oga-white);
+}
+
+.oga-biz-icp--alt .oga-biz-icp__cta-soon-pill {
+  background: var(--oga-white);
+}
+
+/* Proof element pane (right column) */
+.oga-biz-icp__proof {
+  position: sticky;
+  top: var(--oga-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-4);
+}
+
+@media (max-width: 880px) {
+  .oga-biz-icp__proof { position: static; }
+}
+
+.oga-biz-icp__viz {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--oga-5);
+  border: 1px solid var(--oga-border);
+  background: var(--oga-white);
+  min-height: 220px;
+}
+
+.oga-biz-icp--alt .oga-biz-icp__viz {
+  background: var(--oga-white);
+}
+
+.oga-biz-icp__viz-svg {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  color: var(--oga-fg);
+}
+
+.oga-biz-icp__proof-card {
+  border: 1px solid var(--oga-border);
+  background: var(--oga-white);
+  padding: var(--oga-5);
+}
+
+.oga-biz-icp__proof-title {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-3);
+}
+
+.oga-biz-icp__proof-snippet {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--oga-fg);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+.oga-biz-icp__proof-foot {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-fg-muted);
+  margin: var(--oga-3) 0 0;
+  padding-top: var(--oga-3);
+  border-top: 1px solid var(--oga-border-dim);
+}
+
+/* ============================================================
+   § 03 — Common pillars (cream)
+   ============================================================ */
+
+.oga-biz-pillars {
+  padding-top: var(--oga-9);
+}
+
+.oga-biz-pillars__head {
+  text-align: center;
+  margin-bottom: var(--oga-7);
+}
+
+.oga-biz-pillars__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-4);
+}
+
+.oga-biz-pillars__eyebrow-mark {
+  width: 16px;
+  height: 1px;
+  background: var(--oga-border);
+}
+
+.oga-biz-pillars__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.5vw, 40px);
+  line-height: 1.05;
+  letter-spacing: -0.018em;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 auto var(--oga-3);
+  max-width: 28ch;
+}
+
+.oga-biz-pillars__sub {
+  font-family: var(--oga-font-sans);
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0 auto;
+  max-width: 60ch;
+}
+
+.oga-biz-pillars__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--oga-border);
+  border: 1px solid var(--oga-border);
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+@media (max-width: 880px) {
+  .oga-biz-pillars__grid { grid-template-columns: 1fr; }
+}
+
+.oga-biz-pillar {
+  background: var(--oga-white);
+  padding: var(--oga-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+  min-height: 240px;
+}
+
+.oga-biz-pillar__num {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-biz-pillar__title {
+  font-family: var(--oga-font-sans);
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-fg);
+  margin: 0;
+}
+
+.oga-biz-pillar__body {
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+.oga-biz-pillar__cite {
+  margin-top: auto;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-fg);
+}
+
+/* ============================================================
+   § 04 — Proof (DARK)
+   ============================================================ */
+
+.oga-biz-proof {
+  padding-top: var(--oga-9);
+  padding-bottom: var(--oga-9);
+}
+
+.oga-biz-proof__head {
+  text-align: center;
+  margin-bottom: var(--oga-7);
+}
+
+.oga-biz-proof__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.5vw, 40px);
+  line-height: 1.05;
+  letter-spacing: -0.018em;
+  font-weight: 500;
+  color: var(--oga-white);
+  margin: 0 auto var(--oga-3);
+  max-width: 30ch;
+}
+
+.oga-biz-proof__sub {
+  font-family: var(--oga-font-sans);
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.7);
+  margin: 0 auto;
+  max-width: 60ch;
+}
+
+.oga-biz-proof__strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: rgba(250, 248, 244, 0.16);
+  border: 1px solid rgba(250, 248, 244, 0.16);
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+@media (max-width: 720px) {
+  .oga-biz-proof__strip { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .oga-biz-proof__strip { grid-template-columns: 1fr; }
+}
+
+.oga-biz-proof-stat {
+  background: var(--oga-ink);
+  padding: var(--oga-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-2);
+}
+
+.oga-biz-proof-stat__num {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(32px, 4vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+  color: var(--oga-white);
+}
+
+.oga-biz-proof-stat__label {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-biz-proof-stat__body {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(250, 248, 244, 0.7);
+  margin: 0;
+}
+
+/* ============================================================
+   Final CTA (DARK)
+   ============================================================ */
+
+.oga-biz-cta {
+  text-align: center;
+}
+
+.oga-biz-cta__h2 {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.5vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.018em;
+  font-weight: 500;
+  color: var(--oga-white);
+  margin: 0 auto var(--oga-4);
+  max-width: 26ch;
+}
+
+.oga-biz-cta__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  color: rgba(250, 248, 244, 0.68);
+  margin: 0 auto var(--oga-6);
+  max-width: 56ch;
+}
+
+.oga-biz-cta__ctas {
+  display: inline-flex;
+  gap: var(--oga-3);
+  flex-wrap: wrap;
+  justify-content: center;
+}
