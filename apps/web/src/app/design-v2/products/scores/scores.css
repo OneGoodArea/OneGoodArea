@@ -1,0 +1,1117 @@
+/* /products/scores — Brand v3 (Plotted) — AR-204 product page #2.
+
+   Pattern parity with /products/signals, Scores-specific visual
+   treatment per section. Zero inline styles. */
+
+.oga-scr {
+  min-height: 100vh;
+  background: var(--oga-white);
+  color: var(--oga-fg);
+}
+
+.oga-scr section {
+  padding: var(--oga-9) clamp(20px, 4vw, var(--oga-7));
+}
+
+.oga-scr__wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.oga-scr__wrap--narrow {
+  max-width: 880px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ============================================================
+   Hero — centred, icon-forward (ScoresIcon)
+   ============================================================ */
+
+.oga-scr-hero {
+  text-align: center;
+  padding-top: var(--oga-9);
+  padding-bottom: var(--oga-8);
+}
+
+.oga-scr-hero__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 132px;
+  height: 132px;
+  margin: 0 auto var(--oga-7);
+  color: var(--oga-fg);
+}
+
+.oga-scr-hero__h1 {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(36px, 4.6vw, 56px);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 auto var(--oga-5);
+  max-width: 22ch;
+}
+
+.oga-scr-hero__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  color: var(--oga-fg-muted);
+  margin: 0 auto var(--oga-6);
+  max-width: 60ch;
+}
+
+.oga-scr-hero__ctas {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--oga-3);
+  justify-content: center;
+}
+
+/* ============================================================
+   § 01 — Live specimen (DARK) — preset × postcode = score
+   ============================================================ */
+
+.oga-scr-spec {
+  padding-top: var(--oga-8);
+  padding-bottom: var(--oga-9);
+}
+
+.oga-scr-spec__head {
+  text-align: center;
+  margin-bottom: var(--oga-7);
+}
+
+.oga-scr-spec__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.55);
+  margin-bottom: var(--oga-4);
+}
+
+.oga-scr-spec__eyebrow-mark {
+  width: 16px;
+  height: 1px;
+  background: rgba(250, 248, 244, 0.3);
+}
+
+.oga-scr-spec__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+  color: var(--oga-white);
+  margin: 0 auto var(--oga-3);
+  max-width: 22ch;
+}
+
+.oga-scr-spec__sub {
+  font-family: var(--oga-font-sans);
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.7);
+  margin: 0 auto;
+  max-width: 56ch;
+}
+
+/* Picker rows — two axes (postcode + preset) */
+.oga-scr-spec__pickers {
+  max-width: 980px;
+  margin: var(--oga-6) auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--oga-4);
+}
+
+.oga-scr-spec__picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--oga-3);
+  justify-content: center;
+}
+
+.oga-scr-spec__picker-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.5);
+}
+
+.oga-scr-spec__chip {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: rgba(250, 248, 244, 0.7);
+  background: transparent;
+  border: 1px solid rgba(250, 248, 244, 0.22);
+  padding: 7px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+}
+
+.oga-scr-spec__chip:hover {
+  color: var(--oga-white);
+  border-color: rgba(250, 248, 244, 0.5);
+}
+
+.oga-scr-spec__chip--active {
+  color: var(--oga-ink);
+  background: var(--oga-white);
+  border-color: var(--oga-white);
+}
+
+/* Specimen card — corner ticks + score panel + dim breakdown */
+.oga-scr-spec__card {
+  position: relative;
+  background: rgba(250, 248, 244, 0.03);
+  border: 1px solid rgba(250, 248, 244, 0.16);
+  max-width: 980px;
+  margin: 0 auto;
+  padding: var(--oga-6);
+}
+
+.oga-scr-spec__tick {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+
+.oga-scr-spec__tick::before,
+.oga-scr-spec__tick::after {
+  content: "";
+  position: absolute;
+  background: rgba(250, 248, 244, 0.5);
+}
+
+.oga-scr-spec__tick--tl { top: 8px; left: 8px; }
+.oga-scr-spec__tick--tr { top: 8px; right: 8px; }
+.oga-scr-spec__tick--bl { bottom: 8px; left: 8px; }
+.oga-scr-spec__tick--br { bottom: 8px; right: 8px; }
+
+.oga-scr-spec__tick--tl::before { top: 0; left: 0; width: 14px; height: 1px; }
+.oga-scr-spec__tick--tl::after  { top: 0; left: 0; width: 1px; height: 14px; }
+.oga-scr-spec__tick--tr::before { top: 0; right: 0; width: 14px; height: 1px; }
+.oga-scr-spec__tick--tr::after  { top: 0; right: 0; width: 1px; height: 14px; }
+.oga-scr-spec__tick--bl::before { bottom: 0; left: 0; width: 14px; height: 1px; }
+.oga-scr-spec__tick--bl::after  { bottom: 0; left: 0; width: 1px; height: 14px; }
+.oga-scr-spec__tick--br::before { bottom: 0; right: 0; width: 14px; height: 1px; }
+.oga-scr-spec__tick--br::after  { bottom: 0; right: 0; width: 1px; height: 14px; }
+
+/* Top bar — verb + path + JSON toggle */
+.oga-scr-spec__resp {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--oga-4);
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.6);
+  padding-bottom: var(--oga-4);
+  border-bottom: 1px solid rgba(250, 248, 244, 0.16);
+  margin-bottom: var(--oga-5);
+}
+
+.oga-scr-spec__resp-method {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  color: var(--oga-white);
+}
+
+.oga-scr-spec__resp-method-verb {
+  background: rgba(230, 180, 120, 0.18);
+  color: rgba(255, 220, 170, 0.95);
+  padding: 3px 8px;
+  border-radius: 2px;
+  font-size: 10.5px;
+}
+
+.oga-scr-spec__resp-toggle {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.7);
+  background: transparent;
+  border: 1px solid rgba(250, 248, 244, 0.22);
+  padding: 5px 10px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.oga-scr-spec__resp-toggle:hover {
+  color: var(--oga-white);
+  border-color: rgba(250, 248, 244, 0.5);
+}
+
+/* Big score panel */
+.oga-scr-spec__score-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--oga-7);
+  align-items: center;
+  margin-bottom: var(--oga-6);
+  padding-bottom: var(--oga-6);
+  border-bottom: 1px solid rgba(250, 248, 244, 0.16);
+}
+
+@media (max-width: 720px) {
+  .oga-scr-spec__score-panel { grid-template-columns: 1fr; gap: var(--oga-5); }
+}
+
+.oga-scr-spec__score-number {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oga-3);
+}
+
+.oga-scr-spec__score-number-val {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(72px, 10vw, 120px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-weight: 500;
+  color: var(--oga-white);
+}
+
+.oga-scr-spec__score-number-denom {
+  font-family: var(--oga-font-mono);
+  font-size: 16px;
+  color: rgba(250, 248, 244, 0.45);
+}
+
+.oga-scr-spec__score-meta {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+}
+
+.oga-scr-spec__score-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--oga-3);
+  padding: var(--oga-2) 0;
+  border-bottom: 1px solid rgba(250, 248, 244, 0.08);
+}
+
+.oga-scr-spec__score-meta-row:last-child {
+  border-bottom: none;
+}
+
+.oga-scr-spec__score-meta-k {
+  color: rgba(250, 248, 244, 0.45);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 10.5px;
+}
+
+.oga-scr-spec__score-meta-v {
+  color: var(--oga-white);
+  font-weight: 500;
+}
+
+/* Dimension breakdown rows */
+.oga-scr-spec__dims-title {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.55);
+  margin: 0 0 var(--oga-4);
+}
+
+.oga-scr-spec__dims {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.oga-scr-spec__dim {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) 60px 1fr 80px;
+  gap: var(--oga-4);
+  align-items: center;
+  padding: var(--oga-3) 0;
+  border-bottom: 1px solid rgba(250, 248, 244, 0.08);
+}
+
+.oga-scr-spec__dim:last-child {
+  border-bottom: none;
+}
+
+@media (max-width: 720px) {
+  .oga-scr-spec__dim {
+    grid-template-columns: 1fr;
+    gap: var(--oga-1);
+    padding: var(--oga-4) 0;
+  }
+}
+
+.oga-scr-spec__dim-name {
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  color: var(--oga-white);
+}
+
+.oga-scr-spec__dim-name-slug {
+  display: block;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: rgba(250, 248, 244, 0.45);
+  margin-top: 2px;
+}
+
+.oga-scr-spec__dim-val {
+  font-family: var(--oga-font-mono);
+  font-size: 16px;
+  color: var(--oga-white);
+  font-weight: 500;
+  text-align: right;
+}
+
+.oga-scr-spec__dim-bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.oga-scr-spec__dim-bar {
+  position: relative;
+  height: 4px;
+  background: rgba(250, 248, 244, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.oga-scr-spec__dim-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--oga-white);
+  border-radius: 2px;
+  transition: width 240ms ease;
+}
+
+.oga-scr-spec__dim-bar-meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-scr-spec__dim-conf {
+  display: flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: rgba(250, 248, 244, 0.7);
+  justify-content: flex-end;
+}
+
+.oga-scr-spec__conf-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(250, 248, 244, 0.85);
+  flex: 0 0 auto;
+}
+
+.oga-scr-spec__conf-dot--med {
+  background: rgba(250, 248, 244, 0.5);
+}
+
+.oga-scr-spec__conf-dot--low {
+  background: rgba(250, 248, 244, 0.25);
+}
+
+/* JSON view */
+.oga-scr-spec__json {
+  font-family: var(--oga-font-mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: rgba(250, 248, 244, 0.9);
+  white-space: pre;
+  overflow-x: auto;
+  margin: 0;
+  padding: var(--oga-3) 0 0;
+}
+
+/* Legend */
+.oga-scr-spec__legend {
+  max-width: 980px;
+  margin: var(--oga-6) auto 0;
+  padding: var(--oga-5);
+  border: 1px solid rgba(250, 248, 244, 0.14);
+  background: rgba(250, 248, 244, 0.02);
+}
+
+.oga-scr-spec__legend-title {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.55);
+  margin: 0 0 var(--oga-3);
+}
+
+.oga-scr-spec__legend-rows {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: var(--oga-3) var(--oga-5);
+  margin: 0;
+  align-items: baseline;
+}
+
+@media (max-width: 720px) {
+  .oga-scr-spec__legend-rows {
+    grid-template-columns: 1fr;
+    gap: var(--oga-1);
+  }
+  .oga-scr-spec__legend-rows > dt {
+    margin-top: var(--oga-3);
+  }
+}
+
+.oga-scr-spec__legend-rows dt {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-white);
+  margin: 0;
+}
+
+.oga-scr-spec__legend-rows dt code {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-white);
+  background: rgba(250, 248, 244, 0.08);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+.oga-scr-spec__legend-rows dd {
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.75);
+  margin: 0;
+}
+
+.oga-scr-spec__legend-rows dd strong {
+  color: var(--oga-white);
+  font-weight: 500;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+}
+
+.oga-scr-spec__note {
+  text-align: center;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: rgba(250, 248, 244, 0.45);
+  margin: var(--oga-5) auto 0;
+  max-width: 60ch;
+}
+
+/* ============================================================
+   § 02 — The four presets (cream) — bespoke "4 columns of 5 dims"
+   ============================================================ */
+
+.oga-scr-presets {
+  padding-top: var(--oga-9);
+}
+
+.oga-scr-presets__head {
+  text-align: center;
+  margin-bottom: var(--oga-7);
+}
+
+.oga-scr-presets__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 auto var(--oga-3);
+  max-width: 26ch;
+}
+
+.oga-scr-presets__sub {
+  font-family: var(--oga-font-sans);
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0 auto;
+  max-width: 60ch;
+}
+
+.oga-scr-presets__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--oga-border);
+  border: 1px solid var(--oga-border);
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+@media (max-width: 880px) {
+  .oga-scr-presets__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 480px) {
+  .oga-scr-presets__grid { grid-template-columns: 1fr; }
+}
+
+.oga-scr-preset {
+  background: var(--oga-white);
+  padding: var(--oga-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+}
+
+.oga-scr-preset__glyph {
+  width: 36px;
+  height: 36px;
+  margin-bottom: var(--oga-2);
+  color: var(--oga-fg);
+}
+
+.oga-scr-preset__slug {
+  display: inline-block;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-fg-muted);
+  background: var(--oga-canvas);
+  border: 1px solid var(--oga-border);
+  padding: 2px 7px;
+  border-radius: 2px;
+  align-self: flex-start;
+}
+
+.oga-scr-preset__name {
+  font-family: var(--oga-font-sans);
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-fg);
+  margin: 0;
+}
+
+.oga-scr-preset__use {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-4);
+}
+
+.oga-scr-preset__dims-title {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-2);
+  padding-top: var(--oga-3);
+  border-top: 1px solid var(--oga-border-dim);
+}
+
+.oga-scr-preset__dims {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-1);
+}
+
+.oga-scr-preset__dims li {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-fg);
+  padding: 4px 0;
+  display: flex;
+  align-items: center;
+  gap: var(--oga-2);
+}
+
+.oga-scr-preset__dim-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--oga-fg);
+  flex: 0 0 auto;
+}
+
+/* ============================================================
+   § 03 — Anatomy / pipeline (DARK)
+   ============================================================ */
+
+.oga-scr-anat {
+  padding-top: var(--oga-9);
+  padding-bottom: var(--oga-9);
+}
+
+.oga-scr-anat__head {
+  text-align: center;
+  margin-bottom: var(--oga-7);
+}
+
+.oga-scr-anat__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+  color: var(--oga-white);
+  margin: 0 auto var(--oga-3);
+  max-width: 26ch;
+}
+
+.oga-scr-anat__sub {
+  font-family: var(--oga-font-sans);
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.7);
+  margin: 0 auto;
+  max-width: 60ch;
+}
+
+.oga-scr-anat__stage {
+  position: relative;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.oga-scr-anat__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.oga-scr-anat__notes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--oga-5);
+  list-style: none;
+  padding: 0;
+  margin: var(--oga-7) auto 0;
+  max-width: 1000px;
+}
+
+@media (max-width: 720px) {
+  .oga-scr-anat__notes { grid-template-columns: 1fr; }
+}
+
+.oga-scr-anat__note {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-2);
+  padding-top: var(--oga-3);
+  border-top: 1px solid rgba(250, 248, 244, 0.16);
+}
+
+.oga-scr-anat__note-num {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-scr-anat__note-title {
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--oga-white);
+  margin: 0;
+}
+
+.oga-scr-anat__note-body {
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.72);
+  margin: 0;
+}
+
+/* ============================================================
+   § 04 — Endpoints (cream) — tabbed panel
+   ============================================================ */
+
+.oga-scr-ep {
+  padding-top: var(--oga-9);
+}
+
+.oga-scr-ep__head {
+  text-align: center;
+  margin-bottom: var(--oga-7);
+}
+
+.oga-scr-ep__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 auto var(--oga-3);
+  max-width: 26ch;
+}
+
+.oga-scr-ep__sub {
+  font-family: var(--oga-font-sans);
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0 auto;
+  max-width: 60ch;
+}
+
+.oga-scr-ep__panel {
+  max-width: 1000px;
+  margin: 0 auto;
+  border: 1px solid var(--oga-border);
+  background: var(--oga-white);
+}
+
+.oga-scr-ep__tabs {
+  display: flex;
+  border-bottom: 1px solid var(--oga-border);
+}
+
+.oga-scr-ep__tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--oga-border);
+  padding: var(--oga-4) var(--oga-3);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--oga-font-mono);
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.oga-scr-ep__tab:last-child {
+  border-right: none;
+}
+
+.oga-scr-ep__tab:hover {
+  background: var(--oga-canvas);
+}
+
+.oga-scr-ep__tab--active {
+  background: var(--oga-ink);
+  color: var(--oga-white);
+}
+
+.oga-scr-ep__tab-verb {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--oga-status-amber);
+  margin-bottom: 4px;
+}
+
+.oga-scr-ep__tab--active .oga-scr-ep__tab-verb {
+  color: rgba(255, 220, 170, 0.95);
+}
+
+.oga-scr-ep__tab-path {
+  display: block;
+  font-size: 12.5px;
+  color: var(--oga-fg);
+}
+
+.oga-scr-ep__tab--active .oga-scr-ep__tab-path {
+  color: var(--oga-white);
+}
+
+.oga-scr-ep__body {
+  padding: var(--oga-6);
+}
+
+.oga-scr-ep__what {
+  font-family: var(--oga-font-sans);
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-5);
+}
+
+.oga-scr-ep__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--oga-6);
+}
+
+@media (max-width: 720px) {
+  .oga-scr-ep__grid { grid-template-columns: 1fr; gap: var(--oga-5); }
+}
+
+.oga-scr-ep__col-title {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-3);
+}
+
+.oga-scr-ep__params {
+  display: grid;
+  gap: var(--oga-3);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.oga-scr-ep__params li {
+  padding: var(--oga-2) 0;
+  border-bottom: 1px solid var(--oga-border-dim);
+}
+
+.oga-scr-ep__params li:last-child {
+  border-bottom: none;
+}
+
+.oga-scr-ep__params-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--oga-2);
+}
+
+.oga-scr-ep__params-name {
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
+  color: var(--oga-fg);
+  font-weight: 500;
+}
+
+.oga-scr-ep__params-type {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  color: var(--oga-fg-muted);
+}
+
+.oga-scr-ep__params-req {
+  font-family: var(--oga-font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--oga-status-amber);
+}
+
+.oga-scr-ep__params-desc {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+  margin: 4px 0 0;
+}
+
+.oga-scr-ep__response {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-4);
+}
+
+.oga-scr-ep__codes {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--oga-1) var(--oga-3);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  margin: 0;
+}
+
+.oga-scr-ep__codes dt {
+  color: var(--oga-fg);
+  font-weight: 500;
+}
+
+.oga-scr-ep__codes dd {
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+/* ============================================================
+   § 05 — Built for (cream) — 5 ICPs equal weight
+   ============================================================ */
+
+.oga-scr-icps {
+  padding-top: var(--oga-9);
+}
+
+.oga-scr-icps__head {
+  text-align: center;
+  margin-bottom: var(--oga-8);
+}
+
+.oga-scr-icps__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 auto var(--oga-3);
+  max-width: 26ch;
+}
+
+.oga-scr-icps__sub {
+  font-family: var(--oga-font-sans);
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0 auto;
+  max-width: 60ch;
+}
+
+.oga-scr-icps__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 1080px;
+  margin: 0 auto;
+  border-top: 1px solid var(--oga-border);
+}
+
+.oga-scr-icp {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: var(--oga-5) var(--oga-6);
+  padding: var(--oga-7) var(--oga-3);
+  border-bottom: 1px solid var(--oga-border);
+  align-items: start;
+}
+
+@media (max-width: 880px) {
+  .oga-scr-icp {
+    grid-template-columns: 1fr;
+    gap: var(--oga-4);
+    padding: var(--oga-6) var(--oga-2);
+  }
+}
+
+.oga-scr-icp__viz {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.oga-scr-icp__viz-svg {
+  width: 100%;
+  max-width: 120px;
+  height: auto;
+  color: var(--oga-fg);
+}
+
+.oga-scr-icp__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+}
+
+.oga-scr-icp__name {
+  font-family: var(--oga-font-sans);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.oga-scr-icp__row-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+.oga-scr-icp__row-text {
+  font-family: var(--oga-font-sans);
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--oga-fg);
+  margin: 4px 0 0;
+}
+
+.oga-scr-icp__sales {
+  margin-top: var(--oga-2);
+  padding: var(--oga-3) var(--oga-4);
+  background: var(--oga-canvas);
+  border-left: 2px solid var(--oga-fg);
+  font-family: var(--oga-font-sans);
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--oga-fg);
+}
+
+/* ============================================================
+   Final CTA (DARK)
+   ============================================================ */
+
+.oga-scr-cta {
+  text-align: center;
+}
+
+.oga-scr-cta__h2 {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.5vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.018em;
+  font-weight: 500;
+  color: var(--oga-white);
+  margin: 0 auto var(--oga-4);
+  max-width: 22ch;
+}
+
+.oga-scr-cta__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  color: rgba(250, 248, 244, 0.68);
+  margin: 0 auto var(--oga-6);
+  max-width: 56ch;
+}
+
+.oga-scr-cta__ctas {
+  display: inline-flex;
+  gap: var(--oga-3);
+  flex-wrap: wrap;
+  justify-content: center;
+}

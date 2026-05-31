@@ -490,7 +490,7 @@ function SignalAnatomySvg() {
       className="oga-sig-anatomy__svg"
       viewBox="0 0 1080 580"
       role="img"
-      aria-label="Anatomy of a Signal — fields and their meanings"
+      aria-label="Anatomy of a Signal: fields and their meanings"
     >
       {/* central spec pill */}
       <g transform="translate(540, 290)">
