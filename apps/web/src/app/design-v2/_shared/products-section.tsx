@@ -65,7 +65,7 @@ const PRODUCTS: Product[] = [
       "signal.changed webhooks delivered to your endpoint",
     ],
     icon: MonitorIcon,
-    ready: false,
+    ready: true,
   },
   {
     slug: "intelligence",

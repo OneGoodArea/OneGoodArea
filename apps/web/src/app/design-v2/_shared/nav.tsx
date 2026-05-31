@@ -46,7 +46,7 @@ interface ProductLink {
 const PRODUCTS: ProductLink[] = [
   { slug: "signals",      title: "Signals",      sub: "Raw normalized data per LSOA",   icon: SignalsIcon,      ready: true  },
   { slug: "scores",       title: "Scores",       sub: "Configurable 0–100 composite",  icon: ScoresIcon,       ready: true  },
-  { slug: "monitor",      title: "Monitor",      sub: "Portfolios + change alerts",    icon: MonitorIcon,      ready: false },
+  { slug: "monitor",      title: "Monitor",      sub: "Portfolios + change alerts",    icon: MonitorIcon,      ready: true  },
   { slug: "intelligence", title: "Intelligence", sub: "Typed query plane (NL + JSON)", icon: IntelligenceIcon, ready: false },
 ];
 
