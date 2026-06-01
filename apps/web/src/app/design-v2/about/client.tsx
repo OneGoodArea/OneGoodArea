@@ -1,670 +1,514 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
-import { Styles } from "../_shared/styles";
 import { Nav } from "../_shared/nav";
 import { Footer } from "../_shared/footer";
-import { AiqIcon, type IconName } from "../_shared/icons";
+import { XIcon, LinkedInIcon, EmailIcon } from "../_shared/social-icons";
+import "./about.css";
 
-/* ═══════════════════════════════════════════════════════════════
-   OneGoodArea · Design V2 · /about
-   Editorial story page: the gap, principles, data, timeline, builder.
-   ═══════════════════════════════════════════════════════════════ */
+/* About OneGoodArea — Brand v3 rewrite (AR-204 PR Q).
+   Replaces the 670 LOC legacy Fraunces + .aiq + inline-style page.
+
+   Locked IA (5 sections, no founder block, no roadmap):
+     Hero (cream)
+     § 01  Why we exist            (cream-quiet)
+     § 02  What we believe         (DARK, 6 principle cards w/ ADR refs)
+     § 03  How it got built        (cream, origin + small-team framing + real stats strip)
+     § 04  Talk to us              (DARK CTA, 3 contact channels)
+
+   Voice: company (we / our). No founder spotlight.
+   Hard rules: zero inline styles, no aiq_, no em dashes, no fake links,
+   no invented numbers (all stats traceable to ADRs / memory / engine state). */
+
+/* Per-principle micro-illustrations.
+   Brand v3 dot-and-hairline vocabulary — same family as the homepage
+   product icons (SignalsIcon 5x5 / ScoresIcon converge / MonitorIcon
+   wave / IntelligenceIcon query-graph). Pure dots + hairlines, no
+   text inside the SVG. viewBox 32x32, rendered at 64px in the card.
+   currentColor everywhere so they invert on dark surfaces. */
+
+const VIZ_BASE = {
+  className: "oga-about-believe__card-svg",
+  viewBox: "0 0 32 32",
+  fill: "none",
+  "aria-hidden": true as const,
+};
+
+/* 1. Deterministic at the source — many inputs converge to ONE solid
+   dot (the engine output); a small disconnected cluster up top
+   stands for AI (not in the line). */
+function VizDeterministic() {
+  const center = { x: 16, y: 19 };
+  const inputs = [
+    { x: 4,  y: 24 },
+    { x: 8,  y: 28 },
+    { x: 16, y: 30 },
+    { x: 24, y: 28 },
+    { x: 28, y: 24 },
+  ];
+  const ai = [
+    { x: 10, y: 5 },
+    { x: 16, y: 4 },
+    { x: 22, y: 5 },
+  ];
+  return (
+    <svg {...VIZ_BASE}>
+      {/* hairlines from inputs to engine */}
+      <g stroke="currentColor" strokeOpacity="0.32" strokeWidth="0.7">
+        {inputs.map((p, i) => (
+          <line key={i} x1={p.x} y1={p.y} x2={center.x} y2={center.y} />
+        ))}
+      </g>
+      <g fill="currentColor">
+        {inputs.map((p, i) => (
+          <circle key={i} cx={p.x} cy={p.y} r="1.2" />
+        ))}
+        {/* AI cluster — disconnected, ambient */}
+        <g opacity="0.36">
+          {ai.map((p, i) => (
+            <circle key={i} cx={p.x} cy={p.y} r="1.0" />
+          ))}
+        </g>
+        {/* Engine result — enlarged, with a halo ring */}
+        <circle cx={center.x} cy={center.y} r="2.4" />
+      </g>
+      <circle cx={center.x} cy={center.y} r="3.8" fill="none" stroke="currentColor" strokeOpacity="0.45" strokeWidth="0.6" />
+    </svg>
+  );
+}
+
+/* 2. Methodology is public — a structured 4x5 grid of dots with a
+   horizontal "ruled" hairline at midpoint, top row at full opacity
+   (the header anchor). Reads as an ordered, published page. */
+function VizMethodology() {
+  const cols = [6, 13, 20, 27];
+  const rows = [5, 11, 17, 23, 29];
+  return (
+    <svg {...VIZ_BASE}>
+      {/* page rule hairline */}
+      <line x1="2" y1="14" x2="30" y2="14" stroke="currentColor" strokeOpacity="0.28" strokeWidth="0.6" />
+      <g fill="currentColor">
+        {rows.map((y, rIdx) =>
+          cols.map((x, cIdx) => (
+            <circle
+              key={`${rIdx}-${cIdx}`}
+              cx={x}
+              cy={y}
+              r={rIdx === 0 ? 1.4 : 1.0}
+              opacity={rIdx === 0 ? 1 : 0.45}
+            />
+          )),
+        )}
+      </g>
+    </svg>
+  );
+}
+
+/* 3. Plan-replayable AI — 6 dots arranged in a closed loop. The
+   closing edge IS the replay; one entry dot enlarged. No text. */
+function VizPlanReplay() {
+  const cx = 16, cy = 16, r = 10;
+  const nodes = [0, 1, 2, 3, 4, 5].map((i) => {
+    const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+    return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+  });
+  return (
+    <svg {...VIZ_BASE}>
+      <g stroke="currentColor" strokeOpacity="0.42" strokeWidth="0.7" fill="none">
+        {nodes.map((p, i) => {
+          const next = nodes[(i + 1) % nodes.length];
+          return <line key={i} x1={p.x} y1={p.y} x2={next.x} y2={next.y} />;
+        })}
+      </g>
+      <g fill="currentColor">
+        {nodes.map((p, i) => (
+          <circle key={i} cx={p.x} cy={p.y} r={i === 0 ? 2.0 : 1.3} />
+        ))}
+      </g>
+      {/* halo on the entry node */}
+      <circle cx={nodes[0].x} cy={nodes[0].y} r="3.2" fill="none" stroke="currentColor" strokeOpacity="0.4" strokeWidth="0.55" />
+    </svg>
+  );
+}
+
+/* 4. Sample-size honest — 6 vertical columns of stacked dots. A
+   horizontal threshold hairline divides the field. Columns peaking
+   below the threshold are dimmed (gated out); columns peaking above
+   are full opacity (the honest signal that passes). */
+function VizSampleSize() {
+  const cols = [
+    { x: 4,  heights: [28, 24] },                              // 2 dots — below
+    { x: 9,  heights: [28, 24, 20, 16] },                      // 4 dots — at line
+    { x: 14, heights: [28, 24] },                              // 2 dots — below
+    { x: 19, heights: [28, 24, 20, 16, 12] },                  // 5 dots — well above
+    { x: 24, heights: [28, 24, 20] },                          // 3 dots — below
+    { x: 29, heights: [28, 24, 20, 16] },                      // 4 dots — at line
+  ];
+  const threshold = 16;
+  return (
+    <svg {...VIZ_BASE}>
+      {/* threshold rule */}
+      <line x1="2" y1={threshold} x2="30" y2={threshold} stroke="currentColor" strokeOpacity="0.42" strokeWidth="0.6" strokeDasharray="1.5 1.5" />
+      {cols.map((c, ci) => {
+        const top = Math.min(...c.heights);
+        const passes = top <= threshold;
+        return (
+          <g key={ci} fill="currentColor" opacity={passes ? 1 : 0.35}>
+            {c.heights.map((y, di) => (
+              <circle key={di} cx={c.x} cy={y} r={passes && di === c.heights.length - 1 ? 1.5 : 1.1} />
+            ))}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/* 5. Pinnable per organisation — horizontal axis of 5 version dots.
+   Center dot enlarged + halo (the pinned version). A hairline drops
+   from it to a small anchor mark below (the org). */
+function VizPinnable() {
+  const axisY = 14;
+  const versions = [4, 10, 16, 22, 28];
+  return (
+    <svg {...VIZ_BASE}>
+      {/* axis line */}
+      <line x1="2" y1={axisY} x2="30" y2={axisY} stroke="currentColor" strokeOpacity="0.3" strokeWidth="0.6" />
+      <g fill="currentColor">
+        {versions.map((x, i) => {
+          const pinned = i === 2;
+          return (
+            <circle
+              key={i}
+              cx={x}
+              cy={axisY}
+              r={pinned ? 2.2 : 1.2}
+              opacity={i === 4 ? 0.45 : pinned ? 1 : 0.6}
+            />
+          );
+        })}
+      </g>
+      {/* halo on pinned version */}
+      <circle cx="16" cy={axisY} r="3.6" fill="none" stroke="currentColor" strokeOpacity="0.45" strokeWidth="0.55" />
+      {/* pin drop to anchor */}
+      <line x1="16" y1="18" x2="16" y2="24" stroke="currentColor" strokeOpacity="0.5" strokeWidth="0.7" />
+      <line x1="12" y1="26" x2="20" y2="26" stroke="currentColor" strokeOpacity="0.45" strokeWidth="0.7" />
+      <circle cx="16" cy="26" r="1.0" fill="currentColor" />
+    </svg>
+  );
+}
+
+/* 6. Country-scoped percentiles — 3 separated dot clusters, no
+   hairlines between them. The visual gap IS the principle (no
+   cross-border comparison). One enlarged dot per cluster = the
+   country reference. */
+function VizCountryScoped() {
+  const clusters = [
+    /* England */
+    [
+      { x: 4,  y: 12, r: 1.0 },
+      { x: 7,  y: 10, r: 1.0 },
+      { x: 9,  y: 13, r: 1.0 },
+      { x: 7,  y: 16, r: 1.7 },
+      { x: 4,  y: 18, r: 1.0 },
+    ],
+    /* Scotland */
+    [
+      { x: 14, y: 10, r: 1.0 },
+      { x: 18, y: 11, r: 1.0 },
+      { x: 17, y: 14, r: 1.0 },
+      { x: 15, y: 16, r: 1.7 },
+      { x: 19, y: 18, r: 1.0 },
+    ],
+    /* Wales */
+    [
+      { x: 24, y: 11, r: 1.0 },
+      { x: 27, y: 13, r: 1.0 },
+      { x: 23, y: 14, r: 1.0 },
+      { x: 26, y: 17, r: 1.7 },
+      { x: 28, y: 19, r: 1.0 },
+    ],
+  ];
+  return (
+    <svg {...VIZ_BASE}>
+      <g fill="currentColor">
+        {clusters.flatMap((cluster, ci) =>
+          cluster.map((p, pi) => (
+            <circle key={`${ci}-${pi}`} cx={p.x} cy={p.y} r={p.r} />
+          )),
+        )}
+      </g>
+      {/* faint baseline hairline under each cluster — anchors them
+          to their own ground without connecting cross-cluster */}
+      <g stroke="currentColor" strokeOpacity="0.25" strokeWidth="0.55">
+        <line x1="3"  y1="23" x2="10" y2="23" />
+        <line x1="13" y1="23" x2="20" y2="23" />
+        <line x1="22" y1="23" x2="29" y2="23" />
+      </g>
+    </svg>
+  );
+}
+
+const PRINCIPLES = [
+  {
+    title: "Deterministic at the source",
+    body: "The engine sets the number, not the AI. Every score, signal, and percentile is computed by a versioned SQL + rules pipeline you can replay byte-for-byte. AI sits on top as a planner and a query plane, never as the source of truth.",
+    Viz: VizDeterministic,
+  },
+  {
+    title: "Methodology is public",
+    body: "Every dimension, every weight, every aggregation step is documented on /methodology. The architectural decision record is open on GitHub. If a number lands in your report, the trail is citable.",
+    Viz: VizMethodology,
+  },
+  {
+    title: "Plan-replayable AI",
+    body: "Natural-language queries emit a typed plan (Zod-strict JSON) before any SQL runs. The same plan replays without an LLM call. The AI is auditable because it is not the executor.",
+    Viz: VizPlanReplay,
+  },
+  {
+    title: "Sample-size honest",
+    body: "When the underlying data is thin, confidence drops and the response says why. Price moves on two transactions never trigger a webhook. We would rather say less than say something wrong.",
+    Viz: VizSampleSize,
+  },
+  {
+    title: "Pinnable per organisation",
+    body: "Methodology version locks per-org. Your contract cycle survives engine upgrades. Two calls in the same window return the same numbers across deploys.",
+    Viz: VizPinnable,
+  },
+  {
+    title: "Country-scoped percentiles",
+    body: "England compared against England, Scotland against Scotland, Wales against Wales. No cross-border lies. Three official deprivation methodologies, three percentile spaces, by design.",
+    Viz: VizCountryScoped,
+  },
+];
+
+const STATS = [
+  { value: "v2.0.2",  label: "Engine version stamped on every response" },
+  { value: "4",       label: "Products live (Signals, Scores, Monitor, Intelligence)" },
+  { value: "5",       label: "ICPs served (PropTech, insurance, lenders, CRE, public sector)" },
+  { value: "35+",     label: "Architectural decision records published" },
+];
+
+const CONTACT_CHANNELS = [
+  {
+    label: "Email",
+    value: "hello@onegoodarea.com",
+    href: "mailto:hello@onegoodarea.com",
+    note: "We read everything that lands here.",
+    Icon: EmailIcon,
+  },
+  {
+    label: "X",
+    value: "@onegoodarea",
+    href: "https://x.com/onegoodarea",
+    note: "Engineering and product updates as we ship.",
+    Icon: XIcon,
+  },
+  {
+    label: "LinkedIn",
+    value: "company/onegoodarea",
+    href: "https://www.linkedin.com/company/onegoodarea",
+    note: "Longer-form notes and hiring when we open roles.",
+    Icon: LinkedInIcon,
+  },
+];
 
 export default function AboutClient() {
   return (
-    <div className="aiq">
-      <Styles />
+    <div className="oga-root oga-about">
       <Nav />
-      <Hero />
-      <StatsStrip />
-      <TheGap />
-      <Principles />
-      <DataSources />
-      <Timeline />
-      <Builder />
-      <Mission />
-      <FinalCta />
+      {/* HERO ---------------------------------------------------- */}
+      <section className="oga-about-hero" data-oga-surface="light">
+        <div className="oga-about-hero__inner">
+          <div className="oga-about-hero__eyebrow oga-eyebrow">
+            <span className="oga-eyebrow-dot" aria-hidden />
+            <span>About OneGoodArea</span>
+          </div>
+
+          <h1 className="oga-about-hero__title">
+            We&rsquo;re building the data and intelligence layer underneath UK property workflows.
+          </h1>
+
+          <p className="oga-about-hero__lead">
+            Deterministic signals, configurable scoring, portfolio monitoring,
+            and a typed AI query plane over monthly area time-series. One API,
+            one methodology, version-pinned per organisation.
+          </p>
+
+          <div className="oga-about-hero__cta">
+            <Link href="/methodology" className="oga-btn oga-btn-primary">
+              Read the methodology
+              <span aria-hidden>→</span>
+            </Link>
+            <a href="mailto:hello@onegoodarea.com" className="oga-btn oga-btn-secondary">
+              Talk to us
+              <span aria-hidden>→</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* § 01 — WHY WE EXIST ------------------------------------- */}
+      <section className="oga-section-quiet oga-about-why" data-oga-surface="light">
+        <div className="oga-about-why__inner">
+          <div className="oga-about-why__eyebrow oga-eyebrow">
+            <span className="oga-eyebrow-mono">01</span>
+            <span>Why we exist</span>
+          </div>
+
+          <h2 className="oga-about-why__title">
+            UK property workflows still stitch area data from seven portals.
+          </h2>
+
+          <div className="oga-about-why__prose">
+            <p>
+              An underwriter wants crime, deprivation, education, and price
+              context for a postcode. They open four tabs, copy numbers into a
+              spreadsheet, and hope the dates line up. A site selection team
+              wants to rank 40,000 catchments against their own criteria. They
+              cannot, because no single API answers a compound query against
+              the ONS spine with country-correct percentiles.
+            </p>
+            <p>
+              We built the layer underneath. The same official sources every
+              compliance team already trusts, but stitched into one API with
+              the dating, attribution, and percentile scoping done correctly
+              by construction. Methodology version stamped on every response.
+              Sample-size gates on every change-detection job. Open ADR trail
+              behind every architectural choice.
+            </p>
+            <p>
+              It exists so the underwriter, the planner, the site selection
+              lead, and the analyst all pull from the same numbers, with the
+              same methodology, on the same engine version. Decision-grade by
+              construction. Auditable on first request.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* § 02 — WHAT WE BELIEVE (DARK) --------------------------- */}
+      <section className="oga-section-dark oga-about-believe" data-oga-surface="dark">
+        <div className="oga-about-believe__inner">
+          <div className="oga-about-believe__head">
+            <div className="oga-about-believe__eyebrow oga-eyebrow oga-eyebrow--inverse">
+              <span className="oga-eyebrow-mono">02</span>
+              <span>What we believe</span>
+            </div>
+            <h2 className="oga-about-believe__title">
+              Six principles, all traceable to an architectural decision record.
+            </h2>
+            <p className="oga-about-believe__lead">
+              These aren&rsquo;t marketing words. Each one is enforced in code,
+              documented in /methodology, and citable in your audit footnote.
+            </p>
+          </div>
+
+          <ol className="oga-about-believe__grid">
+            {PRINCIPLES.map((p, i) => (
+              <li key={p.title} className="oga-about-believe__card">
+                <div className="oga-about-believe__card-viz">
+                  <p.Viz />
+                </div>
+                <div className="oga-about-believe__card-meta">
+                  <span className="oga-about-believe__card-num">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                </div>
+                <h3 className="oga-about-believe__card-title">{p.title}</h3>
+                <p className="oga-about-believe__card-body">{p.body}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* § 03 — HOW IT GOT BUILT --------------------------------- */}
+      <section className="oga-about-built" data-oga-surface="light">
+        <div className="oga-about-built__inner">
+          <div className="oga-about-built__eyebrow oga-eyebrow">
+            <span className="oga-eyebrow-mono">03</span>
+            <span>How it got built</span>
+          </div>
+
+          <h2 className="oga-about-built__title">
+            Engine first, surfaces second, AI last.
+          </h2>
+
+          <div className="oga-about-built__prose">
+            <p>
+              OneGoodArea is built lean by a small team. The first phase was
+              the engine: the ONS postcode spine, the three national
+              deprivation methodologies, the price and crime time-series, the
+              confidence rubric, the version stamp. The four products you see
+              today (Signals, Scores, Monitor, Intelligence) all sit on that
+              same core. Same numbers, four shapes.
+            </p>
+            <p>
+              AI joined the stack only after the engine was deterministic and
+              the methodology was published. The planner emits a typed plan
+              first; the SQL runs second; the LLM never touches the numbers.
+              That ordering is the architecture, not a slogan. It is the
+              reason a public sector analyst can replay an AI query a year
+              later, without an LLM call, and get the same rows.
+            </p>
+          </div>
+
+          <ul className="oga-about-built__stats">
+            {STATS.map((s) => (
+              <li key={s.label} className="oga-about-built__stat">
+                <div className="oga-about-built__stat-value">{s.value}</div>
+                <div className="oga-about-built__stat-label">{s.label}</div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* § 04 — TALK TO US (DARK CTA) ---------------------------- */}
+      <section className="oga-section-dark oga-about-contact" data-oga-surface="dark">
+        <div className="oga-about-contact__inner">
+          <div className="oga-about-contact__eyebrow oga-eyebrow oga-eyebrow--inverse">
+            <span className="oga-eyebrow-mono">04</span>
+            <span>Talk to us</span>
+          </div>
+
+          <h2 className="oga-about-contact__title">
+            Procurement question? Methodology question? Building on top of us?
+          </h2>
+
+          <p className="oga-about-contact__lead">
+            Whichever it is, the fastest channel is the one below you already use.
+          </p>
+
+          <ul className="oga-about-contact__grid">
+            {CONTACT_CHANNELS.map((c) => {
+              const external = c.href.startsWith("http");
+              return (
+                <li key={c.label} className="oga-about-contact__card">
+                  <div className="oga-about-contact__card-icon" aria-hidden>
+                    <c.Icon />
+                  </div>
+                  <div className="oga-about-contact__card-label">{c.label}</div>
+                  <a
+                    className="oga-about-contact__card-value"
+                    href={c.href}
+                    {...(external ? { target: "_blank", rel: "noreferrer noopener" } : {})}
+                  >
+                    {c.value}
+                    <span className="oga-about-contact__card-arrow" aria-hidden>
+                      {external ? "↗" : "→"}
+                    </span>
+                  </a>
+                  <p className="oga-about-contact__card-note">{c.note}</p>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </section>
+
       <Footer />
     </div>
-  );
-}
-
-/* ─────── Hero ─────── */
-
-function Hero() {
-  return (
-    <section style={{
-      position: "relative",
-      background: "var(--bg)",
-      borderBottom: "1px solid var(--border)",
-      overflow: "hidden",
-    }}>
-      <div aria-hidden style={{
-        position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0,
-      }}>
-        <div style={{
-          position: "absolute", top: -220, left: "50%",
-          transform: "translateX(-50%)",
-          width: 880, height: 640,
-          background: "radial-gradient(ellipse at center, rgba(212,243,58,0.18) 0%, rgba(212,243,58,0) 60%)",
-        }} />
-      </div>
-      <div style={{
-        maxWidth: 880, margin: "0 auto",
-        padding: "112px 40px 80px",
-        position: "relative", zIndex: 1, textAlign: "center",
-      }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-          letterSpacing: "0.24em", textTransform: "uppercase",
-          color: "var(--text-2)",
-          display: "inline-flex", alignItems: "center", gap: 9,
-          marginBottom: 26,
-        }}>
-          <span aria-hidden style={{
-            width: 6, height: 6, borderRadius: 6,
-            background: "var(--signal)",
-            animation: "aiq-pulse-dot 1.6s ease-in-out infinite",
-          }} />
-          About OneGoodArea
-        </div>
-        <h1 style={{
-          fontFamily: "var(--display)", fontWeight: 400,
-          fontSize: "clamp(44px, 5.6vw, 72px)", lineHeight: 1.02,
-          letterSpacing: "-0.02em", color: "var(--ink-deep)",
-          margin: "0 0 24px",
-        }}>
-          We built the location intelligence layer{" "}
-          <span style={{
-            fontStyle: "italic", color: "var(--ink)",
-            borderBottom: "3px solid var(--signal)", paddingBottom: 2,
-          }}>regulated buyers couldn&apos;t find.</span>
-        </h1>
-        <p style={{
-          fontFamily: "var(--sans)", fontSize: 17.5, fontWeight: 400,
-          lineHeight: 1.55, color: "var(--text-2)",
-          letterSpacing: "-0.005em",
-          margin: "0 auto", maxWidth: "58ch",
-        }}>
-          Deterministic UK area scoring. Same input, same answer, version-stamped on every report, confidence-banded per dimension. Built for FCA-regulated workflows, embeddable in any product.
-        </p>
-      </div>
-    </section>
-  );
-}
-
-/* ─────── Stats ─────── */
-
-const STATS: { value: string; label: string }[] = [
-  { value: "Every",   label: "UK postcode" },
-  { value: "7",       label: "Public datasets" },
-  { value: "v2.0.2",  label: "Engine stamped" },
-  { value: "OpenAPI", label: "3.0 spec" },
-];
-
-function StatsStrip() {
-  return (
-    <section style={{
-      borderBottom: "1px solid var(--border)",
-      background: "var(--bg)",
-    }}>
-      <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 40px" }}>
-        <div className="aiq-stats-strip" style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${STATS.length}, 1fr)`,
-          gap: 0,
-        }}>
-          {STATS.map((s, i) => (
-            <div key={s.label} style={{
-              padding: "28px 24px",
-              borderRight: i < STATS.length - 1 ? "1px solid var(--border)" : "none",
-              display: "flex", flexDirection: "column", gap: 6,
-            }}>
-              <div style={{
-                fontFamily: "var(--display)", fontSize: 36, fontWeight: 500,
-                letterSpacing: "-0.02em", color: "var(--ink-deep)",
-                lineHeight: 1,
-              }}>{s.value}</div>
-              <div style={{
-                fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-                letterSpacing: "0.18em", textTransform: "uppercase",
-                color: "var(--text-3)",
-              }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─────── The gap ─────── */
-
-function TheGap() {
-  return (
-    <section style={{
-      background: "var(--bg-off)",
-      borderBottom: "1px solid var(--border)",
-      padding: "120px 0",
-    }}>
-      <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 40px" }}>
-        <SectionHead
-          eyebrow="Why it exists"
-          title={<>The UK has lots of listings. It didn&apos;t have a{" "}<em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>proper read.</em></>}
-        />
-
-        <div className="aiq-gap-grid" style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 72, marginTop: 64,
-          alignItems: "start",
-        }}>
-          <div>
-            <div style={{
-              fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-              letterSpacing: "0.22em", textTransform: "uppercase",
-              color: "var(--text-3)", marginBottom: 14,
-            }}>What regulated buyers had</div>
-            <p style={{
-              fontFamily: "var(--sans)", fontSize: 15.5, fontWeight: 400,
-              lineHeight: 1.62, color: "var(--text-2)",
-              letterSpacing: "-0.003em",
-              margin: "0 0 14px", maxWidth: "50ch",
-            }}>
-              Black-box AVMs from incumbent vendors. No methodology disclosure, no version pinning, no per-dimension confidence band. Hard to enter into a model risk register, harder to defend in a regulatory review.
-            </p>
-            <p style={{
-              fontFamily: "var(--sans)", fontSize: 15.5, fontWeight: 400,
-              lineHeight: 1.62, color: "var(--text-2)",
-              letterSpacing: "-0.003em",
-              margin: 0, maxWidth: "50ch",
-            }}>
-              Or the alternative: raw Land Registry pulls, ONS CSV dumps, council-scraped data. Free at source, expensive in engineering hours. Months to integrate, no audit trail, no support contract when the data vintage shifts.
-            </p>
-          </div>
-          <div>
-            <div style={{
-              fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-              letterSpacing: "0.22em", textTransform: "uppercase",
-              color: "var(--ink)", marginBottom: 14,
-            }}>What we built instead</div>
-            <p style={{
-              fontFamily: "var(--sans)", fontSize: 15.5, fontWeight: 400,
-              lineHeight: 1.62, color: "var(--text-2)",
-              letterSpacing: "-0.003em",
-              margin: "0 0 14px", maxWidth: "50ch",
-            }}>
-              The deterministic UK location intelligence layer. One API call returns a postcode-level score, five weighted dimensions, per-dimension confidence, cited public datasets, and a version stamp. Same input, same output, every time.
-            </p>
-            <p style={{
-              fontFamily: "var(--sans)", fontSize: 15.5, fontWeight: 400,
-              lineHeight: 1.62, color: "var(--text-2)",
-              letterSpacing: "-0.003em",
-              margin: 0, maxWidth: "50ch",
-            }}>
-              Methodology pinning so the model risk team knows exactly which engine version produced every score. Public changelog. Audit trail on every response. Built to be embedded in lender, insurer, and PropTech surfaces without a six-month integration cycle.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─────── Section head helper ─────── */
-
-function SectionHead({ eyebrow, title, sub }: {
-  eyebrow: string; title: React.ReactNode; sub?: string;
-}) {
-  return (
-    <div>
-      <div style={{
-        fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-        letterSpacing: "0.22em", textTransform: "uppercase",
-        color: "var(--text-2)",
-        display: "inline-flex", alignItems: "center", gap: 9,
-        marginBottom: 20,
-      }}>
-        <span aria-hidden style={{
-          width: 6, height: 6, borderRadius: 6, background: "var(--signal)",
-        }} />
-        {eyebrow}
-      </div>
-      <h2 style={{
-        fontFamily: "var(--display)", fontWeight: 400,
-        fontSize: "clamp(34px, 4.2vw, 52px)", lineHeight: 1.05,
-        letterSpacing: "-0.018em", color: "var(--ink-deep)",
-        margin: 0, maxWidth: "26ch",
-      }}>
-        {title}
-      </h2>
-      {sub && (
-        <p style={{
-          fontFamily: "var(--sans)", fontSize: 16, fontWeight: 400,
-          lineHeight: 1.5, color: "var(--text-2)",
-          letterSpacing: "-0.005em",
-          margin: "18px 0 0", maxWidth: "58ch",
-        }}>{sub}</p>
-      )}
-    </div>
-  );
-}
-
-/* ─────── Principles · editorial rows with bespoke icons ─────── */
-
-const PRINCIPLES: { icon: IconName; title: string; body: string }[] = [
-  { icon: "data",    title: "Deterministic by design",       body: "Scores come from public datasets using fixed formulas. Same input, same output, every time. The AI narrates the result; it never generates the numbers. Server-side score lock is enforced in the response layer." },
-  { icon: "repeat",  title: "Version-stamped responses",     body: "Every response carries an engine_version field and a per-dimension confidence band. Buyers entering reports into a model risk register get a clean audit line. X-Engine-Version request header pins the methodology when a regulated workflow needs it." },
-  { icon: "intent",  title: "Intent shapes the weighting",   body: "Origination scoring is not the same as site selection. We rebalance the five dimensions per intent. Safety and schools weigh heaviest for origination; footfall, competition, and spending power for site selection. Same engine, four different products." },
-  { icon: "map",     title: "Benchmarked against its own peer group", body: "A village with one school is not the same as a city with one school. Every postcode is classified urban / suburban / rural from postcodes.io rural-urban codes and benchmarked against its own peer group. No unfair comparisons between a London high street and a Lake District lane." },
-];
-
-function Principles() {
-  return (
-    <section style={{
-      background: "var(--bg)",
-      borderBottom: "1px solid var(--border)",
-      padding: "120px 0",
-    }}>
-      <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 40px" }}>
-        <SectionHead
-          eyebrow="What we believe"
-          title={<>Four rules, <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>one engine.</em></>}
-        />
-        <div style={{ marginTop: 64 }}>
-          {PRINCIPLES.map((p, i) => (
-            <div key={p.title} className="aiq-capability-row" style={{
-              display: "grid",
-              gridTemplateColumns: "56px 240px 1fr",
-              gap: 32, alignItems: "start",
-              padding: "32px 0",
-              borderTop: i === 0 ? "1px solid var(--border)" : "none",
-              borderBottom: "1px solid var(--border)",
-            }}>
-              <div style={{
-                fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-                letterSpacing: "0.18em", color: "var(--text-3)",
-                paddingTop: 6,
-              }}>0{i + 1}</div>
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
-                <AiqIcon name={p.icon} size={24} />
-                <div style={{
-                  fontFamily: "var(--display)", fontSize: 22, fontWeight: 500,
-                  letterSpacing: "-0.014em", color: "var(--ink-deep)",
-                  lineHeight: 1.18,
-                }}>{p.title}</div>
-              </div>
-              <p style={{
-                fontFamily: "var(--sans)", fontSize: 15.5, fontWeight: 400,
-                lineHeight: 1.58, color: "var(--text-2)",
-                letterSpacing: "-0.003em",
-                margin: 0, maxWidth: "62ch",
-              }}>{p.body}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─────── Data sources · editorial list ─────── */
-
-const SOURCES: { icon: IconName; name: string; role: string; detail: string }[] = [
-  { icon: "map",        name: "Postcodes.io",          role: "Geocoding + LSOA lookup",       detail: "The front door. Every postcode resolved to coordinates, LSOA, and MSOA so every downstream query knows exactly where it's looking." },
-  { icon: "support",    name: "Police.uk",             role: "Street-level crime",            detail: "12 months of incidents by category and street, used to score safety per intent and cite specific figures in the narrative." },
-  { icon: "researcher", name: "IMD 2025",              role: "Deprivation indices",           detail: "The Ministry of Housing, Communities and Local Government's 2025 release for England, with WIMD (Wales) and SIMD (Scotland) for full UK coverage." },
-  { icon: "operator",   name: "OpenStreetMap",         role: "Amenities and transport",       detail: "Schools, GP surgeries, shops, cafés, parks, bus stops, and train stations within 0.5–2km radii. Volunteer-maintained, surprisingly current." },
-  { icon: "investor",   name: "HM Land Registry",      role: "Property sold prices",          detail: "Real transactions. Median sold price, year-on-year change, transaction counts, and property-type breakdowns. No asking prices, no estate-agent optimism." },
-  { icon: "intent",     name: "Environment Agency",    role: "Flood risk",                    detail: "Flood-zone classification and live flood-warning data. Lives in the Environment & Quality dimension, surfaced as a citation when the zone is 2 or 3." },
-  { icon: "read",       name: "Ofsted",                role: "School inspections (England)",  detail: "Inspection ratings seeded locally, queried by coordinates for schools within 1.5km. Scotland (Education Scotland) and Wales (Estyn) planned." },
-];
-
-function DataSources() {
-  return (
-    <section style={{
-      background: "var(--bg-off)",
-      borderBottom: "1px solid var(--border)",
-      padding: "120px 0",
-    }}>
-      <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 40px" }}>
-        <SectionHead
-          eyebrow="What we read"
-          title={<>Seven public sources, <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>one report.</em></>}
-          sub="Every fact in a report comes from one of the seven. Each response carries a data_freshness block so you can see the source and age of each datapoint."
-        />
-        <div style={{
-          marginTop: 56,
-          border: "1px solid var(--border)", background: "var(--bg)",
-        }}>
-          {SOURCES.map((s, i) => (
-            <div key={s.name} className="aiq-capability-row" style={{
-              display: "grid",
-              gridTemplateColumns: "56px 260px 1fr",
-              gap: 28, alignItems: "center",
-              padding: "22px 28px",
-              borderBottom: i === SOURCES.length - 1 ? "none" : "1px solid var(--border-dim)",
-            }}>
-              <AiqIcon name={s.icon} size={24} />
-              <div>
-                <div style={{
-                  fontFamily: "var(--display)", fontSize: 19, fontWeight: 500,
-                  letterSpacing: "-0.012em", color: "var(--ink-deep)",
-                  lineHeight: 1.15, marginBottom: 4,
-                }}>{s.name}</div>
-                <div style={{
-                  fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-                  letterSpacing: "0.14em", textTransform: "uppercase",
-                  color: "var(--text-3)",
-                }}>{s.role}</div>
-              </div>
-              <p style={{
-                fontFamily: "var(--sans)", fontSize: 14.5, fontWeight: 400,
-                lineHeight: 1.55, color: "var(--text-2)",
-                letterSpacing: "-0.003em",
-                margin: 0, maxWidth: "64ch",
-              }}>{s.detail}</p>
-            </div>
-          ))}
-        </div>
-        <div style={{
-          marginTop: 18, display: "flex", alignItems: "center", gap: 10,
-        }}>
-          <span aria-hidden style={{
-            width: 6, height: 6, borderRadius: 6, background: "var(--signal)",
-          }} />
-          <span style={{
-            fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-            letterSpacing: "0.18em", textTransform: "uppercase",
-            color: "var(--text-3)",
-          }}>
-            Want the detail? See <Link href="/methodology" style={{ color: "var(--ink-deep)", textDecoration: "underline" }}>the methodology page</Link>.
-          </span>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─────── Timeline ─────── */
-
-const MILESTONES: { date: string; label: string; body: string }[] = [
-  { date: "January 2025",  label: "Idea validated",         body: "Ran into the same question for the fourth time: is this area any good? Checked every tool available. The honest answer was 'not really, and certainly not per-intent'." },
-  { date: "February 2025", label: "First prototype",        body: "Seven public datasets wired in parallel: Postcodes.io, Police.uk, IMD, OpenStreetMap, Environment Agency, HM Land Registry, Ofsted. Narrative generated from the numbers, not from thin air." },
-  { date: "March 2025",    label: "Deterministic engine",   body: "AI-generated scores swapped for fixed formulas. Numbers became reproducible. The narrative stayed AI-written. Server-side score lock added so the AI never drifts the output." },
-  { date: "March 2025",    label: "Public launch",          body: "Live at the consumer surface. Stripe checkout, API keys, Ofsted integration, watchlist. Built and shipped solo." },
-  { date: "April 2026",    label: "Engine v2.0.0",          body: "Confidence per dimension, methodology versioning, OpenAPI 3.0 spec, interactive API reference. Every response stamped with the engine version that produced it." },
-  { date: "April 2026",    label: "Strategic repositioning", body: "Pivot from consumer postcode tool to the deterministic UK location intelligence layer for regulated B2B buyers. Front door moves to mortgage lenders, insurance underwriters, PropTech, retail / CRE site selection." },
-  { date: "May 2026",      label: "Pricing v2 + MCP server", body: "Six-tier pricing for the B2B audience (Sandbox through Enterprise). Native MCP server for Claude Desktop and IDE workflows ships at v0.2.0." },
-  { date: "May 2026",      label: "API infrastructure complete", body: "API keys hashed at rest, bulk endpoint for portfolio-scale calls, Idempotency-Key support, outbound webhooks with HMAC signing, and X-Engine-Version header for model-risk-register pinning." },
-];
-
-function Timeline() {
-  return (
-    <section style={{
-      background: "var(--bg)",
-      borderBottom: "1px solid var(--border)",
-      padding: "120px 0",
-    }}>
-      <div style={{ maxWidth: 980, margin: "0 auto", padding: "0 40px" }}>
-        <SectionHead
-          eyebrow="How we got here"
-          title={<>A short <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>timeline.</em></>}
-        />
-        <div style={{ marginTop: 56, position: "relative" }}>
-          <div aria-hidden style={{
-            position: "absolute", left: 11, top: 12, bottom: 12,
-            width: 1, background: "var(--border)",
-          }} />
-          {MILESTONES.map((m, i) => (
-            <div key={i} style={{
-              display: "grid",
-              gridTemplateColumns: "24px 1fr",
-              gap: 28, alignItems: "start",
-              padding: "22px 0 26px",
-              position: "relative",
-            }}>
-              <div style={{ display: "flex", justifyContent: "center" }}>
-                <span aria-hidden style={{
-                  width: 11, height: 11, borderRadius: 11,
-                  background: "var(--signal)",
-                  border: "2px solid var(--ink-deep)",
-                  boxShadow: "0 0 0 4px var(--bg)",
-                  marginTop: 6,
-                }} />
-              </div>
-              <div>
-                <div style={{
-                  fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-                  letterSpacing: "0.22em", textTransform: "uppercase",
-                  color: "var(--text-3)", marginBottom: 6,
-                }}>{m.date}</div>
-                <div style={{
-                  fontFamily: "var(--display)", fontSize: 22, fontWeight: 500,
-                  letterSpacing: "-0.014em", color: "var(--ink-deep)",
-                  lineHeight: 1.18, marginBottom: 6,
-                }}>{m.label}</div>
-                <p style={{
-                  fontFamily: "var(--sans)", fontSize: 15, fontWeight: 400,
-                  lineHeight: 1.55, color: "var(--text-2)",
-                  letterSpacing: "-0.003em",
-                  margin: 0, maxWidth: "58ch",
-                }}>{m.body}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─────── Builder · Pedro bio ─────── */
-
-function Builder() {
-  return (
-    <section style={{
-      background: "var(--bg-off)",
-      borderBottom: "1px solid var(--border)",
-      padding: "120px 0",
-    }}>
-      <div style={{ maxWidth: 980, margin: "0 auto", padding: "0 40px" }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-          letterSpacing: "0.22em", textTransform: "uppercase",
-          color: "var(--text-2)",
-          display: "inline-flex", alignItems: "center", gap: 9,
-          marginBottom: 28,
-        }}>
-          <span aria-hidden style={{
-            width: 6, height: 6, borderRadius: 6, background: "var(--signal)",
-          }} />
-          Built by
-        </div>
-        <div className="aiq-builder-row" style={{
-          display: "grid",
-          gridTemplateColumns: "120px 1fr",
-          gap: 40, alignItems: "start",
-        }}>
-          <div style={{
-            width: 120, height: 120,
-            background: "var(--signal-dim)",
-            border: "1px solid var(--ink-deep)",
-            borderRadius: 6,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontFamily: "var(--display)", fontSize: 40, fontWeight: 500,
-            letterSpacing: "-0.02em", color: "var(--ink-deep)",
-          }}>PS</div>
-          <div>
-            <h3 style={{
-              fontFamily: "var(--display)", fontWeight: 400,
-              fontSize: "clamp(28px, 3.4vw, 36px)", lineHeight: 1.08,
-              letterSpacing: "-0.016em", color: "var(--ink-deep)",
-              margin: "0 0 6px",
-            }}>
-              Pedro <span style={{
-                fontStyle: "italic", color: "var(--ink)",
-                borderBottom: "2.5px solid var(--signal)", paddingBottom: 1,
-              }}>Serapião</span>
-            </h3>
-            <div style={{
-              fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-              letterSpacing: "0.18em", textTransform: "uppercase",
-              color: "var(--text-3)", marginBottom: 20,
-            }}>Software engineer · Product builder · UK</div>
-            <p style={{
-              fontFamily: "var(--sans)", fontSize: 16, fontWeight: 400,
-              lineHeight: 1.58, color: "var(--text-2)",
-              letterSpacing: "-0.003em",
-              margin: "0 0 14px", maxWidth: "56ch",
-            }}>
-              I kept running into the same problem: trying to make location decisions without reliable, structured data. Rightmove gives you vibes, PropertyData gives you spreadsheets, nothing gave you scored, transparent, intent-driven intelligence at a reader&apos;s price point.
-            </p>
-            <p style={{
-              fontFamily: "var(--sans)", fontSize: 16, fontWeight: 400,
-              lineHeight: 1.58, color: "var(--text-2)",
-              letterSpacing: "-0.003em",
-              margin: 0, maxWidth: "56ch",
-            }}>
-              OneGoodArea is the tool I wanted on the other side of those decisions. Every feature exists because it solves a problem I had myself. No vanity metrics, no filler.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─────── Mission ─────── */
-
-function Mission() {
-  return (
-    <section style={{
-      background: "var(--bg)",
-      borderBottom: "1px solid var(--border)",
-      padding: "110px 0",
-    }}>
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 40px" }}>
-        <div style={{
-          borderLeft: "3px solid var(--signal)",
-          paddingLeft: 28,
-        }}>
-          <div style={{
-            fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-            letterSpacing: "0.22em", textTransform: "uppercase",
-            color: "var(--text-3)", marginBottom: 16,
-          }}>Mission</div>
-          <p style={{
-            fontFamily: "var(--display)", fontWeight: 400,
-            fontSize: "clamp(30px, 3.8vw, 44px)", lineHeight: 1.12,
-            letterSpacing: "-0.016em", color: "var(--ink-deep)",
-            margin: 0, maxWidth: "28ch",
-          }}>
-            Make area intelligence{" "}
-            <em style={{
-              fontStyle: "italic", color: "var(--ink)",
-              borderBottom: "2.5px solid var(--signal)", paddingBottom: 1,
-            }}>accessible, transparent, and useful</em>
-            {" "}for every UK location decision.
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─────── Final CTA ─────── */
-
-function FinalCta() {
-  return (
-    <section style={{
-      background: "var(--bg-ink)",
-      padding: "120px 0 140px",
-      position: "relative", overflow: "hidden",
-    }}>
-      <div aria-hidden style={{
-        position: "absolute", inset: 0, pointerEvents: "none",
-      }}>
-        <div style={{
-          position: "absolute", top: -180, left: "50%",
-          transform: "translateX(-50%)",
-          width: 880, height: 600,
-          background: "radial-gradient(ellipse at center, rgba(212,243,58,0.12) 0%, rgba(212,243,58,0) 60%)",
-        }} />
-      </div>
-      <div style={{
-        maxWidth: 820, margin: "0 auto", padding: "0 40px",
-        textAlign: "center", position: "relative", zIndex: 1,
-      }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-          letterSpacing: "0.22em", textTransform: "uppercase",
-          color: "rgba(212,243,58,0.9)",
-          display: "inline-flex", alignItems: "center", gap: 9,
-          marginBottom: 22,
-        }}>
-          <span aria-hidden style={{
-            width: 6, height: 6, borderRadius: 6, background: "var(--signal)",
-          }} />
-          See it in action
-        </div>
-        <h2 style={{
-          fontFamily: "var(--display)", fontWeight: 400,
-          fontSize: "clamp(38px, 5vw, 58px)", lineHeight: 1.04,
-          letterSpacing: "-0.02em", color: "#FFFFFF",
-          margin: "0 0 18px",
-        }}>
-          Try the engine. <em style={{
-            fontStyle: "italic", color: "var(--signal)",
-          }}>Read the methodology.</em>
-        </h2>
-        <p style={{
-          fontFamily: "var(--sans)", fontSize: 16.5, fontWeight: 400,
-          lineHeight: 1.55, color: "rgba(255,255,255,0.64)",
-          margin: "0 auto 36px", maxWidth: "52ch",
-        }}>
-          Sandbox is free, no card. 35 calls a month against the full API surface. Pin a version, fire webhooks, batch a portfolio.
-        </p>
-        <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href="/pricing" style={{
-            fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-            letterSpacing: "0.14em", textTransform: "uppercase",
-            color: "var(--signal-ink)", background: "var(--signal)",
-            padding: "14px 24px", borderRadius: 999, textDecoration: "none",
-            border: "1px solid var(--signal)",
-            display: "inline-flex", alignItems: "center", gap: 9,
-            transition: "transform 140ms cubic-bezier(0.16,1,0.3,1)",
-          }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-1px)")}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-          >
-            Start on Sandbox
-            <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
-          </Link>
-          <Link href="/methodology" style={{
-            fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-            letterSpacing: "0.14em", textTransform: "uppercase",
-            color: "rgba(255,255,255,0.88)", background: "transparent",
-            padding: "14px 24px", borderRadius: 999, textDecoration: "none",
-            border: "1px solid rgba(255,255,255,0.22)",
-            display: "inline-flex", alignItems: "center", gap: 9,
-            transition: "border-color 140ms ease, background 140ms ease",
-          }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)";
-              e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)";
-              e.currentTarget.style.background = "transparent";
-            }}
-          >
-            Read the methodology
-          </Link>
-        </div>
-      </div>
-    </section>
   );
 }
