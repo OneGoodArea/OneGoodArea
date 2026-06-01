@@ -349,7 +349,6 @@ type DefendCard = {
   num: string;
   title: string;
   body: string;
-  cite: string;
 };
 
 const DEFEND: DefendCard[] = [
@@ -357,37 +356,31 @@ const DEFEND: DefendCard[] = [
     num: "01",
     title: "Compound queries in one round trip",
     body: "rank_areas accepts up to 8 AND-joined signal filters with 11 comparison operators (raw value or percentile). One INNER JOIN per signal in the executor. AND semantics across all filters. No more spreadsheet joins; no more partial joins across data vendors.",
-    cite: "ADR 0019",
   },
   {
     num: "02",
     title: "Reproducible shortlists",
     body: "Every /v1/query response echoes the executed plan plus plan_source. Save the plan JSON alongside the shortlist; replay it next quarter against refreshed data and get a comparable answer. Criteria become version-controlled JSON instead of an Excel file on a laptop.",
-    cite: "ADR 0017",
   },
   {
     num: "03",
     title: "Materialised peer graph",
     body: "/v1/peers reads from a materialised k-NN graph (~840k assignments across 42k LSOAs, k=20 default). The peer math runs offline in the refresh:peers + derive:signals batch so query-time is cheap. Same definition of \"peer\" feeds find_peers, find_insights, and the peer-relative-z derived signals.",
-    cite: "ADR 0023 · 0024",
   },
   {
     num: "04",
     title: "ONS-backed scope, no fake polygons",
     body: "Country and LAD scoping use the official ONS NSPL spine. Region scope is on the roadmap; ad-hoc polygon overlays are not. Where the analyst wants a custom catchment, Levers peer cohorts persist an explicit list of LSOA codes per org and constrain /v1/peers to that universe.",
-    cite: "ADR 0005 · 0032",
   },
   {
     num: "05",
     title: "Deterministic + stable",
     body: "Same postcode plus same scoring profile gives the same score across deploys. Same plan gives the same shortlist across the same data state. The deterministic engine is frozen v2, golden-tested; AI never sets the numbers (AI translates NL into the typed plan; the database produces the rows).",
-    cite: "ADR 0008 · 0017",
   },
   {
     num: "06",
     title: "Country-scoped percentiles",
     body: "Normalisation runs national-within-country. England's IMD, Wales's WIMD, and Scotland's SIMD are different methodologies. A cross-border percentile would be a lie. If you operate across all three countries, you compare percentiles within each, not across.",
-    cite: "ADR 0005",
   },
 ];
 
@@ -417,7 +410,6 @@ function SectionDefend() {
               <span className="oga-icp-defend-card__num">§ {d.num}</span>
               <h3 className="oga-icp-defend-card__title">{d.title}</h3>
               <p className="oga-icp-defend-card__body">{d.body}</p>
-              <span className="oga-icp-defend-card__cite">{d.cite}</span>
             </article>
           ))}
         </div>

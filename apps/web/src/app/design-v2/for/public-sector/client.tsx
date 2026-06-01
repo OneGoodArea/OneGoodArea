@@ -367,7 +367,6 @@ type DefendCard = {
   num: string;
   title: string;
   body: string;
-  cite: string;
 };
 
 const DEFEND: DefendCard[] = [
@@ -375,37 +374,31 @@ const DEFEND: DefendCard[] = [
     num: "01",
     title: "Country-scoped percentiles by design",
     body: "Normalisation runs national-within-country. England's IMD 2025, Wales's WIMD 2019, and Scotland's SIMD 2020 are different methodologies on different release schedules. We refuse to manufacture a cross-border percentile that would not survive procurement review.",
-    cite: "ADR 0005",
   },
   {
     num: "02",
     title: "Provenance on every signal",
     body: "Every Signal carries an explicit source, observed_period, confidence (0-1), and a plain-language confidence_reason. Lineage stamps (source_snapshot_id, engine_version, boundary_version) on every persisted row. Ready for an FOI footnote without you stitching it together.",
-    cite: "ADR 0001 · 0002",
   },
   {
     num: "03",
     title: "Sample-size honest",
     body: "Monitor change detection gates price moves on transaction count (default 8 in both periods). Static signals produce zero change rows. The system says when it cannot tell instead of hallucinating a move that would embarrass a council briefing.",
-    cite: "ADR 0013 · 0014",
   },
   {
     num: "04",
     title: "Plan-replayable AI",
     body: "Every Intelligence response echoes the executed plan plus plan_source ('nl' or 'client'). Any natural-language analyst answer can be replayed as a deterministic programmatic call. The methodology behind the answer is a JSON object you can store in the publication appendix.",
-    cite: "ADR 0017",
   },
   {
     num: "05",
     title: "Methodology version pinning for the contract cycle",
     body: "Per-org engine_version pin honoured on every product response via X-Engine-Version header. Owner-only, validated against the supported window. Two API calls under the same pin return the same numbers across deploys, which is exactly what a procurement deliverable timeline requires.",
-    cite: "ADR 0031 · Levers AR-197",
   },
   {
     num: "06",
     title: "Published methodology + open ADR trail",
     body: "The methodology is public on /methodology. The full architectural decision record is open at github.com/OneGoodArea/OneGoodArea/tree/main/docs/adr. Your research note can cite the exact ADR your methodology section references; readers can verify the code path against the rule.",
-    cite: "Open repo · /methodology",
   },
 ];
 
@@ -435,7 +428,6 @@ function SectionDefend() {
               <span className="oga-icp-defend-card__num">§ {d.num}</span>
               <h3 className="oga-icp-defend-card__title">{d.title}</h3>
               <p className="oga-icp-defend-card__body">{d.body}</p>
-              <span className="oga-icp-defend-card__cite">{d.cite}</span>
             </article>
           ))}
         </div>

@@ -564,42 +564,36 @@ const PILLARS = [
     title: "Methodology version stamped",
     body:
       "Every response carries engine_version in the body and X-Engine-Version on the response header. Org-level methodology pinning locks the version per caller, owner-only.",
-    cite: "ADR 0008 · 0031",
   },
   {
     num: "02",
     title: "Plan-replayable AI",
     body:
       "Intelligence echoes the executed plan plus plan_source on every response. Any natural-language answer can be replayed as a deterministic programmatic call. AI never sets the numbers; the database does.",
-    cite: "ADR 0017 · 0026",
   },
   {
     num: "03",
     title: "Sample-size honest",
     body:
       "Monitor change detection gates price moves on transaction count (default 8). Static signals produce zero change rows. The system says when it cannot tell instead of hallucinating a move.",
-    cite: "ADR 0013 · 0014",
   },
   {
     num: "04",
     title: "Provenance on the wire",
     body:
       "Every signal carries source, observed_period, confidence and confidence_reason. fetch_mode is honestly live, store, or hybrid. Lineage stamps (source_snapshot_id, boundary_version) on every persisted row.",
-    cite: "ADR 0001 · 0002",
   },
   {
     num: "05",
     title: "Levers · per-org config",
     body:
       "Custom signal bundles, saved scoring profiles, methodology pinning, peer cohorts, three-tier RBAC, white-label, per-key IP allowlist. Opt-in and additive on top of the deterministic engine.",
-    cite: "ADR 0027 to 0034",
   },
   {
     num: "06",
     title: "Country-scoped percentiles",
     body:
       "Normalisation runs national-within-country. England's IMD, Wales's WIMD, and Scotland's SIMD are different methodologies and we refuse to manufacture a cross-border percentile.",
-    cite: "ADR 0005",
   },
 ];
 
@@ -631,7 +625,6 @@ function SectionPillars() {
               <span className="oga-biz-pillar__num">§ {p.num}</span>
               <h3 className="oga-biz-pillar__title">{p.title}</h3>
               <p className="oga-biz-pillar__body">{p.body}</p>
-              <span className="oga-biz-pillar__cite">{p.cite}</span>
             </article>
           ))}
         </div>

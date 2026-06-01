@@ -312,7 +312,6 @@ type DefendCard = {
   num: string;
   title: string;
   body: string;
-  cite: string;
 };
 
 const DEFEND: DefendCard[] = [
@@ -320,25 +319,21 @@ const DEFEND: DefendCard[] = [
     num: "01",
     title: "Engine version on every response",
     body: "engine_version is stamped on the body and on the X-Engine-Version response header. If a score in your UI gets challenged, you can point at the exact methodology version that produced it.",
-    cite: "ADR 0008",
   },
   {
     num: "02",
     title: "Country-scoped percentiles, not invented ones",
     body: "Percentiles are national-within-country. England's IMD, Wales's WIMD, and Scotland's SIMD are different methodologies. We refuse to manufacture a cross-border percentile that would be a lie.",
-    cite: "ADR 0005",
   },
   {
     num: "03",
     title: "Provenance on the wire",
     body: "Every signal carries source, observed_period, confidence, and a plain-language confidence_reason. fetch_mode is honestly live, store, or hybrid so you always know how each value was served.",
-    cite: "ADR 0001 · 0002",
   },
   {
     num: "04",
     title: "Deterministic + stable for caching",
     body: "Same postcode plus same scoring profile equals the same score across deploys. Cached UI states stay coherent. The engine is frozen v2 and golden-tested; AI never sets the numbers.",
-    cite: "ADR 0008",
   },
 ];
 
@@ -368,7 +363,6 @@ function SectionDefend() {
               <span className="oga-icp-defend-card__num">§ {d.num}</span>
               <h3 className="oga-icp-defend-card__title">{d.title}</h3>
               <p className="oga-icp-defend-card__body">{d.body}</p>
-              <span className="oga-icp-defend-card__cite">{d.cite}</span>
             </article>
           ))}
         </div>
