@@ -631,6 +631,12 @@ nav[data-oga-surface="dark"] {
   line-height: 1.06;
   white-space: nowrap;
   opacity: 0;
+  /* Default: inactive items can't be hovered or clicked. Without
+     this, the topmost DOM-order item (public-sector, last in list)
+     captures all clicks because grid-area: stack puts every item
+     in the same cell. Keyframes flip pointer-events: auto only
+     during the visible window. */
+  pointer-events: none;
   animation: oga-rotator-fade 14s infinite cubic-bezier(0.4, 0, 0.2, 1);
   will-change: opacity, transform;
 }
@@ -653,11 +659,56 @@ nav[data-oga-surface="dark"] {
      Cleaner, less fussy at smaller compact-hero sizes. */
 }
 
+/* Each rotating word is a Link to its ICP page. Two affordances
+   bake "this is clickable + leads to a new page" into the visual:
+     1. A permanent underline beneath the word (semi-opaque at rest,
+        full white on hover) — classic link convention.
+     2. A small inline "→" arrow after the label that nudges right
+        on hover — same convention used on every other CTA in the
+        site, signals "navigation to another page".
+   Together they read as a link at first glance, no animation
+   required to discover it. */
+.oga-rotator__word--link {
+  text-decoration: none;
+  color: var(--oga-white);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.08em;
+  border-bottom: 2px solid rgba(250, 248, 244, 0.4);
+  padding-bottom: 0.04em;
+  transition: border-color 160ms ease;
+}
+.oga-rotator__word--link:hover,
+.oga-rotator__word--link:focus-visible {
+  border-bottom-color: var(--oga-white);
+  outline: none;
+}
+.oga-rotator__label {
+  display: inline-block;
+}
+/* NE-diagonal SVG icon at a small absolute size (does NOT inflate
+   with em at the hero font-size). Thin 1.5px stroke + low opacity
+   keeps it restrained — the link cue without competing with the
+   word. Same convention used by Linear / Stripe / Vercel for
+   "navigates to a dedicated page". */
+.oga-rotator__arrow {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  opacity: 0.4;
+  transition: transform 200ms ease, opacity 160ms ease;
+}
+.oga-rotator__word--link:hover .oga-rotator__arrow,
+.oga-rotator__word--link:focus-visible .oga-rotator__arrow {
+  transform: translate(2px, -2px);
+  opacity: 0.9;
+}
+
 @keyframes oga-rotator-fade {
-  0%        { opacity: 0; transform: translateY(8px); }
-  3%        { opacity: 1; transform: translateY(0); }
-  17%       { opacity: 1; transform: translateY(0); }
-  20%, 100% { opacity: 0; transform: translateY(-8px); }
+  0%        { opacity: 0; transform: translateY(8px);  pointer-events: none; }
+  3%        { opacity: 1; transform: translateY(0);    pointer-events: auto; }
+  17%       { opacity: 1; transform: translateY(0);    pointer-events: auto; }
+  20%, 100% { opacity: 0; transform: translateY(-8px); pointer-events: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

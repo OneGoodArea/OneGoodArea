@@ -2,24 +2,22 @@
 
 import Link from "next/link";
 
-/* HeroPlotted — bold dark hero with vertically-rotating workflow word.
-   "The area intelligence layer for [cycling]." 5 workflows cycle on
+/* HeroPlotted — bold dark hero with vertically-rotating ICP word.
+   "The area intelligence layer for [cycling]." 5 ICPs cycle on
    a 14s loop. Pure CSS keyframes (no JS state). Centered layout.
 
-   AR-204 PR 2 / commit 3:
-   - Dropped the legacy "Sourced from: Police.uk · Ofsted · ..." foot
-     strip per the "multiple sources" rule. Specific sources live on
-     /methodology, not on the marketing hero.
-   - Stripped inline-style arrow margin (Marcos's rule); the .oga-btn
-     class already provides gap: 6px between flex children so the
-     arrow inherits natural spacing. */
+   AR-204 PR P:
+   - Rotator words flipped from generic workflows to the 5 ICPs we
+     now have dedicated pages for. Each rotating word is a Link to
+     its /for/<slug> page so the hero becomes a navigable index of
+     who we're for. */
 
-const WORKFLOWS = [
-  "origination.",
-  "underwriting.",
-  "site selection.",
-  "portfolio monitoring.",
-  "planning decisions.",
+const ICPS = [
+  { label: "PropTech",      slug: "proptech" },
+  { label: "insurance",     slug: "insurance" },
+  { label: "lenders",       slug: "lenders" },
+  { label: "CRE",           slug: "cre" },
+  { label: "public sector", slug: "public-sector" },
 ];
 
 export function HeroPlotted() {
@@ -33,9 +31,30 @@ export function HeroPlotted() {
           <span className="oga-hero-dark__line1">The area intelligence layer for</span>
           <span className="oga-rotator" aria-live="polite">
             <span className="oga-rotator__list">
-              {WORKFLOWS.concat(WORKFLOWS[0]).map((w, i) => (
+              {ICPS.concat(ICPS[0]).map((icp, i) => (
                 <span key={i} className="oga-rotator__item">
-                  <span className="oga-rotator__word">{w}</span>
+                  <Link
+                    href={`/for/${icp.slug}`}
+                    className="oga-rotator__word oga-rotator__word--link"
+                    aria-label={`See OneGoodArea for ${icp.label}`}
+                  >
+                    <span className="oga-rotator__label">{icp.label}</span>
+                    <svg
+                      className="oga-rotator__arrow"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                    >
+                      <path d="M7 17 L17 7" />
+                      <path d="M8 7 H17 V16" />
+                    </svg>
+                  </Link>
                 </span>
               ))}
             </span>
