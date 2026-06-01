@@ -1,0 +1,455 @@
+/* About page — co-located CSS for /about (AR-204 PR Q).
+   Brand v3 (Plotted). Depends on tokens.css + components.css +
+   backgrounds.css. No inline styles in client.tsx.
+
+   Section flow:
+     Hero               -- cream
+     § 01 Why we exist   -- cream-quiet
+     § 02 What we believe -- DARK (uses .oga-section-dark from backgrounds.css)
+     § 03 How it got built -- cream
+     § 04 Talk to us      -- DARK
+*/
+
+/* ============================================================
+   SHARED — eyebrow children (page-scoped)
+   ============================================================ */
+.oga-about .oga-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.oga-about .oga-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--oga-ink);
+  display: inline-block;
+}
+.oga-about .oga-eyebrow--inverse .oga-eyebrow-dot {
+  background: var(--oga-white);
+}
+.oga-about .oga-eyebrow-mono {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: inherit;
+  opacity: 0.75;
+}
+
+/* ============================================================
+   HERO — cream
+   ============================================================ */
+.oga-about-hero {
+  background: var(--oga-canvas);
+  padding: clamp(64px, 9vw, 128px) 24px clamp(48px, 7vw, 96px);
+  position: relative;
+}
+.oga-about-hero__inner {
+  max-width: 920px;
+  margin: 0 auto;
+  text-align: left;
+}
+.oga-about-hero__eyebrow {
+  margin-bottom: 24px;
+}
+.oga-about-hero__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(36px, 5vw, 60px);
+  font-weight: 500;
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+  color: var(--oga-fg);
+  text-wrap: balance;
+  margin: 0 0 24px;
+}
+.oga-about-hero__lead {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(16px, 1.4vw, 19px);
+  line-height: 1.55;
+  color: var(--oga-fg-subtle);
+  text-wrap: pretty;
+  margin: 0 0 32px;
+  max-width: 680px;
+}
+.oga-about-hero__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* ============================================================
+   § 01 — WHY WE EXIST (cream-quiet)
+   ============================================================ */
+.oga-about-why {
+  padding: clamp(56px, 8vw, 112px) 24px;
+}
+.oga-about-why__inner {
+  max-width: 920px;
+  margin: 0 auto;
+}
+.oga-about-why__eyebrow {
+  margin-bottom: 20px;
+}
+.oga-about-why__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.5vw, 40px);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.018em;
+  color: var(--oga-fg);
+  text-wrap: balance;
+  margin: 0 0 28px;
+  max-width: 760px;
+}
+.oga-about-why__prose {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 720px;
+}
+.oga-about-why__prose p {
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--oga-fg-subtle);
+  margin: 0;
+  text-wrap: pretty;
+}
+
+/* ============================================================
+   § 02 — WHAT WE BELIEVE (DARK)
+   ============================================================ */
+.oga-about-believe {
+  padding: clamp(64px, 9vw, 120px) 24px;
+}
+.oga-about-believe__inner {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+.oga-about-believe__head {
+  max-width: 760px;
+  margin: 0 auto 48px;
+  text-align: center;
+}
+.oga-about-believe__eyebrow {
+  margin-bottom: 18px;
+  justify-content: center;
+}
+.oga-about-believe__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.5vw, 40px);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.018em;
+  color: var(--oga-white);
+  text-wrap: balance;
+  margin: 0 0 18px;
+}
+.oga-about-believe__lead {
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.7);
+  margin: 0;
+}
+
+.oga-about-believe__grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+@media (max-width: 960px) {
+  .oga-about-believe__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .oga-about-believe__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.oga-about-believe__card {
+  background: rgba(250, 248, 244, 0.04);
+  border: 1px solid rgba(250, 248, 244, 0.12);
+  border-radius: 4px;
+  padding: 0 24px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 200ms ease, background 200ms ease;
+}
+.oga-about-believe__card:hover {
+  border-color: rgba(250, 248, 244, 0.28);
+  background: rgba(250, 248, 244, 0.06);
+}
+
+/* Illustration slot — sits flush at top, bleeds to card edges so each
+   bespoke SVG occupies real visual real estate (~104px). The card has
+   `padding: 0` on the top so the viz block can claim its own space,
+   then a thin separator line below before the meta row. */
+.oga-about-believe__card-viz {
+  margin: 0 -24px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid rgba(250, 248, 244, 0.08);
+  color: var(--oga-white);
+  background:
+    radial-gradient(circle at 50% 60%, rgba(250, 248, 244, 0.04) 0%, transparent 70%),
+    rgba(250, 248, 244, 0.015);
+}
+.oga-about-believe__card-svg {
+  width: 64px;
+  height: 64px;
+  color: var(--oga-white);
+  display: block;
+}
+
+.oga-about-believe__card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 18px;
+}
+.oga-about-believe__card-num {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: rgba(250, 248, 244, 0.5);
+}
+.oga-about-believe__card-title {
+  font-family: var(--oga-font-sans);
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.012em;
+  color: var(--oga-white);
+  margin: 0;
+}
+.oga-about-believe__card-body {
+  font-family: var(--oga-font-sans);
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.72);
+  margin: 0;
+  flex: 1;
+}
+
+/* ============================================================
+   § 03 — HOW IT GOT BUILT (cream)
+   ============================================================ */
+.oga-about-built {
+  background: var(--oga-canvas);
+  padding: clamp(64px, 9vw, 120px) 24px;
+}
+.oga-about-built__inner {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.oga-about-built__eyebrow {
+  margin-bottom: 18px;
+}
+.oga-about-built__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.5vw, 40px);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.018em;
+  color: var(--oga-fg);
+  text-wrap: balance;
+  margin: 0 0 28px;
+  max-width: 720px;
+}
+.oga-about-built__prose {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 720px;
+  margin-bottom: 48px;
+}
+.oga-about-built__prose p {
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--oga-fg-subtle);
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.oga-about-built__stats {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--oga-ink-10, rgba(26, 28, 31, 0.1));
+  border: 1px solid var(--oga-ink-10, rgba(26, 28, 31, 0.1));
+  border-radius: 4px;
+  overflow: hidden;
+}
+@media (max-width: 880px) {
+  .oga-about-built__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.oga-about-built__stat {
+  background: var(--oga-canvas);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.oga-about-built__stat-value {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.4vw, 36px);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--oga-fg);
+}
+.oga-about-built__stat-label {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  line-height: 1.45;
+  letter-spacing: 0.02em;
+  color: var(--oga-fg-muted);
+  text-wrap: pretty;
+}
+
+/* ============================================================
+   § 04 — TALK TO US (DARK CTA)
+   ============================================================ */
+.oga-about-contact {
+  padding: clamp(64px, 9vw, 120px) 24px;
+}
+.oga-about-contact__inner {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.oga-about-contact__eyebrow {
+  margin-bottom: 18px;
+}
+.oga-about-contact__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.5vw, 40px);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.018em;
+  color: var(--oga-white);
+  text-wrap: balance;
+  margin: 0 0 18px;
+  max-width: 760px;
+}
+.oga-about-contact__lead {
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.7);
+  margin: 0 0 40px;
+  max-width: 600px;
+}
+
+.oga-about-contact__grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+@media (max-width: 880px) {
+  .oga-about-contact__grid {
+    grid-template-columns: 1fr;
+  }
+}
+.oga-about-contact__card {
+  background: rgba(250, 248, 244, 0.04);
+  border: 1px solid rgba(250, 248, 244, 0.12);
+  border-radius: 4px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color 200ms ease, background 200ms ease;
+}
+.oga-about-contact__card:hover {
+  border-color: rgba(250, 248, 244, 0.28);
+  background: rgba(250, 248, 244, 0.06);
+}
+/* Match the footer social-link aesthetic: 32x32 square with the
+   shared --oga-radius-sm, 1px border, transparent background.
+   Inverse-tinted (white-on-dark) since this section is DARK. */
+.oga-about-contact__card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(250, 248, 244, 0.22);
+  border-radius: var(--oga-radius-sm);
+  background: transparent;
+  color: rgba(250, 248, 244, 0.7);
+  margin-bottom: 4px;
+  transition:
+    color var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-about-contact__card:hover .oga-about-contact__card-icon {
+  color: var(--oga-white);
+  border-color: var(--oga-white);
+  background: rgba(250, 248, 244, 0.06);
+}
+.oga-about-contact__card-label {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.5);
+}
+.oga-about-contact__card-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--oga-font-sans);
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  color: var(--oga-white);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(250, 248, 244, 0.25);
+  padding-bottom: 6px;
+  transition: border-color 200ms ease;
+  word-break: break-word;
+}
+.oga-about-contact__card-value:hover,
+.oga-about-contact__card-value:focus-visible {
+  border-bottom-color: var(--oga-white);
+  outline: none;
+}
+.oga-about-contact__card-arrow {
+  font-size: 13px;
+  opacity: 0.65;
+  transition: transform 200ms ease, opacity 200ms ease;
+}
+.oga-about-contact__card-value:hover .oga-about-contact__card-arrow,
+.oga-about-contact__card-value:focus-visible .oga-about-contact__card-arrow {
+  transform: translate(2px, -2px);
+  opacity: 1;
+}
+.oga-about-contact__card-note {
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: rgba(250, 248, 244, 0.65);
+  margin: 0;
+}
