@@ -349,7 +349,6 @@ type DefendCard = {
   num: string;
   title: string;
   body: string;
-  cite: string;
 };
 
 const DEFEND: DefendCard[] = [
@@ -357,37 +356,31 @@ const DEFEND: DefendCard[] = [
     num: "01",
     title: "Configurable weights, transparent components",
     body: "Every Scores response returns the 5 per-dimension scores, the weight applied to each, and per-dimension confidence. The actuary sees the components, not a black box. Custom weights or a saved preset_id; either way the breakdown is in the response.",
-    cite: "ADR 0008 · 0030",
   },
   {
     num: "02",
     title: "Variance-aware confidence",
     body: "Confidence on property-backed dimensions caps wide YoY swings at MEDIUM rather than letting them present as HIGH. Honesty as a feature: the actuary gets a signal when volatility makes a value less trustworthy.",
-    cite: "Engine v2.0.1 rubric",
   },
   {
     num: "03",
     title: "Sample-size gated change detection",
     body: "Monitor's diff core gates price moves on transaction count (default 8 in both periods). Static signals produce zero change rows by design. The system says when it cannot tell instead of hallucinating a move. The diff core is unit-tested without DB or network.",
-    cite: "ADR 0013 · 0014",
   },
   {
     num: "04",
     title: "Signed webhook delivery",
     body: "Material changes fire signal.changed webhooks signed Stripe-style HMAC-SHA256. The signing secret is returned ONCE on subscription create. Webhook URLs must be public HTTPS; localhost and RFC 1918 ranges rejected at validation. 5-second delivery timeout.",
-    cite: "ADR 0009 · 0013",
   },
   {
     num: "05",
     title: "Peer-relative anomaly, not absolute",
     body: "Intelligence find_peers gives a stable, symmetric similarity metric (Euclidean dimension-mean-squared over normalised signals, bounded in [0,1]). find_insights ranks LSOAs by abs(peer_relative_z) so the underwriter flags catchments that are 3 sigma from their peer group, not 3 sigma absolute.",
-    cite: "ADR 0023 · 0024",
   },
   {
     num: "06",
     title: "Methodology version pinning",
     body: "Per-org engine_version pin honoured on every product response via X-Engine-Version header. Owner-only. Two API calls under the same pin return the same numbers across deploys. Audit-grade reproducibility for quarterly back-tests.",
-    cite: "ADR 0031 · Levers AR-197",
   },
 ];
 
@@ -416,7 +409,6 @@ function SectionDefend() {
               <span className="oga-icp-defend-card__num">§ {d.num}</span>
               <h3 className="oga-icp-defend-card__title">{d.title}</h3>
               <p className="oga-icp-defend-card__body">{d.body}</p>
-              <span className="oga-icp-defend-card__cite">{d.cite}</span>
             </article>
           ))}
         </div>

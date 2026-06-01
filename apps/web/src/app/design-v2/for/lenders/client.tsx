@@ -337,7 +337,6 @@ type DefendCard = {
   num: string;
   title: string;
   body: string;
-  cite: string;
 };
 
 const DEFEND: DefendCard[] = [
@@ -345,37 +344,31 @@ const DEFEND: DefendCard[] = [
     num: "01",
     title: "Methodology version pinning, owner-only",
     body: "PUT /v1/orgs/:id/methodology persists the engine_version your book consumes. Owner-only; admins cannot change it. Validated at write time against the supported version window. Two API calls under the same pin return the same numbers across deploys.",
-    cite: "ADR 0031 · Levers AR-197",
   },
   {
     num: "02",
     title: "Engine version on body AND header",
     body: "Every product response carries engine_version in the body (what actually ran) and X-Engine-Version on the response header (the auditor's anchor). The split is deliberate: body = ground truth, header = pin. Will become semantically distinct when v3 freezes a separate engine module.",
-    cite: "ADR 0008 · AR-131",
   },
   {
     num: "03",
     title: "Plan-replayable AI",
     body: "Intelligence echoes the executed plan plus plan_source on every response. Model risk can replay any natural-language answer as a deterministic programmatic call by pasting the plan back. The LLM only ever emits a typed plan; the database produces the rows.",
-    cite: "ADR 0017",
   },
   {
     num: "04",
     title: "Sample-size honest",
     body: "Monitor change detection gates price moves on transaction count (default 8 in both periods). Static signals like deprivation produce zero change rows by design. The system says when it cannot tell instead of hallucinating a move. The diff core is unit-tested without DB or network.",
-    cite: "ADR 0013 · 0014",
   },
   {
     num: "05",
     title: "92.9% planner accuracy on a 14-case curated corpus",
     body: "Measured against claude-sonnet-4-20250514. By-op breakdown is in-repo (rank_areas 3/4, all other ops 2/2). The Wilson 95% confidence interval is wide (roughly 70 to 99 percent) because the corpus is small by design and version-controlled. The harness measures the seam, not the model; the headline number is provider-specific and re-runs on any model swap.",
-    cite: "ADR 0026",
   },
   {
     num: "06",
     title: "Country-scoped percentiles",
     body: "Normalisation runs national-within-country. England's IMD, Wales's WIMD, and Scotland's SIMD are different methodologies. We refuse to manufacture a cross-border percentile that would be a methodological lie if challenged in a compliance review.",
-    cite: "ADR 0005",
   },
 ];
 
@@ -404,7 +397,6 @@ function SectionDefend() {
               <span className="oga-icp-defend-card__num">§ {d.num}</span>
               <h3 className="oga-icp-defend-card__title">{d.title}</h3>
               <p className="oga-icp-defend-card__body">{d.body}</p>
-              <span className="oga-icp-defend-card__cite">{d.cite}</span>
             </article>
           ))}
         </div>

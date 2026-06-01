@@ -756,7 +756,7 @@ const EPS: Endpoint[] = [
       "Legacy AI-narrated report. Runs the same deterministic engine, then layers an AI narrative on top. The AI cannot drift the numbers; the score is locked server-side. METERED against the monthly report quota. Honours Idempotency-Key + X-Engine-Version pin.",
     params: [
       { name: "area", type: "string", required: true, desc: "UK postcode or place name." },
-      { name: "intent", type: "enum", required: true, desc: "Same enum as preset. Historically these were called 'intents' and were demoted to named presets (ADR 0008)." },
+      { name: "intent", type: "enum", required: true, desc: "Same enum as preset. Historically these were called 'intents' and were demoted to named presets." },
       { name: "Idempotency-Key", type: "header", required: false, desc: "Same key + same body replays the cached response. Header X-Idempotency-Replayed echoes true/false." },
       { name: "X-Engine-Version", type: "header", required: false, desc: "Pin to a supported engine version. Stamped on response." },
     ],
