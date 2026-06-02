@@ -1,0 +1,640 @@
+/* auth-shell CSS — Brand v3 (AR-204 close-out sweep 4/15).
+   Co-located, zero inline styles in auth-shell.tsx.
+
+   Two-column layout: DARK brand panel (left) + cream form column
+   (right). On mobile (≤880px) the brand panel collapses to a
+   compact header strip and the form takes the full viewport.
+
+   All primitives (AuthTitle, FormField, AuthInput, AuthError,
+   AuthSubmit, Divider, OAuthButtons, AuthFooterLink,
+   AuthStatusIcon) keep the same public API as the legacy version.
+
+   Self-contained @keyframes oga-spin-auth (Spinner survives the
+   .aiq-block strip at the end of the sweep). */
+
+/* ============================================================
+   Shell — split-screen grid
+   ============================================================ */
+.oga-auth {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--oga-canvas);
+}
+@media (max-width: 880px) {
+  .oga-auth {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+}
+
+/* ============================================================
+   Form column (cream)
+   ============================================================ */
+.oga-auth__form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(48px, 7vw, 80px) clamp(24px, 4vw, 56px);
+  background: var(--oga-canvas);
+  min-height: 100vh;
+}
+@media (max-width: 880px) {
+  .oga-auth__form {
+    min-height: auto;
+  }
+}
+.oga-auth__form-inner {
+  width: 100%;
+  max-width: 420px;
+}
+
+/* ============================================================
+   Brand panel (DARK)
+   ============================================================ */
+.oga-auth__brand {
+  padding: 48px 48px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+}
+@media (max-width: 880px) {
+  .oga-auth__brand {
+    min-height: auto;
+    padding: 32px 24px 28px;
+  }
+}
+.oga-auth__brand-top {
+  position: relative;
+  z-index: 1;
+}
+
+.oga-auth__brand-body {
+  position: relative;
+  z-index: 1;
+  max-width: 480px;
+}
+.oga-auth__brand-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.65);
+  margin-bottom: 22px;
+}
+.oga-auth__brand-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--oga-white);
+}
+.oga-auth__brand-title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.4vw, 42px);
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -0.018em;
+  color: var(--oga-white);
+  text-wrap: balance;
+  margin: 0 0 18px;
+}
+.oga-auth__brand-lead {
+  font-family: var(--oga-font-sans);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: rgba(250, 248, 244, 0.7);
+  letter-spacing: -0.003em;
+  text-wrap: pretty;
+  margin: 0;
+  max-width: 50ch;
+}
+
+.oga-auth__brand-foot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+@media (max-width: 880px) {
+  .oga-auth__brand-foot {
+    display: none;
+  }
+}
+.oga-auth__brand-back {
+  color: var(--oga-white);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--oga-white);
+  padding-bottom: 2px;
+}
+.oga-auth__brand-sep {
+  width: 1px;
+  height: 10px;
+  background: rgba(250, 248, 244, 0.22);
+}
+.oga-auth__brand-link {
+  color: rgba(250, 248, 244, 0.7);
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+.oga-auth__brand-link:hover {
+  color: var(--oga-white);
+}
+
+/* ============================================================
+   AuthTitle
+   ============================================================ */
+.oga-auth-title {
+  margin-bottom: 32px;
+}
+.oga-auth-title__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: 14px;
+}
+.oga-auth-title__eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--oga-ink);
+}
+.oga-auth-title__h1 {
+  font-family: var(--oga-font-sans);
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.018em;
+  color: var(--oga-fg);
+  margin: 0 0 10px;
+  text-wrap: balance;
+}
+.oga-auth-title__sub {
+  font-family: var(--oga-font-sans);
+  font-size: 14.5px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--oga-fg-subtle);
+  letter-spacing: -0.003em;
+  margin: 0;
+}
+
+/* ============================================================
+   FormField + AuthInput
+   ============================================================ */
+.oga-auth-field {
+  margin-bottom: 16px;
+}
+.oga-auth-field__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+.oga-auth-field__label {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+.oga-auth-field__hint-link {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--oga-fg);
+  text-decoration: none;
+  border-bottom: 1px solid var(--oga-border);
+  padding-bottom: 1px;
+  transition: border-color 160ms ease;
+}
+.oga-auth-field__hint-link:hover {
+  border-bottom-color: var(--oga-fg);
+}
+
+.oga-auth-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  font-family: var(--oga-font-sans);
+  font-size: 14.5px;
+  color: var(--oga-fg);
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  border-radius: 4px;
+  outline: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+.oga-auth-input:hover {
+  border-color: rgba(26, 28, 31, 0.32);
+}
+.oga-auth-input:focus,
+.oga-auth-input:focus-visible {
+  border-color: var(--oga-fg);
+  box-shadow: 0 0 0 3px rgba(26, 28, 31, 0.08);
+}
+
+/* ============================================================
+   AuthError
+   ============================================================ */
+.oga-auth-error {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: #b42318;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  padding: 10px 14px;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  line-height: 1.45;
+}
+
+/* ============================================================
+   AuthSubmit (primary button)
+   ============================================================ */
+.oga-auth-submit {
+  width: 100%;
+  height: 44px;
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-white);
+  background: var(--oga-fg);
+  border: 1px solid var(--oga-fg);
+  border-radius: var(--oga-radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition:
+    filter var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-auth-submit:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+.oga-auth-submit:disabled,
+.oga-auth-submit[data-loading="true"] {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.oga-auth-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.6px solid currentColor;
+  border-top-color: transparent;
+  display: inline-block;
+  animation: oga-spin-auth 800ms linear infinite;
+}
+
+@keyframes oga-spin-auth {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================================
+   Divider (labelled horizontal rule)
+   ============================================================ */
+.oga-auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 20px 0;
+}
+.oga-auth-divider__rule {
+  flex: 1;
+  height: 1px;
+  background: var(--oga-border);
+}
+.oga-auth-divider__label {
+  font-family: var(--oga-font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+/* ============================================================
+   OAuthButtons
+   ============================================================ */
+.oga-auth-oauth {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.oga-auth-oauth__btn {
+  height: 44px;
+  width: 100%;
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-fg);
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition:
+    background var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-auth-oauth__btn:hover {
+  background: rgba(26, 28, 31, 0.04);
+  border-color: var(--oga-fg);
+}
+.oga-auth-oauth__icon {
+  flex: 0 0 auto;
+}
+
+/* ============================================================
+   AuthFooterLink
+   ============================================================ */
+.oga-auth-foot-link {
+  margin-top: 28px;
+  text-align: center;
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  color: var(--oga-fg-subtle);
+}
+.oga-auth-foot-link__link {
+  color: var(--oga-fg);
+  text-decoration: none;
+  border-bottom: 1px solid var(--oga-fg);
+  padding-bottom: 1px;
+  font-weight: 500;
+}
+
+/* ============================================================
+   Shared utility patterns for caller pages
+   ============================================================ */
+
+/* Inline mono code chip (e.g. echo back the user's email) */
+.oga-auth-code {
+  font-family: var(--oga-font-mono);
+  font-size: 13.5px;
+  color: var(--oga-fg);
+  background: rgba(26, 28, 31, 0.04);
+  padding: 1px 6px;
+  border-radius: 2px;
+  border: 1px solid var(--oga-border);
+}
+
+/* Numbered step list (e.g. post-signup "check your email" 1-2-3) */
+.oga-auth-steps {
+  list-style: none;
+  padding: 0;
+  margin: 18px 0 24px;
+  border: 1px solid var(--oga-border);
+  border-radius: 4px;
+  background: var(--oga-white);
+  text-align: left;
+}
+.oga-auth-steps__item {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  color: var(--oga-fg-subtle);
+}
+.oga-auth-steps__item + .oga-auth-steps__item {
+  border-top: 1px solid var(--oga-border);
+}
+.oga-auth-steps__num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--oga-fg);
+  color: var(--oga-white);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* Caption row (mono, uppercase, dim) — e.g. "Link expires in 24h" */
+.oga-auth-meta {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: 18px;
+}
+
+/* Text-style button (no border, mono uppercase, hover-underline) */
+.oga-auth-link-btn {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oga-fg);
+  background: transparent;
+  border: none;
+  padding: 4px 0;
+  cursor: pointer;
+  border-bottom: 1px solid var(--oga-border);
+  transition: border-color 160ms ease;
+  margin-bottom: 22px;
+}
+.oga-auth-link-btn:hover:not(:disabled) {
+  border-bottom-color: var(--oga-fg);
+}
+.oga-auth-link-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Brand v3 anchor button (used as a "Go to sign in" CTA after
+   success). Same rectangle + small-radius shape as .oga-btn. */
+.oga-auth-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-white);
+  background: var(--oga-fg);
+  padding: 12px 20px;
+  border-radius: var(--oga-radius-sm);
+  text-decoration: none;
+  border: 1px solid var(--oga-fg);
+  transition: filter var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-auth-pill:hover {
+  filter: brightness(1.1);
+}
+.oga-auth-pill--ghost {
+  color: var(--oga-fg);
+  background: transparent;
+  border-color: var(--oga-border);
+}
+.oga-auth-pill--ghost:hover {
+  filter: none;
+  background: rgba(26, 28, 31, 0.04);
+  border-color: var(--oga-fg);
+}
+
+/* Inline two-button row (Sign in / Explore first, etc.) */
+.oga-auth-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Dev-only preview state toggle */
+.oga-auth-preview {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px dashed var(--oga-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--oga-font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+.oga-auth-preview__chip {
+  padding: 3px 8px;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--oga-fg-subtle);
+  text-decoration: none;
+  border: 1px solid var(--oga-border);
+  transition:
+    background var(--oga-dur-fast) var(--oga-ease),
+    color var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-auth-preview__chip--active {
+  background: var(--oga-fg);
+  color: var(--oga-white);
+  border-color: var(--oga-fg);
+}
+
+/* "← Back to sign in" mini-link row under the form */
+.oga-auth-back-row {
+  margin-top: 28px;
+  text-align: center;
+}
+.oga-auth-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+.oga-auth-back-link:hover {
+  color: var(--oga-fg);
+}
+
+/* Centred text block (used by success / verify / status views) */
+.oga-auth-center {
+  text-align: center;
+}
+
+/* Footer fine print (terms + privacy under the sign-up button) */
+.oga-auth-fineprint {
+  margin-top: 20px;
+  text-align: center;
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+.oga-auth-fineprint a {
+  color: var(--oga-fg-subtle);
+  text-decoration: none;
+  border-bottom: 1px solid var(--oga-border);
+}
+.oga-auth-fineprint a:hover {
+  color: var(--oga-fg);
+  border-bottom-color: var(--oga-fg);
+}
+
+/* ============================================================
+   AuthStatusIcon (success / danger / info halo)
+   ============================================================ */
+.oga-auth-status {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 22px;
+  border: 1.5px solid;
+}
+.oga-auth-status[data-tone="success"] {
+  background: rgba(26, 28, 31, 0.06);
+  border-color: var(--oga-fg);
+  color: var(--oga-fg);
+}
+.oga-auth-status[data-tone="danger"] {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #b42318;
+}
+.oga-auth-status[data-tone="info"] {
+  background: rgba(26, 28, 31, 0.04);
+  border-color: var(--oga-border);
+  color: var(--oga-fg);
+}

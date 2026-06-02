@@ -1,36 +1,34 @@
 "use client";
 
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Styles } from "../_shared/styles";
 import {
-  AuthShell, AuthTitle, AuthStatusIcon,
+  AuthShell,
+  AuthTitle,
+  AuthStatusIcon,
 } from "../_shared/auth-shell";
 
-/* NOTE: this is a DESIGN PREVIEW page. The real email-verification flow
-   (DB token check + send-welcome-email) lives at `/verify` as a server
-   component. Here we show both visual states so Pedro can review the UI,
-   toggled via `?state=success` or `?state=failure`. At promotion time,
-   the real /verify server component can render either of these client
-   components based on its DB result. */
+/* /verify — DESIGN PREVIEW page. The real email-verification flow
+   (DB token check + send-welcome-email) lives at /verify as a
+   server component. Here we show both visual states so they can
+   be reviewed, toggled via ?state=success or ?state=failure. */
 
 export default function VerifyClient() {
   return (
-    <>
-      <Styles />
-      <Suspense fallback={<AuthShell><div /></AuthShell>}>
-        <VerifyInner />
-      </Suspense>
-    </>
+    <Suspense fallback={<AuthShell><div /></AuthShell>}>
+      <VerifyInner />
+    </Suspense>
   );
 }
 
 function VerifyInner() {
   const searchParams = useSearchParams();
-  const state = (searchParams.get("state") || "success") as "success" | "failure";
-
+  const state = (searchParams.get("state") || "success") as
+    | "success"
+    | "failure";
   const isDev = process.env.NODE_ENV !== "production";
+
   return (
     <AuthShell>
       {state === "success" ? <SuccessState /> : <FailureState />}
@@ -41,23 +39,29 @@ function VerifyInner() {
 
 function SuccessState() {
   return (
-    <div style={{ textAlign: "center" }}>
+    <div className="oga-auth-center">
       <AuthStatusIcon tone="success">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
           <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" />
-          <path d="M8 12 L11 15 L16 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M8 12 L11 15 L16 9"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </AuthStatusIcon>
       <AuthTitle
-        title={<>Email <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>verified.</em></>}
-        sub="Your account is ready. Sign in to score your first postcode. The Sandbox tier includes 35 API calls a month for evaluation, no card required."
+        title="Email verified."
+        sub="Your account is ready. Sign in to make your first API call. The Sandbox tier includes 35 API calls a month for evaluation, no card required."
       />
-      <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-        <Link href="/sign-in" style={primaryCta}>
+      <div className="oga-auth-actions">
+        <Link href="/sign-in" className="oga-auth-pill">
           Sign in
-          <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
+          <span aria-hidden>→</span>
         </Link>
-        <Link href="/" style={ghostCta}>
+        <Link href="/" className="oga-auth-pill oga-auth-pill--ghost">
           Explore first
         </Link>
       </div>
@@ -67,7 +71,7 @@ function SuccessState() {
 
 function FailureState() {
   return (
-    <div style={{ textAlign: "center" }}>
+    <div className="oga-auth-center">
       <AuthStatusIcon tone="danger">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
           <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" />
@@ -76,15 +80,18 @@ function FailureState() {
         </svg>
       </AuthStatusIcon>
       <AuthTitle
-        title={<>Verification <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>failed.</em></>}
+        title="Verification failed."
         sub="This verification link is invalid, has expired, or has already been used. Create your account again to get a fresh link."
       />
-      <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-        <Link href="/sign-up" style={primaryCta}>
+      <div className="oga-auth-actions">
+        <Link href="/sign-up" className="oga-auth-pill">
           Sign up again
-          <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
+          <span aria-hidden>→</span>
         </Link>
-        <a href="mailto:operation@onegoodarea.co.uk?subject=Verification help" style={ghostCta}>
+        <a
+          href="mailto:operation@onegoodarea.co.uk?subject=Verification%20help"
+          className="oga-auth-pill oga-auth-pill--ghost"
+        >
           Contact support
         </a>
       </div>
@@ -92,51 +99,30 @@ function FailureState() {
   );
 }
 
-/* Tiny toggle so Pedro can flip between states on the preview. Hidden in
-   the design review, removed from the eventual promotion render. */
 function PreviewToggle({ current }: { current: "success" | "failure" }) {
   return (
-    <div style={{
-      marginTop: 48, paddingTop: 24,
-      borderTop: "1px dashed var(--border)",
-      display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-      fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
-      letterSpacing: "0.22em", textTransform: "uppercase",
-      color: "var(--text-3)",
-    }}>
+    <div className="oga-auth-preview">
       <span>Preview state:</span>
-      <Link href="?state=success" style={{
-        padding: "3px 8px", borderRadius: 2,
-        background: current === "success" ? "var(--signal)" : "transparent",
-        color: current === "success" ? "var(--signal-ink)" : "var(--text-2)",
-        textDecoration: "none",
-        border: `1px solid ${current === "success" ? "var(--ink-deep)" : "var(--border)"}`,
-      }}>Success</Link>
-      <Link href="?state=failure" style={{
-        padding: "3px 8px", borderRadius: 2,
-        background: current === "failure" ? "var(--signal)" : "transparent",
-        color: current === "failure" ? "var(--signal-ink)" : "var(--text-2)",
-        textDecoration: "none",
-        border: `1px solid ${current === "failure" ? "var(--ink-deep)" : "var(--border)"}`,
-      }}>Failure</Link>
+      <Link
+        href="?state=success"
+        className={
+          current === "success"
+            ? "oga-auth-preview__chip oga-auth-preview__chip--active"
+            : "oga-auth-preview__chip"
+        }
+      >
+        Success
+      </Link>
+      <Link
+        href="?state=failure"
+        className={
+          current === "failure"
+            ? "oga-auth-preview__chip oga-auth-preview__chip--active"
+            : "oga-auth-preview__chip"
+        }
+      >
+        Failure
+      </Link>
     </div>
   );
 }
-
-const primaryCta: React.CSSProperties = {
-  fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-  letterSpacing: "0.14em", textTransform: "uppercase",
-  color: "var(--signal-ink)", background: "var(--signal)",
-  padding: "12px 22px", borderRadius: 999, textDecoration: "none",
-  border: "1px solid var(--ink-deep)",
-  display: "inline-flex", alignItems: "center", gap: 9,
-};
-
-const ghostCta: React.CSSProperties = {
-  fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-  letterSpacing: "0.14em", textTransform: "uppercase",
-  color: "var(--ink)", background: "transparent",
-  padding: "12px 22px", borderRadius: 999, textDecoration: "none",
-  border: "1px solid var(--border)",
-  display: "inline-flex", alignItems: "center", gap: 9,
-};
