@@ -1,350 +1,197 @@
 "use client";
 
-import React, { useState } from "react";
 import Link from "next/link";
-import { Styles } from "../_shared/styles";
 import { Nav } from "../_shared/nav";
 import { Footer } from "../_shared/footer";
 import { BLOG_POSTS, type BlogPost } from "@/app/blog/posts";
+import "./blog.css";
 
-/* ═══════════════════════════════════════════════════════════════
-   OneGoodArea · Design V2 · /blog
-   Post index. Reuses BLOG_POSTS from the live site as data source.
-   Editorial card list: featured lead + rest below.
-   ═══════════════════════════════════════════════════════════════ */
+/* /blog list page — Brand v3 rewrite (AR-204 PR).
+   Replaces the 350 LOC legacy Fraunces + .aiq + inline-style index.
 
-export default function BlogClient() {
-  const [featured, ...rest] = BLOG_POSTS;
+   Locked surface plan (per Pedro's surface-rotation rule):
+     Hero       DARK   (data-oga-surface="dark")
+     Featured   cream
+     Grid       cream-quiet
+     CTA        DARK   (bookend match w/ hero)
+
+   Posts are sourced from apps/web/src/app/blog/posts.ts (kept as-is
+   per the rewrite scope decision; visual reskin only on this PR).
+   The first post (newest) is rendered as the Featured card; the
+   rest fill the grid. */
+
+const SORTED = [...BLOG_POSTS].sort((a, b) => (a.date < b.date ? 1 : -1));
+const [featured, ...rest] = SORTED;
+
+function formatDate(d: string): string {
+  const date = new Date(d);
+  return date.toLocaleDateString("en-GB", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function PostMeta({ post }: { post: BlogPost }) {
   return (
-    <div className="aiq">
-      <Styles />
-      <Nav />
-      <Hero />
-      <Featured post={featured} />
-      <PostList posts={rest} />
-      <FinalCta />
-      <Footer />
+    <div className="oga-blog-meta">
+      <time dateTime={post.date}>{formatDate(post.date)}</time>
+      <span className="oga-blog-meta__dot" aria-hidden />
+      <span>{post.readTime}</span>
     </div>
   );
 }
 
-function Hero() {
+function TagList({ tags }: { tags: string[] }) {
   return (
-    <section style={{
-      position: "relative",
-      background: "var(--bg)",
-      borderBottom: "1px solid var(--border)",
-      overflow: "hidden",
-    }}>
-      <div aria-hidden style={{
-        position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0,
-      }}>
-        <div style={{
-          position: "absolute", top: -220, left: "50%",
-          transform: "translateX(-50%)",
-          width: 880, height: 520,
-          background: "radial-gradient(ellipse at center, rgba(212,243,58,0.14) 0%, rgba(212,243,58,0) 60%)",
-        }} />
-      </div>
-      <div style={{
-        maxWidth: 1000, margin: "0 auto", padding: "100px 40px 48px",
-        position: "relative", zIndex: 1,
-      }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-          letterSpacing: "0.24em", textTransform: "uppercase",
-          color: "var(--text-2)",
-          display: "inline-flex", alignItems: "center", gap: 9,
-          marginBottom: 22,
-        }}>
-          <span aria-hidden style={{
-            width: 6, height: 6, borderRadius: 6,
-            background: "var(--signal)",
-            animation: "aiq-pulse-dot 1.6s ease-in-out infinite",
-          }} />
-          OneGoodArea blog
-        </div>
-        <h1 style={{
-          fontFamily: "var(--display)", fontWeight: 400,
-          fontSize: "clamp(42px, 5.2vw, 62px)", lineHeight: 1.04,
-          letterSpacing: "-0.02em", color: "var(--ink-deep)",
-          margin: "0 0 16px", maxWidth: "22ch",
-        }}>
-          Notes from the <em style={{
-            fontStyle: "italic", color: "var(--ink)",
-            borderBottom: "3px solid var(--signal)", paddingBottom: 2,
-          }}>UK location intelligence layer.</em>
-        </h1>
-        <p style={{
-          fontFamily: "var(--sans)", fontSize: 16.5, fontWeight: 400,
-          lineHeight: 1.55, color: "var(--text-2)",
-          margin: 0, maxWidth: "62ch",
-        }}>
-          Methodology deep-dives, data-source explainers, and field notes on UK area scoring. Written for the engineers, underwriters, and product teams who integrate with us, plus anyone curious about how the engine actually works.
-        </p>
-      </div>
-    </section>
+    <ul className="oga-blog-tags">
+      {tags.map((t) => (
+        <li key={t} className="oga-blog-tag">
+          {t}
+        </li>
+      ))}
+    </ul>
   );
 }
 
-function Featured({ post }: { post: BlogPost }) {
-  const [hover, setHover] = useState(false);
+export default function BlogClient() {
   return (
-    <section style={{
-      background: "var(--bg)",
-      borderBottom: "1px solid var(--border)",
-      padding: "48px 0",
-    }}>
-      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "0 40px" }}>
-        <Link
-          href={`/blog/${post.slug}`}
-          onMouseEnter={() => setHover(true)}
-          onMouseLeave={() => setHover(false)}
-          style={{
-            display: "block",
-            background: "var(--bg-off)",
-            border: "1px solid var(--border)",
-            padding: "40px 44px",
-            textDecoration: "none",
-            position: "relative", overflow: "hidden",
-            transition: "border-color 180ms ease, transform 180ms cubic-bezier(0.16,1,0.3,1)",
-            borderColor: hover ? "var(--ink)" : "var(--border)",
-            transform: hover ? "translateY(-1px)" : "translateY(0)",
-          }}
-        >
-          <div aria-hidden style={{
-            position: "absolute", top: -140, right: -140,
-            width: 400, height: 400,
-            background: "radial-gradient(circle, rgba(212,243,58,0.14) 0%, rgba(212,243,58,0) 62%)",
-            pointerEvents: "none",
-          }} />
+    <div className="oga-root oga-blog">
+      <Nav />
 
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: 12,
-            marginBottom: 22, position: "relative", zIndex: 1,
-          }}>
-            <span style={{
-              fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-              letterSpacing: "0.22em", textTransform: "uppercase",
-              color: "var(--signal-ink)", background: "var(--signal)",
-              padding: "4px 9px", borderRadius: 2,
-              display: "inline-flex", alignItems: "center", gap: 6,
-            }}>
-              <span aria-hidden style={{
-                width: 4, height: 4, borderRadius: 4, background: "var(--ink-deep)",
-              }} />
-              Latest
-            </span>
-            <span style={{
-              fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-              letterSpacing: "0.14em", color: "var(--text-3)",
-            }}>
-              {formatDate(post.date)}
-            </span>
-            <span style={{
-              fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-              letterSpacing: "0.14em", color: "var(--text-3)",
-            }}>
-              · {post.readTime} read
-            </span>
+      {/* HERO (DARK) ------------------------------------------- */}
+      <section
+        className="oga-section-dark oga-blog-hero"
+        data-oga-surface="dark"
+      >
+        <div className="oga-blog-hero__inner">
+          <div className="oga-blog-hero__eyebrow oga-eyebrow oga-eyebrow--inverse">
+            <span className="oga-eyebrow-dot" aria-hidden />
+            <span>Blog &amp; insights</span>
           </div>
 
-          <h2 style={{
-            fontFamily: "var(--display)", fontWeight: 400,
-            fontSize: "clamp(28px, 3.8vw, 42px)", lineHeight: 1.1,
-            letterSpacing: "-0.018em",
-            color: "var(--ink-deep)",
-            margin: "0 0 16px", maxWidth: "24ch",
-            position: "relative", zIndex: 1,
-          }}>
-            {post.title}
-          </h2>
-          <p style={{
-            fontFamily: "var(--sans)", fontSize: 16, fontWeight: 400,
-            lineHeight: 1.55, color: "var(--text-2)",
-            margin: "0 0 22px", maxWidth: "58ch",
-            position: "relative", zIndex: 1,
-          }}>
-            {post.description}
+          <h1 className="oga-blog-hero__title">
+            Notes on building the UK property intelligence layer.
+          </h1>
+
+          <p className="oga-blog-hero__lead">
+            Engineering notes, methodology deep-dives, and field-tested
+            workflows. New entries land as we ship.
           </p>
 
-          <div style={{
-            display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap",
-            position: "relative", zIndex: 1,
-          }}>
-            <span style={{
-              fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-              letterSpacing: "0.16em", textTransform: "uppercase",
-              color: "var(--ink-deep)",
-              display: "inline-flex", alignItems: "center", gap: 8,
-              borderBottom: "1px solid var(--ink-deep)", paddingBottom: 2,
-            }}>
-              Read it
-              <span aria-hidden style={{
-                display: "inline-block",
-                transform: hover ? "translateX(2px)" : "translateX(0)",
-                transition: "transform 220ms cubic-bezier(0.16,1,0.3,1)",
-              }}>→</span>
-            </span>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {post.tags.map((tag) => <Tag key={tag} label={tag} />)}
+          <div className="oga-blog-hero__stats">
+            <div className="oga-blog-hero__stat">
+              <span className="oga-blog-hero__stat-value">{SORTED.length}</span>
+              <span className="oga-blog-hero__stat-label">Posts published</span>
             </div>
-          </div>
-        </Link>
-      </div>
-    </section>
-  );
-}
-
-function PostList({ posts }: { posts: BlogPost[] }) {
-  if (posts.length === 0) return null;
-  return (
-    <section style={{
-      background: "var(--bg)",
-      borderBottom: "1px solid var(--border)",
-      padding: "24px 0 100px",
-    }}>
-      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "0 40px" }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-          letterSpacing: "0.22em", textTransform: "uppercase",
-          color: "var(--text-3)", marginBottom: 22,
-        }}>
-          More posts
-        </div>
-        <div style={{
-          border: "1px solid var(--border)",
-          background: "var(--bg)",
-        }}>
-          {posts.map((p, i) => (
-            <PostRow key={p.slug} post={p} isLast={i === posts.length - 1} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function PostRow({ post, isLast }: { post: BlogPost; isLast: boolean }) {
-  const [hover, setHover] = useState(false);
-  return (
-    <Link
-      href={`/blog/${post.slug}`}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{
-        display: "block",
-        padding: "24px 28px",
-        borderBottom: isLast ? "none" : "1px solid var(--border-dim)",
-        textDecoration: "none",
-        transition: "background 160ms ease",
-        background: hover ? "var(--bg-off)" : "var(--bg)",
-        position: "relative",
-      }}
-    >
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "1fr auto",
-        gap: 20, alignItems: "center",
-      }}>
-        <div>
-          <h3 style={{
-            fontFamily: "var(--display)", fontSize: "clamp(19px, 2.2vw, 22px)",
-            fontWeight: 500, letterSpacing: "-0.014em",
-            color: "var(--ink-deep)", lineHeight: 1.2,
-            margin: "0 0 8px",
-          }}>{post.title}</h3>
-          <p style={{
-            fontFamily: "var(--sans)", fontSize: 14.5, fontWeight: 400,
-            lineHeight: 1.5, color: "var(--text-2)",
-            margin: "0 0 12px", maxWidth: "64ch",
-          }}>{post.description}</p>
-          <div style={{
-            display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap",
-          }}>
-            <span style={{
-              fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-              letterSpacing: "0.14em", color: "var(--text-3)",
-            }}>{formatShortDate(post.date)}</span>
-            <span style={{
-              fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-              letterSpacing: "0.14em", color: "var(--text-3)",
-            }}>· {post.readTime}</span>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {post.tags.slice(0, 3).map((tag) => <Tag key={tag} label={tag} />)}
+            <div className="oga-blog-hero__stat">
+              <span className="oga-blog-hero__stat-value">
+                {formatDate(SORTED[0].date)}
+              </span>
+              <span className="oga-blog-hero__stat-label">Most recent</span>
             </div>
           </div>
         </div>
-        <span aria-hidden style={{
-          fontFamily: "var(--sans)", fontSize: 18,
-          color: hover ? "var(--ink-deep)" : "var(--text-3)",
-          transform: hover ? "translateX(3px)" : "translateX(0)",
-          transition: "transform 220ms cubic-bezier(0.16,1,0.3,1), color 160ms",
-        }}>→</span>
-      </div>
-    </Link>
-  );
-}
+      </section>
 
-function Tag({ label }: { label: string }) {
-  return (
-    <span style={{
-      fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
-      letterSpacing: "0.2em", textTransform: "uppercase",
-      color: "var(--text-3)",
-      border: "1px solid var(--border)",
-      padding: "3px 8px", borderRadius: 2,
-    }}>{label}</span>
-  );
-}
+      {/* FEATURED (cream) -------------------------------------- */}
+      <section className="oga-blog-featured" data-oga-surface="light">
+        <div className="oga-blog-featured__inner">
+          <div className="oga-blog-featured__eyebrow oga-eyebrow">
+            <span className="oga-eyebrow-mono">FEATURED</span>
+            <span className="oga-eyebrow-rule" aria-hidden />
+            <span>Most recent</span>
+          </div>
 
-function formatDate(d: string) {
-  return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-}
-function formatShortDate(d: string) {
-  return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-}
+          <Link
+            href={`/blog/${featured.slug}`}
+            className="oga-blog-featured__card"
+          >
+            <div className="oga-blog-featured__card-body">
+              <PostMeta post={featured} />
+              <h2 className="oga-blog-featured__card-title">
+                {featured.title}
+              </h2>
+              <p className="oga-blog-featured__card-desc">
+                {featured.description}
+              </p>
+              <TagList tags={featured.tags} />
+              <span className="oga-blog-featured__card-cta">
+                Read article
+                <span className="oga-blog-featured__card-arrow" aria-hidden>
+                  →
+                </span>
+              </span>
+            </div>
+          </Link>
+        </div>
+      </section>
 
-function FinalCta() {
-  return (
-    <section style={{
-      background: "var(--bg-off)",
-      padding: "80px 0 110px",
-    }}>
-      <div style={{
-        maxWidth: 820, margin: "0 auto", padding: "0 40px",
-        textAlign: "center",
-      }}>
-        <h2 style={{
-          fontFamily: "var(--display)", fontWeight: 400,
-          fontSize: "clamp(30px, 4vw, 42px)", lineHeight: 1.06,
-          letterSpacing: "-0.018em", color: "var(--ink-deep)",
-          margin: "0 0 14px",
-        }}>
-          Read better, <em style={{
-            fontStyle: "italic", color: "var(--ink)",
-            borderBottom: "2.5px solid var(--signal)", paddingBottom: 1,
-          }}>decide better.</em>
-        </h2>
-        <p style={{
-          fontFamily: "var(--sans)", fontSize: 15.5, fontWeight: 400,
-          lineHeight: 1.5, color: "var(--text-2)",
-          margin: "0 auto 28px", maxWidth: "52ch",
-        }}>
-          Every post is built from the same public data as the reports. Same engine, same citations, just in long form.
-        </p>
-        <Link href="/" style={{
-          fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-          letterSpacing: "0.16em", textTransform: "uppercase",
-          color: "var(--signal-ink)", background: "var(--signal)",
-          padding: "13px 22px", borderRadius: 999, textDecoration: "none",
-          border: "1px solid var(--ink-deep)",
-          display: "inline-flex", alignItems: "center", gap: 9,
-        }}>
-          Try a postcode
-          <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
-        </Link>
-      </div>
-    </section>
+      {/* GRID (cream-quiet) ------------------------------------ */}
+      <section
+        className="oga-section-quiet oga-blog-grid"
+        data-oga-surface="light"
+      >
+        <div className="oga-blog-grid__inner">
+          <div className="oga-blog-grid__eyebrow oga-eyebrow">
+            <span className="oga-eyebrow-mono">ARCHIVE</span>
+            <span className="oga-eyebrow-rule" aria-hidden />
+            <span>The rest of the catalogue</span>
+          </div>
+
+          <ul className="oga-blog-grid__list">
+            {rest.map((post) => (
+              <li key={post.slug} className="oga-blog-grid__item">
+                <Link
+                  href={`/blog/${post.slug}`}
+                  className="oga-blog-grid__card"
+                >
+                  <PostMeta post={post} />
+                  <h3 className="oga-blog-grid__card-title">{post.title}</h3>
+                  <p className="oga-blog-grid__card-desc">{post.description}</p>
+                  <TagList tags={post.tags} />
+                  <span className="oga-blog-grid__card-cta">
+                    Read article
+                    <span className="oga-blog-grid__card-arrow" aria-hidden>
+                      →
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* FINAL CTA (DARK) -------------------------------------- */}
+      <section
+        className="oga-section-dark oga-blog-cta"
+        data-oga-surface="dark"
+      >
+        <div className="oga-blog-cta__inner">
+          <h2 className="oga-blog-cta__title">
+            Want the data behind these posts?
+          </h2>
+          <p className="oga-blog-cta__lead">
+            The same engine that ranks areas in our case studies is the
+            engine you call through the API. One methodology, version-pinned
+            per organisation, with the open ADR trail underneath every
+            number.
+          </p>
+          <div className="oga-blog-cta__buttons">
+            <Link href="/sign-up" className="oga-btn oga-btn-primary">
+              Get started
+              <span aria-hidden>→</span>
+            </Link>
+            <Link href="/methodology" className="oga-btn oga-btn-secondary">
+              Read the methodology
+              <span aria-hidden>→</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
   );
 }
