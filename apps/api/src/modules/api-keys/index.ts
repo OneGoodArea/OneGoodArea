@@ -1,8 +1,8 @@
 import crypto from "crypto";
-import { sql } from "../../infrastructure/db/client";
 import { generateId } from "../../infrastructure/utils/id";
-import { type ApiKeyRow, rows } from "../../infrastructure/db/types";
+import { ApiKeyRepository } from "../../infrastructure/db/dal";
 import { ipMatchesCidrs } from "../../infrastructure/utils/ip-cidr";
+import type { ApiKeyRow } from "../../infrastructure/db/types";
 
 /* Migrated from legacy src/lib/api-keys.ts. Changes:
    - imports repointed to apps/api infrastructure;
@@ -19,6 +19,8 @@ import { ipMatchesCidrs } from "../../infrastructure/utils/ip-cidr";
    is correct here: keys are 192-bit random tokens, so brute-forcing the hash of
    a high-entropy input is infeasible and per-request KDF overhead buys nothing.
    Stripe / GitHub / GitLab use the same pattern. */
+
+const repo = new ApiKeyRepository();
 
 export function hashApiKey(key: string): string {
   return crypto.createHash("sha256").update(key).digest("hex");
@@ -41,23 +43,15 @@ export async function createApiKey(userId: string, name: string = "Default"): Pr
   const hash = hashApiKey(key);
   const preview = apiKeyPreview(key);
 
-  await sql`
-    INSERT INTO api_keys (id, key_hash, key_prefix, user_id, name)
-    VALUES (${id}, ${hash}, ${preview}, ${userId}, ${name})
-  `;
+  await repo.insert(id, hash, preview, userId, name);
 
   // Return the plaintext key ONCE. It's never stored, never recoverable.
   return { id, key, name };
 }
 
 export async function listApiKeys(userId: string) {
-  const result = rows<ApiKeyPreview>(await sql`
-    SELECT id, key_prefix as key_preview, name, created_at, last_used_at
-    FROM api_keys
-    WHERE user_id = ${userId} AND revoked = FALSE
-    ORDER BY created_at DESC
-  `);
-  return result.map((r) => ({
+  const result = await repo.listByUser(userId);
+  return result.map((r: ApiKeyPreview) => ({
     id: r.id,
     key_preview: r.key_preview,
     name: r.name,
@@ -67,12 +61,7 @@ export async function listApiKeys(userId: string) {
 }
 
 export async function revokeApiKey(userId: string, keyId: string): Promise<boolean> {
-  const result = await sql`
-    UPDATE api_keys SET revoked = TRUE
-    WHERE id = ${keyId} AND user_id = ${userId}
-    RETURNING id
-  `;
-  return result.length > 0;
+  return repo.revoke(keyId, userId);
 }
 
 /** Result of validating an API key. Includes the org_id the key belongs to
@@ -106,20 +95,17 @@ export type ValidateApiKeyResult =
 
 export async function validateApiKey(key: string, requestIp?: string | null): Promise<ValidateApiKeyResult> {
   const hash = hashApiKey(key);
-  const result = rows<Pick<ApiKeyRow, "user_id" | "org_id" | "allowed_ip_cidrs">>(await sql`
-    SELECT user_id, org_id, allowed_ip_cidrs FROM api_keys
-    WHERE key_hash = ${hash} AND revoked = FALSE
-  `);
-  if (result.length === 0) return null;
+  const found = await repo.findByHash(hash);
+  if (!found) return null;
 
   // Update last_used_at (fire and forget). Done BEFORE the IP gate so a
   // blocked-by-IP attempt still rotates the timestamp — useful signal
   // for "someone tried, from an IP that didn't match".
-  sql`UPDATE api_keys SET last_used_at = NOW() WHERE key_hash = ${hash}`.catch(() => {});
+  repo.touchLastUsed(hash).catch(() => {});
 
-  const userId = result[0].user_id;
-  const orgId = result[0].org_id ?? null;
-  const allowedIpCidrs = result[0].allowed_ip_cidrs ?? [];
+  const userId = found.user_id;
+  const orgId = found.org_id ?? null;
+  const allowedIpCidrs = found.allowed_ip_cidrs ?? [];
 
   // Enforce IP allowlist when set. Empty list = no restriction (existing
   // keys are byte-identical to pre-AR-200 behaviour).
