@@ -14,5 +14,23 @@ export default defineConfig({
       junit: "../../.artifacts/test-reports/contracts/junit.xml",
       json: "../../.artifacts/test-reports/contracts/results.json",
     },
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json", "html"],
+      reportOnFailure: true,
+      reportsDirectory: "../../.artifacts/test-reports/coverage/contracts",
+      include: ["src/**/*.ts"],
+      exclude: [
+        "tests/**",
+        "src/**/*.d.ts",
+        "node_modules/**",
+      ],
+      thresholds: {
+        lines: 90,
+        functions: 90,
+        branches: 80,
+        statements: 90,
+      },
+    },
   },
 });

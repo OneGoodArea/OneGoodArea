@@ -51,7 +51,8 @@ API_ENVFILE ?= .env.local
         refresh-property refresh-crime api-build api-run api-stop api-clean \
         container-build container-run container-stop container-logs \
         container-guard \
-        db-net db-vol db-run db-stop db-clean db-seed
+        db-net db-vol db-run db-stop db-clean db-seed \
+        coverage coverage-api coverage-web coverage-contracts
 
 help:
 	@echo ""
@@ -69,6 +70,10 @@ help:
 	@echo "  test                      run the full test suite"
 	@echo "  typecheck                 TypeScript type-check (no emit)"
 	@echo "  lint                      ESLint across all packages"
+	@echo "  coverage                  coverage for all packages (api, web, contracts)"
+	@echo "  coverage-api              coverage for apps/api only"
+	@echo "  coverage-web              coverage for apps/web only"
+	@echo "  coverage-contracts        coverage for packages/contracts only"
 	@echo ""
 	@echo "  ── Data refresh ─────────────────────────────────────────────────────"
 	@echo "  refresh-deprivation       re-ingest deprivation signal data"
@@ -131,6 +136,23 @@ typecheck:
 
 lint:
 	npm run lint
+
+coverage: coverage-api coverage-web coverage-contracts
+	@echo ""
+	@echo "  Coverage reports written to:"
+	@echo "    .artifacts/test-reports/coverage/api/index.html"
+	@echo "    .artifacts/test-reports/coverage/web/index.html"
+	@echo "    .artifacts/test-reports/coverage/contracts/index.html"
+	@echo ""
+
+coverage-api:
+	npm run test:coverage -w @onegoodarea/api
+
+coverage-web:
+	npm run test:coverage -w @onegoodarea/web
+
+coverage-contracts:
+	npm run test:coverage -w @onegoodarea/contracts
 
 refresh-deprivation:
 	npm run refresh:deprivation -w @onegoodarea/api

@@ -23,5 +23,28 @@ export default defineConfig({
       junit: "../../.artifacts/test-reports/api/junit.xml",
       json: "../../.artifacts/test-reports/api/results.json",
     },
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json", "html"],
+      reportOnFailure: true,
+      reportsDirectory: "../../.artifacts/test-reports/coverage/api",
+      include: ["src/**/*.ts"],
+      exclude: [
+        "tests/**",
+        "src/**/*.d.ts",
+        "src/scripts/**",
+        "src/infrastructure/db/migrate.ts",
+        "node_modules/**",
+      ],
+      /* Baseline thresholds calibrated to actual coverage at Plan 013
+         (lines 51.57, functions 55.64, branches 44.86, statements 50.42).
+         Tighten incrementally per sprint — do not lower these. */
+      thresholds: {
+        lines: 49,
+        functions: 53,
+        branches: 42,
+        statements: 48,
+      },
+    },
   },
 });
