@@ -345,7 +345,7 @@ function FinalCta() {
           Tell us what you&rsquo;d like to see next. Most items on this page started as an email.
         </p>
         <div className="oga-changelog-cta__buttons">
-          <a href="mailto:hello@onegoodarea.com?subject=Feature request" className="oga-btn oga-btn-primary">
+          <a href="mailto:operation@onegoodarea.co.uk?subject=Feature request" className="oga-btn oga-btn-primary">
             Request a feature
             <span aria-hidden>→</span>
           </a>
