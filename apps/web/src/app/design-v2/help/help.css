@@ -1,0 +1,433 @@
+/* /help page — co-located CSS (AR-204 PR).
+   Brand v3 (Plotted). Depends on tokens.css + components.css +
+   backgrounds.css. No inline styles in client.tsx.
+
+   Visual rhythm:
+     Hero               cream, search input prominent
+     Topic 01..09       alternating cream / cream-quiet
+     Talk to us         DARK
+*/
+
+/* ============================================================
+   SHARED — eyebrow children (page-scoped)
+   ============================================================ */
+.oga-help .oga-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.oga-help .oga-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--oga-ink);
+  display: inline-block;
+}
+.oga-help .oga-eyebrow--inverse .oga-eyebrow-dot {
+  background: var(--oga-white);
+}
+
+/* ============================================================
+   HERO — cream, with search input
+   ============================================================ */
+.oga-help-hero {
+  background: var(--oga-canvas);
+  padding: clamp(64px, 9vw, 120px) 24px clamp(48px, 7vw, 80px);
+}
+.oga-help-hero__inner {
+  max-width: 880px;
+  margin: 0 auto;
+}
+.oga-help-hero__eyebrow {
+  margin-bottom: 24px;
+}
+.oga-help-hero__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(34px, 4.6vw, 54px);
+  font-weight: 500;
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+  color: var(--oga-fg);
+  text-wrap: balance;
+  margin: 0 0 22px;
+}
+.oga-help-hero__lead {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(15px, 1.2vw, 17px);
+  line-height: 1.55;
+  color: var(--oga-fg-subtle);
+  margin: 0 0 36px;
+  max-width: 680px;
+}
+.oga-help-hero__link {
+  color: var(--oga-fg);
+  font-weight: 500;
+  border-bottom: 1px solid rgba(26, 28, 31, 0.25);
+  text-decoration: none;
+  transition: border-color 160ms ease;
+}
+.oga-help-hero__link:hover {
+  border-bottom-color: var(--oga-fg);
+}
+
+.oga-help-hero__search {
+  margin-top: 8px;
+}
+.oga-help-hero__search-label {
+  display: block;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: 10px;
+}
+.oga-help-hero__search-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-sm);
+  padding: 0 12px;
+  height: 48px;
+  transition: border-color 160ms ease;
+}
+.oga-help-hero__search-row:focus-within {
+  border-color: var(--oga-fg);
+}
+.oga-help-hero__search-icon {
+  color: var(--oga-fg-muted);
+  flex: 0 0 auto;
+  margin-right: 10px;
+}
+.oga-help-hero__search-input {
+  flex: 1 1 auto;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-family: var(--oga-font-sans);
+  font-size: 15px;
+  color: var(--oga-fg);
+  height: 100%;
+  min-width: 0;
+}
+.oga-help-hero__search-input::placeholder {
+  color: var(--oga-fg-muted);
+}
+.oga-help-hero__search-clear {
+  flex: 0 0 auto;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--oga-radius-sm);
+  transition: color 160ms ease, background 160ms ease;
+}
+.oga-help-hero__search-clear:hover {
+  color: var(--oga-fg);
+  background: rgba(26, 28, 31, 0.04);
+}
+.oga-help-hero__search-status {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--oga-fg-muted);
+  margin: 14px 0 0;
+}
+
+/* ============================================================
+   TOPIC SECTIONS — alternating cream / cream-quiet
+   ============================================================ */
+.oga-help-topics {
+  /* container; no styles needed beyond letting children render */
+}
+.oga-help-topic {
+  padding: clamp(56px, 8vw, 96px) 24px;
+}
+.oga-help-topic--cream {
+  background: var(--oga-canvas);
+}
+.oga-help-topic__inner {
+  max-width: 880px;
+  margin: 0 auto;
+}
+.oga-help-topic__head {
+  margin-bottom: 32px;
+  max-width: 720px;
+}
+.oga-help-topic__eyebrow {
+  margin-bottom: 16px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+.oga-help-topic__eyebrow-num {
+  color: var(--oga-fg);
+  font-weight: 600;
+}
+.oga-help-topic__eyebrow-rule {
+  display: inline-block;
+  width: 24px;
+  height: 1px;
+  background: var(--oga-border);
+}
+.oga-help-topic__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3.2vw, 36px);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.018em;
+  color: var(--oga-fg);
+  text-wrap: balance;
+  margin: 0 0 14px;
+}
+.oga-help-topic__lead {
+  font-family: var(--oga-font-sans);
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--oga-fg-subtle);
+  margin: 0;
+}
+
+/* Accordion list */
+.oga-help-topic__list {
+  border-top: 1px solid var(--oga-border);
+}
+
+/* ============================================================
+   Q&A row (native <details> styled to match brand)
+   ============================================================ */
+.oga-help-qa {
+  border-bottom: 1px solid var(--oga-border);
+}
+.oga-help-qa__q {
+  list-style: none;
+  cursor: pointer;
+  padding: 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--oga-fg);
+  letter-spacing: -0.008em;
+  transition: color 160ms ease;
+}
+.oga-help-qa__q::-webkit-details-marker {
+  display: none;
+}
+.oga-help-qa__q:hover {
+  color: var(--oga-ink-80, var(--oga-fg));
+}
+.oga-help-qa__q-text {
+  flex: 1 1 auto;
+}
+.oga-help-qa__chevron {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  position: relative;
+  transition: transform 200ms ease;
+}
+.oga-help-qa__chevron::before,
+.oga-help-qa__chevron::after {
+  content: "";
+  position: absolute;
+  background: var(--oga-fg);
+  border-radius: 1px;
+}
+.oga-help-qa__chevron::before {
+  /* horizontal bar */
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1.5px;
+  transform: translateY(-50%);
+}
+.oga-help-qa__chevron::after {
+  /* vertical bar (forms the +) */
+  left: 50%;
+  top: 0;
+  width: 1.5px;
+  height: 100%;
+  transform: translateX(-50%);
+  transition: transform 200ms ease, opacity 200ms ease;
+}
+.oga-help-qa[open] .oga-help-qa__chevron::after {
+  /* collapse the vertical bar to make it look like a - */
+  transform: translateX(-50%) scaleY(0);
+  opacity: 0;
+}
+
+.oga-help-qa__a {
+  padding: 0 0 22px;
+  max-width: 720px;
+}
+.oga-help-qa__a p {
+  font-family: var(--oga-font-sans);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--oga-fg-subtle);
+  margin: 0;
+  text-wrap: pretty;
+}
+
+/* Search hit highlight (renders inside Q text or A text) */
+.oga-help-mark {
+  background: rgba(26, 28, 31, 0.10);
+  color: var(--oga-fg);
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+/* ============================================================
+   TALK TO US (DARK CTA) — same shape as /about contact
+   ============================================================ */
+.oga-help-contact {
+  padding: clamp(64px, 9vw, 120px) 24px;
+}
+.oga-help-contact__inner {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.oga-help-contact__eyebrow {
+  margin-bottom: 18px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.65);
+}
+.oga-help-contact__eyebrow-num {
+  color: var(--oga-white);
+  font-weight: 600;
+}
+.oga-help-contact__eyebrow-rule {
+  display: inline-block;
+  width: 24px;
+  height: 1px;
+  background: rgba(250, 248, 244, 0.25);
+}
+.oga-help-contact__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.5vw, 40px);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.018em;
+  color: var(--oga-white);
+  text-wrap: balance;
+  margin: 0 0 18px;
+  max-width: 720px;
+}
+.oga-help-contact__lead {
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.7);
+  margin: 0 0 40px;
+  max-width: 640px;
+}
+
+.oga-help-contact__grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+@media (max-width: 880px) {
+  .oga-help-contact__grid {
+    grid-template-columns: 1fr;
+  }
+}
+.oga-help-contact__card {
+  background: rgba(250, 248, 244, 0.04);
+  border: 1px solid rgba(250, 248, 244, 0.12);
+  border-radius: 4px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color 200ms ease, background 200ms ease;
+}
+.oga-help-contact__card:hover {
+  border-color: rgba(250, 248, 244, 0.28);
+  background: rgba(250, 248, 244, 0.06);
+}
+.oga-help-contact__card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(250, 248, 244, 0.22);
+  border-radius: var(--oga-radius-sm);
+  background: transparent;
+  color: rgba(250, 248, 244, 0.7);
+  margin-bottom: 4px;
+  transition:
+    color var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-help-contact__card:hover .oga-help-contact__card-icon {
+  color: var(--oga-white);
+  border-color: var(--oga-white);
+  background: rgba(250, 248, 244, 0.06);
+}
+.oga-help-contact__card-label {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.5);
+}
+.oga-help-contact__card-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--oga-font-sans);
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  color: var(--oga-white);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(250, 248, 244, 0.25);
+  padding-bottom: 6px;
+  transition: border-color 200ms ease;
+  word-break: break-word;
+}
+.oga-help-contact__card-value:hover,
+.oga-help-contact__card-value:focus-visible {
+  border-bottom-color: var(--oga-white);
+  outline: none;
+}
+.oga-help-contact__card-arrow {
+  font-size: 13px;
+  opacity: 0.65;
+  transition: transform 200ms ease, opacity 200ms ease;
+}
+.oga-help-contact__card-value:hover .oga-help-contact__card-arrow,
+.oga-help-contact__card-value:focus-visible .oga-help-contact__card-arrow {
+  transform: translate(2px, -2px);
+  opacity: 1;
+}
+.oga-help-contact__card-note {
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: rgba(250, 248, 244, 0.65);
+  margin: 0;
+}

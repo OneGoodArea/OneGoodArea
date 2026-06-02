@@ -1,374 +1,316 @@
 "use client";
 
-import React, { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Styles } from "../_shared/styles";
 import { Nav } from "../_shared/nav";
 import { Footer } from "../_shared/footer";
-import { AiqIcon, type IconName } from "../_shared/icons";
+import { XIcon, LinkedInIcon, EmailIcon } from "../_shared/social-icons";
+import { TOPICS, type Topic, type QA } from "./topics";
+import "./help.css";
 
-/* ═══════════════════════════════════════════════════════════════
-   OneGoodArea · Design V2 · /help
-   FAQ + contact. Content ported from live /help, rewritten
-   OneGoodArea throughout. JSON-LD preserved for rich snippets.
-   ═══════════════════════════════════════════════════════════════ */
+/* /help — Brand v3 rewrite (AR-204 PR).
+   Replaces the 374 LOC legacy Fraunces + .aiq + inline-style page.
 
-type QA = { q: string; a: string };
-type Topic = { icon: IconName; title: string; desc: string; items: QA[] };
+   IA (10 sections + final CTA):
+     Hero (cream, eyebrow + H1 + lead + search input)
+     § 01 Getting started        (cream-quiet)
+     § 02 Signals                (cream)
+     § 03 Scores                 (cream-quiet)
+     § 04 Monitor                (cream)
+     § 05 Intelligence           (cream-quiet)
+     § 06 Methodology and data   (cream)
+     § 07 API access             (cream-quiet)
+     § 08 Billing and plans      (cream)
+     § 09 Account                (cream-quiet)
+     Talk to us                  (DARK, 3 contact cards)
 
-const TOPICS: Topic[] = [
+   Behaviour:
+   - Single text input filters all Q&As in real-time via lowercase
+     includes match across both Q and A strings. Topics with zero
+     matches hide entirely. Total match count surfaces under the
+     input.
+   - Each Q&A row is a native <details> element so each row's open
+     state is independent of the search filter; accessible by
+     default, no keyboard listeners required.
+
+   Hard rules: zero inline styles, no aiq_, no em dashes, no fake
+   links, no invented numbers (all stats verified against
+   stripe.ts PLANS + ADDONS + RATE_LIMITS). */
+
+function filterTopic(topic: Topic, query: string): Topic | null {
+  if (!query) return topic;
+  const matched = topic.items.filter(
+    (qa) =>
+      qa.q.toLowerCase().includes(query) ||
+      qa.a.toLowerCase().includes(query),
+  );
+  if (matched.length === 0) return null;
+  return { ...topic, items: matched };
+}
+
+const CONTACT_CHANNELS = [
   {
-    icon: "map",
-    title: "Reports",
-    desc: "How reports work, data sources, scoring, and intent types.",
-    items: [
-      { q: "What data sources are used?",        a: "Every report uses seven live UK data sources: Postcodes.io (geocoding), Police.uk (crime data), IMD 2025 (deprivation), OpenStreetMap (amenities), Environment Agency (flood risk), HM Land Registry (property prices), and Ofsted (school inspection ratings, England only)." },
-      { q: "How are scores calculated?",         a: "Each report scores your postcode across five dimensions, weighted by workflow intent. An Origination report (moving) prioritises Safety, Schools, and Transport. A Site selection report (business) focuses on Foot Traffic and Spending Power. The same inputs always produce the same output. See the Methodology page for the full formula structure and per-dimension calibration." },
-      { q: "What are the workflow intents?",      a: "Origination (residential mortgage origination), Site selection (commercial site / retail / CRE), Investment (property investment screening), and Reference (neutral baseline). Each rebalances the five scoring dimensions for the regulated workflow it supports." },
-      { q: "Can I share my reports?",             a: "Yes. Every report has a Copy link button (primary) and a Share to LinkedIn button. Reports have permanent URLs anyone with the link can view without an account." },
-      { q: "Can I download a report as PDF?",     a: "Yes. Click the PDF button on any report to download a branded PDF for sharing with stakeholders or attaching to procurement memos. Available on every tier including Sandbox." },
-      { q: "Do I get emailed my reports?",        a: "Yes. Every report is automatically emailed to you with a score summary as soon as it is generated. No extra setup needed." },
-      { q: "What are monitored postcodes?",       a: "Add any postcode from a report to your monitored list. View all monitored postcodes on your dashboard, filter them by workflow, and export as CSV for downstream use in portfolio screening or watchlist workflows." },
-      { q: "What are data freshness badges?",     a: "Every report shows colour-coded badges indicating the source and age of each data point, so you know exactly how current the information is." },
-      { q: "What is the Nearby Schools panel?",   a: "For English postcodes, every report shows Ofsted inspection ratings for schools within 1.5km. You can see each school's name, type, rating (Outstanding, Good, Requires Improvement, or Inadequate), and distance. School quality also factors into the Schools and Education score. Scotland and Wales support is planned." },
-      { q: "What is the Property Market panel?",  a: "Real sold prices from HM Land Registry for the local postcode district: median price, year-on-year trends, property type breakdown, tenure split, and price range. Included on every report." },
-    ],
+    label: "Email",
+    value: "operation@onegoodarea.co.uk",
+    href: "mailto:operation@onegoodarea.co.uk",
+    note: "Account, billing, deletion, and anything not covered above.",
+    Icon: EmailIcon,
   },
   {
-    icon: "gauge",
-    title: "Billing + plans",
-    desc: "Pricing tiers, upgrades, cancellations, and invoices.",
-    items: [
-      { q: "What plans are available?",           a: "Free Sandbox (35 API calls/month, no card required — for evaluation only). Paid tiers: Starter £49/mo (1,500 calls), Build £149/mo (6,000), Scale £499/mo (25,000), Growth £1,499/mo (100,000). Enterprise from £4,999/mo with custom annual contracts. Existing subscribers on retired tiers (legacy Free, Starter, Pro, Developer, Business, Growth) continue on their current plan." },
-      { q: "How do I upgrade?",                   a: "Go to the Pricing page and select your plan. Payment is handled securely via Stripe." },
-      { q: "Can I cancel any time?",              a: "Yes. Cancel from your dashboard via the billing portal. You keep access until the end of your billing period." },
-      { q: "What happens if I hit my limit?",     a: "You see a prompt to upgrade. Your existing reports remain accessible, you just can't generate new ones until your limit resets on the 1st of the month." },
-    ],
+    label: "X",
+    value: "@onegoodarea",
+    href: "https://x.com/onegoodarea",
+    note: "Status notes and changelog highlights as we ship.",
+    Icon: XIcon,
   },
   {
-    icon: "key",
-    title: "API access",
-    desc: "API keys, integration, rate limits, and documentation.",
-    items: [
-      { q: "How do I get API access?",            a: "Sign up for the free Sandbox tier and generate an API key from your dashboard. Sandbox includes 35 calls per month at no cost — enough to evaluate the API across a few postcodes and intents. Upgrade to Starter, Build, Scale, or Growth on the Pricing page when you need more." },
-      { q: "Where are the API docs?",             a: "Full documentation with code examples in cURL, Node.js, Python, and Go is available at /docs." },
-      { q: "What are the rate limits?",           a: "Plans include 250 to 100,000+ API calls per month depending on tier. Rate limit is 30 requests per minute per key. Cached responses (24 hours) don't count against your quota." },
-      { q: "Can I revoke an API key?",            a: "Yes. Revoke any key instantly from your dashboard. The key stops working immediately." },
-    ],
-  },
-  {
-    icon: "researcher",
-    title: "Account",
-    desc: "Sign in, sign up, and account management.",
-    items: [
-      { q: "How do I sign up?",                   a: "Sign up with Google, GitHub, or create an account with email and password at /sign-up." },
-      { q: "How do I reset my password?",         a: "Go to /forgot-password, enter the email you signed up with, and we'll send a reset link. Link expires in 1 hour." },
-      { q: "How do I delete my account?",         a: "Contact us at operation@onegoodarea.co.uk and we'll process your request within 48 hours." },
-    ],
+    label: "LinkedIn",
+    value: "company/onegoodarea",
+    href: "https://www.linkedin.com/company/onegoodarea",
+    note: "Longer-form notes and hiring when we open roles.",
+    Icon: LinkedInIcon,
   },
 ];
 
-const ALL_QA: QA[] = TOPICS.flatMap((t) => t.items);
+function HighlightedText({ text, query }: { text: string; query: string }) {
+  if (!query) return <>{text}</>;
+  const lower = text.toLowerCase();
+  const idx = lower.indexOf(query);
+  if (idx === -1) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="oga-help-mark">{text.slice(idx, idx + query.length)}</mark>
+      {text.slice(idx + query.length)}
+    </>
+  );
+}
+
+function QaRow({ item, query }: { item: QA; query: string }) {
+  return (
+    <details className="oga-help-qa">
+      <summary className="oga-help-qa__q">
+        <span className="oga-help-qa__q-text">
+          <HighlightedText text={item.q} query={query} />
+        </span>
+        <span className="oga-help-qa__chevron" aria-hidden />
+      </summary>
+      <div className="oga-help-qa__a">
+        <p>
+          <HighlightedText text={item.a} query={query} />
+        </p>
+      </div>
+    </details>
+  );
+}
+
+function TopicSection({
+  topic,
+  query,
+  altSurface,
+}: {
+  topic: Topic;
+  query: string;
+  altSurface: boolean;
+}) {
+  return (
+    <section
+      className={
+        altSurface
+          ? "oga-section-quiet oga-help-topic"
+          : "oga-help-topic oga-help-topic--cream"
+      }
+    >
+      <div className="oga-help-topic__inner">
+        <header className="oga-help-topic__head">
+          <div className="oga-help-topic__eyebrow oga-eyebrow">
+            <span className="oga-help-topic__eyebrow-num">{topic.num}</span>
+            <span className="oga-help-topic__eyebrow-rule" aria-hidden />
+            <span>{topic.title}</span>
+          </div>
+          <h2 className="oga-help-topic__title">{topic.title}</h2>
+          {topic.lead ? (
+            <p className="oga-help-topic__lead">{topic.lead}</p>
+          ) : null}
+        </header>
+
+        <div className="oga-help-topic__list">
+          {topic.items.map((item) => (
+            <QaRow key={item.q} item={item} query={query} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function HelpClient() {
+  const [rawQuery, setRawQuery] = useState("");
+  const query = rawQuery.trim().toLowerCase();
+
+  const filteredTopics = useMemo(
+    () =>
+      TOPICS.map((t) => filterTopic(t, query)).filter(
+        (t): t is Topic => t !== null,
+      ),
+    [query],
+  );
+
+  const totalMatches = useMemo(
+    () => filteredTopics.reduce((acc, t) => acc + t.items.length, 0),
+    [filteredTopics],
+  );
+
+  const hasQuery = query.length > 0;
+
   return (
-    <div className="aiq">
-      <Styles />
+    <div className="oga-root oga-help">
       <Nav />
-      <Hero />
-      <ContactCard />
-      <Topics />
-      <FinalCta />
-      <Footer />
 
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            mainEntity: ALL_QA.map((item) => ({
-              "@type": "Question",
-              name: item.q,
-              acceptedAnswer: { "@type": "Answer", text: item.a },
-            })),
-          }),
-        }}
-      />
-    </div>
-  );
-}
-
-function Hero() {
-  return (
-    <section style={{
-      position: "relative",
-      background: "var(--bg)",
-      borderBottom: "1px solid var(--border)",
-      overflow: "hidden",
-    }}>
-      <div aria-hidden style={{
-        position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0,
-      }}>
-        <div style={{
-          position: "absolute", top: -220, left: "50%",
-          transform: "translateX(-50%)",
-          width: 880, height: 520,
-          background: "radial-gradient(ellipse at center, rgba(212,243,58,0.14) 0%, rgba(212,243,58,0) 60%)",
-        }} />
-      </div>
-      <div style={{
-        maxWidth: 900, margin: "0 auto", padding: "100px 40px 40px",
-        position: "relative", zIndex: 1, textAlign: "center",
-      }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-          letterSpacing: "0.24em", textTransform: "uppercase",
-          color: "var(--text-2)",
-          display: "inline-flex", alignItems: "center", gap: 9,
-          marginBottom: 22,
-        }}>
-          <span aria-hidden style={{
-            width: 6, height: 6, borderRadius: 6,
-            background: "var(--signal)",
-            animation: "aiq-pulse-dot 1.6s ease-in-out infinite",
-          }} />
-          Help + support
-        </div>
-        <h1 style={{
-          fontFamily: "var(--display)", fontWeight: 400,
-          fontSize: "clamp(40px, 5vw, 58px)", lineHeight: 1.04,
-          letterSpacing: "-0.02em", color: "var(--ink-deep)",
-          margin: "0 0 16px",
-        }}>
-          How can we <em style={{
-            fontStyle: "italic", color: "var(--ink)",
-            borderBottom: "3px solid var(--signal)", paddingBottom: 2,
-          }}>help?</em>
-        </h1>
-        <p style={{
-          fontFamily: "var(--sans)", fontSize: 16.5, fontWeight: 400,
-          lineHeight: 1.55, color: "var(--text-2)",
-          margin: "0 auto", maxWidth: "56ch",
-        }}>
-          Answers below cover the common questions. If you don&apos;t see yours, drop us a line. We typically respond within 24 hours.
-        </p>
-      </div>
-    </section>
-  );
-}
-
-function ContactCard() {
-  return (
-    <section style={{
-      background: "var(--bg)",
-      borderBottom: "1px solid var(--border)",
-      padding: "40px 0 40px",
-    }}>
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 40px" }}>
-        <div style={{
-          border: "1px solid var(--border)",
-          padding: "22px 26px",
-          background: "var(--bg-off)",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          gap: 20, flexWrap: "wrap",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: 4,
-              background: "var(--signal-dim)",
-              border: "1px solid var(--ink-deep)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path d="M4 8 L12 3 L20 8 V20 H4 Z" stroke="var(--ink-deep)" strokeWidth="1.6" strokeLinejoin="round" />
-                <path d="M4 8 L12 13 L20 8" stroke="var(--ink-deep)" strokeWidth="1.6" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <div>
-              <div style={{
-                fontFamily: "var(--display)", fontSize: 18, fontWeight: 500,
-                letterSpacing: "-0.012em", color: "var(--ink-deep)",
-                marginBottom: 2,
-              }}>Email support</div>
-              <div style={{
-                fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 400,
-                color: "var(--text-2)", lineHeight: 1.45,
-              }}>Bugs, feature requests, account issues, or anything else.</div>
-            </div>
+      {/* HERO ---------------------------------------------------- */}
+      <section className="oga-help-hero" data-oga-surface="light">
+        <div className="oga-help-hero__inner">
+          <div className="oga-help-hero__eyebrow oga-eyebrow">
+            <span className="oga-eyebrow-dot" aria-hidden />
+            <span>Help &amp; FAQs</span>
           </div>
-          <a href="mailto:operation@onegoodarea.co.uk" style={{
-            fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-            letterSpacing: "0.14em", textTransform: "uppercase",
-            color: "var(--signal-ink)", background: "var(--signal)",
-            padding: "12px 18px", borderRadius: 999, textDecoration: "none",
-            border: "1px solid var(--ink-deep)",
-            display: "inline-flex", alignItems: "center", gap: 8,
-          }}>
-            operation@onegoodarea.co.uk
-            <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
-          </a>
+
+          <h1 className="oga-help-hero__title">
+            What do you want to know about OneGoodArea?
+          </h1>
+
+          <p className="oga-help-hero__lead">
+            Documentation lives at{" "}
+            <Link href="/docs" className="oga-help-hero__link">
+              /docs
+            </Link>
+            . Methodology lives at{" "}
+            <Link href="/methodology" className="oga-help-hero__link">
+              /methodology
+            </Link>
+            . Below is the FAQ that covers the common product, API, billing,
+            and account questions.
+          </p>
+
+          <div className="oga-help-hero__search">
+            <label htmlFor="help-search" className="oga-help-hero__search-label">
+              Search the FAQ
+            </label>
+            <div className="oga-help-hero__search-row">
+              <svg
+                className="oga-help-hero__search-icon"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
+              <input
+                id="help-search"
+                type="search"
+                value={rawQuery}
+                onChange={(e) => setRawQuery(e.target.value)}
+                placeholder="Try: rate limit, soft cap, peer cohort, fetch_mode"
+                className="oga-help-hero__search-input"
+                autoComplete="off"
+              />
+              {hasQuery ? (
+                <button
+                  type="button"
+                  className="oga-help-hero__search-clear"
+                  onClick={() => setRawQuery("")}
+                  aria-label="Clear search"
+                >
+                  Clear
+                </button>
+              ) : null}
+            </div>
+            {hasQuery ? (
+              <p className="oga-help-hero__search-status">
+                {totalMatches === 0
+                  ? `No matches for ${'"'}${rawQuery}${'"'}. Try a different term or `
+                  : `${totalMatches} match${totalMatches === 1 ? "" : "es"} across ${filteredTopics.length} topic${filteredTopics.length === 1 ? "" : "s"}. `}
+                {totalMatches === 0 ? (
+                  <a href="mailto:operation@onegoodarea.co.uk" className="oga-help-hero__link">
+                    email us
+                  </a>
+                ) : null}
+                {totalMatches === 0 ? "." : null}
+              </p>
+            ) : null}
+          </div>
         </div>
-      </div>
-    </section>
-  );
-}
+      </section>
 
-function Topics() {
-  return (
-    <section style={{
-      background: "var(--bg)",
-      borderBottom: "1px solid var(--border)",
-      padding: "56px 0 100px",
-    }}>
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 40px" }}>
-        {TOPICS.map((topic, i) => (
-          <TopicBlock key={topic.title} topic={topic} first={i === 0} />
-        ))}
-      </div>
-    </section>
-  );
-}
+      {/* TOPIC SECTIONS ------------------------------------------ */}
+      {filteredTopics.length === 0 && hasQuery ? null : (
+        <div className="oga-help-topics">
+          {filteredTopics.map((topic, i) => (
+            <TopicSection
+              key={topic.num}
+              topic={topic}
+              query={query}
+              altSurface={i % 2 === 0}
+            />
+          ))}
+        </div>
+      )}
 
-function TopicBlock({ topic, first }: { topic: Topic; first: boolean }) {
-  return (
-    <section style={{ marginTop: first ? 0 : 56 }}>
-      <div style={{
-        display: "flex", alignItems: "center", gap: 14,
-        marginBottom: 22,
-      }}>
-        <AiqIcon name={topic.icon} size={26} />
-        <h2 style={{
-          fontFamily: "var(--display)", fontSize: "clamp(24px, 3vw, 30px)",
-          fontWeight: 500, letterSpacing: "-0.014em",
-          color: "var(--ink-deep)", lineHeight: 1.1,
-          margin: 0,
-        }}>{topic.title}</h2>
-      </div>
-      <p style={{
-        fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-        letterSpacing: "0.14em", textTransform: "uppercase",
-        color: "var(--text-3)",
-        margin: "0 0 20px",
-      }}>{topic.desc}</p>
-      <div style={{ border: "1px solid var(--border)" }}>
-        {topic.items.map((item, i) => (
-          <QARow key={item.q} item={item} isLast={i === topic.items.length - 1} defaultOpen={i === 0} />
-        ))}
-      </div>
-    </section>
-  );
-}
+      {/* TALK TO US (DARK CTA) ----------------------------------- */}
+      <section className="oga-section-dark oga-help-contact" data-oga-surface="dark">
+        <div className="oga-help-contact__inner">
+          <div className="oga-help-contact__eyebrow oga-eyebrow oga-eyebrow--inverse">
+            <span className="oga-help-contact__eyebrow-num">10</span>
+            <span className="oga-help-contact__eyebrow-rule" aria-hidden />
+            <span>Talk to us</span>
+          </div>
 
-function QARow({ item, isLast, defaultOpen }: {
-  item: QA; isLast: boolean; defaultOpen: boolean;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <div style={{
-      borderBottom: isLast ? "none" : "1px solid var(--border-dim)",
-      background: "var(--bg)",
-    }}>
-      <button
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-        style={{
-          width: "100%",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          gap: 16, padding: "20px 22px",
-          background: "transparent", border: "none",
-          cursor: "pointer", textAlign: "left",
-        }}
-      >
-        <span style={{
-          fontFamily: "var(--display)", fontSize: 17, fontWeight: 500,
-          letterSpacing: "-0.012em", color: "var(--ink-deep)",
-          lineHeight: 1.3,
-        }}>{item.q}</span>
-        <span aria-hidden style={{
-          width: 22, height: 22, flexShrink: 0,
-          display: "inline-flex", alignItems: "center", justifyContent: "center",
-          border: "1px solid var(--border)", borderRadius: "50%",
-          color: "var(--ink)", fontFamily: "var(--sans)", fontSize: 12,
-          background: open ? "var(--signal-dim)" : "transparent",
-          transform: open ? "rotate(45deg)" : "rotate(0deg)",
-          transition: "transform 240ms cubic-bezier(0.16,1,0.3,1), background 140ms",
-        }}>+</span>
-      </button>
-      <div style={{
-        maxHeight: open ? 600 : 0, overflow: "hidden",
-        transition: "max-height 280ms cubic-bezier(0.16,1,0.3,1)",
-      }}>
-        <div style={{
-          padding: "0 22px 22px",
-          fontFamily: "var(--sans)", fontSize: 14.5, fontWeight: 400,
-          lineHeight: 1.6, color: "var(--text-2)",
-          letterSpacing: "-0.003em",
-          maxWidth: "72ch",
-        }}>{item.a}</div>
-      </div>
+          <h2 className="oga-help-contact__title">
+            Something here didn&rsquo;t answer your question?
+          </h2>
+
+          <p className="oga-help-contact__lead">
+            We read every email that lands at operation@onegoodarea.co.uk and we
+            usually reply within one business day.
+          </p>
+
+          <ul className="oga-help-contact__grid">
+            {CONTACT_CHANNELS.map((c) => {
+              const external = c.href.startsWith("http");
+              return (
+                <li key={c.label} className="oga-help-contact__card">
+                  <div className="oga-help-contact__card-icon" aria-hidden>
+                    <c.Icon />
+                  </div>
+                  <div className="oga-help-contact__card-label">{c.label}</div>
+                  <a
+                    className="oga-help-contact__card-value"
+                    href={c.href}
+                    {...(external
+                      ? { target: "_blank", rel: "noreferrer noopener" }
+                      : {})}
+                  >
+                    {c.value}
+                    <span className="oga-help-contact__card-arrow" aria-hidden>
+                      {external ? "↗" : "→"}
+                    </span>
+                  </a>
+                  <p className="oga-help-contact__card-note">{c.note}</p>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </section>
+
+      <Footer />
     </div>
-  );
-}
-
-function FinalCta() {
-  return (
-    <section style={{
-      background: "var(--bg-off)",
-      padding: "80px 0 100px",
-    }}>
-      <div style={{
-        maxWidth: 780, margin: "0 auto", padding: "0 40px",
-        textAlign: "center",
-      }}>
-        <h2 style={{
-          fontFamily: "var(--display)", fontWeight: 400,
-          fontSize: "clamp(28px, 3.6vw, 40px)", lineHeight: 1.08,
-          letterSpacing: "-0.016em", color: "var(--ink-deep)",
-          margin: "0 0 12px",
-        }}>
-          Still stuck? <em style={{
-            fontStyle: "italic", color: "var(--ink)",
-            borderBottom: "2.5px solid var(--signal)", paddingBottom: 1,
-          }}>Tell us.</em>
-        </h2>
-        <p style={{
-          fontFamily: "var(--sans)", fontSize: 15.5, fontWeight: 400,
-          lineHeight: 1.5, color: "var(--text-2)",
-          margin: "0 auto 28px", maxWidth: "48ch",
-        }}>
-          Drop us an email and we&apos;ll get back to you within 24 hours.
-        </p>
-        <a href="mailto:operation@onegoodarea.co.uk" style={{
-          fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-          letterSpacing: "0.16em", textTransform: "uppercase",
-          color: "var(--signal-ink)", background: "var(--signal)",
-          padding: "13px 22px", borderRadius: 999, textDecoration: "none",
-          border: "1px solid var(--ink-deep)",
-          display: "inline-flex", alignItems: "center", gap: 9,
-        }}>
-          Contact us
-          <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
-        </a>
-        <div style={{
-          marginTop: 22,
-          fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-          letterSpacing: "0.16em", textTransform: "uppercase",
-          color: "var(--text-3)",
-        }}>
-          <Link href="/methodology" style={{ color: "var(--text-2)", textDecoration: "none", borderBottom: "1px solid var(--border)", paddingBottom: 2 }}>
-            Methodology
-          </Link>
-          <span aria-hidden style={{ margin: "0 10px" }}>·</span>
-          <Link href="/docs" style={{ color: "var(--text-2)", textDecoration: "none", borderBottom: "1px solid var(--border)", paddingBottom: 2 }}>
-            API docs
-          </Link>
-          <span aria-hidden style={{ margin: "0 10px" }}>·</span>
-          <Link href="/pricing" style={{ color: "var(--text-2)", textDecoration: "none", borderBottom: "1px solid var(--border)", paddingBottom: 2 }}>
-            Pricing
-          </Link>
-        </div>
-      </div>
-    </section>
   );
 }
