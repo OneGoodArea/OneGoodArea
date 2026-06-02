@@ -1,0 +1,312 @@
+/* plan-grid CSS — Brand v3 (AR-204 close-out sweep 3/16).
+   Co-located, zero inline styles in plan-grid.tsx.
+
+   Card-set treated like the /about "What we believe" cards:
+   bespoke illustration in a viz block at the top, generous
+   padding, real hover lift, premium typography rhythm. The
+   highlighted plan (Build) stands out via an accent stripe + a
+   subtle background lift + a filled-ink CTA. Other plans hover
+   with a soft elevation. */
+
+/* ============================================================
+   Section + grid container
+   ============================================================ */
+.oga-plan-grid {
+  background: var(--oga-canvas);
+  padding: 32px 0 48px;
+}
+.oga-plan-grid__inner {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+.oga-plan-grid__cards {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 5), minmax(0, 1fr));
+  gap: 14px;
+}
+.oga-plan-grid__cards[data-cols="1"] { --cols: 1; }
+.oga-plan-grid__cards[data-cols="2"] { --cols: 2; }
+.oga-plan-grid__cards[data-cols="3"] { --cols: 3; }
+.oga-plan-grid__cards[data-cols="4"] { --cols: 4; }
+.oga-plan-grid__cards[data-cols="5"] { --cols: 5; }
+.oga-plan-grid__cards[data-cols="6"] { --cols: 6; }
+
+@media (max-width: 1100px) {
+  .oga-plan-grid__cards { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .oga-plan-grid__cards { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   Single plan card
+   ============================================================ */
+.oga-plan-card {
+  position: relative;
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  border-radius: 4px;
+  padding: 0 24px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 380px;
+  overflow: hidden;
+  color: var(--oga-fg);
+  transition:
+    border-color var(--oga-dur) var(--oga-ease),
+    transform var(--oga-dur) var(--oga-ease),
+    box-shadow var(--oga-dur) var(--oga-ease);
+}
+
+.oga-plan-card:hover {
+  border-color: rgba(26, 28, 31, 0.45);
+  transform: translateY(-3px);
+  box-shadow:
+    0 1px 0 rgba(26, 28, 31, 0.04),
+    0 18px 32px -16px rgba(26, 28, 31, 0.18);
+}
+
+/* Highlighted plan ("Build" / "Popular") — subtle accent stripe,
+   deeper background, slightly stronger border at rest. */
+.oga-plan-card--highlight {
+  background: linear-gradient(
+    180deg,
+    rgba(26, 28, 31, 0.045) 0%,
+    rgba(26, 28, 31, 0.015) 70%,
+    var(--oga-white) 100%
+  );
+  border-color: rgba(26, 28, 31, 0.32);
+}
+.oga-plan-card--highlight:hover {
+  border-color: var(--oga-fg);
+}
+.oga-plan-card__accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--oga-fg);
+}
+
+/* Current plan (billing mode) — outline accent so the user can
+   see what they're on. */
+.oga-plan-card--current {
+  border-color: var(--oga-fg);
+}
+
+/* ============================================================
+   Viz block — bespoke dot illustration at the top
+   ============================================================ */
+.oga-plan-card__viz {
+  margin: 0 -24px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--oga-border);
+  background:
+    radial-gradient(circle at 50% 60%, rgba(26, 28, 31, 0.035) 0%, transparent 70%),
+    rgba(26, 28, 31, 0.012);
+  color: var(--oga-fg);
+  transition: color 200ms ease, background 200ms ease;
+}
+.oga-plan-card:hover .oga-plan-card__viz {
+  background:
+    radial-gradient(circle at 50% 60%, rgba(26, 28, 31, 0.06) 0%, transparent 70%),
+    rgba(26, 28, 31, 0.025);
+}
+.oga-plan-card--highlight .oga-plan-card__viz {
+  background:
+    radial-gradient(circle at 50% 60%, rgba(26, 28, 31, 0.08) 0%, transparent 70%),
+    rgba(26, 28, 31, 0.04);
+}
+.oga-plan-card__viz-svg {
+  width: 56px;
+  height: 56px;
+  color: var(--oga-fg);
+  display: block;
+}
+
+/* ============================================================
+   Head row — plan name eyebrow + optional pill
+   ============================================================ */
+.oga-plan-card__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 16px;
+  flex-wrap: wrap;
+}
+.oga-plan-card__name {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+.oga-plan-card__pill {
+  font-family: var(--oga-font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: 3px 8px 2px;
+  border-radius: 2px;
+  line-height: 1;
+}
+.oga-plan-card__pill--popular {
+  color: var(--oga-white);
+  background: var(--oga-fg);
+}
+.oga-plan-card__pill--current {
+  color: var(--oga-fg);
+  background: rgba(26, 28, 31, 0.08);
+  border: 1px solid var(--oga-border);
+}
+
+/* ============================================================
+   Price row — big sans-display + small mono cadence
+   ============================================================ */
+.oga-plan-card__price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 2px;
+}
+.oga-plan-card__price {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(44px, 4vw, 56px);
+  font-weight: 500;
+  letter-spacing: -0.026em;
+  color: var(--oga-fg);
+  line-height: 0.96;
+}
+.oga-plan-card__cadence {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--oga-fg-muted);
+}
+
+/* ============================================================
+   Allowance + per-call rate
+   ============================================================ */
+.oga-plan-card__reports {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--oga-fg);
+  margin-top: 4px;
+}
+.oga-plan-card__per-report {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--oga-fg-muted);
+}
+
+/* ============================================================
+   Blurb
+   ============================================================ */
+.oga-plan-card__blurb {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: -0.003em;
+  color: var(--oga-fg-subtle);
+  margin: 6px 0 0;
+  text-wrap: pretty;
+}
+
+.oga-plan-card__spacer {
+  flex: 1;
+}
+
+/* ============================================================
+   CTA button
+   ============================================================ */
+.oga-plan-card__cta {
+  width: 100%;
+  height: 46px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oga-fg);
+  background: transparent;
+  border: 1px solid var(--oga-border);
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition:
+    background var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-plan-card__cta:hover:not(:disabled) {
+  background: rgba(26, 28, 31, 0.045);
+  border-color: var(--oga-fg);
+}
+
+.oga-plan-card__cta--primary {
+  color: var(--oga-white);
+  background: var(--oga-fg);
+  border-color: var(--oga-fg);
+}
+.oga-plan-card__cta--primary:hover:not(:disabled) {
+  background: var(--oga-fg);
+  border-color: var(--oga-fg);
+  filter: brightness(1.1);
+}
+
+.oga-plan-card__cta--current,
+.oga-plan-card__cta--current:hover {
+  color: var(--oga-fg);
+  background: rgba(26, 28, 31, 0.045);
+  border-color: var(--oga-border);
+  cursor: default;
+  filter: none;
+}
+
+.oga-plan-card__cta--disabled,
+.oga-plan-card__cta:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.oga-plan-card__cta-arrow {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  transition: transform var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-plan-card__cta:hover:not(:disabled) .oga-plan-card__cta-arrow {
+  transform: translateX(3px);
+}
+
+/* ============================================================
+   Spinner — self-contained keyframes, no .aiq dependency
+   ============================================================ */
+.oga-plan-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  border-top-color: transparent;
+  display: inline-block;
+  animation: oga-spin 800ms linear infinite;
+}
+
+@keyframes oga-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
