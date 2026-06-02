@@ -1,0 +1,504 @@
+/* /admin CSS — Brand v3 (AR-204 close-out 9/15).
+   Co-located, zero design declarations in TSX (only runtime bar
+   widths + heights cross). Internal ops dashboard — keeps it
+   dense, readable, no fluff. */
+
+.oga-admin {
+  padding: 28px 40px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+@media (max-width: 880px) {
+  .oga-admin {
+    padding: 24px 20px 48px;
+  }
+}
+
+/* ============================================================
+   KPI row (4 StatCells in a bordered grid)
+   ============================================================ */
+.oga-admin__kpi {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border: 1px solid var(--oga-border);
+  background: var(--oga-white);
+  border-radius: var(--oga-radius-sm);
+  overflow: hidden;
+}
+@media (max-width: 880px) {
+  .oga-admin__kpi {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ============================================================
+   2-col + 3-col layouts
+   ============================================================ */
+.oga-admin__2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+.oga-admin__2col--areas {
+  grid-template-columns: 1fr 1.2fr;
+}
+@media (max-width: 880px) {
+  .oga-admin__2col,
+  .oga-admin__2col--areas {
+    grid-template-columns: 1fr;
+  }
+}
+
+.oga-admin__3col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 22px;
+}
+@media (max-width: 1100px) {
+  .oga-admin__3col {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 720px) {
+  .oga-admin__3col {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   Revenue panel — MRR + plan list + plan distribution bar
+   ============================================================ */
+.oga-admin__mrr-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.oga-admin__mrr-value {
+  font-family: var(--oga-font-sans);
+  font-size: 42px;
+  font-weight: 500;
+  letter-spacing: -0.022em;
+  color: var(--oga-fg);
+  line-height: 1;
+}
+.oga-admin__mrr-label {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-admin__empty-row {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--oga-fg-muted);
+  padding: 14px 0;
+}
+
+.oga-admin__plan-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.oga-admin__plan-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 0;
+}
+.oga-admin__plan-row--empty {
+  opacity: 0.4;
+}
+.oga-admin__plan-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.oga-admin__plan-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--oga-fg);
+}
+.oga-admin__plan-dot--api {
+  background: var(--oga-fg);
+}
+.oga-admin__plan-name > span:last-child {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-fg);
+  text-transform: capitalize;
+}
+.oga-admin__plan-count {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--oga-fg);
+}
+.oga-admin__plan-revenue {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--oga-fg-muted);
+  width: 70px;
+  text-align: right;
+}
+
+.oga-admin__plan-bar {
+  margin-top: 16px;
+  height: 6px;
+  width: 100%;
+  background: var(--oga-canvas);
+  border-radius: 2px;
+  overflow: hidden;
+  display: flex;
+}
+.oga-admin__plan-bar-fill {
+  height: 100%;
+  background: var(--oga-fg);
+  opacity: 0.6;
+}
+.oga-admin__plan-bar-fill--api {
+  background: var(--oga-fg);
+  opacity: 1;
+}
+
+/* ============================================================
+   Conversion funnel
+   ============================================================ */
+.oga-admin__funnel {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.oga-admin__funnel-conv {
+  padding-left: 4px;
+  margin-bottom: 4px;
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--oga-fg-muted);
+}
+.oga-admin__funnel-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+.oga-admin__funnel-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  text-align: right;
+}
+.oga-admin__funnel-track {
+  height: 28px;
+  position: relative;
+  background: var(--oga-canvas);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.oga-admin__funnel-fill {
+  height: 100%;
+  opacity: 0.22;
+  transition: width 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.oga-admin__funnel-fill[data-tone="ink"] {
+  background: var(--oga-fg);
+}
+.oga-admin__funnel-fill[data-tone="amber"] {
+  background: #d49900;
+}
+.oga-admin__funnel-value {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+}
+.oga-admin__funnel-value[data-tone="ink"] {
+  color: var(--oga-fg);
+}
+.oga-admin__funnel-value[data-tone="amber"] {
+  color: #6e5300;
+}
+
+/* ============================================================
+   Bar chart (reports / pageviews per day)
+   ============================================================ */
+.oga-admin__chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  padding-top: 4px;
+}
+.oga-admin__chart-bar {
+  flex: 1;
+  background: var(--oga-fg);
+  border: 1px solid var(--oga-fg);
+  border-radius: 2px 2px 0 0;
+  min-width: 4px;
+}
+.oga-admin__chart-bar--empty {
+  background: var(--oga-ink-06, rgba(26, 28, 31, 0.06));
+  border: 1px dashed var(--oga-border);
+}
+.oga-admin__chart-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-family: var(--oga-font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--oga-fg-muted);
+}
+
+/* ============================================================
+   Intent bars (4-col grid per row)
+   ============================================================ */
+.oga-admin__intents {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.oga-admin__intent-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 50px 40px;
+  gap: 12px;
+  align-items: center;
+}
+.oga-admin__intent-label {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: capitalize;
+  color: var(--oga-fg);
+  text-align: right;
+}
+.oga-admin__intent-track {
+  height: 22px;
+  position: relative;
+  background: var(--oga-canvas);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.oga-admin__intent-fill {
+  height: 100%;
+  background: var(--oga-fg);
+  opacity: 0.28;
+  transition: width 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.oga-admin__intent-count {
+  font-family: var(--oga-font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.008em;
+  color: var(--oga-fg);
+  text-align: right;
+}
+.oga-admin__intent-pct {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--oga-fg-muted);
+  letter-spacing: 0.04em;
+}
+
+/* ============================================================
+   Empty note
+   ============================================================ */
+.oga-admin__empty {
+  padding: 20px 0;
+  text-align: center;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--oga-fg-muted);
+}
+.oga-admin__pad-empty {
+  padding: 20px;
+}
+
+/* ============================================================
+   Shared list rows (areas / activity / pages / mini-lists)
+   ============================================================ */
+.oga-admin__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.oga-admin__list > li + li {
+  border-top: 1px solid var(--oga-border);
+}
+
+/* Top areas row */
+.oga-admin__area-row {
+  padding: 12px 22px;
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+.oga-admin__area-rank {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: var(--oga-fg-muted);
+}
+.oga-admin__area-name {
+  font-family: var(--oga-font-sans);
+  font-size: 14.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.oga-admin__area-count {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--oga-fg);
+  background: rgba(26, 28, 31, 0.06);
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+
+/* Recent activity row */
+.oga-admin__activity-row {
+  padding: 11px 22px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+.oga-admin__activity-text {
+  min-width: 0;
+}
+.oga-admin__activity-event {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--oga-fg);
+  margin-bottom: 3px;
+}
+.oga-admin__activity-user {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--oga-fg-subtle);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.oga-admin__activity-time {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--oga-fg-muted);
+}
+
+/* Page row (path + count) */
+.oga-admin__page-row {
+  padding: 10px 22px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+.oga-admin__page-path {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.oga-admin__page-count {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--oga-fg);
+}
+
+/* Mini list row */
+.oga-admin__mini-row {
+  padding: 10px 22px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+.oga-admin__mini-label {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-fg);
+  text-transform: capitalize;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.oga-admin__mini-count {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--oga-fg);
+}
+
+/* ============================================================
+   Traffic eyebrow
+   ============================================================ */
+.oga-admin__traffic-eyebrow {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg);
+}
+.oga-admin__traffic-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--oga-fg);
+}
