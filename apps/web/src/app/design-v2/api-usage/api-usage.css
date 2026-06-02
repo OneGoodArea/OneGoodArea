@@ -1,0 +1,354 @@
+/* /api-usage CSS — Brand v3 (AR-204 close-out 6/15).
+   Co-located, zero design declarations in TSX (only runtime
+   percentage values cross the boundary for chart bar heights +
+   progress fill width). */
+
+.oga-api-usage {
+  padding: 28px 40px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.oga-api-usage__placeholder {
+  padding: 40px;
+}
+
+@media (max-width: 880px) {
+  .oga-api-usage {
+    padding: 24px 20px 48px;
+  }
+}
+
+/* ============================================================
+   Loading + error states
+   ============================================================ */
+.oga-api-usage__loading {
+  padding: 60px 0;
+  text-align: center;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.oga-api-usage__loading-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.6px solid currentColor;
+  border-top-color: transparent;
+  display: inline-block;
+  animation: oga-spin-api-usage 800ms linear infinite;
+}
+@keyframes oga-spin-api-usage {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.oga-api-usage__error {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: #a01b00;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  padding: 14px 18px;
+  border-radius: var(--oga-radius-sm);
+}
+
+/* ============================================================
+   Stat blocks (3-up row inside an AppCard)
+   ============================================================ */
+.oga-api-usage__stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  border-radius: var(--oga-radius-sm);
+  overflow: hidden;
+}
+@media (max-width: 720px) {
+  .oga-api-usage__stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+.oga-api-usage__block {
+  padding: 24px;
+  border-right: 1px solid var(--oga-border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.oga-api-usage__block:last-child {
+  border-right: none;
+}
+@media (max-width: 720px) {
+  .oga-api-usage__block {
+    border-right: none;
+    border-bottom: 1px solid var(--oga-border);
+  }
+  .oga-api-usage__block:last-child {
+    border-bottom: none;
+  }
+}
+
+.oga-api-usage__block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.oga-api-usage__block-label {
+  font-family: var(--oga-font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+.oga-api-usage__block-pct {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+.oga-api-usage__block-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.oga-api-usage__block-value {
+  font-family: var(--oga-font-sans);
+  font-size: 34px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--oga-fg);
+}
+.oga-api-usage__block-divider {
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
+  color: var(--oga-fg-muted);
+}
+.oga-api-usage__block-bar {
+  height: 4px;
+  width: 100%;
+  background: var(--oga-ink-06, rgba(26, 28, 31, 0.06));
+  border-radius: 2px;
+  overflow: hidden;
+}
+.oga-api-usage__block-bar-fill {
+  height: 100%;
+  transition: width 420ms cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--oga-fg);
+}
+
+/* Block tone — RAG palette for quota warnings (genuine signal,
+   preserved from legacy). */
+.oga-api-usage__block[data-tone="strong"] .oga-api-usage__block-pct {
+  color: var(--oga-fg);
+  background: rgba(26, 28, 31, 0.06);
+}
+.oga-api-usage__block[data-tone="moderate"] .oga-api-usage__block-pct {
+  color: #6e5300;
+  background: #fff4d1;
+}
+.oga-api-usage__block[data-tone="moderate"] .oga-api-usage__block-bar-fill {
+  background: #d49900;
+}
+.oga-api-usage__block[data-tone="weak"] .oga-api-usage__block-pct {
+  color: #a01b00;
+  background: #ffe8e2;
+}
+.oga-api-usage__block[data-tone="weak"] .oga-api-usage__block-bar-fill {
+  background: #d13a1e;
+}
+
+/* Simple block variant (no head row, just label + value) */
+.oga-api-usage__block--simple {
+  gap: 10px;
+}
+.oga-api-usage__block-simple-value {
+  font-family: var(--oga-font-sans);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.014em;
+  line-height: 1.1;
+  color: var(--oga-fg);
+}
+
+/* ============================================================
+   Daily chart
+   ============================================================ */
+.oga-api-usage__chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 160px;
+  padding-top: 8px;
+}
+.oga-api-usage__bar {
+  flex: 1;
+  position: relative;
+  background: var(--oga-fg);
+  border: 1px solid var(--oga-fg);
+  border-radius: 2px 2px 0 0;
+  transition: background var(--oga-dur-fast) var(--oga-ease);
+  min-width: 4px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: visible;
+}
+.oga-api-usage__bar--empty {
+  background: var(--oga-ink-06, rgba(26, 28, 31, 0.06));
+  border: 1px dashed var(--oga-border);
+}
+.oga-api-usage__bar-tip {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--oga-fg);
+  white-space: nowrap;
+}
+.oga-api-usage__chart-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-family: var(--oga-font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--oga-fg-muted);
+}
+
+/* ============================================================
+   API keys list
+   ============================================================ */
+.oga-api-usage__empty {
+  padding: 26px 22px;
+  text-align: center;
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  color: var(--oga-fg-muted);
+}
+.oga-api-usage__keys {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.oga-api-usage__key {
+  padding: 14px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.oga-api-usage__key + .oga-api-usage__key {
+  border-top: 1px solid var(--oga-border);
+}
+.oga-api-usage__key-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.oga-api-usage__key-preview {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  background: var(--oga-canvas);
+  border: 1px solid var(--oga-border);
+  padding: 3px 8px;
+  border-radius: 2px;
+}
+.oga-api-usage__key-name {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  letter-spacing: -0.005em;
+}
+.oga-api-usage__key-meta {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--oga-fg-muted);
+}
+
+/* ============================================================
+   Quick action cards (3-up grid)
+   ============================================================ */
+.oga-api-usage__quick {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+@media (max-width: 880px) {
+  .oga-api-usage__quick {
+    grid-template-columns: 1fr;
+  }
+}
+.oga-api-usage__quick-card {
+  display: block;
+  border: 1px solid var(--oga-border);
+  background: var(--oga-white);
+  padding: 18px 20px;
+  text-decoration: none;
+  border-radius: var(--oga-radius-sm);
+  transition:
+    border-color var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-api-usage__quick-card:hover {
+  border-color: var(--oga-fg);
+  background: var(--oga-canvas);
+}
+.oga-api-usage__quick-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.oga-api-usage__quick-title {
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  color: var(--oga-fg);
+}
+.oga-api-usage__quick-arrow {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  color: var(--oga-fg-muted);
+  transition:
+    transform 200ms cubic-bezier(0.16, 1, 0.3, 1),
+    color 140ms;
+}
+.oga-api-usage__quick-card:hover .oga-api-usage__quick-arrow {
+  color: var(--oga-fg);
+  transform: translateX(2px);
+}
+.oga-api-usage__quick-body {
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--oga-fg-subtle);
+}
