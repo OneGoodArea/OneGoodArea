@@ -3,7 +3,7 @@
 Domain terms used across the codebase + docs. Alphabetised.
 
 ## ADR
-Architecture Decision Record. Short, durable record of a load-bearing decision with context + alternatives considered. See [`adr/`](./adr/) for the 35-strong catalog.
+Architecture Decision Record. Short, durable record of a load-bearing decision with context + alternatives considered. See [`adr/`](../adr/) for the 35-strong catalog.
 
 ## .artifacts/
 Repo-root directory for **generated** test reports + coverage + build outputs. Gitignored. Plan 007 phase 0.
@@ -27,7 +27,7 @@ Same input → same output, every time. Scoring formulas are frozen. AI narrates
 Methodology version stamp on every response (`X-Engine-Version` header + `engine_version` body field). Customers can pin per request (header) or per org (Levers methodology pin).
 
 ## Golden test
-Snapshot test that pins exact engine output for a postcode × intent matrix. Any refactor changing a number fails CI. See [`ENGINEERING/GOLDEN-TESTS.md`](./ENGINEERING/GOLDEN-TESTS.md).
+Snapshot test that pins exact engine output for a postcode × intent matrix. Any refactor changing a number fails CI. See [`ENGINEERING/GOLDEN-TESTS.md`](../ENGINEERING/GOLDEN-TESTS.md).
 
 ## IMD / WIMD / SIMD
 Indices of Multiple Deprivation. England (2025), Wales (2019), Scotland (2020). 7-domain composite at LSOA grain. The deprivation source loaded into the signal store.
@@ -86,4 +86,4 @@ Engine version generations. v1 = consumer-era chartreuse aesthetic + intent-driv
 ## See also
 
 - [`INDEX.md`](./INDEX.md) — "How do I X?" question → doc map
-- [`ARCHITECTURE/SYSTEM-OVERVIEW.md`](./ARCHITECTURE/SYSTEM-OVERVIEW.md) — where every term lives in the live system
+- [`ARCHITECTURE/SYSTEM-OVERVIEW.md`](../ARCHITECTURE/SYSTEM-OVERVIEW.md) — where every term lives in the live system

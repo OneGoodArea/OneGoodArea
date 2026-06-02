@@ -14,6 +14,16 @@ Authorization: Bearer oga_a1b2c3d4e5f6...
 - Created via the dashboard at `/dashboard/api-keys` → `POST /keys` (session JWT auth)
 - Returned ONCE on creation; cannot be recovered after
 
+### Local bootstrap (no UI)
+
+For a disposable local test account + API key, run:
+
+```bash
+npm run bootstrap:test-key -w @onegoodarea/api -- --email api-test@onegoodarea.local --plan sandbox
+```
+
+It creates or updates a local credentials user, gives them an API-enabled sandbox plan, creates a personal org, and prints a fresh `oga_...` key.
+
 ### IP allowlist (Levers AR-200)
 
 A key may have `allowed_ip_cidrs` set. If non-empty, request IPs outside the allowlist return **403 `ip_not_allowed`** (distinct from 401 invalid-key). Read your key's current allowlist via `GET /v1/me.key.allowed_ip_cidrs`.

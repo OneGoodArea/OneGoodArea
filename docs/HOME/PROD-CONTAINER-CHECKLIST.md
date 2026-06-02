@@ -4,8 +4,8 @@ Run this top-to-bottom before merging any change that touches the
 container surface (`container/**`, `build/container.mk`, `Makefile`
 container targets, `render.yaml`, `env/**`). Fail-fast at the first NO.
 
-> See [`CONTAINERS.md`](./CONTAINERS.md) for the workflow itself + the
-> decision record in [`adr/0035-prod-container-parity.md`](./adr/0035-prod-container-parity.md).
+> See [`CONTAINERS.md`](../ARCHITECTURE/CONTAINERS.md) for the workflow itself + the
+> decision record in [`adr/0035-prod-container-parity.md`](../adr/0035-prod-container-parity.md).
 
 ## Preflight
 
@@ -57,7 +57,7 @@ For each `(ENV, SERVICE)`:
 - [ ] The same `make container-*` invocations succeed on at least one
       Linux + one macOS-or-Windows host (or have CI evidence per the
       "linux" and "windows" runners). No script-shape differences.
-- [ ] `docs/CONTAINERS.md` env file table matches the actual
+- [ ] `docs/ARCHITECTURE/CONTAINERS.md` env file table matches the actual
       `env/<env>/<service>.env.example` contents.
 
 ## Provider wiring

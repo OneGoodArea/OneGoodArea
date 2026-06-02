@@ -16,23 +16,28 @@ Deterministic signals · configurable scoring · portfolio monitoring · a typed
 
 ## Start here
 
-📖 **All documentation lives in [`docs/`](./docs/)**. The navigation backbone:
+📖 **External projects should link only to this README.** The docs live under [`docs/`](./docs/), and the folder-level entry points below are the stable links.
 
-- **[`docs/README.md`](./docs/README.md)** — audience-based door (developer / operator / B2B / decision-history / search)
-- **[`docs/GETTING-STARTED.md`](./docs/GETTING-STARTED.md)** — 5-minute orientation
-- **[`docs/INDEX.md`](./docs/INDEX.md)** — "How do I X?" → which doc to read
-- **[`docs/GLOSSARY.md`](./docs/GLOSSARY.md)** — domain terms (LSOA, NSPL, IMD, Levers, …)
+- **[`docs/HOME/README.md`](./docs/HOME/README.md)** — audience-based door
+- **[`docs/ARCHITECTURE/README.md`](./docs/ARCHITECTURE/README.md)** — system design, products, data layer, deploy topology
+- **[`docs/OPERATIONS/README.md`](./docs/OPERATIONS/README.md)** — local setup, migrations, refresh, monitoring, troubleshooting
+- **[`docs/API-REFERENCE/README.md`](./docs/API-REFERENCE/README.md)** — endpoint catalog and examples
+- **[`docs/DECISIONS/README.md`](./docs/DECISIONS/README.md)** — ADR timeline and decision trail
+- **[`docs/ENGINEERING/README.md`](./docs/ENGINEERING/README.md)** — code style, testing strategy, performance
+- **[`docs/DESIGN/README.md`](./docs/DESIGN/README.md)** — living design briefs
+- **[`docs/TESTING/README.md`](./docs/TESTING/README.md)** — manual QA test plans and bug tracker
+- **[`docs/adr/README.md`](./docs/adr/README.md)** — canonical ADR index
 
 ## Run locally
 
 ```bash
 git clone https://github.com/OneGoodArea/OneGoodArea.git
 cd OneGoodArea
-npm install
-npm run dev -w @onegoodarea/api       # http://localhost:8080
+make setup
+make dev
 ```
 
-Full setup + env vars in [`docs/OPERATIONS/LOCAL-SETUP.md`](./docs/OPERATIONS/LOCAL-SETUP.md).
+Full setup + env vars in [`docs/OPERATIONS/README.md`](./docs/OPERATIONS/README.md). The Makefile also exposes `setup`, `dev`, `migrate`, `bootstrap-test-key`, `test`, `typecheck`, and `lint`.
 
 ## What's inside
 

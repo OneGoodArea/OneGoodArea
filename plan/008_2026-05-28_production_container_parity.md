@@ -86,13 +86,13 @@ The `container/postgres/Containerfile` exists for **test compatibility + cross-p
 2. Ensure identical command surface on Linux/macOS/Windows (via GNU Make + runtime abstraction).
 
 ### 6) Documentation and operational guardrails
-1. Update `docs/DEPLOY.md` with the new production container workflow.
-2. Add a dedicated `docs/CONTAINERS.md` with:
+1. Update `docs/ARCHITECTURE/DEPLOYMENTS.md` with the new production container workflow.
+2. Add a dedicated `docs/ARCHITECTURE/CONTAINERS.md` with:
    - OS runtime rules (Linux=Podman default, macOS/Windows=Docker default)
    - exact make commands
    - env file structure and secret handling guidance
 3. Document image naming/tagging convention per deployable unit.
-4. Add a required verification checklist file: `docs/PROD-CONTAINER-CHECKLIST.md`.
+4. Add a required verification checklist file: `docs/HOME/PROD-CONTAINER-CHECKLIST.md`.
 
 ### 7) Verification matrix
 1. Linux: verify all targets with Podman and with Docker.
@@ -100,7 +100,7 @@ The `container/postgres/Containerfile` exists for **test compatibility + cross-p
 3. Validate independent startup of web/api images and per-service runtime checks (no compose).
 
 ### 8) Assurance ("insurance") plan
-1. Add a deterministic post-change checklist file: `docs/PROD-CONTAINER-CHECKLIST.md`.
+1. Add a deterministic post-change checklist file: `docs/HOME/PROD-CONTAINER-CHECKLIST.md`.
 2. Checklist must include:
    - preflight checks (runtime detected, branch safety, required env files present)
    - image build checks per service

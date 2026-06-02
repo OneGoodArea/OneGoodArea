@@ -42,10 +42,10 @@ Plus **Levers** cross-cutting: per-org custom bundles, scoring presets, methodol
 
 | If you want to… | Read |
 |---|---|
-| Run the apps locally | [`OPERATIONS/LOCAL-SETUP.md`](./OPERATIONS/LOCAL-SETUP.md) |
-| Understand the full system | [`ARCHITECTURE/SYSTEM-OVERVIEW.md`](./ARCHITECTURE/SYSTEM-OVERVIEW.md) |
-| Call the API | [`API-REFERENCE/EXAMPLES.md`](./API-REFERENCE/EXAMPLES.md) |
-| Contribute code | [`CONTRIBUTING.md`](./CONTRIBUTING.md) + [`ENGINEERING/CODE-STYLE.md`](./ENGINEERING/CODE-STYLE.md) |
+| Run the apps locally | [`OPERATIONS/LOCAL-SETUP.md`](../OPERATIONS/LOCAL-SETUP.md) |
+| Understand the full system | [`ARCHITECTURE/SYSTEM-OVERVIEW.md`](../ARCHITECTURE/SYSTEM-OVERVIEW.md) |
+| Call the API | [`API-REFERENCE/EXAMPLES.md`](../API-REFERENCE/EXAMPLES.md) |
+| Contribute code | [`/CLAUDE.md`](../../CLAUDE.md) + [`ENGINEERING/CODE-STYLE.md`](../ENGINEERING/CODE-STYLE.md) |
 | Look up a term | [`GLOSSARY.md`](./GLOSSARY.md) |
 | Find an answer fast | [`INDEX.md`](./INDEX.md) |
 

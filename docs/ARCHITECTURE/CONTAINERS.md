@@ -5,7 +5,7 @@ commands, every host OS.
 
 > **Scope.** This doc is the production-container workflow (plan 008).
 > Local dev compose (`container-compose.yml` + `Containerfile.dev`) is a
-> separate, complementary stack -- see [`OPERATIONS/LOCAL-SETUP.md`](./OPERATIONS/LOCAL-SETUP.md).
+> separate, complementary stack -- see [`OPERATIONS/LOCAL-SETUP.md`](../OPERATIONS/LOCAL-SETUP.md).
 
 ## TL;DR
 
@@ -151,11 +151,11 @@ their own image tags; the convention above is for locally-built images.
 | Host | Wiring | File |
 |---|---|---|
 | Render | Reads `render.yaml`, builds from `container/api/Containerfile` | `/render.yaml` |
-| Cloud Run | `gcloud run deploy --source . --build-pack=NOT_SET` then point at the same Containerfile | See [`ARCHITECTURE/DEPLOYMENTS.md`](./ARCHITECTURE/DEPLOYMENTS.md) |
-| Self-host | `make container-build ENV=prod SERVICE=api`, push to your registry, run with the host's env injection | See [`PROD-CONTAINER-CHECKLIST.md`](./PROD-CONTAINER-CHECKLIST.md) |
+| Cloud Run | `gcloud run deploy --source . --build-pack=NOT_SET` then point at the same Containerfile | See [`DEPLOYMENTS.md`](./DEPLOYMENTS.md) |
+| Self-host | `make container-build ENV=prod SERVICE=api`, push to your registry, run with the host's env injection | See [`PROD-CONTAINER-CHECKLIST.md`](../HOME/PROD-CONTAINER-CHECKLIST.md) |
 
 ## See also
 
-- [`PROD-CONTAINER-CHECKLIST.md`](./PROD-CONTAINER-CHECKLIST.md) -- preflight + smoke + rollback steps
-- [`ARCHITECTURE/DEPLOYMENTS.md`](./ARCHITECTURE/DEPLOYMENTS.md) -- per-provider walkthrough
-- [`adr/0035-prod-container-parity.md`](./adr/0035-prod-container-parity.md) -- the decision record
+- [`PROD-CONTAINER-CHECKLIST.md`](../HOME/PROD-CONTAINER-CHECKLIST.md) -- preflight + smoke + rollback steps
+- [`DEPLOYMENTS.md`](./DEPLOYMENTS.md) -- per-provider walkthrough
+- [`adr/0035-prod-container-parity.md`](../adr/0035-prod-container-parity.md) -- the decision record
