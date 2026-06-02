@@ -1,27 +1,27 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Styles } from "../_shared/styles";
 import { AppShell, AppCard, PrimaryCta, GhostCta } from "../_shared/app-shell";
 import { AiqIcon, type IconName } from "../_shared/icons";
+import "./report.css";
 
-/* ═══════════════════════════════════════════════════════════════
-   OneGoodArea · Design V2 · /report (generator)
-   Form with area + intent selector, then a live-looking pipeline
-   loading state, then redirect to /report/[id].
-   Real endpoints preserved: /api/usage, /api/report.
-   ═══════════════════════════════════════════════════════════════ */
+/* /report — Brand v3 rewrite (AR-204 close-out 11/15).
+
+   Report generator: postcode input + intent picker + live-looking
+   pipeline -> redirect to /report/[id]. Retires per the dashboard
+   proposal (gets absorbed into /dashboard/scores). Light-touch
+   token swap to land the .aiq strip cleanly. Real endpoints
+   preserved: /api/usage, /api/report. */
 
 type Intent = "moving" | "business" | "investing" | "research";
 
 const INTENTS: { value: Intent; label: string; desc: string; icon: IconName }[] = [
-  { value: "moving",    label: "Origination",    desc: "Mortgage suitability + demand-side risk", icon: "buyer" },
-  { value: "business",  label: "Site selection", desc: "Footfall, competition, commercial viability", icon: "operator" },
-  { value: "investing", label: "Investment",     desc: "Yield, growth, regeneration, tenant risk",     icon: "investor" },
-  { value: "research",  label: "Reference",      desc: "Neutral baseline for analysts + planning",     icon: "researcher" },
+  { value: "moving",    label: "Origination",    desc: "Mortgage suitability + demand-side risk",        icon: "buyer" },
+  { value: "business",  label: "Site selection", desc: "Footfall, competition, commercial viability",     icon: "operator" },
+  { value: "investing", label: "Investment",     desc: "Yield, growth, regeneration, tenant risk",        icon: "investor" },
+  { value: "research",  label: "Reference",      desc: "Neutral baseline for analysts + planning",        icon: "researcher" },
 ];
 
 const PIPELINE = [
@@ -50,14 +50,21 @@ export default function ReportGeneratorClient() {
 
   useEffect(() => {
     if (status !== "authenticated") return;
-    fetch("/api/usage").then((r) => r.json()).then((data) => {
-      setUsage({ plan: data.plan, used: data.used, limit: data.limit });
-      if (!data.allowed) setLimitReached(true);
-    }).catch(() => {});
+    fetch("/api/usage")
+      .then((r) => r.json())
+      .then((data) => {
+        setUsage({ plan: data.plan, used: data.used, limit: data.limit });
+        if (!data.allowed) setLimitReached(true);
+      })
+      .catch(() => {});
   }, [status]);
 
   if (status === "loading") {
-    return <><Styles /><AppShell title="New report"><div style={{ padding: 40 }} /></AppShell></>;
+    return (
+      <AppShell title="New report">
+        <div className="oga-report__placeholder" />
+      </AppShell>
+    );
   }
   if (status === "unauthenticated") {
     router.push("/sign-in?callbackUrl=/report");
@@ -72,11 +79,14 @@ export default function ReportGeneratorClient() {
     return null;
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (loading || limitReached) return;
     const err = validate(area);
-    if (err) { setError(err); return; }
+    if (err) {
+      setError(err);
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -88,7 +98,11 @@ export default function ReportGeneratorClient() {
       });
       if (res.status === 403) {
         const data = await res.json();
-        if (data.error === "limit_reached") { setLimitReached(true); setLoading(false); return; }
+        if (data.error === "limit_reached") {
+          setLimitReached(true);
+          setLoading(false);
+          return;
+        }
       }
       if (!res.ok) throw new Error("fail");
       const data = await res.json();
@@ -100,75 +114,73 @@ export default function ReportGeneratorClient() {
   }
 
   return (
-    <>
-      <Styles />
-      <AppShell
-        title="New report"
-        subtitle={loading ? "Fetching live data. This takes 15-45 seconds." : "Enter a postcode or place name. Pick why you're looking."}
-        actions={!loading && <GhostCta href="/dashboard">← My reports</GhostCta>}
-      >
-        <div style={{
-          padding: "28px 40px 64px",
-          display: "flex", flexDirection: "column", gap: 22,
-          maxWidth: 820,
-        }}>
-          {loading ? (
-            <LoadingPipeline area={area} intent={intent} />
-          ) : (
-            <GeneratorForm
-              area={area} setArea={setArea}
-              intent={intent} setIntent={setIntent}
-              usage={usage}
-              limitReached={limitReached}
-              error={error}
-              setError={setError}
-              onSubmit={handleSubmit}
-            />
-          )}
-        </div>
-      </AppShell>
-    </>
+    <AppShell
+      title="New report"
+      subtitle={
+        loading
+          ? "Fetching live data. This takes 15-45 seconds."
+          : "Enter a postcode or place name. Pick why you're looking."
+      }
+      actions={!loading && <GhostCta href="/dashboard">← My reports</GhostCta>}
+    >
+      <div className="oga-report">
+        {loading ? (
+          <LoadingPipeline area={area} intent={intent} />
+        ) : (
+          <GeneratorForm
+            area={area}
+            setArea={setArea}
+            intent={intent}
+            setIntent={setIntent}
+            usage={usage}
+            limitReached={limitReached}
+            error={error}
+            setError={setError}
+            onSubmit={handleSubmit}
+          />
+        )}
+      </div>
+    </AppShell>
   );
 }
 
-/* ─────── Form ─────── */
-
+/* ============================================================
+   Form
+   ============================================================ */
 function GeneratorForm({
-  area, setArea, intent, setIntent, usage, limitReached, error, setError, onSubmit,
+  area,
+  setArea,
+  intent,
+  setIntent,
+  usage,
+  limitReached,
+  error,
+  setError,
+  onSubmit,
 }: {
-  area: string; setArea: (v: string) => void;
-  intent: Intent; setIntent: (v: Intent) => void;
+  area: string;
+  setArea: (v: string) => void;
+  intent: Intent;
+  setIntent: (v: Intent) => void;
   usage: { plan: string; used: number; limit: number } | null;
   limitReached: boolean;
   error: string | null;
   setError: (v: string | null) => void;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (e: FormEvent) => void;
 }) {
   return (
     <>
       {usage && <UsageBar usage={usage} />}
 
       {limitReached && (
-        <div style={{
-          border: "1px solid rgba(212,149,0,0.4)",
-          background: "#FFF4D1",
-          borderRadius: 4,
-          padding: "16px 20px",
-        }}>
-          <div style={{
-            fontFamily: "var(--mono)", fontSize: 10, fontWeight: 600,
-            letterSpacing: "0.22em", textTransform: "uppercase",
-            color: "#6E5300", marginBottom: 8,
-            display: "inline-flex", alignItems: "center", gap: 9,
-          }}>
-            <span aria-hidden style={{ width: 5, height: 5, borderRadius: 5, background: "#D49900" }} />
+        <div className="oga-report__limit">
+          <div className="oga-report__limit-eyebrow">
+            <span aria-hidden className="oga-report__limit-dot" />
             Monthly limit reached
           </div>
-          <p style={{
-            fontFamily: "var(--sans)", fontSize: 14,
-            color: "#6E5300", margin: "0 0 12px", lineHeight: 1.5,
-          }}>
-            You&apos;ve used all {usage?.limit} reports this month. Upgrade to keep going.
+          <p className="oga-report__limit-body">
+            You&rsquo;ve used all {usage?.limit} reports this month. Upgrade to
+            keep going.
           </p>
           <PrimaryCta href="/pricing">See plans</PrimaryCta>
         </div>
@@ -176,68 +188,44 @@ function GeneratorForm({
 
       <AppCard title="What do you want to score?">
         <form onSubmit={onSubmit}>
-          <div style={{ marginBottom: 18 }}>
-            <label style={labelStyle}>Postcode or place</label>
+          <div className="oga-report__field">
+            <label className="oga-report__field-label">Postcode or place</label>
             <AreaInput
               value={area}
-              onChange={(v) => { setArea(v); if (error) setError(null); }}
+              onChange={(v) => {
+                setArea(v);
+                if (error) setError(null);
+              }}
               placeholder="e.g. SW1A 1AA, Shoreditch, or Manchester city centre"
             />
           </div>
 
-          <div style={{ marginBottom: 22 }}>
-            <label style={labelStyle}>Intent</label>
-            <div className="aiq-report-intents" style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 8,
-            }}>
-              {INTENTS.map((i) => <IntentPill key={i.value} item={i} active={intent === i.value} onClick={() => setIntent(i.value)} />)}
+          <div className="oga-report__field oga-report__field--intent">
+            <label className="oga-report__field-label">Intent</label>
+            <div className="oga-report__intents">
+              {INTENTS.map((i) => (
+                <IntentPill
+                  key={i.value}
+                  item={i}
+                  active={intent === i.value}
+                  onClick={() => setIntent(i.value)}
+                />
+              ))}
             </div>
           </div>
 
-          {error && (
-            <div style={{
-              fontFamily: "var(--mono)", fontSize: 12,
-              color: "#A01B00", background: "rgba(239,68,68,0.06)",
-              border: "1px solid rgba(239,68,68,0.25)",
-              padding: "10px 14px", borderRadius: 4, marginBottom: 16,
-            }}>{error}</div>
-          )}
+          {error && <div className="oga-report__error">{error}</div>}
 
-          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <div className="oga-report__submit-row">
             <button
               type="submit"
               disabled={!area.trim() || limitReached}
-              style={{
-                fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-                letterSpacing: "0.14em", textTransform: "uppercase",
-                color: "var(--signal-ink)", background: "var(--signal)",
-                border: "1px solid var(--ink-deep)",
-                padding: "12px 22px", borderRadius: 999,
-                display: "inline-flex", alignItems: "center", gap: 10,
-                cursor: (!area.trim() || limitReached) ? "default" : "pointer",
-                opacity: (!area.trim() || limitReached) ? 0.5 : 1,
-                transition: "transform 140ms cubic-bezier(0.16,1,0.3,1), box-shadow 140ms",
-              }}
-              onMouseEnter={(e) => {
-                if (!area.trim() || limitReached) return;
-                e.currentTarget.style.transform = "translateY(-1px)";
-                e.currentTarget.style.boxShadow = "0 8px 18px rgba(6,42,30,0.14)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "none";
-              }}
+              className="oga-app-cta oga-app-cta--primary"
             >
               Generate report
-              <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
+              <span aria-hidden>→</span>
             </button>
-            <span style={{
-              fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-              letterSpacing: "0.14em", textTransform: "uppercase",
-              color: "var(--text-3)",
-            }}>
+            <span className="oga-report__submit-hint">
               ~15-45s · 7 live data sources
             </span>
           </div>
@@ -247,146 +235,120 @@ function GeneratorForm({
   );
 }
 
-const labelStyle: React.CSSProperties = {
-  display: "block", marginBottom: 10,
-  fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-  letterSpacing: "0.22em", textTransform: "uppercase",
-  color: "var(--text-2)",
-};
-
-function AreaInput({ value, onChange, placeholder }: {
-  value: string; onChange: (v: string) => void; placeholder: string;
+function AreaInput({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
 }) {
-  const [focused, setFocused] = useState(false);
   return (
-    <div style={{ position: "relative" }}>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden style={{
-        position: "absolute", top: "50%", left: 14, transform: "translateY(-50%)",
-        color: focused ? "var(--ink-deep)" : "var(--text-3)",
-        transition: "color 140ms ease",
-      }}>
+    <div className="oga-report__input-wrap">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden
+        className="oga-report__input-icon"
+      >
         <circle cx="11" cy="11" r="6" stroke="currentColor" strokeWidth="1.6" />
-        <path d="M15.5 15.5 L20 20" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        <path
+          d="M15.5 15.5 L20 20"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+        />
       </svg>
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
         placeholder={placeholder}
         autoComplete="off"
-        style={{
-          width: "100%", height: 48,
-          padding: "0 16px 0 40px",
-          fontFamily: "var(--sans)", fontSize: 15,
-          color: "var(--ink-deep)", background: "var(--bg)",
-          border: `1px solid ${focused ? "var(--ink)" : "var(--border)"}`,
-          borderRadius: 4, outline: "none",
-          transition: "border-color 140ms ease, box-shadow 140ms ease",
-          boxShadow: focused ? "0 0 0 3px rgba(212,243,58,0.22)" : "none",
-        }}
+        className="oga-report__input"
       />
     </div>
   );
 }
 
-function IntentPill({ item, active, onClick }: {
+function IntentPill({
+  item,
+  active,
+  onClick,
+}: {
   item: { value: Intent; label: string; desc: string; icon: IconName };
-  active: boolean; onClick: () => void;
+  active: boolean;
+  onClick: () => void;
 }) {
-  const [hover, setHover] = useState(false);
   return (
     <button
       type="button"
       onClick={onClick}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{
-        padding: "14px 14px 12px",
-        background: active ? "var(--signal-dim)" : hover ? "var(--bg-off)" : "var(--bg)",
-        border: `1px solid ${active ? "var(--ink-deep)" : "var(--border)"}`,
-        borderRadius: 4,
-        cursor: "pointer", textAlign: "left",
-        display: "flex", flexDirection: "column", gap: 8,
-        transition: "background 140ms ease, border-color 140ms ease",
-        position: "relative",
-      }}
+      className={
+        active
+          ? "oga-report__pill oga-report__pill--active"
+          : "oga-report__pill"
+      }
     >
-      {active && (
-        <span aria-hidden style={{
-          position: "absolute", top: 0, left: 0, right: 0,
-          height: 3, background: "var(--signal)",
-        }} />
-      )}
+      {active && <span aria-hidden className="oga-report__pill-accent" />}
       <AiqIcon name={item.icon} size={20} />
       <div>
-        <div style={{
-          fontFamily: "var(--display)", fontSize: 15, fontWeight: 500,
-          letterSpacing: "-0.01em",
-          color: active ? "var(--ink-deep)" : "var(--ink-deep)",
-          lineHeight: 1.15,
-        }}>{item.label}</div>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-          letterSpacing: "0.12em",
-          color: "var(--text-3)", marginTop: 3,
-        }}>{item.desc}</div>
+        <div className="oga-report__pill-label">{item.label}</div>
+        <div className="oga-report__pill-desc">{item.desc}</div>
       </div>
     </button>
   );
 }
 
-/* ─────── Usage bar ─────── */
-
-function UsageBar({ usage }: { usage: { plan: string; used: number; limit: number } }) {
+/* ============================================================
+   Usage bar
+   ============================================================ */
+function UsageBar({
+  usage,
+}: {
+  usage: { plan: string; used: number; limit: number };
+}) {
   const unlimited = usage.limit === Infinity;
   const pct = unlimited ? 0 : Math.min((usage.used / usage.limit) * 100, 100);
-  const rag = pct >= 90 ? "#A01B00" : pct >= 70 ? "#D49900" : "var(--ink)";
+  const tone: "strong" | "moderate" | "weak" =
+    pct >= 90 ? "weak" : pct >= 70 ? "moderate" : "strong";
   return (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap",
-      padding: "12px 18px",
-      border: "1px solid var(--border)",
-      background: "var(--bg)",
-      borderRadius: 4,
-    }}>
-      <span style={{
-        fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
-        letterSpacing: "0.22em", textTransform: "uppercase",
-        color: "var(--ink)", background: "var(--signal-dim)",
-        padding: "3px 8px", borderRadius: 2,
-      }}>{usage.plan}</span>
-      <span style={{
-        fontFamily: "var(--mono)", fontSize: 12, fontWeight: 500,
-        color: "var(--text-2)",
-      }}>
+    <div className="oga-report__usage" data-tone={tone}>
+      <span className="oga-report__usage-plan">{usage.plan}</span>
+      <span className="oga-report__usage-text">
         {usage.used}/{unlimited ? "∞" : usage.limit} this month
       </span>
-      <div style={{
-        flex: 1, minWidth: 100,
-        height: 4, background: "var(--border-dim)",
-        borderRadius: 2, overflow: "hidden",
-      }}>
-        <div style={{
-          height: "100%", width: unlimited ? "0%" : `${pct}%`,
-          background: rag,
-          transition: "width 420ms cubic-bezier(0.16,1,0.3,1)",
-        }} />
+      <div className="oga-report__usage-bar">
+        <div
+          className="oga-report__usage-bar-fill"
+          style={{ width: unlimited ? "0%" : `${pct}%` }}
+        />
       </div>
     </div>
   );
 }
 
-/* ─────── Loading pipeline ─────── */
-
-function LoadingPipeline({ area, intent }: { area: string; intent: Intent }) {
+/* ============================================================
+   Loading pipeline (DARK head + 11-step animation)
+   ============================================================ */
+function LoadingPipeline({
+  area,
+  intent,
+}: {
+  area: string;
+  intent: Intent;
+}) {
   const [step, setStep] = useState(0);
-  const [times] = useState(() => PIPELINE.map(() => (Math.random() * 1.2 + 0.2).toFixed(1)));
+  const [times] = useState(() =>
+    PIPELINE.map(() => (Math.random() * 1.2 + 0.2).toFixed(1)),
+  );
 
   useEffect(() => {
     const t = setInterval(() => {
-      setStep((s) => s < PIPELINE.length - 1 ? s + 1 : s);
+      setStep((s) => (s < PIPELINE.length - 1 ? s + 1 : s));
     }, 2200);
     return () => clearInterval(t);
   }, []);
@@ -396,122 +358,94 @@ function LoadingPipeline({ area, intent }: { area: string; intent: Intent }) {
 
   return (
     <AppCard noPad>
-      <div style={{
-        padding: "24px 28px",
-        borderBottom: "1px solid var(--border)",
-        background: "var(--bg-ink)",
-        color: "#FFFFFF",
-        position: "relative", overflow: "hidden",
-      }}>
-        <div aria-hidden style={{
-          position: "absolute", top: -80, right: -60,
-          width: 280, height: 280,
-          background: "radial-gradient(circle, rgba(212,243,58,0.2) 0%, rgba(212,243,58,0) 60%)",
-          pointerEvents: "none",
-        }} />
-        <div style={{ position: "relative", zIndex: 1 }}>
-          <div style={{
-            display: "flex", alignItems: "center", gap: 10,
-            fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 600,
-            letterSpacing: "0.22em", textTransform: "uppercase",
-            color: "var(--signal)", marginBottom: 10,
-          }}>
-            <span aria-hidden style={{
-              width: 7, height: 7, borderRadius: 7, background: "var(--signal)",
-              animation: "aiq-pulse-dot 1.2s ease-in-out infinite",
-              boxShadow: "0 0 10px rgba(212,243,58,0.6)",
-            }} />
-            {intentLabel} · Generating
-          </div>
-          <div style={{
-            fontFamily: "var(--display)", fontSize: 26, fontWeight: 500,
-            letterSpacing: "-0.014em", lineHeight: 1.15,
-            color: "#FFFFFF",
-          }}>{area}</div>
+      <div className="oga-report__pipe-head" data-oga-surface="dark">
+        <div className="oga-report__pipe-eyebrow">
+          <span aria-hidden className="oga-report__pipe-pulse" />
+          {intentLabel} · Generating
         </div>
+        <div className="oga-report__pipe-area">{area}</div>
       </div>
 
-      <div style={{ padding: "18px 28px 22px" }}>
+      <div className="oga-report__pipe-body">
         {PIPELINE.map((s, i) => {
           const isDone = i < step;
           const isActive = i === step;
           const isPending = i > step;
           return (
-            <div key={i} style={{
-              display: "grid",
-              gridTemplateColumns: "22px 1fr auto auto",
-              gap: 12, alignItems: "center",
-              padding: "9px 0",
-              opacity: isPending ? 0.3 : 1,
-              transition: "opacity 300ms",
-            }}>
-              <span style={{
-                width: 22, height: 22, display: "inline-flex",
-                alignItems: "center", justifyContent: "center",
-              }}>
+            <div
+              key={i}
+              className={
+                isPending
+                  ? "oga-report__pipe-row oga-report__pipe-row--pending"
+                  : "oga-report__pipe-row"
+              }
+            >
+              <span className="oga-report__pipe-icon">
                 {isDone && (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <circle cx="12" cy="12" r="10" fill="var(--signal)" />
-                    <path d="M7 12 L11 16 L17 9" stroke="var(--signal-ink)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden
+                  >
+                    <circle cx="12" cy="12" r="10" fill="currentColor" />
+                    <path
+                      d="M7 12 L11 16 L17 9"
+                      stroke="var(--oga-white)"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill="none"
+                    />
                   </svg>
                 )}
                 {isActive && (
-                  <span aria-hidden style={{
-                    width: 14, height: 14, borderRadius: "50%",
-                    border: "2px solid var(--ink)", borderTopColor: "transparent",
-                    animation: "aiq-spin 900ms linear infinite",
-                  }} />
+                  <span
+                    aria-hidden
+                    className="oga-report__pipe-spinner"
+                  />
                 )}
                 {isPending && (
-                  <span aria-hidden style={{
-                    width: 5, height: 5, borderRadius: 5, background: "var(--border)",
-                  }} />
+                  <span aria-hidden className="oga-report__pipe-dot" />
                 )}
               </span>
-              <span style={{
-                fontFamily: "var(--sans)", fontSize: 14,
-                color: isActive ? "var(--ink-deep)" : "var(--text-2)",
-                fontWeight: isActive ? 500 : 400,
-              }}>{s.label}</span>
-              <span style={{
-                fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-                letterSpacing: "0.18em", textTransform: "uppercase",
-                color: isDone ? "var(--ink)" : "var(--text-3)",
-                background: isDone ? "var(--signal-dim)" : "transparent",
-                padding: isDone ? "2px 7px" : 0,
-                borderRadius: 2,
-              }}>{s.source}</span>
-              {isDone && (
-                <span style={{
-                  fontFamily: "var(--mono)", fontSize: 10,
-                  color: "var(--text-3)",
-                  width: 36, textAlign: "right",
-                }}>{times[i]}s</span>
-              )}
-              {!isDone && <span style={{ width: 36 }} />}
+              <span
+                className={
+                  isActive
+                    ? "oga-report__pipe-label oga-report__pipe-label--active"
+                    : "oga-report__pipe-label"
+                }
+              >
+                {s.label}
+              </span>
+              <span
+                className={
+                  isDone
+                    ? "oga-report__pipe-source oga-report__pipe-source--done"
+                    : "oga-report__pipe-source"
+                }
+              >
+                {s.source}
+              </span>
+              <span className="oga-report__pipe-time">
+                {isDone ? `${times[i]}s` : ""}
+              </span>
             </div>
           );
         })}
 
-        <div style={{ marginTop: 20 }}>
-          <div style={{
-            height: 4, width: "100%",
-            background: "var(--border-dim)", borderRadius: 2, overflow: "hidden",
-          }}>
-            <div style={{
-              height: "100%", width: `${pct}%`,
-              background: "var(--signal)",
-              transition: "width 700ms cubic-bezier(0.16,1,0.3,1)",
-            }} />
+        <div className="oga-report__pipe-progress">
+          <div className="oga-report__pipe-progress-bar">
+            <div
+              className="oga-report__pipe-progress-fill"
+              style={{ width: `${pct}%` }}
+            />
           </div>
-          <div style={{
-            marginTop: 10,
-            display: "flex", justifyContent: "space-between",
-            fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-            letterSpacing: "0.18em", textTransform: "uppercase",
-            color: "var(--text-3)",
-          }}>
-            <span>{step < PIPELINE.length - 1 ? "Reading live data" : "Finalising"}</span>
+          <div className="oga-report__pipe-progress-foot">
+            <span>
+              {step < PIPELINE.length - 1 ? "Reading live data" : "Finalising"}
+            </span>
             <span>{pct}%</span>
           </div>
         </div>
