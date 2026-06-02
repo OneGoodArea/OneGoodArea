@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import type { PlanId } from "@/lib/stripe";
 import "./plan-grid.css";
 
@@ -183,7 +184,7 @@ function VizGrowth() {
   );
 }
 
-const PLAN_VIZ: Record<PlanId, () => JSX.Element> = {
+const PLAN_VIZ: Record<PlanId, () => ReactElement> = {
   // legacy v1 plans never render through this grid, but the type
   // requires we map every PlanId. They alias to the closest v2 viz.
   free:        VizSandbox,
