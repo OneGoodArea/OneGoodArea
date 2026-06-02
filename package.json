@@ -18,7 +18,7 @@
     "lint": "eslint apps packages",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "test:coverage": "npm run test:coverage -w @onegoodarea/web",
+    "test:coverage": "npm run test:coverage --workspaces --if-present",
     "test:api": "./test_files/simple-run.sh"
   },
   "devDependencies": {
