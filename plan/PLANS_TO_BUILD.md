@@ -2,13 +2,10 @@
 
 
 ## CICD
-* push to oracle cloud
-* build docker
-
-## Enhance Make
-* identify all command line utlitlies that exist today and potential ones
-* create a make command for each one identified 
-
+* build containers
+* deploy containers to oracle cloud
+* integrate render check to github
+* integrate OCI deploy check in GITHUB
 
 ## WEB APP Container
 * We want to locally build the WEB AOPO in a Container and test it, add to make with a compose up all the enfironment including DB
