@@ -1,0 +1,106 @@
+/* loading-states CSS — Brand v3 (AR-204 close-out sweep).
+   Co-located, zero design declarations in TSX (prop-driven runtime
+   values pass through CSS custom properties only).
+
+   Self-contained: defines its own @keyframes so when the .aiq block
+   is stripped from globals.css at the end of the sweep, these
+   loaders survive untouched. */
+
+/* ============================================================
+   Page-level container (full-bleed loader, no chrome)
+   ============================================================ */
+.oga-loader-page {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--oga-canvas);
+  padding: 80px 40px;
+  color: var(--oga-fg);
+}
+
+/* ============================================================
+   App-shell loader inner container (inside the sidebar chrome)
+   ============================================================ */
+.oga-loader-app {
+  min-height: 50vh;
+  padding: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================================
+   Centred pulse (small chip with pulsing dot + mono label)
+   ============================================================ */
+.oga-pulse {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 22px;
+  border: 1px solid var(--oga-border);
+  background: var(--oga-canvas);
+  border-radius: 4px;
+  color: var(--oga-fg-muted);
+}
+.oga-pulse__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--oga-fg);
+  box-shadow: 0 0 0 0 rgba(26, 28, 31, 0.35);
+  animation: oga-pulse-dot 1.3s ease-in-out infinite;
+}
+.oga-pulse__label {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+@keyframes oga-pulse-dot {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(26, 28, 31, 0.35);
+  }
+  50% {
+    transform: scale(1.12);
+    box-shadow: 0 0 0 6px rgba(26, 28, 31, 0);
+  }
+}
+
+/* ============================================================
+   Skeleton bar — width/height/delay come in as CSS variables
+   from the consumer (the only inline-style values allowed are
+   the runtime ones; design lives here). Falls back to safe
+   defaults if a variable is missing.
+   ============================================================ */
+.oga-skeleton {
+  display: inline-block;
+  width: var(--oga-skel-w, 100%);
+  height: var(--oga-skel-h, 12px);
+  background: linear-gradient(
+    90deg,
+    var(--oga-ink-06, rgba(26, 28, 31, 0.06)) 0%,
+    var(--oga-ink-10, rgba(26, 28, 31, 0.1)) 50%,
+    var(--oga-ink-06, rgba(26, 28, 31, 0.06)) 100%
+  );
+  background-size: 200% 100%;
+  border-radius: 3px;
+  vertical-align: middle;
+  animation: oga-skeleton 1.4s ease-in-out infinite;
+  animation-delay: var(--oga-skel-delay, 0ms);
+}
+
+@keyframes oga-skeleton {
+  0%,
+  100% {
+    background-position: 200% 0;
+  }
+  50% {
+    background-position: -200% 0;
+  }
+}

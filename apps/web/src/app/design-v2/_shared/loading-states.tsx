@@ -1,94 +1,79 @@
 "use client";
 
-import React from "react";
-import { Styles } from "./styles";
+import type { CSSProperties } from "react";
 import { AppShell } from "./app-shell";
+import "./loading-states.css";
 
-/* Loading states - shared skeleton primitives in design-v2 language.
-   All loaders use the brand tokens (chartreuse pulse, cream/dark-adapt
-   surfaces, Fraunces mute). Used by / * /loading.tsx files. */
+/* Loading states — shared skeleton primitives in Brand v3 vocabulary.
+   AR-204 close-out sweep. Replaces the legacy .aiq + inline-style
+   version that depended on the .aiq cascade in globals.css.
 
-/* Global /loading.tsx fallback - a minimal centred pulse.
-   Next.js uses this while a route segment streams if there's no closer
-   loading.tsx. Keeps the marketing nav/footer out since it's a global
-   fallback. */
+   Self-contained: defines its own @keyframes (oga-pulse-dot /
+   oga-skeleton) in the co-located CSS, so when the .aiq block is
+   stripped later, these loaders survive untouched.
+
+   Used by each route segment's loading.tsx file in Next.js. */
+
+/* Global /loading.tsx fallback — a minimal centred pulse.
+   Next.js uses this while a route segment streams if there's no
+   closer loading.tsx. Keeps the marketing nav/footer out since
+   it's a global fallback. */
 export function PageLoader({ label = "Loading" }: { label?: string }) {
   return (
-    <>
-      <Styles />
-      <div className="aiq" style={{
-        minHeight: "60vh",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        background: "var(--bg)",
-        padding: "80px 40px",
-      }}>
-        <CenteredPulse label={label} />
-      </div>
-    </>
+    <div className="oga-root oga-loader-page">
+      <CenteredPulse label={label} />
+    </div>
   );
 }
 
-/* App-shell loader - renders the full sidebar chrome with a pulse in
-   the main area. Used by /dashboard/loading.tsx etc so the
-   sidebar doesn't flicker during route transitions. */
-export function AppLoader({ title, label = "Loading" }: {
-  title?: string; label?: string;
+/* App-shell loader — renders the full sidebar chrome with a pulse
+   in the main area. Used by /dashboard/loading.tsx etc so the
+   sidebar doesn't flicker during route transitions. AppShell
+   itself stays on legacy until its own migration; this file's
+   contribution is the inner pulse. */
+export function AppLoader({
+  title,
+  label = "Loading",
+}: {
+  title?: string;
+  label?: string;
 }) {
   return (
-    <>
-      <Styles />
-      <AppShell title={title}>
-        <div style={{
-          minHeight: "50vh",
-          padding: "40px",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <CenteredPulse label={label} />
-        </div>
-      </AppShell>
-    </>
+    <AppShell title={title}>
+      <div className="oga-loader-app">
+        <CenteredPulse label={label} />
+      </div>
+    </AppShell>
   );
 }
 
 function CenteredPulse({ label }: { label: string }) {
   return (
-    <div style={{
-      display: "inline-flex", alignItems: "center", gap: 14,
-      padding: "18px 22px",
-      border: "1px solid var(--border)",
-      background: "var(--bg-off)",
-      borderRadius: 4,
-      color: "var(--text-2)",
-    }}>
-      <span aria-hidden style={{
-        width: 10, height: 10, borderRadius: 10,
-        background: "var(--signal)",
-        boxShadow: "0 0 0 0 rgba(212,243,58,0.5)",
-        animation: "aiq-pulse-dot 1.3s ease-in-out infinite",
-      }} />
-      <span style={{
-        fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-        letterSpacing: "0.22em", textTransform: "uppercase",
-        color: "var(--text-2)",
-      }}>{label}</span>
+    <div className="oga-pulse">
+      <span className="oga-pulse__dot" aria-hidden />
+      <span className="oga-pulse__label">{label}</span>
     </div>
   );
 }
 
-/* Skeleton bar - chartreuse-tinted animated placeholder for rows.
-   Used for table skeletons in the dashboard/compare loaders. */
-export function SkeletonBar({ width = "100%", height = 12, delay = 0 }: {
-  width?: string | number; height?: number; delay?: number;
+/* Skeleton bar — animated placeholder for rows in tables / cards.
+   Used by dashboard/compare loaders. Prop-driven dimensions + delay
+   pass through as CSS custom properties so the TSX stays free of
+   design declarations (only runtime values cross the boundary). */
+export function SkeletonBar({
+  width = "100%",
+  height = 12,
+  delay = 0,
+}: {
+  width?: string | number;
+  height?: number;
+  delay?: number;
 }) {
-  return (
-    <span style={{
-      display: "inline-block",
-      width, height,
-      background: "linear-gradient(90deg, var(--border-dim) 0%, var(--border) 50%, var(--border-dim) 100%)",
-      backgroundSize: "200% 100%",
-      borderRadius: 3,
-      animation: `aiq-skeleton 1.4s ease-in-out ${delay}ms infinite`,
-      verticalAlign: "middle",
-    }} />
-  );
+  const widthValue = typeof width === "number" ? `${width}px` : width;
+  const styleVars = {
+    "--oga-skel-w": widthValue,
+    "--oga-skel-h": `${height}px`,
+    "--oga-skel-delay": `${delay}ms`,
+  } as CSSProperties;
+  return <span className="oga-skeleton" style={styleVars} />;
 }
