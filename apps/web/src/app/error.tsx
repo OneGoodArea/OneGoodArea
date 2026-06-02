@@ -6,7 +6,8 @@ import { logger } from "@/lib/logger";
 import * as Sentry from "@sentry/nextjs";
 
 export default function Error({
-  error, reset,
+  error,
+  reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
@@ -19,7 +20,7 @@ export default function Error({
   return (
     <ErrorShell
       code="500"
-      title={<>Our engine <em style={{ fontStyle: "italic", color: "var(--ink)", borderBottom: "2.5px solid var(--signal)" }}>tripped.</em></>}
+      title="Our engine tripped."
       sub="Something on our side went wrong while rendering this page. We've logged it. You can try again, or head back to a known route."
       primaryCta={{ label: "Try again", onClick: reset }}
       secondaryCta={{ label: "Go home", href: "/" }}

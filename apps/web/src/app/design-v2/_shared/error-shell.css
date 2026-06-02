@@ -1,0 +1,124 @@
+/* ErrorShell CSS — Brand v3 (AR-204 close-out sweep 2/16).
+   Co-located, zero inline styles in error-shell.tsx.
+
+   Single DARK hero section. Huge sans-display code number, mono
+   status pill above it, H2 title + lead below, CTA pair, optional
+   quick-links row.
+*/
+
+.oga-error {
+  background: var(--oga-canvas);
+}
+
+/* ============================================================
+   HERO (DARK) — fills viewport minus nav + footer
+   ============================================================ */
+.oga-error-hero {
+  min-height: 72vh;
+  display: flex;
+  align-items: center;
+  padding: clamp(64px, 9vw, 120px) 24px clamp(72px, 10vw, 140px);
+}
+.oga-error-hero__inner {
+  max-width: 760px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Status pill (HTTP {code} + red dot) */
+.oga-error-hero__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  border: 1px solid rgba(250, 248, 244, 0.18);
+  border-radius: var(--oga-radius-sm);
+  background: rgba(250, 248, 244, 0.04);
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.7);
+  margin-bottom: 28px;
+}
+.oga-error-hero__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.22);
+  display: inline-block;
+}
+
+/* Huge sans-display code number */
+.oga-error-hero__code {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(120px, 18vw, 220px);
+  font-weight: 500;
+  line-height: 0.92;
+  letter-spacing: -0.04em;
+  color: var(--oga-white);
+  margin: 0 0 8px;
+}
+
+/* Title (H2-sized, ink-on-dark = white) */
+.oga-error-hero__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3.4vw, 36px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.016em;
+  color: var(--oga-white);
+  text-wrap: balance;
+  margin: 18px 0 12px;
+}
+
+/* Lead */
+.oga-error-hero__lead {
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.7);
+  text-wrap: pretty;
+  margin: 0 auto 32px;
+  max-width: 52ch;
+}
+
+/* CTA pair */
+.oga-error-hero__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+/* Brand v3 button overrides on the dark surface — borrow from the
+   standard .oga-btn + .oga-btn-primary / .oga-btn-secondary classes;
+   .oga-error-hero__btn is the hook for tuning if needed (currently
+   no extra rules; left intentionally for future restyle). */
+
+/* Quick links row (mono, small) */
+.oga-error-hero__quicklinks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 22px;
+  margin-top: 40px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.55);
+}
+.oga-error-hero__quicklinks-label {
+  color: rgba(250, 248, 244, 0.5);
+}
+.oga-error-hero__quicklink {
+  color: rgba(250, 248, 244, 0.7);
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+.oga-error-hero__quicklink:hover {
+  color: var(--oga-white);
+}

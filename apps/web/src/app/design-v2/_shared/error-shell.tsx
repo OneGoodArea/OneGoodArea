@@ -1,152 +1,95 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
-import { Styles } from "./styles";
 import { Nav } from "./nav";
 import { Footer } from "./footer";
-import { Mark } from "./mark";
+import "./error-shell.css";
 
-/* ═══════════════════════════════════════════════════════════════
-   ErrorShell · bespoke error page layout for 404 / 500 / generic.
-   Massive Fraunces error number with italic chartreuse digit.
-   ═══════════════════════════════════════════════════════════════ */
+/* ErrorShell — bespoke error-page layout (404 / 500 / generic).
+   Brand v3 rewrite (AR-204 close-out sweep 2/16).
+
+   Replaces the legacy Fraunces + chartreuse-underline accent + JS
+   mouseenter/leave button-state spaghetti with a single DARK hero
+   section, mono status pill, huge sans-display code number, H2
+   title, lead, CTA pair, and an optional quick-links row.
+
+   Public API simplified: title + sub are now plain strings (the
+   legacy ReactNode shape only existed so callers could pass the
+   inline-styled <em> chartreuse-underline hack, which Brand v3
+   doesn't use). All 4 callers updated. */
+
+type Cta = {
+  label: string;
+  href?: string;
+  onClick?: () => void;
+};
 
 export function ErrorShell({
-  code, title, sub, primaryCta, secondaryCta, quickLinks,
+  code,
+  title,
+  sub,
+  primaryCta,
+  secondaryCta,
+  quickLinks,
 }: {
   code: string;
-  title: React.ReactNode;
-  sub: React.ReactNode;
-  primaryCta: { label: string; href?: string; onClick?: () => void };
-  secondaryCta?: { label: string; href?: string; onClick?: () => void };
+  title: string;
+  sub: string;
+  primaryCta: Cta;
+  secondaryCta?: Cta;
   quickLinks?: { label: string; href: string }[];
 }) {
-  // Split the code into an array of chars so we can italicise + colour the middle digit
-  const chars = code.split("");
-  const accentIdx = chars.length === 3 ? 1 : Math.max(0, chars.length - 1);
-
   return (
-    <div className="aiq">
-      <Styles />
+    <div className="oga-root oga-error">
       <Nav />
 
-      <section style={{
-        position: "relative",
-        background: "var(--bg)",
-        borderBottom: "1px solid var(--border)",
-        padding: "80px 0 100px",
-        overflow: "hidden",
-        minHeight: "64vh",
-        display: "flex", alignItems: "center",
-      }}>
-        <div aria-hidden style={{
-          position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0,
-        }}>
-          <div style={{
-            position: "absolute", top: -200, left: "50%",
-            transform: "translateX(-50%)",
-            width: 860, height: 560,
-            background: "radial-gradient(ellipse at center, rgba(212,243,58,0.16) 0%, rgba(212,243,58,0) 62%)",
-          }} />
-          <div style={{
-            position: "absolute", inset: 0,
-            backgroundImage:
-              "linear-gradient(to right, rgba(10,77,58,0.04) 1px, transparent 1px)",
-            backgroundSize: "48px 48px",
-            maskImage: "radial-gradient(ellipse at center, black 45%, transparent 85%)",
-          }} />
-        </div>
-
-        <div style={{
-          width: "100%", maxWidth: 880, margin: "0 auto",
-          padding: "0 40px",
-          position: "relative", zIndex: 1,
-          textAlign: "center",
-        }}>
-          <div style={{
-            fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-            letterSpacing: "0.24em", textTransform: "uppercase",
-            color: "var(--text-2)",
-            display: "inline-flex", alignItems: "center", gap: 9,
-            marginBottom: 28,
-          }}>
-            <span aria-hidden style={{
-              width: 6, height: 6, borderRadius: 6, background: "#b42318",
-              boxShadow: "0 0 0 3px rgba(239,68,68,0.18)",
-            }} />
-            Status · HTTP {code}
+      <section
+        className="oga-section-dark oga-error-hero"
+        data-oga-surface="dark"
+      >
+        <div className="oga-error-hero__inner">
+          <div className="oga-error-hero__status">
+            <span className="oga-error-hero__status-dot" aria-hidden />
+            <span>HTTP {code}</span>
           </div>
 
-          <div style={{
-            fontFamily: "var(--display)", fontWeight: 400,
-            fontSize: "clamp(120px, 18vw, 220px)",
-            lineHeight: 0.92, letterSpacing: "-0.04em",
-            color: "var(--ink-deep)",
-            margin: "0 0 8px",
-            display: "inline-flex", alignItems: "baseline", gap: 0,
-          }}>
-            {chars.map((ch, i) => (
-              <span
-                key={i}
-                style={i === accentIdx ? {
-                  fontStyle: "italic",
-                  color: "var(--ink)",
-                  position: "relative",
-                  display: "inline-block",
-                } : undefined}
-              >
-                {ch}
-                {i === accentIdx && (
-                  <span aria-hidden style={{
-                    position: "absolute", left: "8%", right: "8%", bottom: "12%",
-                    height: 12, background: "var(--signal)",
-                    opacity: 0.88,
-                    zIndex: -1,
-                  }} />
-                )}
-              </span>
-            ))}
+          <div className="oga-error-hero__code" aria-hidden>
+            {code}
           </div>
 
-          <h1 style={{
-            fontFamily: "var(--display)", fontWeight: 400,
-            fontSize: "clamp(26px, 3.4vw, 36px)", lineHeight: 1.1,
-            letterSpacing: "-0.016em", color: "var(--ink-deep)",
-            margin: "18px 0 12px",
-          }}>{title}</h1>
-          <p style={{
-            fontFamily: "var(--sans)", fontSize: 16, fontWeight: 400,
-            lineHeight: 1.55, color: "var(--text-2)",
-            margin: "0 auto 32px", maxWidth: "50ch",
-          }}>{sub}</p>
+          <h1 className="oga-error-hero__title">{title}</h1>
+          <p className="oga-error-hero__lead">{sub}</p>
 
-          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+          <div className="oga-error-hero__cta">
             <CtaButton {...primaryCta} primary />
             {secondaryCta && <CtaButton {...secondaryCta} />}
           </div>
 
           {quickLinks && quickLinks.length > 0 && (
-            <div style={{
-              marginTop: 40,
-              display: "flex", gap: 22, justifyContent: "center", flexWrap: "wrap",
-              fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-              letterSpacing: "0.22em", textTransform: "uppercase",
-              color: "var(--text-3)",
-            }}>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <Mark size={14} />
+            <div className="oga-error-hero__quicklinks">
+              <span className="oga-error-hero__quicklinks-label">
                 Try instead
               </span>
-              {quickLinks.map((l) => (
-                <Link key={l.href} href={l.href} style={{
-                  color: "var(--text-2)", textDecoration: "none",
-                  transition: "color 140ms ease",
-                }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = "var(--ink-deep)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-2)")}
-                >{l.label}</Link>
-              ))}
+              {quickLinks.map((l) => {
+                const external = l.href.startsWith("mailto:") || l.href.startsWith("http");
+                return external ? (
+                  <a
+                    key={l.href}
+                    href={l.href}
+                    className="oga-error-hero__quicklink"
+                  >
+                    {l.label}
+                  </a>
+                ) : (
+                  <Link
+                    key={l.href}
+                    href={l.href}
+                    className="oga-error-hero__quicklink"
+                  >
+                    {l.label}
+                  </Link>
+                );
+              })}
             </div>
           )}
         </div>
@@ -157,64 +100,35 @@ export function ErrorShell({
   );
 }
 
-function CtaButton({ label, href, onClick, primary }: {
-  label: string; href?: string; onClick?: () => void; primary?: boolean;
-}) {
-  const style: React.CSSProperties = primary ? {
-    fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-    letterSpacing: "0.14em", textTransform: "uppercase",
-    color: "var(--signal-ink)", background: "var(--signal)",
-    padding: "14px 22px", borderRadius: 999, textDecoration: "none",
-    border: "1px solid var(--ink-deep)",
-    display: "inline-flex", alignItems: "center", gap: 9,
-    cursor: "pointer",
-    transition: "transform 140ms cubic-bezier(0.16,1,0.3,1), box-shadow 140ms",
-    boxShadow: "0 1px 0 rgba(6,42,30,0.04)",
-  } : {
-    fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-    letterSpacing: "0.14em", textTransform: "uppercase",
-    color: "var(--ink)", background: "transparent",
-    padding: "14px 22px", borderRadius: 999, textDecoration: "none",
-    border: "1px solid var(--border)",
-    display: "inline-flex", alignItems: "center", gap: 9,
-    cursor: "pointer",
-    transition: "border-color 140ms ease, background 140ms ease",
-  };
+function CtaButton({ label, href, onClick, primary }: Cta & { primary?: boolean }) {
+  const className = primary
+    ? "oga-btn oga-btn-primary oga-error-hero__btn"
+    : "oga-btn oga-btn-secondary oga-error-hero__btn";
+
   const inner = (
     <>
       {label}
-      <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
+      <span aria-hidden>→</span>
     </>
   );
-  const handleMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
-    if (primary) {
-      e.currentTarget.style.transform = "translateY(-1px)";
-      e.currentTarget.style.boxShadow = "0 6px 16px rgba(6,42,30,0.12)";
-    } else {
-      e.currentTarget.style.borderColor = "var(--ink)";
-      e.currentTarget.style.background = "var(--bg-off)";
-    }
-  };
-  const handleMouseLeave = (e: React.MouseEvent<HTMLElement>) => {
-    if (primary) {
-      e.currentTarget.style.transform = "translateY(0)";
-      e.currentTarget.style.boxShadow = "0 1px 0 rgba(6,42,30,0.04)";
-    } else {
-      e.currentTarget.style.borderColor = "var(--border)";
-      e.currentTarget.style.background = "transparent";
-    }
-  };
+
   if (href) {
+    const external = href.startsWith("mailto:") || href.startsWith("http");
+    if (external) {
+      return (
+        <a href={href} className={className}>
+          {inner}
+        </a>
+      );
+    }
     return (
-      <Link href={href} style={style}
-        onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <Link href={href} className={className}>
         {inner}
       </Link>
     );
   }
   return (
-    <button onClick={onClick} style={style}
-      onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+    <button type="button" onClick={onClick} className={className}>
       {inner}
     </button>
   );
