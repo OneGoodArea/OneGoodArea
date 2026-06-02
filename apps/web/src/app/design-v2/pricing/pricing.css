@@ -1,0 +1,417 @@
+/* /pricing page CSS — Brand v3 (AR-204 close-out sweep 3/16).
+   Co-located, zero inline styles in client.tsx.
+
+   Surface plan:
+     Hero               DARK
+     PlanGrid            cream (own CSS in _shared/plan-grid.css)
+     Enterprise callout cream-quiet
+     Feature table       cream
+     FAQ                cream-quiet
+     Final CTA           DARK
+*/
+
+/* ============================================================
+   SHARED — page-scoped eyebrow helpers
+   ============================================================ */
+.oga-pricing .oga-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+.oga-pricing .oga-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--oga-ink);
+  display: inline-block;
+}
+.oga-pricing .oga-eyebrow--inverse {
+  color: rgba(250, 248, 244, 0.65);
+}
+.oga-pricing .oga-eyebrow--inverse .oga-eyebrow-dot {
+  background: var(--oga-white);
+}
+
+/* ============================================================
+   HERO (DARK)
+   ============================================================ */
+.oga-pricing-hero {
+  padding: clamp(72px, 10vw, 132px) 24px clamp(48px, 7vw, 80px);
+}
+.oga-pricing-hero__inner {
+  max-width: 920px;
+  margin: 0 auto;
+}
+.oga-pricing-hero__eyebrow {
+  margin-bottom: 22px;
+}
+.oga-pricing-hero__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(36px, 5vw, 60px);
+  font-weight: 500;
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+  color: var(--oga-white);
+  text-wrap: balance;
+  margin: 0 0 22px;
+}
+.oga-pricing-hero__lead {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(15px, 1.3vw, 18px);
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.7);
+  text-wrap: pretty;
+  margin: 0 0 36px;
+  max-width: 680px;
+}
+.oga-pricing-hero__stamps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.oga-pricing-hero__stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border: 1px solid rgba(250, 248, 244, 0.18);
+  border-radius: var(--oga-radius-sm);
+  background: rgba(250, 248, 244, 0.04);
+}
+.oga-pricing-hero__stamp-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.55);
+}
+.oga-pricing-hero__stamp-value {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--oga-white);
+}
+
+/* ============================================================
+   ENTERPRISE CALLOUT (cream-quiet)
+   ============================================================ */
+.oga-pricing-ent {
+  padding: clamp(56px, 8vw, 96px) 24px;
+}
+.oga-pricing-ent__inner {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+.oga-pricing-ent__card {
+  background: var(--oga-ink);
+  color: var(--oga-white);
+  border-radius: 4px;
+  padding: clamp(28px, 4vw, 44px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 32px;
+  align-items: center;
+}
+@media (max-width: 880px) {
+  .oga-pricing-ent__card {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+.oga-pricing-ent__eyebrow {
+  margin-bottom: 14px;
+  color: rgba(250, 248, 244, 0.65);
+}
+.oga-pricing-ent__eyebrow .oga-eyebrow-dot {
+  background: var(--oga-white);
+}
+.oga-pricing-ent__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(22px, 2.8vw, 30px);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.014em;
+  color: var(--oga-white);
+  text-wrap: balance;
+  margin: 0 0 12px;
+  max-width: 56ch;
+}
+.oga-pricing-ent__lead {
+  font-family: var(--oga-font-sans);
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: rgba(250, 248, 244, 0.7);
+  text-wrap: pretty;
+  margin: 0;
+  max-width: 56ch;
+}
+.oga-pricing-ent__cta {
+  background: var(--oga-white);
+  color: var(--oga-ink);
+  border-color: var(--oga-white);
+}
+.oga-pricing-ent__cta:hover {
+  background: var(--oga-white);
+  border-color: var(--oga-white);
+  filter: brightness(0.94);
+}
+
+/* ============================================================
+   FEATURE TABLE (cream)
+   ============================================================ */
+.oga-pricing-table {
+  background: var(--oga-canvas);
+  padding: clamp(64px, 9vw, 120px) 24px;
+}
+.oga-pricing-table__inner {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+.oga-pricing-table__head {
+  margin-bottom: 36px;
+  max-width: 720px;
+}
+.oga-pricing-table__eyebrow {
+  margin-bottom: 16px;
+}
+.oga-pricing-table__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3.2vw, 36px);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.018em;
+  color: var(--oga-fg);
+  text-wrap: balance;
+  margin: 0 0 12px;
+}
+.oga-pricing-table__lead {
+  font-family: var(--oga-font-sans);
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--oga-fg-subtle);
+  margin: 0;
+}
+
+.oga-pricing-table__wrap {
+  overflow-x: auto;
+  border: 1px solid var(--oga-border);
+  border-radius: 4px;
+  background: var(--oga-white);
+}
+.oga-pricing-table__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--oga-font-sans);
+}
+.oga-pricing-table__th {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  text-align: left;
+  padding: 18px 18px;
+  border-bottom: 1px solid var(--oga-border);
+  background: var(--oga-canvas);
+  white-space: nowrap;
+}
+.oga-pricing-table__th--feature {
+  width: 36%;
+  min-width: 240px;
+}
+.oga-pricing-table__th--highlight {
+  color: var(--oga-fg);
+  background: rgba(26, 28, 31, 0.04);
+}
+.oga-pricing-table__tr:hover {
+  background: rgba(26, 28, 31, 0.015);
+}
+.oga-pricing-table__td {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--oga-border);
+  vertical-align: top;
+  font-size: 14px;
+  color: var(--oga-fg);
+  white-space: nowrap;
+}
+.oga-pricing-table__tr:last-child .oga-pricing-table__td {
+  border-bottom: none;
+}
+.oga-pricing-table__td--feature {
+  white-space: normal;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.oga-pricing-table__td--highlight {
+  background: rgba(26, 28, 31, 0.025);
+}
+.oga-pricing-table__label {
+  font-family: var(--oga-font-sans);
+  font-size: 14.5px;
+  font-weight: 500;
+  letter-spacing: -0.003em;
+  color: var(--oga-fg);
+}
+.oga-pricing-table__sub {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--oga-fg-muted);
+  line-height: 1.45;
+  white-space: normal;
+}
+.oga-pricing-table__check {
+  color: var(--oga-fg);
+  font-size: 16px;
+  font-weight: 500;
+}
+.oga-pricing-table__dash {
+  color: var(--oga-fg-muted);
+}
+.oga-pricing-table__cell-text {
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--oga-fg);
+}
+
+/* ============================================================
+   FAQ (cream-quiet)
+   ============================================================ */
+.oga-pricing-faq {
+  padding: clamp(64px, 9vw, 120px) 24px;
+}
+.oga-pricing-faq__inner {
+  max-width: 880px;
+  margin: 0 auto;
+}
+.oga-pricing-faq__head {
+  margin-bottom: 32px;
+  text-align: center;
+}
+.oga-pricing-faq__eyebrow {
+  margin-bottom: 16px;
+  justify-content: center;
+}
+.oga-pricing-faq__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3.2vw, 36px);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.018em;
+  color: var(--oga-fg);
+  text-wrap: balance;
+  margin: 0;
+}
+.oga-pricing-faq__list {
+  border-top: 1px solid var(--oga-border);
+}
+.oga-pricing-faq__qa {
+  border-bottom: 1px solid var(--oga-border);
+}
+.oga-pricing-faq__q {
+  list-style: none;
+  cursor: pointer;
+  padding: 22px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--oga-fg);
+  letter-spacing: -0.008em;
+}
+.oga-pricing-faq__q::-webkit-details-marker {
+  display: none;
+}
+.oga-pricing-faq__chevron {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  position: relative;
+}
+.oga-pricing-faq__chevron::before,
+.oga-pricing-faq__chevron::after {
+  content: "";
+  position: absolute;
+  background: var(--oga-fg);
+  border-radius: 1px;
+}
+.oga-pricing-faq__chevron::before {
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1.5px;
+  transform: translateY(-50%);
+}
+.oga-pricing-faq__chevron::after {
+  left: 50%;
+  top: 0;
+  width: 1.5px;
+  height: 100%;
+  transform: translateX(-50%);
+  transition: transform 200ms ease, opacity 200ms ease;
+}
+.oga-pricing-faq__qa[open] .oga-pricing-faq__chevron::after {
+  transform: translateX(-50%) scaleY(0);
+  opacity: 0;
+}
+.oga-pricing-faq__a {
+  padding: 0 0 24px;
+  max-width: 720px;
+}
+.oga-pricing-faq__a p {
+  font-family: var(--oga-font-sans);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--oga-fg-subtle);
+  margin: 0;
+  text-wrap: pretty;
+}
+
+/* ============================================================
+   FINAL CTA (DARK)
+   ============================================================ */
+.oga-pricing-cta {
+  padding: clamp(64px, 9vw, 120px) 24px;
+}
+.oga-pricing-cta__inner {
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: center;
+}
+.oga-pricing-cta__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.6vw, 44px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.018em;
+  color: var(--oga-white);
+  text-wrap: balance;
+  margin: 0 0 18px;
+}
+.oga-pricing-cta__lead {
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(250, 248, 244, 0.7);
+  text-wrap: pretty;
+  margin: 0 auto 32px;
+  max-width: 600px;
+}
+.oga-pricing-cta__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}

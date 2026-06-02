@@ -1,12 +1,27 @@
 "use client";
 
-import React from "react";
 import type { PlanId } from "@/lib/stripe";
+import "./plan-grid.css";
 
-/* Shared plan grid + plan card + spinner. Used on the marketing /pricing page
-   (mode="marketing") and the in-app /dashboard/billing surface (mode="billing").
-   Single source of truth for the public V2 plan display, so the two surfaces
-   never drift. */
+/* Shared plan-grid primitive (AR-204 close-out sweep 3/16).
+   Used on /pricing (mode="marketing") and /dashboard/billing
+   (mode="billing"). Single source of truth for the public V2 plan
+   display, so the two surfaces never drift.
+
+   Brand v3 redesign: each card carries a bespoke dot-and-hairline
+   SVG illustration in the brand product-icon vocabulary (same
+   family as SignalsIcon / ScoresIcon / MonitorIcon /
+   IntelligenceIcon, and the 6 principle illustrations on /about).
+   Illustrations escalate in density across the 5 tiers, visualising
+   "scaling complexity" — Sandbox is a single eval dot, Growth is
+   a full constellation.
+
+   Hover states: card lifts subtly, border brightens, illustration
+   intensifies. Highlighted plan (Build) carries a top accent rule,
+   slightly deeper background, and a filled-ink CTA.
+
+   Self-contained CSS animations (oga-spin) so the spinner survives
+   the .aiq-block strip at the end of the sweep. */
 
 export type DisplayPlan = {
   id: PlanId;
@@ -16,13 +31,10 @@ export type DisplayPlan = {
   reports: string;
   perReport?: string;
   blurb: string;
-  /* Marketing CTA copy (e.g., "Get Build"). */
   cta: string;
-  /* Billing-mode CTA override (e.g., "Switch to Build"). Falls back to cta. */
   ctaBilling?: string;
   highlight?: boolean;
   disabled?: boolean;
-  /* Free tier: no Stripe checkout, parent decides where to route. */
   free?: boolean;
 };
 
@@ -36,8 +48,164 @@ export const DISPLAY_PLANS: DisplayPlan[] = [
 
 export type PlanGridMode = "marketing" | "billing";
 
+/* ============================================================
+   Per-plan bespoke illustrations — dot-and-hairline vocabulary.
+   Density escalates with tier ("scaling complexity"). All 32x32
+   viewBox, currentColor stroke/fill so they invert with the
+   card's text colour.
+   ============================================================ */
+
+const VIZ_BASE = {
+  className: "oga-plan-card__viz-svg",
+  viewBox: "0 0 32 32",
+  fill: "none",
+  "aria-hidden": true as const,
+};
+
+function VizSandbox() {
+  /* One dashed dot in a sparse 5x5 grid — "evaluation, single
+     pulse, not yet productionised". */
+  return (
+    <svg {...VIZ_BASE}>
+      <g fill="currentColor" opacity="0.18">
+        <circle cx="6"  cy="16" r="0.9" />
+        <circle cx="11" cy="16" r="0.9" />
+        <circle cx="21" cy="16" r="0.9" />
+        <circle cx="26" cy="16" r="0.9" />
+      </g>
+      <circle cx="16" cy="16" r="2.4" fill="none" stroke="currentColor" strokeWidth="0.9" strokeDasharray="2 2" />
+      <circle cx="16" cy="16" r="1.2" fill="currentColor" />
+    </svg>
+  );
+}
+
+function VizStarter() {
+  /* Two dots forming a starter pair with a hairline connector. */
+  return (
+    <svg {...VIZ_BASE}>
+      <g fill="currentColor" opacity="0.22">
+        <circle cx="6"  cy="22" r="0.9" />
+        <circle cx="26" cy="22" r="0.9" />
+        <circle cx="6"  cy="10" r="0.9" />
+        <circle cx="26" cy="10" r="0.9" />
+      </g>
+      <line x1="11" y1="16" x2="21" y2="16" stroke="currentColor" strokeWidth="0.7" strokeOpacity="0.5" />
+      <circle cx="11" cy="16" r="1.6" fill="currentColor" />
+      <circle cx="21" cy="16" r="1.6" fill="currentColor" />
+    </svg>
+  );
+}
+
+function VizBuild() {
+  /* Triangle of 3 dots, denser ambient field. The build phase
+     (small team in production). */
+  return (
+    <svg {...VIZ_BASE}>
+      <g fill="currentColor" opacity="0.22">
+        <circle cx="6"  cy="6"  r="0.9" />
+        <circle cx="26" cy="6"  r="0.9" />
+        <circle cx="6"  cy="26" r="0.9" />
+        <circle cx="26" cy="26" r="0.9" />
+        <circle cx="16" cy="6"  r="0.9" />
+        <circle cx="6"  cy="16" r="0.9" />
+      </g>
+      <g stroke="currentColor" strokeWidth="0.7" strokeOpacity="0.55">
+        <line x1="11" y1="11" x2="21" y2="11" />
+        <line x1="11" y1="11" x2="16" y2="21" />
+        <line x1="21" y1="11" x2="16" y2="21" />
+      </g>
+      <circle cx="11" cy="11" r="1.7" fill="currentColor" />
+      <circle cx="21" cy="11" r="1.7" fill="currentColor" />
+      <circle cx="16" cy="21" r="1.9" fill="currentColor" />
+    </svg>
+  );
+}
+
+function VizScale() {
+  /* 5-dot mesh with cross-connectors. Mid-tier — multiple
+     systems integrating. */
+  return (
+    <svg {...VIZ_BASE}>
+      <g fill="currentColor" opacity="0.2">
+        <circle cx="6"  cy="6"  r="0.9" />
+        <circle cx="26" cy="26" r="0.9" />
+        <circle cx="16" cy="6"  r="0.9" />
+        <circle cx="16" cy="26" r="0.9" />
+      </g>
+      <g stroke="currentColor" strokeWidth="0.7" strokeOpacity="0.45">
+        <line x1="8"  y1="10" x2="24" y2="22" />
+        <line x1="24" y1="10" x2="8"  y2="22" />
+        <line x1="8"  y1="10" x2="24" y2="10" />
+        <line x1="8"  y1="22" x2="24" y2="22" />
+      </g>
+      <circle cx="8"  cy="10" r="1.6" fill="currentColor" />
+      <circle cx="24" cy="10" r="1.6" fill="currentColor" />
+      <circle cx="8"  cy="22" r="1.6" fill="currentColor" />
+      <circle cx="24" cy="22" r="1.6" fill="currentColor" />
+      <circle cx="16" cy="16" r="2.2" fill="currentColor" />
+    </svg>
+  );
+}
+
+function VizGrowth() {
+  /* Hub-and-spoke constellation — 7 surfaced dots + ambient field.
+     High-volume — the platform fully wired. */
+  return (
+    <svg {...VIZ_BASE}>
+      <g fill="currentColor" opacity="0.2">
+        <circle cx="4"  cy="4"  r="0.8" />
+        <circle cx="28" cy="4"  r="0.8" />
+        <circle cx="4"  cy="28" r="0.8" />
+        <circle cx="28" cy="28" r="0.8" />
+        <circle cx="16" cy="4"  r="0.8" />
+        <circle cx="4"  cy="16" r="0.8" />
+        <circle cx="28" cy="16" r="0.8" />
+        <circle cx="16" cy="28" r="0.8" />
+      </g>
+      <g stroke="currentColor" strokeWidth="0.6" strokeOpacity="0.45">
+        <line x1="8"  y1="8"  x2="16" y2="16" />
+        <line x1="24" y1="8"  x2="16" y2="16" />
+        <line x1="8"  y1="24" x2="16" y2="16" />
+        <line x1="24" y1="24" x2="16" y2="16" />
+        <line x1="16" y1="9"  x2="16" y2="16" />
+        <line x1="16" y1="23" x2="16" y2="16" />
+      </g>
+      <g fill="currentColor">
+        <circle cx="8"  cy="8"  r="1.5" />
+        <circle cx="24" cy="8"  r="1.5" />
+        <circle cx="8"  cy="24" r="1.5" />
+        <circle cx="24" cy="24" r="1.5" />
+        <circle cx="16" cy="9"  r="1.4" />
+        <circle cx="16" cy="23" r="1.4" />
+        <circle cx="16" cy="16" r="2.4" />
+      </g>
+    </svg>
+  );
+}
+
+const PLAN_VIZ: Record<PlanId, () => JSX.Element> = {
+  // legacy v1 plans never render through this grid, but the type
+  // requires we map every PlanId. They alias to the closest v2 viz.
+  free:        VizSandbox,
+  starter:     VizStarter,
+  pro:         VizStarter,
+  developer:   VizBuild,
+  business:    VizScale,
+  growth:      VizGrowth,
+  sandbox:     VizSandbox,
+  starter_v2:  VizStarter,
+  build:       VizBuild,
+  scale:       VizScale,
+  growth_v2:   VizGrowth,
+  enterprise:  VizGrowth,
+};
+
 export function PlanGrid({
-  plans, currentPlan, loading, mode, onSelect,
+  plans,
+  currentPlan,
+  loading,
+  mode,
+  onSelect,
 }: {
   plans: DisplayPlan[];
   currentPlan: string | null;
@@ -46,35 +214,22 @@ export function PlanGrid({
   onSelect: (id: PlanId) => void;
 }) {
   return (
-    <section style={{ background: "var(--bg)", padding: "48px 0 80px" }}>
-      <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 40px" }}>
-        <div className="aiq-plan-grid" style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${plans.length}, 1fr)`,
-          gap: 0, border: "1px solid var(--border)",
-        }}>
-          {plans.map((p, i) => (
+    <section className="oga-plan-grid">
+      <div className="oga-plan-grid__inner">
+        <div
+          className="oga-plan-grid__cards"
+          data-cols={plans.length}
+        >
+          {plans.map((p) => (
             <PlanCard
               key={p.id}
               plan={p}
               mode={mode}
-              isLast={i === plans.length - 1}
               isCurrent={currentPlan === p.id}
               isLoading={loading === p.id}
               onClick={() => onSelect(p.id)}
             />
           ))}
-        </div>
-        <div style={{
-          marginTop: 18, display: "flex", gap: 22, flexWrap: "wrap",
-          fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-          letterSpacing: "0.16em", textTransform: "uppercase",
-          color: "var(--text-3)",
-        }}>
-          <span>{"✓"} Billed monthly</span>
-          <span>{"✓"} Cancel any time</span>
-          <span>{"✓"} No setup fee</span>
-          <span>{"✓"} Cached hits free</span>
         </div>
       </div>
     </section>
@@ -82,138 +237,103 @@ export function PlanGrid({
 }
 
 export function PlanCard({
-  plan, mode, isLast, isCurrent, isLoading, onClick,
+  plan,
+  mode,
+  isCurrent,
+  isLoading,
+  onClick,
 }: {
   plan: DisplayPlan;
   mode: PlanGridMode;
-  isLast: boolean;
   isCurrent: boolean;
   isLoading: boolean;
   onClick: () => void;
 }) {
-  const ctaLabel = mode === "billing" && plan.ctaBilling ? plan.ctaBilling : plan.cta;
+  const ctaLabel =
+    mode === "billing" && plan.ctaBilling ? plan.ctaBilling : plan.cta;
+  const buttonDisabled = plan.disabled || isCurrent || isLoading;
+  const Viz = PLAN_VIZ[plan.id] ?? VizSandbox;
+
+  const cardClasses = [
+    "oga-plan-card",
+    plan.highlight ? "oga-plan-card--highlight" : "",
+    isCurrent ? "oga-plan-card--current" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const buttonClasses = [
+    "oga-plan-card__cta",
+    plan.highlight ? "oga-plan-card__cta--primary" : "",
+    isCurrent ? "oga-plan-card__cta--current" : "",
+    plan.disabled ? "oga-plan-card__cta--disabled" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div style={{
-      padding: "34px 30px 32px",
-      borderRight: !isLast ? "1px solid var(--border)" : "none",
-      background: plan.highlight ? "var(--bg-off)" : "var(--bg)",
-      position: "relative",
-      display: "flex", flexDirection: "column", gap: 14,
-      minHeight: 380,
-    }}>
+    <article className={cardClasses}>
       {plan.highlight && (
-        <span aria-hidden style={{
-          position: "absolute", top: 0, left: 0, right: 0,
-          height: 3, background: "var(--signal)",
-        }} />
+        <span className="oga-plan-card__accent" aria-hidden />
       )}
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-          letterSpacing: "0.22em", textTransform: "uppercase",
-          color: "var(--text-2)",
-        }}>{plan.name}</div>
+
+      <div className="oga-plan-card__viz">
+        <Viz />
+      </div>
+
+      <div className="oga-plan-card__head">
+        <span className="oga-plan-card__name">{plan.name}</span>
         {plan.highlight && !isCurrent && (
-          <span style={{
-            fontFamily: "var(--mono)", fontSize: 9, fontWeight: 500,
-            letterSpacing: "0.22em", textTransform: "uppercase",
-            color: "var(--ink)", background: "var(--signal-dim)",
-            padding: "3px 7px 2px", borderRadius: 2,
-          }}>Popular</span>
+          <span className="oga-plan-card__pill oga-plan-card__pill--popular">
+            Popular
+          </span>
         )}
         {isCurrent && (
-          <span style={{
-            fontFamily: "var(--mono)", fontSize: 9, fontWeight: 500,
-            letterSpacing: "0.22em", textTransform: "uppercase",
-            color: "var(--signal-ink)", background: "var(--signal)",
-            padding: "3px 7px 2px", borderRadius: 2,
-          }}>Current</span>
+          <span className="oga-plan-card__pill oga-plan-card__pill--current">
+            Current
+          </span>
         )}
       </div>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-        <span style={{
-          fontFamily: "var(--display)", fontSize: 52, fontWeight: 500,
-          letterSpacing: "-0.024em", color: "var(--ink-deep)", lineHeight: 1,
-        }}>{plan.price}</span>
-        <span style={{
-          fontFamily: "var(--mono)", fontSize: 12,
-          color: "var(--text-3)", letterSpacing: "0.04em",
-        }}>{plan.cadence}</span>
+
+      <div className="oga-plan-card__price-row">
+        <span className="oga-plan-card__price">{plan.price}</span>
+        <span className="oga-plan-card__cadence">{plan.cadence}</span>
       </div>
-      <div style={{
-        fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-        letterSpacing: "0.04em", color: "var(--ink)",
-      }}>{plan.reports}</div>
+
+      <div className="oga-plan-card__reports">{plan.reports}</div>
       {plan.perReport && (
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10.5,
-          color: "var(--text-3)",
-        }}>{plan.perReport}</div>
+        <div className="oga-plan-card__per-report">{plan.perReport}</div>
       )}
-      <p style={{
-        fontFamily: "var(--sans)", fontSize: 14, fontWeight: 400,
-        lineHeight: 1.5, color: "var(--text-2)",
-        letterSpacing: "-0.003em", margin: 0,
-      }}>{plan.blurb}</p>
-      <div style={{ flex: 1 }} />
+
+      <p className="oga-plan-card__blurb">{plan.blurb}</p>
+
+      <div className="oga-plan-card__spacer" aria-hidden />
+
       <button
+        type="button"
         onClick={onClick}
-        disabled={plan.disabled || isCurrent || isLoading}
-        style={{
-          width: "100%", height: 44,
-          fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-          letterSpacing: "0.16em", textTransform: "uppercase",
-          color: isCurrent
-            ? "var(--ink)"
-            : plan.highlight ? "var(--signal-ink)" : "var(--ink-deep)",
-          background: isCurrent
-            ? "var(--signal-dim)"
-            : plan.highlight ? "var(--signal)" : "transparent",
-          border: isCurrent
-            ? "1px solid var(--ink)"
-            : plan.highlight
-              ? "1px solid var(--ink-deep)"
-              : "1px solid var(--border)",
-          borderRadius: 999, cursor: (plan.disabled || isCurrent || isLoading) ? "default" : "pointer",
-          opacity: plan.disabled ? 0.45 : 1,
-          transition: "background 140ms ease, border-color 140ms ease, transform 140ms cubic-bezier(0.16,1,0.3,1)",
-          display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 10,
-        }}
-        onMouseEnter={(e) => {
-          if (plan.disabled || isCurrent || isLoading) return;
-          if (!plan.highlight) {
-            e.currentTarget.style.background = "var(--bg-off)";
-            e.currentTarget.style.borderColor = "var(--ink)";
-          } else {
-            e.currentTarget.style.transform = "translateY(-1px)";
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (plan.disabled || isCurrent || isLoading) return;
-          if (!plan.highlight) {
-            e.currentTarget.style.background = "transparent";
-            e.currentTarget.style.borderColor = "var(--border)";
-          } else {
-            e.currentTarget.style.transform = "translateY(0)";
-          }
-        }}
+        disabled={buttonDisabled}
+        className={buttonClasses}
       >
-        {isLoading ? <Spinner /> : isCurrent ? "Current plan" : ctaLabel}
-        {!isLoading && !isCurrent && !plan.disabled && (
-          <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>{"→"}</span>
+        {isLoading ? (
+          <Spinner />
+        ) : isCurrent ? (
+          "Current plan"
+        ) : (
+          <>
+            {ctaLabel}
+            {!plan.disabled && (
+              <span aria-hidden className="oga-plan-card__cta-arrow">
+                →
+              </span>
+            )}
+          </>
         )}
       </button>
-    </div>
+    </article>
   );
 }
 
 export function Spinner() {
-  return (
-    <span style={{
-      width: 14, height: 14, borderRadius: "50%",
-      border: "1.5px solid currentColor", borderTopColor: "transparent",
-      display: "inline-block",
-      animation: "aiq-spin 800ms linear infinite",
-    }} />
-  );
+  return <span className="oga-plan-spinner" aria-hidden />;
 }
