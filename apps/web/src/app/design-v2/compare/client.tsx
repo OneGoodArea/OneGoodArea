@@ -1,53 +1,89 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Styles } from "../_shared/styles";
 import { AppShell, AppCard, GhostCta, appRag } from "../_shared/app-shell";
 import type { AreaReport } from "@/lib/types";
+import "./compare.css";
 
-type Report = { id: string; area: string; intent: string; report: AreaReport; score: number; created_at: string };
-type Summary = { id: string; area: string; intent: string; score: number; created_at: string };
+/* /compare — Brand v3 rewrite (AR-204 close-out 10/15).
 
-export default function CompareClient({ selected, all }: {
-  selected: Report[]; all: Summary[];
+   Retires per dashboard proposal: becomes part of
+   /dashboard/intelligence (rank_areas builder + peers tab). This
+   migration is light-touch — token swap + zero inline styles so
+   the .aiq block can be stripped cleanly at the end of the sweep.
+   No layout restructure since the page won't survive long. */
+
+type Report = {
+  id: string;
+  area: string;
+  intent: string;
+  report: AreaReport;
+  score: number;
+  created_at: string;
+};
+type Summary = {
+  id: string;
+  area: string;
+  intent: string;
+  score: number;
+  created_at: string;
+};
+
+export default function CompareClient({
+  selected,
+  all,
+}: {
+  selected: Report[];
+  all: Summary[];
 }) {
   const comparisonRef = useRef<HTMLDivElement>(null);
   const prevCountRef = useRef(selected.length);
 
   useEffect(() => {
-    // Auto-scroll to the comparison once a second report lands.
-    if (selected.length === 2 && prevCountRef.current < 2 && comparisonRef.current) {
-      comparisonRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (
+      selected.length === 2 &&
+      prevCountRef.current < 2 &&
+      comparisonRef.current
+    ) {
+      comparisonRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     }
     prevCountRef.current = selected.length;
   }, [selected.length]);
 
   return (
-    <>
-      <Styles />
-      <AppShell
-        title="Compare postcodes"
-        subtitle="Select two reports to see the scores side by side. Useful for portfolio screening and site-shortlisting workflows."
-        actions={<GhostCta href="/dashboard">← Dashboard</GhostCta>}
-      >
-        <div style={{ padding: "28px 40px 64px", display: "flex", flexDirection: "column", gap: 22, maxWidth: 1100 }}>
-          <Picker selected={selected} all={all} />
-          {selected.length === 2 && (
-            <div ref={comparisonRef} data-aiq-comparison-anchor>
-              <SideBySide a={selected[0]} b={selected[1]} />
-            </div>
-          )}
-          {selected.length === 1 && <OneSelected report={selected[0]} />}
-          {selected.length === 0 && <EmptyCompare />}
-        </div>
-      </AppShell>
-    </>
+    <AppShell
+      title="Compare postcodes"
+      subtitle="Select two reports to see the scores side by side. Useful for portfolio screening and site-shortlisting workflows."
+      actions={<GhostCta href="/dashboard">← Dashboard</GhostCta>}
+    >
+      <div className="oga-compare">
+        <Picker selected={selected} all={all} />
+        {selected.length === 2 && (
+          <div ref={comparisonRef} data-oga-comparison-anchor>
+            <SideBySide a={selected[0]} b={selected[1]} />
+          </div>
+        )}
+        {selected.length === 1 && <OneSelected report={selected[0]} />}
+        {selected.length === 0 && <EmptyCompare />}
+      </div>
+    </AppShell>
   );
 }
 
-function Picker({ selected, all }: { selected: Report[]; all: Summary[] }) {
+/* ============================================================
+   Picker
+   ============================================================ */
+function Picker({
+  selected,
+  all,
+}: {
+  selected: Report[];
+  all: Summary[];
+}) {
   const router = useRouter();
   const selectedIds = new Set(selected.map((r) => r.id));
   const ready = selected.length === 2;
@@ -57,41 +93,50 @@ function Picker({ selected, all }: { selected: Report[]; all: Summary[] }) {
     const next = current.includes(id)
       ? current.filter((x) => x !== id)
       : current.length >= 2
-        ? [current[1], id]  // drop oldest, add new
+        ? [current[1], id]
         : [...current, id];
     const qs = next.length > 0 ? `?reports=${next.join(",")}` : "";
     router.push(`/compare${qs}`);
   }
 
   function scrollToComparison() {
-    const el = document.querySelector("[data-aiq-comparison-anchor]");
+    const el = document.querySelector("[data-oga-comparison-anchor]");
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   return (
-    <AppCard title={ready ? "Comparing 2 reports below" : `Select two · ${selected.length}/2 picked`} noPad>
-      <div style={{
-        padding: "14px 22px",
-        borderBottom: "1px solid var(--border)",
-        display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap",
-        background: ready ? "var(--signal-dim)" : "transparent",
-        transition: "background 180ms ease",
-      }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-          letterSpacing: "0.14em", color: ready ? "var(--ink-deep)" : "var(--text-2)",
-          display: "inline-flex", alignItems: "center", gap: 8,
-        }}>
+    <AppCard
+      title={
+        ready
+          ? "Comparing 2 reports below"
+          : `Select two · ${selected.length}/2 picked`
+      }
+      noPad
+    >
+      <div
+        className={
+          ready
+            ? "oga-compare__bar oga-compare__bar--ready"
+            : "oga-compare__bar"
+        }
+      >
+        <div className="oga-compare__bar-msg">
           {ready && (
-            <span aria-hidden style={{
-              width: 14, height: 14, borderRadius: 14,
-              background: "var(--signal)",
-              border: "1px solid var(--ink-deep)",
-              display: "inline-flex", alignItems: "center", justifyContent: "center",
-              flexShrink: 0,
-            }}>
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path d="M5 12 L10 17 L19 8" stroke="var(--signal-ink)" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            <span aria-hidden className="oga-compare__bar-check">
+              <svg
+                width="9"
+                height="9"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden
+              >
+                <path
+                  d="M5 12 L10 17 L19 8"
+                  stroke="currentColor"
+                  strokeWidth="2.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </span>
           )}
@@ -99,107 +144,92 @@ function Picker({ selected, all }: { selected: Report[]; all: Summary[] }) {
             ? "Ready. Scroll down to see the side-by-side."
             : "Tap a report to add or remove."}
         </div>
-        <div style={{ marginLeft: "auto", display: "inline-flex", gap: 8, alignItems: "center" }}>
+        <div className="oga-compare__bar-actions">
           {ready && (
             <button
+              type="button"
               onClick={scrollToComparison}
-              style={{
-                fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-                letterSpacing: "0.14em", textTransform: "uppercase",
-                color: "var(--signal-ink)", background: "var(--signal)",
-                border: "1px solid var(--ink-deep)",
-                padding: "6px 12px", borderRadius: 999, cursor: "pointer",
-                display: "inline-flex", alignItems: "center", gap: 8,
-              }}
+              className="oga-compare__bar-jump"
             >
               See comparison
-              <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>↓</span>
+              <span aria-hidden>↓</span>
             </button>
           )}
           {selected.length > 0 && (
             <button
+              type="button"
               onClick={() => router.push("/compare")}
-              style={{
-                fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-                letterSpacing: "0.18em", textTransform: "uppercase",
-                color: "var(--text-2)", background: "transparent",
-                border: "1px solid var(--border)",
-                padding: "5px 10px", borderRadius: 2, cursor: "pointer",
-              }}
-            >Clear</button>
+              className="oga-compare__bar-clear"
+            >
+              Clear
+            </button>
           )}
         </div>
       </div>
 
       {all.length === 0 ? (
-        <div style={{ padding: "32px 22px", textAlign: "center" }}>
-          <div style={{
-            fontFamily: "var(--display)", fontSize: 18, fontWeight: 500,
-            color: "var(--ink-deep)", marginBottom: 6,
-          }}>No reports to compare yet</div>
-          <p style={{
-            fontFamily: "var(--sans)", fontSize: 14,
-            color: "var(--text-2)", margin: "0 auto 14px", maxWidth: "44ch",
-          }}>Generate two reports, then come back here.</p>
+        <div className="oga-compare__empty-list">
+          <div className="oga-compare__empty-title">
+            No reports to compare yet
+          </div>
+          <p className="oga-compare__empty-body">
+            Generate two reports, then come back here.
+          </p>
           <GhostCta href="/report">Generate a report</GhostCta>
         </div>
       ) : (
-        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          {all.map((r, i) => {
+        <ul className="oga-compare__list">
+          {all.map((r) => {
             const isPicked = selectedIds.has(r.id);
             const rag = appRag(r.score);
             return (
-              <li key={r.id} style={{
-                borderBottom: i < all.length - 1 ? "1px solid var(--border-dim)" : "none",
-              }}>
+              <li key={r.id} className="oga-compare__list-item">
                 <button
+                  type="button"
                   onClick={() => toggle(r.id)}
-                  className="aiq-compare-picker-row"
-                  style={{
-                    width: "100%", textAlign: "left",
-                    padding: "13px 22px",
-                    background: isPicked ? "var(--signal-dim)" : "transparent",
-                    border: "none", cursor: "pointer",
-                    display: "grid",
-                    gridTemplateColumns: "24px 1fr 120px 70px 100px",
-                    gap: 14, alignItems: "center",
-                    transition: "background 140ms ease",
-                  }}
-                  onMouseEnter={(e) => { if (!isPicked) e.currentTarget.style.background = "var(--bg-off)"; }}
-                  onMouseLeave={(e) => { if (!isPicked) e.currentTarget.style.background = "transparent"; }}
+                  className={
+                    isPicked
+                      ? "oga-compare__row oga-compare__row--picked"
+                      : "oga-compare__row"
+                  }
                 >
-                  <span aria-hidden style={{
-                    width: 18, height: 18, borderRadius: 3,
-                    border: `1.5px solid ${isPicked ? "var(--ink-deep)" : "var(--border)"}`,
-                    background: isPicked ? "var(--signal)" : "transparent",
-                    display: "inline-flex", alignItems: "center", justifyContent: "center",
-                    transition: "background 140ms ease, border-color 140ms ease",
-                  }}>
+                  <span
+                    aria-hidden
+                    className={
+                      isPicked
+                        ? "oga-compare__check oga-compare__check--on"
+                        : "oga-compare__check"
+                    }
+                  >
                     {isPicked && (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
-                        <path d="M5 12 L10 17 L19 8" stroke="var(--signal-ink)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        aria-hidden
+                      >
+                        <path
+                          d="M5 12 L10 17 L19 8"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
                       </svg>
                     )}
                   </span>
-                  <span style={{
-                    fontFamily: "var(--display)", fontSize: 15, fontWeight: 500,
-                    letterSpacing: "-0.008em", color: "var(--ink-deep)",
-                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                  }}>{r.area}</span>
-                  <span style={{
-                    fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-                    letterSpacing: "0.04em",
-                    color: "var(--signal-ink)", background: "var(--signal)",
-                    padding: "3px 8px", borderRadius: 2, justifySelf: "start",
-                  }}>{r.intent}</span>
-                  <span style={{
-                    fontFamily: "var(--mono)", fontSize: 14, fontWeight: 600,
-                    color: rag.dot,
-                  }}>{r.score}</span>
-                  <span style={{
-                    fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-                    letterSpacing: "0.06em", color: "var(--text-3)",
-                  }}>{formatDate(r.created_at)}</span>
+                  <span className="oga-compare__row-area">{r.area}</span>
+                  <span className="oga-compare__row-intent">{r.intent}</span>
+                  <span
+                    className="oga-compare__row-score"
+                    style={{ color: rag.dot }}
+                  >
+                    {r.score}
+                  </span>
+                  <span className="oga-compare__row-date">
+                    {formatDate(r.created_at)}
+                  </span>
                 </button>
               </li>
             );
@@ -210,35 +240,30 @@ function Picker({ selected, all }: { selected: Report[]; all: Summary[] }) {
   );
 }
 
+/* ============================================================
+   Side-by-side
+   ============================================================ */
 function SideBySide({ a, b }: { a: Report; b: Report }) {
   const alignedDims = alignDimensions(a, b);
-  const ragA = appRag(a.score);
-  const ragB = appRag(b.score);
   return (
     <>
       <AppCard noPad>
-        <div className="aiq-compare-heads" style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 0,
-        }}>
-          <CompareHead report={a} rag={ragA} />
-          <CompareHead report={b} rag={ragB} border="left" />
+        <div className="oga-compare__heads">
+          <CompareHead report={a} />
+          <CompareHead report={b} border="left" />
         </div>
       </AppCard>
 
       <AppCard title="Dimension-by-dimension">
-        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-          {alignedDims.map((row, i) => <CompareDim key={i} row={row} />)}
+        <div className="oga-compare__dims">
+          {alignedDims.map((row, i) => (
+            <CompareDim key={i} row={row} />
+          ))}
         </div>
       </AppCard>
 
       <AppCard title="Summaries">
-        <div className="aiq-compare-summaries" style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 20,
-        }}>
+        <div className="oga-compare__summaries">
           <SummaryCol label={a.area} text={a.report.summary} />
           <SummaryCol label={b.area} text={b.report.summary} />
         </div>
@@ -247,51 +272,29 @@ function SideBySide({ a, b }: { a: Report; b: Report }) {
   );
 }
 
-function CompareHead({ report, rag, border }: {
+function CompareHead({
+  report,
+  border,
+}: {
   report: Report;
-  rag: ReturnType<typeof appRag>;
   border?: "left";
 }) {
   return (
-    <div style={{
-      padding: "24px 26px",
-      borderLeft: border === "left" ? "1px solid var(--border)" : "none",
-      background: "var(--bg-ink)",
-      color: "#FFFFFF",
-      position: "relative", overflow: "hidden",
-    }}>
-      <div aria-hidden style={{
-        position: "absolute", top: -90, right: -70,
-        width: 260, height: 260,
-        background: "radial-gradient(circle, rgba(212,243,58,0.18) 0%, rgba(212,243,58,0) 60%)",
-        pointerEvents: "none",
-      }} />
-      <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 18 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{
-            fontFamily: "var(--mono)", fontSize: 10, fontWeight: 600,
-            letterSpacing: "0.22em", textTransform: "uppercase",
-            color: "var(--signal)", marginBottom: 8,
-          }}>{report.intent}</div>
-          <div style={{
-            fontFamily: "var(--display)", fontSize: 22, fontWeight: 500,
-            letterSpacing: "-0.014em", color: "#FFFFFF",
-            lineHeight: 1.1,
-            overflow: "hidden", textOverflow: "ellipsis",
-          }}>{report.area}</div>
-        </div>
-        <div style={{ textAlign: "center", flexShrink: 0 }}>
-          <div style={{
-            fontFamily: "var(--display)", fontSize: 44, fontWeight: 500,
-            letterSpacing: "-0.024em",
-            color: "var(--signal)", lineHeight: 1,
-          }}>{report.score}</div>
-          <div style={{
-            fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
-            letterSpacing: "0.22em", color: "rgba(255,255,255,0.5)",
-            marginTop: 4,
-          }}>/ 100</div>
-        </div>
+    <div
+      className={
+        border === "left"
+          ? "oga-compare__head oga-compare__head--bordered"
+          : "oga-compare__head"
+      }
+      data-oga-surface="dark"
+    >
+      <div className="oga-compare__head-text">
+        <div className="oga-compare__head-intent">{report.intent}</div>
+        <div className="oga-compare__head-area">{report.area}</div>
+      </div>
+      <div className="oga-compare__head-score">
+        <div className="oga-compare__head-score-value">{report.score}</div>
+        <div className="oga-compare__head-score-label">/ 100</div>
       </div>
     </div>
   );
@@ -308,21 +311,19 @@ function alignDimensions(a: Report, b: Report) {
   }));
 }
 
-function CompareDim({ row }: {
-  row: { label: string; a: AreaReport["sub_scores"][number] | null; b: AreaReport["sub_scores"][number] | null };
+function CompareDim({
+  row,
+}: {
+  row: {
+    label: string;
+    a: AreaReport["sub_scores"][number] | null;
+    b: AreaReport["sub_scores"][number] | null;
+  };
 }) {
   return (
     <div>
-      <div style={{
-        fontFamily: "var(--display)", fontSize: 16, fontWeight: 500,
-        letterSpacing: "-0.01em", color: "var(--ink-deep)",
-        marginBottom: 10,
-      }}>{row.label}</div>
-      <div className="aiq-compare-bars" style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 20,
-      }}>
+      <div className="oga-compare__dim-label">{row.label}</div>
+      <div className="oga-compare__dim-bars">
         <DimBar sub={row.a} />
         <DimBar sub={row.b} />
       </div>
@@ -330,50 +331,33 @@ function CompareDim({ row }: {
   );
 }
 
-function DimBar({ sub }: { sub: AreaReport["sub_scores"][number] | null }) {
+function DimBar({
+  sub,
+}: {
+  sub: AreaReport["sub_scores"][number] | null;
+}) {
   if (!sub) {
-    return (
-      <div style={{
-        fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-        letterSpacing: "0.14em", color: "var(--text-3)",
-        padding: "12px 14px",
-        border: "1px dashed var(--border)",
-        borderRadius: 3,
-      }}>Not in this intent</div>
-    );
+    return <div className="oga-compare__dim-empty">Not in this intent</div>;
   }
   const rag = appRag(sub.score);
   return (
     <div>
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        marginBottom: 5,
-      }}>
-        <span style={{
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-          letterSpacing: "0.16em",
-          color: "var(--text-3)",
-        }}>Weight {sub.weight}</span>
-        <span style={{
-          fontFamily: "var(--mono)", fontSize: 15, fontWeight: 600,
-          color: rag.dot,
-        }}>{sub.score}</span>
+      <div className="oga-compare__dim-head">
+        <span className="oga-compare__dim-weight">Weight {sub.weight}</span>
+        <span className="oga-compare__dim-score" style={{ color: rag.dot }}>
+          {sub.score}
+        </span>
       </div>
-      <div style={{
-        height: 6, width: "100%",
-        background: rag.bg,
-        borderRadius: 2, overflow: "hidden",
-      }}>
-        <div style={{
-          height: "100%", width: `${sub.score}%`, background: rag.dot,
-          transition: "width 500ms cubic-bezier(0.16,1,0.3,1)",
-        }} />
+      <div
+        className="oga-compare__dim-track"
+        style={{ background: rag.bg }}
+      >
+        <div
+          className="oga-compare__dim-fill"
+          style={{ width: `${sub.score}%`, background: rag.dot }}
+        />
       </div>
-      <p style={{
-        fontFamily: "var(--sans)", fontSize: 12.5, fontWeight: 400,
-        lineHeight: 1.5, color: "var(--text-2)",
-        margin: "8px 0 0",
-      }}>{sub.summary}</p>
+      <p className="oga-compare__dim-summary">{sub.summary}</p>
     </div>
   );
 }
@@ -381,22 +365,11 @@ function DimBar({ sub }: { sub: AreaReport["sub_scores"][number] | null }) {
 function SummaryCol({ label, text }: { label: string; text: string }) {
   return (
     <div>
-      <div style={{
-        fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-        letterSpacing: "0.22em", textTransform: "uppercase",
-        color: "var(--ink)", marginBottom: 10,
-        display: "inline-flex", alignItems: "center", gap: 8,
-      }}>
-        <span aria-hidden style={{
-          width: 5, height: 5, borderRadius: 5, background: "var(--signal)",
-        }} />
+      <div className="oga-compare__summary-label">
+        <span aria-hidden className="oga-compare__summary-dot" />
         {label}
       </div>
-      <p style={{
-        fontFamily: "var(--sans)", fontSize: 14, fontWeight: 400,
-        lineHeight: 1.65, color: "var(--text-2)",
-        margin: 0, maxWidth: "48ch",
-      }}>{text}</p>
+      <p className="oga-compare__summary-text">{text}</p>
     </div>
   );
 }
@@ -404,16 +377,10 @@ function SummaryCol({ label, text }: { label: string; text: string }) {
 function OneSelected({ report }: { report: Report }) {
   return (
     <AppCard>
-      <div style={{
-        fontFamily: "var(--display)", fontSize: 17, fontWeight: 500,
-        letterSpacing: "-0.01em", color: "var(--ink-deep)",
-        marginBottom: 6,
-      }}>Pick one more report</div>
-      <p style={{
-        fontFamily: "var(--sans)", fontSize: 14,
-        color: "var(--text-2)", margin: 0,
-      }}>
-        <strong style={{ color: "var(--ink-deep)" }}>{report.area}</strong> is waiting. Tap another report above to see the comparison.
+      <div className="oga-compare__status-title">Pick one more report</div>
+      <p className="oga-compare__status-body">
+        <strong className="oga-compare__status-strong">{report.area}</strong>{" "}
+        is waiting. Tap another report above to see the comparison.
       </p>
     </AppCard>
   );
@@ -422,21 +389,19 @@ function OneSelected({ report }: { report: Report }) {
 function EmptyCompare() {
   return (
     <AppCard>
-      <div style={{
-        fontFamily: "var(--display)", fontSize: 17, fontWeight: 500,
-        letterSpacing: "-0.01em", color: "var(--ink-deep)",
-        marginBottom: 6,
-      }}>Pick two reports</div>
-      <p style={{
-        fontFamily: "var(--sans)", fontSize: 14,
-        color: "var(--text-2)", margin: 0, lineHeight: 1.5,
-      }}>
-        Tap any two reports in the list above. OneGoodArea will line them up score-by-score, dimension-by-dimension.
+      <div className="oga-compare__status-title">Pick two reports</div>
+      <p className="oga-compare__status-body">
+        Tap any two reports in the list above. OneGoodArea will line them up
+        score-by-score, dimension-by-dimension.
       </p>
     </AppCard>
   );
 }
 
 function formatDate(d: string) {
-  return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(d).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
