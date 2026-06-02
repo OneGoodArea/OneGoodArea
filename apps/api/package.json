@@ -23,7 +23,8 @@
     "eval:intelligence": "tsx src/modules/intelligence/eval/run.ts",
     "load:geo": "tsx src/modules/signals/refresh/geo-spine.ts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "fastify": "^5.2.0",
