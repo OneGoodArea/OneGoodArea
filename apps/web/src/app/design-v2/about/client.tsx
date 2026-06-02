@@ -292,8 +292,8 @@ const STATS = [
 const CONTACT_CHANNELS = [
   {
     label: "Email",
-    value: "hello@onegoodarea.com",
-    href: "mailto:hello@onegoodarea.com",
+    value: "operation@onegoodarea.co.uk",
+    href: "mailto:operation@onegoodarea.co.uk",
     note: "We read everything that lands here.",
     Icon: EmailIcon,
   },
@@ -340,7 +340,7 @@ export default function AboutClient() {
               Read the methodology
               <span aria-hidden>→</span>
             </Link>
-            <a href="mailto:hello@onegoodarea.com" className="oga-btn oga-btn-secondary">
+            <a href="mailto:operation@onegoodarea.co.uk" className="oga-btn oga-btn-secondary">
               Talk to us
               <span aria-hidden>→</span>
             </a>

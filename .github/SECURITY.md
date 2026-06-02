@@ -4,7 +4,7 @@
 
 If you discover a security issue in OneGoodArea, please report it privately.
 
-- **Email:** `hello@onegoodarea.com` with subject prefix `[Security]`
+- **Email:** `operation@onegoodarea.co.uk` with subject prefix `[Security]`
 - **Response time:** we aim to acknowledge within 24 hours and ship a fix or mitigation within 7 days for critical issues
 - **Do NOT** open a public GitHub issue for security vulnerabilities
 
@@ -51,4 +51,4 @@ We publish known security gaps transparently:
 
 ## For procurement security questionnaires
 
-Contact `hello@onegoodarea.com` for security questionnaire responses, signed DPAs, and infrastructure attestations.
+Contact `operation@onegoodarea.co.uk` for security questionnaire responses, signed DPAs, and infrastructure attestations.

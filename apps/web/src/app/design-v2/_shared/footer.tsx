@@ -49,7 +49,7 @@ const COMPANY: Array<{ label: string; href: string }> = [
   { label: "Pricing",  href: "/pricing" },
   { label: "Help",     href: "/help" },
   { label: "Blog",     href: "/blog" },
-  { label: "Contact",  href: "mailto:hello@onegoodarea.com" },
+  { label: "Contact",  href: "mailto:operation@onegoodarea.co.uk" },
 ];
 
 const LEGAL: Array<{ label: string; href: string }> = [
@@ -66,7 +66,7 @@ interface SocialLink {
 const SOCIAL: SocialLink[] = [
   { label: "X",        href: "https://x.com/onegoodarea",              Icon: XIcon },
   { label: "LinkedIn", href: "https://www.linkedin.com/company/onegoodarea", Icon: LinkedInIcon },
-  { label: "Email",    href: "mailto:hello@onegoodarea.com",           Icon: EmailIcon },
+  { label: "Email",    href: "mailto:operation@onegoodarea.co.uk",           Icon: EmailIcon },
 ];
 
 export function Footer() {

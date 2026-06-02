@@ -202,7 +202,7 @@ function EnterpriseCallout() {
             </div>
           </div>
           <a
-            href="mailto:hello@onegoodarea.com?subject=Enterprise API pricing"
+            href="mailto:operation@onegoodarea.co.uk?subject=Enterprise API pricing"
             style={{
               fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
               letterSpacing: "0.16em", textTransform: "uppercase",
@@ -489,12 +489,12 @@ function RetiredPlansNotice() {
           {" "}Existing subscribers continue on their current plan.
           {" "}Contact{" "}
           <a
-            href="mailto:hello@onegoodarea.com?subject=Plan migration"
+            href="mailto:operation@onegoodarea.co.uk?subject=Plan migration"
             style={{
               color: "var(--ink)", textDecoration: "underline",
               textUnderlineOffset: 3, textDecorationColor: "var(--border)",
             }}
-          >hello@onegoodarea.com</a>
+          >operation@onegoodarea.co.uk</a>
           {" "}to migrate.
         </p>
       </div>

@@ -26,7 +26,7 @@ export default function Error({
       quickLinks={[
         { label: "Dashboard", href: "/dashboard" },
         { label: "Help",      href: "/help" },
-        { label: "Contact",   href: "mailto:hello@onegoodarea.com" },
+        { label: "Contact",   href: "mailto:operation@onegoodarea.co.uk" },
       ]}
     />
   );

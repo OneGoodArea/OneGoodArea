@@ -242,12 +242,12 @@ export function LegalEmph({ children }: { children: React.ReactNode }) {
 
 export function LegalMail() {
   return (
-    <a href="mailto:hello@onegoodarea.com" style={{
+    <a href="mailto:operation@onegoodarea.co.uk" style={{
       color: "var(--ink-deep)", textDecoration: "none",
       borderBottom: "1px solid var(--ink-deep)", paddingBottom: 1,
       fontFamily: "var(--mono)", fontSize: 14,
     }}>
-      hello@onegoodarea.com
+      operation@onegoodarea.co.uk
     </a>
   );
 }
