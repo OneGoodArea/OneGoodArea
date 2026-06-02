@@ -14,6 +14,5 @@ How we write code at OneGoodArea — philosophy, testing strategy, code style.
 ## Related
 
 - [`/CLAUDE.md`](../../CLAUDE.md) — the source of truth for engineering rules (this folder distills + cross-references it)
-- [`/CONTRIBUTING.md`](../CONTRIBUTING.md) — workflow conventions + PR expectations
 - [`docs/OPERATIONS/`](../OPERATIONS/) — how to run things locally
 - [`docs/DECISIONS/`](../DECISIONS/) — why decisions were made

@@ -16,7 +16,7 @@
 1. **Before ANY code changes:** `git checkout -b docs/documentation-organization` (or appropriate feature branch)
 2. **Every commit:** Include `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>` trailer
 3. **Before merge:** Create a PR against `main`, get review, squash-merge with Conventional Commit title
-4. **Branch naming:** `docs/documentation-organization` or `chore/test-artifacts-restructure` per `.github/CONTRIBUTING.md`
+4. **Branch naming:** `docs/documentation-organization` or `chore/test-artifacts-restructure` per `CLAUDE.md`
 
 **If this rule is violated again, the entire work reverts + restarts on a proper branch.**
 
@@ -33,7 +33,7 @@ Makes it difficult for newcomers and auditors to build a mental model:
 - **System architecture** → `docs/SYSTEM-OVERVIEW.md` (excellent but monolithic, 200+ lines)
 - **Architectural decisions** → `docs/adr/0001-0034.md` (34 ADRs, no index)
 - **Engineering rules** → `CLAUDE.md` + `.antigravitycli/instructions.md` (duplicated)
-- **Contributing workflow** → `.github/CONTRIBUTING.md` (hidden from main nav)
+- **Workflow rules** → `CLAUDE.md` (hidden from main nav)
 - **Implementation plans** → `plan/` directory (ad-hoc, not indexed)
 - **Deployment** → `docs/DEPLOY.md` (exists but may drift from reality)
 - **Local dev** → `README.md` (buries dev setup in 217-line file)
@@ -124,10 +124,10 @@ Reorganize `docs/` as **tier + topic**, each tier with its own README, following
 - All docs named with **consistent intent** (UPPER-SNAKE-CASE): `GETTING-STARTED`, `LOCAL-SETUP`, `SIGNAL-REFRESH` (not `setup`, `start`, `refresh`)
 - One job per doc: each file answers ONE question completely
 - No file > 80 lines; link out for related topics
-- Create `docs/INDEX.md` and `docs/GLOSSARY.md` for phrase search
+- Create `docs/HOME/INDEX.md` and `docs/HOME/GLOSSARY.md` for phrase search
 
 ### 2.2 Audience-Aware Navigation
-- Top-level `docs/README.md` branches by role: "I'm a developer → see GETTING-STARTED"; "I'm an operator → see OPERATIONS"
+- Top-level `docs/HOME/README.md` branches by role: "I'm a developer → see GETTING-STARTED"; "I'm an operator → see OPERATIONS"
 - Each tier has its own `README.md` (e.g., `docs/ARCHITECTURE/README.md`, `docs/OPERATIONS/README.md`)
 - Breadcrumb links throughout
 
@@ -149,7 +149,7 @@ Reorganize `docs/` as **tier + topic**, each tier with its own README, following
 docs/
 ├── README.md                          [ROOT: Triage by audience + quick-start]
 ├── GETTING-STARTED.md                 [NEW: 5-min onboard]
-├── CONTRIBUTING.md                    [MOVED from .github/]
+├── CLAUDE.md                          [source of truth]
 ├── GLOSSARY.md                        [NEW: Searchable domain terms + cross-references]
 ├── INDEX.md                           [NEW: "How do I X?" → document map]
 │
@@ -183,7 +183,7 @@ docs/
 │
 ├── ENGINEERING/                       [NEW: Code-level guidance]
 │   ├── README.md                      [Philosophy + quality gates]
-│   ├── CODE-STYLE.md                  [Extracted from CLAUDE.md + CONTRIBUTING.md]
+│   ├── CODE-STYLE.md                  [Extracted from CLAUDE.md]
 │   ├── TESTING-STRATEGY.md            [Test counts, fixtures, patterns]
 │   ├── GOLDEN-TESTS.md                [Scoring engine golden-tests + pattern]
 │   └── PERFORMANCE.md                 [Benchmarks, optimization notes]
@@ -208,13 +208,13 @@ docs/
 - **Lines 148–193:** Local dev → `docs/OPERATIONS/LOCAL-SETUP.md`
 - **Lines 105–116:** API surface → `docs/API-REFERENCE/ENDPOINTS-BY-PRODUCT.md`
 - **Lines 89–102:** Data sources → `docs/ARCHITECTURE/DATA-LAYER.md`
-- **Lines 17–44:** "Why it's different" + "Audiences" → `docs/GETTING-STARTED.md`
+- **Lines 17–44:** "Why it's different" + "Audiences" → `docs/HOME/GETTING-STARTED.md`
 
 ### 4.2 Extract from CLAUDE.md & .antigravitycli/instructions.md
-- **Line 18 (CLAUDE.md):** Plan storage rule → `docs/CONTRIBUTING.md` (already captured)
+- **Line 18 (CLAUDE.md):** Plan storage rule → `CLAUDE.md` (already captured)
 - **Lines 1–16 (CLAUDE.md):** Interaction model → `docs/ENGINEERING/CODE-STYLE.md` (philosophy)
 - **Lines 20–30:** Tooling priority → `docs/ENGINEERING/CODE-STYLE.md`
-- **Lines 35–47:** Git rules → `docs/CONTRIBUTING.md`
+- **Lines 35–47:** Git rules → `CLAUDE.md`
 - **Lines 51–66:** Safety rules → `docs/ENGINEERING/CODE-STYLE.md` (Safety section)
 - **Lines 70–78:** Engineering philosophy → `docs/ENGINEERING/CODE-STYLE.md`
 - **Duplicate in .antigravitycli:** Mark as deprecated; link to CLAUDE.md
@@ -270,12 +270,12 @@ See: [ONS NSPL spine](https://geoportal.statistics.gov.uk)
 - [ ] **create-api-tier:** `docs/API-REFERENCE/` + organize endpoints by product
 
 ### Phase 3: Create Index & Glossary (2–3 hours)
-- [ ] **create-glossary:** `docs/GLOSSARY.md` (50+ terms, grep-friendly)
-- [ ] **create-index:** `docs/INDEX.md` (phrase search map)
+- [ ] **create-glossary:** `docs/HOME/GLOSSARY.md` (50+ terms, grep-friendly)
+- [ ] **create-index:** `docs/HOME/INDEX.md` (phrase search map)
 
 ### Phase 4: Restructure & Rewrite (3–4 hours)
-- [ ] **rewrite-readme:** Simplify `docs/README.md` to navigation + quick-start
-- [ ] **update-engineering-docs:** Extract CLAUDE.md + CONTRIBUTING.md → `docs/ENGINEERING/CODE-STYLE.md`
+- [ ] **rewrite-readme:** Simplify `docs/HOME/README.md` to navigation + quick-start
+- [ ] **update-engineering-docs:** Extract CLAUDE.md → `docs/ENGINEERING/CODE-STYLE.md`
 - [ ] **add-deprecation-notices:** Mark old docs with "See X for updated guidance"
 
 ### Phase 5: Validate & Publish (2–3 hours)
@@ -294,7 +294,7 @@ All docs use **UPPER-SNAKE-CASE** for consistency:
 - ✅ `GETTING-STARTED.md`, `LOCAL-SETUP.md`, `SIGNAL-REFRESH.md`
 - ❌ `getting_started.md`, `setup.md`, `refresh.md`
 
-Cross-references: `[See CONTRIBUTING](./CONTRIBUTING.md)` or `[See docs/OPERATIONS/LOCAL-SETUP](./OPERATIONS/LOCAL-SETUP.md)`
+Cross-references: `[See CLAUDE.md](../CLAUDE.md)` or `[See docs/OPERATIONS/LOCAL-SETUP](./OPERATIONS/LOCAL-SETUP.md)`
 
 ---
 
@@ -323,7 +323,7 @@ Before starting Phase 0, confirm:
 ## 8. Win Conditions
 
 - ✅ **Discoverability:** `grep -r "how to X" docs/ | head -3` → answer found in <2 files
-- ✅ **Onboarding:** Fresh contributor starts at `docs/GETTING-STARTED.md`, finds everything in breadcrumbs
+- ✅ **Onboarding:** Fresh contributor starts at `docs/HOME/GETTING-STARTED.md`, finds everything in breadcrumbs
 - ✅ **Audit trail:** ADRs + decision log make reasoning transparent; linked to code
 - ✅ **Ops clarity:** Operator finds "how to refresh signals" + exact command in <1 minute
 - ✅ **API clarity:** API docs live next to examples; no "figure it out from code"

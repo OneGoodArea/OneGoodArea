@@ -1,6 +1,6 @@
 # Render Blueprint for the standalone backend (apps/api).
 # Render is the fastest free start; the same OCI image also runs on Cloud Run /
-# Koyeb with no rework (see docs/CONTAINERS.md + docs/ARCHITECTURE/DEPLOYMENTS.md).
+# Koyeb with no rework (see docs/ARCHITECTURE/CONTAINERS.md + docs/ARCHITECTURE/DEPLOYMENTS.md).
 # Free web services sleep after 15 min idle (30-60s cold start) — fine pre-customer.
 #
 # To use: Render Dashboard → New → Blueprint → connect this repo. Then set the

@@ -8,8 +8,8 @@
 
 For the cross-platform container workflow (Podman/Docker abstraction,
 per-service env split, portable `make container-*` interface), see
-[`../CONTAINERS.md`](../CONTAINERS.md). For pre-deploy verification,
-see [`../PROD-CONTAINER-CHECKLIST.md`](../PROD-CONTAINER-CHECKLIST.md).
+[`./CONTAINERS.md`](./CONTAINERS.md). For pre-deploy verification,
+see [`../HOME/PROD-CONTAINER-CHECKLIST.md`](../HOME/PROD-CONTAINER-CHECKLIST.md).
 
 Nothing here touches the live site: `apps/api` is a separate service.
 

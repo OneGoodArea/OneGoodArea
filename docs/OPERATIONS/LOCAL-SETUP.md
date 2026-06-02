@@ -1,25 +1,27 @@
 # Local setup
 
-Get OneGoodArea running on your machine in 5 minutes.
+Use the Makefile for the common path: `make setup`, `make dev`, `make migrate`, `make bootstrap-test-key`, `make test`, `make typecheck`, and `make lint`.
 
 ## Prerequisites
 
 - Node.js 22+ (matches the Render container)
 - npm 10+
-- A Neon Postgres database URL (or any Postgres with the migrations applied)
-- An Anthropic API key (for the Intelligence + NL planner features)
+- A Postgres `DATABASE_URL`
+- An Anthropic API key
 
-## Install
+## Start
 
 ```bash
 git clone https://github.com/OneGoodArea/OneGoodArea.git
 cd OneGoodArea
-npm install
+make setup
 ```
+
+`make setup` runs a clean install and scaffolds `apps/web/.env.local` and `apps/api/.env.local` from their `.env.example` files if they do not already exist.
 
 ## Env vars
 
-Per app (`apps/web/.env.local` and `apps/api/.env.local`):
+Populate the local env files:
 
 ```bash
 # Shared (must match between apps)
@@ -35,7 +37,7 @@ RESEND_API_KEY=re_...
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 
-# apps/api only — usually same key
+# apps/api only
 ANTHROPIC_API_KEY=sk-ant-...
 ```
 
@@ -43,42 +45,36 @@ Full templates at `apps/web/.env.example` and `apps/api/.env.example`.
 
 ## Run
 
-Standalone API server:
-
 ```bash
-npm run dev -w @onegoodarea/api        # Fastify on http://localhost:8080
+make dev
+OGA_SIGNALS_API=true make dev-signals
 ```
 
 The web app is deployed separately; this local flow is API-only.
 
-Flag the post-restructure surface on for `apps/api`:
+## Database + keys
 
 ```bash
-OGA_SIGNALS_API=true npm run dev -w @onegoodarea/api
+make migrate
+make bootstrap-test-key
 ```
 
-## Gates (run before every commit)
+`make bootstrap-test-key` prints a disposable `oga_...` key and a temp password for the test user.
+
+## Gates
 
 ```bash
-npm test          # all workspaces
-npm run typecheck # all workspaces
-npm run lint      # apps + packages
+make test
+make typecheck
+make lint
 ```
 
-## Run database migrations
+## Refresh signal data
 
 ```bash
-npm run migrate -w @onegoodarea/api
+make refresh-deprivation
+make refresh-property
+make refresh-crime CRIME_ARCHIVE_DIR=<police-archive-folder>
 ```
 
-Migrations are idempotent — safe to re-run. See [`DATABASE-MIGRATIONS.md`](./DATABASE-MIGRATIONS.md) for details.
-
-## Refresh signal data (optional, takes a while)
-
-```bash
-npm run refresh:deprivation -w @onegoodarea/api
-npm run refresh:property -w @onegoodarea/api
-npm run refresh:crime -w @onegoodarea/api <police-archive-folder>
-```
-
-Full list in [`SIGNAL-REFRESH.md`](./SIGNAL-REFRESH.md).
+See [`SIGNAL-REFRESH.md`](../../docs/OPERATIONS/SIGNAL-REFRESH.md) for the full refresh list.

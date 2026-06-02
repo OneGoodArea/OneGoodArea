@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
+    "bootstrap:test-key": "tsx src/scripts/bootstrap-test-key.ts",
     "build": "esbuild src/server.ts --bundle --platform=node --format=cjs --outfile=dist/server.cjs --target=node22",
     "start:prod": "node dist/server.cjs",
     "migrate": "tsx src/infrastructure/db/migrate.ts",

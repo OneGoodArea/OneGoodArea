@@ -55,5 +55,4 @@ Before writing custom code: check whether an existing tool, abstraction, or capa
 ## See also
 
 - [`/CLAUDE.md`](../../CLAUDE.md) — canonical source of all rules above
-- [`/CONTRIBUTING.md`](../CONTRIBUTING.md) — workflow + PR conventions
 - [`TESTING-STRATEGY.md`](./TESTING-STRATEGY.md) — when to add tests + what kind

@@ -25,40 +25,99 @@
 
 include build/container.mk
 
-# --- legacy API shortcuts ----------------------------------------------
-IMG     ?= onegoodarea/api:local
-NAME    ?= oga-api
-PORT    ?= 8080
-ENVFILE ?= .env.local
+# --- local setup ----------------------------------------------------------
+WEB_ENV_FILE ?= apps/web/.env.local
+API_ENV_FILE ?= apps/api/.env.local
+BOOTSTRAP_EMAIL ?= api-test@onegoodarea.local
+BOOTSTRAP_PLAN ?= sandbox
+CRIME_ARCHIVE_DIR ?=
 
-.PHONY: help api-build api-run api-stop api-clean \
+# --- legacy API shortcuts ----------------------------------------------
+API_IMAGE   ?= onegoodarea/api:local
+API_NAME    ?= oga-api
+API_PORT    ?= 8080
+API_ENVFILE ?= .env.local
+
+.PHONY: help setup setup-install setup-env dev dev-signals migrate \
+        bootstrap-test-key test typecheck lint refresh-deprivation \
+        refresh-property refresh-crime api-build api-run api-stop api-clean \
         container-build container-run container-stop container-logs \
         container-guard
 
 help:
-	@echo "OneGoodArea container targets:"
+	@echo "OneGoodArea targets:"
+	@echo "  make setup                                                install deps and scaffold .env.local files"
+	@echo "  make dev                                                  run the API on :8080"
+	@echo "  make dev-signals                                          run the API with OGA_SIGNALS_API=true"
+	@echo "  make migrate                                              run API migrations"
+	@echo "  make bootstrap-test-key                                   create a disposable test API key"
+	@echo "  make test | typecheck | lint                              workspace checks"
+	@echo "  make refresh-deprivation                                  refresh deprivation signals"
+	@echo "  make refresh-property                                     refresh property signals"
+	@echo "  make refresh-crime ARCHIVE_DIR=/path/to/folder            refresh crime signals"
 	@echo "  make container-info                                       runtime info"
-	@echo "  make api-build                                            build $(IMG)"
-	@echo "  make api-run                                              run $(NAME) on :$(PORT) (env: $(ENVFILE))"
-	@echo "  make api-stop                                             stop $(NAME)"
-	@echo "  make api-clean                                            stop $(NAME) + drop $(IMG)"
+	@echo "  make api-build                                            build $(API_IMAGE)"
+	@echo "  make api-run                                              run $(API_NAME) on :$(API_PORT) (env: $(API_ENVFILE))"
+	@echo "  make api-stop                                             stop $(API_NAME)"
+	@echo "  make api-clean                                            stop $(API_NAME) + drop $(API_IMAGE)"
 	@echo "  make container-build ENV=<local|dev|prod> SERVICE=<api|web|postgres>"
 	@echo "  make container-run   ENV=<...> SERVICE=<...>"
 	@echo "  make container-stop  ENV=<...> SERVICE=<...>"
 	@echo "  make container-logs  ENV=<...> SERVICE=<...>"
 
+setup: setup-install setup-env
+	@echo "Fill in $(WEB_ENV_FILE) and $(API_ENV_FILE), then run 'make dev'."
+
+setup-install:
+	npm ci
+
+setup-env:
+	@if [ -f "$(WEB_ENV_FILE)" ]; then echo "$(WEB_ENV_FILE) already exists"; else cp apps/web/.env.example "$(WEB_ENV_FILE)" && echo "created $(WEB_ENV_FILE)"; fi
+	@if [ -f "$(API_ENV_FILE)" ]; then echo "$(API_ENV_FILE) already exists"; else cp apps/api/.env.example "$(API_ENV_FILE)" && echo "created $(API_ENV_FILE)"; fi
+
+dev:
+	npm run dev -w @onegoodarea/api
+
+dev-signals:
+	OGA_SIGNALS_API=true npm run dev -w @onegoodarea/api
+
+migrate:
+	npm run migrate -w @onegoodarea/api
+
+bootstrap-test-key:
+	npm run bootstrap:test-key -w @onegoodarea/api -- --email $(BOOTSTRAP_EMAIL) --plan $(BOOTSTRAP_PLAN)
+
+test:
+	npm test
+
+typecheck:
+	npm run typecheck
+
+lint:
+	npm run lint
+
+refresh-deprivation:
+	npm run refresh:deprivation -w @onegoodarea/api
+
+refresh-property:
+	npm run refresh:property -w @onegoodarea/api
+
+refresh-crime:
+	@test -n "$(CRIME_ARCHIVE_DIR)" || { echo "ERROR: CRIME_ARCHIVE_DIR is required"; exit 2; }
+	npm run refresh:crime -w @onegoodarea/api -- $(CRIME_ARCHIVE_DIR)
+
 api-build:
-	$(CONTAINER_ENGINE) build -t $(IMG) -f container/api/Containerfile .
+	$(CONTAINER_ENGINE) build -t $(API_IMAGE) -f container/api/Containerfile .
 
 api-run:
-	$(CONTAINER_ENGINE) run -d --rm --name $(NAME) -p $(PORT):8080 --env-file $(ENVFILE) $(IMG)
-	@echo "Started $(NAME) -> http://localhost:$(PORT)/health"
+	$(CONTAINER_ENGINE) run -d --rm --name $(API_NAME) -p $(API_PORT):8080 --env-file $(API_ENVFILE) $(API_IMAGE)
+	@echo "Started $(API_NAME) -> http://localhost:$(API_PORT)/health"
 
 api-stop:
-	-$(CONTAINER_ENGINE) stop $(NAME)
+	-$(CONTAINER_ENGINE) stop $(API_NAME)
 
 api-clean: api-stop
-	-$(CONTAINER_ENGINE) rmi $(IMG)
+	-$(CONTAINER_ENGINE) rmi $(API_IMAGE)
 
 # --- portable per-service targets --------------------------------------
 #
