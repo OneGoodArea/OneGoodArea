@@ -13,13 +13,15 @@
 
    See ADR 0028. */
 
-import { sql } from "../../infrastructure/db/client";
 import { generateId } from "../../infrastructure/utils/id";
+import { OrgRepository } from "../../infrastructure/db/dal";
 import type { OrgRow, OrgMemberRow } from "../../infrastructure/db/types";
-import { rows } from "../../infrastructure/db/types";
+import type { OrgRole } from "@onegoodarea/contracts";
 import type {
-  Org, OrgMember, OrgWithRole, OrgRole,
+  Org, OrgMember, OrgWithRole,
 } from "@onegoodarea/contracts";
+
+const repo = new OrgRepository();
 
 /* ── RBAC (pure) — Levers AR-199 ─────────────────────────────────────── */
 
@@ -94,47 +96,27 @@ function memberFromRow(r: OrgMemberRow): OrgMember {
     backfill, but possible if a user was created in the gap before
     this commit lands). */
 export async function listOrgsForUser(userId: string): Promise<OrgWithRole[]> {
-  const result = rows<OrgRow & { role: OrgRole }>(await sql`
-    SELECT o.id, o.slug, o.name, o.display_name, o.brand_url, o.created_at, o.updated_at, m.role
-      FROM orgs o
-      JOIN org_members m ON m.org_id = o.id
-     WHERE m.user_id = ${userId}
-     ORDER BY o.created_at ASC
-  `);
+  const result = await repo.listForUser(userId);
   return result.map((r) => ({ ...orgFromRow(r), role: r.role }));
 }
 
 /** Return the org if the caller is a member, otherwise null (the endpoint
     maps null to 404). */
 export async function getOrgIfMember(orgId: string, userId: string): Promise<Org | null> {
-  const result = rows<OrgRow>(await sql`
-    SELECT o.id, o.slug, o.name, o.display_name, o.brand_url, o.created_at, o.updated_at
-      FROM orgs o
-      JOIN org_members m ON m.org_id = o.id
-     WHERE o.id = ${orgId} AND m.user_id = ${userId}
-     LIMIT 1
-  `);
-  if (result.length === 0) return null;
-  return orgFromRow(result[0]);
+  const r = await repo.findForMember(orgId, userId);
+  if (!r) return null;
+  return orgFromRow(r);
 }
 
 /** Resolve the caller's role in a given org (or null if not a member). */
 export async function getRoleInOrg(orgId: string, userId: string): Promise<OrgRole | null> {
-  const result = rows<Pick<OrgMemberRow, "role">>(await sql`
-    SELECT role FROM org_members WHERE org_id = ${orgId} AND user_id = ${userId} LIMIT 1
-  `);
-  return result.length === 0 ? null : result[0].role;
+  return repo.getRoleInOrg(orgId, userId);
 }
 
 /** List all members of an org. Caller membership is checked at the
     endpoint layer; this function is pure data fetch. */
 export async function listMembers(orgId: string): Promise<OrgMember[]> {
-  const result = rows<OrgMemberRow>(await sql`
-    SELECT org_id, user_id, role, joined_at
-      FROM org_members
-     WHERE org_id = ${orgId}
-     ORDER BY joined_at ASC
-  `);
+  const result = await repo.listMembers(orgId);
   return result.map(memberFromRow);
 }
 
@@ -150,17 +132,9 @@ export async function createOrgWithOwner(input: {
   const id = generateId("org");
   const derived = input.slug ?? slugify(input.name);
   const slug = derived || slugify(id); // fallback to id if name was all-symbol
-  const insertResult = rows<OrgRow>(await sql`
-    INSERT INTO orgs (id, slug, name)
-    VALUES (${id}, ${slug}, ${input.name})
-    RETURNING id, slug, name, display_name, brand_url, created_at, updated_at
-  `);
-  if (insertResult.length === 0) throw new Error("orgs insert returned no row");
-  await sql`
-    INSERT INTO org_members (org_id, user_id, role)
-    VALUES (${id}, ${input.userId}, 'owner')
-  `;
-  return orgFromRow(insertResult[0]);
+  const insertedRow = await repo.createOrg(id, slug, input.name);
+  await repo.addMember(id, input.userId, "owner");
+  return orgFromRow(insertedRow);
 }
 
 /** Create the auto-personal org for a user. Idempotent via ON CONFLICT —
@@ -172,16 +146,7 @@ export async function createPersonalOrgForUser(userId: string, email: string): P
   const slug = personalOrgSlug(email, userId);
   const localPart = email.split("@")[0] ?? "workspace";
   const name = `${localPart} workspace`;
-  await sql`
-    INSERT INTO orgs (id, slug, name)
-    VALUES (${id}, ${slug}, ${name})
-    ON CONFLICT DO NOTHING
-  `;
-  await sql`
-    INSERT INTO org_members (org_id, user_id, role)
-    VALUES (${id}, ${userId}, 'owner')
-    ON CONFLICT (org_id, user_id) DO NOTHING
-  `;
+  await repo.createPersonalOrg(id, slug, name, userId);
 }
 
 /** Rename / re-slug / re-brand an org. Owner+/admin+ check happens
@@ -203,32 +168,17 @@ export async function updateOrg(
     brand_url?: string | null;
   },
 ): Promise<Org | null> {
-  const currentRows = rows<OrgRow>(await sql`
-    SELECT id, slug, name, display_name, brand_url, created_at, updated_at
-      FROM orgs
-     WHERE id = ${orgId}
-     LIMIT 1
-  `);
-  if (currentRows.length === 0) return null;
-  const current = currentRows[0];
+  const current = await repo.findById(orgId);
+  if (!current) return null;
   const next = {
     name: patch.name ?? current.name,
     slug: patch.slug ?? current.slug,
     display_name: patch.display_name !== undefined ? patch.display_name : current.display_name,
     brand_url: patch.brand_url !== undefined ? patch.brand_url : current.brand_url,
   };
-  const result = rows<OrgRow>(await sql`
-    UPDATE orgs
-       SET name = ${next.name},
-           slug = ${next.slug},
-           display_name = ${next.display_name},
-           brand_url = ${next.brand_url},
-           updated_at = NOW()
-     WHERE id = ${orgId}
-     RETURNING id, slug, name, display_name, brand_url, created_at, updated_at
-  `);
-  if (result.length === 0) return null;
-  return orgFromRow(result[0]);
+  const updated = await repo.update(orgId, next);
+  if (!updated) return null;
+  return orgFromRow(updated);
 }
 
 /** Add a user to an org with the given role. Owner-only mutation.
@@ -236,31 +186,18 @@ export async function updateOrg(
     (the role is NOT updated, to avoid accidental privilege escalation;
     a future `changeMemberRole` op covers that case explicitly). */
 export async function addMember(input: { orgId: string; userId: string; role: OrgRole }): Promise<void> {
-  await sql`
-    INSERT INTO org_members (org_id, user_id, role)
-    VALUES (${input.orgId}, ${input.userId}, ${input.role})
-    ON CONFLICT (org_id, user_id) DO NOTHING
-  `;
+  await repo.addMember(input.orgId, input.userId, input.role);
 }
 
 /** Remove a member from an org. Owner-only mutation. The endpoint guards
     against removing the LAST OWNER (would orphan the org); this function
     trusts the caller did that check. Returns true if a row was deleted. */
 export async function removeMember(orgId: string, userId: string): Promise<boolean> {
-  const deleted = await sql`
-    DELETE FROM org_members
-     WHERE org_id = ${orgId} AND user_id = ${userId}
-     RETURNING user_id
-  `;
-  return deleted.length > 0;
+  return repo.removeMember(orgId, userId);
 }
 
 /** Count the owners of an org. Used by the endpoint to prevent removing
     the last owner. */
 export async function countOwners(orgId: string): Promise<number> {
-  const result = rows<{ n: number }>(await sql`
-    SELECT COUNT(*)::int AS n FROM org_members
-     WHERE org_id = ${orgId} AND role = 'owner'
-  `);
-  return result.length === 0 ? 0 : (result[0].n ?? 0);
+  return repo.countOwners(orgId);
 }
