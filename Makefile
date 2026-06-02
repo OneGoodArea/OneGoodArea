@@ -1,4 +1,4 @@
-# OneGoodArea -- container Make interface (Plan 008).
+# OneGoodArea -- container Make interface (Plans 008 + 009).
 #
 # Cross-platform: Linux defaults to Podman, macOS/Windows default to Docker.
 # All engine calls route through $(CONTAINER_ENGINE) from build/container.mk
@@ -7,6 +7,7 @@
 # Two target families:
 #   api-*                    -- ergonomic API shortcuts (legacy + still useful)
 #   container-*  ENV=  SERVICE= -- portable per-service prod-mirror targets
+#   db-*                     -- standalone postgres lifecycle (Plan 009)
 #
 # Usage:
 #   make container-info        show detected engine + host OS
@@ -32,6 +33,13 @@ BOOTSTRAP_EMAIL ?= api-test@onegoodarea.local
 BOOTSTRAP_PLAN ?= sandbox
 CRIME_ARCHIVE_DIR ?=
 
+# --- postgres container (Plan 009) ------------------------------------
+DB_IMG     ?= postgres:16-alpine
+DB_NAME    ?= oga-postgres
+DB_PORT    ?= 55432
+DB_VOL     ?= oga-postgres-data
+NET_NAME   ?= oga-network
+
 # --- legacy API shortcuts ----------------------------------------------
 API_IMAGE   ?= onegoodarea/api:local
 API_NAME    ?= oga-api
@@ -42,28 +50,56 @@ API_ENVFILE ?= .env.local
         bootstrap-test-key test typecheck lint refresh-deprivation \
         refresh-property refresh-crime api-build api-run api-stop api-clean \
         container-build container-run container-stop container-logs \
-        container-guard
+        container-guard \
+        db-net db-vol db-run db-stop db-clean db-seed
 
 help:
-	@echo "OneGoodArea targets:"
-	@echo "  make setup                                                install deps and scaffold .env.local files"
-	@echo "  make dev                                                  run the API on :8080"
-	@echo "  make dev-signals                                          run the API with OGA_SIGNALS_API=true"
-	@echo "  make migrate                                              run API migrations"
-	@echo "  make bootstrap-test-key                                   create a disposable test API key"
-	@echo "  make test | typecheck | lint                              workspace checks"
-	@echo "  make refresh-deprivation                                  refresh deprivation signals"
-	@echo "  make refresh-property                                     refresh property signals"
-	@echo "  make refresh-crime ARCHIVE_DIR=/path/to/folder            refresh crime signals"
-	@echo "  make container-info                                       runtime info"
-	@echo "  make api-build                                            build $(API_IMAGE)"
-	@echo "  make api-run                                              run $(API_NAME) on :$(API_PORT) (env: $(API_ENVFILE))"
-	@echo "  make api-stop                                             stop $(API_NAME)"
-	@echo "  make api-clean                                            stop $(API_NAME) + drop $(API_IMAGE)"
-	@echo "  make container-build ENV=<local|dev|prod> SERVICE=<api|web|postgres>"
-	@echo "  make container-run   ENV=<...> SERVICE=<...>"
-	@echo "  make container-stop  ENV=<...> SERVICE=<...>"
-	@echo "  make container-logs  ENV=<...> SERVICE=<...>"
+	@echo ""
+	@echo "  OneGoodArea — available targets"
+	@echo ""
+	@echo "  ── Development ──────────────────────────────────────────────────────"
+	@echo "  setup                     install npm deps + scaffold .env.local files"
+	@echo "  dev                       run the API in watch mode on :8080"
+	@echo "  dev-signals               run the API with OGA_SIGNALS_API=true"
+	@echo "  migrate                   run pending DB schema migrations"
+	@echo "  bootstrap-test-key        create a disposable test API key"
+	@echo "                            (EMAIL=$(BOOTSTRAP_EMAIL) PLAN=$(BOOTSTRAP_PLAN))"
+	@echo ""
+	@echo "  ── Checks ───────────────────────────────────────────────────────────"
+	@echo "  test                      run the full test suite"
+	@echo "  typecheck                 TypeScript type-check (no emit)"
+	@echo "  lint                      ESLint across all packages"
+	@echo ""
+	@echo "  ── Data refresh ─────────────────────────────────────────────────────"
+	@echo "  refresh-deprivation       re-ingest deprivation signal data"
+	@echo "  refresh-property          re-ingest property signal data"
+	@echo "  refresh-crime             re-ingest crime data"
+	@echo "                            (CRIME_ARCHIVE_DIR=/path/to/folder  required)"
+	@echo ""
+	@echo "  ── Local Postgres container (Plan 009) ──────────────────────────────"
+	@echo "  db-net                    create the $(NET_NAME) bridge network"
+	@echo "  db-vol                    create the $(DB_VOL) named volume"
+	@echo "  db-run                    start $(DB_NAME) on :$(DB_PORT)  [db-net + db-vol implied]"
+	@echo "  db-stop                   stop and remove the $(DB_NAME) container"
+	@echo "  db-clean                  db-stop + destroy the data volume (full reset)"
+	@echo "  db-seed                   load framework + baseline seed SQL"
+	@echo ""
+	@echo "  One-time setup:  make db-run  →  make migrate  →  make db-seed"
+	@echo "  Full reset:      make db-clean  →  make db-run  →  make migrate  →  make db-seed"
+	@echo ""
+	@echo "  ── API container shortcuts ──────────────────────────────────────────"
+	@echo "  api-build                 build $(API_IMAGE)"
+	@echo "  api-run                   run $(API_NAME) on :$(API_PORT)  (env: $(API_ENVFILE))"
+	@echo "  api-stop                  stop $(API_NAME)"
+	@echo "  api-clean                 api-stop + remove image"
+	@echo ""
+	@echo "  ── Portable per-service targets  (ENV=  SERVICE=) ───────────────────"
+	@echo "  container-info            show detected engine + host OS"
+	@echo "  container-build           build image  ENV=<local|dev|prod> SERVICE=<api|web|postgres>"
+	@echo "  container-run             start container  ENV=<...> SERVICE=<...>"
+	@echo "  container-stop            stop container   ENV=<...> SERVICE=<...>"
+	@echo "  container-logs            tail logs        ENV=<...> SERVICE=<...>"
+	@echo ""
 
 setup: setup-install setup-env
 	@echo "Fill in $(WEB_ENV_FILE) and $(API_ENV_FILE), then run 'make dev'."
@@ -110,7 +146,7 @@ api-build:
 	$(CONTAINER_ENGINE) build -t $(API_IMAGE) -f container/api/Containerfile .
 
 api-run:
-	$(CONTAINER_ENGINE) run -d --rm --name $(API_NAME) -p $(API_PORT):8080 --env-file $(API_ENVFILE) $(API_IMAGE)
+	$(CONTAINER_ENGINE) run -d --rm --name $(API_NAME) -p $(API_PORT):8080 --env-file $(API_ENVFILE) --network $(NET_NAME) $(API_IMAGE)
 	@echo "Started $(API_NAME) -> http://localhost:$(API_PORT)/health"
 
 api-stop:
@@ -178,3 +214,41 @@ container-stop: container-guard
 
 container-logs: container-guard
 	$(CONTAINER_ENGINE) logs -f $(C_NAME)
+
+# --- postgres container lifecycle (Plan 009) ---------------------------
+#
+# One-time setup:        make db-net db-vol db-run db-seed
+# Tear down completely:  make db-clean
+
+db-net:
+	$(CONTAINER_ENGINE) network create $(NET_NAME) 2>/dev/null || true
+
+db-vol:
+	$(CONTAINER_ENGINE) volume create $(DB_VOL)
+
+db-run: db-net db-vol
+	$(CONTAINER_ENGINE) run -d \
+	  --name $(DB_NAME) \
+	  --network $(NET_NAME) \
+	  -p $(DB_PORT):5432 \
+	  -e POSTGRES_USER=oga \
+	  -e POSTGRES_PASSWORD=oga \
+	  -e POSTGRES_DB=oga \
+	  -v $(DB_VOL):/var/lib/postgresql/data \
+	  -v $(CURDIR)/apps/web/tests/db/bootstrap:/docker-entrypoint-initdb.d:ro \
+	  $(DB_IMG)
+	@echo "$(DB_NAME) listening on localhost:$(DB_PORT)"
+
+db-stop:
+	-$(CONTAINER_ENGINE) stop $(DB_NAME)
+	-$(CONTAINER_ENGINE) rm   $(DB_NAME)
+
+db-clean: db-stop
+	-$(CONTAINER_ENGINE) volume rm $(DB_VOL)
+
+db-seed:
+	$(CONTAINER_ENGINE) exec -i $(DB_NAME) psql -U oga -d oga \
+	  < apps/web/tests/seeds/framework/001-seed-framework.sql
+	$(CONTAINER_ENGINE) exec -i $(DB_NAME) psql -U oga -d oga \
+	  < apps/web/tests/seeds/profiles/baseline/100-baseline-users.sql
+	@echo "Seed applied."
