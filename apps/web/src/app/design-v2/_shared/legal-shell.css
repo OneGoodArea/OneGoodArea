@@ -1,0 +1,322 @@
+/* LegalShell CSS — Brand v3 (AR-204 PR).
+   Co-located, zero inline styles in legal-shell.tsx.
+
+   Surface plan:
+     Hero        DARK
+     Body        cream  (sticky sidebar + main column)
+     ContactCta  DARK
+*/
+
+/* ============================================================
+   SHARED — page-scoped eyebrow helpers
+   ============================================================ */
+.oga-legal .oga-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.oga-legal .oga-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--oga-ink);
+  display: inline-block;
+}
+.oga-legal .oga-eyebrow--inverse .oga-eyebrow-dot {
+  background: var(--oga-white);
+}
+
+/* ============================================================
+   HERO (DARK)
+   ============================================================ */
+.oga-legal-hero {
+  padding: clamp(72px, 10vw, 132px) 24px clamp(56px, 8vw, 96px);
+}
+.oga-legal-hero__inner {
+  max-width: 920px;
+  margin: 0 auto;
+}
+.oga-legal-hero__eyebrow {
+  margin-bottom: 22px;
+  color: rgba(250, 248, 244, 0.65);
+}
+.oga-legal-hero__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(36px, 5vw, 60px);
+  font-weight: 500;
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+  color: var(--oga-white);
+  text-wrap: balance;
+  margin: 0 0 22px;
+}
+.oga-legal-hero__intro {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(15px, 1.3vw, 18px);
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.7);
+  text-wrap: pretty;
+  margin: 0 0 36px;
+  max-width: 680px;
+}
+.oga-legal-hero__updated {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border: 1px solid rgba(250, 248, 244, 0.18);
+  border-radius: var(--oga-radius-sm);
+  background: rgba(250, 248, 244, 0.04);
+}
+.oga-legal-hero__updated-label {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.55);
+}
+.oga-legal-hero__updated-value {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--oga-white);
+}
+
+/* ============================================================
+   BODY (cream) — sidebar + main column
+   ============================================================ */
+.oga-legal-body {
+  background: var(--oga-canvas);
+  padding: clamp(56px, 8vw, 96px) 24px clamp(72px, 10vw, 120px);
+}
+.oga-legal-body__inner {
+  max-width: 1140px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 56px;
+}
+@media (max-width: 900px) {
+  .oga-legal-body__inner {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+.oga-legal-body__aside {
+  position: relative;
+}
+@media (min-width: 901px) {
+  .oga-legal-body__aside {
+    position: sticky;
+    top: 24px;
+    align-self: start;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+  }
+}
+
+.oga-legal-body__main {
+  min-width: 0;
+  max-width: 720px;
+}
+
+/* ============================================================
+   SIDEBAR (sticky TOC)
+   ============================================================ */
+.oga-legal-sidebar {
+  font-family: var(--oga-font-sans);
+}
+.oga-legal-sidebar__eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: 16px;
+}
+.oga-legal-sidebar__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-left: 1px solid var(--oga-border);
+}
+.oga-legal-sidebar__item {
+  display: block;
+}
+.oga-legal-sidebar__link {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 14px;
+  text-decoration: none;
+  color: var(--oga-fg-muted);
+  border-left: 2px solid transparent;
+  margin-left: -1px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+.oga-legal-sidebar__link:hover {
+  color: var(--oga-fg);
+}
+.oga-legal-sidebar__link--active {
+  color: var(--oga-fg);
+  border-left-color: var(--oga-fg);
+}
+.oga-legal-sidebar__num {
+  flex: 0 0 auto;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+}
+
+/* ============================================================
+   SECTION (within main column)
+   ============================================================ */
+.oga-legal-section {
+  margin: 0 0 56px;
+}
+.oga-legal-section:last-child {
+  margin-bottom: 0;
+}
+.oga-legal-section__head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--oga-border);
+}
+.oga-legal-section__num {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--oga-fg-muted);
+}
+.oga-legal-section__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(22px, 2.6vw, 28px);
+  font-weight: 500;
+  line-height: 1.18;
+  letter-spacing: -0.014em;
+  color: var(--oga-fg);
+  margin: 0;
+  text-wrap: balance;
+}
+.oga-legal-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ============================================================
+   INLINE PRIMITIVES
+   ============================================================ */
+.oga-legal-p {
+  font-family: var(--oga-font-sans);
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--oga-fg-subtle);
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.oga-legal-emph {
+  color: var(--oga-fg);
+  font-weight: 600;
+}
+
+.oga-legal-link {
+  color: var(--oga-fg);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(26, 28, 31, 0.3);
+  transition: border-color 160ms ease;
+}
+.oga-legal-link:hover {
+  border-bottom-color: var(--oga-fg);
+}
+
+/* ============================================================
+   CONTACT CTA (DARK)
+   ============================================================ */
+.oga-legal-cta {
+  padding: clamp(64px, 9vw, 120px) 24px;
+}
+.oga-legal-cta__inner {
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: center;
+}
+.oga-legal-cta__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3.4vw, 38px);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.018em;
+  color: var(--oga-white);
+  text-wrap: balance;
+  margin: 0 0 18px;
+}
+.oga-legal-cta__lead {
+  font-family: var(--oga-font-sans);
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: rgba(250, 248, 244, 0.7);
+  text-wrap: pretty;
+  margin: 0 auto 30px;
+  max-width: 560px;
+}
+.oga-legal-cta__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+/* ============================================================
+   PROCESSORS TABLE (Privacy § 4)
+   ============================================================ */
+.oga-legal-processors {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 8px;
+  border: 1px solid var(--oga-border);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--oga-white);
+}
+.oga-legal-processors__item {
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.oga-legal-processors__item + .oga-legal-processors__item {
+  border-top: 1px solid var(--oga-border);
+}
+.oga-legal-processors__name {
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--oga-fg);
+}
+.oga-legal-processors__purpose {
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--oga-fg-subtle);
+}
+.oga-legal-processors__data {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--oga-fg-muted);
+}
