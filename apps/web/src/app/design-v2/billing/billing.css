@@ -1,0 +1,331 @@
+/* /billing CSS — Brand v3 (AR-204 close-out 8/15).
+   Co-located, zero design declarations in TSX (only the
+   progress-bar fill width crosses as a runtime value).
+
+   Two DARK panels (ConfirmPanel + CurrentPlanStrip) sit above the
+   PlanGrid + FullComparisonLink + McpAddOnSection on a cream main.
+   Drops the legacy chartreuse glow + chartreuse italic accents.
+*/
+
+.oga-billing {
+  padding: 28px 40px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+@media (max-width: 880px) {
+  .oga-billing {
+    padding: 24px 20px 48px;
+  }
+}
+
+/* ============================================================
+   Confirm panel (DARK)
+   ============================================================ */
+.oga-billing__confirm {
+  background: var(--oga-ink);
+  color: var(--oga-white);
+  border: 1px solid var(--oga-ink);
+  border-radius: var(--oga-radius-sm);
+  padding: 26px 28px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.oga-billing__confirm-body {
+  max-width: 60ch;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.oga-billing__confirm-eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.65);
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+.oga-billing__confirm-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--oga-white);
+}
+.oga-billing__confirm-title {
+  font-family: var(--oga-font-sans);
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.018em;
+  color: var(--oga-white);
+  line-height: 1.1;
+}
+.oga-billing__confirm-price {
+  color: var(--oga-white);
+  font-weight: 500;
+}
+.oga-billing__confirm-cadence {
+  font-family: var(--oga-font-mono);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: rgba(250, 248, 244, 0.55);
+}
+.oga-billing__confirm-meta {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: rgba(250, 248, 244, 0.65);
+  letter-spacing: 0.04em;
+}
+.oga-billing__confirm-error {
+  margin-top: 6px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: #ffb8a8;
+  padding: 8px 12px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.32);
+  border-radius: var(--oga-radius-sm);
+}
+
+.oga-billing__confirm-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.oga-billing__confirm-primary {
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-ink);
+  background: var(--oga-white);
+  padding: 12px 20px;
+  border-radius: var(--oga-radius-sm);
+  border: 1px solid var(--oga-white);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: filter var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-billing__confirm-primary:hover:not(:disabled) {
+  filter: brightness(0.94);
+}
+.oga-billing__confirm-primary:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+.oga-billing__confirm-ghost {
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-white);
+  background: transparent;
+  border: 1px solid rgba(250, 248, 244, 0.24);
+  padding: 11px 18px;
+  border-radius: var(--oga-radius-sm);
+  cursor: pointer;
+  transition:
+    background var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-billing__confirm-ghost:hover:not(:disabled) {
+  background: rgba(250, 248, 244, 0.06);
+  border-color: rgba(250, 248, 244, 0.5);
+}
+.oga-billing__confirm-ghost:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ============================================================
+   Current plan strip (DARK, 2-col)
+   ============================================================ */
+.oga-billing__current {
+  background: var(--oga-ink);
+  color: var(--oga-white);
+  border-radius: var(--oga-radius-sm);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+@media (max-width: 720px) {
+  .oga-billing__current {
+    grid-template-columns: 1fr;
+  }
+}
+.oga-billing__current-col {
+  padding: 26px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.oga-billing__current-col + .oga-billing__current-col {
+  border-left: 1px solid rgba(250, 248, 244, 0.08);
+}
+@media (max-width: 720px) {
+  .oga-billing__current-col + .oga-billing__current-col {
+    border-left: none;
+    border-top: 1px solid rgba(250, 248, 244, 0.08);
+  }
+}
+
+.oga-billing__current-eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.7);
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+.oga-billing__current-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--oga-white);
+}
+.oga-billing__current-plan {
+  font-family: var(--oga-font-sans);
+  font-size: 32px;
+  font-weight: 500;
+  letter-spacing: -0.018em;
+  color: var(--oga-white);
+  line-height: 1;
+}
+.oga-billing__current-manage {
+  margin-top: 6px;
+  align-self: flex-start;
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-white);
+  background: transparent;
+  border: 1px solid rgba(250, 248, 244, 0.24);
+  padding: 10px 18px;
+  border-radius: var(--oga-radius-sm);
+  cursor: pointer;
+  transition:
+    background var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-billing__current-manage:hover:not(:disabled) {
+  background: rgba(250, 248, 244, 0.06);
+  border-color: rgba(250, 248, 244, 0.5);
+}
+.oga-billing__current-manage:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.oga-billing__current-usage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.6);
+}
+.oga-billing__current-pct {
+  /* tone-driven via parent data-tone */
+}
+.oga-billing__current[data-tone="strong"] .oga-billing__current-pct {
+  color: var(--oga-white);
+}
+.oga-billing__current[data-tone="moderate"] .oga-billing__current-pct {
+  color: #ffe07a;
+}
+.oga-billing__current[data-tone="weak"] .oga-billing__current-pct {
+  color: #ffb8a8;
+}
+
+.oga-billing__current-usage-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.oga-billing__current-usage-value {
+  font-family: var(--oga-font-sans);
+  font-size: 38px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--oga-white);
+  line-height: 1;
+}
+.oga-billing__current-usage-limit {
+  font-family: var(--oga-font-mono);
+  font-size: 14px;
+  color: rgba(250, 248, 244, 0.5);
+}
+
+.oga-billing__current-bar {
+  height: 5px;
+  width: 100%;
+  background: rgba(250, 248, 244, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.oga-billing__current-bar-fill {
+  height: 100%;
+  background: var(--oga-white);
+  transition: width 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.oga-billing__current[data-tone="moderate"] .oga-billing__current-bar-fill {
+  background: #ffe07a;
+}
+.oga-billing__current[data-tone="weak"] .oga-billing__current-bar-fill {
+  background: #ffb8a8;
+}
+
+.oga-billing__current-reset {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: rgba(250, 248, 244, 0.45);
+}
+
+/* ============================================================
+   Full comparison link (cream, ghost rectangle)
+   ============================================================ */
+.oga-billing__compare {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0 12px;
+}
+.oga-billing__compare-link {
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-fg);
+  background: var(--oga-white);
+  padding: 10px 18px;
+  border-radius: var(--oga-radius-sm);
+  text-decoration: none;
+  border: 1px solid var(--oga-border);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition:
+    border-color var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-billing__compare-link:hover {
+  border-color: var(--oga-fg);
+  background: var(--oga-canvas);
+}

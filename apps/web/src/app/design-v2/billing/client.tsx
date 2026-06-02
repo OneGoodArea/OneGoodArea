@@ -1,19 +1,30 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { PlanId } from "@/lib/stripe";
-import { Styles } from "../_shared/styles";
 import { AppShell } from "../_shared/app-shell";
-import { DISPLAY_PLANS, PlanGrid, type DisplayPlan, Spinner } from "../_shared/plan-grid";
+import {
+  DISPLAY_PLANS,
+  PlanGrid,
+  type DisplayPlan,
+  Spinner,
+} from "../_shared/plan-grid";
 import { McpAddOnSection, type McpStatus } from "../_shared/mcp-addon-section";
+import "./billing.css";
 
-/* AR-146 — in-app billing surface.
-   Lean by design: current plan + plan grid + MCP add-on + manage-subscription.
-   The full feature comparison lives at /pricing and opens in a new tab so
-   users don't lose their place. Stripe Checkout fires from this surface only
-   (never from the marketing page). When ?plan=<id> is in the URL, a confirm
-   panel is shown above the grid — never auto-fires checkout. */
+/* /billing — Brand v3 rewrite (AR-204 close-out 8/15).
+
+   In-app billing surface. Lean by design: current plan + plan grid
+   + MCP add-on + manage-subscription. The full feature comparison
+   lives at /pricing and opens in a new tab so users don't lose
+   their place. Stripe Checkout fires from this surface only (never
+   from the marketing page). When ?plan=<id> is in the URL, a
+   confirm panel is shown above the grid — never auto-fires checkout.
+
+   Per the dashboard proposal (PR #104), this page may move from
+   /billing -> /dashboard/billing in a future restructure. Shape
+   preserved. */
 
 type Props = {
   plan: PlanId;
@@ -25,15 +36,12 @@ type Props = {
 
 export default function BillingClient(props: Props) {
   return (
-    <>
-      <Styles />
-      <AppShell
-        title="Billing"
-        subtitle="Manage your plan, MCP add-on, and subscription."
-      >
-        <Body {...props} />
-      </AppShell>
-    </>
+    <AppShell
+      title="Billing"
+      subtitle="Manage your plan, MCP add-on, and subscription."
+    >
+      <Body {...props} />
+    </AppShell>
   );
 }
 
@@ -59,9 +67,6 @@ function Body({ plan, planName, used, limit, mcp }: Props) {
     : null;
   const showConfirmPanel = !!requestedDisplayPlan && requestedPlan !== plan;
 
-  /* Sandbox is free — no Stripe Checkout. Pick "switch to Sandbox" routes
-     to /dashboard (effectively a downgrade-to-free). Paid plans go through
-     Stripe Checkout. */
   async function continueToCheckout(planId: PlanId) {
     if (planId === "sandbox") {
       router.push("/dashboard");
@@ -93,10 +98,6 @@ function Body({ plan, planName, used, limit, mcp }: Props) {
     }
   }
 
-  /* Plan-grid click handler. If the user already has the plan, no-op (the
-     card is "Current"). Otherwise route to the same page with ?plan=<id>
-     so the confirm panel handles the actual fire. Single-source for the
-     Stripe POST. */
   function handlePlanSelect(planId: PlanId) {
     if (planId === plan) return;
     router.push(`/dashboard/billing?plan=${encodeURIComponent(planId)}`);
@@ -122,7 +123,7 @@ function Body({ plan, planName, used, limit, mcp }: Props) {
   const onPaidPlan = plan !== "sandbox" && plan !== "free";
 
   return (
-    <div style={{ padding: "28px 40px 64px", display: "flex", flexDirection: "column", gap: 22 }}>
+    <div className="oga-billing">
       {showConfirmPanel && requestedDisplayPlan && (
         <ConfirmPanel
           plan={requestedDisplayPlan}
@@ -157,10 +158,15 @@ function Body({ plan, planName, used, limit, mcp }: Props) {
   );
 }
 
-/* ─────── Confirm panel (shown when ?plan=<id> is in the URL) ─────── */
-
+/* ============================================================
+   Confirm panel (shown when ?plan=<id> is in the URL)
+   ============================================================ */
 function ConfirmPanel({
-  plan, loading, error, onContinue, onDismiss,
+  plan,
+  loading,
+  error,
+  onContinue,
+  onDismiss,
 }: {
   plan: DisplayPlan;
   loading: boolean;
@@ -169,105 +175,38 @@ function ConfirmPanel({
   onDismiss: () => void;
 }) {
   return (
-    <div style={{
-      border: "1px solid var(--ink-deep)",
-      background: "var(--bg-ink)",
-      color: "#FFFFFF",
-      borderRadius: 4,
-      padding: "26px 28px",
-      display: "flex", alignItems: "flex-start", justifyContent: "space-between",
-      gap: 24, flexWrap: "wrap",
-      position: "relative", overflow: "hidden",
-      boxShadow: "0 20px 50px -28px rgba(6,42,30,0.35)",
-    }}>
-      <div aria-hidden style={{
-        position: "absolute", top: -100, right: -60,
-        width: 360, height: 360,
-        background: "radial-gradient(circle, rgba(212,243,58,0.18) 0%, rgba(212,243,58,0) 60%)",
-        pointerEvents: "none",
-      }} />
-
-      <div style={{ position: "relative", zIndex: 1, maxWidth: "60ch", display: "flex", flexDirection: "column", gap: 10 }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-          letterSpacing: "0.22em", textTransform: "uppercase",
-          color: "var(--signal)",
-          display: "inline-flex", alignItems: "center", gap: 9,
-        }}>
-          <span aria-hidden style={{
-            width: 6, height: 6, borderRadius: 6, background: "var(--signal)",
-            boxShadow: "0 0 8px rgba(212,243,58,0.5)",
-          }} />
-          You picked
+    <div className="oga-billing__confirm" data-oga-surface="dark">
+      <div className="oga-billing__confirm-body">
+        <div className="oga-billing__confirm-eyebrow">
+          <span aria-hidden className="oga-billing__confirm-eyebrow-dot" />
+          <span>You picked</span>
         </div>
-        <div style={{
-          fontFamily: "var(--display)", fontSize: 28, fontWeight: 500,
-          letterSpacing: "-0.018em", color: "#FFFFFF", lineHeight: 1.1,
-        }}>
-          {plan.name} · <em style={{ fontStyle: "italic", color: "var(--signal)" }}>{plan.price}</em> {plan.cadence}
+        <div className="oga-billing__confirm-title">
+          {plan.name} <span className="oga-billing__confirm-price">· {plan.price}</span>{" "}
+          <span className="oga-billing__confirm-cadence">{plan.cadence}</span>
         </div>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 11.5,
-          color: "rgba(255,255,255,0.65)", letterSpacing: "0.04em",
-        }}>
-          {plan.reports}{plan.perReport ? ` · ${plan.perReport}` : ""}
+        <div className="oga-billing__confirm-meta">
+          {plan.reports}
+          {plan.perReport ? ` · ${plan.perReport}` : ""}
         </div>
-        {error && (
-          <div style={{
-            marginTop: 6,
-            fontFamily: "var(--mono)", fontSize: 11,
-            color: "#FFB8A8", padding: "8px 12px",
-            background: "rgba(239,68,68,0.12)",
-            border: "1px solid rgba(239,68,68,0.32)",
-            borderRadius: 4,
-          }}>{error}</div>
-        )}
+        {error && <div className="oga-billing__confirm-error">{error}</div>}
       </div>
 
-      <div style={{
-        position: "relative", zIndex: 1,
-        display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center",
-      }}>
+      <div className="oga-billing__confirm-actions">
         <button
+          type="button"
           onClick={onContinue}
           disabled={loading}
-          style={{
-            fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-            letterSpacing: "0.16em", textTransform: "uppercase",
-            color: "var(--signal-ink)", background: "var(--signal)",
-            padding: "13px 22px", borderRadius: 999,
-            border: "1px solid var(--signal)", cursor: loading ? "default" : "pointer",
-            opacity: loading ? 0.7 : 1,
-            display: "inline-flex", alignItems: "center", gap: 9,
-            transition: "transform 140ms cubic-bezier(0.16,1,0.3,1)",
-          }}
-          onMouseEnter={(e) => { if (!loading) e.currentTarget.style.transform = "translateY(-1px)"; }}
-          onMouseLeave={(e) => { if (!loading) e.currentTarget.style.transform = "translateY(0)"; }}
+          className="oga-billing__confirm-primary"
         >
           {loading ? <Spinner /> : "Continue to Stripe"}
-          {!loading && <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>{"→"}</span>}
+          {!loading && <span aria-hidden>→</span>}
         </button>
         <button
+          type="button"
           onClick={onDismiss}
           disabled={loading}
-          style={{
-            fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-            letterSpacing: "0.14em", textTransform: "uppercase",
-            color: "#FFFFFF", background: "transparent",
-            border: "1px solid rgba(255,255,255,0.24)",
-            padding: "12px 18px", borderRadius: 999, cursor: loading ? "default" : "pointer",
-            transition: "background 140ms ease, border-color 140ms ease",
-          }}
-          onMouseEnter={(e) => {
-            if (loading) return;
-            e.currentTarget.style.background = "rgba(255,255,255,0.06)";
-            e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)";
-          }}
-          onMouseLeave={(e) => {
-            if (loading) return;
-            e.currentTarget.style.background = "transparent";
-            e.currentTarget.style.borderColor = "rgba(255,255,255,0.24)";
-          }}
+          className="oga-billing__confirm-ghost"
         >
           Choose a different plan
         </button>
@@ -276,172 +215,94 @@ function ConfirmPanel({
   );
 }
 
-/* ─────── Current plan strip (compact, billing-flavored) ─────── */
-
+/* ============================================================
+   Current plan strip (DARK, 2-col)
+   ============================================================ */
 function CurrentPlanStrip({
-  planName, used, limit, onBilling, billingLoading, showManage,
+  planName,
+  used,
+  limit,
+  onBilling,
+  billingLoading,
+  showManage,
 }: {
   planName: string;
-  used: number; limit: number;
-  onBilling: () => void; billingLoading: boolean;
+  used: number;
+  limit: number;
+  onBilling: () => void;
+  billingLoading: boolean;
   showManage: boolean;
 }) {
   const unlimited = limit === Infinity;
   const pct = unlimited ? 0 : Math.min((used / limit) * 100, 100);
-  const rag = pct >= 90 ? "#FFB8A8" : pct >= 70 ? "#FFE07A" : "var(--signal)";
+  const tone: "strong" | "moderate" | "weak" =
+    pct >= 90 ? "weak" : pct >= 70 ? "moderate" : "strong";
 
   return (
-    <div className="aiq-dash-usage" style={{
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 0,
-      background: "var(--bg-ink)",
-      borderRadius: 4,
-      overflow: "hidden",
-      position: "relative",
-      boxShadow: "0 20px 50px -28px rgba(6,42,30,0.35)",
-    }}>
-      <div aria-hidden style={{
-        position: "absolute", top: -120, right: -80,
-        width: 420, height: 420,
-        background: "radial-gradient(circle, rgba(212,243,58,0.2) 0%, rgba(212,243,58,0) 58%)",
-        pointerEvents: "none",
-      }} />
-
-      <div style={{
-        padding: "26px 28px",
-        borderRight: "1px solid rgba(255,255,255,0.08)",
-        display: "flex", flexDirection: "column", gap: 12,
-        position: "relative", zIndex: 1,
-      }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-          letterSpacing: "0.22em", textTransform: "uppercase",
-          color: "rgba(212,243,58,0.88)",
-          display: "inline-flex", alignItems: "center", gap: 9,
-        }}>
-          <span aria-hidden style={{
-            width: 6, height: 6, borderRadius: 6, background: "var(--signal)",
-            boxShadow: "0 0 8px rgba(212,243,58,0.5)",
-          }} />
-          Current plan
+    <div
+      className="oga-billing__current"
+      data-oga-surface="dark"
+      data-tone={tone}
+    >
+      <div className="oga-billing__current-col">
+        <div className="oga-billing__current-eyebrow">
+          <span aria-hidden className="oga-billing__current-eyebrow-dot" />
+          <span>Current plan</span>
         </div>
-        <div style={{
-          fontFamily: "var(--display)", fontSize: 32, fontWeight: 500,
-          letterSpacing: "-0.018em", color: "#FFFFFF",
-          lineHeight: 1,
-        }}>{planName}</div>
+        <div className="oga-billing__current-plan">{planName}</div>
         {showManage && (
-          <div style={{ marginTop: 2 }}>
-            <button
-              onClick={onBilling}
-              disabled={billingLoading}
-              style={{
-                fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-                letterSpacing: "0.14em", textTransform: "uppercase",
-                color: "#FFFFFF", background: "transparent",
-                border: "1px solid rgba(255,255,255,0.24)",
-                padding: "10px 18px", borderRadius: 999,
-                cursor: billingLoading ? "default" : "pointer",
-                opacity: billingLoading ? 0.7 : 1,
-                transition: "background 140ms ease, border-color 140ms ease",
-              }}
-              onMouseEnter={(e) => {
-                if (billingLoading) return;
-                e.currentTarget.style.background = "rgba(255,255,255,0.06)";
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)";
-              }}
-              onMouseLeave={(e) => {
-                if (billingLoading) return;
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.24)";
-              }}
-            >
-              {billingLoading ? "Opening…" : "Manage subscription"}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={onBilling}
+            disabled={billingLoading}
+            className="oga-billing__current-manage"
+          >
+            {billingLoading ? "Opening…" : "Manage subscription"}
+          </button>
         )}
       </div>
 
-      <div style={{
-        padding: "26px 28px",
-        display: "flex", flexDirection: "column", gap: 14,
-        position: "relative", zIndex: 1,
-      }}>
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-          letterSpacing: "0.22em", textTransform: "uppercase",
-          color: "rgba(255,255,255,0.6)",
-        }}>
+      <div className="oga-billing__current-col">
+        <div className="oga-billing__current-usage-head">
           <span>Monthly usage</span>
-          {!unlimited && <span style={{ color: rag }}>{Math.round(pct)}%</span>}
+          {!unlimited && (
+            <span className="oga-billing__current-pct">{Math.round(pct)}%</span>
+          )}
         </div>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-          <span style={{
-            fontFamily: "var(--display)", fontSize: 38, fontWeight: 500,
-            letterSpacing: "-0.02em", color: "#FFFFFF",
-            lineHeight: 1,
-          }}>{used}</span>
-          <span style={{
-            fontFamily: "var(--mono)", fontSize: 14,
-            color: "rgba(255,255,255,0.5)",
-          }}>/ {unlimited ? "∞" : limit}</span>
+        <div className="oga-billing__current-usage-row">
+          <span className="oga-billing__current-usage-value">{used}</span>
+          <span className="oga-billing__current-usage-limit">
+            / {unlimited ? "∞" : limit}
+          </span>
         </div>
-        <div style={{
-          height: 5, width: "100%",
-          background: "rgba(255,255,255,0.08)",
-          borderRadius: 2, overflow: "hidden",
-        }}>
-          <div style={{
-            height: "100%",
-            width: unlimited ? "0%" : `${pct}%`,
-            background: rag,
-            transition: "width 420ms cubic-bezier(0.16,1,0.3,1)",
-            boxShadow: `0 0 12px ${rag}33`,
-          }} />
+        <div className="oga-billing__current-bar">
+          <div
+            className="oga-billing__current-bar-fill"
+            style={{ width: unlimited ? "0%" : `${pct}%` }}
+          />
         </div>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-          letterSpacing: "0.14em",
-          color: "rgba(255,255,255,0.45)",
-        }}>Resets on the 1st of the month</div>
+        <div className="oga-billing__current-reset">
+          Resets on the 1st of the month
+        </div>
       </div>
     </div>
   );
 }
 
-/* ─────── Full-comparison link (opens /pricing in a new tab) ─────── */
-
+/* ============================================================
+   Full-comparison link (opens /pricing in a new tab)
+   ============================================================ */
 function FullComparisonLink() {
   return (
-    <div style={{
-      display: "flex", justifyContent: "center", padding: "4px 0 12px",
-    }}>
+    <div className="oga-billing__compare">
       <a
         href="/pricing"
         target="_blank"
         rel="noopener noreferrer"
-        style={{
-          fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-          letterSpacing: "0.16em", textTransform: "uppercase",
-          color: "var(--ink)", background: "var(--bg)",
-          padding: "10px 18px", borderRadius: 999, textDecoration: "none",
-          border: "1px solid var(--border)",
-          display: "inline-flex", alignItems: "center", gap: 9,
-          transition: "border-color 140ms ease, background 140ms ease",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = "var(--ink)";
-          e.currentTarget.style.background = "var(--bg-off)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = "var(--border)";
-          e.currentTarget.style.background = "var(--bg)";
-        }}
+        className="oga-billing__compare-link"
       >
         View full feature comparison
-        <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>{"↗"}</span>
+        <span aria-hidden>↗</span>
       </a>
     </div>
   );
