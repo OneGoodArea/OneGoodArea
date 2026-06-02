@@ -41,7 +41,7 @@
    HERO (DARK)
    ============================================================ */
 .oga-pricing-hero {
-  padding: clamp(72px, 10vw, 132px) 24px clamp(48px, 7vw, 80px);
+  padding: clamp(56px, 7vw, 88px) 24px clamp(40px, 5vw, 56px);
 }
 .oga-pricing-hero__inner {
   max-width: 920px;
@@ -101,7 +101,7 @@
    ENTERPRISE CALLOUT (cream-quiet)
    ============================================================ */
 .oga-pricing-ent {
-  padding: clamp(56px, 8vw, 96px) 24px;
+  padding: clamp(40px, 5vw, 56px) 24px;
 }
 .oga-pricing-ent__inner {
   max-width: 1240px;
@@ -166,7 +166,7 @@
    ============================================================ */
 .oga-pricing-table {
   background: var(--oga-canvas);
-  padding: clamp(64px, 9vw, 120px) 24px;
+  padding: clamp(48px, 6vw, 72px) 24px;
 }
 .oga-pricing-table__inner {
   max-width: 1240px;
@@ -286,7 +286,7 @@
    FAQ (cream-quiet)
    ============================================================ */
 .oga-pricing-faq {
-  padding: clamp(64px, 9vw, 120px) 24px;
+  padding: clamp(48px, 6vw, 72px) 24px;
 }
 .oga-pricing-faq__inner {
   max-width: 880px;
@@ -383,7 +383,7 @@
    FINAL CTA (DARK)
    ============================================================ */
 .oga-pricing-cta {
-  padding: clamp(64px, 9vw, 120px) 24px;
+  padding: clamp(48px, 6vw, 72px) 24px;
 }
 .oga-pricing-cta__inner {
   max-width: 720px;
