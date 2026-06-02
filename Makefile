@@ -1,4 +1,4 @@
-# OneGoodArea -- container Make interface (Plan 008).
+# OneGoodArea -- container Make interface (Plans 008 + 009).
 #
 # Cross-platform: Linux defaults to Podman, macOS/Windows default to Docker.
 # All engine calls route through $(CONTAINER_ENGINE) from build/container.mk
@@ -7,6 +7,7 @@
 # Two target families:
 #   api-*                    -- ergonomic API shortcuts (legacy + still useful)
 #   container-*  ENV=  SERVICE= -- portable per-service prod-mirror targets
+#   db-*                     -- standalone postgres lifecycle (Plan 009)
 #
 # Usage:
 #   make container-info        show detected engine + host OS
@@ -32,6 +33,13 @@ BOOTSTRAP_EMAIL ?= api-test@onegoodarea.local
 BOOTSTRAP_PLAN ?= sandbox
 CRIME_ARCHIVE_DIR ?=
 
+# --- postgres container (Plan 009) ------------------------------------
+DB_IMG     ?= postgres:16-alpine
+DB_NAME    ?= oga-postgres
+DB_PORT    ?= 55432
+DB_VOL     ?= oga-postgres-data
+NET_NAME   ?= oga-network
+
 # --- legacy API shortcuts ----------------------------------------------
 API_IMAGE   ?= onegoodarea/api:local
 API_NAME    ?= oga-api
@@ -42,7 +50,8 @@ API_ENVFILE ?= .env.local
         bootstrap-test-key test typecheck lint refresh-deprivation \
         refresh-property refresh-crime api-build api-run api-stop api-clean \
         container-build container-run container-stop container-logs \
-        container-guard
+        container-guard \
+        db-net db-vol db-run db-stop db-clean db-seed
 
 help:
 	@echo "OneGoodArea targets:"
@@ -64,6 +73,12 @@ help:
 	@echo "  make container-run   ENV=<...> SERVICE=<...>"
 	@echo "  make container-stop  ENV=<...> SERVICE=<...>"
 	@echo "  make container-logs  ENV=<...> SERVICE=<...>"
+	@echo "  make db-net                                               create $(NET_NAME) network"
+	@echo "  make db-vol                                               create $(DB_VOL) volume"
+	@echo "  make db-run                                               start $(DB_NAME) on :$(DB_PORT)"
+	@echo "  make db-stop                                              stop $(DB_NAME)"
+	@echo "  make db-clean                                             stop $(DB_NAME) + remove volume"
+	@echo "  make db-seed                                              apply baseline and framework seed SQL"
 
 setup: setup-install setup-env
 	@echo "Fill in $(WEB_ENV_FILE) and $(API_ENV_FILE), then run 'make dev'."
@@ -110,7 +125,7 @@ api-build:
 	$(CONTAINER_ENGINE) build -t $(API_IMAGE) -f container/api/Containerfile .
 
 api-run:
-	$(CONTAINER_ENGINE) run -d --rm --name $(API_NAME) -p $(API_PORT):8080 --env-file $(API_ENVFILE) $(API_IMAGE)
+	$(CONTAINER_ENGINE) run -d --rm --name $(API_NAME) -p $(API_PORT):8080 --env-file $(API_ENVFILE) --network $(NET_NAME) $(API_IMAGE)
 	@echo "Started $(API_NAME) -> http://localhost:$(API_PORT)/health"
 
 api-stop:
@@ -178,3 +193,41 @@ container-stop: container-guard
 
 container-logs: container-guard
 	$(CONTAINER_ENGINE) logs -f $(C_NAME)
+
+# --- postgres container lifecycle (Plan 009) ---------------------------
+#
+# One-time setup:        make db-net db-vol db-run db-seed
+# Tear down completely:  make db-clean
+
+db-net:
+	$(CONTAINER_ENGINE) network create $(NET_NAME) 2>/dev/null || true
+
+db-vol:
+	$(CONTAINER_ENGINE) volume create $(DB_VOL)
+
+db-run: db-net db-vol
+	$(CONTAINER_ENGINE) run -d \
+	  --name $(DB_NAME) \
+	  --network $(NET_NAME) \
+	  -p $(DB_PORT):5432 \
+	  -e POSTGRES_USER=oga \
+	  -e POSTGRES_PASSWORD=oga \
+	  -e POSTGRES_DB=oga \
+	  -v $(DB_VOL):/var/lib/postgresql/data \
+	  -v $(CURDIR)/apps/web/tests/db/bootstrap:/docker-entrypoint-initdb.d:ro \
+	  $(DB_IMG)
+	@echo "$(DB_NAME) listening on localhost:$(DB_PORT)"
+
+db-stop:
+	-$(CONTAINER_ENGINE) stop $(DB_NAME)
+	-$(CONTAINER_ENGINE) rm   $(DB_NAME)
+
+db-clean: db-stop
+	-$(CONTAINER_ENGINE) volume rm $(DB_VOL)
+
+db-seed:
+	$(CONTAINER_ENGINE) exec -i $(DB_NAME) psql -U oga -d oga \
+	  < apps/web/tests/seeds/framework/001-seed-framework.sql
+	$(CONTAINER_ENGINE) exec -i $(DB_NAME) psql -U oga -d oga \
+	  < apps/web/tests/seeds/profiles/baseline/100-baseline-users.sql
+	@echo "Seed applied."
