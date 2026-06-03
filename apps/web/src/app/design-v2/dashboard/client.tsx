@@ -2,27 +2,23 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Styles } from "../_shared/styles";
 import {
   AppShell, AppCard, StatCell, PrimaryCta, GhostCta, appRag,
 } from "../_shared/app-shell";
 import { McpAddOnSection, type McpStatus } from "../_shared/mcp-addon-section";
 import { intentLabel } from "@/lib/intents";
+import "./dashboard.css";
 
-/* =================================================================
-   OneGoodArea · Design V2 · /dashboard
-   Reports list + usage + monitored postcodes + API keys (if API plan).
-   All real endpoints preserved: /api/stripe/portal, /api/keys,
-   /api/report/:id, /api/watchlist/:id (legacy route, surface relabelled).
-   ================================================================= */
+/* /dashboard — Brand v3 rewrite (AR-204 close-out 14/15).
+
+   Visual altitude lift only. IA unchanged (structural restructure
+   around the 4-product API is the next epic — see
+   memory/project_dashboard_redesign_pending.md + task #172).
+   Same shell + same data + same real endpoints. */
 
 type Report = { id: string; area: string; intent: string; score: number; created_at: string };
 type SavedArea = { id: string; postcode: string; label: string; intent: string | null; created_at: string };
 type ApiKey = { id: string; key_preview: string; name: string; created_at: string; last_used_at: string | null };
-
-// Intent enum (moving / business / investing / research) → B2B workflow
-// label (Origination / Site selection / Investment / Reference) via the
-// canonical helper in src/lib/intents.ts. Per AR-149.
 
 type Props = {
   reports: Report[];
@@ -36,25 +32,25 @@ type Props = {
 
 export default function DashboardClient(props: Props) {
   return (
-    <>
-      <Styles />
-      <AppShell
-        title="Dashboard"
-        subtitle="Reports, monitored postcodes, and usage."
-        actions={
-          <PrimaryCta href="/report">
-            New report
-            <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
-          </PrimaryCta>
-        }
-      >
-        <Body {...props} />
-      </AppShell>
-    </>
+    <AppShell
+      title="Dashboard"
+      subtitle="Reports, monitored postcodes, and usage."
+      actions={<PrimaryCta href="/report">New report</PrimaryCta>}
+    >
+      <Body {...props} />
+    </AppShell>
   );
 }
 
-function Body({ reports: initialReports, plan, planName, used, limit, savedAreas: initialSaved, mcp }: Props) {
+function Body({
+  reports: initialReports,
+  plan,
+  planName,
+  used,
+  limit,
+  savedAreas: initialSaved,
+  mcp,
+}: Props) {
   const [reports, setReports] = useState<Report[]>(initialReports);
   const [savedAreas, setSavedAreas] = useState<SavedArea[]>(initialSaved);
 
@@ -62,10 +58,11 @@ function Body({ reports: initialReports, plan, planName, used, limit, savedAreas
   // all grant API access. Keep in sync with API_PLANS in src/lib/stripe.ts.
   const apiPlans = ["developer", "business", "growth", "sandbox", "starter_v2", "build", "scale", "growth_v2", "enterprise"];
   const isApiPlan = apiPlans.includes(plan);
+
   const stats = useMemo(() => {
     if (reports.length === 0) return null;
     const avg = Math.round(reports.reduce((s, r) => s + r.score, 0) / reports.length);
-    const best = reports.reduce((b, r) => r.score > b.score ? r : b, reports[0]);
+    const best = reports.reduce((b, r) => (r.score > b.score ? r : b), reports[0]);
     return { avg, best };
   }, [reports]);
 
@@ -80,27 +77,32 @@ function Body({ reports: initialReports, plan, planName, used, limit, savedAreas
   }
 
   return (
-    <div style={{ padding: "28px 40px 64px", display: "flex", flexDirection: "column", gap: 22 }}>
-      <UsageStrip plan={plan} planName={planName} isApiPlan={isApiPlan}
-                  used={used} limit={limit} />
+    <div className="oga-dash">
+      <UsageStrip
+        plan={plan}
+        planName={planName}
+        isApiPlan={isApiPlan}
+        used={used}
+        limit={limit}
+      />
 
       {stats && (
-        <div className="aiq-dash-stats" style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: 0,
-          border: "1px solid var(--border)",
-          background: "var(--bg)",
-          borderRadius: 4, overflow: "hidden",
-        }}>
-          <StatCell label="Total reports"      value={reports.length} />
-          <StatCell label="Average score"      value={stats.avg}      accent={appRag(stats.avg).tone} />
-          <StatCell label="Top-scoring postcode" value={
-            <span style={{ fontSize: 17, lineHeight: 1.25, letterSpacing: "-0.012em" }}>
-              {stats.best.area}
-            </span>
-          } />
-          <StatCell label="Top score"          value={stats.best.score} accent={appRag(stats.best.score).tone} />
+        <div className="oga-dash__stats">
+          <StatCell label="Total reports" value={reports.length} />
+          <StatCell
+            label="Average score"
+            value={stats.avg}
+            accent={appRag(stats.avg).tone}
+          />
+          <StatCell
+            label="Top-scoring postcode"
+            value={<span className="oga-dash__stat-top">{stats.best.area}</span>}
+          />
+          <StatCell
+            label="Top score"
+            value={stats.best.score}
+            accent={appRag(stats.best.score).tone}
+          />
         </div>
       )}
 
@@ -116,197 +118,112 @@ function Body({ reports: initialReports, plan, planName, used, limit, savedAreas
   );
 }
 
-/* ─────── Usage strip ─────── */
-
-function UsageStrip({ plan, planName, isApiPlan, used, limit }: {
-  plan: string; planName: string; isApiPlan: boolean;
-  used: number; limit: number;
+/* ============================================================
+   Usage strip — DARK 2-col card (Plan | Usage)
+   ============================================================ */
+function UsageStrip({
+  plan,
+  planName,
+  isApiPlan,
+  used,
+  limit,
+}: {
+  plan: string;
+  planName: string;
+  isApiPlan: boolean;
+  used: number;
+  limit: number;
 }) {
   const unlimited = limit === Infinity;
   const pct = unlimited ? 0 : Math.min((used / limit) * 100, 100);
-  const rag = pct >= 90 ? "#FFB8A8" : pct >= 70 ? "#FFE07A" : "var(--signal)";
+  const tone: "strong" | "moderate" | "weak" =
+    pct >= 90 ? "weak" : pct >= 70 ? "moderate" : "strong";
 
   return (
-    <div className="aiq-dash-usage" style={{
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 0,
-      background: "var(--bg-ink)",
-      borderRadius: 4,
-      overflow: "hidden",
-      position: "relative",
-      boxShadow: "0 20px 50px -28px rgba(6,42,30,0.35)",
-    }}>
-      {/* Chartreuse wash */}
-      <div aria-hidden style={{
-        position: "absolute", top: -120, right: -80,
-        width: 420, height: 420,
-        background: "radial-gradient(circle, rgba(212,243,58,0.2) 0%, rgba(212,243,58,0) 58%)",
-        pointerEvents: "none",
-      }} />
-
+    <div className="oga-dash__usage" data-oga-surface="dark">
       {/* Plan */}
-      <div style={{
-        padding: "26px 28px",
-        borderRight: "1px solid rgba(255,255,255,0.08)",
-        display: "flex", flexDirection: "column", gap: 12,
-        position: "relative", zIndex: 1,
-      }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-          letterSpacing: "0.22em", textTransform: "uppercase",
-          color: "rgba(212,243,58,0.88)",
-          display: "inline-flex", alignItems: "center", gap: 9,
-        }}>
-          <span aria-hidden style={{
-            width: 6, height: 6, borderRadius: 6, background: "var(--signal)",
-            boxShadow: "0 0 8px rgba(212,243,58,0.5)",
-          }} />
+      <div className="oga-dash__usage-cell">
+        <div className="oga-dash__usage-eyebrow">
+          <span aria-hidden className="oga-dash__usage-dot" />
           Current plan
         </div>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
-          <span style={{
-            fontFamily: "var(--display)", fontSize: 32, fontWeight: 500,
-            letterSpacing: "-0.018em", color: "#FFFFFF",
-            lineHeight: 1,
-          }}>{planName}</span>
-          {isApiPlan && (
-            <span style={{
-              fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 600,
-              letterSpacing: "0.22em", textTransform: "uppercase",
-              color: "var(--signal-ink)", background: "var(--signal)",
-              padding: "3px 8px", borderRadius: 2,
-            }}>API</span>
-          )}
+        <div className="oga-dash__usage-plan-row">
+          <span className="oga-dash__usage-plan-name">{planName}</span>
+          {isApiPlan && <span className="oga-dash__usage-badge">API</span>}
         </div>
-        <div style={{ marginTop: 2 }}>
+        <div>
           <Link
             href="/dashboard/billing"
-            style={{
-              fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-              letterSpacing: "0.14em", textTransform: "uppercase",
-              color: "#FFFFFF", background: "transparent",
-              border: "1px solid rgba(255,255,255,0.24)",
-              padding: "10px 18px", borderRadius: 999,
-              textDecoration: "none",
-              display: "inline-flex", alignItems: "center", gap: 9,
-              transition: "background 140ms ease, border-color 140ms ease",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.24)"; }}
+            className="oga-dash__usage-cta"
           >
             {plan === "free" || plan === "sandbox" ? "Upgrade plan" : "Manage billing"}
-            <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>{"→"}</span>
+            <span aria-hidden>→</span>
           </Link>
         </div>
       </div>
 
       {/* Usage */}
-      <div style={{
-        padding: "26px 28px",
-        display: "flex", flexDirection: "column", gap: 14,
-        position: "relative", zIndex: 1,
-      }}>
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-          letterSpacing: "0.22em", textTransform: "uppercase",
-          color: "rgba(255,255,255,0.6)",
-        }}>
+      <div className="oga-dash__usage-cell oga-dash__usage-cell--bordered">
+        <div className="oga-dash__usage-eyebrow">
           <span>Monthly usage</span>
-          {!unlimited && <span style={{ color: rag }}>{Math.round(pct)}%</span>}
+          {!unlimited && (
+            <span
+              className="oga-dash__usage-pct"
+              data-tone={tone}
+            >
+              {Math.round(pct)}%
+            </span>
+          )}
         </div>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-          <span style={{
-            fontFamily: "var(--display)", fontSize: 38, fontWeight: 500,
-            letterSpacing: "-0.02em", color: "#FFFFFF",
-            lineHeight: 1,
-          }}>{used}</span>
-          <span style={{
-            fontFamily: "var(--mono)", fontSize: 14,
-            color: "rgba(255,255,255,0.5)",
-          }}>/ {unlimited ? "∞" : limit}</span>
+        <div className="oga-dash__usage-count">
+          <span className="oga-dash__usage-count-value">{used}</span>
+          <span className="oga-dash__usage-count-out">/ {unlimited ? "∞" : limit}</span>
         </div>
-        <div style={{
-          height: 5, width: "100%",
-          background: "rgba(255,255,255,0.08)",
-          borderRadius: 2, overflow: "hidden",
-        }}>
-          <div style={{
-            height: "100%",
-            width: unlimited ? "0%" : `${pct}%`,
-            background: rag,
-            transition: "width 420ms cubic-bezier(0.16,1,0.3,1)",
-            boxShadow: `0 0 12px ${rag}33`,
-          }} />
+        <div className="oga-dash__usage-bar" data-tone={tone}>
+          <div
+            className="oga-dash__usage-bar-fill"
+            style={{ width: unlimited ? "0%" : `${pct}%` }}
+          />
         </div>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-          letterSpacing: "0.14em",
-          color: "rgba(255,255,255,0.45)",
-        }}>Resets on the 1st of the month</div>
+        <div className="oga-dash__usage-reset">
+          Resets on the 1st of the month
+        </div>
       </div>
     </div>
   );
 }
 
-/* --- Monitored postcodes --- */
-
-function Watchlist({ items, onRemove }: {
-  items: SavedArea[]; onRemove: (id: string) => void;
+/* ============================================================
+   Monitored postcodes
+   ============================================================ */
+function Watchlist({
+  items,
+  onRemove,
+}: {
+  items: SavedArea[];
+  onRemove: (id: string) => void;
 }) {
   return (
     <AppCard title={`Monitored postcodes · ${items.length}`} noPad>
-      <ul className="aiq-watchlist" style={{
-        listStyle: "none", margin: 0, padding: 0,
-        display: "grid",
-        gridTemplateColumns: "repeat(3, 1fr)",
-        gap: 0,
-      }}>
-        {items.map((area, i) => (
-          <li key={area.id} style={{
-            padding: "16px 20px",
-            borderRight: (i % 3 !== 2) ? "1px solid var(--border-dim)" : "none",
-            borderTop: i >= 3 ? "1px solid var(--border-dim)" : "none",
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            gap: 12,
-          }}>
-            <div style={{ minWidth: 0 }}>
-              <div style={{
-                fontFamily: "var(--display)", fontSize: 15, fontWeight: 500,
-                letterSpacing: "-0.008em", color: "var(--ink-deep)",
-                lineHeight: 1.2,
-                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-              }}>
+      <ul className="oga-dash__watchlist">
+        {items.map((area) => (
+          <li key={area.id} className="oga-dash__watchlist-row">
+            <div className="oga-dash__watchlist-text">
+              <div className="oga-dash__watchlist-label">
                 {area.label || area.postcode}
               </div>
-              <div style={{
-                fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-                letterSpacing: "0.14em",
-                color: "var(--text-3)",
-                marginTop: 3,
-              }}>
-                {area.postcode}{area.intent ? ` · ${intentLabel(area.intent)}` : ""}
+              <div className="oga-dash__watchlist-meta">
+                {area.postcode}
+                {area.intent ? ` · ${intentLabel(area.intent)}` : ""}
               </div>
             </div>
             <button
+              type="button"
               onClick={() => onRemove(area.id)}
               aria-label="Stop monitoring this postcode"
-              style={{
-                width: 26, height: 26, flexShrink: 0,
-                background: "transparent",
-                border: "1px solid var(--border)",
-                borderRadius: 4, cursor: "pointer",
-                color: "var(--text-3)",
-                display: "inline-flex", alignItems: "center", justifyContent: "center",
-                transition: "color 140ms, border-color 140ms",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = "#A01B00"; e.currentTarget.style.borderColor = "#A01B00"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-3)"; e.currentTarget.style.borderColor = "var(--border)"; }}
+              className="oga-dash__icon-btn oga-dash__icon-btn--danger"
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path d="M6 6 L18 18 M18 6 L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
+              <XIcon />
             </button>
           </li>
         ))}
@@ -315,8 +232,9 @@ function Watchlist({ items, onRemove }: {
   );
 }
 
-/* ─────── API keys (conditional on API plan) ─────── */
-
+/* ============================================================
+   API keys
+   ============================================================ */
 function ApiKeysSection() {
   const [keys, setKeys] = useState<ApiKey[] | null>(null);
   const [newKey, setNewKey] = useState<string | null>(null);
@@ -346,7 +264,9 @@ function ApiKeysSection() {
         const kData = await kRes.json();
         setKeys(kData.keys || []);
       }
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function revokeKey(id: string) {
@@ -366,94 +286,57 @@ function ApiKeysSection() {
       note="Bearer tokens for the REST API"
       noPad
     >
-      <div style={{ padding: "14px 22px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-        <div style={{
-          fontFamily: "var(--sans)", fontSize: 13, color: "var(--text-2)",
-          maxWidth: "60ch", lineHeight: 1.5,
-        }}>
-          Create a key, drop it in your <code style={inlineCode}>Authorization: Bearer</code> header. 30 requests per minute per key; cached responses don&apos;t count.
-        </div>
+      <div className="oga-dash__keys-head">
+        <p className="oga-dash__keys-blurb">
+          Create a key, drop it in your <code className="oga-dash__inline-code">Authorization: Bearer</code> header. 30 requests per minute per key; cached responses don&rsquo;t count.
+        </p>
         <PrimaryCta onClick={createKey} disabled={loading}>
           {loading ? "Creating…" : "New key"}
         </PrimaryCta>
       </div>
 
       {newKey && (
-        <div style={{
-          margin: "0 22px 18px",
-          padding: "14px 18px",
-          background: "var(--signal-dim)",
-          border: "1px solid var(--ink)",
-          borderRadius: 4,
-        }}>
-          <div style={{
-            fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-            letterSpacing: "0.22em", textTransform: "uppercase",
-            color: "var(--ink-deep)", marginBottom: 8,
-          }}>
-            Save this key now · it won&apos;t be shown again
+        <div className="oga-dash__keys-reveal">
+          <div className="oga-dash__keys-reveal-eyebrow">
+            Save this key now &middot; it won&rsquo;t be shown again
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <code style={{
-              fontFamily: "var(--mono)", fontSize: 13, fontWeight: 500,
-              color: "var(--ink-deep)",
-              background: "var(--bg)",
-              border: "1px solid var(--border)",
-              padding: "6px 10px", borderRadius: 2,
-              flex: 1, minWidth: 0,
-              overflow: "auto", whiteSpace: "nowrap",
-            }}>{newKey}</code>
+          <div className="oga-dash__keys-reveal-row">
+            <code className="oga-dash__keys-reveal-code">{newKey}</code>
             <button
+              type="button"
               onClick={() => copy(newKey)}
-              style={{
-                fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-                letterSpacing: "0.16em", textTransform: "uppercase",
-                color: copied ? "var(--ink-deep)" : "var(--ink)",
-                background: copied ? "var(--bg)" : "transparent",
-                border: `1px solid var(--ink-deep)`,
-                padding: "6px 12px", borderRadius: 2, cursor: "pointer",
-              }}
-            >{copied ? "Copied ✓" : "Copy"}</button>
+              className="oga-dash__keys-copy"
+              data-copied={copied}
+            >
+              {copied ? "Copied ✓" : "Copy"}
+            </button>
           </div>
         </div>
       )}
 
-      <div style={{ borderTop: "1px solid var(--border)" }}>
+      <div className="oga-dash__keys-list-wrap">
         {keys === null ? (
-          <div style={{
-            padding: "22px", textAlign: "center",
-            fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-            letterSpacing: "0.14em", color: "var(--text-3)",
-          }}>Loading keys…</div>
+          <div className="oga-dash__keys-empty">Loading keys&hellip;</div>
         ) : keys.length === 0 ? (
-          <div style={{
-            padding: "26px 22px", textAlign: "center",
-            fontFamily: "var(--sans)", fontSize: 14,
-            color: "var(--text-3)",
-          }}>No keys yet. Create one to start making requests.</div>
+          <div className="oga-dash__keys-empty-body">
+            No keys yet. Create one to start making requests.
+          </div>
         ) : (
-          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-            {keys.map((k, i) => (
-              <li key={k.id} style={{
-                padding: "14px 22px",
-                borderBottom: i < keys.length - 1 ? "1px solid var(--border-dim)" : "none",
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                gap: 14, flexWrap: "wrap",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-                  <code style={inlineCode}>{k.key_preview}</code>
-                  <span style={{
-                    fontFamily: "var(--display)", fontSize: 14, fontWeight: 500,
-                    color: "var(--ink-deep)", letterSpacing: "-0.005em",
-                  }}>{k.name}</span>
-                  <span style={{
-                    fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-                    letterSpacing: "0.14em", color: "var(--text-3)",
-                  }}>
-                    {k.last_used_at ? `Last used ${formatDate(k.last_used_at)}` : "Never used"}
+          <ul className="oga-dash__keys-list">
+            {keys.map((k) => (
+              <li key={k.id} className="oga-dash__keys-row">
+                <div className="oga-dash__keys-row-text">
+                  <code className="oga-dash__inline-code">{k.key_preview}</code>
+                  <span className="oga-dash__keys-name">{k.name}</span>
+                  <span className="oga-dash__keys-meta">
+                    {k.last_used_at
+                      ? `Last used ${formatDate(k.last_used_at)}`
+                      : "Never used"}
                   </span>
                 </div>
-                <GhostCta onClick={() => revokeKey(k.id)} danger>Revoke</GhostCta>
+                <GhostCta onClick={() => revokeKey(k.id)} danger>
+                  Revoke
+                </GhostCta>
               </li>
             ))}
           </ul>
@@ -463,49 +346,60 @@ function ApiKeysSection() {
   );
 }
 
-const inlineCode: React.CSSProperties = {
-  fontFamily: "var(--mono)", fontSize: 12, fontWeight: 500,
-  color: "var(--ink-deep)",
-  background: "var(--bg-off)",
-  border: "1px solid var(--border)",
-  padding: "2px 7px", borderRadius: 2,
-};
-
-/* ─────── Reports table ─────── */
-
-function ReportsTable({ reports, onDelete }: {
-  reports: Report[]; onDelete: (id: string) => void;
+/* ============================================================
+   Reports list
+   ============================================================ */
+function ReportsTable({
+  reports,
+  onDelete,
+}: {
+  reports: Report[];
+  onDelete: (id: string) => void;
 }) {
   const [search, setSearch] = useState("");
   const [intentFilter, setIntentFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"date" | "score" | "area">("date");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  const intents = useMemo(() => Array.from(new Set(reports.map((r) => r.intent))), [reports]);
-  const filtered = useMemo(() => reports
-    .filter((r) => {
-      if (search && !r.area.toLowerCase().includes(search.toLowerCase())) return false;
-      if (intentFilter !== "all" && r.intent !== intentFilter) return false;
-      return true;
-    })
-    .sort((a, b) => {
-      let cmp = 0;
-      if (sortBy === "score") cmp = a.score - b.score;
-      else if (sortBy === "area") cmp = a.area.localeCompare(b.area);
-      else cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-      return sortDir === "desc" ? -cmp : cmp;
-    }), [reports, search, intentFilter, sortBy, sortDir]);
+  const intents = useMemo(
+    () => Array.from(new Set(reports.map((r) => r.intent))),
+    [reports],
+  );
+  const filtered = useMemo(
+    () =>
+      reports
+        .filter((r) => {
+          if (search && !r.area.toLowerCase().includes(search.toLowerCase())) return false;
+          if (intentFilter !== "all" && r.intent !== intentFilter) return false;
+          return true;
+        })
+        .sort((a, b) => {
+          let cmp = 0;
+          if (sortBy === "score") cmp = a.score - b.score;
+          else if (sortBy === "area") cmp = a.area.localeCompare(b.area);
+          else cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          return sortDir === "desc" ? -cmp : cmp;
+        }),
+    [reports, search, intentFilter, sortBy, sortDir],
+  );
 
   function toggleSort(col: "date" | "score" | "area") {
-    if (sortBy === col) setSortDir((d) => d === "desc" ? "asc" : "desc");
-    else { setSortBy(col); setSortDir("desc"); }
+    if (sortBy === col) setSortDir((d) => (d === "desc" ? "asc" : "desc"));
+    else {
+      setSortBy(col);
+      setSortDir("desc");
+    }
   }
 
   function exportCSV() {
     const header = "Area,Intent,Score,Status,Generated";
     const rowStrings = filtered.map((r) => {
       const rag = appRag(r.score);
-      const date = new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+      const date = new Date(r.created_at).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
       return `"${r.area.replace(/"/g, '""')}","${r.intent}",${r.score},"${rag.label}","${date}"`;
     });
     const csv = [header, ...rowStrings].join("\n");
@@ -521,195 +415,158 @@ function ReportsTable({ reports, onDelete }: {
   return (
     <AppCard title={`Reports · ${reports.length}`} noPad>
       {/* Toolbar */}
-      <div style={{
-        padding: "14px 22px",
-        borderBottom: "1px solid var(--border)",
-        display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
-      }}>
+      <div className="oga-dash__rep-toolbar">
         <input
           type="search"
           placeholder="Search area…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{
-            flex: 1, minWidth: 180,
-            height: 36, padding: "0 12px",
-            fontFamily: "var(--sans)", fontSize: 13.5,
-            color: "var(--ink-deep)", background: "var(--bg)",
-            border: "1px solid var(--border)", borderRadius: 4,
-            outline: "none",
-          }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = "var(--ink)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(212,243,58,0.22)"; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.boxShadow = "none"; }}
+          className="oga-dash__rep-search"
         />
         <select
           value={intentFilter}
           onChange={(e) => setIntentFilter(e.target.value)}
-          style={{
-            height: 36, padding: "0 12px",
-            fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-            letterSpacing: "0.08em",
-            color: "var(--ink-deep)", background: "var(--bg)",
-            border: "1px solid var(--border)", borderRadius: 4,
-            outline: "none", cursor: "pointer",
-          }}
+          className="oga-dash__rep-filter"
         >
           <option value="all">All workflows</option>
-          {intents.map((i) => <option key={i} value={i}>{intentLabel(i)}</option>)}
+          {intents.map((i) => (
+            <option key={i} value={i}>
+              {intentLabel(i)}
+            </option>
+          ))}
         </select>
-        {filtered.length > 0 && <GhostCta onClick={exportCSV}>Export CSV</GhostCta>}
+        {filtered.length > 0 && (
+          <GhostCta onClick={exportCSV}>Export CSV</GhostCta>
+        )}
       </div>
 
-      {/* Header row */}
       {filtered.length > 0 && (
-        <div className="aiq-reports-head" style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 120px 80px 120px 40px",
-          gap: 14, padding: "10px 22px",
-          borderBottom: "1px solid var(--border)",
-          background: "var(--bg-off)",
-          fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
-          letterSpacing: "0.22em", textTransform: "uppercase",
-          color: "var(--text-3)",
-        }}>
-          <SortHeader label="Postcode" active={sortBy === "area"}   dir={sortDir} onClick={() => toggleSort("area")} />
+        <div className="oga-dash__rep-head">
+          <SortHeader
+            label="Postcode"
+            active={sortBy === "area"}
+            dir={sortDir}
+            onClick={() => toggleSort("area")}
+          />
           <span>Workflow</span>
-          <SortHeader label="Score"    active={sortBy === "score"}  dir={sortDir} onClick={() => toggleSort("score")} />
-          <SortHeader label="Created"  active={sortBy === "date"}   dir={sortDir} onClick={() => toggleSort("date")} />
+          <SortHeader
+            label="Score"
+            active={sortBy === "score"}
+            dir={sortDir}
+            onClick={() => toggleSort("score")}
+          />
+          <SortHeader
+            label="Created"
+            active={sortBy === "date"}
+            dir={sortDir}
+            onClick={() => toggleSort("date")}
+          />
           <span />
         </div>
       )}
 
-      {/* Rows */}
       {filtered.length === 0 ? (
         <EmptyState hasReports={reports.length > 0} />
       ) : (
-        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          {filtered.map((r, i) => <ReportRow key={r.id} report={r} isLast={i === filtered.length - 1} onDelete={onDelete} />)}
+        <ul className="oga-dash__rep-list">
+          {filtered.map((r) => (
+            <ReportRow key={r.id} report={r} onDelete={onDelete} />
+          ))}
         </ul>
       )}
     </AppCard>
   );
 }
 
-function SortHeader({ label, active, dir, onClick }: {
-  label: string; active: boolean; dir: "asc" | "desc"; onClick: () => void;
+function SortHeader({
+  label,
+  active,
+  dir,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  dir: "asc" | "desc";
+  onClick: () => void;
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      style={{
-        background: "transparent", border: "none", cursor: "pointer",
-        display: "inline-flex", alignItems: "center", gap: 6,
-        fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
-        letterSpacing: "0.22em", textTransform: "uppercase",
-        color: active ? "var(--ink-deep)" : "var(--text-3)",
-        padding: 0,
-      }}
+      className="oga-dash__sort"
+      data-active={active}
     >
       {label}
-      {active && <span aria-hidden style={{ fontSize: 9 }}>{dir === "desc" ? "▼" : "▲"}</span>}
+      {active && (
+        <span aria-hidden className="oga-dash__sort-arrow">
+          {dir === "desc" ? "▼" : "▲"}
+        </span>
+      )}
     </button>
   );
 }
 
-function ReportRow({ report, isLast, onDelete }: {
-  report: Report; isLast: boolean; onDelete: (id: string) => void;
+function ReportRow({
+  report,
+  onDelete,
+}: {
+  report: Report;
+  onDelete: (id: string) => void;
 }) {
   const rag = appRag(report.score);
   const [confirm, setConfirm] = useState(false);
-  const [hover, setHover] = useState(false);
 
   return (
-    <li
-      className="aiq-reports-row"
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 120px 80px 120px 40px",
-        gap: 14,
-        alignItems: "center",
-        padding: "14px 22px",
-        borderBottom: isLast ? "none" : "1px solid var(--border-dim)",
-        background: hover ? "var(--bg-off)" : "var(--bg)",
-        transition: "background 140ms ease",
-      }}
-    >
-      <Link href={`/report/${report.id}`} style={{
-        fontFamily: "var(--display)", fontSize: 15, fontWeight: 500,
-        letterSpacing: "-0.008em",
-        color: "var(--ink-deep)", textDecoration: "none",
-        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-      }}>{report.area}</Link>
+    <li className="oga-dash__rep-row">
+      <Link
+        href={`/report/${report.id}`}
+        className="oga-dash__rep-area"
+      >
+        {report.area}
+      </Link>
 
-      <span style={{
-        fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-        letterSpacing: "0.04em",
-        color: "var(--signal-ink)", background: "var(--signal)",
-        padding: "3px 8px", borderRadius: 2, justifySelf: "start",
-      }}>{intentLabel(report.intent)}</span>
+      <span className="oga-dash__rep-intent">{intentLabel(report.intent)}</span>
 
-      <span style={{
-        fontFamily: "var(--mono)", fontSize: 14, fontWeight: 600,
-        color: rag.dot,
-        display: "inline-flex", alignItems: "center", gap: 7,
-      }}>
-        <span aria-hidden style={{
-          width: 6, height: 6, borderRadius: 6, background: rag.dot,
-        }} />
+      <span className="oga-dash__rep-score" style={{ color: rag.dot }}>
+        <span
+          aria-hidden
+          className="oga-dash__rep-score-dot"
+          style={{ background: rag.dot }}
+        />
         {report.score}
       </span>
 
-      <span style={{
-        fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-        letterSpacing: "0.06em", color: "var(--text-3)",
-      }}>{formatDate(report.created_at)}</span>
+      <span className="oga-dash__rep-date">{formatDate(report.created_at)}</span>
 
-      <div style={{ justifySelf: "end", position: "relative" }}>
+      <div className="oga-dash__rep-actions">
         {confirm ? (
-          <div style={{ display: "flex", gap: 6 }}>
+          <div className="oga-dash__rep-confirm">
             <button
-              onClick={() => { onDelete(report.id); setConfirm(false); }}
-              style={{
-                fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
-                letterSpacing: "0.18em", textTransform: "uppercase",
-                color: "#FFFFFF", background: "#A01B00",
-                border: "1px solid #A01B00", padding: "4px 8px", borderRadius: 2,
-                cursor: "pointer",
+              type="button"
+              onClick={() => {
+                onDelete(report.id);
+                setConfirm(false);
               }}
-            >Delete</button>
+              className="oga-dash__rep-confirm-yes"
+            >
+              Delete
+            </button>
             <button
+              type="button"
               onClick={() => setConfirm(false)}
-              style={{
-                fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
-                letterSpacing: "0.18em", textTransform: "uppercase",
-                color: "var(--text-2)", background: "transparent",
-                border: "1px solid var(--border)", padding: "4px 8px", borderRadius: 2,
-                cursor: "pointer",
-              }}
-            >No</button>
+              className="oga-dash__rep-confirm-no"
+            >
+              No
+            </button>
           </div>
         ) : (
           <button
+            type="button"
             onClick={() => setConfirm(true)}
             aria-label="Delete report"
-            style={{
-              width: 28, height: 28,
-              background: "transparent",
-              border: "1px solid var(--border)",
-              borderRadius: 4, cursor: "pointer",
-              color: "var(--text-3)",
-              display: "inline-flex", alignItems: "center", justifyContent: "center",
-              transition: "color 140ms, border-color 140ms",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = "#A01B00"; e.currentTarget.style.borderColor = "#A01B00"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-3)"; e.currentTarget.style.borderColor = "var(--border)"; }}
+            className="oga-dash__icon-btn oga-dash__icon-btn--danger"
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path d="M5 7 H19 M9 7 V5 A1 1 0 0 1 10 4 H14 A1 1 0 0 1 15 5 V7 M7 7 V20 A1 1 0 0 0 8 21 H16 A1 1 0 0 0 17 20 V7 M10 11 V17 M14 11 V17"
-                stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" fill="none" />
-            </svg>
+            <TrashIcon />
           </button>
         )}
       </div>
@@ -719,36 +576,50 @@ function ReportRow({ report, isLast, onDelete }: {
 
 function EmptyState({ hasReports }: { hasReports: boolean }) {
   return (
-    <div style={{
-      padding: "48px 22px",
-      textAlign: "center",
-    }}>
-      <div style={{
-        fontFamily: "var(--display)", fontSize: 20, fontWeight: 500,
-        letterSpacing: "-0.012em", color: "var(--ink-deep)",
-        margin: "0 0 8px",
-      }}>
+    <div className="oga-dash__empty">
+      <div className="oga-dash__empty-title">
         {hasReports ? "No reports match your filter" : "No reports yet"}
       </div>
-      <p style={{
-        fontFamily: "var(--sans)", fontSize: 14, fontWeight: 400,
-        color: "var(--text-2)", lineHeight: 1.5,
-        margin: "0 auto 20px", maxWidth: "44ch",
-      }}>
+      <p className="oga-dash__empty-body">
         {hasReports
           ? "Clear the search or change the workflow filter to see your reports again."
-          : "Generate your first report. The Sandbox tier includes 35 free API calls a month, no card required."}
+          : "Generate your first report. The Sandbox tier includes free API calls a month, no card required."}
       </p>
       {!hasReports && (
-        <PrimaryCta href="/report">
-          Generate a report
-          <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
-        </PrimaryCta>
+        <PrimaryCta href="/report">Generate a report</PrimaryCta>
       )}
     </div>
   );
 }
 
+/* ============================================================
+   Icons
+   ============================================================ */
+function XIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M6 6 L18 18 M18 6 L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+function TrashIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M5 7 H19 M9 7 V5 A1 1 0 0 1 10 4 H14 A1 1 0 0 1 15 5 V7 M7 7 V20 A1 1 0 0 0 8 21 H16 A1 1 0 0 0 17 20 V7 M10 11 V17 M14 11 V17"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        fill="none"
+      />
+    </svg>
+  );
+}
+
 function formatDate(d: string) {
-  return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(d).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
