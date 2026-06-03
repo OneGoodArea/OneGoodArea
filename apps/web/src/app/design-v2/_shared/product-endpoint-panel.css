@@ -1,0 +1,229 @@
+/* Shared product-page endpoint panel CSS (AR-211).
+
+   Recipe lifted character-for-character from the 4 page-scoped
+   endpoint-panel blocks (signals.css / scores.css / monitor.css /
+   intelligence.css) which were identical modulo prefix. Page-scoped
+   blocks were dropped from their respective files; this is the
+   single source of truth.
+
+   Verb colour: temporary data-verb attribute mapping preserves the
+   per-product visual (signals's tabs were green, the others amber).
+   AR-210 replaces this with the shared `.oga-verb--{verb}` utility
+   so the colour is verb-aware everywhere, not per-page. */
+
+.oga-product-ep {
+  padding-top: var(--oga-9);
+}
+
+.oga-product-ep__wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.oga-product-ep__head {
+  text-align: center;
+  margin-bottom: var(--oga-7);
+}
+
+.oga-product-ep__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 auto var(--oga-3);
+  max-width: 28ch;
+}
+
+.oga-product-ep__sub {
+  font-family: var(--oga-font-sans);
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0 auto;
+  max-width: 60ch;
+}
+
+.oga-product-ep__panel {
+  max-width: 1080px;
+  margin: 0 auto;
+  border: 1px solid var(--oga-border);
+  background: var(--oga-white);
+}
+
+.oga-product-ep__tabs {
+  display: flex;
+  border-bottom: 1px solid var(--oga-border);
+  flex-wrap: wrap;
+}
+
+.oga-product-ep__tab {
+  flex: 1;
+  min-width: 180px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--oga-border);
+  padding: var(--oga-4) var(--oga-3);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--oga-font-mono);
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.oga-product-ep__tab:last-child {
+  border-right: none;
+}
+
+.oga-product-ep__tab:hover {
+  background: var(--oga-canvas);
+}
+
+.oga-product-ep__tab--active {
+  background: var(--oga-ink);
+  color: var(--oga-white);
+}
+
+.oga-product-ep__tab-verb {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  color: var(--oga-status-amber);
+}
+/* Per-verb colour via data-verb. Visual-parity bridge; AR-210
+   replaces with the shared .oga-verb--{verb} utility. */
+.oga-product-ep__tab-verb[data-verb="GET"]    { color: var(--oga-status-green);  }
+.oga-product-ep__tab-verb[data-verb="POST"]   { color: var(--oga-status-amber);  }
+.oga-product-ep__tab-verb[data-verb="PUT"]    { color: var(--oga-status-yellow); }
+.oga-product-ep__tab-verb[data-verb="DELETE"] { color: var(--oga-status-red);    }
+.oga-product-ep__tab-verb[data-verb="PATCH"]  { color: var(--oga-status-amber);  }
+
+.oga-product-ep__tab--active .oga-product-ep__tab-verb[data-verb="GET"]    { color: rgba(170, 230, 180, 0.95); }
+.oga-product-ep__tab--active .oga-product-ep__tab-verb[data-verb="POST"],
+.oga-product-ep__tab--active .oga-product-ep__tab-verb[data-verb="PATCH"]  { color: rgba(255, 220, 170, 0.95); }
+.oga-product-ep__tab--active .oga-product-ep__tab-verb[data-verb="PUT"]    { color: rgba(232, 210, 122, 0.95); }
+.oga-product-ep__tab--active .oga-product-ep__tab-verb[data-verb="DELETE"] { color: rgba(232, 122, 101, 0.95); }
+
+.oga-product-ep__tab-path {
+  display: block;
+  font-size: 12.5px;
+  color: var(--oga-fg);
+}
+
+.oga-product-ep__tab--active .oga-product-ep__tab-path {
+  color: var(--oga-white);
+}
+
+.oga-product-ep__body {
+  padding: var(--oga-6);
+}
+
+.oga-product-ep__what {
+  font-family: var(--oga-font-sans);
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-5);
+}
+
+.oga-product-ep__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--oga-6);
+}
+
+@media (max-width: 720px) {
+  .oga-product-ep__grid { grid-template-columns: 1fr; gap: var(--oga-5); }
+}
+
+.oga-product-ep__col-title {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-3);
+}
+
+.oga-product-ep__params {
+  display: grid;
+  gap: var(--oga-3);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.oga-product-ep__params li {
+  padding: var(--oga-2) 0;
+  border-bottom: 1px solid var(--oga-border-dim);
+}
+
+.oga-product-ep__params li:last-child {
+  border-bottom: none;
+}
+
+.oga-product-ep__params-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--oga-2);
+}
+
+.oga-product-ep__params-name {
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
+  color: var(--oga-fg);
+  font-weight: 500;
+}
+
+.oga-product-ep__params-type {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  color: var(--oga-fg-muted);
+}
+
+.oga-product-ep__params-req {
+  font-family: var(--oga-font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--oga-status-amber);
+}
+
+.oga-product-ep__params-desc {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+  margin: 4px 0 0;
+}
+
+.oga-product-ep__response {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-4);
+}
+
+.oga-product-ep__codes {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--oga-1) var(--oga-3);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  margin: 0;
+}
+
+.oga-product-ep__codes dt {
+  color: var(--oga-fg);
+  font-weight: 500;
+}
+
+.oga-product-ep__codes dd {
+  color: var(--oga-fg-muted);
+  margin: 0;
+}

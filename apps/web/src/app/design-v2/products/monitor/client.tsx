@@ -6,6 +6,7 @@ import { Nav } from "../../_shared/nav";
 import { Footer } from "../../_shared/footer";
 import { MonitorIcon } from "../../_shared/product-icons";
 import { ProductHero } from "../../_shared/product-hero";
+import { ProductEndpointPanel } from "../../_shared/product-endpoint-panel";
 import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 import "./monitor.css";
 
@@ -173,7 +174,12 @@ export default function ProductMonitorClient() {
       <SectionSpecimen />
       <SectionWatched />
       <SectionPipeline />
-      <SectionEndpoints />
+      <ProductEndpointPanel
+        titleId="mon-ep-title"
+        title="Five endpoints. One signed event catalog."
+        sub="Portfolios CRUD plus enrich plus change detection plus webhook subscriptions. Plain JSON over HTTPS, Bearer-token auth with the oga_ prefix, all paths under /v1/."
+        endpoints={EPS}
+      />
       <SectionIcps />
       <FinalCta />
       <Footer />
@@ -911,89 +917,9 @@ const EPS: Endpoint[] = [
   },
 ];
 
-function SectionEndpoints() {
-  const [idx, setIdx] = useState(0);
-  const ep = EPS[idx];
-  return (
-    <section
-      className="oga-section-hero oga-mon-ep"
-      aria-labelledby="mon-ep-title"
-    >
-      <div className="oga-mon__wrap">
-        <header className="oga-mon-ep__head">
-          <h2 id="mon-ep-title" className="oga-mon-ep__title">
-            Five endpoints. One signed event catalog.
-          </h2>
-          <p className="oga-mon-ep__sub">
-            Portfolios CRUD plus enrich plus change detection plus webhook
-            subscriptions. Plain JSON over HTTPS, Bearer-token auth with the
-            oga_ prefix, all paths under /v1/.
-          </p>
-        </header>
-
-        <div className="oga-mon-ep__panel">
-          <div className="oga-mon-ep__tabs" role="tablist" aria-label="Endpoint">
-            {EPS.map((e, i) => (
-              <button
-                key={e.path}
-                type="button"
-                role="tab"
-                aria-selected={i === idx}
-                onClick={() => setIdx(i)}
-                className={`oga-mon-ep__tab${i === idx ? " oga-mon-ep__tab--active" : ""}`}
-              >
-                <span className="oga-mon-ep__tab-verb">{e.method}</span>
-                <span className="oga-mon-ep__tab-path">{e.path}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="oga-mon-ep__body">
-            <p className="oga-mon-ep__what">{ep.what}</p>
-
-            <div className="oga-mon-ep__grid">
-              <div>
-                <h4 className="oga-mon-ep__col-title">Parameters</h4>
-                <ul className="oga-mon-ep__params">
-                  {ep.params.map((p) => (
-                    <li key={p.name}>
-                      <div className="oga-mon-ep__params-head">
-                        <code className="oga-mon-ep__params-name">{p.name}</code>
-                        <span className="oga-mon-ep__params-type">{p.type}</span>
-                        {p.required && <span className="oga-mon-ep__params-req">Required</span>}
-                      </div>
-                      <p className="oga-mon-ep__params-desc">{p.desc}</p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="oga-mon-ep__col-title">Response</h4>
-                <p className="oga-mon-ep__response">{ep.response}</p>
-                <h4 className="oga-mon-ep__col-title">Status codes</h4>
-                <dl className="oga-mon-ep__codes">
-                  {ep.codes.map((c) => (
-                    <CodeRow key={c.code} code={c.code} meaning={c.meaning} />
-                  ))}
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function CodeRow({ code, meaning }: { code: string; meaning: string }) {
-  return (
-    <>
-      <dt>{code}</dt>
-      <dd>{meaning}</dd>
-    </>
-  );
-}
+/* SectionEndpoints + CodeRow extracted to shared
+   _shared/product-endpoint-panel.{tsx,css} in AR-211.
+   Per-product variation = title + sub + EPS data. */
 
 /* ============================================================
    § 05 — Built for (cream) — 5 ICPs, InsureTech leads

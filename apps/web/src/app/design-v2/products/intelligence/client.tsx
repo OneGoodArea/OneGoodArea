@@ -6,6 +6,7 @@ import { Nav } from "../../_shared/nav";
 import { Footer } from "../../_shared/footer";
 import { IntelligenceIcon } from "../../_shared/product-icons";
 import { ProductHero } from "../../_shared/product-hero";
+import { ProductEndpointPanel } from "../../_shared/product-endpoint-panel";
 import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 import "./intelligence.css";
 
@@ -179,7 +180,12 @@ export default function ProductIntelligenceClient() {
       <SectionOps />
       <SectionPipeline />
       <SectionEval />
-      <SectionEndpoints />
+      <ProductEndpointPanel
+        titleId="int-ep-title"
+        title="One typed query plane. Three convenience endpoints."
+        sub="/v1/query is the typed plane (6 ops). /v1/peers, /v1/insights, /v1/forecast are convenience endpoints over the same plan ops. Same executor, two surfaces."
+        endpoints={EPS}
+      />
       <SectionIcps />
       <FinalCta />
       <Footer />
@@ -896,89 +902,9 @@ const EPS: Endpoint[] = [
   },
 ];
 
-function SectionEndpoints() {
-  const [idx, setIdx] = useState(0);
-  const ep = EPS[idx];
-  return (
-    <section
-      className="oga-section-hero oga-int-ep"
-      aria-labelledby="int-ep-title"
-    >
-      <div className="oga-int__wrap">
-        <header className="oga-int-ep__head">
-          <h2 id="int-ep-title" className="oga-int-ep__title">
-            One typed query plane. Three convenience endpoints.
-          </h2>
-          <p className="oga-int-ep__sub">
-            /v1/query is the typed plane (6 ops). /v1/peers, /v1/insights,
-            /v1/forecast are convenience endpoints over the same plan ops.
-            Same executor, two surfaces.
-          </p>
-        </header>
-
-        <div className="oga-int-ep__panel">
-          <div className="oga-int-ep__tabs" role="tablist" aria-label="Endpoint">
-            {EPS.map((e, i) => (
-              <button
-                key={e.path}
-                type="button"
-                role="tab"
-                aria-selected={i === idx}
-                onClick={() => setIdx(i)}
-                className={`oga-int-ep__tab${i === idx ? " oga-int-ep__tab--active" : ""}`}
-              >
-                <span className="oga-int-ep__tab-verb">{e.method}</span>
-                <span className="oga-int-ep__tab-path">{e.path}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="oga-int-ep__body">
-            <p className="oga-int-ep__what">{ep.what}</p>
-
-            <div className="oga-int-ep__grid">
-              <div>
-                <h4 className="oga-int-ep__col-title">Parameters</h4>
-                <ul className="oga-int-ep__params">
-                  {ep.params.map((p) => (
-                    <li key={p.name}>
-                      <div className="oga-int-ep__params-head">
-                        <code className="oga-int-ep__params-name">{p.name}</code>
-                        <span className="oga-int-ep__params-type">{p.type}</span>
-                        {p.required && <span className="oga-int-ep__params-req">Required</span>}
-                      </div>
-                      <p className="oga-int-ep__params-desc">{p.desc}</p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="oga-int-ep__col-title">Response</h4>
-                <p className="oga-int-ep__response">{ep.response}</p>
-                <h4 className="oga-int-ep__col-title">Status codes</h4>
-                <dl className="oga-int-ep__codes">
-                  {ep.codes.map((c) => (
-                    <CodeRow key={c.code} code={c.code} meaning={c.meaning} />
-                  ))}
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function CodeRow({ code, meaning }: { code: string; meaning: string }) {
-  return (
-    <>
-      <dt>{code}</dt>
-      <dd>{meaning}</dd>
-    </>
-  );
-}
+/* SectionEndpoints + CodeRow extracted to shared
+   _shared/product-endpoint-panel.{tsx,css} in AR-211.
+   Per-product variation = title + sub + EPS data. */
 
 /* ============================================================
    § 06 — Built for (cream) — 5 ICPs, CRE leads

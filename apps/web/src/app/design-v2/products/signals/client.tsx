@@ -6,6 +6,7 @@ import { Nav } from "../../_shared/nav";
 import { Footer } from "../../_shared/footer";
 import { SignalsIcon } from "../../_shared/product-icons";
 import { ProductHero } from "../../_shared/product-hero";
+import { ProductEndpointPanel } from "../../_shared/product-endpoint-panel";
 import {
   METHODOLOGY_VERSION,
   getCurrentMethodology,
@@ -176,7 +177,12 @@ export default function ProductSignalsClient() {
       <SectionSpecimen />
       <SectionAnatomy />
       <SectionCategories />
-      <SectionEndpoints />
+      <ProductEndpointPanel
+        titleId="sig-ep-title"
+        title="Three endpoints. One contract. No SDK required."
+        sub="Plain JSON over HTTPS, Bearer-token auth with the oga_ prefix, all paths under /v1/. Single-signal ranking lives here; multi-signal compound filtering lives one product up under Intelligence."
+        endpoints={EPS}
+      />
       <SectionIcps />
       <FinalCta />
       <Footer />
@@ -778,86 +784,9 @@ const EPS: Endpoint[] = [
   },
 ];
 
-function SectionEndpoints() {
-  const [idx, setIdx] = useState(0);
-  const ep = EPS[idx];
-  return (
-    <section className="oga-section-hero oga-sig-ep" aria-labelledby="sig-ep-title">
-      <div className="oga-sig__wrap">
-        <header className="oga-sig-ep__head">
-          <h2 id="sig-ep-title" className="oga-sig-ep__title">
-            Three endpoints. One contract. No SDK required.
-          </h2>
-          <p className="oga-sig-ep__sub">
-            Plain JSON over HTTPS, Bearer-token auth with the oga_ prefix, all
-            paths under /v1/. Single-signal ranking lives here; multi-signal
-            compound filtering lives one product up under Intelligence.
-          </p>
-        </header>
-
-        <div className="oga-sig-ep__panel">
-          <div className="oga-sig-ep__tabs" role="tablist" aria-label="Endpoint">
-            {EPS.map((e, i) => (
-              <button
-                key={e.path}
-                type="button"
-                role="tab"
-                aria-selected={i === idx}
-                onClick={() => setIdx(i)}
-                className={`oga-sig-ep__tab${i === idx ? " oga-sig-ep__tab--active" : ""}`}
-              >
-                <span className="oga-sig-ep__tab-verb">{e.method}</span>
-                <span className="oga-sig-ep__tab-path">{e.path}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="oga-sig-ep__body">
-            <p className="oga-sig-ep__what">{ep.what}</p>
-
-            <div className="oga-sig-ep__grid">
-              <div>
-                <h4 className="oga-sig-ep__col-title">Parameters</h4>
-                <ul className="oga-sig-ep__params">
-                  {ep.params.map((p) => (
-                    <li key={p.name}>
-                      <div className="oga-sig-ep__params-head">
-                        <code className="oga-sig-ep__params-name">{p.name}</code>
-                        <span className="oga-sig-ep__params-type">{p.type}</span>
-                        {p.required && <span className="oga-sig-ep__params-req">Required</span>}
-                      </div>
-                      <p className="oga-sig-ep__params-desc">{p.desc}</p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="oga-sig-ep__col-title">Response</h4>
-                <p className="oga-sig-ep__response">{ep.response}</p>
-                <h4 className="oga-sig-ep__col-title">Status codes</h4>
-                <dl className="oga-sig-ep__codes">
-                  {ep.codes.map((c) => (
-                    <CodeRow key={c.code} code={c.code} meaning={c.meaning} />
-                  ))}
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function CodeRow({ code, meaning }: { code: string; meaning: string }) {
-  return (
-    <>
-      <dt>{code}</dt>
-      <dd>{meaning}</dd>
-    </>
-  );
-}
+/* SectionEndpoints + CodeRow extracted to shared
+   _shared/product-endpoint-panel.{tsx,css} in AR-211.
+   Per-product variation = title + sub + EPS data. */
 
 /* ============================================================
    § 05 — Built for (cream, equal-weight ICPs w/ bespoke vizzes)
