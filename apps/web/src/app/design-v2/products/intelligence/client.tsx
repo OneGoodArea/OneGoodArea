@@ -8,6 +8,7 @@ import { IntelligenceIcon } from "../../_shared/product-icons";
 import { ProductHero } from "../../_shared/product-hero";
 import { ProductEndpointPanel } from "../../_shared/product-endpoint-panel";
 import { ProductFinalCta } from "../../_shared/product-final-cta";
+import { ProductIcpGrid } from "../../_shared/product-icp-grid";
 import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 import "./intelligence.css";
 
@@ -187,7 +188,13 @@ export default function ProductIntelligenceClient() {
         sub="/v1/query is the typed plane (6 ops). /v1/peers, /v1/insights, /v1/forecast are convenience endpoints over the same plan ops. Same executor, two surfaces."
         endpoints={EPS}
       />
-      <SectionIcps />
+      <ProductIcpGrid
+        titleId="int-icps-title"
+        title="Same query plane. Five different buyer workflows."
+        sub="One executor. Five very different questions buyers are trying to answer. The grammar is the same; the angle of attack is not."
+        whyLabel="Why Intelligence"
+        icps={ICPS}
+      />
       <ProductFinalCta
         titleId="int-cta-title"
         title="Query UK areas in JSON or English. Get the same deterministic answer."
@@ -991,55 +998,8 @@ const ICPS: Icp[] = [
   },
 ];
 
-function SectionIcps() {
-  return (
-    <section
-      className="oga-section-quiet oga-int-icps"
-      aria-labelledby="int-icps-title"
-    >
-      <div className="oga-int__wrap">
-        <header className="oga-int-icps__head">
-          <h2 id="int-icps-title" className="oga-int-icps__title">
-            Same query plane. Five different buyer workflows.
-          </h2>
-          <p className="oga-int-icps__sub">
-            One executor. Five very different questions buyers are trying
-            to answer. The grammar is the same; the angle of attack is not.
-          </p>
-        </header>
-
-        <div className="oga-int-icps__list">
-          {ICPS.map((i) => {
-            const Viz = i.Viz;
-            return (
-              <article key={i.name} className="oga-int-icp">
-                <div className="oga-int-icp__viz" aria-hidden>
-                  <Viz />
-                </div>
-                <div className="oga-int-icp__body">
-                  <h3 className="oga-int-icp__name">{i.name}</h3>
-                  <div>
-                    <p className="oga-int-icp__row-label">The problem</p>
-                    <p className="oga-int-icp__row-text">{i.problem}</p>
-                  </div>
-                  <div>
-                    <p className="oga-int-icp__row-label">Why Intelligence</p>
-                    <p className="oga-int-icp__row-text">{i.why}</p>
-                  </div>
-                  <div>
-                    <p className="oga-int-icp__row-label">Their value</p>
-                    <p className="oga-int-icp__row-text">{i.value}</p>
-                  </div>
-                  <p className="oga-int-icp__sales">{i.sales}</p>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
+/* SectionIcps extracted to shared _shared/product-icp-grid.{tsx,css}
+   in AR-211. Per-product: ICPS data + bespoke Viz functions below. */
 
 /* ICP micro-illustrations */
 

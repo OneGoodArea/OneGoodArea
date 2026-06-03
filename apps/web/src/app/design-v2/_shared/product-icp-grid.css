@@ -1,0 +1,126 @@
+/* Shared product-page ICP grid CSS (AR-211).
+
+   Recipe lifted character-for-character from the 4 page-scoped
+   ICP grid blocks (signals.css / scores.css / monitor.css /
+   intelligence.css) which were identical modulo prefix. */
+
+.oga-product-icps {
+  padding-top: var(--oga-9);
+}
+
+.oga-product-icps__wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.oga-product-icps__head {
+  text-align: center;
+  margin-bottom: var(--oga-8);
+}
+
+.oga-product-icps__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 auto var(--oga-3);
+  max-width: 28ch;
+}
+
+.oga-product-icps__sub {
+  font-family: var(--oga-font-sans);
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0 auto;
+  max-width: 60ch;
+}
+
+.oga-product-icps__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 1080px;
+  margin: 0 auto;
+  border-top: 1px solid var(--oga-border);
+}
+
+.oga-product-icp {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: var(--oga-5) var(--oga-6);
+  padding: var(--oga-7) var(--oga-3);
+  border-bottom: 1px solid var(--oga-border);
+  align-items: start;
+}
+
+@media (max-width: 880px) {
+  .oga-product-icp {
+    grid-template-columns: 1fr;
+    gap: var(--oga-4);
+    padding: var(--oga-6) var(--oga-2);
+  }
+}
+
+.oga-product-icp__viz {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Per-product Viz components emit their own SVG with this class
+   for sizing + currentColor inheritance. */
+.oga-product-icp__viz-svg {
+  width: 100%;
+  max-width: 120px;
+  height: auto;
+  color: var(--oga-fg);
+}
+
+.oga-product-icp__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+}
+
+.oga-product-icp__name {
+  font-family: var(--oga-font-sans);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.oga-product-icp__row-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+.oga-product-icp__row-text {
+  font-family: var(--oga-font-sans);
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--oga-fg);
+  margin: 4px 0 0;
+}
+
+.oga-product-icp__sales {
+  margin-top: var(--oga-2);
+  padding: var(--oga-3) var(--oga-4);
+  background: var(--oga-canvas);
+  border-left: 2px solid var(--oga-fg);
+  font-family: var(--oga-font-sans);
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--oga-fg);
+}

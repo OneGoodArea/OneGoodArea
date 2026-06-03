@@ -8,6 +8,7 @@ import { MonitorIcon } from "../../_shared/product-icons";
 import { ProductHero } from "../../_shared/product-hero";
 import { ProductEndpointPanel } from "../../_shared/product-endpoint-panel";
 import { ProductFinalCta } from "../../_shared/product-final-cta";
+import { ProductIcpGrid } from "../../_shared/product-icp-grid";
 import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 import "./monitor.css";
 
@@ -181,7 +182,13 @@ export default function ProductMonitorClient() {
         sub="Portfolios CRUD plus enrich plus change detection plus webhook subscriptions. Plain JSON over HTTPS, Bearer-token auth with the oga_ prefix, all paths under /v1/."
         endpoints={EPS}
       />
-      <SectionIcps />
+      <ProductIcpGrid
+        titleId="mon-icps-title"
+        title="One book. Five buyer workflows."
+        sub="Same portfolio. Same change-detection mechanics. Different questions each buyer is trying to answer with the alert."
+        whyLabel="Why Monitor"
+        icps={ICPS}
+      />
       <ProductFinalCta
         titleId="mon-cta-title"
         title="Monitor your book of UK areas. Sample-size honest by default."
@@ -1006,55 +1013,8 @@ const ICPS: Icp[] = [
   },
 ];
 
-function SectionIcps() {
-  return (
-    <section
-      className="oga-section-quiet oga-mon-icps"
-      aria-labelledby="mon-icps-title"
-    >
-      <div className="oga-mon__wrap">
-        <header className="oga-mon-icps__head">
-          <h2 id="mon-icps-title" className="oga-mon-icps__title">
-            One book. Five buyer workflows.
-          </h2>
-          <p className="oga-mon-icps__sub">
-            Same portfolio. Same change-detection mechanics. Different
-            questions each buyer is trying to answer with the alert.
-          </p>
-        </header>
-
-        <div className="oga-mon-icps__list">
-          {ICPS.map((i) => {
-            const Viz = i.Viz;
-            return (
-              <article key={i.name} className="oga-mon-icp">
-                <div className="oga-mon-icp__viz" aria-hidden>
-                  <Viz />
-                </div>
-                <div className="oga-mon-icp__body">
-                  <h3 className="oga-mon-icp__name">{i.name}</h3>
-                  <div>
-                    <p className="oga-mon-icp__row-label">The problem</p>
-                    <p className="oga-mon-icp__row-text">{i.problem}</p>
-                  </div>
-                  <div>
-                    <p className="oga-mon-icp__row-label">Why Monitor</p>
-                    <p className="oga-mon-icp__row-text">{i.why}</p>
-                  </div>
-                  <div>
-                    <p className="oga-mon-icp__row-label">Their value</p>
-                    <p className="oga-mon-icp__row-text">{i.value}</p>
-                  </div>
-                  <p className="oga-mon-icp__sales">{i.sales}</p>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
+/* SectionIcps extracted to shared _shared/product-icp-grid.{tsx,css}
+   in AR-211. Per-product: ICPS data + bespoke Viz functions below. */
 
 /* ICP micro-illustrations — Monitor-specific. */
 

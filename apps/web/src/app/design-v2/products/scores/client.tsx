@@ -8,6 +8,7 @@ import { ScoresIcon } from "../../_shared/product-icons";
 import { ProductHero } from "../../_shared/product-hero";
 import { ProductEndpointPanel } from "../../_shared/product-endpoint-panel";
 import { ProductFinalCta } from "../../_shared/product-final-cta";
+import { ProductIcpGrid } from "../../_shared/product-icp-grid";
 import {
   METHODOLOGY_VERSION,
   getCurrentMethodology,
@@ -133,7 +134,13 @@ export default function ProductScoresClient() {
         sub="Plain JSON over HTTPS, Bearer-token auth with the oga_ prefix, all paths under /v1/. Score endpoint is free of the monthly report quota; the legacy /v1/report endpoint still consumes it."
         endpoints={EPS}
       />
-      <SectionIcps />
+      <ProductIcpGrid
+        titleId="scr-icps-title"
+        title="Same engine. Five different buyer workflows."
+        sub="What the score is FOR changes per buyer. The deterministic pipeline underneath does not."
+        whyLabel="Why Scores"
+        icps={ICPS}
+      />
       <ProductFinalCta
         titleId="scr-cta-title"
         title="Configurable composite scoring, version-stamped and deterministic."
@@ -860,52 +867,8 @@ const ICPS: Icp[] = [
   },
 ];
 
-function SectionIcps() {
-  return (
-    <section className="oga-section-quiet oga-scr-icps" aria-labelledby="scr-icps-title">
-      <div className="oga-scr__wrap">
-        <header className="oga-scr-icps__head">
-          <h2 id="scr-icps-title" className="oga-scr-icps__title">
-            Same engine. Five different buyer workflows.
-          </h2>
-          <p className="oga-scr-icps__sub">
-            What the score is FOR changes per buyer. The deterministic
-            pipeline underneath does not.
-          </p>
-        </header>
-
-        <div className="oga-scr-icps__list">
-          {ICPS.map((i) => {
-            const Viz = i.Viz;
-            return (
-              <article key={i.name} className="oga-scr-icp">
-                <div className="oga-scr-icp__viz" aria-hidden>
-                  <Viz />
-                </div>
-                <div className="oga-scr-icp__body">
-                  <h3 className="oga-scr-icp__name">{i.name}</h3>
-                  <div>
-                    <p className="oga-scr-icp__row-label">The problem</p>
-                    <p className="oga-scr-icp__row-text">{i.problem}</p>
-                  </div>
-                  <div>
-                    <p className="oga-scr-icp__row-label">Why Scores</p>
-                    <p className="oga-scr-icp__row-text">{i.why}</p>
-                  </div>
-                  <div>
-                    <p className="oga-scr-icp__row-label">Their value</p>
-                    <p className="oga-scr-icp__row-text">{i.value}</p>
-                  </div>
-                  <p className="oga-scr-icp__sales">{i.sales}</p>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
+/* SectionIcps extracted to shared _shared/product-icp-grid.{tsx,css}
+   in AR-211. Per-product: ICPS data + bespoke Viz functions below. */
 
 /* ICP micro-illustrations — Scores-specific. 120x120, dot-and-hairline. */
 

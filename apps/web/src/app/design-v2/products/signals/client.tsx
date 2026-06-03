@@ -8,6 +8,7 @@ import { SignalsIcon } from "../../_shared/product-icons";
 import { ProductHero } from "../../_shared/product-hero";
 import { ProductEndpointPanel } from "../../_shared/product-endpoint-panel";
 import { ProductFinalCta } from "../../_shared/product-final-cta";
+import { ProductIcpGrid } from "../../_shared/product-icp-grid";
 import {
   METHODOLOGY_VERSION,
   getCurrentMethodology,
@@ -184,7 +185,13 @@ export default function ProductSignalsClient() {
         sub="Plain JSON over HTTPS, Bearer-token auth with the oga_ prefix, all paths under /v1/. Single-signal ranking lives here; multi-signal compound filtering lives one product up under Intelligence."
         endpoints={EPS}
       />
-      <SectionIcps />
+      <ProductIcpGrid
+        titleId="sig-icps-title"
+        title="Same primitive. Five different workflows."
+        sub="Each buyer reaches for Signals from a different angle. The data layer underneath is the same."
+        whyLabel="Why Signals"
+        icps={ICPS}
+      />
       <ProductFinalCta
         titleId="sig-cta-title"
         title="Build on the typed UK area-data layer."
@@ -868,52 +875,8 @@ const ICPS: Icp[] = [
   },
 ];
 
-function SectionIcps() {
-  return (
-    <section className="oga-section-quiet oga-sig-icps" aria-labelledby="sig-icps-title">
-      <div className="oga-sig__wrap">
-        <header className="oga-sig-icps__head">
-          <h2 id="sig-icps-title" className="oga-sig-icps__title">
-            Same primitive. Five different workflows.
-          </h2>
-          <p className="oga-sig-icps__sub">
-            Each buyer reaches for Signals from a different angle. The data
-            layer underneath is the same.
-          </p>
-        </header>
-
-        <div className="oga-sig-icps__list">
-          {ICPS.map((i) => {
-            const Viz = i.Viz;
-            return (
-              <article key={i.name} className="oga-sig-icp">
-                <div className="oga-sig-icp__viz" aria-hidden>
-                  <Viz />
-                </div>
-                <div className="oga-sig-icp__body">
-                  <h3 className="oga-sig-icp__name">{i.name}</h3>
-                  <div>
-                    <p className="oga-sig-icp__row-label">The problem</p>
-                    <p className="oga-sig-icp__row-text">{i.problem}</p>
-                  </div>
-                  <div>
-                    <p className="oga-sig-icp__row-label">Why Signals</p>
-                    <p className="oga-sig-icp__row-text">{i.why}</p>
-                  </div>
-                  <div>
-                    <p className="oga-sig-icp__row-label">Their value</p>
-                    <p className="oga-sig-icp__row-text">{i.value}</p>
-                  </div>
-                  <p className="oga-sig-icp__sales">{i.sales}</p>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
+/* SectionIcps extracted to shared _shared/product-icp-grid.{tsx,css}
+   in AR-211. Per-product: ICPS data + bespoke Viz functions below. */
 
 /* Bespoke ICP micro-illustrations — each ~120px, dot-and-hairline only.
    Currentcolor follows the surface; no inline styles. */
@@ -921,7 +884,7 @@ function SectionIcps() {
 function VizProptech() {
   // listing card with signal overlay
   return (
-    <svg className="oga-sig-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
+    <svg className="oga-product-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
       <rect x="14" y="22" width="92" height="76" rx="2" fill="none" stroke="currentColor" strokeWidth="1" />
       <line x1="14" y1="50" x2="106" y2="50" stroke="currentColor" strokeWidth="1" opacity="0.45" />
       {/* signal overlay dots */}
@@ -946,7 +909,7 @@ function VizProptech() {
 function VizInsurer() {
   // risk gradient — vertical bands of dot density
   return (
-    <svg className="oga-sig-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
+    <svg className="oga-product-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
       <g fill="currentColor">
         {[28, 44, 60, 76, 92].map((x, i) => (
           <g key={x}>
@@ -970,7 +933,7 @@ function VizInsurer() {
 function VizLender() {
   // portfolio scatter w/ trend line
   return (
-    <svg className="oga-sig-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
+    <svg className="oga-product-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
       <line x1="14" y1="100" x2="106" y2="100" stroke="currentColor" strokeWidth="1" />
       <line x1="14" y1="100" x2="14" y2="20" stroke="currentColor" strokeWidth="1" />
       {/* scatter */}
@@ -995,7 +958,7 @@ function VizLender() {
 function VizCre() {
   // ranked stack
   return (
-    <svg className="oga-sig-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
+    <svg className="oga-product-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
       <g fill="currentColor">
         <circle cx="20" cy="32" r="3" />
         <line x1="28" y1="32" x2="100" y2="32" stroke="currentColor" strokeWidth="1" />
@@ -1015,7 +978,7 @@ function VizCre() {
 function VizPublic() {
   // grid of LSOAs w/ one highlighted
   return (
-    <svg className="oga-sig-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
+    <svg className="oga-product-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
       <g fill="currentColor">
         {Array.from({ length: 6 }).map((_, c) =>
           Array.from({ length: 6 }).map((_, r) => {
