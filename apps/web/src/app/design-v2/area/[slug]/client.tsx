@@ -2,50 +2,110 @@
 
 import React from "react";
 import Link from "next/link";
-import { Styles } from "../../_shared/styles";
 import { Nav } from "../../_shared/nav";
 import { Footer } from "../../_shared/footer";
 import type { AreaData, AreaDimension } from "@/data/area-types";
+import "./area-slug.css";
 
-/* ═══════════════════════════════════════════════════════════════
-   OneGoodArea · Design V2 · /area/[slug]
-   Programmatic SEO area page (32 UK cities share the template).
-   Bespoke score ring + radar chart + dimension breakdown + intents +
-   locked sections teaser + related areas, all in design-v2 language.
-   ═══════════════════════════════════════════════════════════════ */
+/* /area/[slug] — Brand v3 rewrite v3 (AR-204 close-out 13/15).
+
+   Mirrors /about's exact pattern + primitives:
+     • .oga-eyebrow + .oga-eyebrow-mono / .oga-eyebrow-dot (real shared)
+     • .oga-section-quiet / .oga-section-dark + data-oga-surface (real shared)
+     • .oga-btn + .oga-btn-primary / .oga-btn-secondary (real shared)
+     • 920px prose container, 1120px grid container
+     • Section padding clamp(56-64, 8-9vw, 112-120) 24
+
+   Section flow (matches /about altitude):
+     Hero                  -- cream, text-only, 2-CTA row
+     § 01 Overall score    -- cream-quiet, editorial split (H2 + prose | ring)
+     § 02 By the dimensions -- DARK, 3-col card grid (mirrors /about's principles)
+     § 03 Score by intent   -- cream, prose + 4-up stat strip (mirrors /about's STATS)
+     § 04 Inside the report -- cream-quiet, single editorial teaser card
+     § 05 Get the report    -- DARK CTA (mirrors /about's "Talk to us")
+     Related                -- cream, restrained grid
+*/
 
 type Related = { slug: string; name: string; overallScore: number };
 
 type RagTone = "strong" | "moderate" | "weak";
-type RagStyle = { fg: string; bg: string; dot: string; label: string };
 
-function rag(score: number): RagStyle {
-  if (score >= 70) return { fg: "var(--ink-deep)", bg: "var(--signal-dim)", dot: "var(--ink)",  label: "Strong"   };
-  if (score >= 45) return { fg: "#6E5300",         bg: "#FFF4D1",            dot: "#D49900",    label: "Moderate" };
-  return              { fg: "#A01B00",             bg: "#FFE8E2",            dot: "#D13A1E",    label: "Weak"     };
-}
-function ragRing(score: number): string {
-  if (score >= 70) return "var(--ink)";
-  if (score >= 45) return "#D49900";
-  return "#D13A1E";
-}
 function ragTone(score: number): RagTone {
   if (score >= 70) return "strong";
   if (score >= 45) return "moderate";
   return "weak";
 }
 
+function ragLabel(tone: RagTone): string {
+  return tone === "strong" ? "Strong" : tone === "moderate" ? "Moderate" : "Weak";
+}
+
+/* RAG colours — only used where genuine semantic signal (score ring,
+   dimension card score number, intent score number). Otherwise text
+   stays ink / white per surface. */
+function ragColor(tone: RagTone, surface: "light" | "dark"): string {
+  if (surface === "light") {
+    if (tone === "strong")   return "var(--oga-fg)";
+    if (tone === "moderate") return "#D49900";
+    return "#D13A1E";
+  }
+  if (tone === "strong")   return "var(--oga-white)";
+  if (tone === "moderate") return "#FFE07A";
+  return "#FFB8A8";
+}
+
 export default function AreaClient({ slug, area, related }: {
   slug: string; area: AreaData; related: Related[];
 }) {
-  const r = rag(area.overallScore);
+  const signupHref = `/sign-up?postcode=${encodeURIComponent(area.postcode)}`;
   return (
-    <div className="aiq">
-      <Styles />
+    <div className="oga-root oga-area">
       <Nav />
-      <Hero area={area} ragStyle={r} />
-      <Body area={area} />
+
+      {/* HERO — mirrors product hero pattern (oga-section-hero +
+              centered, identity-anchor up top, h1 + lead + 2-CTA) ---- */}
+      <section className="oga-section-hero oga-area-hero" data-oga-surface="light">
+        <div className="oga-area-hero__inner">
+          <div className="oga-area-hero__anchor" aria-hidden>
+            <HeroScoreRing score={area.overallScore} />
+          </div>
+
+          <div className="oga-area-hero__eyebrow oga-eyebrow">
+            <span className="oga-eyebrow-dot" aria-hidden />
+            <span>{area.region} · {area.areaType}</span>
+          </div>
+
+          <h1 className="oga-area-hero__h1">{area.name}</h1>
+
+          <p className="oga-area-hero__lead">{area.summary}</p>
+
+          <div className="oga-area-hero__ctas">
+            <Link href={signupHref} className="oga-btn oga-btn-primary">
+              Generate full report
+              <span aria-hidden>→</span>
+            </Link>
+            <Link href="/methodology" className="oga-btn oga-btn-secondary">
+              Read the methodology
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* § 01 — BY THE DIMENSIONS (DARK) -------------------------- */}
+      <Dimensions area={area} />
+
+      {/* § 02 — SCORE BY INTENT (cream) --------------------------- */}
+      <Intents area={area} />
+
+      {/* § 03 — INSIDE THE FULL REPORT (cream-quiet) -------------- */}
+      <LockedTeaser area={area} />
+
+      {/* § 04 — CLOSING CTA (DARK) -------------------------------- */}
+      <ClosingCta area={area} signupHref={signupHref} />
+
+      {/* Related -------------------------------------------------- */}
       <Related items={related} />
+
       <Footer />
 
       <script
@@ -76,648 +136,322 @@ export default function AreaClient({ slug, area, related }: {
   );
 }
 
-/* ─────── Hero ─────── */
-
-function Hero({ area, ragStyle }: { area: AreaData; ragStyle: RagStyle }) {
-  const ring = ragRing(area.overallScore);
-  return (
-    <section style={{
-      position: "relative",
-      background: "var(--bg)",
-      borderBottom: "1px solid var(--border)",
-      overflow: "hidden",
-    }}>
-      <div aria-hidden style={{
-        position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0,
-      }}>
-        <div style={{
-          position: "absolute", top: -240, left: "50%",
-          transform: "translateX(-50%)",
-          width: 960, height: 620,
-          background: "radial-gradient(ellipse at center, rgba(212,243,58,0.16) 0%, rgba(212,243,58,0) 60%)",
-        }} />
-      </div>
-
-      <div style={{
-        maxWidth: 1100, margin: "0 auto",
-        padding: "92px 40px 72px",
-        position: "relative", zIndex: 1,
-      }}>
-        <div className="aiq-area-hero" style={{
-          display: "grid",
-          gridTemplateColumns: "1fr auto",
-          gap: 56, alignItems: "start",
-        }}>
-          <div>
-            <div style={{
-              fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-              letterSpacing: "0.22em", textTransform: "uppercase",
-              color: "var(--text-2)",
-              display: "inline-flex", alignItems: "center", gap: 10,
-              marginBottom: 18, flexWrap: "wrap",
-            }}>
-              <span aria-hidden style={{
-                width: 6, height: 6, borderRadius: 6, background: "var(--signal)",
-                animation: "aiq-pulse-dot 1.6s ease-in-out infinite",
-              }} />
-              {area.region}
-              <span style={{
-                padding: "3px 8px",
-                border: "1px solid var(--border)", borderRadius: 2,
-                background: "var(--bg-off)", color: "var(--ink)",
-                fontSize: 10,
-              }}>{area.areaType}</span>
-              <span style={{
-                padding: "3px 8px",
-                background: ragStyle.bg, color: ragStyle.fg,
-                borderRadius: 2, fontSize: 10,
-                display: "inline-flex", alignItems: "center", gap: 6,
-              }}>
-                <span aria-hidden style={{ width: 5, height: 5, borderRadius: 5, background: ragStyle.dot }} />
-                {ragStyle.label}
-              </span>
-            </div>
-
-            <h1 style={{
-              fontFamily: "var(--display)", fontWeight: 400,
-              fontSize: "clamp(40px, 5.2vw, 58px)", lineHeight: 1.04,
-              letterSpacing: "-0.02em", color: "var(--ink-deep)",
-              margin: "0 0 20px",
-            }}>
-              {area.name}
-            </h1>
-
-            <p style={{
-              fontFamily: "var(--sans)", fontSize: 16, fontWeight: 400,
-              lineHeight: 1.6, color: "var(--text-2)",
-              letterSpacing: "-0.003em",
-              margin: "0 0 24px", maxWidth: "62ch",
-            }}>
-              {area.summary}
-            </p>
-
-            <div style={{
-              display: "flex", gap: 18, flexWrap: "wrap",
-              fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-              letterSpacing: "0.14em", textTransform: "uppercase",
-              color: "var(--text-3)", marginBottom: 20,
-            }}>
-              <span>Postcode · {area.postcode}</span>
-              <span>Population · {area.population}</span>
-              <span>Avg. property · {area.avgPropertyPrice}</span>
-            </div>
-
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {area.dataSources.map((src) => (
-                <span key={src} style={{
-                  fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
-                  letterSpacing: "0.2em", textTransform: "uppercase",
-                  color: "var(--ink)", background: "var(--signal-dim)",
-                  padding: "3px 8px", borderRadius: 2,
-                }}>{src}</span>
-              ))}
-            </div>
-          </div>
-
-          <ScoreRing score={area.overallScore} ring={ring} />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ScoreRing({ score, ring }: { score: number; ring: string }) {
-  const size = 180;
-  const r = size / 2 - 14;
+/* ============================================================
+   Hero score ring — centered identity anchor, sized to match the
+   product-page hero icon presence (160px). Carries the actual area
+   score as both visual and content. RAG tone on the progress stroke.
+   ============================================================ */
+function HeroScoreRing({ score }: { score: number }) {
+  const tone = ragTone(score);
+  const size = 112;
+  const r = size / 2 - 9;
   const circ = 2 * Math.PI * r;
   const offset = circ - (score / 100) * circ;
+  const ring = ragColor(tone, "light");
 
   return (
-    <div className="aiq-score-ring" style={{
-      display: "flex", flexDirection: "column", alignItems: "center", gap: 12,
-    }}>
-      <div style={{
-        position: "relative", width: size, height: size,
-        padding: 8,
-      }}>
-        <svg width={size} height={size} style={{ overflow: "visible" }}>
-          <circle
-            cx={size / 2} cy={size / 2} r={r}
-            stroke="var(--border)" strokeWidth="2.5" fill="none"
-          />
-          <circle
-            cx={size / 2} cy={size / 2} r={r}
-            stroke={ring} strokeWidth="5" fill="none"
-            strokeLinecap="round"
-            strokeDasharray={circ}
-            strokeDashoffset={offset}
-            transform={`rotate(-90 ${size / 2} ${size / 2})`}
-            style={{ transition: "stroke-dashoffset 600ms cubic-bezier(0.16,1,0.3,1)" }}
-          />
-        </svg>
-        <div style={{
-          position: "absolute", inset: 0,
-          display: "flex", flexDirection: "column",
-          alignItems: "center", justifyContent: "center", gap: 0,
-        }}>
-          <span style={{
-            fontFamily: "var(--display)", fontSize: 56, fontWeight: 500,
-            letterSpacing: "-0.03em", color: "var(--ink-deep)",
-            lineHeight: 1,
-          }}>{score}</span>
-          <span style={{
-            fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-            letterSpacing: "0.18em", color: "var(--text-3)",
-            marginTop: 4,
-          }}>/ 100</span>
-        </div>
+    <div className="oga-area-hero__ring" data-tone={tone}>
+      <svg width={size} height={size}>
+        <circle
+          cx={size / 2} cy={size / 2} r={r}
+          stroke="var(--oga-border)" strokeWidth="2" fill="none"
+        />
+        <circle
+          cx={size / 2} cy={size / 2} r={r}
+          stroke={ring} strokeWidth="4" fill="none"
+          strokeLinecap="round"
+          strokeDasharray={circ}
+          strokeDashoffset={offset}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          className="oga-area-hero__ring-fill"
+        />
+      </svg>
+      <div className="oga-area-hero__ring-text">
+        <span className="oga-area-hero__ring-value">{score}</span>
+        <span className="oga-area-hero__ring-out">{ragLabel(tone)}</span>
       </div>
-      <div style={{
-        fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-        letterSpacing: "0.22em", textTransform: "uppercase",
-        color: "var(--text-3)",
-      }}>OneGoodArea score</div>
     </div>
   );
 }
 
-/* ─────── Body ─────── */
-
-function Body({ area }: { area: AreaData }) {
+/* ============================================================
+   § 01 — By the dimensions (DARK, 3-col card grid)
+   ============================================================ */
+function Dimensions({ area }: { area: AreaData }) {
   return (
-    <section style={{
-      background: "var(--bg)",
-      borderBottom: "1px solid var(--border)",
-      padding: "72px 0 100px",
-    }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 40px" }}>
-        <DimensionRadar area={area} />
-        <DimensionBreakdown area={area} />
-        <ScoreByIntent area={area} />
-        <LockedSections area={area} />
-        <Cta area={area} />
+    <section className="oga-section-dark oga-area-dims" data-oga-surface="dark">
+      <div className="oga-area-dims__inner">
+        <div className="oga-area-dims__head">
+          <div className="oga-area-dims__eyebrow oga-eyebrow oga-eyebrow--inverse">
+            <span className="oga-eyebrow-mono">01</span>
+            <span>By the dimensions</span>
+          </div>
+          <h2 className="oga-area-dims__title">
+            Every dimension. Every weight. Every reason.
+          </h2>
+          <p className="oga-area-dims__lead">
+            {area.dimensions.length} weighted scores computed from {area.dataSources.length} live UK data sources. Each one carries its own evidence trail.
+          </p>
+        </div>
+
+        <ol className="oga-area-dims__grid">
+          {area.dimensions.map((d, i) => (
+            <DimensionCard key={d.label} dim={d} index={i} />
+          ))}
+        </ol>
       </div>
     </section>
   );
 }
 
-/* Radar chart · design-v2 colours */
-
-function DimensionRadar({ area }: { area: AreaData }) {
-  const size = 280;
-  const cx = size / 2, cy = size / 2;
-  const maxR = size / 2 - 40;
-  const levels = [25, 50, 75, 100];
-  const count = area.dimensions.length;
-
-  function point(i: number, value: number): [number, number] {
-    const angle = (Math.PI * 2 * i) / count - Math.PI / 2;
-    const r = (value / 100) * maxR;
-    return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)];
-  }
-  function polygon(value: number): string {
-    return Array.from({ length: count }, (_, i) => point(i, value).join(",")).join(" ");
-  }
-
-  const avg = area.dimensions.reduce((s, d) => s + d.score, 0) / area.dimensions.length;
-  const fill = ragRing(avg);
-  const points = area.dimensions.map((d, i) => point(i, d.score));
-  const dataPolygon = points.map((p) => p.join(",")).join(" ");
-
+function DimensionCard({ dim, index }: { dim: AreaDimension; index: number }) {
+  const tone = ragTone(dim.score);
+  const fg = ragColor(tone, "dark");
   return (
-    <div style={{
-      marginBottom: 28,
-      border: "1px solid var(--border)",
-      background: "var(--bg)",
-    }}>
-      <SectionHead eyebrow="Dimension overview" note={`${area.areaType} benchmarks · ${count} dimensions`} />
-      <div style={{
-        padding: "28px 24px 36px",
-        display: "flex", justifyContent: "center",
-      }}>
-        <svg width={size + 80} height={size + 40} style={{ overflow: "visible" }}>
-          <g transform={`translate(40, 20)`}>
-            {levels.map((level) => (
-              <polygon key={level} points={polygon(level)} fill="none"
-                stroke="var(--border)" strokeWidth={level === 100 ? 1 : 0.5}
-                opacity={level === 100 ? 0.9 : 0.5} />
-            ))}
-            {area.dimensions.map((_, i) => {
-              const [x, y] = point(i, 100);
-              return <line key={i} x1={cx} y1={cy} x2={x} y2={y}
-                stroke="var(--border)" strokeWidth={0.5} opacity={0.5} />;
-            })}
-            <polygon points={dataPolygon}
-              fill={fill} fillOpacity={0.14}
-              stroke={fill} strokeWidth={1.75} />
-            {points.map((p, i) => {
-              const c = ragRing(area.dimensions[i].score);
-              return <circle key={i} cx={p[0]} cy={p[1]} r={4}
-                fill={c} stroke="var(--bg)" strokeWidth={1.5} />;
-            })}
-            {area.dimensions.map((d, i) => {
-              const angle = (Math.PI * 2 * i) / count - Math.PI / 2;
-              const lx = cx + (maxR + 26) * Math.cos(angle);
-              const ly = cy + (maxR + 26) * Math.sin(angle);
-              const dimRag = rag(d.score);
-              let anchor: "start" | "middle" | "end" = "middle";
-              if (Math.cos(angle) > 0.3) anchor = "start";
-              else if (Math.cos(angle) < -0.3) anchor = "end";
-              return (
-                <g key={i}>
-                  <text x={lx} y={ly} textAnchor={anchor} dominantBaseline="middle"
-                    fill="var(--text-3)" fontSize="10.5"
-                    fontFamily="var(--mono)" letterSpacing="0.06em">
-                    {d.label}
-                  </text>
-                  <text x={lx} y={ly + 14} textAnchor={anchor} dominantBaseline="middle"
-                    fill={dimRag.dot} fontSize="13"
-                    fontFamily="var(--display)" fontWeight="500">
-                    {d.score}
-                  </text>
-                </g>
-              );
-            })}
-          </g>
-        </svg>
+    <li className="oga-area-dims__card">
+      <div className="oga-area-dims__card-viz">
+        <DimensionViz score={dim.score} />
       </div>
-    </div>
+      <div className="oga-area-dims__card-meta">
+        <span className="oga-area-dims__card-num">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+        <span
+          className="oga-area-dims__card-score"
+          style={{ color: fg }}
+        >
+          {dim.score}
+          <span className="oga-area-dims__card-score-mut">/ {dim.weight}%</span>
+        </span>
+      </div>
+      <h3 className="oga-area-dims__card-title">{dim.label}</h3>
+      <p className="oga-area-dims__card-body">{dim.summary}</p>
+    </li>
   );
 }
 
-function SectionHead({ eyebrow, note }: { eyebrow: string; note?: string }) {
+/* Dimension viz — 5x5 dot grid, N filled (N = round(score/4)), rest
+   dimmed. Brand v3 dot-motif vocabulary, restrained, no chartjunk.
+   currentColor adapts to surface (white on DARK). */
+function DimensionViz({ score }: { score: number }) {
+  const totalDots = 25;
+  const filled = Math.round((score / 100) * totalDots);
+  const cols = [4, 10, 16, 22, 28];
+  const rows = [4, 10, 16, 22, 28];
+
   return (
-    <div style={{
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-      gap: 16, flexWrap: "wrap",
-      padding: "14px 24px",
-      borderBottom: "1px solid var(--border)",
-      background: "var(--bg-off)",
-    }}>
-      <div style={{
-        fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-        letterSpacing: "0.22em", textTransform: "uppercase",
-        color: "var(--ink)",
-        display: "inline-flex", alignItems: "center", gap: 9,
-      }}>
-        <span aria-hidden style={{
-          width: 5, height: 5, borderRadius: 5, background: "var(--signal)",
-        }} />
-        {eyebrow}
-      </div>
-      {note && (
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-          letterSpacing: "0.14em",
-          color: "var(--text-3)",
-        }}>{note}</div>
-      )}
-    </div>
+    <svg viewBox="0 0 32 32" fill="none" aria-hidden className="oga-area-dims__card-svg">
+      <g fill="currentColor">
+        {rows.map((y, rIdx) =>
+          cols.map((x, cIdx) => {
+            const dotIdx = rIdx * 5 + cIdx;
+            const isFilled = dotIdx < filled;
+            return (
+              <circle
+                key={`${rIdx}-${cIdx}`}
+                cx={x}
+                cy={y}
+                r={isFilled ? 1.3 : 1.0}
+                opacity={isFilled ? 1 : 0.18}
+              />
+            );
+          }),
+        )}
+      </g>
+    </svg>
   );
 }
 
-function DimensionBreakdown({ area }: { area: AreaData }) {
+/* ============================================================
+   § 03 — Score by intent (cream, prose + 4-up stat strip)
+   ============================================================ */
+function Intents({ area }: { area: AreaData }) {
   return (
-    <div style={{
-      marginBottom: 28,
-      border: "1px solid var(--border)",
-      background: "var(--bg)",
-    }}>
-      <SectionHead eyebrow="Dimension breakdown" />
-      <div className="aiq-dim-grid" style={{
-        padding: "24px",
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: "22px 32px",
-      }}>
-        {area.dimensions.map((d) => <DimensionRow key={d.label} dim={d} />)}
-      </div>
-    </div>
-  );
-}
-
-function DimensionRow({ dim }: { dim: AreaDimension }) {
-  const r = rag(dim.score);
-  const ring = ragRing(dim.score);
-  return (
-    <div>
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        gap: 12, marginBottom: 8,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{
-            fontFamily: "var(--display)", fontSize: 15, fontWeight: 500,
-            letterSpacing: "-0.01em", color: "var(--ink-deep)",
-          }}>{dim.label}</span>
-          <span style={{
-            fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
-            letterSpacing: "0.14em",
-            color: "var(--text-3)",
-            border: "1px solid var(--border)",
-            padding: "2px 6px", borderRadius: 2,
-          }}>{dim.weight}%</span>
+    <section className="oga-area-intents" data-oga-surface="light">
+      <div className="oga-area-intents__inner">
+        <div className="oga-area-intents__eyebrow oga-eyebrow">
+          <span className="oga-eyebrow-mono">02</span>
+          <span>Score by intent</span>
         </div>
-        <span style={{
-          fontFamily: "var(--mono)", fontSize: 15, fontWeight: 600,
-          color: r.dot, letterSpacing: "0.02em",
-        }}>{dim.score}</span>
+
+        <h2 className="oga-area-intents__title">
+          One area. Scored against every intent.
+        </h2>
+
+        <div className="oga-area-intents__prose">
+          <p>
+            The same dimensions, weighted differently for each use-case. A great area for a first-time-buyer is rarely the same area for a hands-off landlord. Intent-relative scoring is the difference between a generic ranking and a decision-grade one.
+          </p>
+        </div>
+
+        <ul className="oga-area-intents__stats">
+          {area.intents.map((intent) => {
+            const tone = ragTone(intent.score);
+            return (
+              <li key={intent.slug} className="oga-area-intents__stat">
+                <div
+                  className="oga-area-intents__stat-value"
+                  style={{ color: ragColor(tone, "light") }}
+                >
+                  {intent.score}
+                </div>
+                <div className="oga-area-intents__stat-label">
+                  {intent.label}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       </div>
-      <div style={{
-        height: 4, width: "100%",
-        background: r.bg,
-        overflow: "hidden", borderRadius: 2,
-        marginBottom: 8,
-      }}>
-        <div style={{
-          height: "100%",
-          width: `${dim.score}%`,
-          background: ring,
-          transition: "width 500ms cubic-bezier(0.16,1,0.3,1)",
-        }} />
-      </div>
-      <p style={{
-        fontFamily: "var(--sans)", fontSize: 12.5, fontWeight: 400,
-        lineHeight: 1.5, color: "var(--text-2)",
-        margin: 0,
-      }}>{dim.summary}</p>
-    </div>
+    </section>
   );
 }
 
-function ScoreByIntent({ area }: { area: AreaData }) {
+/* ============================================================
+   § 04 — Inside the full report (cream-quiet, single teaser card)
+   ============================================================ */
+function LockedTeaser({ area }: { area: AreaData }) {
   return (
-    <div style={{
-      marginBottom: 28,
-      border: "1px solid var(--border)",
-      background: "var(--bg)",
-    }}>
-      <SectionHead eyebrow="Score by intent" note="Same area, different scores for different purposes" />
-      <div className="aiq-intent-scores" style={{
-        display: "grid",
-        gridTemplateColumns: `repeat(${area.intents.length}, 1fr)`,
-        gap: 0,
-      }}>
-        {area.intents.map((intent, i) => {
-          const r = rag(intent.score);
-          return (
-            <div key={intent.slug} style={{
-              padding: "28px 20px 24px",
-              textAlign: "center",
-              borderRight: i < area.intents.length - 1 ? "1px solid var(--border)" : "none",
-            }}>
-              <div style={{
-                fontFamily: "var(--display)", fontSize: 36, fontWeight: 500,
-                letterSpacing: "-0.02em",
-                color: r.dot, lineHeight: 1,
-              }}>{intent.score}</div>
-              <div style={{
-                fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-                letterSpacing: "0.18em", textTransform: "uppercase",
-                color: "var(--text-3)", marginTop: 4,
-              }}>/ 100</div>
-              <div style={{
-                fontFamily: "var(--display)", fontSize: 14.5, fontWeight: 500,
-                color: "var(--ink-deep)", marginTop: 10,
-                letterSpacing: "-0.01em",
-              }}>{intent.label}</div>
+    <section className="oga-section-quiet oga-area-locked" data-oga-surface="light">
+      <div className="oga-area-locked__inner">
+        <div className="oga-area-locked__eyebrow oga-eyebrow">
+          <span className="oga-eyebrow-mono">03</span>
+          <span>Inside the full report</span>
+        </div>
+
+        <h2 className="oga-area-locked__title">
+          What&rsquo;s behind the lock.
+        </h2>
+
+        <div className="oga-area-locked__prose">
+          <p>
+            {area.lockedSections.length} sections of detailed reasoning. {area.lockedRecommendations} personalised recommendations for this area. The raw signals behind every score, attributed to the source.
+          </p>
+        </div>
+
+        <div className="oga-area-locked__card">
+          <div className="oga-area-locked__card-head">
+            <div className="oga-area-locked__card-head-text">
+              <div className="oga-area-locked__card-eyebrow">
+                The full {area.name} report
+              </div>
+              <div className="oga-area-locked__card-line">
+                {area.lockedSections.length + 1} sections · {area.dataSources.length} sources · methodology-versioned
+              </div>
             </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function LockedSections({ area }: { area: AreaData }) {
-  return (
-    <div style={{ marginBottom: 28 }}>
-      <div style={{
-        fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-        letterSpacing: "0.22em", textTransform: "uppercase",
-        color: "var(--text-3)", marginBottom: 14,
-        display: "inline-flex", alignItems: "center", gap: 9,
-      }}>
-        <span aria-hidden style={{ width: 5, height: 5, borderRadius: 5, background: "var(--signal)" }} />
-        Detailed analysis · {area.lockedSections.length} sections
-      </div>
-      <div style={{
-        border: "1px solid var(--border)",
-        background: "var(--bg)",
-      }}>
-        {area.lockedSections.map((title, i) => (
-          <div key={i} style={{
-            padding: "14px 22px",
-            borderBottom: i < area.lockedSections.length - 1 ? "1px solid var(--border-dim)" : "none",
-            display: "flex", alignItems: "center", gap: 16,
-            opacity: 0.55,
-          }}>
-            <span style={{
-              fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500,
-              letterSpacing: "0.18em", color: "var(--text-3)",
-            }}>{String(i + 1).padStart(2, "0")}</span>
-            <span style={{
-              flex: 1,
-              fontFamily: "var(--display)", fontSize: 16, fontWeight: 500,
-              letterSpacing: "-0.012em", color: "var(--ink-deep)",
-            }}>{title}</span>
             <LockIcon />
           </div>
-        ))}
-      </div>
 
-      <div style={{
-        marginTop: 16,
-        fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-        letterSpacing: "0.22em", textTransform: "uppercase",
-        color: "var(--text-3)", marginBottom: 14,
-        display: "inline-flex", alignItems: "center", gap: 9,
-      }}>
-        <span aria-hidden style={{ width: 5, height: 5, borderRadius: 5, background: "var(--signal)" }} />
-        Recommendations · {area.lockedRecommendations} actions
+          <ol className="oga-area-locked__list">
+            {area.lockedSections.map((title, i) => (
+              <li key={i} className="oga-area-locked__list-item">
+                <span className="oga-area-locked__list-num">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span className="oga-area-locked__list-text">{title}</span>
+              </li>
+            ))}
+            <li className="oga-area-locked__list-item oga-area-locked__list-item--rec">
+              <span className="oga-area-locked__list-num">
+                {String(area.lockedSections.length + 1).padStart(2, "0")}
+              </span>
+              <span className="oga-area-locked__list-text">
+                {area.lockedRecommendations} personalised recommendations.
+              </span>
+            </li>
+          </ol>
+        </div>
       </div>
-      <div style={{
-        border: "1px solid var(--border)",
-        background: "var(--bg)",
-      }}>
-        {Array.from({ length: area.lockedRecommendations }, (_, i) => (
-          <div key={i} style={{
-            padding: "16px 22px",
-            borderBottom: i < area.lockedRecommendations - 1 ? "1px solid var(--border-dim)" : "none",
-            display: "flex", alignItems: "center", gap: 16,
-            opacity: 0.55,
-          }}>
-            <span style={{
-              width: 22, height: 22, borderRadius: "50%",
-              background: "var(--signal-dim)", color: "var(--ink-deep)",
-              display: "inline-flex", alignItems: "center", justifyContent: "center",
-              fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
-              flexShrink: 0,
-            }}>{i + 1}</span>
-            <div aria-hidden style={{
-              flex: 1,
-              height: 8, borderRadius: 2,
-              background: "var(--border)",
-              maxWidth: `${70 - i * 8}%`,
-            }} />
-            <LockIcon />
-          </div>
-        ))}
-      </div>
-    </div>
+    </section>
   );
 }
 
 function LockIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden style={{ flexShrink: 0 }}>
-      <rect x="5" y="11" width="14" height="9" rx="1.5" stroke="var(--text-3)" strokeWidth="1.6" />
-      <path d="M8 11 V7 A 4 4 0 0 1 16 7 V11" stroke="var(--text-3)" strokeWidth="1.6" fill="none" />
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+      className="oga-area-locked__icon"
+    >
+      <rect x="5" y="11" width="14" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M8 11 V7 A 4 4 0 0 1 16 7 V11" stroke="currentColor" strokeWidth="1.6" fill="none" />
     </svg>
   );
 }
 
-function Cta({ area }: { area: AreaData }) {
+/* ============================================================
+   § 05 — Closing CTA (DARK)
+   ============================================================ */
+function ClosingCta({ area, signupHref }: { area: AreaData; signupHref: string }) {
   return (
-    <div style={{
-      border: "1px solid var(--border)",
-      background: "var(--bg-ink)",
-      padding: "40px 32px",
-      position: "relative", overflow: "hidden",
-    }}>
-      <div aria-hidden style={{
-        position: "absolute", top: -140, left: "50%",
-        transform: "translateX(-50%)",
-        width: 720, height: 420,
-        background: "radial-gradient(ellipse at center, rgba(212,243,58,0.14) 0%, rgba(212,243,58,0) 62%)",
-        pointerEvents: "none",
-      }} />
-      <div style={{
-        position: "relative", zIndex: 1,
-        textAlign: "center", maxWidth: 720, margin: "0 auto",
-      }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-          letterSpacing: "0.22em", textTransform: "uppercase",
-          color: "rgba(212,243,58,0.9)",
-          display: "inline-flex", alignItems: "center", gap: 9,
-          marginBottom: 16,
-        }}>
-          <span aria-hidden style={{ width: 6, height: 6, borderRadius: 6, background: "var(--signal)" }} />
-          Full report locked
+    <section className="oga-section-dark oga-area-cta" data-oga-surface="dark">
+      <div className="oga-area-cta__inner">
+        <div className="oga-area-cta__eyebrow oga-eyebrow oga-eyebrow--inverse">
+          <span className="oga-eyebrow-mono">04</span>
+          <span>Get the report</span>
         </div>
-        <h2 style={{
-          fontFamily: "var(--display)", fontWeight: 400,
-          fontSize: "clamp(26px, 3.4vw, 36px)", lineHeight: 1.08,
-          letterSpacing: "-0.016em", color: "#FFFFFF",
-          margin: "0 0 12px",
-        }}>
-          Unlock the full <em style={{
-            fontStyle: "italic", color: "var(--signal)",
-          }}>{area.name}</em> report.
+
+        <h2 className="oga-area-cta__title">
+          Get the full report on {area.name}.
         </h2>
-        <p style={{
-          fontFamily: "var(--sans)", fontSize: 15, fontWeight: 400,
-          lineHeight: 1.55, color: "rgba(255,255,255,0.64)",
-          margin: "0 auto 26px", maxWidth: "56ch",
-        }}>
-          {area.lockedSections.length} sections of detailed analysis, data-backed reasoning for every score, and {area.lockedRecommendations} personalised recommendations. Built from {area.dataSources.length} live UK data sources.
+
+        <p className="oga-area-cta__lead">
+          Every dimension reasoned through. Every score backed by the raw signals behind it. Methodology-versioned so you can audit every output.
         </p>
-        <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href={`/sign-up?postcode=${encodeURIComponent(area.postcode)}`} style={{
-            fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-            letterSpacing: "0.14em", textTransform: "uppercase",
-            color: "var(--signal-ink)", background: "var(--signal)",
-            padding: "13px 22px", borderRadius: 999, textDecoration: "none",
-            border: "1px solid var(--signal)",
-            display: "inline-flex", alignItems: "center", gap: 9,
-          }}>
+
+        <div className="oga-area-cta__actions">
+          <Link href={signupHref} className="oga-btn oga-btn-primary">
             Generate full report
-            <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>→</span>
+            <span aria-hidden>→</span>
           </Link>
-          <Link href="/pricing" style={{
-            fontFamily: "var(--mono)", fontSize: 11.5, fontWeight: 500,
-            letterSpacing: "0.14em", textTransform: "uppercase",
-            color: "rgba(255,255,255,0.88)", background: "transparent",
-            padding: "13px 22px", borderRadius: 999, textDecoration: "none",
-            border: "1px solid rgba(255,255,255,0.22)",
-            display: "inline-flex", alignItems: "center", gap: 9,
-          }}>
-            See pricing
+          <Link href="/methodology" className="oga-btn oga-btn-secondary">
+            Read the methodology
+            <span aria-hidden>→</span>
           </Link>
-        </div>
-        <div style={{
-          marginTop: 18,
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500,
-          letterSpacing: "0.18em", textTransform: "uppercase",
-          color: "rgba(255,255,255,0.5)",
-        }}>
-          Free tier · 3 reports/month · No card required
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
+/* ============================================================
+   Related areas (cream tail, restrained grid)
+   ============================================================ */
 function Related({ items }: { items: Related[] }) {
   if (items.length === 0) return null;
   return (
-    <section style={{
-      background: "var(--bg-off)",
-      borderBottom: "1px solid var(--border)",
-      padding: "80px 0 100px",
-    }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 40px" }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
-          letterSpacing: "0.22em", textTransform: "uppercase",
-          color: "var(--text-2)", marginBottom: 20,
-          display: "inline-flex", alignItems: "center", gap: 9,
-        }}>
-          <span aria-hidden style={{ width: 6, height: 6, borderRadius: 6, background: "var(--signal)" }} />
-          More UK area reports
+    <section className="oga-area-related" data-oga-surface="light">
+      <div className="oga-area-related__inner">
+        <div className="oga-area-related__eyebrow oga-eyebrow">
+          <span className="oga-eyebrow-dot" aria-hidden />
+          <span>More UK areas</span>
         </div>
-        <div className="aiq-related-grid" style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: 10,
-        }}>
+
+        <h2 className="oga-area-related__title">
+          Compare against other UK areas.
+        </h2>
+
+        <ul className="oga-area-related__grid">
           {items.map((a) => {
             const tone = ragTone(a.overallScore);
-            const fg  = tone === "strong" ? "var(--ink-deep)" : tone === "moderate" ? "#6E5300" : "#A01B00";
             return (
-              <Link key={a.slug} href={`/area/${a.slug}`} style={{
-                border: "1px solid var(--border)",
-                background: "var(--bg)",
-                padding: "14px 16px",
-                textDecoration: "none",
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                gap: 12,
-                transition: "border-color 140ms ease, background 140ms ease",
-              }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "var(--ink)";
-                  e.currentTarget.style.background = "var(--bg)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border)";
-                  e.currentTarget.style.background = "var(--bg)";
-                }}
-              >
-                <span style={{
-                  fontFamily: "var(--display)", fontSize: 14.5, fontWeight: 500,
-                  letterSpacing: "-0.01em", color: "var(--ink-deep)",
-                  lineHeight: 1.3,
-                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                }}>{a.name}</span>
-                <span style={{
-                  fontFamily: "var(--mono)", fontSize: 13, fontWeight: 600,
-                  color: fg, flexShrink: 0,
-                }}>{a.overallScore}</span>
-              </Link>
+              <li key={a.slug} className="oga-area-related__cell">
+                <Link href={`/area/${a.slug}`} className="oga-area-related__card">
+                  <span className="oga-area-related__name">{a.name}</span>
+                  <span
+                    className="oga-area-related__score"
+                    style={{ color: ragColor(tone, "light") }}
+                  >
+                    {a.overallScore}
+                  </span>
+                </Link>
+              </li>
             );
           })}
-        </div>
+        </ul>
       </div>
     </section>
   );

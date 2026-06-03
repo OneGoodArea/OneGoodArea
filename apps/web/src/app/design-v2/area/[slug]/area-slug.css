@@ -1,0 +1,611 @@
+/* /area/[slug] — Brand v3 v3 rewrite (AR-204 close-out 13/15).
+
+   Co-located. Depends on tokens.css + components.css + backgrounds.css.
+   Mirrors /about's exact primitives:
+     • .oga-eyebrow / .oga-eyebrow-mono / .oga-eyebrow-dot (page-scoped)
+     • .oga-section-quiet / .oga-section-dark (global, from backgrounds.css)
+     • .oga-btn / .oga-btn-primary / .oga-btn-secondary (global, components.css)
+
+   Section flow:
+     Hero             -- cream (.oga-area-hero)
+     § 01 Overall score -- cream-quiet (.oga-section-quiet)
+     § 02 Dimensions   -- DARK (.oga-section-dark)
+     § 03 Intents     -- cream
+     § 04 Locked teaser -- cream-quiet (.oga-section-quiet)
+     § 05 Closing CTA -- DARK (.oga-section-dark)
+     Related          -- cream
+*/
+
+/* ============================================================
+   SHARED — eyebrow children (page-scoped, mirrors /about)
+   ============================================================ */
+.oga-area .oga-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.oga-area .oga-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--oga-ink);
+  display: inline-block;
+}
+.oga-area .oga-eyebrow--inverse .oga-eyebrow-dot {
+  background: var(--oga-white);
+}
+.oga-area .oga-eyebrow-mono {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: inherit;
+  opacity: 0.75;
+}
+
+/* ============================================================
+   HERO — Mirrors the product-page hero pattern exactly:
+     • Shell = .oga-section-hero (shared, gives cream + dot-field
+       fading from left + isolation, defined in backgrounds.css)
+     • Centered, identity-anchor up top (score ring 160px), then
+       eyebrow + h1 + lead + 2-CTA row
+   No background override: inherit the default .oga-section-hero
+   recipe so this hero reads identical to every product page.
+   ============================================================ */
+.oga-area-hero {
+  text-align: center;
+  padding-top: clamp(40px, 5vw, 72px);
+  padding-bottom: clamp(36px, 4.5vw, 60px);
+}
+.oga-area-hero__inner {
+  max-width: 680px;
+  margin: 0 auto;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* Identity anchor — score ring, 112px, mirrors the product hero
+   icon presence (compressed from the 132–160 default since this
+   page retires soon). RAG tone on the stroke; score inside. */
+.oga-area-hero__anchor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+.oga-area-hero__ring {
+  position: relative;
+  width: 112px;
+  height: 112px;
+}
+.oga-area-hero__ring-fill {
+  transition: stroke-dashoffset 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.oga-area-hero__ring-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.oga-area-hero__ring-value {
+  font-family: var(--oga-font-sans);
+  font-size: 38px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--oga-fg);
+  line-height: 1;
+}
+.oga-area-hero__ring-out {
+  font-family: var(--oga-font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-top: 4px;
+}
+
+.oga-area-hero__eyebrow {
+  margin: 0 auto 14px;
+  justify-content: center;
+}
+
+.oga-area-hero__h1 {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.6vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+  color: var(--oga-fg);
+  text-wrap: balance;
+  margin: 0 auto 14px;
+  max-width: 22ch;
+}
+
+.oga-area-hero__lead {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(15px, 1.15vw, 17px);
+  line-height: 1.55;
+  color: var(--oga-fg-subtle);
+  text-wrap: pretty;
+  margin: 0 auto 24px;
+  max-width: 58ch;
+}
+
+.oga-area-hero__ctas {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+/* ============================================================
+   § 02 — Dimensions (DARK, 3-col card grid)
+   Mirrors /about-believe__grid exactly.
+   ============================================================ */
+.oga-area-dims {
+  padding: clamp(64px, 9vw, 120px) 24px;
+}
+.oga-area-dims__inner {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+.oga-area-dims__head {
+  max-width: 760px;
+  margin: 0 auto 48px;
+  text-align: center;
+}
+.oga-area-dims__eyebrow {
+  margin-bottom: 18px;
+  justify-content: center;
+}
+.oga-area-dims__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.5vw, 40px);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.018em;
+  color: var(--oga-white);
+  text-wrap: balance;
+  margin: 0 0 18px;
+}
+.oga-area-dims__lead {
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.7);
+  margin: 0;
+}
+
+.oga-area-dims__grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+@media (max-width: 960px) {
+  .oga-area-dims__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .oga-area-dims__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.oga-area-dims__card {
+  background: rgba(250, 248, 244, 0.04);
+  border: 1px solid rgba(250, 248, 244, 0.12);
+  border-radius: 4px;
+  padding: 0 24px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 200ms ease, background 200ms ease;
+}
+.oga-area-dims__card:hover {
+  border-color: rgba(250, 248, 244, 0.28);
+  background: rgba(250, 248, 244, 0.06);
+}
+
+/* Viz block — bleeds full card-width, 96px tall, dot-motif backdrop */
+.oga-area-dims__card-viz {
+  margin: 0 -24px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid rgba(250, 248, 244, 0.08);
+  color: var(--oga-white);
+  background:
+    radial-gradient(circle at 50% 60%, rgba(250, 248, 244, 0.04) 0%, transparent 70%),
+    rgba(250, 248, 244, 0.015);
+}
+.oga-area-dims__card-svg {
+  width: 64px;
+  height: 64px;
+  color: var(--oga-white);
+  display: block;
+}
+
+.oga-area-dims__card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 18px;
+}
+.oga-area-dims__card-num {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: rgba(250, 248, 244, 0.5);
+}
+.oga-area-dims__card-score {
+  font-family: var(--oga-font-sans);
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.014em;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.oga-area-dims__card-score-mut {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: rgba(250, 248, 244, 0.45);
+}
+.oga-area-dims__card-title {
+  font-family: var(--oga-font-sans);
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.012em;
+  color: var(--oga-white);
+  margin: 0;
+}
+.oga-area-dims__card-body {
+  font-family: var(--oga-font-sans);
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.72);
+  margin: 0;
+  flex: 1;
+}
+
+/* ============================================================
+   § 03 — Score by intent (cream, prose + 4-up stat strip)
+   Mirrors /about-built __stats pattern.
+   ============================================================ */
+.oga-area-intents {
+  background: var(--oga-canvas);
+  padding: clamp(64px, 9vw, 120px) 24px;
+}
+.oga-area-intents__inner {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.oga-area-intents__eyebrow {
+  margin-bottom: 18px;
+}
+.oga-area-intents__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.5vw, 40px);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.018em;
+  color: var(--oga-fg);
+  text-wrap: balance;
+  margin: 0 0 28px;
+  max-width: 720px;
+}
+.oga-area-intents__prose {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 720px;
+  margin-bottom: 48px;
+}
+.oga-area-intents__prose p {
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--oga-fg-subtle);
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.oga-area-intents__stats {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: rgba(26, 28, 31, 0.1);
+  border: 1px solid rgba(26, 28, 31, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+@media (max-width: 880px) {
+  .oga-area-intents__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.oga-area-intents__stat {
+  background: var(--oga-canvas);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.oga-area-intents__stat-value {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.4vw, 36px);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.oga-area-intents__stat-label {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  line-height: 1.45;
+  letter-spacing: 0.02em;
+  color: var(--oga-fg-muted);
+  text-wrap: pretty;
+}
+
+/* ============================================================
+   § 04 — Inside the full report (cream-quiet, editorial teaser card)
+   ============================================================ */
+.oga-area-locked {
+  padding: clamp(56px, 8vw, 112px) 24px;
+}
+.oga-area-locked__inner {
+  max-width: 920px;
+  margin: 0 auto;
+}
+.oga-area-locked__eyebrow {
+  margin-bottom: 20px;
+}
+.oga-area-locked__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.5vw, 40px);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.018em;
+  color: var(--oga-fg);
+  text-wrap: balance;
+  margin: 0 0 28px;
+  max-width: 720px;
+}
+.oga-area-locked__prose {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 720px;
+  margin-bottom: 36px;
+}
+.oga-area-locked__prose p {
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--oga-fg-subtle);
+  margin: 0;
+  text-wrap: pretty;
+}
+
+/* Teaser card */
+.oga-area-locked__card {
+  background: var(--oga-white);
+  border: 1px solid rgba(26, 28, 31, 0.1);
+  border-radius: 4px;
+  padding: 28px 28px 22px;
+  max-width: 720px;
+}
+@media (max-width: 600px) {
+  .oga-area-locked__card {
+    padding: 22px 20px;
+  }
+}
+.oga-area-locked__card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 22px;
+  border-bottom: 1px dashed rgba(26, 28, 31, 0.12);
+  margin-bottom: 18px;
+}
+.oga-area-locked__card-eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--oga-fg-muted);
+  opacity: 0.75;
+  margin-bottom: 8px;
+}
+.oga-area-locked__card-line {
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--oga-fg);
+  line-height: 1.4;
+}
+.oga-area-locked__icon {
+  flex-shrink: 0;
+  color: var(--oga-fg-muted);
+  margin-top: 4px;
+}
+
+.oga-area-locked__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.oga-area-locked__list-item {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 14px;
+  align-items: baseline;
+  padding: 9px 0;
+  border-bottom: 1px dashed rgba(26, 28, 31, 0.08);
+}
+.oga-area-locked__list-item:last-child {
+  border-bottom: none;
+}
+.oga-area-locked__list-num {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--oga-fg-muted);
+  opacity: 0.75;
+}
+.oga-area-locked__list-text {
+  font-family: var(--oga-font-sans);
+  font-size: 14.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-fg);
+  line-height: 1.4;
+}
+.oga-area-locked__list-item--rec .oga-area-locked__list-text {
+  color: var(--oga-fg-subtle);
+  font-weight: 400;
+}
+
+/* ============================================================
+   § 05 — Closing CTA (DARK, mirrors /about-contact)
+   ============================================================ */
+.oga-area-cta {
+  padding: clamp(64px, 9vw, 120px) 24px;
+}
+.oga-area-cta__inner {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.oga-area-cta__eyebrow {
+  margin-bottom: 18px;
+}
+.oga-area-cta__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.5vw, 40px);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.018em;
+  color: var(--oga-white);
+  text-wrap: balance;
+  margin: 0 0 18px;
+  max-width: 760px;
+}
+.oga-area-cta__lead {
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.7);
+  margin: 0 0 40px;
+  max-width: 600px;
+}
+.oga-area-cta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* ============================================================
+   Related areas (cream tail)
+   ============================================================ */
+.oga-area-related {
+  background: var(--oga-canvas);
+  padding: clamp(64px, 9vw, 120px) 24px clamp(80px, 10vw, 140px);
+}
+.oga-area-related__inner {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+.oga-area-related__eyebrow {
+  margin-bottom: 20px;
+}
+.oga-area-related__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.5vw, 40px);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.018em;
+  color: var(--oga-fg);
+  text-wrap: balance;
+  margin: 0 0 36px;
+  max-width: 720px;
+}
+.oga-area-related__grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 880px) {
+  .oga-area-related__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 480px) {
+  .oga-area-related__grid {
+    grid-template-columns: 1fr;
+  }
+}
+.oga-area-related__cell {
+  display: flex;
+}
+.oga-area-related__card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px;
+  background: var(--oga-white);
+  border: 1px solid rgba(26, 28, 31, 0.1);
+  border-radius: 4px;
+  text-decoration: none;
+  transition:
+    border-color 200ms ease,
+    background 200ms ease,
+    transform var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-area-related__card:hover {
+  border-color: var(--oga-fg);
+  background: var(--oga-canvas);
+  transform: translateY(-1px);
+}
+.oga-area-related__name {
+  font-family: var(--oga-font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.008em;
+  color: var(--oga-fg);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.oga-area-related__score {
+  font-family: var(--oga-font-sans);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.014em;
+  flex-shrink: 0;
+}
