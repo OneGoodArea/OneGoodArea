@@ -83,8 +83,7 @@ export function ProductEndpointPanel({
                 className={`oga-product-ep__tab${i === idx ? " oga-product-ep__tab--active" : ""}`}
               >
                 <span
-                  className="oga-product-ep__tab-verb"
-                  data-verb={e.method}
+                  className={`oga-product-ep__tab-verb oga-verb oga-verb--${e.method.toLowerCase()}`}
                 >
                   {e.method}
                 </span>
