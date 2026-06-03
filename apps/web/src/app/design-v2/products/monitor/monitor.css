@@ -186,8 +186,10 @@
 }
 
 .oga-mon-spec__resp-method-verb {
+  /* Colour from shared .oga-verb--post (applied in TSX, DARK-surface
+     variant since this chip lives inside .oga-section-dark). The
+     amber-tint background matches the hardcoded POST verb. */
   background: rgba(230, 180, 120, 0.18);
-  color: rgba(255, 220, 170, 0.95);
   padding: 3px 8px;
   border-radius: 2px;
   font-size: 10.5px;
