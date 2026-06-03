@@ -1,0 +1,42 @@
+/* Shared product-page final CTA CSS (AR-211).
+
+   Recipe lifted character-for-character from the 4 page-scoped
+   final-cta blocks (signals.css / scores.css / monitor.css /
+   intelligence.css) which were identical modulo prefix. */
+
+.oga-product-cta {
+  text-align: center;
+}
+
+.oga-product-cta__wrap {
+  max-width: 880px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.oga-product-cta__h2 {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(28px, 3.5vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.018em;
+  font-weight: 500;
+  color: var(--oga-white);
+  margin: 0 auto var(--oga-4);
+  max-width: 24ch;
+}
+
+.oga-product-cta__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: var(--oga-lh-snug);
+  color: rgba(250, 248, 244, 0.68);
+  margin: 0 auto var(--oga-6);
+  max-width: 56ch;
+}
+
+.oga-product-cta__ctas {
+  display: inline-flex;
+  gap: var(--oga-3);
+  flex-wrap: wrap;
+  justify-content: center;
+}

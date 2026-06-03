@@ -857,37 +857,3 @@
   color: var(--oga-fg);
 }
 
-/* ============================================================
-   Final CTA (DARK)
-   ============================================================ */
-
-.oga-mon-cta {
-  text-align: center;
-}
-
-.oga-mon-cta__h2 {
-  font-family: var(--oga-font-sans);
-  font-size: clamp(28px, 3.5vw, 44px);
-  line-height: 1.05;
-  letter-spacing: -0.018em;
-  font-weight: 500;
-  color: var(--oga-white);
-  margin: 0 auto var(--oga-4);
-  max-width: 22ch;
-}
-
-.oga-mon-cta__lead {
-  font-family: var(--oga-font-sans);
-  font-size: var(--oga-fs-lead);
-  line-height: var(--oga-lh-snug);
-  color: rgba(250, 248, 244, 0.68);
-  margin: 0 auto var(--oga-6);
-  max-width: 56ch;
-}
-
-.oga-mon-cta__ctas {
-  display: inline-flex;
-  gap: var(--oga-3);
-  flex-wrap: wrap;
-  justify-content: center;
-}

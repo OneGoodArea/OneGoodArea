@@ -7,6 +7,7 @@ import { Footer } from "../../_shared/footer";
 import { ScoresIcon } from "../../_shared/product-icons";
 import { ProductHero } from "../../_shared/product-hero";
 import { ProductEndpointPanel } from "../../_shared/product-endpoint-panel";
+import { ProductFinalCta } from "../../_shared/product-final-cta";
 import {
   METHODOLOGY_VERSION,
   getCurrentMethodology,
@@ -133,7 +134,15 @@ export default function ProductScoresClient() {
         endpoints={EPS}
       />
       <SectionIcps />
-      <FinalCta />
+      <ProductFinalCta
+        titleId="scr-cta-title"
+        title="Configurable composite scoring, version-stamped and deterministic."
+        lead="Four presets, each with its own five dimensions. Override weights per request or save them as a per-org preset. AI never touches the scoring path. The methodology version is on every response, both body and header."
+        primaryHref="/sign-up"
+        primaryLabel="Get an API key"
+        secondaryHref="/methodology"
+        secondaryLabel="Read the methodology"
+      />
       <Footer />
     </div>
   );
@@ -1026,33 +1035,5 @@ function VizPublic() {
    Final CTA (DARK)
    ============================================================ */
 
-function FinalCta() {
-  return (
-    <section
-      className="oga-section-dark oga-scr-cta"
-      data-oga-surface="dark"
-      aria-labelledby="scr-cta-title"
-    >
-      <div className="oga-scr__wrap--narrow">
-        <h2 id="scr-cta-title" className="oga-scr-cta__h2">
-          Configurable composite scoring, version-stamped and deterministic.
-        </h2>
-        <p className="oga-scr-cta__lead">
-          Four presets, each with its own five dimensions. Override weights per
-          request or save them as a per-org preset. AI never touches the
-          scoring path. The methodology version is on every response, both
-          body and header.
-        </p>
-        <div className="oga-scr-cta__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
-            <span aria-hidden>→</span>
-          </Link>
-          <Link href="/methodology" className="oga-btn oga-btn-secondary">
-            Read the methodology
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
+/* FinalCta extracted to shared _shared/product-final-cta.{tsx,css}
+   in AR-211. */

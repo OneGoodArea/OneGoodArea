@@ -7,6 +7,7 @@ import { Footer } from "../../_shared/footer";
 import { IntelligenceIcon } from "../../_shared/product-icons";
 import { ProductHero } from "../../_shared/product-hero";
 import { ProductEndpointPanel } from "../../_shared/product-endpoint-panel";
+import { ProductFinalCta } from "../../_shared/product-final-cta";
 import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 import "./intelligence.css";
 
@@ -187,7 +188,15 @@ export default function ProductIntelligenceClient() {
         endpoints={EPS}
       />
       <SectionIcps />
-      <FinalCta />
+      <ProductFinalCta
+        titleId="int-cta-title"
+        title="Query UK areas in JSON or English. Get the same deterministic answer."
+        lead={`Six plan ops. One typed grammar. AI emits the plan, the database produces the rows, the response always echoes the plan so any natural-language answer can be replayed as a programmatic call. Engine version ${METHODOLOGY_VERSION} is stamped on every response.`}
+        primaryHref="/sign-up"
+        primaryLabel="Get an API key"
+        secondaryHref="/methodology"
+        secondaryLabel="Read the methodology"
+      />
       <Footer />
     </div>
   );
@@ -1143,33 +1152,5 @@ function VizPropTech() {
    Final CTA (DARK)
    ============================================================ */
 
-function FinalCta() {
-  return (
-    <section
-      className="oga-section-dark oga-int-cta"
-      data-oga-surface="dark"
-      aria-labelledby="int-cta-title"
-    >
-      <div className="oga-int__wrap--narrow">
-        <h2 id="int-cta-title" className="oga-int-cta__h2">
-          Query UK areas in JSON or English. Get the same deterministic answer.
-        </h2>
-        <p className="oga-int-cta__lead">
-          Six plan ops. One typed grammar. AI emits the plan, the database
-          produces the rows, the response always echoes the plan so any
-          natural-language answer can be replayed as a programmatic call.
-          Engine version {METHODOLOGY_VERSION} is stamped on every response.
-        </p>
-        <div className="oga-int-cta__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
-            <span aria-hidden>→</span>
-          </Link>
-          <Link href="/methodology" className="oga-btn oga-btn-secondary">
-            Read the methodology
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
+/* FinalCta extracted to shared _shared/product-final-cta.{tsx,css}
+   in AR-211. */

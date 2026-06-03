@@ -7,6 +7,7 @@ import { Footer } from "../../_shared/footer";
 import { SignalsIcon } from "../../_shared/product-icons";
 import { ProductHero } from "../../_shared/product-hero";
 import { ProductEndpointPanel } from "../../_shared/product-endpoint-panel";
+import { ProductFinalCta } from "../../_shared/product-final-cta";
 import {
   METHODOLOGY_VERSION,
   getCurrentMethodology,
@@ -184,7 +185,15 @@ export default function ProductSignalsClient() {
         endpoints={EPS}
       />
       <SectionIcps />
-      <FinalCta />
+      <ProductFinalCta
+        titleId="sig-cta-title"
+        title="Build on the typed UK area-data layer."
+        lead="One endpoint resolves any UK postcode to the seven-category Signal catalog at LSOA grain. Provenance on the wire, methodology version stamped on every response, percentiles country-scoped by design."
+        primaryHref="/sign-up"
+        primaryLabel="Get an API key"
+        secondaryHref="/methodology"
+        secondaryLabel="Read the methodology"
+      />
       <Footer />
     </div>
   );
@@ -1034,32 +1043,5 @@ function VizPublic() {
    Final CTA (DARK)
    ============================================================ */
 
-function FinalCta() {
-  return (
-    <section
-      className="oga-section-dark oga-sig-cta"
-      data-oga-surface="dark"
-      aria-labelledby="sig-cta-title"
-    >
-      <div className="oga-sig__wrap--narrow">
-        <h2 id="sig-cta-title" className="oga-sig-cta__h2">
-          Build on the typed UK area-data layer.
-        </h2>
-        <p className="oga-sig-cta__lead">
-          One endpoint resolves any UK postcode to the seven-category Signal
-          catalog at LSOA grain. Provenance on the wire, methodology version
-          stamped on every response, percentiles country-scoped by design.
-        </p>
-        <div className="oga-sig-cta__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
-            <span aria-hidden>→</span>
-          </Link>
-          <Link href="/methodology" className="oga-btn oga-btn-secondary">
-            Read the methodology
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
+/* FinalCta extracted to shared _shared/product-final-cta.{tsx,css}
+   in AR-211. */

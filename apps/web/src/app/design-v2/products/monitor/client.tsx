@@ -7,6 +7,7 @@ import { Footer } from "../../_shared/footer";
 import { MonitorIcon } from "../../_shared/product-icons";
 import { ProductHero } from "../../_shared/product-hero";
 import { ProductEndpointPanel } from "../../_shared/product-endpoint-panel";
+import { ProductFinalCta } from "../../_shared/product-final-cta";
 import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 import "./monitor.css";
 
@@ -181,7 +182,15 @@ export default function ProductMonitorClient() {
         endpoints={EPS}
       />
       <SectionIcps />
-      <FinalCta />
+      <ProductFinalCta
+        titleId="mon-cta-title"
+        title="Monitor your book of UK areas. Sample-size honest by default."
+        lead="Save areas, bulk-enrich, run change detection, get signed webhooks when something material shifts. The diff core is unit-tested, the envelope is HMAC-SHA256 signed, and a 47% swing on 2 sales never earns an alert."
+        primaryHref="/sign-up"
+        primaryLabel="Get an API key"
+        secondaryHref="/methodology"
+        secondaryLabel="Read the methodology"
+      />
       <Footer />
     </div>
   );
@@ -1180,33 +1189,5 @@ function VizPublic() {
    Final CTA (DARK)
    ============================================================ */
 
-function FinalCta() {
-  return (
-    <section
-      className="oga-section-dark oga-mon-cta"
-      data-oga-surface="dark"
-      aria-labelledby="mon-cta-title"
-    >
-      <div className="oga-mon__wrap--narrow">
-        <h2 id="mon-cta-title" className="oga-mon-cta__h2">
-          Monitor your book of UK areas. Sample-size honest by default.
-        </h2>
-        <p className="oga-mon-cta__lead">
-          Save areas, bulk-enrich, run change detection, get signed webhooks
-          when something material shifts. The diff core is unit-tested, the
-          envelope is HMAC-SHA256 signed, and a 47% swing on 2 sales never
-          earns an alert.
-        </p>
-        <div className="oga-mon-cta__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
-            <span aria-hidden>→</span>
-          </Link>
-          <Link href="/methodology" className="oga-btn oga-btn-secondary">
-            Read the methodology
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
+/* FinalCta extracted to shared _shared/product-final-cta.{tsx,css}
+   in AR-211. */
