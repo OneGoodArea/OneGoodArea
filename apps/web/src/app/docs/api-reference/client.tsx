@@ -112,9 +112,9 @@ const SURFACES: Surface[] = [
   },
   {
     num: "06",
-    name: "Reports (legacy)",
+    name: "Reports",
     count: "3 endpoints",
-    body: "The original v1 report surface: AI-narrated report for one area, bulk batch, list-mine.",
+    body: "AI-narrated report for one area, bulk batch, list-mine.",
     endpoints: [
       { verb: "POST", path: "/v1/report" },
       { verb: "POST", path: "/v1/batch" },
@@ -146,24 +146,8 @@ const RESOURCES: ResourceTile[] = [
   },
   {
     num: "03.2",
-    name: "ADR repository",
-    desc: "Every architectural decision since signal-first. ADRs 0001 through 0035 cover the full live surface.",
-    href: "https://github.com/OneGoodArea/OneGoodArea/tree/main/docs/adr",
-    external: true,
-    cta: "Open on GitHub",
-  },
-  {
-    num: "03.3",
-    name: "Live route schemas",
-    desc: "Fastify route definitions per module: signals, scoring, monitor, intelligence, orgs, reports, billing.",
-    href: "https://github.com/OneGoodArea/OneGoodArea/tree/main/apps/api/src/modules",
-    external: true,
-    cta: "Open on GitHub",
-  },
-  {
-    num: "03.4",
     name: "Current spec snapshot",
-    desc: "OpenAPI 3.0 v2.0.0. Documents 5 endpoints with stale paths. Kept available for buyers integrated against it.",
+    desc: "OpenAPI 3.0 v2.0.0. Documents the existing surface; kept available for buyers integrated against it while the interactive reference is regenerated.",
     href: "/openapi.json",
     cta: "Download JSON",
   },
@@ -206,8 +190,7 @@ function Hero() {
 
         <p className="oga-apiref-hero__lead">
           We&rsquo;re regenerating the interactive reference from the live Fastify backend. While that
-          ships, here&rsquo;s a surface map of every product endpoint, with pointers to the methodology,
-          ADRs, and source.
+          ships, here&rsquo;s a surface map of every product endpoint, with a pointer to the methodology.
         </p>
 
         <div className="oga-apiref-hero__actions">
@@ -238,8 +221,7 @@ function SectionSurfaces() {
           <h2 className="oga-apiref__h2">Six product surfaces, ~70 live endpoints.</h2>
           <p className="oga-apiref__lead">
             One card per product surface with a representative endpoint list. Detailed per-surface docs
-            are the next wave of work; until they ship, the methodology page covers the engine and the
-            ADR repository covers every architectural decision.
+            are the next wave of work; until they ship, the methodology page covers the engine.
           </p>
         </header>
 
@@ -289,10 +271,10 @@ function SectionToday() {
             <span className="oga-apiref__eyebrow-line" aria-hidden />
             <span>What you can use today</span>
           </div>
-          <h2 className="oga-apiref__h2">Four resources that work right now.</h2>
+          <h2 className="oga-apiref__h2">Two resources that work right now.</h2>
           <p className="oga-apiref__lead">
-            Methodology page for the engine, ADRs for design decisions, route source for exact schemas,
-            spec snapshot for buyers who already integrated.
+            Methodology page for the engine, and the current OpenAPI spec snapshot for buyers who
+            already integrated.
           </p>
         </header>
 

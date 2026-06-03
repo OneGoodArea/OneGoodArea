@@ -396,7 +396,7 @@ const FAQS: Faq[] = [
   },
   {
     q: "Do you have customer logos I can show to procurement?",
-    a: "We are early. We would rather have a clean methodology, public ADRs and a stamped engine version than logos that imply social proof we have not earned. If procurement needs deeper assurance we are happy to do a call.",
+    a: "We are early. We would rather have a clean published methodology and a stamped engine version on every response than logos that imply social proof we have not earned. If procurement needs deeper assurance we are happy to do a call.",
   },
   {
     q: "Is there a free tier for me to integrate against?",

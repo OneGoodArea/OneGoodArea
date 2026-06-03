@@ -99,15 +99,10 @@ function Hero() {
             Get an API key
             <span aria-hidden>→</span>
           </Link>
-          <a
-            href="https://github.com/OneGoodArea/OneGoodArea/tree/main/mcp"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="oga-btn oga-btn-secondary"
-          >
-            View source
+          <Link href="/methodology" className="oga-btn oga-btn-secondary">
+            Read the methodology
             <span aria-hidden>→</span>
-          </a>
+          </Link>
         </div>
       </div>
     </section>
@@ -283,13 +278,9 @@ function SectionDev() {
         />
 
         <div className="oga-mcp-dev__source">
-          Source code, issues, and feature requests live at{" "}
-          <a
-            href="https://github.com/OneGoodArea/OneGoodArea/tree/main/mcp"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            github.com/OneGoodArea/OneGoodArea/tree/main/mcp <span aria-hidden>→</span>
+          Issues, feature requests, and support:{" "}
+          <a href="mailto:operation@onegoodarea.co.uk">
+            operation@onegoodarea.co.uk <span aria-hidden>→</span>
           </a>
         </div>
       </div>

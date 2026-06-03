@@ -333,20 +333,6 @@ const AUDIT: { num: string; name: string; desc: string; href: string; external?:
     desc: "OpenAPI 3.0 spec rendered as an interactive reference. Currently being regenerated against the live backend.",
     href: "/docs/api-reference",
   },
-  {
-    num: "14.4",
-    name: "ADR repository",
-    desc: "Every architectural decision since signal-first, with rationale and trade-offs.",
-    href: "https://github.com/OneGoodArea/OneGoodArea/tree/main/docs/adr",
-    external: true,
-  },
-  {
-    num: "14.5",
-    name: "AI eval harness",
-    desc: "Measured planner accuracy. 92.9% on a 14-case curated corpus against claude-sonnet-4-20250514.",
-    href: "https://github.com/OneGoodArea/OneGoodArea/tree/main/apps/api/src/modules/intelligence/eval",
-    external: true,
-  },
 ];
 
 /* ============================================================
@@ -1149,7 +1135,6 @@ type Lever = {
   rbac: "Owner" | "Admin";
   body: string;
   honest: string;
-  adr: string;
 };
 
 const LEVERS: Lever[] = [
@@ -1160,7 +1145,6 @@ const LEVERS: Lever[] = [
     rbac: "Admin",
     body: "Named whitelist of signal_keys. Scopes /v1/area, /v1/areas, and /v1/query — the API exposes only the bundle's signals to your keys.",
     honest: "A request for an out-of-bundle signal returns 422 bundle_signal_not_allowed. No silent omission.",
-    adr: "ADR 0029",
   },
   {
     num: "12.2",
@@ -1169,7 +1153,6 @@ const LEVERS: Lever[] = [
     rbac: "Admin",
     body: "Save a (base_preset, weights) pair server-side. Call by preset_id from POST /v1/score. Reusable across team members and replayable in audits.",
     honest: "Frozen v2 engine unchanged. weights_source surfaces as \"custom\" on response.",
-    adr: "ADR 0030",
   },
   {
     num: "12.3",
@@ -1178,7 +1161,6 @@ const LEVERS: Lever[] = [
     rbac: "Owner",
     body: "Pin the whole org to a specific engine_version. Every scoring response from the org's keys stamps that version in X-Engine-Version.",
     honest: "Owner-only by design: misclicking a pin has high cost for regulator-facing audits. Explicit request header still wins.",
-    adr: "ADR 0031",
   },
   {
     num: "12.4",
@@ -1187,7 +1169,6 @@ const LEVERS: Lever[] = [
     rbac: "Admin",
     body: "Named list of LSOA codes (max 10,000). Scopes the candidate pool on /v1/peers — \"find peers in MY universe.\"",
     honest: "Cohorts ship today; per-cohort percentile recompute (scope=peer_group) is on the roadmap.",
-    adr: "ADR 0032",
   },
 ];
 
@@ -1222,7 +1203,6 @@ function SectionLevers() {
               </code>
               <p className="oga-meth-levers__card-body">{l.body}</p>
               <p className="oga-meth-levers__card-honest">{l.honest}</p>
-              <span className="oga-meth-levers__card-adr">{l.adr}</span>
             </article>
           ))}
         </div>

@@ -398,8 +398,8 @@ function SectionDefend() {
             Six properties an actuarial team will sign off.
           </h2>
           <p className="oga-icp__lead">
-            The compliance + actuarial-audit pitch. Each property is grounded
-            in an architectural decision record open in the public repo.
+            The compliance + actuarial-audit pitch. Each property is
+            documented on /methodology and stamped on every response.
           </p>
         </header>
 

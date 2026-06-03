@@ -65,7 +65,7 @@ const CHANGELOG: Month[] = [
       {
         type: "improvement",
         title: "Brand v3 (Plotted) live.",
-        description: "New homepage, methodology page, and docs surfaces. Geist sans plus the warm graphite + cream two-colour palette. The 29-dot Plotted mark on every page. /methodology fully rewritten to reflect the system as it actually is (14 sections, every claim traced to an ADR).",
+        description: "New homepage, methodology page, and docs surfaces. Geist sans plus the warm graphite + cream two-colour palette. The 29-dot Plotted mark on every page. /methodology fully rewritten to reflect the system as it actually is (14 sections, every claim grounded in code).",
       },
     ],
   },

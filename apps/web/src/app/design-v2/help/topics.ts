@@ -46,7 +46,7 @@ export const TOPICS: Topic[] = [
       },
       {
         q: "Where do I find the methodology?",
-        a: "The full methodology is public at /methodology. It documents the data sources, the country-scoped percentile design, the scoring formula, the confidence rubric, the engine version registry, and the architectural decision record. Every response also carries an engine_version stamp so you can cite the exact methodology version that produced any number.",
+        a: "The full methodology is public at /methodology. It documents the data sources, the country-scoped percentile design, the scoring formula, the confidence rubric, and the engine version registry. Every response also carries an engine_version stamp so you can cite the exact methodology version that produced any number.",
       },
     ],
   },

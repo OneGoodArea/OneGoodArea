@@ -430,7 +430,7 @@ const FAQS: Faq[] = [
   },
   {
     q: "How do you handle FCA / PRA SS1/23 model risk requirements?",
-    a: "We do not certify your model; that is your model risk team's job. What we provide is the inputs to do it well: versioned methodology with a public registry, engine_version on every response, a plan-replayable AI seam, sample-size gating built into change detection, country-scoped percentiles, source attribution on every signal. The full ADR trail is open at github.com/OneGoodArea/OneGoodArea/tree/main/docs/adr — your team can include it in the model documentation pack.",
+    a: "We do not certify your model; that is your model risk team's job. What we provide is the inputs to do it well: versioned methodology with a public registry, engine_version on every response, a plan-replayable AI seam, sample-size gating built into change detection, country-scoped percentiles, source attribution on every signal. The full methodology is public at /methodology — your team can include it in the model documentation pack.",
   },
   {
     q: "Can the engine version be locked across multiple environments?",
