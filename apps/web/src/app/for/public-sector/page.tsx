@@ -42,7 +42,7 @@ const faqLd = {
       name: "Will the numbers survive an FOI response?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes by construction. Each signal carries source, observed_period, confidence, and confidence_reason. The methodology version is stamped on every response. The full methodology is public on /methodology and the architectural decision record is open on GitHub. Your FOI footnote can point at source, release, engine version, and ADR.",
+        text: "Yes by construction. Each signal carries source, observed_period, confidence, and confidence_reason. The methodology version is stamped on every response body and the X-Engine-Version header. The full methodology is public on /methodology. Your FOI footnote can point at source, release, and engine version.",
       },
     },
     {
@@ -66,7 +66,7 @@ const faqLd = {
       name: "Can the analyst cite OneGoodArea in a research note or report?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. Each signal carries a source string you can cite directly (police.uk, IMD 2025, HM Land Registry). For methodology citation, the canonical reference is the /methodology page plus the engine version (visible on the X-Engine-Version header). The ADR trail is open and citable.",
+        text: "Yes. Each signal carries a source string you can cite directly (police.uk, IMD 2025, HM Land Registry). For methodology citation, the canonical reference is the /methodology page plus the engine version (visible on the X-Engine-Version header).",
       },
     },
     {

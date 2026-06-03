@@ -4,7 +4,7 @@ import AboutClient from "@/app/design-v2/about/client";
 export const metadata: Metadata = {
   title: "About OneGoodArea — The data and intelligence layer underneath UK property workflows",
   description:
-    "Deterministic signals, configurable scoring, portfolio monitoring, and a typed AI query plane over monthly area time-series. One API, one methodology, version-pinned per organisation. Six principles, all traceable to an architectural decision record.",
+    "Deterministic signals, configurable scoring, portfolio monitoring, and a typed AI query plane over monthly area time-series. One API, one methodology, version-pinned per organisation. Six principles, applied in code and methodology-versioned in every response.",
   keywords: [
     "UK area intelligence layer",
     "deterministic area scoring",

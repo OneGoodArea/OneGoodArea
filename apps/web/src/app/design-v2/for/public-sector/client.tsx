@@ -397,8 +397,8 @@ const DEFEND: DefendCard[] = [
   },
   {
     num: "06",
-    title: "Published methodology + open ADR trail",
-    body: "The methodology is public on /methodology. The full architectural decision record is open at github.com/OneGoodArea/OneGoodArea/tree/main/docs/adr. Your research note can cite the exact ADR your methodology section references; readers can verify the code path against the rule.",
+    title: "Published methodology, citable in any research note",
+    body: "The methodology is public on /methodology. Every response carries an engine_version stamp + X-Engine-Version header. Your research note can cite the methodology page + the exact engine version that produced any number.",
   },
 ];
 
@@ -416,9 +416,9 @@ function SectionDefend() {
             Six properties that hold up at FOI and procurement review.
           </h2>
           <p className="oga-icp__lead">
-            The defensibility pitch. Each property is grounded in an
-            architectural decision record open in the public repo, ready
-            to be cited in your methodology section.
+            The defensibility pitch. Each property is documented on
+            /methodology and stamped on every response, ready to be cited
+            in your methodology section.
           </p>
         </header>
 
@@ -445,7 +445,7 @@ type Faq = { q: string; a: string };
 const FAQS: Faq[] = [
   {
     q: "Will the numbers survive an FOI response?",
-    a: "Yes by construction. Each signal carries an explicit source, observed_period, confidence, and plain-language confidence_reason. The methodology version is stamped on every response body and the X-Engine-Version header. The full methodology is public on /methodology and the architectural decision record is open at github.com/OneGoodArea/OneGoodArea/tree/main/docs/adr. Your FOI footnote can point at the source, the release, the engine version, and the ADR.",
+    a: "Yes by construction. Each signal carries an explicit source, observed_period, confidence, and plain-language confidence_reason. The methodology version is stamped on every response body and the X-Engine-Version header. The full methodology is public on /methodology. Your FOI footnote can point at the source, the release, and the engine version.",
   },
   {
     q: "Can we pin the methodology for a contract or procurement deliverable?",
@@ -457,7 +457,7 @@ const FAQS: Faq[] = [
   },
   {
     q: "Can the analyst cite OneGoodArea in a research note or report?",
-    a: "Yes. Each signal carries a source string (e.g. police.uk, IMD 2025, HM Land Registry) you can cite directly. For methodology citation, the canonical reference is the /methodology page plus the engine version your queries ran under (visible on the X-Engine-Version header). The ADR trail is open and citable.",
+    a: "Yes. Each signal carries a source string (e.g. police.uk, IMD 2025, HM Land Registry) you can cite directly. For methodology citation, the canonical reference is the /methodology page plus the engine version your queries ran under (visible on the X-Engine-Version header).",
   },
   {
     q: "What about precision and statistical confidence intervals?",

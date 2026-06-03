@@ -1092,7 +1092,7 @@ const ICPS: Icp[] = [
     why:
       "Monitor is honest by construction. A single-period signal (deprivation) produces no change row. A price move on 2 sales is filtered by min_transactions=8. The ChangeReport carries baseline, threshold_pct, and min_transactions, so a published 'areas that moved' note has the methodology stamped inside the artifact.",
     value:
-      "A reproducible, lineage-stamped record of which tracked areas moved between two periods, with gating decisions visible in the artifact. The diff core is documented in the ADR trail and unit-tested.",
+      "A reproducible, lineage-stamped record of which tracked areas moved between two periods, with gating decisions visible in the artifact. The diff core is documented on /methodology and unit-tested.",
     sales:
       "Track priority LSOAs as a portfolio. Get a lineage-stamped change report with honest sample-size gating built in.",
   },

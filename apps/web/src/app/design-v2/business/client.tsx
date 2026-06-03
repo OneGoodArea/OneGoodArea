@@ -650,8 +650,8 @@ function SectionProof() {
             Measured, version-stamped, deterministic.
           </h2>
           <p className="oga-biz-proof__sub">
-            Numbers you can audit. Every one of these is grounded in a public
-            ADR or apps/api code.
+            Numbers you can audit. Source-attributed signals,
+            methodology-versioned responses, deterministic engine.
           </p>
         </header>
 
@@ -681,11 +681,11 @@ function SectionProof() {
             </p>
           </div>
           <div className="oga-biz-proof-stat">
-            <span className="oga-biz-proof-stat__num">35</span>
-            <span className="oga-biz-proof-stat__label">ADRs published</span>
+            <span className="oga-biz-proof-stat__num">3</span>
+            <span className="oga-biz-proof-stat__label">Country-scoped</span>
             <p className="oga-biz-proof-stat__body">
-              Every architectural decision in docs/adr/. The methodology is
-              public; the code is open; the trail is the audit.
+              England, Wales, Scotland — three separate percentile spaces
+              by design. No cross-border lies in any score.
             </p>
           </div>
         </div>

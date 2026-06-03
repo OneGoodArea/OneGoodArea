@@ -257,7 +257,7 @@ const PRINCIPLES = [
   },
   {
     title: "Methodology is public",
-    body: "Every dimension, every weight, every aggregation step is documented on /methodology. The architectural decision record is open on GitHub. If a number lands in your report, the trail is citable.",
+    body: "Every dimension, every weight, every aggregation step is documented on /methodology. The methodology version is stamped on every response. If a number lands in your report, the trail is citable.",
     Viz: VizMethodology,
   },
   {
@@ -374,8 +374,8 @@ export default function AboutClient() {
               compliance team already trusts, but stitched into one API with
               the dating, attribution, and percentile scoping done correctly
               by construction. Methodology version stamped on every response.
-              Sample-size gates on every change-detection job. Open ADR trail
-              behind every architectural choice.
+              Sample-size gates on every change-detection job. A published
+              methodology behind every architectural choice.
             </p>
             <p>
               It exists so the underwriter, the planner, the site selection
@@ -396,7 +396,7 @@ export default function AboutClient() {
               <span>What we believe</span>
             </div>
             <h2 className="oga-about-believe__title">
-              Six principles, all traceable to an architectural decision record.
+              Six principles, applied in code and stamped on every response.
             </h2>
             <p className="oga-about-believe__lead">
               These aren&rsquo;t marketing words. Each one is enforced in code,

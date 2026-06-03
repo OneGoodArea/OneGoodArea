@@ -175,8 +175,7 @@ export default function BlogClient() {
           <p className="oga-blog-cta__lead">
             The same engine that ranks areas in our case studies is the
             engine you call through the API. One methodology, version-pinned
-            per organisation, with the open ADR trail underneath every
-            number.
+            per organisation, stamped on every response.
           </p>
           <div className="oga-blog-cta__buttons">
             <Link href="/sign-up" className="oga-btn oga-btn-primary">

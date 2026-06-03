@@ -76,7 +76,7 @@ const faqLd = {
       name: "How do you handle FCA and PRA SS1/23 model risk requirements?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "We do not certify your model; that is your model risk team's responsibility. We provide the inputs to do it well: versioned methodology, engine_version on every response, a plan-replayable AI seam, sample-size gating in change detection, country-scoped percentiles, source attribution on every signal. The full ADR trail is public on GitHub.",
+        text: "We do not certify your model; that is your model risk team's responsibility. We provide the inputs to do it well: versioned methodology, engine_version on every response, a plan-replayable AI seam, sample-size gating in change detection, country-scoped percentiles, source attribution on every signal. The full methodology is public on /methodology.",
       },
     },
     {

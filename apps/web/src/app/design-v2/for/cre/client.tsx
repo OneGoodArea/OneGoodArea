@@ -399,8 +399,7 @@ function SectionDefend() {
           </h2>
           <p className="oga-icp__lead">
             The shortlist needs to survive committee scrutiny. Each property
-            is grounded in an architectural decision record open in the
-            public repo.
+            is documented on /methodology and stamped on every response.
           </p>
         </header>
 

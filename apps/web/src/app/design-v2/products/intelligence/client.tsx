@@ -1041,7 +1041,7 @@ const ICPS: Icp[] = [
     why:
       "Every response echoes the executed plan plus plan_source ('client' or 'nl'), so any answer is replayable as a programmatic call. Forecast meta exposes n_observations, r2, slope_per_month, residual_stderr; insights expose signed peer_relative_z and abs_z; peers expose distance and n_dims_used. No inference inside the executor.",
     value:
-      "Methodology defensibility. The team can point at a published ADR, a Zod schema, and the SQL that produced every row. The AI is constrained to picking the query, never to setting the numbers.",
+      "Methodology defensibility. The team can point at a published methodology, a Zod schema, and the SQL that produced every row. The AI is constrained to picking the query, never to setting the numbers.",
     sales:
       "An AI query plane where the AI is the interface, not the answer. Every row traces to deterministic SQL and a published methodology.",
   },
