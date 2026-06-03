@@ -5,6 +5,10 @@ import Link from "next/link";
 import { Nav } from "../../_shared/nav";
 import { Footer } from "../../_shared/footer";
 import { ScoresIcon } from "../../_shared/product-icons";
+import { ProductHero } from "../../_shared/product-hero";
+import { ProductEndpointPanel } from "../../_shared/product-endpoint-panel";
+import { ProductFinalCta } from "../../_shared/product-final-cta";
+import { ProductIcpGrid } from "../../_shared/product-icp-grid";
 import {
   METHODOLOGY_VERSION,
   getCurrentMethodology,
@@ -112,52 +116,42 @@ export default function ProductScoresClient() {
   return (
     <div className="oga-root oga-scr">
       <Nav />
-      <Hero />
+      <ProductHero
+        Icon={ScoresIcon}
+        h1="Scores: deterministic composite scoring."
+        lead="One 0-to-100 number per UK area. Four scoring profiles tuned to four workflows: residential origination, commercial site selection, investment underwrite, and research. Each profile uses its own five-dimension set; override the weights per request or save your own recipe against your org. The engine is frozen, golden-tested, and AI never touches the scoring path. Every response stamps the engine version that produced it."
+        primaryHref="/sign-up"
+        primaryLabel="Get an API key"
+        secondaryHref="/methodology"
+        secondaryLabel="Read the methodology"
+      />
       <SectionSpecimen />
       <SectionPresets />
       <SectionAnatomy />
-      <SectionEndpoints />
-      <SectionIcps />
-      <FinalCta />
+      <ProductEndpointPanel
+        titleId="scr-ep-title"
+        title="The primary scoring endpoint, the legacy narrated report, plus Levers preset CRUD."
+        sub="Plain JSON over HTTPS, Bearer-token auth with the oga_ prefix, all paths under /v1/. Score endpoint is free of the monthly report quota; the legacy /v1/report endpoint still consumes it."
+        endpoints={EPS}
+      />
+      <ProductIcpGrid
+        titleId="scr-icps-title"
+        title="Same engine. Five different buyer workflows."
+        sub="What the score is FOR changes per buyer. The deterministic pipeline underneath does not."
+        whyLabel="Why Scores"
+        icps={ICPS}
+      />
+      <ProductFinalCta
+        titleId="scr-cta-title"
+        title="Configurable composite scoring, version-stamped and deterministic."
+        lead="Four presets, each with its own five dimensions. Override weights per request or save them as a per-org preset. AI never touches the scoring path. The methodology version is on every response, both body and header."
+        primaryHref="/sign-up"
+        primaryLabel="Get an API key"
+        secondaryHref="/methodology"
+        secondaryLabel="Read the methodology"
+      />
       <Footer />
     </div>
-  );
-}
-
-/* ============================================================
-   Hero
-   ============================================================ */
-
-function Hero() {
-  return (
-    <section className="oga-section-hero oga-scr-hero">
-      <div className="oga-scr__wrap--narrow">
-        <div className="oga-scr-hero__icon" aria-hidden>
-          <ScoresIcon width={132} height={132} />
-        </div>
-        <h1 className="oga-scr-hero__h1">
-          Scores: deterministic composite scoring.
-        </h1>
-        <p className="oga-scr-hero__lead">
-          One 0-to-100 number per UK area. Four scoring profiles tuned to four
-          workflows: residential origination, commercial site selection,
-          investment underwrite, and research. Each profile uses its own
-          five-dimension set; override the weights per request or save your own
-          recipe against your org. The engine is frozen, golden-tested, and AI
-          never touches the scoring path. Every response stamps the engine
-          version that produced it.
-        </p>
-        <div className="oga-scr-hero__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
-            <span aria-hidden>→</span>
-          </Link>
-          <Link href="/methodology" className="oga-btn oga-btn-secondary">
-            Read the methodology
-          </Link>
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -793,86 +787,9 @@ const EPS: Endpoint[] = [
   },
 ];
 
-function SectionEndpoints() {
-  const [idx, setIdx] = useState(0);
-  const ep = EPS[idx];
-  return (
-    <section className="oga-section-hero oga-scr-ep" aria-labelledby="scr-ep-title">
-      <div className="oga-scr__wrap">
-        <header className="oga-scr-ep__head">
-          <h2 id="scr-ep-title" className="oga-scr-ep__title">
-            The primary scoring endpoint, the legacy narrated report, plus Levers preset CRUD.
-          </h2>
-          <p className="oga-scr-ep__sub">
-            Plain JSON over HTTPS, Bearer-token auth with the oga_ prefix, all
-            paths under /v1/. Score endpoint is free of the monthly report
-            quota; the legacy /v1/report endpoint still consumes it.
-          </p>
-        </header>
-
-        <div className="oga-scr-ep__panel">
-          <div className="oga-scr-ep__tabs" role="tablist" aria-label="Endpoint">
-            {EPS.map((e, i) => (
-              <button
-                key={e.path}
-                type="button"
-                role="tab"
-                aria-selected={i === idx}
-                onClick={() => setIdx(i)}
-                className={`oga-scr-ep__tab${i === idx ? " oga-scr-ep__tab--active" : ""}`}
-              >
-                <span className="oga-scr-ep__tab-verb">{e.method}</span>
-                <span className="oga-scr-ep__tab-path">{e.path}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="oga-scr-ep__body">
-            <p className="oga-scr-ep__what">{ep.what}</p>
-
-            <div className="oga-scr-ep__grid">
-              <div>
-                <h4 className="oga-scr-ep__col-title">Parameters</h4>
-                <ul className="oga-scr-ep__params">
-                  {ep.params.map((p) => (
-                    <li key={p.name}>
-                      <div className="oga-scr-ep__params-head">
-                        <code className="oga-scr-ep__params-name">{p.name}</code>
-                        <span className="oga-scr-ep__params-type">{p.type}</span>
-                        {p.required && <span className="oga-scr-ep__params-req">Required</span>}
-                      </div>
-                      <p className="oga-scr-ep__params-desc">{p.desc}</p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="oga-scr-ep__col-title">Response</h4>
-                <p className="oga-scr-ep__response">{ep.response}</p>
-                <h4 className="oga-scr-ep__col-title">Status codes</h4>
-                <dl className="oga-scr-ep__codes">
-                  {ep.codes.map((c) => (
-                    <CodeRow key={c.code} code={c.code} meaning={c.meaning} />
-                  ))}
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function CodeRow({ code, meaning }: { code: string; meaning: string }) {
-  return (
-    <>
-      <dt>{code}</dt>
-      <dd>{meaning}</dd>
-    </>
-  );
-}
+/* SectionEndpoints + CodeRow extracted to shared
+   _shared/product-endpoint-panel.{tsx,css} in AR-211.
+   Per-product variation = title + sub + EPS data. */
 
 /* ============================================================
    § 05 — Built for (cream) — 5 ICPs, Lender leads
@@ -950,52 +867,8 @@ const ICPS: Icp[] = [
   },
 ];
 
-function SectionIcps() {
-  return (
-    <section className="oga-section-quiet oga-scr-icps" aria-labelledby="scr-icps-title">
-      <div className="oga-scr__wrap">
-        <header className="oga-scr-icps__head">
-          <h2 id="scr-icps-title" className="oga-scr-icps__title">
-            Same engine. Five different buyer workflows.
-          </h2>
-          <p className="oga-scr-icps__sub">
-            What the score is FOR changes per buyer. The deterministic
-            pipeline underneath does not.
-          </p>
-        </header>
-
-        <div className="oga-scr-icps__list">
-          {ICPS.map((i) => {
-            const Viz = i.Viz;
-            return (
-              <article key={i.name} className="oga-scr-icp">
-                <div className="oga-scr-icp__viz" aria-hidden>
-                  <Viz />
-                </div>
-                <div className="oga-scr-icp__body">
-                  <h3 className="oga-scr-icp__name">{i.name}</h3>
-                  <div>
-                    <p className="oga-scr-icp__row-label">The problem</p>
-                    <p className="oga-scr-icp__row-text">{i.problem}</p>
-                  </div>
-                  <div>
-                    <p className="oga-scr-icp__row-label">Why Scores</p>
-                    <p className="oga-scr-icp__row-text">{i.why}</p>
-                  </div>
-                  <div>
-                    <p className="oga-scr-icp__row-label">Their value</p>
-                    <p className="oga-scr-icp__row-text">{i.value}</p>
-                  </div>
-                  <p className="oga-scr-icp__sales">{i.sales}</p>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
+/* SectionIcps extracted to shared _shared/product-icp-grid.{tsx,css}
+   in AR-211. Per-product: ICPS data + bespoke Viz functions below. */
 
 /* ICP micro-illustrations — Scores-specific. 120x120, dot-and-hairline. */
 
@@ -1125,33 +998,5 @@ function VizPublic() {
    Final CTA (DARK)
    ============================================================ */
 
-function FinalCta() {
-  return (
-    <section
-      className="oga-section-dark oga-scr-cta"
-      data-oga-surface="dark"
-      aria-labelledby="scr-cta-title"
-    >
-      <div className="oga-scr__wrap--narrow">
-        <h2 id="scr-cta-title" className="oga-scr-cta__h2">
-          Configurable composite scoring, version-stamped and deterministic.
-        </h2>
-        <p className="oga-scr-cta__lead">
-          Four presets, each with its own five dimensions. Override weights per
-          request or save them as a per-org preset. AI never touches the
-          scoring path. The methodology version is on every response, both
-          body and header.
-        </p>
-        <div className="oga-scr-cta__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
-            <span aria-hidden>→</span>
-          </Link>
-          <Link href="/methodology" className="oga-btn oga-btn-secondary">
-            Read the methodology
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
+/* FinalCta extracted to shared _shared/product-final-cta.{tsx,css}
+   in AR-211. */

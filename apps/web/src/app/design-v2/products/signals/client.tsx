@@ -5,6 +5,10 @@ import Link from "next/link";
 import { Nav } from "../../_shared/nav";
 import { Footer } from "../../_shared/footer";
 import { SignalsIcon } from "../../_shared/product-icons";
+import { ProductHero } from "../../_shared/product-hero";
+import { ProductEndpointPanel } from "../../_shared/product-endpoint-panel";
+import { ProductFinalCta } from "../../_shared/product-final-cta";
+import { ProductIcpGrid } from "../../_shared/product-icp-grid";
 import {
   METHODOLOGY_VERSION,
   getCurrentMethodology,
@@ -163,50 +167,42 @@ export default function ProductSignalsClient() {
   return (
     <div className="oga-root oga-sig">
       <Nav />
-      <Hero />
+      <ProductHero
+        Icon={SignalsIcon}
+        h1="Signals: the typed UK area-data layer."
+        lead="One typed primitive over seven categories of public-record data, resolved to LSOA grain across England, Wales and Scotland. Value, normalised position, national-within-country percentile, per-signal confidence and source attribution on every response. Provenance is on the wire, not in a follow-up email."
+        primaryHref="/sign-up"
+        primaryLabel="Get an API key"
+        secondaryHref="/methodology"
+        secondaryLabel="Read the methodology"
+      />
       <SectionSpecimen />
       <SectionAnatomy />
       <SectionCategories />
-      <SectionEndpoints />
-      <SectionIcps />
-      <FinalCta />
+      <ProductEndpointPanel
+        titleId="sig-ep-title"
+        title="Three endpoints. One contract. No SDK required."
+        sub="Plain JSON over HTTPS, Bearer-token auth with the oga_ prefix, all paths under /v1/. Single-signal ranking lives here; multi-signal compound filtering lives one product up under Intelligence."
+        endpoints={EPS}
+      />
+      <ProductIcpGrid
+        titleId="sig-icps-title"
+        title="Same primitive. Five different workflows."
+        sub="Each buyer reaches for Signals from a different angle. The data layer underneath is the same."
+        whyLabel="Why Signals"
+        icps={ICPS}
+      />
+      <ProductFinalCta
+        titleId="sig-cta-title"
+        title="Build on the typed UK area-data layer."
+        lead="One endpoint resolves any UK postcode to the seven-category Signal catalog at LSOA grain. Provenance on the wire, methodology version stamped on every response, percentiles country-scoped by design."
+        primaryHref="/sign-up"
+        primaryLabel="Get an API key"
+        secondaryHref="/methodology"
+        secondaryLabel="Read the methodology"
+      />
       <Footer />
     </div>
-  );
-}
-
-/* ============================================================
-   Hero — centred, icon-forward
-   ============================================================ */
-
-function Hero() {
-  return (
-    <section className="oga-section-hero oga-sig-hero">
-      <div className="oga-sig__wrap--narrow">
-        <div className="oga-sig-hero__icon" aria-hidden>
-          <SignalsIcon width={132} height={132} />
-        </div>
-        <h1 className="oga-sig-hero__h1">
-          Signals: the typed UK area-data layer.
-        </h1>
-        <p className="oga-sig-hero__lead">
-          One typed primitive over seven categories of public-record data,
-          resolved to LSOA grain across England, Wales and Scotland. Value,
-          normalised position, national-within-country percentile, per-signal
-          confidence and source attribution on every response. Provenance is on
-          the wire, not in a follow-up email.
-        </p>
-        <div className="oga-sig-hero__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
-            <span aria-hidden>→</span>
-          </Link>
-          <Link href="/methodology" className="oga-btn oga-btn-secondary">
-            Read the methodology
-          </Link>
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -804,86 +800,9 @@ const EPS: Endpoint[] = [
   },
 ];
 
-function SectionEndpoints() {
-  const [idx, setIdx] = useState(0);
-  const ep = EPS[idx];
-  return (
-    <section className="oga-section-hero oga-sig-ep" aria-labelledby="sig-ep-title">
-      <div className="oga-sig__wrap">
-        <header className="oga-sig-ep__head">
-          <h2 id="sig-ep-title" className="oga-sig-ep__title">
-            Three endpoints. One contract. No SDK required.
-          </h2>
-          <p className="oga-sig-ep__sub">
-            Plain JSON over HTTPS, Bearer-token auth with the oga_ prefix, all
-            paths under /v1/. Single-signal ranking lives here; multi-signal
-            compound filtering lives one product up under Intelligence.
-          </p>
-        </header>
-
-        <div className="oga-sig-ep__panel">
-          <div className="oga-sig-ep__tabs" role="tablist" aria-label="Endpoint">
-            {EPS.map((e, i) => (
-              <button
-                key={e.path}
-                type="button"
-                role="tab"
-                aria-selected={i === idx}
-                onClick={() => setIdx(i)}
-                className={`oga-sig-ep__tab${i === idx ? " oga-sig-ep__tab--active" : ""}`}
-              >
-                <span className="oga-sig-ep__tab-verb">{e.method}</span>
-                <span className="oga-sig-ep__tab-path">{e.path}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="oga-sig-ep__body">
-            <p className="oga-sig-ep__what">{ep.what}</p>
-
-            <div className="oga-sig-ep__grid">
-              <div>
-                <h4 className="oga-sig-ep__col-title">Parameters</h4>
-                <ul className="oga-sig-ep__params">
-                  {ep.params.map((p) => (
-                    <li key={p.name}>
-                      <div className="oga-sig-ep__params-head">
-                        <code className="oga-sig-ep__params-name">{p.name}</code>
-                        <span className="oga-sig-ep__params-type">{p.type}</span>
-                        {p.required && <span className="oga-sig-ep__params-req">Required</span>}
-                      </div>
-                      <p className="oga-sig-ep__params-desc">{p.desc}</p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="oga-sig-ep__col-title">Response</h4>
-                <p className="oga-sig-ep__response">{ep.response}</p>
-                <h4 className="oga-sig-ep__col-title">Status codes</h4>
-                <dl className="oga-sig-ep__codes">
-                  {ep.codes.map((c) => (
-                    <CodeRow key={c.code} code={c.code} meaning={c.meaning} />
-                  ))}
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function CodeRow({ code, meaning }: { code: string; meaning: string }) {
-  return (
-    <>
-      <dt>{code}</dt>
-      <dd>{meaning}</dd>
-    </>
-  );
-}
+/* SectionEndpoints + CodeRow extracted to shared
+   _shared/product-endpoint-panel.{tsx,css} in AR-211.
+   Per-product variation = title + sub + EPS data. */
 
 /* ============================================================
    § 05 — Built for (cream, equal-weight ICPs w/ bespoke vizzes)
@@ -956,52 +875,8 @@ const ICPS: Icp[] = [
   },
 ];
 
-function SectionIcps() {
-  return (
-    <section className="oga-section-quiet oga-sig-icps" aria-labelledby="sig-icps-title">
-      <div className="oga-sig__wrap">
-        <header className="oga-sig-icps__head">
-          <h2 id="sig-icps-title" className="oga-sig-icps__title">
-            Same primitive. Five different workflows.
-          </h2>
-          <p className="oga-sig-icps__sub">
-            Each buyer reaches for Signals from a different angle. The data
-            layer underneath is the same.
-          </p>
-        </header>
-
-        <div className="oga-sig-icps__list">
-          {ICPS.map((i) => {
-            const Viz = i.Viz;
-            return (
-              <article key={i.name} className="oga-sig-icp">
-                <div className="oga-sig-icp__viz" aria-hidden>
-                  <Viz />
-                </div>
-                <div className="oga-sig-icp__body">
-                  <h3 className="oga-sig-icp__name">{i.name}</h3>
-                  <div>
-                    <p className="oga-sig-icp__row-label">The problem</p>
-                    <p className="oga-sig-icp__row-text">{i.problem}</p>
-                  </div>
-                  <div>
-                    <p className="oga-sig-icp__row-label">Why Signals</p>
-                    <p className="oga-sig-icp__row-text">{i.why}</p>
-                  </div>
-                  <div>
-                    <p className="oga-sig-icp__row-label">Their value</p>
-                    <p className="oga-sig-icp__row-text">{i.value}</p>
-                  </div>
-                  <p className="oga-sig-icp__sales">{i.sales}</p>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
+/* SectionIcps extracted to shared _shared/product-icp-grid.{tsx,css}
+   in AR-211. Per-product: ICPS data + bespoke Viz functions below. */
 
 /* Bespoke ICP micro-illustrations — each ~120px, dot-and-hairline only.
    Currentcolor follows the surface; no inline styles. */
@@ -1009,7 +884,7 @@ function SectionIcps() {
 function VizProptech() {
   // listing card with signal overlay
   return (
-    <svg className="oga-sig-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
+    <svg className="oga-product-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
       <rect x="14" y="22" width="92" height="76" rx="2" fill="none" stroke="currentColor" strokeWidth="1" />
       <line x1="14" y1="50" x2="106" y2="50" stroke="currentColor" strokeWidth="1" opacity="0.45" />
       {/* signal overlay dots */}
@@ -1034,7 +909,7 @@ function VizProptech() {
 function VizInsurer() {
   // risk gradient — vertical bands of dot density
   return (
-    <svg className="oga-sig-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
+    <svg className="oga-product-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
       <g fill="currentColor">
         {[28, 44, 60, 76, 92].map((x, i) => (
           <g key={x}>
@@ -1058,7 +933,7 @@ function VizInsurer() {
 function VizLender() {
   // portfolio scatter w/ trend line
   return (
-    <svg className="oga-sig-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
+    <svg className="oga-product-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
       <line x1="14" y1="100" x2="106" y2="100" stroke="currentColor" strokeWidth="1" />
       <line x1="14" y1="100" x2="14" y2="20" stroke="currentColor" strokeWidth="1" />
       {/* scatter */}
@@ -1083,7 +958,7 @@ function VizLender() {
 function VizCre() {
   // ranked stack
   return (
-    <svg className="oga-sig-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
+    <svg className="oga-product-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
       <g fill="currentColor">
         <circle cx="20" cy="32" r="3" />
         <line x1="28" y1="32" x2="100" y2="32" stroke="currentColor" strokeWidth="1" />
@@ -1103,7 +978,7 @@ function VizCre() {
 function VizPublic() {
   // grid of LSOAs w/ one highlighted
   return (
-    <svg className="oga-sig-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
+    <svg className="oga-product-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
       <g fill="currentColor">
         {Array.from({ length: 6 }).map((_, c) =>
           Array.from({ length: 6 }).map((_, r) => {
@@ -1131,32 +1006,5 @@ function VizPublic() {
    Final CTA (DARK)
    ============================================================ */
 
-function FinalCta() {
-  return (
-    <section
-      className="oga-section-dark oga-sig-cta"
-      data-oga-surface="dark"
-      aria-labelledby="sig-cta-title"
-    >
-      <div className="oga-sig__wrap--narrow">
-        <h2 id="sig-cta-title" className="oga-sig-cta__h2">
-          Build on the typed UK area-data layer.
-        </h2>
-        <p className="oga-sig-cta__lead">
-          One endpoint resolves any UK postcode to the seven-category Signal
-          catalog at LSOA grain. Provenance on the wire, methodology version
-          stamped on every response, percentiles country-scoped by design.
-        </p>
-        <div className="oga-sig-cta__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
-            <span aria-hidden>→</span>
-          </Link>
-          <Link href="/methodology" className="oga-btn oga-btn-secondary">
-            Read the methodology
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
+/* FinalCta extracted to shared _shared/product-final-cta.{tsx,css}
+   in AR-211. */

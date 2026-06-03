@@ -5,6 +5,10 @@ import Link from "next/link";
 import { Nav } from "../../_shared/nav";
 import { Footer } from "../../_shared/footer";
 import { IntelligenceIcon } from "../../_shared/product-icons";
+import { ProductHero } from "../../_shared/product-hero";
+import { ProductEndpointPanel } from "../../_shared/product-endpoint-panel";
+import { ProductFinalCta } from "../../_shared/product-final-cta";
+import { ProductIcpGrid } from "../../_shared/product-icp-grid";
 import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 import "./intelligence.css";
 
@@ -165,52 +169,43 @@ export default function ProductIntelligenceClient() {
   return (
     <div className="oga-root oga-int">
       <Nav />
-      <Hero />
+      <ProductHero
+        Icon={IntelligenceIcon}
+        h1="Intelligence: a typed query plane over the moat."
+        lead="Six plan ops, one Zod-strict grammar. Send a programmatic plan object or a natural-language question. Either way the same deterministic executor runs the plan against the database and returns typed rows. The response always echoes the executed plan so any natural-language answer can be replayed as a programmatic call. Not a chatbot. Not a narrative. AI never sets the numbers."
+        primaryHref="/sign-up"
+        primaryLabel="Get an API key"
+        secondaryHref="/methodology"
+        secondaryLabel="Read the methodology"
+      />
       <SectionSpecimen />
       <SectionOps />
       <SectionPipeline />
       <SectionEval />
-      <SectionEndpoints />
-      <SectionIcps />
-      <FinalCta />
+      <ProductEndpointPanel
+        titleId="int-ep-title"
+        title="One typed query plane. Three convenience endpoints."
+        sub="/v1/query is the typed plane (6 ops). /v1/peers, /v1/insights, /v1/forecast are convenience endpoints over the same plan ops. Same executor, two surfaces."
+        endpoints={EPS}
+      />
+      <ProductIcpGrid
+        titleId="int-icps-title"
+        title="Same query plane. Five different buyer workflows."
+        sub="One executor. Five very different questions buyers are trying to answer. The grammar is the same; the angle of attack is not."
+        whyLabel="Why Intelligence"
+        icps={ICPS}
+      />
+      <ProductFinalCta
+        titleId="int-cta-title"
+        title="Query UK areas in JSON or English. Get the same deterministic answer."
+        lead={`Six plan ops. One typed grammar. AI emits the plan, the database produces the rows, the response always echoes the plan so any natural-language answer can be replayed as a programmatic call. Engine version ${METHODOLOGY_VERSION} is stamped on every response.`}
+        primaryHref="/sign-up"
+        primaryLabel="Get an API key"
+        secondaryHref="/methodology"
+        secondaryLabel="Read the methodology"
+      />
       <Footer />
     </div>
-  );
-}
-
-/* ============================================================
-   Hero
-   ============================================================ */
-
-function Hero() {
-  return (
-    <section className="oga-section-hero oga-int-hero">
-      <div className="oga-int__wrap--narrow">
-        <div className="oga-int-hero__icon" aria-hidden>
-          <IntelligenceIcon width={132} height={132} />
-        </div>
-        <h1 className="oga-int-hero__h1">
-          Intelligence: a typed query plane over the moat.
-        </h1>
-        <p className="oga-int-hero__lead">
-          Six plan ops, one Zod-strict grammar. Send a programmatic plan
-          object or a natural-language question. Either way the same
-          deterministic executor runs the plan against the database and
-          returns typed rows. The response always echoes the executed plan
-          so any natural-language answer can be replayed as a programmatic
-          call. Not a chatbot. Not a narrative. AI never sets the numbers.
-        </p>
-        <div className="oga-int-hero__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
-            <span aria-hidden>→</span>
-          </Link>
-          <Link href="/methodology" className="oga-btn oga-btn-secondary">
-            Read the methodology
-          </Link>
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -923,89 +918,9 @@ const EPS: Endpoint[] = [
   },
 ];
 
-function SectionEndpoints() {
-  const [idx, setIdx] = useState(0);
-  const ep = EPS[idx];
-  return (
-    <section
-      className="oga-section-hero oga-int-ep"
-      aria-labelledby="int-ep-title"
-    >
-      <div className="oga-int__wrap">
-        <header className="oga-int-ep__head">
-          <h2 id="int-ep-title" className="oga-int-ep__title">
-            One typed query plane. Three convenience endpoints.
-          </h2>
-          <p className="oga-int-ep__sub">
-            /v1/query is the typed plane (6 ops). /v1/peers, /v1/insights,
-            /v1/forecast are convenience endpoints over the same plan ops.
-            Same executor, two surfaces.
-          </p>
-        </header>
-
-        <div className="oga-int-ep__panel">
-          <div className="oga-int-ep__tabs" role="tablist" aria-label="Endpoint">
-            {EPS.map((e, i) => (
-              <button
-                key={e.path}
-                type="button"
-                role="tab"
-                aria-selected={i === idx}
-                onClick={() => setIdx(i)}
-                className={`oga-int-ep__tab${i === idx ? " oga-int-ep__tab--active" : ""}`}
-              >
-                <span className="oga-int-ep__tab-verb">{e.method}</span>
-                <span className="oga-int-ep__tab-path">{e.path}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="oga-int-ep__body">
-            <p className="oga-int-ep__what">{ep.what}</p>
-
-            <div className="oga-int-ep__grid">
-              <div>
-                <h4 className="oga-int-ep__col-title">Parameters</h4>
-                <ul className="oga-int-ep__params">
-                  {ep.params.map((p) => (
-                    <li key={p.name}>
-                      <div className="oga-int-ep__params-head">
-                        <code className="oga-int-ep__params-name">{p.name}</code>
-                        <span className="oga-int-ep__params-type">{p.type}</span>
-                        {p.required && <span className="oga-int-ep__params-req">Required</span>}
-                      </div>
-                      <p className="oga-int-ep__params-desc">{p.desc}</p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="oga-int-ep__col-title">Response</h4>
-                <p className="oga-int-ep__response">{ep.response}</p>
-                <h4 className="oga-int-ep__col-title">Status codes</h4>
-                <dl className="oga-int-ep__codes">
-                  {ep.codes.map((c) => (
-                    <CodeRow key={c.code} code={c.code} meaning={c.meaning} />
-                  ))}
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function CodeRow({ code, meaning }: { code: string; meaning: string }) {
-  return (
-    <>
-      <dt>{code}</dt>
-      <dd>{meaning}</dd>
-    </>
-  );
-}
+/* SectionEndpoints + CodeRow extracted to shared
+   _shared/product-endpoint-panel.{tsx,css} in AR-211.
+   Per-product variation = title + sub + EPS data. */
 
 /* ============================================================
    § 06 — Built for (cream) — 5 ICPs, CRE leads
@@ -1083,55 +998,8 @@ const ICPS: Icp[] = [
   },
 ];
 
-function SectionIcps() {
-  return (
-    <section
-      className="oga-section-quiet oga-int-icps"
-      aria-labelledby="int-icps-title"
-    >
-      <div className="oga-int__wrap">
-        <header className="oga-int-icps__head">
-          <h2 id="int-icps-title" className="oga-int-icps__title">
-            Same query plane. Five different buyer workflows.
-          </h2>
-          <p className="oga-int-icps__sub">
-            One executor. Five very different questions buyers are trying
-            to answer. The grammar is the same; the angle of attack is not.
-          </p>
-        </header>
-
-        <div className="oga-int-icps__list">
-          {ICPS.map((i) => {
-            const Viz = i.Viz;
-            return (
-              <article key={i.name} className="oga-int-icp">
-                <div className="oga-int-icp__viz" aria-hidden>
-                  <Viz />
-                </div>
-                <div className="oga-int-icp__body">
-                  <h3 className="oga-int-icp__name">{i.name}</h3>
-                  <div>
-                    <p className="oga-int-icp__row-label">The problem</p>
-                    <p className="oga-int-icp__row-text">{i.problem}</p>
-                  </div>
-                  <div>
-                    <p className="oga-int-icp__row-label">Why Intelligence</p>
-                    <p className="oga-int-icp__row-text">{i.why}</p>
-                  </div>
-                  <div>
-                    <p className="oga-int-icp__row-label">Their value</p>
-                    <p className="oga-int-icp__row-text">{i.value}</p>
-                  </div>
-                  <p className="oga-int-icp__sales">{i.sales}</p>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
+/* SectionIcps extracted to shared _shared/product-icp-grid.{tsx,css}
+   in AR-211. Per-product: ICPS data + bespoke Viz functions below. */
 
 /* ICP micro-illustrations */
 
@@ -1244,33 +1112,5 @@ function VizPropTech() {
    Final CTA (DARK)
    ============================================================ */
 
-function FinalCta() {
-  return (
-    <section
-      className="oga-section-dark oga-int-cta"
-      data-oga-surface="dark"
-      aria-labelledby="int-cta-title"
-    >
-      <div className="oga-int__wrap--narrow">
-        <h2 id="int-cta-title" className="oga-int-cta__h2">
-          Query UK areas in JSON or English. Get the same deterministic answer.
-        </h2>
-        <p className="oga-int-cta__lead">
-          Six plan ops. One typed grammar. AI emits the plan, the database
-          produces the rows, the response always echoes the plan so any
-          natural-language answer can be replayed as a programmatic call.
-          Engine version {METHODOLOGY_VERSION} is stamped on every response.
-        </p>
-        <div className="oga-int-cta__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
-            <span aria-hidden>→</span>
-          </Link>
-          <Link href="/methodology" className="oga-btn oga-btn-secondary">
-            Read the methodology
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
+/* FinalCta extracted to shared _shared/product-final-cta.{tsx,css}
+   in AR-211. */

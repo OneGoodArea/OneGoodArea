@@ -5,6 +5,10 @@ import Link from "next/link";
 import { Nav } from "../../_shared/nav";
 import { Footer } from "../../_shared/footer";
 import { MonitorIcon } from "../../_shared/product-icons";
+import { ProductHero } from "../../_shared/product-hero";
+import { ProductEndpointPanel } from "../../_shared/product-endpoint-panel";
+import { ProductFinalCta } from "../../_shared/product-final-cta";
+import { ProductIcpGrid } from "../../_shared/product-icp-grid";
 import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 import "./monitor.css";
 
@@ -160,51 +164,42 @@ export default function ProductMonitorClient() {
   return (
     <div className="oga-root oga-mon">
       <Nav />
-      <Hero />
+      <ProductHero
+        Icon={MonitorIcon}
+        h1="Monitor: portfolios plus signed change detection."
+        lead="Save a book of UK areas, enrich it on intake, and detect material moves across the monthly time-series on demand. Each move arrives as a structured row with the exact periods compared, the raw values before and after, and the percent change. Material alerts deliver as Stripe-style HMAC-SHA256 signed webhooks. Sample-size gated so a 47% swing on two sales never earns an alert."
+        primaryHref="/sign-up"
+        primaryLabel="Get an API key"
+        secondaryHref="/methodology"
+        secondaryLabel="Read the methodology"
+      />
       <SectionSpecimen />
       <SectionWatched />
       <SectionPipeline />
-      <SectionEndpoints />
-      <SectionIcps />
-      <FinalCta />
+      <ProductEndpointPanel
+        titleId="mon-ep-title"
+        title="Five endpoints. One signed event catalog."
+        sub="Portfolios CRUD plus enrich plus change detection plus webhook subscriptions. Plain JSON over HTTPS, Bearer-token auth with the oga_ prefix, all paths under /v1/."
+        endpoints={EPS}
+      />
+      <ProductIcpGrid
+        titleId="mon-icps-title"
+        title="One book. Five buyer workflows."
+        sub="Same portfolio. Same change-detection mechanics. Different questions each buyer is trying to answer with the alert."
+        whyLabel="Why Monitor"
+        icps={ICPS}
+      />
+      <ProductFinalCta
+        titleId="mon-cta-title"
+        title="Monitor your book of UK areas. Sample-size honest by default."
+        lead="Save areas, bulk-enrich, run change detection, get signed webhooks when something material shifts. The diff core is unit-tested, the envelope is HMAC-SHA256 signed, and a 47% swing on 2 sales never earns an alert."
+        primaryHref="/sign-up"
+        primaryLabel="Get an API key"
+        secondaryHref="/methodology"
+        secondaryLabel="Read the methodology"
+      />
       <Footer />
     </div>
-  );
-}
-
-/* ============================================================
-   Hero
-   ============================================================ */
-
-function Hero() {
-  return (
-    <section className="oga-section-hero oga-mon-hero">
-      <div className="oga-mon__wrap--narrow">
-        <div className="oga-mon-hero__icon" aria-hidden>
-          <MonitorIcon width={132} height={132} />
-        </div>
-        <h1 className="oga-mon-hero__h1">
-          Monitor: portfolios plus signed change detection.
-        </h1>
-        <p className="oga-mon-hero__lead">
-          Save a book of UK areas, enrich it on intake, and detect material
-          moves across the monthly time-series on demand. Each move arrives as
-          a structured row with the exact periods compared, the raw values
-          before and after, and the percent change. Material alerts deliver as
-          Stripe-style HMAC-SHA256 signed webhooks. Sample-size gated so a
-          47% swing on two sales never earns an alert.
-        </p>
-        <div className="oga-mon-hero__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
-            <span aria-hidden>→</span>
-          </Link>
-          <Link href="/methodology" className="oga-btn oga-btn-secondary">
-            Read the methodology
-          </Link>
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -938,89 +933,9 @@ const EPS: Endpoint[] = [
   },
 ];
 
-function SectionEndpoints() {
-  const [idx, setIdx] = useState(0);
-  const ep = EPS[idx];
-  return (
-    <section
-      className="oga-section-hero oga-mon-ep"
-      aria-labelledby="mon-ep-title"
-    >
-      <div className="oga-mon__wrap">
-        <header className="oga-mon-ep__head">
-          <h2 id="mon-ep-title" className="oga-mon-ep__title">
-            Five endpoints. One signed event catalog.
-          </h2>
-          <p className="oga-mon-ep__sub">
-            Portfolios CRUD plus enrich plus change detection plus webhook
-            subscriptions. Plain JSON over HTTPS, Bearer-token auth with the
-            oga_ prefix, all paths under /v1/.
-          </p>
-        </header>
-
-        <div className="oga-mon-ep__panel">
-          <div className="oga-mon-ep__tabs" role="tablist" aria-label="Endpoint">
-            {EPS.map((e, i) => (
-              <button
-                key={e.path}
-                type="button"
-                role="tab"
-                aria-selected={i === idx}
-                onClick={() => setIdx(i)}
-                className={`oga-mon-ep__tab${i === idx ? " oga-mon-ep__tab--active" : ""}`}
-              >
-                <span className="oga-mon-ep__tab-verb">{e.method}</span>
-                <span className="oga-mon-ep__tab-path">{e.path}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="oga-mon-ep__body">
-            <p className="oga-mon-ep__what">{ep.what}</p>
-
-            <div className="oga-mon-ep__grid">
-              <div>
-                <h4 className="oga-mon-ep__col-title">Parameters</h4>
-                <ul className="oga-mon-ep__params">
-                  {ep.params.map((p) => (
-                    <li key={p.name}>
-                      <div className="oga-mon-ep__params-head">
-                        <code className="oga-mon-ep__params-name">{p.name}</code>
-                        <span className="oga-mon-ep__params-type">{p.type}</span>
-                        {p.required && <span className="oga-mon-ep__params-req">Required</span>}
-                      </div>
-                      <p className="oga-mon-ep__params-desc">{p.desc}</p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="oga-mon-ep__col-title">Response</h4>
-                <p className="oga-mon-ep__response">{ep.response}</p>
-                <h4 className="oga-mon-ep__col-title">Status codes</h4>
-                <dl className="oga-mon-ep__codes">
-                  {ep.codes.map((c) => (
-                    <CodeRow key={c.code} code={c.code} meaning={c.meaning} />
-                  ))}
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function CodeRow({ code, meaning }: { code: string; meaning: string }) {
-  return (
-    <>
-      <dt>{code}</dt>
-      <dd>{meaning}</dd>
-    </>
-  );
-}
+/* SectionEndpoints + CodeRow extracted to shared
+   _shared/product-endpoint-panel.{tsx,css} in AR-211.
+   Per-product variation = title + sub + EPS data. */
 
 /* ============================================================
    § 05 — Built for (cream) — 5 ICPs, InsureTech leads
@@ -1098,55 +1013,8 @@ const ICPS: Icp[] = [
   },
 ];
 
-function SectionIcps() {
-  return (
-    <section
-      className="oga-section-quiet oga-mon-icps"
-      aria-labelledby="mon-icps-title"
-    >
-      <div className="oga-mon__wrap">
-        <header className="oga-mon-icps__head">
-          <h2 id="mon-icps-title" className="oga-mon-icps__title">
-            One book. Five buyer workflows.
-          </h2>
-          <p className="oga-mon-icps__sub">
-            Same portfolio. Same change-detection mechanics. Different
-            questions each buyer is trying to answer with the alert.
-          </p>
-        </header>
-
-        <div className="oga-mon-icps__list">
-          {ICPS.map((i) => {
-            const Viz = i.Viz;
-            return (
-              <article key={i.name} className="oga-mon-icp">
-                <div className="oga-mon-icp__viz" aria-hidden>
-                  <Viz />
-                </div>
-                <div className="oga-mon-icp__body">
-                  <h3 className="oga-mon-icp__name">{i.name}</h3>
-                  <div>
-                    <p className="oga-mon-icp__row-label">The problem</p>
-                    <p className="oga-mon-icp__row-text">{i.problem}</p>
-                  </div>
-                  <div>
-                    <p className="oga-mon-icp__row-label">Why Monitor</p>
-                    <p className="oga-mon-icp__row-text">{i.why}</p>
-                  </div>
-                  <div>
-                    <p className="oga-mon-icp__row-label">Their value</p>
-                    <p className="oga-mon-icp__row-text">{i.value}</p>
-                  </div>
-                  <p className="oga-mon-icp__sales">{i.sales}</p>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
+/* SectionIcps extracted to shared _shared/product-icp-grid.{tsx,css}
+   in AR-211. Per-product: ICPS data + bespoke Viz functions below. */
 
 /* ICP micro-illustrations — Monitor-specific. */
 
@@ -1281,33 +1149,5 @@ function VizPublic() {
    Final CTA (DARK)
    ============================================================ */
 
-function FinalCta() {
-  return (
-    <section
-      className="oga-section-dark oga-mon-cta"
-      data-oga-surface="dark"
-      aria-labelledby="mon-cta-title"
-    >
-      <div className="oga-mon__wrap--narrow">
-        <h2 id="mon-cta-title" className="oga-mon-cta__h2">
-          Monitor your book of UK areas. Sample-size honest by default.
-        </h2>
-        <p className="oga-mon-cta__lead">
-          Save areas, bulk-enrich, run change detection, get signed webhooks
-          when something material shifts. The diff core is unit-tested, the
-          envelope is HMAC-SHA256 signed, and a 47% swing on 2 sales never
-          earns an alert.
-        </p>
-        <div className="oga-mon-cta__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
-            <span aria-hidden>→</span>
-          </Link>
-          <Link href="/methodology" className="oga-btn oga-btn-secondary">
-            Read the methodology
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
+/* FinalCta extracted to shared _shared/product-final-cta.{tsx,css}
+   in AR-211. */
