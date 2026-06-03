@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Nav } from "../../_shared/nav";
 import { Footer } from "../../_shared/footer";
 import { SignalsIcon } from "../../_shared/product-icons";
+import { ProductHero } from "../../_shared/product-hero";
 import {
   METHODOLOGY_VERSION,
   getCurrentMethodology,
@@ -163,7 +164,15 @@ export default function ProductSignalsClient() {
   return (
     <div className="oga-root oga-sig">
       <Nav />
-      <Hero />
+      <ProductHero
+        Icon={SignalsIcon}
+        h1="Signals: the typed UK area-data layer."
+        lead="One typed primitive over seven categories of public-record data, resolved to LSOA grain across England, Wales and Scotland. Value, normalised position, national-within-country percentile, per-signal confidence and source attribution on every response. Provenance is on the wire, not in a follow-up email."
+        primaryHref="/sign-up"
+        primaryLabel="Get an API key"
+        secondaryHref="/methodology"
+        secondaryLabel="Read the methodology"
+      />
       <SectionSpecimen />
       <SectionAnatomy />
       <SectionCategories />
@@ -172,41 +181,6 @@ export default function ProductSignalsClient() {
       <FinalCta />
       <Footer />
     </div>
-  );
-}
-
-/* ============================================================
-   Hero — centred, icon-forward
-   ============================================================ */
-
-function Hero() {
-  return (
-    <section className="oga-section-hero oga-sig-hero">
-      <div className="oga-sig__wrap--narrow">
-        <div className="oga-sig-hero__icon" aria-hidden>
-          <SignalsIcon width={132} height={132} />
-        </div>
-        <h1 className="oga-sig-hero__h1">
-          Signals: the typed UK area-data layer.
-        </h1>
-        <p className="oga-sig-hero__lead">
-          One typed primitive over seven categories of public-record data,
-          resolved to LSOA grain across England, Wales and Scotland. Value,
-          normalised position, national-within-country percentile, per-signal
-          confidence and source attribution on every response. Provenance is on
-          the wire, not in a follow-up email.
-        </p>
-        <div className="oga-sig-hero__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
-            <span aria-hidden>→</span>
-          </Link>
-          <Link href="/methodology" className="oga-btn oga-btn-secondary">
-            Read the methodology
-          </Link>
-        </div>
-      </div>
-    </section>
   );
 }
 

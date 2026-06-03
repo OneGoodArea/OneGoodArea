@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Nav } from "../../_shared/nav";
 import { Footer } from "../../_shared/footer";
 import { IntelligenceIcon } from "../../_shared/product-icons";
+import { ProductHero } from "../../_shared/product-hero";
 import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 import "./intelligence.css";
 
@@ -165,7 +166,15 @@ export default function ProductIntelligenceClient() {
   return (
     <div className="oga-root oga-int">
       <Nav />
-      <Hero />
+      <ProductHero
+        Icon={IntelligenceIcon}
+        h1="Intelligence: a typed query plane over the moat."
+        lead="Six plan ops, one Zod-strict grammar. Send a programmatic plan object or a natural-language question. Either way the same deterministic executor runs the plan against the database and returns typed rows. The response always echoes the executed plan so any natural-language answer can be replayed as a programmatic call. Not a chatbot. Not a narrative. AI never sets the numbers."
+        primaryHref="/sign-up"
+        primaryLabel="Get an API key"
+        secondaryHref="/methodology"
+        secondaryLabel="Read the methodology"
+      />
       <SectionSpecimen />
       <SectionOps />
       <SectionPipeline />
@@ -175,42 +184,6 @@ export default function ProductIntelligenceClient() {
       <FinalCta />
       <Footer />
     </div>
-  );
-}
-
-/* ============================================================
-   Hero
-   ============================================================ */
-
-function Hero() {
-  return (
-    <section className="oga-section-hero oga-int-hero">
-      <div className="oga-int__wrap--narrow">
-        <div className="oga-int-hero__icon" aria-hidden>
-          <IntelligenceIcon width={132} height={132} />
-        </div>
-        <h1 className="oga-int-hero__h1">
-          Intelligence: a typed query plane over the moat.
-        </h1>
-        <p className="oga-int-hero__lead">
-          Six plan ops, one Zod-strict grammar. Send a programmatic plan
-          object or a natural-language question. Either way the same
-          deterministic executor runs the plan against the database and
-          returns typed rows. The response always echoes the executed plan
-          so any natural-language answer can be replayed as a programmatic
-          call. Not a chatbot. Not a narrative. AI never sets the numbers.
-        </p>
-        <div className="oga-int-hero__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
-            <span aria-hidden>→</span>
-          </Link>
-          <Link href="/methodology" className="oga-btn oga-btn-secondary">
-            Read the methodology
-          </Link>
-        </div>
-      </div>
-    </section>
   );
 }
 

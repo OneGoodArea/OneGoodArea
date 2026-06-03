@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Nav } from "../../_shared/nav";
 import { Footer } from "../../_shared/footer";
 import { ScoresIcon } from "../../_shared/product-icons";
+import { ProductHero } from "../../_shared/product-hero";
 import {
   METHODOLOGY_VERSION,
   getCurrentMethodology,
@@ -112,7 +113,15 @@ export default function ProductScoresClient() {
   return (
     <div className="oga-root oga-scr">
       <Nav />
-      <Hero />
+      <ProductHero
+        Icon={ScoresIcon}
+        h1="Scores: deterministic composite scoring."
+        lead="One 0-to-100 number per UK area. Four scoring profiles tuned to four workflows: residential origination, commercial site selection, investment underwrite, and research. Each profile uses its own five-dimension set; override the weights per request or save your own recipe against your org. The engine is frozen, golden-tested, and AI never touches the scoring path. Every response stamps the engine version that produced it."
+        primaryHref="/sign-up"
+        primaryLabel="Get an API key"
+        secondaryHref="/methodology"
+        secondaryLabel="Read the methodology"
+      />
       <SectionSpecimen />
       <SectionPresets />
       <SectionAnatomy />
@@ -121,43 +130,6 @@ export default function ProductScoresClient() {
       <FinalCta />
       <Footer />
     </div>
-  );
-}
-
-/* ============================================================
-   Hero
-   ============================================================ */
-
-function Hero() {
-  return (
-    <section className="oga-section-hero oga-scr-hero">
-      <div className="oga-scr__wrap--narrow">
-        <div className="oga-scr-hero__icon" aria-hidden>
-          <ScoresIcon width={132} height={132} />
-        </div>
-        <h1 className="oga-scr-hero__h1">
-          Scores: deterministic composite scoring.
-        </h1>
-        <p className="oga-scr-hero__lead">
-          One 0-to-100 number per UK area. Four scoring profiles tuned to four
-          workflows: residential origination, commercial site selection,
-          investment underwrite, and research. Each profile uses its own
-          five-dimension set; override the weights per request or save your own
-          recipe against your org. The engine is frozen, golden-tested, and AI
-          never touches the scoring path. Every response stamps the engine
-          version that produced it.
-        </p>
-        <div className="oga-scr-hero__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
-            <span aria-hidden>→</span>
-          </Link>
-          <Link href="/methodology" className="oga-btn oga-btn-secondary">
-            Read the methodology
-          </Link>
-        </div>
-      </div>
-    </section>
   );
 }
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Nav } from "../../_shared/nav";
 import { Footer } from "../../_shared/footer";
 import { MonitorIcon } from "../../_shared/product-icons";
+import { ProductHero } from "../../_shared/product-hero";
 import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 import "./monitor.css";
 
@@ -160,7 +161,15 @@ export default function ProductMonitorClient() {
   return (
     <div className="oga-root oga-mon">
       <Nav />
-      <Hero />
+      <ProductHero
+        Icon={MonitorIcon}
+        h1="Monitor: portfolios plus signed change detection."
+        lead="Save a book of UK areas, enrich it on intake, and detect material moves across the monthly time-series on demand. Each move arrives as a structured row with the exact periods compared, the raw values before and after, and the percent change. Material alerts deliver as Stripe-style HMAC-SHA256 signed webhooks. Sample-size gated so a 47% swing on two sales never earns an alert."
+        primaryHref="/sign-up"
+        primaryLabel="Get an API key"
+        secondaryHref="/methodology"
+        secondaryLabel="Read the methodology"
+      />
       <SectionSpecimen />
       <SectionWatched />
       <SectionPipeline />
@@ -169,42 +178,6 @@ export default function ProductMonitorClient() {
       <FinalCta />
       <Footer />
     </div>
-  );
-}
-
-/* ============================================================
-   Hero
-   ============================================================ */
-
-function Hero() {
-  return (
-    <section className="oga-section-hero oga-mon-hero">
-      <div className="oga-mon__wrap--narrow">
-        <div className="oga-mon-hero__icon" aria-hidden>
-          <MonitorIcon width={132} height={132} />
-        </div>
-        <h1 className="oga-mon-hero__h1">
-          Monitor: portfolios plus signed change detection.
-        </h1>
-        <p className="oga-mon-hero__lead">
-          Save a book of UK areas, enrich it on intake, and detect material
-          moves across the monthly time-series on demand. Each move arrives as
-          a structured row with the exact periods compared, the raw values
-          before and after, and the percent change. Material alerts deliver as
-          Stripe-style HMAC-SHA256 signed webhooks. Sample-size gated so a
-          47% swing on two sales never earns an alert.
-        </p>
-        <div className="oga-mon-hero__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
-            <span aria-hidden>→</span>
-          </Link>
-          <Link href="/methodology" className="oga-btn oga-btn-secondary">
-            Read the methodology
-          </Link>
-        </div>
-      </div>
-    </section>
   );
 }
 

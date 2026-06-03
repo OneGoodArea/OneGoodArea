@@ -19,58 +19,8 @@
   width: 100%;
 }
 
-.oga-scr__wrap--narrow {
-  max-width: 880px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-/* ============================================================
-   Hero — centred, icon-forward (ScoresIcon)
-   ============================================================ */
-
-.oga-scr-hero {
-  text-align: center;
-  padding-top: var(--oga-9);
-  padding-bottom: var(--oga-8);
-}
-
-.oga-scr-hero__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 132px;
-  height: 132px;
-  margin: 0 auto var(--oga-7);
-  color: var(--oga-fg);
-}
-
-.oga-scr-hero__h1 {
-  font-family: var(--oga-font-sans);
-  font-size: clamp(36px, 4.6vw, 56px);
-  line-height: 1.04;
-  letter-spacing: -0.02em;
-  font-weight: 500;
-  color: var(--oga-fg);
-  margin: 0 auto var(--oga-5);
-  max-width: 22ch;
-}
-
-.oga-scr-hero__lead {
-  font-family: var(--oga-font-sans);
-  font-size: var(--oga-fs-lead);
-  line-height: var(--oga-lh-snug);
-  color: var(--oga-fg-muted);
-  margin: 0 auto var(--oga-6);
-  max-width: 60ch;
-}
-
-.oga-scr-hero__ctas {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: var(--oga-3);
-  justify-content: center;
-}
+/* Hero + .oga-scr__wrap--narrow extracted to shared
+   _shared/product-hero.{tsx,css} in AR-211. */
 
 /* ============================================================
    § 01 — Live specimen (DARK) — preset × postcode = score
