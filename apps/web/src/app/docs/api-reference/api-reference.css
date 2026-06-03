@@ -219,15 +219,10 @@
 .oga-apiref-surfaces__endpoint:first-child { border-top: 0; padding-top: 0; }
 
 .oga-apiref-surfaces__endpoint-verb {
-  font-weight: 500;
+  /* Colour from shared .oga-verb--{verb} (applied in TSX). The
+     min-width keeps verbs aligned in the endpoint list. */
   min-width: 48px;
 }
-
-.oga-apiref-surfaces__endpoint-verb--get { color: var(--oga-status-green); }
-.oga-apiref-surfaces__endpoint-verb--post { color: var(--oga-status-amber); }
-.oga-apiref-surfaces__endpoint-verb--put { color: var(--oga-status-yellow); }
-.oga-apiref-surfaces__endpoint-verb--delete { color: var(--oga-status-red); }
-.oga-apiref-surfaces__endpoint-verb--patch { color: var(--oga-status-amber); }
 
 .oga-apiref-surfaces__endpoint-path { color: var(--oga-fg); }
 
@@ -308,12 +303,10 @@
   color: rgba(250, 248, 244, 0.55);
 }
 
-/* HTTP-verb colours brighten slightly on dark for legibility */
-[data-oga-surface="dark"] .oga-apiref-surfaces__endpoint-verb--get    { color: #7AC295; }
-[data-oga-surface="dark"] .oga-apiref-surfaces__endpoint-verb--post,
-[data-oga-surface="dark"] .oga-apiref-surfaces__endpoint-verb--patch  { color: #F0B270; }
-[data-oga-surface="dark"] .oga-apiref-surfaces__endpoint-verb--put    { color: #E8D27A; }
-[data-oga-surface="dark"] .oga-apiref-surfaces__endpoint-verb--delete { color: #E87A65; }
+/* HTTP-verb DARK-surface colour brightening lives on the shared
+   .oga-verb--{verb} utility in styles/brand/components.css. The
+   Surface map section carries data-oga-surface="dark" so the
+   shared overrides fire automatically. */
 
 /* ============================================================
    § 3 — What you can use today (4 cards)
