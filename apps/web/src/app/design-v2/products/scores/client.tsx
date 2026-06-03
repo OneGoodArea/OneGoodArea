@@ -230,7 +230,7 @@ function SectionSpecimen() {
 
           <div className="oga-scr-spec__resp">
             <span className="oga-scr-spec__resp-method">
-              <span className="oga-scr-spec__resp-method-verb">POST</span>
+              <span className="oga-scr-spec__resp-method-verb oga-verb oga-verb--post">POST</span>
               /v1/score
             </span>
             <button
