@@ -333,20 +333,6 @@ const AUDIT: { num: string; name: string; desc: string; href: string; external?:
     desc: "OpenAPI 3.0 spec rendered as an interactive reference. Currently being regenerated against the live backend.",
     href: "/docs/api-reference",
   },
-  {
-    num: "14.4",
-    name: "ADR repository",
-    desc: "Every architectural decision since signal-first, with rationale and trade-offs.",
-    href: "https://github.com/OneGoodArea/OneGoodArea/tree/main/docs/adr",
-    external: true,
-  },
-  {
-    num: "14.5",
-    name: "AI eval harness",
-    desc: "Measured planner accuracy. 92.9% on a 14-case curated corpus against claude-sonnet-4-20250514.",
-    href: "https://github.com/OneGoodArea/OneGoodArea/tree/main/apps/api/src/modules/intelligence/eval",
-    external: true,
-  },
 ];
 
 /* ============================================================

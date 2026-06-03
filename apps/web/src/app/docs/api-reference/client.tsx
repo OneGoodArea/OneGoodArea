@@ -112,9 +112,9 @@ const SURFACES: Surface[] = [
   },
   {
     num: "06",
-    name: "Reports (legacy)",
+    name: "Reports",
     count: "3 endpoints",
-    body: "The original v1 report surface: AI-narrated report for one area, bulk batch, list-mine.",
+    body: "AI-narrated report for one area, bulk batch, list-mine.",
     endpoints: [
       { verb: "POST", path: "/v1/report" },
       { verb: "POST", path: "/v1/batch" },
