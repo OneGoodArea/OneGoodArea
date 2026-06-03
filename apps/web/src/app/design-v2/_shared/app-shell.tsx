@@ -79,8 +79,7 @@ export function AppShell({
   }, [drawerOpen]);
 
   return (
-    /* aiq className is intentional back-compat (see file header). */
-    <div className="oga-root oga-app aiq" data-drawer-open={drawerOpen ? "true" : undefined}>
+    <div className="oga-root oga-app" data-drawer-open={drawerOpen ? "true" : undefined}>
       <Sidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} />
       {drawerOpen && (
         <div
