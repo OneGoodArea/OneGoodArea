@@ -1,6 +1,5 @@
-/* AiqIcon · bespoke 11-icon set for design-v2. 28×28 viewBox, 1.5px forest
-   stroke, chartreuse accent dot. Use this for ALL design-v2 marketing pages;
-   do not import Lucide or any other icon library in design-v2. */
+/* AiqIcon -- bespoke icon set for design-v2. 28x28 viewBox, 1.5px stroke.
+   All paths use `currentColor` so callers control colour via CSS. */
 
 import type React from "react";
 
@@ -14,10 +13,10 @@ export function AiqIcon({ name, size = 26 }: { name: IconName; size?: number }) 
   const s = size;
   const common: React.SVGProps<SVGSVGElement> = {
     width: s, height: s, viewBox: "0 0 28 28", fill: "none",
-    stroke: "var(--ink)", strokeWidth: 1.5,
+    stroke: "currentColor", strokeWidth: 1.5,
     strokeLinecap: "round", strokeLinejoin: "round",
   };
-  const accent = "var(--signal)";
+  const accent = "currentColor";
   switch (name) {
     case "buyer":
       return (
@@ -31,7 +30,7 @@ export function AiqIcon({ name, size = 26 }: { name: IconName; size?: number }) 
       return (
         <svg {...common}>
           <circle cx="10" cy="14" r="4.2" />
-          <circle cx="10" cy="14" r="1" fill="var(--ink)" stroke="none" />
+          <circle cx="10" cy="14" r="1" fill="currentColor" stroke="none" />
           <path d="M14.2 14 L23.5 14" />
           <path d="M20 14 L20 17.5" />
           <path d="M17 14 L17 16.5" />
@@ -51,8 +50,8 @@ export function AiqIcon({ name, size = 26 }: { name: IconName; size?: number }) 
         <svg {...common}>
           <path d="M4 6 H24 V18 H15 L10 22 V18 H4 Z" />
           <circle cx="10" cy="12" r="1" fill={accent} stroke="none" />
-          <circle cx="14" cy="12" r="1" fill="var(--ink)" stroke="none" />
-          <circle cx="18" cy="12" r="1" fill="var(--ink)" stroke="none" />
+          <circle cx="14" cy="12" r="1" fill="currentColor" stroke="none" />
+          <circle cx="18" cy="12" r="1" fill="currentColor" stroke="none" />
         </svg>
       );
     case "operator":
@@ -132,7 +131,7 @@ export function AiqIcon({ name, size = 26 }: { name: IconName; size?: number }) 
           <path d="M10.5 12.6 L17.5 8.2" />
           <path d="M10.5 15.4 L17.5 19.8" />
           <circle cx="8"  cy="14" r="2.4" />
-          <circle cx="20" cy="7"  r="2.4" fill={accent} stroke="var(--ink)" />
+          <circle cx="20" cy="7"  r="2.4" fill={accent} stroke="currentColor" />
           <circle cx="20" cy="21" r="2.4" />
         </svg>
       );
@@ -198,7 +197,7 @@ export function AiqIcon({ name, size = 26 }: { name: IconName; size?: number }) 
           <path d="M14 9 L14 10.6" />
           <path d="M18.6 11.2 L18.6 12.8" />
           <path d="M14 18 L19.5 11.5" stroke={accent} strokeWidth="2" />
-          <circle cx="14" cy="18" r="1.4" fill="var(--ink)" stroke="none" />
+          <circle cx="14" cy="18" r="1.4" fill="currentColor" stroke="none" />
         </svg>
       );
     case "cache":
@@ -218,7 +217,7 @@ export function AiqIcon({ name, size = 26 }: { name: IconName; size?: number }) 
           <path d="M4 23 H24" />
           <rect x="6"  y="16" width="4" height="6" />
           <rect x="12" y="12" width="4" height="10" />
-          <rect x="18" y="7"  width="4" height="15" fill={accent} stroke="var(--ink)" />
+          <rect x="18" y="7"  width="4" height="15" fill={accent} stroke="currentColor" />
         </svg>
       );
     case "widget":
@@ -227,9 +226,9 @@ export function AiqIcon({ name, size = 26 }: { name: IconName; size?: number }) 
         <svg {...common}>
           <rect x="4" y="5" width="20" height="18" rx="0.8" />
           <path d="M4 10 H24" />
-          <circle cx="7"  cy="7.5" r="0.6" fill="var(--ink)" stroke="none" />
-          <circle cx="9.2" cy="7.5" r="0.6" fill="var(--ink)" stroke="none" />
-          <rect x="7" y="13" width="14" height="7" fill={accent} stroke="var(--ink)" />
+          <circle cx="7"  cy="7.5" r="0.6" fill="currentColor" stroke="none" />
+          <circle cx="9.2" cy="7.5" r="0.6" fill="currentColor" stroke="none" />
+          <rect x="7" y="13" width="14" height="7" fill={accent} stroke="currentColor" />
         </svg>
       );
     case "support":
@@ -237,7 +236,7 @@ export function AiqIcon({ name, size = 26 }: { name: IconName; size?: number }) 
       return (
         <svg {...common}>
           <circle cx="14" cy="14" r="9" />
-          <path d="M14 9 L15.3 12.3 L18.8 12.6 L16.1 14.9 L16.9 18.4 L14 16.6 L11.1 18.4 L11.9 14.9 L9.2 12.6 L12.7 12.3 Z" fill={accent} stroke="var(--ink)" strokeWidth="1" />
+          <path d="M14 9 L15.3 12.3 L18.8 12.6 L16.1 14.9 L16.9 18.4 L14 16.6 L11.1 18.4 L11.9 14.9 L9.2 12.6 L12.7 12.3 Z" fill={accent} stroke="currentColor" strokeWidth="1" />
         </svg>
       );
     case "billing":

@@ -7,7 +7,9 @@ import { AppCard, PrimaryCta, GhostCta } from "./app-shell";
 /* MCP add-on section · used on /dashboard and /dashboard/billing.
    AR-144 Session 5 wired up the purchase flow; AR-146 extracted this from
    dashboard/client.tsx so the in-app billing surface can render the same
-   card without forking. Behavior is unchanged from the original. */
+   card without forking. AR-204 close-out 15/15 swapped legacy `--ink/
+   --signal/--text-N/--display/--sans/--mono` tokens for `--oga-*` so this
+   component survives the `.aiq` cascade strip. Behavior unchanged. */
 
 export type McpStatus = {
   access: boolean;
@@ -52,9 +54,6 @@ export function McpAddOnSection({ mcp }: { mcp: McpStatus }) {
     }
   }
 
-  // STATE 1: Has MCP access — render active card with appropriate label.
-  // Branches in priority: plan-included > add-on > catch-all (e.g. superuser
-  // implicit access without a paid plan or add-on row).
   if (mcp.access) {
     let label = "Active";
     if (mcp.includedFreeViaPlan) label = "Included free on your plan";
@@ -70,22 +69,20 @@ export function McpAddOnSection({ mcp }: { mcp: McpStatus }) {
     );
   }
 
-  // STATE 2: No MCP access (not superuser, plan doesn't include, no add-on).
-  // Show purchase CTA.
   return (
     <AppCard title="MCP Server">
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <McpStatusBadge status="inactive" label="Not on your plan" />
         <p style={{
-          fontFamily: "var(--sans)", fontSize: 14, lineHeight: 1.55,
-          color: "var(--text-2)", margin: 0,
+          fontFamily: "var(--oga-font-sans)", fontSize: 14, lineHeight: 1.55,
+          color: "var(--oga-fg-subtle)", margin: 0,
         }}>
           Add OneGoodArea to Claude Desktop, Cursor, or any MCP-compatible client. Score postcodes inline in your AI workflow.
           Included free on Growth (£1,499 / mo) and Enterprise tiers, or available as a £29 / month add-on on any paid plan.
         </p>
         {error && (
           <div style={{
-            fontFamily: "var(--mono)", fontSize: 11,
+            fontFamily: "var(--oga-font-mono)", fontSize: 11,
             color: "#A01B00", padding: "10px 12px",
             background: "rgba(160,27,0,0.08)",
             border: "1px solid rgba(160,27,0,0.18)",
@@ -95,7 +92,6 @@ export function McpAddOnSection({ mcp }: { mcp: McpStatus }) {
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <PrimaryCta onClick={buyMcpAddon} disabled={purchaseLoading}>
             {purchaseLoading ? "Starting checkout…" : "Add MCP · £29 / month"}
-            <span aria-hidden style={{ fontFamily: "var(--sans)", fontSize: 13 }}>{"→"}</span>
           </PrimaryCta>
           <GhostCta href="/docs/mcp">What is MCP?</GhostCta>
         </div>
@@ -109,14 +105,13 @@ function McpStatusBadge({ status, label }: { status: "active" | "inactive"; labe
   return (
     <div style={{
       display: "inline-flex", alignItems: "center", gap: 9,
-      fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
+      fontFamily: "var(--oga-font-mono)", fontSize: 10.5, fontWeight: 500,
       letterSpacing: "0.18em", textTransform: "uppercase",
-      color: isActive ? "var(--ink)" : "var(--text-3)",
+      color: isActive ? "var(--oga-fg)" : "var(--oga-fg-muted)",
     }}>
       <span aria-hidden style={{
         width: 7, height: 7, borderRadius: 999,
-        background: isActive ? "var(--signal)" : "var(--text-4)",
-        boxShadow: isActive ? "0 0 0 4px rgba(212,243,58,0.18)" : "none",
+        background: isActive ? "var(--oga-fg)" : "var(--oga-fg-muted)",
       }} />
       {label}
     </div>
@@ -127,19 +122,19 @@ function McpUsageStat({ callsThisMonth }: { callsThisMonth: number }) {
   return (
     <div style={{
       padding: "12px 16px",
-      background: "var(--bg-off)",
-      border: "1px solid var(--border)",
+      background: "var(--oga-canvas)",
+      border: "1px solid var(--oga-border)",
       borderRadius: 4,
       display: "flex", alignItems: "center", justifyContent: "space-between",
     }}>
       <span style={{
-        fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 500,
+        fontFamily: "var(--oga-font-mono)", fontSize: 10.5, fontWeight: 500,
         letterSpacing: "0.18em", textTransform: "uppercase",
-        color: "var(--text-3)",
+        color: "var(--oga-fg-muted)",
       }}>MCP calls this month</span>
       <span style={{
-        fontFamily: "var(--display)", fontSize: 24, fontWeight: 400,
-        color: "var(--ink-deep)", letterSpacing: "-0.02em",
+        fontFamily: "var(--oga-font-sans)", fontSize: 24, fontWeight: 500,
+        color: "var(--oga-fg)", letterSpacing: "-0.02em",
         fontVariantNumeric: "tabular-nums",
       }}>{callsThisMonth.toLocaleString()}</span>
     </div>
@@ -150,23 +145,23 @@ function McpInstallHelp() {
   return (
     <div style={{
       padding: "12px 16px",
-      background: "var(--bg)",
-      border: "1px solid var(--border)",
-      borderLeft: "3px solid var(--signal)",
+      background: "var(--oga-white)",
+      border: "1px solid var(--oga-border)",
+      borderLeft: "3px solid var(--oga-fg)",
       borderRadius: 4,
       display: "flex", alignItems: "flex-start", gap: 12,
     }}>
       <span style={{
-        fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 500,
+        fontFamily: "var(--oga-font-mono)", fontSize: 9.5, fontWeight: 500,
         letterSpacing: "0.18em", textTransform: "uppercase",
-        color: "var(--ink)", paddingTop: 3, flexShrink: 0,
+        color: "var(--oga-fg)", paddingTop: 3, flexShrink: 0,
       }}>Install</span>
       <span style={{
-        fontFamily: "var(--sans)", fontSize: 13.5, lineHeight: 1.55,
-        color: "var(--ink-deep)",
+        fontFamily: "var(--oga-font-sans)", fontSize: 13.5, lineHeight: 1.55,
+        color: "var(--oga-fg)",
       }}>
         Add to your Claude Desktop or Cursor config with your API key. Full instructions at{" "}
-        <Link href="/docs/mcp" style={{ color: "var(--ink)", borderBottom: "1px solid var(--signal)" }}>
+        <Link href="/docs/mcp" style={{ color: "var(--oga-fg)", borderBottom: "1px solid var(--oga-fg)" }}>
           /docs/mcp
         </Link>.
       </span>
