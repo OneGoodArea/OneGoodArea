@@ -173,6 +173,37 @@
 .oga-status-yellow { color: var(--oga-status-yellow); background: var(--oga-status-yellow-bg); }
 .oga-status-green  { color: var(--oga-status-green);  background: var(--oga-status-green-bg); }
 
+/* ---------- HTTP verb colour utility ----------
+   Single source of truth for HTTP verb chip colour across every surface
+   that renders an endpoint (api-reference surface map, product page
+   endpoint tabs, Levers methodology cards, shared products-section
+   cards, etc.). Recipe: GET green, POST/PATCH amber, PUT yellow,
+   DELETE red. Surface-specific layout (font size, padding, min-width)
+   stays in the page-scoped class; .oga-verb provides ONLY the colour.
+
+   Apply alongside the existing layout class:
+     <span className="oga-products__card-endpoint-verb oga-verb oga-verb--post">POST</span>
+
+   DARK-surface overrides match the api-reference.css recipe at lighter
+   chromas so the chips remain legible on graphite. */
+.oga-verb         { font-weight: 500; }
+.oga-verb--get    { color: var(--oga-status-green);  }
+.oga-verb--post   { color: var(--oga-status-amber);  }
+.oga-verb--put    { color: var(--oga-status-yellow); }
+.oga-verb--delete { color: var(--oga-status-red);    }
+.oga-verb--patch  { color: var(--oga-status-amber);  }
+
+[data-oga-surface="dark"] .oga-verb--get,
+.oga-on-dark        .oga-verb--get    { color: #7AC295; }
+[data-oga-surface="dark"] .oga-verb--post,
+[data-oga-surface="dark"] .oga-verb--patch,
+.oga-on-dark        .oga-verb--post,
+.oga-on-dark        .oga-verb--patch  { color: #F0B270; }
+[data-oga-surface="dark"] .oga-verb--put,
+.oga-on-dark        .oga-verb--put    { color: #E8D27A; }
+[data-oga-surface="dark"] .oga-verb--delete,
+.oga-on-dark        .oga-verb--delete { color: #E87A65; }
+
 /* ============================================================
    THE MOTIF — Plotted dot field
    Faint dot grid that echoes the mark.
@@ -1269,10 +1300,9 @@ nav[data-oga-surface="dark"] {
   overflow-x: auto;
   max-width: 100%;
 }
-.oga-built__panel-endpoint-verb {
-  color: var(--oga-status-green);
-  font-weight: 500;
-}
+/* .oga-built__panel-endpoint-verb provides only the layout slot.
+   Colour comes from the shared .oga-verb--{verb} utility above,
+   applied alongside this class in the TSX. */
 
 /* CTA row — link + optional "Coming soon" pill side-by-side */
 .oga-built__panel-cta {

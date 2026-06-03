@@ -238,7 +238,7 @@ function SectionSurfaces() {
               <ul className="oga-apiref-surfaces__endpoints">
                 {s.endpoints.map((e) => (
                   <li key={`${e.verb}-${e.path}`} className="oga-apiref-surfaces__endpoint">
-                    <span className={`oga-apiref-surfaces__endpoint-verb oga-apiref-surfaces__endpoint-verb--${e.verb.toLowerCase()}`}>
+                    <span className={`oga-apiref-surfaces__endpoint-verb oga-verb oga-verb--${e.verb.toLowerCase()}`}>
                       {e.verb}
                     </span>
                     <span className="oga-apiref-surfaces__endpoint-path">{e.path}</span>

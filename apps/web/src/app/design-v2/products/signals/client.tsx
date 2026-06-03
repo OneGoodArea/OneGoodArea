@@ -260,7 +260,7 @@ function SectionSpecimen() {
 
           <div className="oga-sig-spec__resp">
             <span className="oga-sig-spec__resp-method">
-              <span className="oga-sig-spec__resp-method-verb">GET</span>
+              <span className="oga-sig-spec__resp-method-verb oga-verb oga-verb--get">GET</span>
               /v1/area?postcode={encodeURIComponent(s.postcode)}
             </span>
             <button

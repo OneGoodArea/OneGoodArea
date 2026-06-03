@@ -173,8 +173,10 @@
 }
 
 .oga-sig-spec__resp-method-verb {
+  /* Colour from shared .oga-verb--get (applied in TSX, DARK-surface
+     variant since this chip lives inside .oga-section-dark). The
+     green-tint background matches the hardcoded GET verb. */
   background: rgba(120, 200, 130, 0.18);
-  color: rgba(170, 230, 180, 0.95);
   padding: 3px 8px;
   border-radius: 2px;
   font-size: 10.5px;

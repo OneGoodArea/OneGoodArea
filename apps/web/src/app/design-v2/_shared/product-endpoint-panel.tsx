@@ -81,10 +81,14 @@ export function ProductEndpointPanel({
                 aria-selected={i === idx}
                 onClick={() => setIdx(i)}
                 className={`oga-product-ep__tab${i === idx ? " oga-product-ep__tab--active" : ""}`}
+                /* Active tab carries an ink background — opt the verb chip
+                   into the shared .oga-verb--{verb} DARK-surface override
+                   so it brightens on selection. Matches the api-reference
+                   Surface map's per-tab brightening behaviour. */
+                {...(i === idx ? { "data-oga-surface": "dark" as const } : {})}
               >
                 <span
-                  className="oga-product-ep__tab-verb"
-                  data-verb={e.method}
+                  className={`oga-product-ep__tab-verb oga-verb oga-verb--${e.method.toLowerCase()}`}
                 >
                   {e.method}
                 </span>

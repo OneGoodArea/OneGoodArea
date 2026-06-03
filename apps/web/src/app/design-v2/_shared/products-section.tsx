@@ -126,7 +126,9 @@ function ProductCard({ product }: { product: Product }) {
       <p className="oga-products__card-body">{product.body}</p>
 
       <span className="oga-products__card-endpoint">
-        <span className="oga-products__card-endpoint-verb">{product.endpoint.verb}</span>
+        <span className={`oga-products__card-endpoint-verb oga-verb oga-verb--${product.endpoint.verb.toLowerCase()}`}>
+          {product.endpoint.verb}
+        </span>
         <span>{product.endpoint.path}</span>
       </span>
 

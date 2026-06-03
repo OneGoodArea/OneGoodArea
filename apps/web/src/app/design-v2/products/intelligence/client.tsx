@@ -268,7 +268,7 @@ function SectionSpecimen() {
 
           <div className="oga-int-spec__resp">
             <span className="oga-int-spec__resp-method">
-              <span className="oga-int-spec__resp-method-verb">POST</span>
+              <span className="oga-int-spec__resp-method-verb oga-verb oga-verb--post">POST</span>
               /v1/query
             </span>
             <span className="oga-int-spec__resp-source">

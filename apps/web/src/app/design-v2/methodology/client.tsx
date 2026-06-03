@@ -1199,7 +1199,7 @@ function SectionLevers() {
               </div>
               <h3 className="oga-meth-levers__card-name">{l.name}</h3>
               <code className="oga-meth-levers__card-endpoint">
-                <span className="oga-meth-levers__card-verb">{l.endpoint.verb}</span> {l.endpoint.path}
+                <span className={`oga-meth-levers__card-verb oga-verb oga-verb--${l.endpoint.verb.toLowerCase()}`}>{l.endpoint.verb}</span> {l.endpoint.path}
               </code>
               <p className="oga-meth-levers__card-body">{l.body}</p>
               <p className="oga-meth-levers__card-honest">{l.honest}</p>

@@ -300,7 +300,7 @@ function SectionSpecimen() {
 
           <div className="oga-mon-spec__resp">
             <span className="oga-mon-spec__resp-method">
-              <span className="oga-mon-spec__resp-method-verb">POST</span>
+              <span className="oga-mon-spec__resp-method-verb oga-verb oga-verb--post">POST</span>
               /v1/portfolios/pf_demo_lender/changes
             </span>
             <button

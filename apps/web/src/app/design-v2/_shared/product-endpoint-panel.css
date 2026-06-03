@@ -91,21 +91,12 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   margin-bottom: 4px;
-  color: var(--oga-status-amber);
+  /* Colour from the shared .oga-verb--{verb} utility (applied
+     alongside this class in the TSX). Single source of truth in
+     styles/brand/components.css. The active-state brightening is
+     covered by the DARK-surface override on .oga-verb--{verb}
+     since the active tab carries an ink background. */
 }
-/* Per-verb colour via data-verb. Visual-parity bridge; AR-210
-   replaces with the shared .oga-verb--{verb} utility. */
-.oga-product-ep__tab-verb[data-verb="GET"]    { color: var(--oga-status-green);  }
-.oga-product-ep__tab-verb[data-verb="POST"]   { color: var(--oga-status-amber);  }
-.oga-product-ep__tab-verb[data-verb="PUT"]    { color: var(--oga-status-yellow); }
-.oga-product-ep__tab-verb[data-verb="DELETE"] { color: var(--oga-status-red);    }
-.oga-product-ep__tab-verb[data-verb="PATCH"]  { color: var(--oga-status-amber);  }
-
-.oga-product-ep__tab--active .oga-product-ep__tab-verb[data-verb="GET"]    { color: rgba(170, 230, 180, 0.95); }
-.oga-product-ep__tab--active .oga-product-ep__tab-verb[data-verb="POST"],
-.oga-product-ep__tab--active .oga-product-ep__tab-verb[data-verb="PATCH"]  { color: rgba(255, 220, 170, 0.95); }
-.oga-product-ep__tab--active .oga-product-ep__tab-verb[data-verb="PUT"]    { color: rgba(232, 210, 122, 0.95); }
-.oga-product-ep__tab--active .oga-product-ep__tab-verb[data-verb="DELETE"] { color: rgba(232, 122, 101, 0.95); }
 
 .oga-product-ep__tab-path {
   display: block;

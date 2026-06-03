@@ -1238,7 +1238,7 @@
 }
 
 .oga-meth-levers__card-verb {
-  color: var(--oga-status-green);
+  /* Colour from shared .oga-verb--{verb} (applied in TSX). */
   font-weight: 500;
   margin-right: 4px;
 }
