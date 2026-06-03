@@ -204,7 +204,9 @@ export function BuiltForSection() {
             <p className="oga-built__panel-body">{current.body}</p>
 
             <span className="oga-built__panel-endpoint">
-              <span className="oga-built__panel-endpoint-verb">{current.endpointVerb}</span>
+              <span className={`oga-built__panel-endpoint-verb oga-verb oga-verb--${current.endpointVerb.toLowerCase()}`}>
+                {current.endpointVerb}
+              </span>
               <span>{current.endpointPath}</span>
             </span>
 

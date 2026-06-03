@@ -1300,10 +1300,9 @@ nav[data-oga-surface="dark"] {
   overflow-x: auto;
   max-width: 100%;
 }
-.oga-built__panel-endpoint-verb {
-  color: var(--oga-status-green);
-  font-weight: 500;
-}
+/* .oga-built__panel-endpoint-verb provides only the layout slot.
+   Colour comes from the shared .oga-verb--{verb} utility above,
+   applied alongside this class in the TSX. */
 
 /* CTA row — link + optional "Coming soon" pill side-by-side */
 .oga-built__panel-cta {

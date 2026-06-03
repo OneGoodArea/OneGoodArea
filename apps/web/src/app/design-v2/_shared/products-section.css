@@ -182,10 +182,9 @@
   overflow-x: auto;
   max-width: 100%;
 }
-.oga-products__card-endpoint-verb {
-  color: var(--oga-status-green);
-  font-weight: 500;
-}
+/* .oga-products__card-endpoint-verb provides only layout slot.
+   Colour comes from the shared .oga-verb--{verb} utility in
+   components.css, applied alongside this class in the TSX. */
 
 /* ---------- Capabilities list ---------- */
 
