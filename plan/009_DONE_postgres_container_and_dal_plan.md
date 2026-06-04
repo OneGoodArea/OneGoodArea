@@ -3,7 +3,7 @@
 ## 1. JIRA Integration
 
 - **Jira Issue:** [AR-202](https://podnex.atlassian.net/browse/AR-202)
-- **Plan File (GitHub):** https://github.com/OneGoodArea/OneGoodArea/blob/feat/postgres-dal-setup/plan/009_postgres_container_and_dal_plan.md
+- **Plan File (GitHub):** https://github.com/OneGoodArea/OneGoodArea/blob/feat/postgres-dal-setup/plan/009_DONE_postgres_container_and_dal_plan.md
 - **Pull Request:** https://github.com/OneGoodArea/OneGoodArea/pull/70
 
 ---
