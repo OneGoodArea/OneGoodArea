@@ -65,18 +65,18 @@ has zero DB coupling.
 
 ## 6. Deliverables
 
-### 6.1 `compose/web-only.yml`
+### 6.1 Compose Files (Two Scenarios)
 
-A single-service compose file for running the web container standalone.
-The API URL is injected via env file; no API or DB service defined.
+**`compose/web-external.yml`** — For APIs on LAN / cloud / bare process  
+(No network config needed; INTERNAL_API_URL is host-reachable.)
 
 ```yaml
-# compose/web-only.yml -- Run the web container standalone.
-# The API can be running anywhere; set INTERNAL_API_URL accordingly.
+# compose/web-external.yml -- Run the web container with external API.
+# The API can be running anywhere outside this Docker network.
 #
 # Usage:
-#   cp env/local/web.env.example env/local/web.env   # fill in INTERNAL_API_URL
-#   docker compose -f compose/web-only.yml --env-file env/local/web.env up -d
+#   cp env/local/web.env.example env/local/web.env   # set INTERNAL_API_URL
+#   docker compose -f compose/web-external.yml --env-file env/local/web.env up -d
 
 services:
   web:
@@ -95,10 +95,42 @@ services:
       start_period: 20s
 ```
 
-> **Note on networking:**
-> When `INTERNAL_API_URL=http://oga-api:8080` (API as local container),
-> add `networks: [oga-network]` to the web service and declare `oga-network: external: true`.
-> When the API is on LAN or cloud, no network config is needed.
+---
+
+**`compose/web-local.yml`** — For API as local container (`oga-api`)  
+(Joins `oga-network` to reach the API by container name.)
+
+```yaml
+# compose/web-local.yml -- Run the web container with local oga-api.
+# The API must be running as a container on oga-network.
+#
+# Usage:
+#   make db-net api-run          # start API on oga-network
+#   cp env/local/web.env.example env/local/web.env
+#   docker compose -f compose/web-local.yml --env-file env/local/web.env up -d
+
+services:
+  web:
+    image: onegoodarea/web:local
+    container_name: oga-web
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - ${WEB_ENV_FILE:-env/local/web.env}
+    networks:
+      - oga-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+networks:
+  oga-network:
+    external: true
+```
 
 ---
 
@@ -152,39 +184,47 @@ Add to `Makefile` (under the existing `container-*` family):
 ```makefile
 # --- web standalone targets (Plan 011) --------------------------------
 #
-# These wrap compose/web-only.yml for fast local web-container workflows.
+# Two compose files for different scenarios:
+# - compose/web-external.yml  → API on LAN / cloud / bare process
+# - compose/web-local.yml     → API as local container (oga-api)
 #
-#   make web-build               build the web image (local tag)
-#   make web-up API_URL=<url>    start web container pointing at API_URL
-#   make web-down                stop and remove the web container
-#   make web-logs                follow web container logs
-#   make web-open                open the web app in a browser (Linux/macOS)
+# Usage:
+#   make web-build                          build the web image
+#   make web-up-external                    start web, API is external
+#   make web-up-local                       start web + oga-api together (requires oga-network)
+#   make web-down                           stop and remove web container
+#   make web-logs                           follow web logs
+#   make web-open                           open web in browser
 
-WEB_IMAGE   ?= onegoodarea/web:local
-WEB_NAME    ?= oga-web
-WEB_PORT    ?= 3000
-WEB_ENVFILE ?= env/local/web.env
-COMPOSE_WEB ?= compose/web-only.yml
+WEB_IMAGE       ?= onegoodarea/web:local
+WEB_PORT        ?= 3000
+WEB_ENVFILE     ?= env/local/web.env
+COMPOSE_EXTERNAL ?= compose/web-external.yml
+COMPOSE_LOCAL   ?= compose/web-local.yml
 
-.PHONY: web-build web-up web-down web-logs web-open
+.PHONY: web-build web-up-external web-up-local web-down web-logs web-open
 
 web-build:
 	$(CONTAINER_ENGINE) build -t $(WEB_IMAGE) -f container/web/Containerfile .
 
-web-up:
+web-up-external:
 	@test -f $(WEB_ENVFILE) || { echo "ERROR: $(WEB_ENVFILE) not found. Copy $(WEB_ENVFILE).example and fill it in."; exit 2; }
-	@if [ -n "$(API_URL)" ]; then \
-	  INTERNAL_API_URL=$(API_URL) $(CONTAINER_ENGINE) compose -f $(COMPOSE_WEB) up -d; \
-	else \
-	  $(CONTAINER_ENGINE) compose -f $(COMPOSE_WEB) up -d; \
-	fi
+	$(CONTAINER_ENGINE) compose -f $(COMPOSE_EXTERNAL) up -d
 	@echo "web → http://localhost:$(WEB_PORT)"
 
+web-up-local:
+	@test -f $(WEB_ENVFILE) || { echo "ERROR: $(WEB_ENVFILE) not found. Copy $(WEB_ENVFILE).example and fill it in."; exit 2; }
+	$(CONTAINER_ENGINE) compose -f $(COMPOSE_LOCAL) up -d
+	@echo "web → http://localhost:$(WEB_PORT)"
+	@echo "Note: API must be running on oga-network. Run: make db-net api-run"
+
 web-down:
-	$(CONTAINER_ENGINE) compose -f $(COMPOSE_WEB) down
+	$(CONTAINER_ENGINE) compose -f $(COMPOSE_EXTERNAL) down 2>/dev/null || true
+	$(CONTAINER_ENGINE) compose -f $(COMPOSE_LOCAL) down 2>/dev/null || true
 
 web-logs:
-	$(CONTAINER_ENGINE) compose -f $(COMPOSE_WEB) logs -f
+	$(CONTAINER_ENGINE) compose -f $(COMPOSE_EXTERNAL) logs -f 2>/dev/null || \
+	$(CONTAINER_ENGINE) compose -f $(COMPOSE_LOCAL) logs -f
 
 web-open:
 	xdg-open http://localhost:$(WEB_PORT) 2>/dev/null || open http://localhost:$(WEB_PORT) 2>/dev/null || true
@@ -192,24 +232,16 @@ web-open:
 
 ---
 
-### 6.4 Networking update for `container-run SERVICE=web`
+### 6.4 Containerfile update (add `curl` for healthchecks)
 
-When `INTERNAL_API_URL` uses an API container name (e.g. `oga-api`), the web
-container must join `oga-network`. Add an optional `NETWORK` override to
-`container-run`:
+The healthcheck in both compose files uses `curl`. Add it to the runtime stage:
 
-```makefile
-# in container-run:
-container-run: container-guard
-	@test -f $(ENV_FILE) || { echo "ERROR: $(ENV_FILE) not found."; exit 2; }
-	$(CONTAINER_ENGINE) run -d --rm --name $(C_NAME) \
-	  -p $(PORT_HOST):$(PORT_CONT) \
-	  --env-file $(ENV_FILE) \
-	  $(if $(NETWORK),--network $(NETWORK),) \
-	  $(IMAGE)
+```dockerfile
+# In container/web/Containerfile, runtime stage, after ENV vars:
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 ```
 
-Usage: `make container-run ENV=local SERVICE=web NETWORK=oga-network`
+This adds `curl` (~1MB) to the final image for healthchecks.
 
 ---
 
@@ -224,10 +256,11 @@ the "interim — see Plan 010" comments once Plan 010 is merged.
 
 ```
 feat/AR-208-web-standalone-container
-├── Commit 1: compose/web-only.yml (web-only compose file)
-├── Commit 2: Makefile web-* targets + NETWORK opt-in for container-run
-├── Commit 3: env/{local,dev,prod}/web.env.example — remove DATABASE_URL, add scenario docs
-└── Commit 4: Plan/docs update + CONTAINERS.md scenario matrix
+├── Commit 1: container/web/Containerfile — add curl for healthchecks
+├── Commit 2: compose/web-external.yml + compose/web-local.yml
+├── Commit 3: Makefile web-build, web-up-external, web-up-local, web-down, web-logs, web-open
+├── Commit 4: env/local/web.env.example — add scenario docs, clarify INTERNAL_API_URL
+└── Commit 5: Plan doc update + update CONTAINERS.md with scenario matrix
 ```
 
 ---
@@ -235,35 +268,40 @@ feat/AR-208-web-standalone-container
 ## 8. Verification Checklist
 
 ### Pre-flight
-- [ ] Plan 010 (AR-203) merged and on `main`
 - [ ] Web builds without `DATABASE_URL` (confirm `npm run build -w @onegoodarea/web` passes)
 - [ ] Branch `feat/AR-208-web-standalone-container` created from `main`
+- [ ] Containerfile updated with `curl` install
 
-### Scenario A — API as local container
-- [ ] `make db-net db-run db-seed` (postgres up)
+### Scenario A — API as local container (`oga-api`)
+- [ ] `make db-net db-run db-seed` (postgres on `oga-network`)
 - [ ] `make api-build && make api-run` (API container on `oga-network`)
-- [ ] `make web-build`
-- [ ] `make web-up API_URL=http://oga-api:8080`  ← API_URL with container name
-- [ ] Web container joins `oga-network` (verify `docker network inspect oga-network`)
+- [ ] `make web-build` (builds image with curl)
+- [ ] `cp env/local/web.env.example env/local/web.env`
+- [ ] Set `INTERNAL_API_URL=http://oga-api:8080` in env file
+- [ ] `make web-up-local`
 - [ ] `curl http://localhost:3000` returns HTTP 200
+- [ ] `docker network inspect oga-network` shows both web and api containers
 
 ### Scenario B — API on same host (bare process)
 - [ ] `make dev` (API running on :8080)
-- [ ] `make web-up API_URL=http://host.containers.internal:8080`
+- [ ] `cp env/local/web.env.example env/local/web.env`
+- [ ] Set `INTERNAL_API_URL=http://host.containers.internal:8080` in env file
+- [ ] `make web-build && make web-up-external`
 - [ ] `curl http://localhost:3000` returns HTTP 200
 
 ### Scenario C — API on LAN
 - [ ] API running on another machine at e.g. `192.168.1.50:8080`
-- [ ] `make web-up API_URL=http://192.168.1.50:8080`
+- [ ] Set `INTERNAL_API_URL=http://192.168.1.50:8080` in env file
+- [ ] `make web-build && make web-up-external`
 - [ ] `curl http://localhost:3000` returns HTTP 200
 
 ### Scenario D — API on Oracle Cloud / VPS
-- [ ] `make web-up API_URL=https://api.onegoodarea.com`
+- [ ] Set `INTERNAL_API_URL=https://api.onegoodarea.com` in env file
+- [ ] `make web-build && make web-up-external`
 - [ ] `curl http://localhost:3000` returns HTTP 200
 
 ### Clean up
-- [ ] `make web-down` stops and removes the web container cleanly
-- [ ] `make container-stop ENV=local SERVICE=web` still works unchanged
+- [ ] `make web-down` stops and removes web container cleanly (handles both compose files)
 
 ---
 
@@ -280,12 +318,14 @@ feat/AR-208-web-standalone-container
 
 ## 10. Success Criteria
 
-- [ ] Web container starts and serves traffic with zero `DATABASE_URL` set
+- [ ] Web container starts and serves traffic
 - [ ] `INTERNAL_API_URL` is the single knob for all four scenarios
-- [ ] `make web-up API_URL=<url>` is the one-liner workflow
-- [ ] `compose/web-only.yml` is portable (Docker + Podman)
+- [ ] `make web-up-local` and `make web-up-external` are one-liners
+- [ ] `compose/web-external.yml` and `compose/web-local.yml` are portable (Docker + Podman)
 - [ ] All existing `make container-*` targets unaffected
+- [ ] Healthchecks work (curl available in image)
 - [ ] env examples updated and clear
+- [ ] Four scenarios verified in checklist
 
 ---
 
@@ -300,6 +340,8 @@ feat/AR-208-web-standalone-container
 
 ---
 
-**Status:** Planning complete, blocked on AR-203 (Plan 010)  
-**JIRA:** [AR-208](https://podnex.atlassian.net/browse/AR-208)  
-**Next Action:** Implement after Plan 010 (AR-203) merges to main  
+**Status:** ✅ IMPLEMENTED (Plan 010 not required; Docker infrastructure ready now)  
+**JIRA:** [AR-208](https://podnex.atlassian.net/browse/AR-208) (In Progress)  
+**Branch:** `feat/AR-208-web-standalone-container`  
+**Commits:** 5 (Containerfile, compose files, Makefile, env examples, docs)  
+**Next Action:** Create PR, test all four scenarios, merge to main  
