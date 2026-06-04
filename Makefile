@@ -52,6 +52,7 @@ API_ENVFILE ?= .env.local
         container-build container-run container-stop container-logs \
         container-guard \
         db-net db-vol db-run db-stop db-clean db-seed \
+        web-build web-up-external web-up-local web-down web-logs web-open \
         coverage coverage-api coverage-web coverage-contracts
 
 help:
@@ -97,6 +98,14 @@ help:
 	@echo "  api-run                   run $(API_NAME) on :$(API_PORT)  (env: $(API_ENVFILE))"
 	@echo "  api-stop                  stop $(API_NAME)"
 	@echo "  api-clean                 api-stop + remove image"
+	@echo ""
+	@echo "  ── Web container shortcuts (Plan 011) ──────────────────────────────"
+	@echo "  web-build                 build $(WEB_IMAGE)"
+	@echo "  web-up-external           run web container (API on LAN / cloud / bare)"
+	@echo "  web-up-local              run web container (API as local oga-api)"
+	@echo "  web-down                  stop and remove web container"
+	@echo "  web-logs                  follow web container logs"
+	@echo "  web-open                  open web app in browser"
 	@echo ""
 	@echo "  ── Portable per-service targets  (ENV=  SERVICE=) ───────────────────"
 	@echo "  container-info            show detected engine + host OS"
@@ -274,3 +283,42 @@ db-seed:
 	$(CONTAINER_ENGINE) exec -i $(DB_NAME) psql -U oga -d oga \
 	  < apps/web/tests/seeds/profiles/baseline/100-baseline-users.sql
 	@echo "Seed applied."
+
+# --- web container shortcuts (Plan 011) ----------------------------------
+#
+# Two scenarios:
+#   web-up-external  → API on LAN / cloud / bare process
+#   web-up-local     → API as local container (oga-api) on oga-network
+#
+# Both use INTERNAL_API_URL from env file to point to the API.
+
+WEB_IMAGE       ?= onegoodarea/web:local
+WEB_PORT        ?= 3000
+WEB_ENVFILE     ?= env/local/web.env
+COMPOSE_EXTERNAL ?= compose/web-external.yml
+COMPOSE_LOCAL   ?= compose/web-local.yml
+
+web-build:
+	$(CONTAINER_ENGINE) build -t $(WEB_IMAGE) -f container/web/Containerfile .
+
+web-up-external:
+	@test -f $(WEB_ENVFILE) || { echo "ERROR: $(WEB_ENVFILE) not found. Copy env/local/web.env.example and fill it in."; exit 2; }
+	$(CONTAINER_ENGINE) compose -f $(COMPOSE_EXTERNAL) up -d
+	@echo "web → http://localhost:$(WEB_PORT)"
+
+web-up-local:
+	@test -f $(WEB_ENVFILE) || { echo "ERROR: $(WEB_ENVFILE) not found. Copy env/local/web.env.example and fill it in."; exit 2; }
+	$(CONTAINER_ENGINE) compose -f $(COMPOSE_LOCAL) up -d
+	@echo "web → http://localhost:$(WEB_PORT)"
+	@echo "Note: API must be running on oga-network. Run: make db-net api-run"
+
+web-down:
+	-$(CONTAINER_ENGINE) compose -f $(COMPOSE_EXTERNAL) down 2>/dev/null || true
+	-$(CONTAINER_ENGINE) compose -f $(COMPOSE_LOCAL) down 2>/dev/null || true
+
+web-logs:
+	$(CONTAINER_ENGINE) compose -f $(COMPOSE_EXTERNAL) logs -f 2>/dev/null || \
+	$(CONTAINER_ENGINE) compose -f $(COMPOSE_LOCAL) logs -f
+
+web-open:
+	xdg-open http://localhost:$(WEB_PORT) 2>/dev/null || open http://localhost:$(WEB_PORT) 2>/dev/null || true
