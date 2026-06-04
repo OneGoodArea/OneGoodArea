@@ -89,8 +89,7 @@ ARCHITECTURE.md
 scripts/world-*.json
 scripts/uk-paths.json
 
-# claude code local state
-.claude/
+# AI local state
 .aider*
 
 # apps/api production bundle (built in-image / by `npm run build`)
