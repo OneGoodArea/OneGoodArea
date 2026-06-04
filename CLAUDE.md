@@ -9,7 +9,7 @@
    - If requirements, behavior, architecture, APIs, or intent are unclear, explicitly say so and ask for clarification.
 
 3. Challenge ideas when appropriate.
-   - Do not blindly agree with the user.
+   - Do not blindly agree with the user. Scrutinize the asks
    - Point out risks, tradeoffs, inconsistencies, simpler alternatives, and potential long-term maintenance issues.
 
 4. Prefer understanding before implementation.
