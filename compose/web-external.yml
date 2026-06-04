@@ -1,0 +1,29 @@
+# compose/web-external.yml -- Run web container with external API.
+#
+# Use this when your API is running:
+# - On a local bare process (host.containers.internal:8080)
+# - On a LAN machine (192.168.x.x:8080)
+# - On a cloud platform (https://api.yourdomain.com)
+#
+# The API URL is configured via INTERNAL_API_URL in your env file.
+#
+# Usage:
+#   cp env/local/web.env.example env/local/web.env
+#   # Edit web.env and set INTERNAL_API_URL to your API location
+#   docker compose -f compose/web-external.yml --env-file env/local/web.env up -d
+
+services:
+  web:
+    image: onegoodarea/web:local
+    container_name: oga-web
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - ${WEB_ENV_FILE:-env/local/web.env}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

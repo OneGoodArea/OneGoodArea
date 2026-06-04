@@ -1,0 +1,34 @@
+# compose/web-local.yml -- Run web container with local oga-api container.
+#
+# Use this when your API is running as a container on oga-network.
+# The web container will join the same network and reach the API by name.
+#
+# Prerequisite: The API container (oga-api) must be running on oga-network.
+#   make db-net api-run
+#
+# Usage:
+#   cp env/local/web.env.example env/local/web.env
+#   # Set INTERNAL_API_URL=http://oga-api:8080 in web.env
+#   docker compose -f compose/web-local.yml --env-file env/local/web.env up -d
+
+services:
+  web:
+    image: onegoodarea/web:local
+    container_name: oga-web
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - ${WEB_ENV_FILE:-env/local/web.env}
+    networks:
+      - oga-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+networks:
+  oga-network:
+    external: true
