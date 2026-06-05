@@ -17,18 +17,22 @@ import { useState } from "react";
 import { FormGroup, Input, Textarea, Select } from "@/app/design-v2/_shared/dashboard/form-group";
 import { Modal } from "@/app/design-v2/_shared/dashboard/modal";
 import { DropdownMenu } from "@/app/design-v2/_shared/dashboard/dropdown-menu";
+import { ToastProvider, useToast } from "@/app/design-v2/_shared/dashboard/toast";
 import "./client.css";
 
 export default function DashboardPrimitivesClient() {
   return (
-    <div className="oga-root oga-prim-page">
-      <Hero />
-      <FormGroupSection />
-      <FormGroupDarkSection />
-      <ModalSection />
-      <DropdownMenuSection />
-      <DropdownMenuDarkSection />
-    </div>
+    <ToastProvider>
+      <div className="oga-root oga-prim-page">
+        <Hero />
+        <FormGroupSection />
+        <FormGroupDarkSection />
+        <ModalSection />
+        <DropdownMenuSection />
+        <DropdownMenuDarkSection />
+        <ToastSection />
+      </div>
+    </ToastProvider>
   );
 }
 
@@ -455,6 +459,162 @@ function DropdownMenuDarkSection() {
                   { label: "Sign out", danger: true, onClick: () => {} },
                 ]}
               />
+            </div>
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   AR-222 <Toast>
+   ============================================================ */
+
+function ToastSection() {
+  const { toast, dismissAll } = useToast();
+
+  return (
+    <section className="oga-section-quiet oga-prim-section" aria-labelledby="ar-222-heading">
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-222 · Foundational</p>
+          <h2 id="ar-222-heading" className="oga-h2 oga-prim-section__title">
+            Toast
+          </h2>
+          <p className="oga-prim-section__caption">
+            Non-blocking notification stack — corner-anchored bottom-right,
+            newest on top, auto-dismiss after 5s with pause-on-hover.
+            <code className="oga-prim-code">useToast()</code> fires from any
+            client component under <code className="oga-prim-code">&lt;ToastProvider&gt;</code>.
+            Used everywhere an action wants quiet feedback: preset saved,
+            API key copied, member removed, webhook delivered, 403 admin
+            required, IP not allowed.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc">
+          <Variant label="Success" caption='Green checkmark + left-edge accent. Auto-dismisses after 5s; hover pauses.'>
+            <button
+              type="button"
+              className="oga-btn oga-btn-secondary"
+              onClick={() =>
+                toast({
+                  variant: "success",
+                  title: "Preset saved",
+                  body: "Acme Underwriting preset now applies to /v1/score requests.",
+                })
+              }
+            >
+              Fire success toast
+            </button>
+          </Variant>
+
+          <Variant label="Info" caption="Default variant. Neutral ink-muted icon. For ambient confirmations.">
+            <button
+              type="button"
+              className="oga-btn oga-btn-secondary"
+              onClick={() =>
+                toast({
+                  variant: "info",
+                  title: "Bulk enrich queued",
+                  body: "47 areas in your portfolio will be scored. We'll notify you when it's done.",
+                })
+              }
+            >
+              Fire info toast
+            </button>
+          </Variant>
+
+          <Variant label="Warning" caption="Amber triangle. Calls attention without blocking. aria-live='assertive'.">
+            <button
+              type="button"
+              className="oga-btn oga-btn-secondary"
+              onClick={() =>
+                toast({
+                  variant: "warning",
+                  title: "Quota at 90%",
+                  body: "Your monthly API quota is nearly spent. Upgrade to keep serving requests after the period rolls over.",
+                })
+              }
+            >
+              Fire warning toast
+            </button>
+          </Variant>
+
+          <Variant label="Error" caption="Red x-in-circle. For 4xx + 5xx outcomes. aria-live='assertive', role='alert'.">
+            <button
+              type="button"
+              className="oga-btn oga-btn-secondary"
+              onClick={() =>
+                toast({
+                  variant: "error",
+                  title: "403 ip_not_allowed",
+                  body: "Your current IP isn't in the org's allowlist. Ask an admin to add 192.168.1.42/32.",
+                })
+              }
+            >
+              Fire error toast
+            </button>
+          </Variant>
+
+          <Variant label="With action" caption='Right-aligned action button (e.g. "Undo"). Clicking fires the handler + dismisses.'>
+            <button
+              type="button"
+              className="oga-btn oga-btn-secondary"
+              onClick={() =>
+                toast({
+                  variant: "success",
+                  title: "Member removed",
+                  body: "marcos@onegoodarea.co.uk no longer has access to Acme Underwriting.",
+                  action: {
+                    label: "Undo",
+                    onClick: () => {
+                      toast({ variant: "info", title: "Restored membership" });
+                    },
+                  },
+                })
+              }
+            >
+              Fire toast with action
+            </button>
+          </Variant>
+
+          <Variant label="Sticky (duration=0)" caption="Auto-dismiss disabled. User must click X or call dismiss(id).">
+            <button
+              type="button"
+              className="oga-btn oga-btn-secondary"
+              onClick={() =>
+                toast({
+                  variant: "warning",
+                  title: "Resend DNS pending",
+                  body: "Until SPF + DKIM propagate at IONOS, password-reset emails won't deliver. Pedro's manual action.",
+                  duration: 0,
+                })
+              }
+            >
+              Fire sticky toast
+            </button>
+          </Variant>
+
+          <Variant label="Stack test" caption="Fire 5 toasts quickly to see stacking. Max 5 visible; older toasts evict.">
+            <div className="oga-prim-button-row">
+              <button
+                type="button"
+                className="oga-btn oga-btn-secondary"
+                onClick={() => {
+                  toast({ variant: "success", title: "Webhook delivered", body: "report.created → https://hooks.acme.dev/oga" });
+                  toast({ variant: "info", title: "Cron run completed", body: "Re-scored 1,283 postcodes. Run id run_2026_06_05." });
+                  toast({ variant: "success", title: "Bundle updated", body: "Lender-only bundle now includes 12 signals." });
+                  toast({ variant: "warning", title: "Methodology pin will affect 4 future calls", body: "Your org pinned to v2.0.1." });
+                  toast({ variant: "success", title: "API key copied", body: "oga_live_*** copied to clipboard." });
+                }}
+              >
+                Fire 5 toasts
+              </button>
+              <button type="button" className="oga-btn oga-btn-secondary" onClick={dismissAll}>
+                Dismiss all
+              </button>
             </div>
           </Variant>
         </div>
