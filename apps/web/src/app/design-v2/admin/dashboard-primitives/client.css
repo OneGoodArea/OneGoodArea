@@ -169,3 +169,91 @@
   flex-direction: column;
   gap: var(--oga-4);
 }
+
+/* ---------- Showcase-only utility helpers for AR-221 demos ---------- */
+
+.oga-prim-end-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Trigger label content — what sits inside the consumer's button. */
+.oga-prim-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: inherit;
+}
+
+.oga-prim-trigger--icon {
+  gap: 0;
+}
+
+.oga-prim-trigger--dark {
+  color: var(--oga-white);
+}
+
+.oga-prim-trigger__primary {
+  font-weight: 500;
+}
+
+.oga-prim-trigger__role {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(250, 248, 244, 0.55);
+  padding: 2px 6px;
+  border: 1px solid rgba(250, 248, 244, 0.18);
+  border-radius: 2px;
+}
+
+/* Icon-only button: used for "more" row action triggers. Square, no text. */
+.oga-prim-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 2px;
+  color: var(--oga-fg-muted);
+  cursor: pointer;
+  transition:
+    color var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-prim-icon-button:hover {
+  color: var(--oga-ink);
+  background: var(--oga-canvas);
+  border-color: var(--oga-ink-30);
+}
+
+/* Sidebar-style trigger: matches what the real sidebar consumes will
+   use. Transparent background, soft-warm hover on dark, hairline border. */
+.oga-prim-sidebar-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-3);
+  padding: var(--oga-2) var(--oga-3);
+  background: rgba(250, 248, 244, 0.04);
+  border: 1px solid rgba(250, 248, 244, 0.12);
+  border-radius: 4px;
+  color: var(--oga-white);
+  cursor: pointer;
+  transition:
+    background var(--oga-dur) var(--oga-ease),
+    border-color var(--oga-dur) var(--oga-ease);
+  min-width: 200px;
+}
+
+.oga-prim-sidebar-trigger:hover {
+  background: rgba(250, 248, 244, 0.06);
+  border-color: rgba(250, 248, 244, 0.28);
+}
