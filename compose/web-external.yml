@@ -19,7 +19,7 @@ services:
     ports:
       - "${PORT:-3000}:3000"
     env_file:
-      - ${WEB_ENV_FILE:-env/local/web.env}
+      - ../../env/local/web.env
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]

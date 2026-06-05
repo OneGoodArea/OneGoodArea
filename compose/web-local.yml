@@ -18,7 +18,7 @@ services:
     ports:
       - "${PORT:-3000}:3000"
     env_file:
-      - ${WEB_ENV_FILE:-env/local/web.env}
+      - ../../env/local/web.env
     networks:
       - oga-network
     restart: unless-stopped

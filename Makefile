@@ -1,28 +1,3 @@
-# OneGoodArea -- container Make interface (Plans 008 + 009).
-#
-# Cross-platform: Linux defaults to Podman, macOS/Windows default to Docker.
-# All engine calls route through $(CONTAINER_ENGINE) from build/container.mk
-# -- never hardcode "docker" or "podman" here.
-#
-# Two target families:
-#   api-*                    -- ergonomic API shortcuts (legacy + still useful)
-#   container-*  ENV=  SERVICE= -- portable per-service prod-mirror targets
-#   db-*                     -- standalone postgres lifecycle (Plan 009)
-#
-# Usage:
-#   make container-info        show detected engine + host OS
-#   make api-build             build the API image
-#   make api-run               run API detached on $(PORT) (env from $(ENVFILE))
-#   make api-stop              stop the API container
-#   make api-clean             stop API + remove API image
-#
-#   make container-build ENV=prod SERVICE=api|web|postgres
-#   make container-run   ENV=prod SERVICE=api|web|postgres
-#   make container-stop  ENV=prod SERVICE=api|web|postgres
-#   make container-logs  ENV=prod SERVICE=api|web|postgres
-#
-# Override variables on the command line, e.g.:
-#   make container-build ENV=local SERVICE=web CONTAINER_ENGINE=podman
 
 include build/container.mk
 
