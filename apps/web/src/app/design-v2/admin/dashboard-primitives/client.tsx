@@ -18,6 +18,7 @@ import { FormGroup, Input, Textarea, Select } from "@/app/design-v2/_shared/dash
 import { Modal } from "@/app/design-v2/_shared/dashboard/modal";
 import { DropdownMenu } from "@/app/design-v2/_shared/dashboard/dropdown-menu";
 import { ToastProvider, useToast } from "@/app/design-v2/_shared/dashboard/toast";
+import { Tabs } from "@/app/design-v2/_shared/dashboard/tabs";
 import "./client.css";
 
 export default function DashboardPrimitivesClient() {
@@ -31,6 +32,8 @@ export default function DashboardPrimitivesClient() {
         <DropdownMenuSection />
         <DropdownMenuDarkSection />
         <ToastSection />
+        <TabsSection />
+        <TabsDarkSection />
       </div>
     </ToastProvider>
   );
@@ -839,6 +842,412 @@ function ModalSection() {
             >
               <p>The key &quot;Production&quot; will stop validating immediately. Any service calling the API with this key will start failing with 401.</p>
             </Modal>
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   AR-228 <Tabs>
+   ============================================================
+   Inline 14x14 line icons. Where the concept overlaps with the
+   AiqIcon set (key, billing, compare), the silhouette mirrors
+   the higher-altitude icon so the visual idea reads the same. */
+
+function GridIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <rect x="1.5" y="1.5" width="4.5" height="4.5" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="8" y="1.5" width="4.5" height="4.5" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="1.5" y="8" width="4.5" height="4.5" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="8" y="8" width="4.5" height="4.5" stroke="currentColor" strokeWidth="1.3" />
+    </svg>
+  );
+}
+
+function ListIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path d="M2 3.5h10M2 7h10M2 10.5h10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function MapIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path d="M5 2L1.5 3.5v8.5L5 10.5l4 1.5 3.5-1.5V2L9 3.5 5 2z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+      <path d="M5 2v8.5M9 3.5V12" stroke="currentColor" strokeWidth="1.3" />
+    </svg>
+  );
+}
+
+/* ---------- Intelligence sub-tab icons ---------- */
+
+function QueryIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <circle cx="6" cy="6" r="3.8" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M9 9l3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function NlIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path d="M2 3.5h10v6H7l-3 2.5v-2.5H2v-6z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+      <circle cx="5" cy="6.5" r="0.6" fill="currentColor" />
+      <circle cx="7" cy="6.5" r="0.6" fill="currentColor" />
+      <circle cx="9" cy="6.5" r="0.6" fill="currentColor" />
+    </svg>
+  );
+}
+
+function PeersIcon() {
+  /* Bracket pair facing each other — mirrors AiqIcon "compare" intent. */
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path d="M4 2L1.5 4.5 4 7M4 7L1.5 9.5 4 12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 2l2.5 2.5L10 7M10 7l2.5 2.5L10 12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7 1v12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeDasharray="1.5 1.5" />
+    </svg>
+  );
+}
+
+function InsightsIcon() {
+  /* Lightbulb */
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path d="M7 1.5a3.8 3.8 0 0 0-2.3 6.8v1.7h4.6V8.3A3.8 3.8 0 0 0 7 1.5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+      <path d="M5.5 11h3M6 12.5h2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ForecastIcon() {
+  /* Trendline going forward + up */
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path d="M1.5 11l3-3 2.5 2L11 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 4h3v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M11 11h-1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeDasharray="1.5 1.2" />
+    </svg>
+  );
+}
+
+/* ---------- Settings sub-tab icons ---------- */
+
+function ProfileIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <circle cx="7" cy="5" r="2.3" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M2.5 12c.7-2.2 2.4-3.5 4.5-3.5s3.8 1.3 4.5 3.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function MembersIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <circle cx="5" cy="5" r="2" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="10" cy="5.5" r="1.6" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M1.5 11.5c.6-1.7 2-2.7 3.5-2.7s2.9 1 3.5 2.7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <path d="M9 11.5c.4-1.4 1.5-2.2 2.7-2.2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function KeyIcon() {
+  /* Mirrors AiqIcon "key" silhouette — circle bow + stem with teeth. */
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <circle cx="4" cy="7" r="2.5" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M6.5 7H12M10 7v2M12 7v1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function WebhookIcon() {
+  /* Mirrors GlyphWebhooks (homepage section 04) at tab scale: source
+     node on the left emitting 2 concentric arcs outward to a
+     subscriber dot on the right. Same visual idea (push), compressed
+     to a 14x14 inline glyph. The hero illustration has 3 arcs +
+     pulse animation; at this size 2 arcs read cleaner and no
+     animation. */
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <circle cx="3.5" cy="7" r="1.6" fill="currentColor" />
+      <path d="M5.5 4.5a3.2 3.2 0 0 1 0 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <path d="M7.5 3a5 5 0 0 1 0 8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" opacity="0.55" />
+      <circle cx="11" cy="7" r="1" stroke="currentColor" strokeWidth="1.2" />
+    </svg>
+  );
+}
+
+function BillingIcon() {
+  /* Mirrors AiqIcon "billing" silhouette — card with stripe */
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <rect x="1.5" y="3" width="11" height="8" rx="1" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M1.5 5.5h11" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M3.5 8.5h2M7 8.5h1" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/* ---------- Portfolio views icons ---------- */
+
+function PortfolioIcon() {
+  /* Folder */
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path d="M1.5 4a1 1 0 0 1 1-1h3l1.5 1.5h5a1 1 0 0 1 1 1V11a1 1 0 0 1-1 1h-9.5a1 1 0 0 1-1-1V4z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function CohortsIcon() {
+  /* Three intersecting circles — cohort overlap */
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <circle cx="5" cy="5" r="2.8" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="9" cy="5" r="2.8" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="7" cy="9" r="2.8" stroke="currentColor" strokeWidth="1.3" />
+    </svg>
+  );
+}
+
+function BundlesIcon() {
+  /* Stack of layers */
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path d="M7 1.5l5.5 2.5L7 6.5 1.5 4 7 1.5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+      <path d="M1.5 7L7 9.5 12.5 7" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+      <path d="M1.5 10L7 12.5 12.5 10" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function CompareIcon() {
+  /* Mirrors AiqIcon "compare" silhouette — split rectangle */
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <rect x="1.5" y="2.5" width="11" height="9" rx="1" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M7 2.5v9" stroke="currentColor" strokeWidth="1.3" strokeDasharray="1.5 1.2" />
+      <path d="M3 5h2.5M3 7h2.5M3 9h1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <path d="M8.5 5h2.5M8.5 7h2M8.5 9h2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ExportsIcon() {
+  /* Download arrow into tray */
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path d="M7 1.5v6.5M4.5 6L7 8.5 9.5 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M2 9.5v2a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/* ---------- Monitor sub-tab icons (dark) ---------- */
+
+function ChangesIcon() {
+  /* Clock with arrow — activity/changes feed */
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M7 4v3.2L9 8.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function AlertsIcon() {
+  /* Bell */
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path d="M3 9.5c.5-.4.8-1 .8-1.7V6.5a3.2 3.2 0 0 1 6.4 0v1.3c0 .7.3 1.3.8 1.7H3z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+      <path d="M5.8 11.5c.2.6.7 1 1.2 1s1-.4 1.2-1" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function TabsSection() {
+  const [intelligenceTab, setIntelligenceTab] = useState("query");
+  const [settingsTab, setSettingsTab] = useState("profile");
+  const [iconTab, setIconTab] = useState("monitor");
+  const [skipTab, setSkipTab] = useState("portfolios");
+  const [filterTab, setFilterTab] = useState("all");
+  const [viewTab, setViewTab] = useState("list");
+
+  return (
+    <section className="oga-section-quiet oga-prim-section" aria-labelledby="ar-228-heading">
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-228 · Foundational</p>
+          <h2 id="ar-228-heading" className="oga-h2 oga-prim-section__title">
+            Tabs
+          </h2>
+          <p className="oga-prim-section__caption">
+            Horizontal tab strip — controlled, fully keyboard-navigable (arrow
+            keys, Home/End), roving tabindex per WAI-ARIA Tabs pattern. Two
+            variants: underline (Intelligence sub-tabs, Settings sections,
+            Monitor sub-views) and pill (filter strips, view-mode toggles).
+            The component renders only the strip — consumers render panel
+            content based on <code className="oga-prim-code">activeId</code>.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc">
+          <Variant label="Underline · default" caption="The Intelligence sub-tabs pattern (D4 locked). Each tab carries its own line glyph; active tab gets the 2px ink underline + ink text.">
+            <Tabs
+              aria-label="Intelligence sub-tabs"
+              activeId={intelligenceTab}
+              onChange={setIntelligenceTab}
+              items={[
+                { id: "query", label: "Query", icon: <QueryIcon /> },
+                { id: "nl", label: "Natural language", icon: <NlIcon /> },
+                { id: "peers", label: "Peers", icon: <PeersIcon /> },
+                { id: "insights", label: "Insights", icon: <InsightsIcon /> },
+                { id: "forecast", label: "Forecast", icon: <ForecastIcon /> },
+              ]}
+            />
+          </Variant>
+
+          <Variant label="Underline · with badges" caption="Settings sections. Icon + label + optional count badge. Active-tab badge inverts (ink bg, white digit) to match the underline emphasis. Key + billing silhouettes mirror the AiqIcon set.">
+            <Tabs
+              aria-label="Settings sections"
+              activeId={settingsTab}
+              onChange={setSettingsTab}
+              items={[
+                { id: "profile", label: "Profile", icon: <ProfileIcon /> },
+                { id: "members", label: "Members", icon: <MembersIcon />, badge: 4 },
+                { id: "api-keys", label: "API keys", icon: <KeyIcon />, badge: 2 },
+                { id: "webhooks", label: "Webhooks", icon: <WebhookIcon />, badge: 7 },
+                { id: "billing", label: "Billing", icon: <BillingIcon /> },
+              ]}
+            />
+          </Variant>
+
+          <Variant label="Underline · compact" caption="Monitor sub-views — minimal labels with icons. Same primitive, fewer items.">
+            <Tabs
+              aria-label="Monitor sub-views"
+              activeId={iconTab}
+              onChange={setIconTab}
+              items={[
+                { id: "monitor", label: "Portfolios", icon: <PortfolioIcon /> },
+                { id: "changes", label: "Changes feed", icon: <ChangesIcon /> },
+                { id: "webhooks", label: "Webhooks", icon: <WebhookIcon /> },
+              ]}
+            />
+          </Variant>
+
+          <Variant label="Underline · with disabled" caption="Portfolio views. Disabled tabs are skipped by arrow-key navigation. Visual: 0.5 opacity, not-allowed cursor.">
+            <Tabs
+              aria-label="Portfolio views"
+              activeId={skipTab}
+              onChange={setSkipTab}
+              items={[
+                { id: "portfolios", label: "Portfolios", icon: <PortfolioIcon /> },
+                { id: "cohorts", label: "Cohorts", icon: <CohortsIcon />, disabled: true },
+                { id: "bundles", label: "Bundles", icon: <BundlesIcon /> },
+                { id: "compare", label: "Compare", icon: <CompareIcon />, disabled: true },
+                { id: "exports", label: "Exports", icon: <ExportsIcon /> },
+              ]}
+            />
+          </Variant>
+
+          <Variant label="Pill" caption='variant="pill" — active tab gets a small ink-tinted rounded background. Used for compact filter strips inside cards or panels.'>
+            <Tabs
+              aria-label="Period filter"
+              variant="pill"
+              activeId={filterTab}
+              onChange={setFilterTab}
+              items={[
+                { id: "all", label: "All time" },
+                { id: "1y", label: "1Y" },
+                { id: "6m", label: "6M" },
+                { id: "3m", label: "3M" },
+                { id: "1m", label: "1M" },
+              ]}
+            />
+          </Variant>
+
+          <Variant label="Pill · with icons" caption="View-mode toggle pattern. Icons replace labels when space is tight — combine with aria-label per tab for screen readers.">
+            <Tabs
+              aria-label="View mode"
+              variant="pill"
+              activeId={viewTab}
+              onChange={setViewTab}
+              items={[
+                { id: "list", label: "List", icon: <ListIcon /> },
+                { id: "grid", label: "Grid", icon: <GridIcon /> },
+                { id: "map", label: "Map", icon: <MapIcon /> },
+              ]}
+            />
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TabsDarkSection() {
+  const [monitorTab, setMonitorTab] = useState("portfolios");
+  const [rangeTab, setRangeTab] = useState("1m");
+
+  return (
+    <section
+      className="oga-section-dark oga-prim-section"
+      data-oga-surface="dark"
+      aria-labelledby="ar-228-dark-heading"
+    >
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-228 · Dark surface variant</p>
+          <h2 id="ar-228-dark-heading" className="oga-h2 oga-prim-section__title">
+            Tabs on dark
+          </h2>
+          <p className="oga-prim-section__caption">
+            For Monitor / sidebar contexts that sit on the graphite-ink
+            surface. Inactive text desaturates to warm-white at 55% opacity;
+            the active underline / pill inverts to warm-white so it reads as
+            the editorial accent the page expects.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc oga-prim-doc--dark">
+          <Variant label="Underline" caption="Monitor sub-views as they appear on a dark scaffolding page. Warm-white active underline; icons desaturate to 55% white when inactive.">
+            <Tabs
+              aria-label="Monitor sub-views (dark)"
+              activeId={monitorTab}
+              onChange={setMonitorTab}
+              items={[
+                { id: "portfolios", label: "Portfolios", icon: <PortfolioIcon />, badge: 12 },
+                { id: "changes", label: "Changes feed", icon: <ChangesIcon />, badge: 3 },
+                { id: "webhooks", label: "Webhooks", icon: <WebhookIcon /> },
+                { id: "alerts", label: "Alerts", icon: <AlertsIcon /> },
+              ]}
+            />
+          </Variant>
+
+          <Variant label="Pill" caption="Compact range selector inside a dark card. Active pill picks up a translucent warm-white wash.">
+            <Tabs
+              aria-label="Range (dark)"
+              variant="pill"
+              activeId={rangeTab}
+              onChange={setRangeTab}
+              items={[
+                { id: "1m", label: "1M" },
+                { id: "3m", label: "3M" },
+                { id: "6m", label: "6M" },
+                { id: "1y", label: "1Y" },
+                { id: "all", label: "All" },
+              ]}
+            />
           </Variant>
         </div>
       </div>
