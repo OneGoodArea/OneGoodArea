@@ -33,6 +33,19 @@ export const MIGRATIONS: Migration[] = [
         created_at TIMESTAMPTZ DEFAULT NOW()
       )`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE`,
+      // AR-218 (Dashboard redesign Epic AR-217): /welcome flow needs to persist
+      // three onboarding signals. All nullable + expand-only; existing rows
+      // unaffected. Values validated at the application layer (Zod in
+      // @onegoodarea/contracts) rather than via CHECK constraints so the
+      // taxonomies can evolve without schema changes.
+      //   - intent: which of the 5 ICPs the user is here for (/welcome Step 1)
+      //   - signup_source: marketing surface that referred them via ?from= (/sign-up)
+      //   - role_preference: how they'll use the product (/welcome Step 3) —
+      //     determines arrival page (engineer → /api-usage, analyst →
+      //     /dashboard/intelligence, explorer → /dashboard)
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS intent TEXT`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS signup_source TEXT`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS role_preference TEXT`,
     ],
   },
   {

@@ -24,6 +24,12 @@ export async function ensureUsersTable() {
   await sql`
     ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE
   `;
+  // AR-218 (Dashboard redesign Epic AR-217): /welcome flow needs three
+  // onboarding signals. Mirrored from apps/api/src/infrastructure/db/schema.ts.
+  // All nullable + expand-only; existing rows unaffected.
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS intent TEXT`;
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS signup_source TEXT`;
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS role_preference TEXT`;
 }
 
 export async function ensureVerificationTable() {

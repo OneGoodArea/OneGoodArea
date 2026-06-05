@@ -89,4 +89,16 @@ describe("db migrate", () => {
     const names = MIGRATIONS.map((m) => m.name);
     expect(new Set(names).size).toBe(names.length);
   });
+
+  it("users migration includes intent + signup_source + role_preference ADD COLUMN statements (AR-218)", () => {
+    // AR-218 (Dashboard redesign Epic AR-217): /welcome flow needs three onboarding
+    // columns nullable on the users table. Idempotent ADD COLUMN IF NOT EXISTS so
+    // existing rows are unaffected.
+    const users = MIGRATIONS.find((m) => m.name === "users");
+    expect(users, "users migration must exist").toBeDefined();
+    const ddl = users!.statements.join("\n");
+    expect(ddl).toMatch(/ADD COLUMN IF NOT EXISTS intent TEXT/i);
+    expect(ddl).toMatch(/ADD COLUMN IF NOT EXISTS signup_source TEXT/i);
+    expect(ddl).toMatch(/ADD COLUMN IF NOT EXISTS role_preference TEXT/i);
+  });
 });
