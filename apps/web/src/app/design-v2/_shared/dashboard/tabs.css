@@ -1,0 +1,218 @@
+/* ============================================================
+   AR-228 — <Tabs>
+   Horizontal tab strip. Two visual variants:
+   - underline (default): bottom hairline under whole strip,
+     2px ink underline on the active tab. Intelligence sub-tabs
+     pattern; restrained editorial feel.
+   - pill: active tab gets a small ink-tinted rounded rectangle
+     background. Used for filter strips + settings sub-sections.
+   Soft-warm hover signature on inactive tabs matches the /about
+   page card hover + .oga-dropdown__item recipe.
+   ============================================================ */
+
+.oga-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: var(--oga-4);
+  position: relative;
+  /* Allow horizontal scroll on narrow widths without breaking layout */
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.oga-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* Underline variant — hairline under the whole strip; the active tab
+   draws a 2px ink line that sits on top of (slightly below baseline
+   of) the strip border, creating a tabbed-page feel. */
+.oga-tabs[data-variant="underline"] {
+  border-bottom: 1px solid var(--oga-ink-10);
+  gap: var(--oga-5);
+}
+
+[data-oga-surface="dark"] .oga-tabs[data-variant="underline"] {
+  border-bottom-color: rgba(250, 248, 244, 0.12);
+}
+
+/* Pill variant — no strip-level border; tighter gap because pills
+   visually separate themselves. */
+.oga-tabs[data-variant="pill"] {
+  gap: var(--oga-2);
+}
+
+/* ---------- Tab button ---------- */
+
+.oga-tabs__tab {
+  appearance: none;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  padding: 10px 2px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--oga-fg-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition:
+    color var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-tabs__tab:hover:not(:disabled):not([data-active="true"]) {
+  color: var(--oga-ink);
+}
+
+.oga-tabs__tab:focus-visible {
+  outline: 1.5px solid var(--oga-ink);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.oga-tabs__tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.oga-tabs__tab[data-active="true"] {
+  color: var(--oga-ink);
+}
+
+/* ---------- Underline active marker ---------- */
+
+.oga-tabs[data-variant="underline"] .oga-tabs__tab {
+  /* Negative margin pulls the active underline down to overlap the
+     strip hairline; padding-bottom adjusted to compensate so the
+     hit-target stays visually centered. */
+  padding: 10px 2px 11px;
+}
+
+.oga-tabs[data-variant="underline"] .oga-tabs__tab::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: transparent;
+  transition: background var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-tabs[data-variant="underline"] .oga-tabs__tab[data-active="true"]::after {
+  background: var(--oga-ink);
+}
+
+[data-oga-surface="dark"] .oga-tabs[data-variant="underline"] .oga-tabs__tab[data-active="true"]::after {
+  background: var(--oga-white);
+}
+
+/* ---------- Pill active background ---------- */
+
+.oga-tabs[data-variant="pill"] .oga-tabs__tab {
+  padding: 8px var(--oga-3);
+  border-radius: 4px;
+}
+
+.oga-tabs[data-variant="pill"] .oga-tabs__tab:hover:not(:disabled):not([data-active="true"]) {
+  background: rgba(26, 28, 31, 0.04);
+  border-color: rgba(26, 28, 31, 0.08);
+}
+
+.oga-tabs[data-variant="pill"] .oga-tabs__tab[data-active="true"] {
+  background: rgba(26, 28, 31, 0.06);
+  border-color: rgba(26, 28, 31, 0.10);
+  /* Inset highlight catches the top edge — same edge-lit material
+     recipe as .oga-btn + .oga-dropdown */
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+}
+
+[data-oga-surface="dark"] .oga-tabs[data-variant="pill"] .oga-tabs__tab:hover:not(:disabled):not([data-active="true"]) {
+  background: rgba(250, 248, 244, 0.04);
+  border-color: rgba(250, 248, 244, 0.10);
+}
+
+[data-oga-surface="dark"] .oga-tabs[data-variant="pill"] .oga-tabs__tab[data-active="true"] {
+  background: rgba(250, 248, 244, 0.08);
+  border-color: rgba(250, 248, 244, 0.18);
+  box-shadow: 0 1px 0 rgba(250, 248, 244, 0.06) inset;
+}
+
+/* ---------- Dark surface text colours ---------- */
+
+[data-oga-surface="dark"] .oga-tabs__tab {
+  color: rgba(250, 248, 244, 0.55);
+}
+
+[data-oga-surface="dark"] .oga-tabs__tab:hover:not(:disabled):not([data-active="true"]) {
+  color: var(--oga-white);
+}
+
+[data-oga-surface="dark"] .oga-tabs__tab[data-active="true"] {
+  color: var(--oga-white);
+}
+
+[data-oga-surface="dark"] .oga-tabs__tab:focus-visible {
+  outline-color: var(--oga-white);
+}
+
+/* ---------- Icon + badge ---------- */
+
+.oga-tabs__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+.oga-tabs__label {
+  /* Reserve a fraction of pixel space so the typography aligns
+     consistently between active (font-weight) and inactive states. */
+  display: inline-block;
+}
+
+.oga-tabs__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  background: var(--oga-ink-10);
+  color: var(--oga-fg-muted);
+  border-radius: 9px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  flex-shrink: 0;
+  transition:
+    background var(--oga-dur-fast) var(--oga-ease),
+    color var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-tabs__tab[data-active="true"] .oga-tabs__badge {
+  background: var(--oga-ink);
+  color: var(--oga-white);
+}
+
+[data-oga-surface="dark"] .oga-tabs__badge {
+  background: rgba(250, 248, 244, 0.10);
+  color: rgba(250, 248, 244, 0.65);
+}
+
+[data-oga-surface="dark"] .oga-tabs__tab[data-active="true"] .oga-tabs__badge {
+  background: var(--oga-white);
+  color: var(--oga-ink);
+}
