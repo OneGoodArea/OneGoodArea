@@ -20,6 +20,7 @@ export * from "./bundles";
 export * from "./presets";
 export * from "./methodology";
 export * from "./cohorts";
+export * from "./users";
 import type { AreaType } from "./signals";
 
 /** The four scoring intents the engine supports. Canonical source of truth. */
