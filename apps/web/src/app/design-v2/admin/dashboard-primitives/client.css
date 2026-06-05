@@ -257,3 +257,10 @@
   background: rgba(250, 248, 244, 0.06);
   border-color: rgba(250, 248, 244, 0.28);
 }
+
+/* AR-222 — button row for stack-test variant */
+.oga-prim-button-row {
+  display: flex;
+  gap: var(--oga-2);
+  flex-wrap: wrap;
+}
