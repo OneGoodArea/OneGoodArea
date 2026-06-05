@@ -1,0 +1,139 @@
+/* AR-217 Phase 0 — Dashboard primitives showcase page.
+   Brand v3 altitude: surface rotation (hero → quiet → dark), editorial
+   hero, document-style variant rows (NOT card grid — auto-rejected per
+   feedback-design-bar). Layout only; the primitives themselves carry
+   their own CSS (form-group.css etc.). */
+
+.oga-prim-page {
+  min-height: 100vh;
+  background: var(--oga-bg);
+  color: var(--oga-fg);
+}
+
+/* ---------- Hero ---------- */
+
+.oga-prim-hero__inner {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 clamp(var(--oga-4), 5vw, var(--oga-7));
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+}
+
+.oga-prim-hero__title {
+  margin: 0;
+}
+
+.oga-prim-hero__lead {
+  margin: 0;
+  max-width: 56ch;
+}
+
+/* ---------- Sections ---------- */
+
+.oga-prim-section__inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 clamp(var(--oga-4), 5vw, var(--oga-7));
+}
+
+.oga-prim-section__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+  margin-bottom: var(--oga-7);
+  padding-bottom: var(--oga-5);
+  border-bottom: 1px solid var(--oga-ink-10);
+}
+
+[data-oga-surface="dark"] .oga-prim-section__header {
+  border-bottom-color: rgba(250, 248, 244, 0.12);
+}
+
+.oga-prim-section__title {
+  margin: 0;
+}
+
+.oga-prim-section__caption {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+  max-width: 64ch;
+  margin: 0;
+}
+
+[data-oga-surface="dark"] .oga-prim-section__caption {
+  color: rgba(250, 248, 244, 0.65);
+}
+
+/* ---------- Document-style variant grid ----------
+   Two-column row: meta (label + caption) | demo. Stacks under 720px.
+   No cards. No borders around the control area. Restrained spacing,
+   subtle hairline between rows. */
+
+.oga-prim-doc {
+  display: flex;
+  flex-direction: column;
+}
+
+.oga-prim-doc__row {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  gap: clamp(var(--oga-5), 6vw, var(--oga-7));
+  padding: var(--oga-6) 0;
+  border-top: 1px solid var(--oga-ink-10);
+}
+
+.oga-prim-doc__row:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.oga-prim-doc__row:last-child {
+  padding-bottom: 0;
+}
+
+[data-oga-surface="dark"] .oga-prim-doc__row {
+  border-top-color: rgba(250, 248, 244, 0.10);
+}
+
+.oga-prim-doc__meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-2);
+}
+
+.oga-prim-doc__label {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--oga-fg);
+  margin: 0;
+}
+
+.oga-prim-doc__caption {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+[data-oga-surface="dark"] .oga-prim-doc__caption {
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-prim-doc__demo {
+  max-width: 480px;
+}
+
+@media (max-width: 720px) {
+  .oga-prim-doc__row {
+    grid-template-columns: 1fr;
+    gap: var(--oga-3);
+    padding: var(--oga-5) 0;
+  }
+}
