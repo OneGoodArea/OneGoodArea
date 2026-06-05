@@ -1,28 +1,3 @@
-# OneGoodArea -- container Make interface (Plans 008 + 009).
-#
-# Cross-platform: Linux defaults to Podman, macOS/Windows default to Docker.
-# All engine calls route through $(CONTAINER_ENGINE) from build/container.mk
-# -- never hardcode "docker" or "podman" here.
-#
-# Two target families:
-#   api-*                    -- ergonomic API shortcuts (legacy + still useful)
-#   container-*  ENV=  SERVICE= -- portable per-service prod-mirror targets
-#   db-*                     -- standalone postgres lifecycle (Plan 009)
-#
-# Usage:
-#   make container-info        show detected engine + host OS
-#   make api-build             build the API image
-#   make api-run               run API detached on $(PORT) (env from $(ENVFILE))
-#   make api-stop              stop the API container
-#   make api-clean             stop API + remove API image
-#
-#   make container-build ENV=prod SERVICE=api|web|postgres
-#   make container-run   ENV=prod SERVICE=api|web|postgres
-#   make container-stop  ENV=prod SERVICE=api|web|postgres
-#   make container-logs  ENV=prod SERVICE=api|web|postgres
-#
-# Override variables on the command line, e.g.:
-#   make container-build ENV=local SERVICE=web CONTAINER_ENGINE=podman
 
 include build/container.mk
 
@@ -52,6 +27,7 @@ API_ENVFILE ?= .env.local
         container-build container-run container-stop container-logs \
         container-guard \
         db-net db-vol db-run db-stop db-clean db-seed \
+        web-build web-up-external web-up-local web-down web-logs web-open \
         coverage coverage-api coverage-web coverage-contracts
 
 help:
@@ -97,6 +73,14 @@ help:
 	@echo "  api-run                   run $(API_NAME) on :$(API_PORT)  (env: $(API_ENVFILE))"
 	@echo "  api-stop                  stop $(API_NAME)"
 	@echo "  api-clean                 api-stop + remove image"
+	@echo ""
+	@echo "  ── Web container shortcuts (Plan 011) ──────────────────────────────"
+	@echo "  web-build                 build $(WEB_IMAGE)"
+	@echo "  web-up-external           run web container (API on LAN / cloud / bare)"
+	@echo "  web-up-local              run web container (API as local oga-api)"
+	@echo "  web-down                  stop and remove web container"
+	@echo "  web-logs                  follow web container logs"
+	@echo "  web-open                  open web app in browser"
 	@echo ""
 	@echo "  ── Portable per-service targets  (ENV=  SERVICE=) ───────────────────"
 	@echo "  container-info            show detected engine + host OS"
@@ -274,3 +258,42 @@ db-seed:
 	$(CONTAINER_ENGINE) exec -i $(DB_NAME) psql -U oga -d oga \
 	  < apps/web/tests/seeds/profiles/baseline/100-baseline-users.sql
 	@echo "Seed applied."
+
+# --- web container shortcuts (Plan 011) ----------------------------------
+#
+# Two scenarios:
+#   web-up-external  → API on LAN / cloud / bare process
+#   web-up-local     → API as local container (oga-api) on oga-network
+#
+# Both use INTERNAL_API_URL from env file to point to the API.
+
+WEB_IMAGE       ?= onegoodarea/web:local
+WEB_PORT        ?= 3000
+WEB_ENVFILE     ?= env/local/web.env
+COMPOSE_EXTERNAL ?= compose/web-external.yml
+COMPOSE_LOCAL   ?= compose/web-local.yml
+
+web-build:
+	$(CONTAINER_ENGINE) build -t $(WEB_IMAGE) -f container/web/Containerfile .
+
+web-up-external:
+	@test -f $(WEB_ENVFILE) || { echo "ERROR: $(WEB_ENVFILE) not found. Copy env/local/web.env.example and fill it in."; exit 2; }
+	$(CONTAINER_ENGINE) compose -f $(COMPOSE_EXTERNAL) up -d
+	@echo "web → http://localhost:$(WEB_PORT)"
+
+web-up-local:
+	@test -f $(WEB_ENVFILE) || { echo "ERROR: $(WEB_ENVFILE) not found. Copy env/local/web.env.example and fill it in."; exit 2; }
+	$(CONTAINER_ENGINE) compose -f $(COMPOSE_LOCAL) up -d
+	@echo "web → http://localhost:$(WEB_PORT)"
+	@echo "Note: API must be running on oga-network. Run: make db-net api-run"
+
+web-down:
+	-$(CONTAINER_ENGINE) compose -f $(COMPOSE_EXTERNAL) down 2>/dev/null || true
+	-$(CONTAINER_ENGINE) compose -f $(COMPOSE_LOCAL) down 2>/dev/null || true
+
+web-logs:
+	$(CONTAINER_ENGINE) compose -f $(COMPOSE_EXTERNAL) logs -f 2>/dev/null || \
+	$(CONTAINER_ENGINE) compose -f $(COMPOSE_LOCAL) logs -f
+
+web-open:
+	xdg-open http://localhost:$(WEB_PORT) 2>/dev/null || open http://localhost:$(WEB_PORT) 2>/dev/null || true

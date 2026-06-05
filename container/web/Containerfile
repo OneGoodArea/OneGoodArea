@@ -58,6 +58,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
+# Install curl for healthchecks (Plan 011: docker compose healthcheck).
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
 # Standalone output layout copied per Next.js convention:
 #   .next/standalone/   -> minimal node server + traced deps
 #   .next/static/       -> hashed static assets served by the server
