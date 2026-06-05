@@ -10,10 +10,12 @@
    Brand v3 altitude: same vocabulary as /methodology + /products/*.
    Surface rotation (hero → quiet → dark) per feedback-design-bar.
 
-   AR-219: <FormGroup> + <Input> + <Textarea> + <Select>. */
+   AR-219: <FormGroup> + <Input> + <Textarea> + <Select>.
+   AR-220: <Modal>. */
 
 import { useState } from "react";
 import { FormGroup, Input, Textarea, Select } from "@/app/design-v2/_shared/dashboard/form-group";
+import { Modal } from "@/app/design-v2/_shared/dashboard/modal";
 import "./client.css";
 
 export default function DashboardPrimitivesClient() {
@@ -22,6 +24,7 @@ export default function DashboardPrimitivesClient() {
       <Hero />
       <FormGroupSection />
       <FormGroupDarkSection />
+      <ModalSection />
     </div>
   );
 }
@@ -228,5 +231,214 @@ function Variant({ label, caption, children }: { label: string; caption: string;
       </div>
       <div className="oga-prim-doc__demo">{children}</div>
     </div>
+  );
+}
+
+/* ============================================================
+   AR-220 <Modal>
+   ============================================================ */
+
+function ModalSection() {
+  const [defaultOpen, setDefaultOpen] = useState(false);
+  const [smOpen, setSmOpen] = useState(false);
+  const [lgOpen, setLgOpen] = useState(false);
+  const [mustConfirmOpen, setMustConfirmOpen] = useState(false);
+  const [darkOpen, setDarkOpen] = useState(false);
+  const [withFormOpen, setWithFormOpen] = useState(false);
+
+  return (
+    <section className="oga-section-quiet oga-prim-section" aria-labelledby="ar-220-heading">
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-220 · Foundational</p>
+          <h2 id="ar-220-heading" className="oga-h2 oga-prim-section__title">
+            Modal
+          </h2>
+          <p className="oga-prim-section__caption">
+            Focused overlay built on the native <code className="oga-prim-code">&lt;dialog&gt;</code> element.
+            Focus trap, escape key, body scroll lock, top-layer positioning all come
+            for free. Used for delete confirmations, create dialogs, reveal-once
+            secrets (API key + webhook secret), and the &quot;Show the curl&quot; panel
+            from Intelligence.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc">
+          <Variant label="Default · md" caption="The standard shape: title, body, footer with cancel + confirm.">
+            <button type="button" className="oga-btn oga-btn-secondary" onClick={() => setDefaultOpen(true)}>
+              Open default modal
+            </button>
+            <Modal
+              open={defaultOpen}
+              onClose={() => setDefaultOpen(false)}
+              title="Rename portfolio"
+              footer={
+                <>
+                  <button type="button" className="oga-btn oga-btn-secondary" onClick={() => setDefaultOpen(false)}>
+                    Cancel
+                  </button>
+                  <button type="button" className="oga-btn oga-btn-primary" onClick={() => setDefaultOpen(false)}>
+                    Save
+                  </button>
+                </>
+              }
+            >
+              <p>Pick a new name for this portfolio. Members will see the new name on their next sync.</p>
+            </Modal>
+          </Variant>
+
+          <Variant label="Small" caption="400px max. For quick yes/no confirmations.">
+            <button type="button" className="oga-btn oga-btn-secondary" onClick={() => setSmOpen(true)}>
+              Open small modal
+            </button>
+            <Modal
+              open={smOpen}
+              onClose={() => setSmOpen(false)}
+              title="Delete this preset?"
+              size="sm"
+              footer={
+                <>
+                  <button type="button" className="oga-btn oga-btn-secondary" onClick={() => setSmOpen(false)}>
+                    Cancel
+                  </button>
+                  <button type="button" className="oga-btn oga-btn-primary" onClick={() => setSmOpen(false)}>
+                    Delete
+                  </button>
+                </>
+              }
+            >
+              <p>The preset will be permanently removed from your org. This cannot be undone.</p>
+            </Modal>
+          </Variant>
+
+          <Variant label="Large" caption="720px max. For richer content — code blocks, multi-section dialogs.">
+            <button type="button" className="oga-btn oga-btn-secondary" onClick={() => setLgOpen(true)}>
+              Open large modal
+            </button>
+            <Modal
+              open={lgOpen}
+              onClose={() => setLgOpen(false)}
+              title="Show the curl"
+              size="lg"
+              footer={
+                <button type="button" className="oga-btn oga-btn-primary" onClick={() => setLgOpen(false)}>
+                  Close
+                </button>
+              }
+            >
+              <p>The Intelligence query you just ran, as a programmatic plan you can replay from your own backend:</p>
+              <pre className="oga-prim-pre">
+{`curl -X POST https://api.onegoodarea.com/v1/query \\
+  -H "Authorization: Bearer oga_..." \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "plan": {
+      "op": "rank_areas",
+      "signals": [
+        { "key": "property.price_change_pct_yoy",
+          "filter": { "gt": 0 } },
+        { "key": "crime.total_12m_percentile",
+          "filter": { "lte": 50 } }
+      ],
+      "sort_by": "property.price_change_pct_yoy",
+      "order": "desc",
+      "limit": 5
+    }
+  }'`}
+              </pre>
+            </Modal>
+          </Variant>
+
+          <Variant label="Must confirm" caption="closeOnBackdrop=false. User has to explicitly cancel — backdrop clicks ignored.">
+            <button type="button" className="oga-btn oga-btn-secondary" onClick={() => setMustConfirmOpen(true)}>
+              Open must-confirm modal
+            </button>
+            <Modal
+              open={mustConfirmOpen}
+              onClose={() => setMustConfirmOpen(false)}
+              title="Delete this org and all data?"
+              size="sm"
+              closeOnBackdrop={false}
+              footer={
+                <>
+                  <button type="button" className="oga-btn oga-btn-secondary" onClick={() => setMustConfirmOpen(false)}>
+                    Cancel
+                  </button>
+                  <button type="button" className="oga-btn oga-btn-primary" onClick={() => setMustConfirmOpen(false)}>
+                    Delete org
+                  </button>
+                </>
+              }
+            >
+              <p>All members, portfolios, bundles, presets, cohorts, and API keys will be permanently deleted. This cannot be undone.</p>
+            </Modal>
+          </Variant>
+
+          <Variant label="With form" caption="Modal body composes other primitives. FormGroup + Input fit naturally inside.">
+            <button type="button" className="oga-btn oga-btn-secondary" onClick={() => setWithFormOpen(true)}>
+              Open create-org dialog
+            </button>
+            <Modal
+              open={withFormOpen}
+              onClose={() => setWithFormOpen(false)}
+              title="Create new org"
+              footer={
+                <>
+                  <button type="button" className="oga-btn oga-btn-secondary" onClick={() => setWithFormOpen(false)}>
+                    Cancel
+                  </button>
+                  <button type="button" className="oga-btn oga-btn-primary" onClick={() => setWithFormOpen(false)}>
+                    Create org
+                  </button>
+                </>
+              }
+            >
+              <div className="oga-prim-form-stack">
+                <FormGroup
+                  label="Organisation name"
+                  htmlFor="modal-org-name"
+                  help="Visible to your team and on /v1/me responses."
+                  required
+                >
+                  <Input id="modal-org-name" placeholder="Acme Underwriting" />
+                </FormGroup>
+                <FormGroup
+                  label="Slug"
+                  htmlFor="modal-org-slug"
+                  help="Lowercase, no spaces. Used in API responses."
+                >
+                  <Input id="modal-org-slug" placeholder="acme-underwriting" />
+                </FormGroup>
+              </div>
+            </Modal>
+          </Variant>
+
+          <Variant label="Dark variant" caption='data-oga-surface="dark". Used to escalate destructive moments — the surface change carries the gravity.'>
+            <button type="button" className="oga-btn oga-btn-secondary" onClick={() => setDarkOpen(true)}>
+              Open dark modal
+            </button>
+            <Modal
+              open={darkOpen}
+              onClose={() => setDarkOpen(false)}
+              title="Revoke this API key?"
+              size="sm"
+              surface="dark"
+              footer={
+                <>
+                  <button type="button" className="oga-btn oga-btn-secondary" onClick={() => setDarkOpen(false)}>
+                    Cancel
+                  </button>
+                  <button type="button" className="oga-btn oga-btn-primary" onClick={() => setDarkOpen(false)}>
+                    Revoke key
+                  </button>
+                </>
+              }
+            >
+              <p>The key &quot;Production&quot; will stop validating immediately. Any service calling the API with this key will start failing with 401.</p>
+            </Modal>
+          </Variant>
+        </div>
+      </div>
+    </section>
   );
 }
