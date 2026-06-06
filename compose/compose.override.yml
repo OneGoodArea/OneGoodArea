@@ -1,0 +1,31 @@
+services:
+  postgres:
+    ports:
+      - "55432:5432"
+    volumes:
+      - oga-postgres-data:/var/lib/postgresql/data
+      - ../apps/web/tests/db/bootstrap:/docker-entrypoint-initdb.d:ro
+
+  neon-proxy:
+    ports:
+      - "55433:55433"
+
+  api:
+    ports:
+      - "8080:8080"
+
+  web:
+    ports:
+      - "3000:3000"
+
+  mailhog:
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  stripe-mock:
+    ports:
+      - "12111:12111"
+
+volumes:
+  oga-postgres-data:

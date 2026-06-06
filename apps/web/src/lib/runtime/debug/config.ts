@@ -23,7 +23,7 @@ export function getRuntimeDebugConfig() {
   const logLevel = process.env.OGA_LOG_LEVEL?.trim() || "debug";
 
   const config: RuntimeDebugConfig = {
-    composeFile: process.env.OGA_COMPOSE_FILE?.trim() || "container-compose.yml",
+    composeFile: process.env.OGA_COMPOSE_FILE?.trim() || "compose/compose.yml",
     seedProfile: process.env.OGA_SEED_PROFILE?.trim() || "baseline",
     logLevel,
     serviceUrls: {
@@ -36,4 +36,3 @@ export function getRuntimeDebugConfig() {
 
   return config;
 }
-

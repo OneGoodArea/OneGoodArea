@@ -30,14 +30,15 @@ Deterministic signals · configurable scoring · portfolio monitoring · a typed
 
 ## Run locally
 
+Below is just a smal gist, more about make and commands in the OPERATIONS folder documents
 ```bash
 git clone https://github.com/OneGoodArea/OneGoodArea.git
 cd OneGoodArea
-make setup
-make dev
+make app-setup
+make app-dev
 ```
 
-Full setup + env vars in [`docs/OPERATIONS/README.md`](./docs/OPERATIONS/README.md). The Makefile also exposes `setup`, `dev`, `migrate`, `bootstrap-test-key`, `test`, `typecheck`, and `lint`.
+Full setup + env vars in [`docs/OPERATIONS/README.md`](./docs/OPERATIONS/README.md). Use `make help` to discover available `app-*`, `stack-*`, and `<service>-<action>` targets.
 
 ## What's inside
 

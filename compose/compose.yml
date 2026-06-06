@@ -1,0 +1,94 @@
+services:
+  postgres:
+    build:
+      context: ..
+      dockerfile: container/postgres/Containerfile
+    image: onegoodarea/postgres:local
+    profiles: ["db"]
+    environment:
+      POSTGRES_DB: oga_local
+      POSTGRES_USER: oga_user
+      POSTGRES_PASSWORD: oga_test_password_local
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oga_user -d oga_local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  neon-proxy:
+    build:
+      context: ../services/neon-compat-proxy
+      dockerfile: Dockerfile
+    image: onegoodarea/neon-compat-proxy:local
+    profiles: ["db"]
+    environment:
+      POSTGRES_USER: oga_user
+      POSTGRES_PASSWORD: oga_test_password_local
+      POSTGRES_DB: oga_local
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "healthcheck.js"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  api:
+    build:
+      context: ..
+      dockerfile: container/api/Containerfile
+    image: onegoodarea/api:local
+    profiles: ["minimal"]
+    environment:
+      NODE_ENV: development
+      PORT: 8080
+      DATABASE_URL: postgres://oga_user:oga_test_password_local@postgres:5432/oga_local
+      AUTH_SECRET: replace-me
+      NEXTAUTH_URL: http://localhost:3000
+      OGA_AI_PROVIDER: mock
+      OGA_EMAIL_PROVIDER: mailhog
+      OGA_SIGNALS_API: "true"
+      OGA_SIGNALS_STORE_READ: "true"
+      CRON_SECRET: replace-me
+    depends_on:
+      neon-proxy:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ..
+      dockerfile: container/web/Containerfile
+    image: onegoodarea/web:local
+    profiles: ["minimal"]
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      AUTH_SECRET: replace-me
+      NEXTAUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      INTERNAL_API_URL: http://api:8080
+    depends_on:
+      api:
+        condition: service_started
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    profiles: ["full"]
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8025"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  stripe-mock:
+    image: stripe/stripe-mock:latest
+    profiles: ["full"]
