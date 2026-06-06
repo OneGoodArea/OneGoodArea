@@ -32,6 +32,8 @@ import { CodeBlock } from "@/app/design-v2/_shared/dashboard/code-block";
 import { StatsCard } from "@/app/design-v2/_shared/dashboard/stats-card";
 import { Pagination } from "@/app/design-v2/_shared/dashboard/pagination";
 import { Breadcrumb } from "@/app/design-v2/_shared/dashboard/breadcrumb";
+import { FilterBuilder } from "@/app/design-v2/_shared/dashboard/filter-builder";
+import type { FilterSignal, FilterClause } from "@/app/design-v2/_shared/dashboard/filter-builder";
 import "./client.css";
 
 export default function DashboardPrimitivesClient() {
@@ -62,6 +64,8 @@ export default function DashboardPrimitivesClient() {
         <PaginationDarkSection />
         <BreadcrumbSection />
         <BreadcrumbDarkSection />
+        <FilterBuilderSection />
+        <FilterBuilderDarkSection />
       </div>
     </ToastProvider>
   );
@@ -2804,6 +2808,130 @@ function BreadcrumbDarkSection() {
                 { label: "BrightStar — Lender pack" },
               ]}
               separator="›"
+              surface="dark"
+            />
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   AR-244 <FilterBuilder>
+   ============================================================
+   Bespoke compound rank_areas builder. Only consumer is the
+   Signals playground cross-area mode at /dashboard/signals (Phase
+   2 — AR-217-C1). Iteration expected when the real consumer wires
+   it into the live /v1/signals catalog + /v1/areas response. */
+
+const FB_SIGNALS: FilterSignal[] = [
+  { key: "deprivation.imd_decile",          label: "IMD decile",                       category: "Deprivation" },
+  { key: "deprivation.income_score",        label: "Income deprivation score",         category: "Deprivation" },
+  { key: "deprivation.employment_score",    label: "Employment deprivation score",     category: "Deprivation" },
+  { key: "property.median_price",           label: "Median price",                     category: "Property", unit: "£" },
+  { key: "property.price_change_pct_yoy",   label: "Price change (YoY)",               category: "Property", unit: "%" },
+  { key: "property.transaction_count_12m",  label: "Transactions (12m)",               category: "Property" },
+  { key: "crime.total_12m_percentile",      label: "Crime percentile",                 category: "Crime" },
+  { key: "crime.total_12m_change_pct_yoy",  label: "Crime change (YoY)",               category: "Crime", unit: "%" },
+];
+
+function FilterBuilderSection() {
+  /* Two independent demos so the variants don't share state. */
+  const [clauses1, setClauses1] = useState<FilterClause[]>([]);
+  const [clauses2, setClauses2] = useState<FilterClause[]>([
+    { signalKey: "property.median_price", operator: "lt", value: 250000 },
+    { signalKey: "property.price_change_pct_yoy", operator: "gt", value: 0 },
+  ]);
+  const [sortBy2, setSortBy2] = useState<string | undefined>("property.price_change_pct_yoy");
+  const [order2, setOrder2] = useState<"asc" | "desc">("desc");
+
+  return (
+    <section className="oga-section-quiet oga-prim-section" aria-labelledby="ar-244-heading">
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-244 · Bespoke</p>
+          <h2 id="ar-244-heading" className="oga-h2 oga-prim-section__title">
+            FilterBuilder
+          </h2>
+          <p className="oga-prim-section__caption">
+            Composes the compound <code className="oga-prim-code">rank_areas</code> query
+            grammar per ADR 0019 — pick signal, pick operator, set value,
+            stack with AND. <strong>Only Phase 2 consumer:</strong> the Signals playground
+            cross-area mode at <code className="oga-prim-code">/dashboard/signals</code>.
+            Iteration expected when the real page wires it into the live
+            <code className="oga-prim-code">/v1/signals</code> catalog + <code className="oga-prim-code">/v1/areas</code> response.
+            Reuses existing <code className="oga-prim-code">&lt;Select&gt;</code> + <code className="oga-prim-code">&lt;Input&gt;</code> from
+            FormGroup. Sort-by validates against ADR 0019 (only signals
+            present in clauses are sortable). AND semantics only for v1.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc">
+          <Variant label="Empty — initial state" caption="No clauses yet. Empty-state copy in the Where section prompts the user to add the first condition; the Sort by section is disabled until a clause exists." wide>
+            <FilterBuilder
+              signals={FB_SIGNALS}
+              value={clauses1}
+              onChange={setClauses1}
+            />
+          </Variant>
+
+          <Variant label="Realistic shape — interactive (start typing here)" caption='Two clauses pre-populated: "Median price &lt; £250,000 AND YoY change &gt; 0%". Sort-by validated against ADR 0019: only signals present in clauses appear as options. Click "+ Add condition" to stack more clauses; click the × to remove; click any select to change.' wide>
+            <FilterBuilder
+              signals={FB_SIGNALS}
+              value={clauses2}
+              onChange={setClauses2}
+              sortBy={sortBy2}
+              onSortByChange={setSortBy2}
+              sortOrder={order2}
+              onSortOrderChange={setOrder2}
+            />
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FilterBuilderDarkSection() {
+  const [clauses, setClauses] = useState<FilterClause[]>([
+    { signalKey: "crime.total_12m_percentile", operator: "lte", value: 25 },
+    { signalKey: "deprivation.imd_decile", operator: "gte", value: 6 },
+  ]);
+  const [sortBy, setSortBy] = useState<string | undefined>("deprivation.imd_decile");
+  const [order, setOrder] = useState<"asc" | "desc">("desc");
+
+  return (
+    <section
+      className="oga-section-dark oga-prim-section"
+      data-oga-surface="dark"
+      aria-labelledby="ar-244-dark-heading"
+    >
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-244 · Dark surface variant</p>
+          <h2 id="ar-244-dark-heading" className="oga-h2 oga-prim-section__title">
+            FilterBuilder on dark
+          </h2>
+          <p className="oga-prim-section__caption">
+            Same primitive on a dark Monitor / Intelligence scaffolding
+            page. Graphite gradient + dot-field motif at top-right —
+            matches Sidebar + DataTable + EmptyState + CodeBlock dark.
+            The Select + Input children inherit their dark variants from
+            their existing FormGroup CSS.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc oga-prim-doc--dark">
+          <Variant label="Two-clause query on dark" caption='Crime percentile ≤ 25 AND IMD decile ≥ 6, sorted by IMD decile (descending). The "lender bundle" shape — low crime, well-deprived areas.' wide>
+            <FilterBuilder
+              signals={FB_SIGNALS}
+              value={clauses}
+              onChange={setClauses}
+              sortBy={sortBy}
+              onSortByChange={setSortBy}
+              sortOrder={order}
+              onSortOrderChange={setOrder}
               surface="dark"
             />
           </Variant>

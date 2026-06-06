@@ -1,0 +1,446 @@
+/* ============================================================
+   AR-244 — <FilterBuilder>
+   Bespoke compound rank_areas builder. Outer surface shares the
+   warm-white gradient + edge-lit material recipe used by
+   DataTable + EmptyState + StatsCard light; dark variant uses the
+   graphite gradient + dot-field motif. Section labels in mono caps
+   eyebrow, hairline AND divider between clause rows, soft-warm
+   hover on the add/remove affordances.
+   ============================================================ */
+
+.oga-filter-builder {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 22px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAF8F4 100%);
+  border: 1px solid rgba(26, 28, 31, 0.10);
+  border-radius: 10px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 1px 1px rgba(26, 28, 31, 0.04),
+    0 28px 64px -22px rgba(26, 28, 31, 0.18);
+  isolation: isolate;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Light-surface asymmetric accent — bottom-left warm-grey radial
+   wash, same family signature as StatsCard light. The on-brand
+   counterpart that wasn't there in v1; resolves "white is okay but
+   not in our branding as much" feedback. */
+.oga-filter-builder[data-surface="light"]::before,
+.oga-filter-builder:not([data-surface])::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 55% 40% at 0% 100%,
+    rgba(26, 28, 31, 0.045) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ---------- Section ---------- */
+
+.oga-filter-builder__section {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.oga-filter-builder__section-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+/* ---------- Empty state ---------- */
+
+.oga-filter-builder__empty {
+  margin: 0;
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  color: var(--oga-fg-muted);
+  padding: 14px 16px;
+  background: rgba(26, 28, 31, 0.025);
+  border: 1px dashed rgba(26, 28, 31, 0.15);
+  border-radius: 4px;
+}
+
+.oga-filter-builder__empty strong {
+  color: var(--oga-ink);
+  font-weight: 500;
+}
+
+/* ---------- Clause list ---------- */
+
+.oga-filter-builder__clauses {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.oga-filter-builder__clause {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- AND divider ---------- */
+
+.oga-filter-builder__and-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.oga-filter-builder__and-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(26, 28, 31, 0.08);
+}
+
+.oga-filter-builder__and-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+/* ---------- Row ----------
+   Grid: signal picker grows, operator and value share, delete is
+   fixed. Collapses to stacked at narrow widths. */
+
+.oga-filter-builder__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 0.8fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+@media (max-width: 720px) {
+  .oga-filter-builder__row {
+    grid-template-columns: 1fr auto;
+    grid-auto-rows: auto;
+  }
+  .oga-filter-builder__row > *:first-child,
+  .oga-filter-builder__row > *:nth-child(2),
+  .oga-filter-builder__row > *:nth-child(3) {
+    grid-column: 1;
+  }
+  .oga-filter-builder__row > *:nth-child(4) {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+  }
+}
+
+/* ---------- Picker trigger ----------
+   Button that visually mimics a <Select> control — hairline border,
+   chevron, soft-warm hover — but on click opens a DropdownMenu
+   instead of the OS-native select popup. Gives us the full Brand v3
+   vocabulary on the popup (warm-white/graphite gradient, edge-lit
+   material, our typography) — resolves "the native dropdown is not
+   on brand at all" feedback. */
+
+.oga-filter-builder__picker-trigger {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  padding: 8px 12px;
+  background: var(--oga-white);
+  border: 1px solid rgba(26, 28, 31, 0.18);
+  border-radius: 3px;
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--oga-ink);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-filter-builder__picker-trigger:hover:not(:disabled) {
+  border-color: rgba(26, 28, 31, 0.32);
+  background: rgba(26, 28, 31, 0.02);
+}
+
+.oga-filter-builder__picker-trigger:focus-visible {
+  outline: 1.5px solid var(--oga-ink);
+  outline-offset: 2px;
+}
+
+.oga-filter-builder__picker-trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.oga-filter-builder__picker-trigger-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.oga-filter-builder__picker-trigger-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: inherit;
+}
+
+.oga-filter-builder__picker-trigger-content svg {
+  color: var(--oga-fg-muted);
+  flex-shrink: 0;
+}
+
+/* ---------- Value + unit ---------- */
+
+.oga-filter-builder__value-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.oga-filter-builder__value-wrap .oga-input {
+  width: 100%;
+  padding-right: 28px;
+}
+
+.oga-filter-builder__unit {
+  position: absolute;
+  right: 10px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-fg-muted);
+  pointer-events: none;
+}
+
+/* ---------- Remove button ---------- */
+
+.oga-filter-builder__remove {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid rgba(26, 28, 31, 0.10);
+  border-radius: 3px;
+  color: var(--oga-fg-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    color var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-filter-builder__remove:hover {
+  color: var(--oga-status-red);
+  background: var(--oga-status-red-bg, rgba(184, 50, 50, 0.06));
+  border-color: rgba(184, 50, 50, 0.30);
+}
+
+.oga-filter-builder__remove:focus-visible {
+  outline: 1.5px solid var(--oga-ink);
+  outline-offset: 2px;
+}
+
+/* ---------- Add condition button ---------- */
+
+.oga-filter-builder__add {
+  appearance: none;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px dashed rgba(26, 28, 31, 0.20);
+  border-radius: 3px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  cursor: pointer;
+  transition:
+    color var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease),
+    border-style var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-filter-builder__add:hover:not(:disabled) {
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.04);
+  border-color: rgba(26, 28, 31, 0.30);
+  border-style: solid;
+}
+
+.oga-filter-builder__add:focus-visible {
+  outline: 1.5px solid var(--oga-ink);
+  outline-offset: 2px;
+}
+
+.oga-filter-builder__add:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.oga-filter-builder__add-plus {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+/* ---------- Sort row ----------
+   Two-column grid: signal picker + direction picker, equal weight. */
+
+.oga-filter-builder__sort-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 720px) {
+  .oga-filter-builder__sort-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   Dark surface variant
+   ============================================================ */
+
+.oga-filter-builder[data-surface="dark"] {
+  background: linear-gradient(180deg, #1F2125 0%, #1A1C1F 100%);
+  border-color: rgba(250, 248, 244, 0.12);
+  color: var(--oga-white);
+  /* Tell browsers the surface is dark so native <select> popups
+     render with dark-mode default colours (resolves the "dropdown
+     is white on white" feedback). */
+  color-scheme: dark;
+  box-shadow:
+    inset 0 1px 0 rgba(250, 248, 244, 0.06),
+    0 1px 1px rgba(0, 0, 0, 0.18),
+    0 28px 64px -22px rgba(0, 0, 0, 0.45);
+}
+
+/* No dot-field motif on the dark variant — resolves the "waves"
+   feedback. This card is busy with form controls; the moiré pattern
+   that works on Sidebar / DataTable / EmptyState (where there's
+   breathing room) competes here. Subtle inset top highlight from
+   the box-shadow above carries the dark-surface signature instead. */
+.oga-filter-builder[data-surface="dark"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* Soft top-right warm-white glow — quiet asymmetric character
+     without the busy texture. Same vocabulary direction as the
+     dot-field but flat-gradient instead of pattern. */
+  background: radial-gradient(
+    ellipse 50% 35% at 100% 0%,
+    rgba(250, 248, 244, 0.04) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.oga-filter-builder[data-surface="dark"] .oga-filter-builder__section-label,
+.oga-filter-builder[data-surface="dark"] .oga-filter-builder__and-label {
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-filter-builder[data-surface="dark"] .oga-filter-builder__and-line {
+  background: rgba(250, 248, 244, 0.10);
+}
+
+.oga-filter-builder[data-surface="dark"] .oga-filter-builder__empty {
+  background: rgba(250, 248, 244, 0.04);
+  border-color: rgba(250, 248, 244, 0.18);
+  color: rgba(250, 248, 244, 0.65);
+}
+
+.oga-filter-builder[data-surface="dark"] .oga-filter-builder__empty strong {
+  color: var(--oga-white);
+}
+
+.oga-filter-builder[data-surface="dark"] .oga-filter-builder__remove {
+  color: rgba(250, 248, 244, 0.65);
+  border-color: rgba(250, 248, 244, 0.18);
+}
+
+.oga-filter-builder[data-surface="dark"] .oga-filter-builder__remove:hover {
+  color: #E87A65;
+  background: rgba(232, 122, 101, 0.10);
+  border-color: rgba(232, 122, 101, 0.40);
+}
+
+.oga-filter-builder[data-surface="dark"] .oga-filter-builder__remove:focus-visible {
+  outline-color: var(--oga-white);
+}
+
+.oga-filter-builder[data-surface="dark"] .oga-filter-builder__add {
+  color: rgba(250, 248, 244, 0.65);
+  border-color: rgba(250, 248, 244, 0.22);
+}
+
+.oga-filter-builder[data-surface="dark"] .oga-filter-builder__add:hover:not(:disabled) {
+  color: var(--oga-white);
+  background: rgba(250, 248, 244, 0.06);
+  border-color: rgba(250, 248, 244, 0.40);
+}
+
+.oga-filter-builder[data-surface="dark"] .oga-filter-builder__add:focus-visible {
+  outline-color: var(--oga-white);
+}
+
+.oga-filter-builder[data-surface="dark"] .oga-filter-builder__unit {
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-filter-builder[data-surface="dark"] .oga-filter-builder__picker-trigger {
+  background: rgba(250, 248, 244, 0.04);
+  border-color: rgba(250, 248, 244, 0.18);
+  color: var(--oga-white);
+}
+
+.oga-filter-builder[data-surface="dark"] .oga-filter-builder__picker-trigger:hover:not(:disabled) {
+  background: rgba(250, 248, 244, 0.08);
+  border-color: rgba(250, 248, 244, 0.32);
+}
+
+.oga-filter-builder[data-surface="dark"] .oga-filter-builder__picker-trigger:focus-visible {
+  outline-color: var(--oga-white);
+}
+
+.oga-filter-builder[data-surface="dark"] .oga-filter-builder__picker-trigger-content svg {
+  color: rgba(250, 248, 244, 0.55);
+}
