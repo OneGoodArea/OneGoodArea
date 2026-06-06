@@ -1,0 +1,321 @@
+/* ============================================================
+   AR-241 — <StatsCard>
+   Generalised metric tile. Composes the existing StatCell recipe
+   (label + dot + value + hint + accent) with progress bar + delta
+   indicator + action slot + light/dark variants. Self-contained
+   card (border + radius + material recipe) so it sits standalone
+   AND composes cleanly in a CSS Grid row.
+   ============================================================ */
+
+.oga-stats-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 20px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAF8F4 100%);
+  border: 1px solid rgba(26, 28, 31, 0.10);
+  border-radius: 10px;
+  /* Edge-lit material recipe — inset highlight + deep ambient.
+     Same vocabulary as .oga-code-panel + DataTable + EmptyState. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 1px 1px rgba(26, 28, 31, 0.04),
+    0 28px 64px -22px rgba(26, 28, 31, 0.18);
+  isolation: isolate;
+  overflow: hidden;
+  min-width: 0;
+  /* tabular-nums on the entire card so the value + progress + hint
+     numbers all align in mono-quality columns without forcing the
+     whole card into monospace. */
+  font-variant-numeric: tabular-nums;
+}
+
+/* On-brand light-surface accent — subtle warm-grey hairline gradient
+   on the bottom-left corner. The light counterpart to the dark
+   variant's dot-field motif at top-right. Picks up the same
+   `.oga-section-dark`-style asymmetric character without competing
+   with the content. */
+.oga-stats-card[data-surface="light"]::before,
+.oga-stats-card:not([data-surface])::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 60% 45% at 0% 100%,
+    rgba(26, 28, 31, 0.045) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ---------- Label + accent dot ---------- */
+
+.oga-stats-card__label {
+  position: relative;
+  z-index: 1;
+  font-family: var(--oga-font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.oga-stats-card__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ---------- Value row (value + optional delta) ---------- */
+
+.oga-stats-card__value-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.oga-stats-card__value {
+  font-family: var(--oga-font-sans);
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--oga-fg);
+  min-width: 0;
+  /* Don't overflow horizontally — clip with ellipsis if a consumer
+     passes an absurdly long value. tabular-nums + sans is forgiving
+     so this only kicks in for truly extreme widths. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Delta indicator ---------- */
+
+.oga-stats-card__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.oga-stats-card__delta[data-trend="up"] {
+  color: var(--oga-status-green);
+}
+
+.oga-stats-card__delta[data-trend="down"] {
+  color: var(--oga-status-red);
+}
+
+.oga-stats-card__delta[data-trend="neutral"] {
+  color: var(--oga-fg-muted);
+}
+
+.oga-stats-card__delta-glyph {
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* ---------- Progress bar ----------
+   Hairline track + filled segment driven by --pct via CSS attr().
+   Falls back to a calc() width using a CSS custom property set on
+   the fill so older browsers without attr() unit support still
+   render correctly. */
+
+.oga-stats-card__progress {
+  position: relative;
+  z-index: 1;
+  height: 5px;
+  background: rgba(26, 28, 31, 0.07);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.oga-stats-card__progress-fill {
+  height: 100%;
+  width: var(--oga-stats-card-pct, 0%);
+  background: var(--oga-fg);
+  border-radius: 2px;
+  transition: width var(--oga-dur) var(--oga-ease);
+}
+
+/* ---------- Hint ---------- */
+
+.oga-stats-card__hint {
+  position: relative;
+  z-index: 1;
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--oga-fg-muted);
+}
+
+/* ---------- Action ---------- */
+
+.oga-stats-card__action-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+.oga-stats-card__action {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-fg);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-stats-card__action:hover {
+  color: var(--oga-ink);
+}
+
+.oga-stats-card__action:focus-visible {
+  outline: 1.5px solid var(--oga-ink);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.oga-stats-card__action-arrow {
+  font-size: 12px;
+  line-height: 1;
+  transition: transform var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-stats-card__action:hover .oga-stats-card__action-arrow {
+  transform: translateX(2px);
+}
+
+/* ============================================================
+   Accent — drives the dot + value tone via data-accent
+   (matches the existing StatCell appRag palette)
+   ============================================================ */
+
+.oga-stats-card[data-accent="strong"] .oga-stats-card__dot {
+  background: var(--oga-fg);
+}
+.oga-stats-card[data-accent="strong"] .oga-stats-card__value {
+  color: var(--oga-fg);
+}
+
+.oga-stats-card[data-accent="moderate"] .oga-stats-card__dot {
+  background: #d49900;
+}
+.oga-stats-card[data-accent="moderate"] .oga-stats-card__value {
+  color: #6e5300;
+}
+
+.oga-stats-card[data-accent="weak"] .oga-stats-card__dot {
+  background: #d13a1e;
+}
+.oga-stats-card[data-accent="weak"] .oga-stats-card__value {
+  color: #a01b00;
+}
+
+/* ============================================================
+   Dark surface variant
+   ============================================================ */
+
+.oga-stats-card[data-surface="dark"] {
+  background: linear-gradient(180deg, #1F2125 0%, #1A1C1F 100%);
+  border-color: rgba(250, 248, 244, 0.12);
+  color: var(--oga-white);
+  box-shadow:
+    inset 0 1px 0 rgba(250, 248, 244, 0.06),
+    0 1px 1px rgba(0, 0, 0, 0.18),
+    0 28px 64px -22px rgba(0, 0, 0, 0.45);
+}
+
+/* Dot-field motif anchored at top-right — same recipe as
+   .oga-section-dark, Sidebar, EmptyState dark, CodeBlock dark. */
+.oga-stats-card[data-surface="dark"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(250, 248, 244, 0.10) 1.2px, transparent 1.4px);
+  background-size: 14px 14px;
+  -webkit-mask-image: radial-gradient(ellipse at top right, black 0%, transparent 70%);
+          mask-image: radial-gradient(ellipse at top right, black 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.oga-stats-card[data-surface="dark"] .oga-stats-card__label {
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-stats-card[data-surface="dark"] .oga-stats-card__hint {
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-stats-card[data-surface="dark"] .oga-stats-card__progress {
+  background: rgba(250, 248, 244, 0.08);
+}
+
+.oga-stats-card[data-surface="dark"] .oga-stats-card__progress-fill {
+  background: var(--oga-white);
+}
+
+.oga-stats-card[data-surface="dark"] .oga-stats-card__action {
+  color: rgba(250, 248, 244, 0.85);
+}
+
+.oga-stats-card[data-surface="dark"] .oga-stats-card__action:hover {
+  color: var(--oga-white);
+}
+
+.oga-stats-card[data-surface="dark"] .oga-stats-card__action:focus-visible {
+  outline-color: var(--oga-white);
+}
+
+/* Accent on dark — value reads warm-white at strong, status palette
+   for moderate/weak so the colour signal is preserved. Dot inherits
+   the same accent tones (brightening on dark optional — for v1
+   keep the same hex so accent rules are predictable across surfaces). */
+
+.oga-stats-card[data-surface="dark"][data-accent="strong"] .oga-stats-card__dot {
+  background: var(--oga-white);
+}
+.oga-stats-card[data-surface="dark"][data-accent="strong"] .oga-stats-card__value {
+  color: var(--oga-white);
+}
+
+.oga-stats-card[data-surface="dark"][data-accent="moderate"] .oga-stats-card__value {
+  color: #E8B763;
+}
+
+.oga-stats-card[data-surface="dark"][data-accent="weak"] .oga-stats-card__value {
+  color: #E87A65;
+}
