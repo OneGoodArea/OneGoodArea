@@ -19,6 +19,8 @@ import { Modal } from "@/app/design-v2/_shared/dashboard/modal";
 import { DropdownMenu } from "@/app/design-v2/_shared/dashboard/dropdown-menu";
 import { ToastProvider, useToast } from "@/app/design-v2/_shared/dashboard/toast";
 import { Tabs } from "@/app/design-v2/_shared/dashboard/tabs";
+import { DataTable } from "@/app/design-v2/_shared/dashboard/data-table";
+import type { ColumnDef, SortState } from "@/app/design-v2/_shared/dashboard/data-table";
 import "./client.css";
 
 export default function DashboardPrimitivesClient() {
@@ -34,6 +36,8 @@ export default function DashboardPrimitivesClient() {
         <ToastSection />
         <TabsSection />
         <TabsDarkSection />
+        <DataTableSection />
+        <DataTableDarkSection />
       </div>
     </ToastProvider>
   );
@@ -1247,6 +1251,313 @@ function TabsDarkSection() {
                 { id: "1y", label: "1Y" },
                 { id: "all", label: "All" },
               ]}
+            />
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   AR-230 <DataTable>
+   ============================================================ */
+
+interface MemberRow {
+  id: string;
+  email: string;
+  role: "Owner" | "Admin" | "Member";
+  lastActive: string;
+}
+
+const MEMBER_ROWS: MemberRow[] = [
+  { id: "u_1", email: "ptengelmann@gmail.com", role: "Owner", lastActive: "2h ago" },
+  { id: "u_2", email: "marcos@onegoodarea.co.uk", role: "Admin", lastActive: "1d ago" },
+  { id: "u_3", email: "narister@example.com", role: "Member", lastActive: "5d ago" },
+  { id: "u_4", email: "analyst@brightstar.dev", role: "Member", lastActive: "Just now" },
+  { id: "u_5", email: "ops@acmeunderwriting.com", role: "Admin", lastActive: "3w ago" },
+];
+
+interface PortfolioRow {
+  id: string;
+  name: string;
+  areaCount: number;
+  lastEnriched: string;
+  changes30d: number;
+}
+
+const PORTFOLIO_ROWS: PortfolioRow[] = [
+  { id: "ptf_1", name: "Acme — High street retail", areaCount: 142, lastEnriched: "2026-06-04", changes30d: 18 },
+  { id: "ptf_2", name: "BrightStar — Lender pack", areaCount: 1287, lastEnriched: "2026-06-05", changes30d: 247 },
+  { id: "ptf_3", name: "Northern student-let watchlist", areaCount: 56, lastEnriched: "2026-06-01", changes30d: 3 },
+  { id: "ptf_4", name: "London commercial — Zone 1-2", areaCount: 89, lastEnriched: "2026-05-29", changes30d: 12 },
+  { id: "ptf_5", name: "Edinburgh research cohort", areaCount: 23, lastEnriched: "2026-06-05", changes30d: 1 },
+];
+
+interface WebhookRow {
+  id: string;
+  url: string;
+  topic: "report.created" | "score.changed";
+  lastDelivery: string;
+  status: "ok" | "failing";
+}
+
+const WEBHOOK_ROWS: WebhookRow[] = [
+  { id: "wh_1", url: "https://hooks.acme.dev/oga", topic: "report.created", lastDelivery: "2m ago", status: "ok" },
+  { id: "wh_2", url: "https://api.brightstar.com/ingest/oga", topic: "score.changed", lastDelivery: "8m ago", status: "ok" },
+  { id: "wh_3", url: "https://internal.northern.io/wh", topic: "score.changed", lastDelivery: "1h ago", status: "failing" },
+];
+
+interface ActivityRow {
+  id: string;
+  when: string;
+  actor: string;
+  action: string;
+  target: string;
+}
+
+const ACTIVITY_ROWS: ActivityRow[] = [
+  { id: "ev_1", when: "00:38", actor: "ptengelmann", action: "Created preset", target: "lender-default" },
+  { id: "ev_2", when: "00:31", actor: "system", action: "Re-scored 1,283 postcodes", target: "run_2026_06_05" },
+  { id: "ev_3", when: "00:14", actor: "marcos", action: "Updated bundle", target: "lender-only" },
+  { id: "ev_4", when: "23:58", actor: "ptengelmann", action: "Pinned methodology", target: "v2.0.2" },
+  { id: "ev_5", when: "23:42", actor: "ops@acmeunderwriting.com", action: "Added IP to allowlist", target: "192.168.1.42/32" },
+  { id: "ev_6", when: "23:11", actor: "system", action: "Delivered webhook", target: "score.changed -> hooks.acme.dev" },
+];
+
+function RoleBadge({ role }: { role: MemberRow["role"] }) {
+  return <span className="oga-prim-role-badge" data-role={role.toLowerCase()}>{role}</span>;
+}
+
+function StatusDot({ status }: { status: WebhookRow["status"] }) {
+  return (
+    <span className="oga-prim-status-dot" data-status={status}>
+      <span className="oga-prim-status-dot__inner" />
+      {status === "ok" ? "Delivering" : "Failing"}
+    </span>
+  );
+}
+
+function DataTableSection() {
+  const [loading, setLoading] = useState(false);
+  const [sortState, setSortState] = useState<SortState>({ key: "lastEnriched", direction: "desc" });
+
+  const memberColumns: ColumnDef<MemberRow>[] = [
+    { key: "email", header: "Email", sortable: true, sortAccessor: (r) => r.email, cell: (r) => r.email, width: "minmax(220px, 2fr)" },
+    { key: "role", header: "Role", sortable: true, sortAccessor: (r) => r.role, cell: (r) => <RoleBadge role={r.role} />, width: "120px" },
+    { key: "lastActive", header: "Last active", align: "end", cell: (r) => r.lastActive, width: "140px" },
+  ];
+
+  const portfolioColumns: ColumnDef<PortfolioRow>[] = [
+    { key: "name", header: "Portfolio", sortable: true, sortAccessor: (r) => r.name, cell: (r) => r.name, width: "minmax(240px, 2fr)" },
+    { key: "areaCount", header: "Areas", align: "end", sortable: true, sortAccessor: (r) => r.areaCount, cell: (r) => r.areaCount.toLocaleString(), width: "110px" },
+    { key: "lastEnriched", header: "Last enriched", align: "end", sortable: true, sortAccessor: (r) => r.lastEnriched, cell: (r) => r.lastEnriched, width: "150px", hideBelow: "sm" },
+    { key: "changes30d", header: "Changes (30d)", align: "end", sortable: true, sortAccessor: (r) => r.changes30d, cell: (r) => r.changes30d.toLocaleString(), width: "140px", hideBelow: "md" },
+  ];
+
+  const webhookColumns: ColumnDef<WebhookRow>[] = [
+    { key: "url", header: "Endpoint", cell: (r) => <code className="oga-prim-code">{r.url}</code>, width: "minmax(280px, 2fr)" },
+    { key: "topic", header: "Topic", cell: (r) => <code className="oga-prim-code">{r.topic}</code>, width: "180px" },
+    { key: "status", header: "Status", cell: (r) => <StatusDot status={r.status} />, width: "140px" },
+    { key: "lastDelivery", header: "Last delivery", align: "end", cell: (r) => r.lastDelivery, width: "140px", hideBelow: "sm" },
+    {
+      key: "actions",
+      header: "",
+      align: "end",
+      width: "60px",
+      headerLabel: "Row actions",
+      cell: (r) => (
+        <DropdownMenu
+          trigger={
+            <span className="oga-prim-trigger oga-prim-trigger--icon" aria-label={`Actions for ${r.url}`}>
+              <MoreIcon />
+            </span>
+          }
+          triggerLabel={`Actions for ${r.url}`}
+          triggerClassName="oga-prim-icon-button"
+          align="end"
+          items={[
+            { label: "Resend last event", onClick: () => {} },
+            { label: "View delivery log", onClick: () => {} },
+            { label: "Reveal signing secret", onClick: () => {} },
+            { label: "Disable", danger: true, onClick: () => {} },
+          ]}
+        />
+      ),
+    },
+  ];
+
+  return (
+    <section className="oga-section-quiet oga-prim-section" aria-labelledby="ar-230-heading">
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-230 · Foundational</p>
+          <h2 id="ar-230-heading" className="oga-h2 oga-prim-section__title">
+            DataTable
+          </h2>
+          <p className="oga-prim-section__caption">
+            <strong>One generic primitive.</strong> Every row below is the
+            same <code className="oga-prim-code">&lt;DataTable&gt;</code> component
+            rendering different shapes of data with different features
+            turned on — sortable columns, loading skeletons, empty + error
+            states, responsive column hiding, row actions, compact density.
+            The data examples (members, portfolios, webhooks, activity)
+            are realistic samples of what the real Phase 1–5 dashboard
+            pages will feed into it.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc">
+          <Variant label="Default rendering" caption="No special config — just columns + rows. Demonstrates the editorial baseline: sticky mono-caps header, hairline row separators, soft-warm hover. Data shown: an org members list (5 rows).">
+            <DataTable
+              columns={memberColumns}
+              rows={MEMBER_ROWS}
+              rowKey={(r) => r.id}
+              caption="Organisation members"
+            />
+          </Variant>
+
+          <Variant label="Sortable columns" caption='Headers with sortable: true become clickable buttons. Click to sort ascending; click again to flip to descending. The chevron next to the label indicates current sort state. Data: portfolios list — sort by Portfolio name, Areas count, Last enriched date, or Changes (30d). Two columns are flagged hideBelow="sm" and hideBelow="md" — resize the window to see them drop out at narrow widths.'>
+            <DataTable
+              columns={portfolioColumns}
+              rows={PORTFOLIO_ROWS}
+              rowKey={(r) => r.id}
+              caption="Portfolios"
+              sortState={sortState}
+              onSortChange={setSortState}
+            />
+          </Variant>
+
+          <Variant label="Row actions column" caption="Action menus are just a regular column with align=&quot;end&quot; and a DropdownMenu in the cell. Clicking the action trigger does NOT fire row click (interactive-child guard built into the primitive). Click any cell in the row body — the row click logs to the dev console; click the ⋯ — only the dropdown opens. Data: webhook subscriptions with status dots + dropdown of per-row actions.">
+            <DataTable
+              columns={webhookColumns}
+              rows={WEBHOOK_ROWS}
+              rowKey={(r) => r.id}
+              caption="Webhook subscriptions"
+              onRowClick={(r) => {
+                console.log("Row clicked", r.url);
+              }}
+            />
+          </Variant>
+
+          <Variant label="Loading state" caption="isLoading={true} replaces the body with shimmering skeleton rows of the right shape. Click the toggle to see the transition. Useful while a fetch is in flight — the layout stays put, so content swap doesn't jump.">
+            <div className="oga-prim-form-stack">
+              <button
+                type="button"
+                className="oga-btn oga-btn-secondary"
+                onClick={() => setLoading((v) => !v)}
+              >
+                {loading ? "Stop loading" : "Show loading"}
+              </button>
+              <DataTable
+                columns={memberColumns}
+                rows={loading ? [] : MEMBER_ROWS.slice(0, 3)}
+                rowKey={(r) => r.id}
+                isLoading={loading}
+                caption="Members (loading demo)"
+                loadingRowCount={3}
+              />
+            </div>
+          </Variant>
+
+          <Variant label="Empty state (custom)" caption='When rows is [] and no error, the primitive renders the emptyState prop. Consumer can pass any ReactNode — here, a titled message with an "Invite member" CTA. If you omit emptyState entirely, a small generic placeholder shows ("No results").'>
+            <DataTable
+              columns={memberColumns}
+              rows={[]}
+              rowKey={(r) => r.id}
+              caption="Members (empty)"
+              emptyState={
+                <div className="oga-prim-empty-state">
+                  <p className="oga-prim-empty-state__title">No members yet</p>
+                  <p className="oga-prim-empty-state__body">Invite a teammate to start collaborating in this organisation.</p>
+                  <button type="button" className="oga-btn oga-btn-secondary">Invite member</button>
+                </div>
+              }
+            />
+          </Variant>
+
+          <Variant label="Error state" caption='When error is a non-null string, the body is replaced by an inline red message with role="alert" (screen readers announce it). The header stays so the user keeps context. Example: a 403 admin_required surfaced as an inline error rather than a generic toast.'>
+            <DataTable
+              columns={memberColumns}
+              rows={[]}
+              rowKey={(r) => r.id}
+              caption="Members (error)"
+              error="403 admin_required — your role is Member, but only admins can list other members."
+            />
+          </Variant>
+
+          <Variant label='Compact density' caption='density="compact" tightens row + cell padding for high-count tables — activity feeds, ranked-area results, anything paginated with 50+ rows per page. Editorial header treatment stays; just less vertical breathing room per row. Data: recent activity events with mono-formatted timestamps + targets.'>
+            <DataTable
+              columns={[
+                { key: "when", header: "When", cell: (r) => <code className="oga-prim-code">{r.when}</code>, width: "80px" },
+                { key: "actor", header: "Actor", cell: (r) => r.actor, width: "minmax(180px, 1fr)" },
+                { key: "action", header: "Action", cell: (r) => r.action, width: "minmax(200px, 1.5fr)" },
+                { key: "target", header: "Target", cell: (r) => <code className="oga-prim-code">{r.target}</code>, width: "minmax(220px, 2fr)", hideBelow: "sm" },
+              ]}
+              rows={ACTIVITY_ROWS}
+              rowKey={(r) => r.id}
+              caption="Recent activity"
+              density="compact"
+            />
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function DataTableDarkSection() {
+  const memberColumns: ColumnDef<MemberRow>[] = [
+    { key: "email", header: "Email", sortable: true, sortAccessor: (r) => r.email, cell: (r) => r.email, width: "minmax(220px, 2fr)" },
+    { key: "role", header: "Role", sortable: true, sortAccessor: (r) => r.role, cell: (r) => <RoleBadge role={r.role} />, width: "120px" },
+    { key: "lastActive", header: "Last active", align: "end", cell: (r) => r.lastActive, width: "140px" },
+  ];
+
+  return (
+    <section
+      className="oga-section-dark oga-prim-section"
+      data-oga-surface="dark"
+      aria-labelledby="ar-230-dark-heading"
+    >
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-230 · Dark surface variant</p>
+          <h2 id="ar-230-dark-heading" className="oga-h2 oga-prim-section__title">
+            DataTable on dark
+          </h2>
+          <p className="oga-prim-section__caption">
+            Same primitive, same API. When the table sits on a dark
+            scaffolding page (Monitor sub-views, the sidebar org list,
+            tables inside a dark-variant modal), it inverts to
+            graphite-ink with warm-white text, the corner specimen
+            ticks lift to warm-white, hover picks up a translucent
+            wash. Two examples below.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc oga-prim-doc--dark">
+          <Variant label="Default rendering on dark" caption="Same members data as the light section's first variant, on dark scaffolding. Sortable headers + role badges read at the inverted altitude. defaultSort is set so the table opens already sorted by Role.">
+            <DataTable
+              columns={memberColumns}
+              rows={MEMBER_ROWS}
+              rowKey={(r) => r.id}
+              caption="Organisation members (dark)"
+              defaultSort={{ key: "role", direction: "asc" }}
+            />
+          </Variant>
+
+          <Variant label="Compact density on dark" caption="Same activity feed pattern from the light section, dark. The compact density + tabular-num timestamps are the canonical shape the Activity page will use when it ships in Phase 5.">
+            <DataTable
+              columns={[
+                { key: "when", header: "When", cell: (r) => <code className="oga-prim-code">{r.when}</code>, width: "80px" },
+                { key: "actor", header: "Actor", cell: (r) => r.actor, width: "minmax(180px, 1fr)" },
+                { key: "action", header: "Action", cell: (r) => r.action, width: "minmax(200px, 1.5fr)" },
+                { key: "target", header: "Target", cell: (r) => <code className="oga-prim-code">{r.target}</code>, width: "minmax(220px, 2fr)", hideBelow: "sm" },
+              ]}
+              rows={ACTIVITY_ROWS}
+              rowKey={(r) => r.id}
+              caption="Recent activity (dark)"
+              density="compact"
             />
           </Variant>
         </div>

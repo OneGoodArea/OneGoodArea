@@ -147,6 +147,13 @@
   border: 1px solid var(--oga-ink-10);
   border-radius: 2px;
   padding: 1px 6px;
+  color: var(--oga-ink);
+}
+
+[data-oga-surface="dark"] .oga-prim-code {
+  background: rgba(250, 248, 244, 0.06);
+  border-color: rgba(250, 248, 244, 0.14);
+  color: var(--oga-white);
 }
 
 .oga-prim-pre {
@@ -263,4 +270,106 @@
   display: flex;
   gap: var(--oga-2);
   flex-wrap: wrap;
+}
+
+/* ---------- AR-230 showcase helpers ----------
+   Role badge for the Members table cell. The real consumer page
+   will live elsewhere; these stay scoped to the showcase. */
+
+.oga-prim-role-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--oga-ink-10);
+  color: var(--oga-fg-muted);
+}
+
+.oga-prim-role-badge[data-role="owner"] {
+  background: rgba(26, 28, 31, 0.06);
+  border-color: rgba(26, 28, 31, 0.18);
+  color: var(--oga-ink);
+}
+
+.oga-prim-role-badge[data-role="admin"] {
+  background: transparent;
+  color: var(--oga-ink);
+}
+
+[data-oga-surface="dark"] .oga-prim-role-badge {
+  border-color: rgba(250, 248, 244, 0.18);
+  color: rgba(250, 248, 244, 0.65);
+}
+
+[data-oga-surface="dark"] .oga-prim-role-badge[data-role="owner"] {
+  background: rgba(250, 248, 244, 0.08);
+  border-color: rgba(250, 248, 244, 0.30);
+  color: var(--oga-white);
+}
+
+[data-oga-surface="dark"] .oga-prim-role-badge[data-role="admin"] {
+  color: var(--oga-white);
+}
+
+/* Status dot for webhook deliveries — green/amber convention.
+   Inner circle pulses on healthy status so live tables feel alive. */
+
+.oga-prim-status-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  color: var(--oga-fg-muted);
+}
+
+.oga-prim-status-dot__inner {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--oga-status-green, #6ea96a);
+}
+
+.oga-prim-status-dot[data-status="ok"] {
+  color: var(--oga-ink);
+}
+
+.oga-prim-status-dot[data-status="failing"] .oga-prim-status-dot__inner {
+  background: var(--oga-status-red, #b83232);
+}
+
+.oga-prim-status-dot[data-status="failing"] {
+  color: var(--oga-status-red, #b83232);
+}
+
+/* Empty-state composition pattern used in the DataTable showcase. */
+
+.oga-prim-empty-state {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+  align-items: center;
+  padding: var(--oga-3) 0;
+}
+
+.oga-prim-empty-state__title {
+  margin: 0;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--oga-ink);
+}
+
+.oga-prim-empty-state__body {
+  margin: 0;
+  font-size: 13px;
+  color: var(--oga-fg-muted);
+  max-width: 42ch;
+  text-align: center;
 }
