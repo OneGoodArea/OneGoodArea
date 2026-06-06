@@ -131,14 +131,14 @@ export function Tooltip({
   }, [cancelShow]);
 
   /* Compute placement when open. useLayoutEffect runs before paint
-     so the user never sees a one-frame flicker of the wrong side. */
+     so the user never sees a one-frame flicker of the wrong side.
+     When closed, the panel doesn't render at all — any stale
+     resolvedPlacement gets re-measured + corrected on the next
+     open, so no reset needed (and a setState in the closed branch
+     would trip the react-hooks/set-state-in-effect lint rule for
+     no behavioural benefit). */
   useLayoutEffect(() => {
-    if (!open) {
-      /* Reset to preferred placement when closed so the next open
-         starts from the consumer's request, not the last flip. */
-      setResolvedPlacement(placement);
-      return;
-    }
+    if (!open) return;
     const wrapper = wrapperRef.current;
     const panel = panelRef.current;
     if (!wrapper || !panel) return;
