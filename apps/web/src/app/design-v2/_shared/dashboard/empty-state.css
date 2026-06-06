@@ -1,0 +1,125 @@
+/* ============================================================
+   AR-238 — <EmptyState>
+   Brand v3 altitude. Light surface = warm-white gradient + edge-lit
+   material recipe (matches .oga-code-panel). Dark surface = graphite
+   gradient + dot-field motif anchored at top-right (matches
+   .oga-data-table[data-surface="dark"] + .oga-sidebar). Editorial
+   restraint — centered text, mono caps title, generous breathing
+   room, soft-warm hover on the inset wrapper if hosted standalone.
+   ============================================================ */
+
+.oga-empty-state {
+  position: relative;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAF8F4 100%);
+  border: 1px solid rgba(26, 28, 31, 0.08);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 1px 1px rgba(26, 28, 31, 0.04),
+    0 28px 64px -22px rgba(26, 28, 31, 0.10);
+  isolation: isolate;
+}
+
+.oga-empty-state__inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--oga-3);
+  padding: clamp(40px, 6vw, 64px) 24px;
+  text-align: center;
+}
+
+/* ---------- Icon slot ---------- */
+
+.oga-empty-state__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-2);
+}
+
+/* ---------- Title ---------- */
+
+.oga-empty-state__title {
+  margin: 0;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink);
+}
+
+/* ---------- Body ---------- */
+
+.oga-empty-state__body {
+  margin: 0;
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  max-width: 44ch;
+}
+
+/* ---------- Actions ---------- */
+
+.oga-empty-state__actions {
+  display: inline-flex;
+  gap: var(--oga-3);
+  margin-top: var(--oga-3);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ============================================================
+   Dark surface variant — graphite gradient + dot-field motif
+   matching .oga-data-table dark + .oga-sidebar
+   ============================================================ */
+
+.oga-empty-state[data-surface="dark"],
+[data-oga-surface="dark"] .oga-empty-state {
+  background: linear-gradient(180deg, #1F2125 0%, #1A1C1F 100%);
+  border-color: rgba(250, 248, 244, 0.12);
+  color: var(--oga-white);
+  box-shadow:
+    inset 0 1px 0 rgba(250, 248, 244, 0.06),
+    0 1px 1px rgba(0, 0, 0, 0.18),
+    0 28px 64px -22px rgba(0, 0, 0, 0.45);
+}
+
+/* Dot-field motif — exact same recipe as .oga-section-dark, .oga-sidebar.
+   14px grid, warm-white 0.10 opacity, radial-gradient ellipse mask
+   anchored at top right (dots cluster at one corner, fade across). */
+.oga-empty-state[data-surface="dark"]::before,
+[data-oga-surface="dark"] .oga-empty-state::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(250, 248, 244, 0.10) 1.2px, transparent 1.4px);
+  background-size: 14px 14px;
+  -webkit-mask-image: radial-gradient(ellipse at top right, black 0%, transparent 70%);
+          mask-image: radial-gradient(ellipse at top right, black 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.oga-empty-state[data-surface="dark"] .oga-empty-state__title,
+[data-oga-surface="dark"] .oga-empty-state .oga-empty-state__title {
+  color: var(--oga-white);
+}
+
+.oga-empty-state[data-surface="dark"] .oga-empty-state__body,
+[data-oga-surface="dark"] .oga-empty-state .oga-empty-state__body {
+  color: rgba(250, 248, 244, 0.65);
+}
+
+.oga-empty-state[data-surface="dark"] .oga-empty-state__icon,
+[data-oga-surface="dark"] .oga-empty-state .oga-empty-state__icon {
+  color: rgba(250, 248, 244, 0.55);
+}
