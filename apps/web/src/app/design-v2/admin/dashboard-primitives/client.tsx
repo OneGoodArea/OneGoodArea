@@ -29,6 +29,7 @@ import { SignalsIcon, ScoresIcon, MonitorIcon, IntelligenceIcon } from "@/app/de
 import { EmptyState } from "@/app/design-v2/_shared/dashboard/empty-state";
 import { Tooltip } from "@/app/design-v2/_shared/dashboard/tooltip";
 import { CodeBlock } from "@/app/design-v2/_shared/dashboard/code-block";
+import { StatsCard } from "@/app/design-v2/_shared/dashboard/stats-card";
 import "./client.css";
 
 export default function DashboardPrimitivesClient() {
@@ -53,6 +54,8 @@ export default function DashboardPrimitivesClient() {
         <TooltipDarkSection />
         <CodeBlockSection />
         <CodeBlockDarkSection />
+        <StatsCardSection />
+        <StatsCardDarkSection />
       </div>
     </ToastProvider>
   );
@@ -646,15 +649,30 @@ function ToastSection() {
 }
 
 /* Document-style row: variant label (mono) | live control | caption.
-   Replaces the card-grid (auto-rejected per design-taste). */
-function Variant({ label, caption, children }: { label: string; caption: string; children: React.ReactNode }) {
+   Replaces the card-grid (auto-rejected per design-taste).
+
+   wide={true} drops the 480px max-width on the demo cell — used by
+   variants that need realistic surface width (e.g. 3-card strips,
+   wide tables). */
+function Variant({
+  label,
+  caption,
+  children,
+  wide,
+}: {
+  label: string;
+  caption: string;
+  children: React.ReactNode;
+  wide?: boolean;
+}) {
+  const demoClass = wide ? "oga-prim-doc__demo oga-prim-doc__demo--wide" : "oga-prim-doc__demo";
   return (
     <div className="oga-prim-doc__row">
       <div className="oga-prim-doc__meta">
         <p className="oga-prim-doc__label">{label}</p>
         <p className="oga-prim-doc__caption">{caption}</p>
       </div>
-      <div className="oga-prim-doc__demo">{children}</div>
+      <div className={demoClass}>{children}</div>
     </div>
   );
 }
@@ -2232,6 +2250,197 @@ curl -X DELETE "https://api.onegoodarea.com/v1/orgs/.../members/..."`}
               language="bash"
               header="HTTP VERBS · Canonical colour map (dark)"
               surface="dark"
+            />
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   AR-241 <StatsCard>
+   ============================================================ */
+
+function StatsCardSection() {
+  return (
+    <section className="oga-section-quiet oga-prim-section" aria-labelledby="ar-241-heading">
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-241 · Foundational</p>
+          <h2 id="ar-241-heading" className="oga-h2 oga-prim-section__title">
+            StatsCard
+          </h2>
+          <p className="oga-prim-section__caption">
+            The metric tile that composes the <code className="oga-prim-code">/dashboard</code> Home
+            top strip — plan badge + quota bar + adaptive Upgrade CTA, reading
+            from <code className="oga-prim-code">/v1/me</code>. Generalises the
+            existing <code className="oga-prim-code">StatCell</code> from AppShell with progress bar,
+            trend delta, action slot, dark variant, tabular-nums. Composes in
+            CSS Grid rows — the variant labelled &ldquo;3-card top strip&rdquo; below
+            shows the canonical Phase 1 layout.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc">
+          <Variant label="Minimal — label + value" caption="The simplest configuration. Same shape as the existing StatCell.">
+            <StatsCard label="Plan" value="Starter" />
+          </Variant>
+
+          <Variant label="With hint" caption='Supporting context below the value. Mono caps at 0.14em letter-spacing.'>
+            <StatsCard
+              label="API calls this month"
+              value="12,847"
+              hint="of 50,000 included"
+            />
+          </Variant>
+
+          <Variant label="With trend delta" caption="Inline delta indicator. Up = green, down = red, neutral = muted. Glyph + value in mono.">
+            <StatsCard
+              label="Webhook deliveries"
+              value="247"
+              delta={{ value: "+8.6%", trend: "up" }}
+              hint="vs. last month"
+            />
+          </Variant>
+
+          <Variant label="With quota progress bar" caption="Hairline track + ink-filled segment. Percentage computed from current/max; capped at 100%.">
+            <StatsCard
+              label="API calls this month"
+              value="12,847"
+              progress={{ current: 12847, max: 50000 }}
+              hint="of 50,000 included"
+            />
+          </Variant>
+
+          <Variant label="With Upgrade action" caption="Inline action — renders as a Link if href is provided, button if only onClick. Arrow translates on hover.">
+            <StatsCard
+              label="Plan"
+              value="Starter"
+              hint="£49 / month"
+              action={{ label: "Upgrade", href: "#" }}
+            />
+          </Variant>
+
+          <Variant label="Everything composed — the canonical Home top strip tile" caption="Label + value + delta + progress + hint + action all in one card. This is the shape AR-217-B5 (Home redesign) will render per /v1/me.">
+            <StatsCard
+              label="API calls this month"
+              value="42,318"
+              delta={{ value: "+12%", trend: "up" }}
+              progress={{ current: 42318, max: 50000 }}
+              hint="of 50,000 included · resets 1 Jul"
+              action={{ label: "Upgrade", href: "#" }}
+            />
+          </Variant>
+
+          <Variant label="Moderate accent — nearing quota" caption='accent="moderate" tints the dot + value amber. Use when a metric needs gentle attention (80%+ quota used, billing warning, etc.).'>
+            <StatsCard
+              label="MCP calls this month"
+              value="487"
+              progress={{ current: 487, max: 500 }}
+              hint="of 500 included · MCP add-on"
+              accent="moderate"
+              delta={{ value: "+34%", trend: "up" }}
+            />
+          </Variant>
+
+          <Variant label="Weak accent — over quota / failing" caption='accent="weak" tints red. For overage, repeated failures, expired secrets.'>
+            <StatsCard
+              label="Webhook failures (24h)"
+              value="12"
+              delta={{ value: "+9", trend: "up" }}
+              hint="3 endpoints affected"
+              accent="weak"
+              action={{ label: "Investigate", href: "#" }}
+            />
+          </Variant>
+
+          <Variant label="3-card top strip — Phase 1 layout" caption="The canonical CSS Grid row pattern. Three cards in a row, each composing different optional slots. This is what /dashboard Home will render." wide>
+            <div className="oga-prim-stats-strip">
+              <StatsCard
+                label="Plan"
+                value="Starter"
+                hint="£49 / month"
+                action={{ label: "Upgrade", href: "#" }}
+              />
+              <StatsCard
+                label="API calls this month"
+                value="12,847"
+                delta={{ value: "+8%", trend: "up" }}
+                progress={{ current: 12847, max: 50000 }}
+                hint="of 50,000 included"
+              />
+              <StatsCard
+                label="Webhook deliveries"
+                value="247"
+                delta={{ value: "+2.1%", trend: "up" }}
+                hint="98.4% success rate"
+              />
+            </div>
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StatsCardDarkSection() {
+  return (
+    <section
+      className="oga-section-dark oga-prim-section"
+      data-oga-surface="dark"
+      aria-labelledby="ar-241-dark-heading"
+    >
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-241 · Dark surface variant</p>
+          <h2 id="ar-241-dark-heading" className="oga-h2 oga-prim-section__title">
+            StatsCard on dark
+          </h2>
+          <p className="oga-prim-section__caption">
+            Same primitive on a dark scaffolding page (Monitor overview,
+            sidebar embedded summary, dark-modal stats summary). Graphite
+            gradient + dot-field motif anchored at top-right — same vocabulary
+            as DataTable + Sidebar + EmptyState + CodeBlock dark.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc oga-prim-doc--dark">
+          <Variant label="3-card top strip on dark" caption="Same layout as the light variant, on dark scaffolding. Progress bar fill inverts to warm-white; accent colours lift slightly for dark legibility." wide>
+            <div className="oga-prim-stats-strip">
+              <StatsCard
+                label="Plan"
+                value="Scale"
+                hint="£499 / month"
+                surface="dark"
+              />
+              <StatsCard
+                label="API calls this month"
+                value="241,892"
+                delta={{ value: "+18%", trend: "up" }}
+                progress={{ current: 241892, max: 500000 }}
+                hint="of 500,000 included"
+                surface="dark"
+              />
+              <StatsCard
+                label="Active portfolios"
+                value="47"
+                delta={{ value: "+3", trend: "up" }}
+                hint="12 added this month"
+                surface="dark"
+              />
+            </div>
+          </Variant>
+
+          <Variant label="Failure card on dark — weak accent" caption='accent="weak" on dark — value reads brighter red for dark surface legibility.'>
+            <StatsCard
+              label="Webhook failures (24h)"
+              value="12"
+              delta={{ value: "+9", trend: "up" }}
+              hint="3 endpoints affected"
+              accent="weak"
+              surface="dark"
+              action={{ label: "Investigate", href: "#" }}
             />
           </Variant>
         </div>
