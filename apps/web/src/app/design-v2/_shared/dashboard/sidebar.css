@@ -1,0 +1,289 @@
+/* ============================================================
+   AR-233 — <Sidebar>
+   Dark left-column nav extracted from AppShell. Brand v3 dark
+   surface (data-oga-surface="dark"); editorial mono-caps group
+   labels at 0.24em letter-spacing; soft-warm hover signature
+   shared with .oga-dropdown__item. Mobile drawer slides in
+   from the left with a translucent backdrop.
+
+   This CSS replicates the prior .oga-app__sidebar* recipe so
+   AppShell-consuming pages render visually identical before/
+   after the extraction (per Jira's no-visual-regression rule).
+   ============================================================ */
+
+.oga-sidebar {
+  /* Graphite-ink gradient + edge-lit material recipe shared with
+     .oga-data-table[data-surface="dark"] + .oga-code-panel (homepage
+     code surfaces). Replaces the previous flat var(--oga-ink) so the
+     sidebar reads as part of the same calibrated-instrument family
+     as the rest of Brand v3 dark surfaces. */
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 26px 20px 22px;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #1F2125 0%, #1A1C1F 100%);
+  border-right: 1px solid rgba(250, 248, 244, 0.10);
+  color: var(--oga-white);
+  overflow: hidden;
+  box-sizing: border-box;
+  box-shadow:
+    inset 0 1px 0 rgba(250, 248, 244, 0.06),
+    inset -1px 0 0 rgba(250, 248, 244, 0.03);
+  /* Isolation so the ::before dot-field paints below the children
+     without leaking out of the sidebar's bounds */
+  isolation: isolate;
+}
+
+/* Dot-field motif — exact same recipe as .oga-section-dark (used on
+   every dark editorial section across the site: the products page
+   final CTAs, /methodology, /about, /docs/api-reference, etc.).
+   14px grid at warm-white 0.10 opacity, masked with a radial-gradient
+   ellipse anchored at the TOP RIGHT — dots cluster densest at one
+   corner and fade across the surface. Pedro asked for this exact
+   fade direction (referenced the /products/signals "Build on the
+   typed UK area-data layer" CTA). pointer-events:none so it never
+   blocks nav interaction; z-index:0 behind the slots which sit at
+   z-index:1. */
+.oga-sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(250, 248, 244, 0.10) 1.2px, transparent 1.4px);
+  background-size: 14px 14px;
+  -webkit-mask-image: radial-gradient(ellipse at top right, black 0%, transparent 70%);
+          mask-image: radial-gradient(ellipse at top right, black 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Top + body + bottom slots ride above the dot field */
+.oga-sidebar__top,
+.oga-sidebar__body,
+.oga-sidebar__bottom {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- Mobile drawer ----------
+   Below 880px the sidebar lifts off the page into a fixed-position
+   drawer that slides in from the left. The .oga-sidebar--open class
+   is the trigger; consumers toggle it via the open prop. */
+@media (max-width: 880px) {
+  .oga-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    height: auto;
+    transform: translateX(-100%);
+    transition: transform 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
+    z-index: 50;
+    box-shadow: 24px 0 48px -20px rgba(0, 0, 0, 0.5);
+  }
+  .oga-sidebar--open {
+    transform: translateX(0);
+  }
+}
+
+/* Drawer backdrop — only shows when the drawer is open (the component
+   only mounts it then). Dismisses on click. */
+.oga-sidebar__backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 45;
+  backdrop-filter: blur(2px);
+}
+
+@media (max-width: 880px) {
+  .oga-sidebar__backdrop {
+    display: block;
+  }
+}
+
+/* ---------- Top slot ----------
+   Holds wordmark + close button (mobile) and, after Phase 1, the
+   org switcher. Consumer composes the contents. */
+
+.oga-sidebar__top {
+  margin-bottom: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* ---------- Body / nav ---------- */
+
+.oga-sidebar__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  /* Match the dark scrollbar treatment used in .oga-data-table */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(250, 248, 244, 0.18) transparent;
+}
+
+.oga-sidebar__body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.oga-sidebar__body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.oga-sidebar__body::-webkit-scrollbar-thumb {
+  background: rgba(250, 248, 244, 0.18);
+  border-radius: 3px;
+}
+
+.oga-sidebar__body::-webkit-scrollbar-thumb:hover {
+  background: rgba(250, 248, 244, 0.28);
+}
+
+/* ---------- Groups + spacer ----------
+   Editorial spacing — 22px gap between groups carries the same
+   restraint as the old .oga-app__sidebar-gap. The spacer pushes
+   the bottom slot to the floor of the column. */
+
+.oga-sidebar__group {
+  margin-bottom: 22px;
+}
+
+.oga-sidebar__group:last-of-type {
+  margin-bottom: 0;
+}
+
+.oga-sidebar__spacer {
+  flex: 1;
+}
+
+.oga-sidebar__group-label {
+  font-family: var(--oga-font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 10px;
+  padding-left: 10px;
+}
+
+.oga-sidebar__list,
+.oga-sidebar__sublist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Nested sub-list — indented under the parent, tighter top margin */
+.oga-sidebar__sublist {
+  margin-top: 2px;
+  padding-left: 14px;
+  border-left: 1px solid rgba(250, 248, 244, 0.10);
+  margin-left: 19px;
+}
+
+/* ---------- Link ---------- */
+
+.oga-sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 10px;
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: rgba(255, 255, 255, 0.72);
+  background: transparent;
+  border-radius: var(--oga-radius-sm);
+  text-decoration: none;
+  transition:
+    background var(--oga-dur-fast) var(--oga-ease),
+    color var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-sidebar__link:hover {
+  color: var(--oga-white);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.oga-sidebar__link--active {
+  color: var(--oga-ink);
+  background: var(--oga-white);
+  font-weight: 600;
+}
+
+.oga-sidebar__link--active:hover {
+  color: var(--oga-ink);
+  background: var(--oga-white);
+}
+
+.oga-sidebar__link--nested {
+  font-size: 13px;
+  padding: 7px 10px;
+  color: rgba(255, 255, 255, 0.60);
+}
+
+.oga-sidebar__link--nested:hover {
+  color: var(--oga-white);
+}
+
+.oga-sidebar__link-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+}
+
+.oga-sidebar__link-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.oga-sidebar__link-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  background: rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 0.85);
+  border-radius: 9px;
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.oga-sidebar__link--active .oga-sidebar__link-badge {
+  background: var(--oga-ink);
+  color: var(--oga-white);
+}
+
+/* ---------- Bottom slot ----------
+   Holds theme toggle + user chip in the existing AppShell. */
+
+.oga-sidebar__bottom {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
