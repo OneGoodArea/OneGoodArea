@@ -27,6 +27,7 @@ import { NavIconDark } from "@/app/design-v2/_shared/app-shell";
 import { Wordmark } from "@/app/design-v2/_shared/wordmark";
 import { SignalsIcon, ScoresIcon, MonitorIcon, IntelligenceIcon } from "@/app/design-v2/_shared/product-icons";
 import { EmptyState } from "@/app/design-v2/_shared/dashboard/empty-state";
+import { Tooltip } from "@/app/design-v2/_shared/dashboard/tooltip";
 import "./client.css";
 
 export default function DashboardPrimitivesClient() {
@@ -47,6 +48,8 @@ export default function DashboardPrimitivesClient() {
         <SidebarShowcaseSection />
         <EmptyStateSection />
         <EmptyStateDarkSection />
+        <TooltipSection />
+        <TooltipDarkSection />
       </div>
     </ToastProvider>
   );
@@ -1894,6 +1897,152 @@ function EmptyStateDarkSection() {
               action={{ label: "Create bundle", href: "#" }}
               secondaryAction={{ label: "Read about bundles", href: "#" }}
             />
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   AR-239 <Tooltip>
+   ============================================================ */
+
+function InfoGlyph() {
+  /* Small inline info circle — i in a ring. Used as the canonical
+     "hover for explanation" affordance on disabled buttons + signal
+     labels. Inline 14x14, currentColor so it inherits the trigger's
+     color. */
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.2" />
+      <circle cx="7" cy="4.3" r="0.7" fill="currentColor" />
+      <path d="M7 6.5v3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function TooltipSection() {
+  return (
+    <section className="oga-section-quiet oga-prim-section" aria-labelledby="ar-239-heading">
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-239 · Foundational</p>
+          <h2 id="ar-239-heading" className="oga-h2 oga-prim-section__title">
+            Tooltip
+          </h2>
+          <p className="oga-prim-section__caption">
+            Short non-blocking explanations for hover + focus surfaces:
+            RBAC reason on a disabled button, signal descriptions,
+            last-owner-guard rationale, status hovers (&ldquo;Failing -
+            last 3 deliveries returned 5xx&rdquo;). Wrapper API —
+            <code className="oga-prim-code">&lt;Tooltip content=&quot;...&quot;&gt;&#123;trigger&#125;&lt;/Tooltip&gt;</code>.
+            Opens on hover (with a 250ms default delay) or focus
+            (immediate). Dismisses on blur, mouse-leave, or Escape.
+            <code className="oga-prim-code">role=&quot;tooltip&quot;</code> on the panel,
+            <code className="oga-prim-code">aria-describedby</code> wired on the trigger.
+            Auto-flips top &harr; bottom when near viewport edges.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc">
+          <Variant label="Default" caption="Hover the trigger (250ms delay) or tab to it (instant). Mono label, flat ink solid, 6px arrow pointing at the trigger.">
+            <Tooltip content="Owner-only. Pinned to engine v2.0.2.">
+              <button type="button" className="oga-btn oga-btn-secondary">
+                Methodology pin
+              </button>
+            </Tooltip>
+          </Variant>
+
+          <Variant label="With info glyph trigger" caption="The canonical &ldquo;hover for context&rdquo; pattern next to a label. Inline info circle is the visual cue, the explanation is the tooltip.">
+            <span className="oga-prim-tooltip-label-row">
+              <span className="oga-prim-tooltip-eyebrow">Normalized value</span>
+              <Tooltip content="Within-country percentile (0–1).">
+                <span className="oga-prim-tooltip-info-wrap">
+                  <InfoGlyph />
+                </span>
+              </Tooltip>
+            </span>
+          </Variant>
+
+          <Variant label="On a disabled button (RBAC reason)" caption="The 403 admin_required + last-owner-guard explanation. Without the tooltip, users see a disabled button with no context.">
+            <Tooltip content="Last-owner guard. Promote someone first.">
+              <button type="button" className="oga-btn oga-btn-secondary" disabled>
+                Remove member
+              </button>
+            </Tooltip>
+          </Variant>
+
+          <Variant label="Custom delay (0ms — instant)" caption='For statuses where any hover-to-explain delay feels broken. Set delay={0} to show immediately on mouse-enter.'>
+            <Tooltip content="02:42 BST · 200 OK · 142ms" delay={0}>
+              <span className="oga-prim-status-dot oga-prim-tooltip-cursor-default" data-status="ok">
+                <span className="oga-prim-status-dot__inner" />
+                Delivering
+              </span>
+            </Tooltip>
+          </Variant>
+
+          <Variant label="Bottom placement" caption="Pass placement=&quot;bottom&quot; for triggers near the top of the viewport. The tooltip flips to top automatically if it would overflow the bottom edge.">
+            <Tooltip content="Reveal-once. Cannot show again." placement="bottom">
+              <button type="button" className="oga-btn oga-btn-secondary">
+                Reveal signing secret
+              </button>
+            </Tooltip>
+          </Variant>
+
+          <Variant label="Wraps text inline" caption="Tooltips can wrap any inline content — words inside a sentence, an icon, a badge. The trigger wrapper is inline-flex so layout doesn&apos;t reflow.">
+            <span className="oga-prim-tooltip-sentence">
+              Your{" "}
+              <Tooltip content="Total /v1/* calls this calendar month.">
+                <span className="oga-prim-tooltip-underline">monthly usage</span>
+              </Tooltip>
+              {" "}is 12,847 of 50,000 included calls.
+            </span>
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TooltipDarkSection() {
+  return (
+    <section
+      className="oga-section-dark oga-prim-section"
+      data-oga-surface="dark"
+      aria-labelledby="ar-239-dark-heading"
+    >
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-239 · Light variant on dark</p>
+          <h2 id="ar-239-dark-heading" className="oga-h2 oga-prim-section__title">
+            Tooltip on dark
+          </h2>
+          <p className="oga-prim-section__caption">
+            On dark scaffolding pages (Monitor sub-views, sidebar org
+            list, dark-modal embedded contexts) the dark-panel tooltip
+            would blend into the surface. Pass <code className="oga-prim-code">surface=&quot;light&quot;</code> to
+            invert the panel to warm-white — same material recipe as
+            <code className="oga-prim-code">.oga-code-panel</code> + DataTable light.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc oga-prim-doc--dark">
+          <Variant label="Light panel on dark surface" caption="The standard hover-for-explanation pattern in a dark Monitor sub-view.">
+            <Tooltip content="Fires when signal moves more than this %." surface="light">
+              <span className="oga-prim-tooltip-label-row oga-prim-tooltip-label-row--dark">
+                <span className="oga-prim-tooltip-eyebrow oga-prim-tooltip-eyebrow--dark">Change threshold</span>
+                <InfoGlyph />
+              </span>
+            </Tooltip>
+          </Variant>
+
+          <Variant label="On a disabled action in a dark surface" caption="Same RBAC explanation, rendering on a dark Monitor page.">
+            <Tooltip content="Admin role required. You are: Member." surface="light">
+              <button type="button" className="oga-btn oga-btn-secondary" disabled>
+                Delete portfolio
+              </button>
+            </Tooltip>
           </Variant>
         </div>
       </div>

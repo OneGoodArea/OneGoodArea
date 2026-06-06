@@ -462,3 +462,47 @@
   cursor: pointer;
   flex-shrink: 0;
 }
+
+/* ---------- AR-239 Tooltip showcase ---------- */
+
+.oga-prim-tooltip-label-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.oga-prim-tooltip-label-row--dark {
+  color: var(--oga-white);
+}
+
+.oga-prim-tooltip-eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-prim-tooltip-eyebrow--dark {
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-prim-tooltip-info-wrap {
+  display: inline-flex;
+  color: var(--oga-fg-muted);
+  cursor: help;
+}
+
+.oga-prim-tooltip-cursor-default {
+  cursor: default;
+}
+
+.oga-prim-tooltip-sentence {
+  font-size: 14px;
+  color: var(--oga-fg);
+}
+
+.oga-prim-tooltip-underline {
+  border-bottom: 1px dashed var(--oga-ink-30);
+  cursor: help;
+}
