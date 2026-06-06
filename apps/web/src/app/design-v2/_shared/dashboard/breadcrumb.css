@@ -1,0 +1,192 @@
+/* ============================================================
+   AR-243 — <Breadcrumb>
+   Mono caps eyebrow chain. Soft-warm hover on links, current page
+   reads in ink, separators at 30% opacity. Responsive collapse
+   below 640px hides middle items and reveals an ellipsis between
+   first and current.
+   ============================================================ */
+
+.oga-breadcrumb {
+  font-family: var(--oga-font-mono);
+}
+
+.oga-breadcrumb__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+}
+
+.oga-breadcrumb__item {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+/* ---------- Link ----------
+   Soft-warm hover signature shared with .oga-dropdown__item, table
+   rows, tabs, and the rest of the dashboard editorial vocabulary. */
+
+.oga-breadcrumb__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  margin: -4px -6px;        /* keep hit-target without inflating layout */
+  border-radius: 3px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    color var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-breadcrumb__link:hover {
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.04);
+}
+
+.oga-breadcrumb__link:focus-visible {
+  outline: 1.5px solid var(--oga-ink);
+  outline-offset: 2px;
+}
+
+/* ---------- Current (last item, or any item without href) ----------
+   No hover, no link semantics. Ink colour at full opacity so it
+   reads as the anchor of the chain. */
+
+.oga-breadcrumb__current {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-ink);
+  white-space: nowrap;
+}
+
+/* ---------- Icon slot ----------
+   Consumer composes from the canonical sets (NavIconDark,
+   product-icons, Tabs-set bespoke glyphs). Sized to read at the
+   mono-caps eyebrow scale — small enough not to compete with the
+   labels, big enough to recognise. currentColor so icon inherits
+   link / current state colour. */
+
+.oga-breadcrumb__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  color: currentColor;
+  opacity: 0.85;
+}
+
+.oga-breadcrumb__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------- Separator ---------- */
+
+.oga-breadcrumb__separator {
+  display: inline-block;
+  padding: 0 8px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: rgba(26, 28, 31, 0.30);
+  user-select: none;
+  line-height: 1;
+}
+
+/* ---------- Ellipsis (collapsed state) ----------
+   Hidden by default. Shown only at narrow widths when middle items
+   collapse. */
+
+.oga-breadcrumb__ellipsis {
+  display: none;
+  align-items: center;
+  order: 0;
+}
+
+.oga-breadcrumb__ellipsis-glyph {
+  display: inline-block;
+  padding: 4px 6px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-fg-muted);
+  user-select: none;
+}
+
+/* ---------- Responsive collapse below 640px ----------
+   Hide all middle items. Hide the separator that follows each
+   middle item AND the separator that follows the first item (since
+   the ellipsis carries its own separator on the right). Show the
+   ellipsis after the first item. Ordering: first / ellipsis / current. */
+
+@media (max-width: 640px) {
+  .oga-breadcrumb__item[data-position="middle"] {
+    display: none;
+  }
+
+  .oga-breadcrumb__ellipsis {
+    display: inline-flex;
+  }
+
+  /* The first item's separator is replaced by the ellipsis's own
+     separator — hide it to avoid a double slash. */
+  .oga-breadcrumb__item[data-position="first"] .oga-breadcrumb__separator {
+    display: none;
+  }
+
+  /* Place the ellipsis between first item and last (current) item.
+     With order: 0 it slots into the natural flow after the first
+     item (which has order auto = 0 inheriting from its <li>
+     positioning) — but since the middle items are hidden, the
+     ellipsis appears immediately after the first item's content,
+     and the current item follows after. */
+}
+
+/* ============================================================
+   Dark surface variant
+   ============================================================ */
+
+.oga-breadcrumb[data-surface="dark"] .oga-breadcrumb__link {
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-breadcrumb[data-surface="dark"] .oga-breadcrumb__link:hover {
+  color: var(--oga-white);
+  background: rgba(250, 248, 244, 0.06);
+}
+
+.oga-breadcrumb[data-surface="dark"] .oga-breadcrumb__link:focus-visible {
+  outline-color: var(--oga-white);
+}
+
+.oga-breadcrumb[data-surface="dark"] .oga-breadcrumb__current {
+  color: var(--oga-white);
+}
+
+.oga-breadcrumb[data-surface="dark"] .oga-breadcrumb__separator {
+  color: rgba(250, 248, 244, 0.30);
+}
+
+.oga-breadcrumb[data-surface="dark"] .oga-breadcrumb__ellipsis-glyph {
+  color: rgba(250, 248, 244, 0.55);
+}

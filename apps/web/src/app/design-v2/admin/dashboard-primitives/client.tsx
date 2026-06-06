@@ -31,6 +31,7 @@ import { Tooltip } from "@/app/design-v2/_shared/dashboard/tooltip";
 import { CodeBlock } from "@/app/design-v2/_shared/dashboard/code-block";
 import { StatsCard } from "@/app/design-v2/_shared/dashboard/stats-card";
 import { Pagination } from "@/app/design-v2/_shared/dashboard/pagination";
+import { Breadcrumb } from "@/app/design-v2/_shared/dashboard/breadcrumb";
 import "./client.css";
 
 export default function DashboardPrimitivesClient() {
@@ -59,6 +60,8 @@ export default function DashboardPrimitivesClient() {
         <StatsCardDarkSection />
         <PaginationSection />
         <PaginationDarkSection />
+        <BreadcrumbSection />
+        <BreadcrumbDarkSection />
       </div>
     </ToastProvider>
   );
@@ -1067,6 +1070,25 @@ function BundlesIcon() {
       <path d="M7 1.5l5.5 2.5L7 6.5 1.5 4 7 1.5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
       <path d="M1.5 7L7 9.5 12.5 7" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
       <path d="M1.5 10L7 12.5 12.5 10" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function OrgIcon() {
+  /* Institutional silhouette — pediment + 4 columns. Reads as
+     "the organisation" (the container of members + bundles + presets
+     etc.). 14x14 bespoke line glyph in the same vocabulary as the
+     rest of the Tabs-set set. Added 2026-06-06 for AR-243 because
+     "Org" appears in breadcrumb chains across Phase 4 Levers pages
+     and no canonical glyph existed yet. */
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      {/* Roof / pediment */}
+      <path d="M1.5 4.5L7 1.5L12.5 4.5" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+      {/* Floor line */}
+      <path d="M1.5 12.5h11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      {/* Columns */}
+      <path d="M3 5v7.5M5.5 5v7.5M8.5 5v7.5M11 5v7.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -2618,6 +2640,170 @@ function PaginationDarkSection() {
               page={7}
               totalPages={12}
               onChange={() => {}}
+              surface="dark"
+            />
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   AR-243 <Breadcrumb>
+   ============================================================ */
+
+function BreadcrumbSection() {
+  return (
+    <section className="oga-section-quiet oga-prim-section" aria-labelledby="ar-243-heading">
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-243 · Foundational</p>
+          <h2 id="ar-243-heading" className="oga-h2 oga-prim-section__title">
+            Breadcrumb
+          </h2>
+          <p className="oga-prim-section__caption">
+            The trail above page titles on nested routes — Levers settings
+            sub-pages, Monitor portfolio detail, Intelligence saved-query
+            detail. Mono caps eyebrow chain at 0.10em letter-spacing
+            (matches <code className="oga-prim-code">.oga-eyebrow</code> + Pagination + DataTable
+            headers). Items with <code className="oga-prim-code">href</code> render as
+            <code className="oga-prim-code">&lt;Link&gt;</code> with soft-warm hover; the last
+            item renders as a span with <code className="oga-prim-code">aria-current=&quot;page&quot;</code>.
+            Consumer composes the chain explicitly per page (we don&apos;t
+            auto-derive from pathname). Default separator is <code className="oga-prim-code">/</code> —
+            reads as a path, fits infrastructure altitude. Responsive
+            collapse below 640px hides middle items and reveals an
+            ellipsis.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc">
+          <Variant label="Two-level chain — with canonical icons" caption='Uses the canonical glyphs already in the system — NavIconDark "dash" (sidebar nav set) for Dashboard, MembersIcon (Tabs-set bespoke) for the current page. Same icons used by Sidebar + Tabs showcases.'>
+            <Breadcrumb
+              items={[
+                { label: "Dashboard", href: "#", icon: <NavIconDark name="dash" /> },
+                { label: "Members", icon: <MembersIcon /> },
+              ]}
+            />
+          </Variant>
+
+          <Variant label="Three-level — Levers settings sub-page" caption='Phase 4 Levers shape: "Dashboard / Org / Members". OrgIcon (institutional pediment + columns) added 2026-06-06 to the Tabs-set bespoke icons — Org appears across every Levers breadcrumb and needed its own canonical glyph.'>
+            <Breadcrumb
+              items={[
+                { label: "Dashboard", href: "#", icon: <NavIconDark name="dash" /> },
+                { label: "Org", href: "#", icon: <OrgIcon /> },
+                { label: "Members", icon: <MembersIcon /> },
+              ]}
+            />
+          </Variant>
+
+          <Variant label="Four-level — Monitor portfolio detail" caption="MonitorIcon (canonical product icon from product-icons.tsx) on the section root, PortfolioIcon (Tabs-set bespoke) on the listing page, no icon on the resource-name leaf (no canonical glyph for a specific portfolio).">
+            <Breadcrumb
+              items={[
+                { label: "Dashboard", href: "#", icon: <NavIconDark name="dash" /> },
+                { label: "Monitor", href: "#", icon: <MonitorIcon width={12} height={12} /> },
+                { label: "Portfolios", href: "#", icon: <PortfolioIcon /> },
+                { label: "Acme — High street retail" },
+              ]}
+            />
+          </Variant>
+
+          <Variant label="Five-level — deeply nested with product icon" caption="IntelligenceIcon (canonical product icon) anchors the section. Saved queries + child resource names ship without icons — no canonical glyph for those concepts.">
+            <Breadcrumb
+              items={[
+                { label: "Dashboard", href: "#", icon: <NavIconDark name="dash" /> },
+                { label: "Intelligence", href: "#", icon: <IntelligenceIcon width={12} height={12} /> },
+                { label: "Saved queries", href: "#" },
+                { label: "Lender pack", href: "#" },
+                { label: "Q3 cohort comparison" },
+              ]}
+            />
+          </Variant>
+
+          <Variant label="Bundles + Webhooks (Tabs-set bespoke icons)" caption="Reuses the same Tabs/Sidebar bespoke icons for the Levers settings tree — BundlesIcon, WebhookIcon, KeyIcon — so the same concept reads the same across primitives.">
+            <Breadcrumb
+              items={[
+                { label: "Dashboard", href: "#", icon: <NavIconDark name="dash" /> },
+                { label: "Org", href: "#", icon: <OrgIcon /> },
+                { label: "Bundles", href: "#", icon: <BundlesIcon /> },
+                { label: "Lender bundle" },
+              ]}
+            />
+          </Variant>
+
+          <Variant label="Without icons — text-only chain" caption="The icon prop is optional. Simpler surfaces (Settings sub-pages without strong glyph associations) ship without icons.">
+            <Breadcrumb
+              items={[
+                { label: "Dashboard", href: "#" },
+                { label: "Settings", href: "#" },
+                { label: "Profile" },
+              ]}
+            />
+          </Variant>
+
+          <Variant label="Single item — current page only" caption='Edge case: just the current page label, no link chain. Renders as a span with aria-current="page".'>
+            <Breadcrumb items={[{ label: "Dashboard", icon: <NavIconDark name="dash" /> }]} />
+          </Variant>
+
+          <Variant label='Custom separator — chevron "›"' caption='Pass any ReactNode to override the default "/". A single right chevron reads more like a wayfinding affordance, less like a path.'>
+            <Breadcrumb
+              items={[
+                { label: "Dashboard", href: "#", icon: <NavIconDark name="dash" /> },
+                { label: "Org", href: "#", icon: <OrgIcon /> },
+                { label: "Bundles", icon: <BundlesIcon /> },
+              ]}
+              separator="›"
+            />
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function BreadcrumbDarkSection() {
+  return (
+    <section
+      className="oga-section-dark oga-prim-section"
+      data-oga-surface="dark"
+      aria-labelledby="ar-243-dark-heading"
+    >
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-243 · Dark surface variant</p>
+          <h2 id="ar-243-dark-heading" className="oga-h2 oga-prim-section__title">
+            Breadcrumb on dark
+          </h2>
+          <p className="oga-prim-section__caption">
+            Same primitive on a dark scaffolding page (Monitor sub-views,
+            dark-modal embedded contexts). Links and separators invert to
+            warm-white at appropriate opacities; current page reads at
+            full warm-white.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc oga-prim-doc--dark">
+          <Variant label="Levers chain on dark — with canonical icons" caption="Three-level chain on graphite scaffolding. Same canonical icons as the light section — NavIconDark, OrgIcon, MembersIcon — currentColor flips them to warm-white opacities automatically.">
+            <Breadcrumb
+              items={[
+                { label: "Dashboard", href: "#", icon: <NavIconDark name="dash" /> },
+                { label: "Org", href: "#", icon: <OrgIcon /> },
+                { label: "Members", icon: <MembersIcon /> },
+              ]}
+              surface="dark"
+            />
+          </Variant>
+
+          <Variant label="Deep chain on dark with chevron + product icon" caption="MonitorIcon (canonical product icon) on the section root, PortfolioIcon on the listing, no icon on the resource-name leaf. Chevron separator on dark.">
+            <Breadcrumb
+              items={[
+                { label: "Dashboard", href: "#", icon: <NavIconDark name="dash" /> },
+                { label: "Monitor", href: "#", icon: <MonitorIcon width={12} height={12} /> },
+                { label: "Portfolios", href: "#", icon: <PortfolioIcon /> },
+                { label: "BrightStar — Lender pack" },
+              ]}
+              separator="›"
               surface="dark"
             />
           </Variant>
