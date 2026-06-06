@@ -164,6 +164,29 @@
 
 [data-oga-surface="dark"] .oga-fg__select {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23FAF8F4' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  /* color-scheme tells the OS to render the native <select> popup
+     panel in dark mode. Without this, the browser's default popup
+     palette overrides the select's text colour, leaving white text
+     on a white popup background — unreadable. AR-244 localhost
+     feedback ("the dropdown is white on white"). */
+  color-scheme: dark;
+}
+
+/* Native <option> elements render inside the OS popup, which our
+   .oga-fg__select container styling doesn't reach. Style them
+   explicitly so the popup palette inverts: dark background, warm-
+   white text. <optgroup> labels get a muted warm-white for the
+   category header treatment. Required for Select-on-dark to be
+   actually usable. */
+[data-oga-surface="dark"] .oga-fg__select option {
+  background-color: #1F2125;
+  color: var(--oga-white);
+}
+
+[data-oga-surface="dark"] .oga-fg__select optgroup {
+  background-color: #1F2125;
+  color: rgba(250, 248, 244, 0.55);
+  font-style: normal;
 }
 
 [data-oga-surface="dark"] .oga-fg__help {
