@@ -21,6 +21,11 @@ import { ToastProvider, useToast } from "@/app/design-v2/_shared/dashboard/toast
 import { Tabs } from "@/app/design-v2/_shared/dashboard/tabs";
 import { DataTable } from "@/app/design-v2/_shared/dashboard/data-table";
 import type { ColumnDef, SortState } from "@/app/design-v2/_shared/dashboard/data-table";
+import { Sidebar } from "@/app/design-v2/_shared/dashboard/sidebar";
+import type { SidebarSection } from "@/app/design-v2/_shared/dashboard/sidebar";
+import { NavIconDark } from "@/app/design-v2/_shared/app-shell";
+import { Wordmark } from "@/app/design-v2/_shared/wordmark";
+import { SignalsIcon, ScoresIcon, MonitorIcon, IntelligenceIcon } from "@/app/design-v2/_shared/product-icons";
 import "./client.css";
 
 export default function DashboardPrimitivesClient() {
@@ -38,6 +43,7 @@ export default function DashboardPrimitivesClient() {
         <TabsDarkSection />
         <DataTableSection />
         <DataTableDarkSection />
+        <SidebarShowcaseSection />
       </div>
     </ToastProvider>
   );
@@ -1035,6 +1041,20 @@ function BundlesIcon() {
   );
 }
 
+function PresetsIcon() {
+  /* Three horizontal sliders with knobs at different positions —
+     visual of "tunable weight configuration", which is what a preset
+     is (composition of per-dimension weights). */
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path d="M1.5 3.5h11M1.5 7h11M1.5 10.5h11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <circle cx="4"  cy="3.5"  r="1.4" fill="currentColor" />
+      <circle cx="9"  cy="7"    r="1.4" fill="currentColor" />
+      <circle cx="6"  cy="10.5" r="1.4" fill="currentColor" />
+    </svg>
+  );
+}
+
 function CompareIcon() {
   /* Mirrors AiqIcon "compare" silhouette — split rectangle */
   return (
@@ -1559,6 +1579,181 @@ function DataTableDarkSection() {
               caption="Recent activity (dark)"
               density="compact"
             />
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   AR-233 <Sidebar>
+   ============================================================
+   The Sidebar is normally 100vh sticky-positioned on the left
+   of the page. To preview it inline within the doc rows, each
+   variant lives inside .oga-prim-sidebar-frame — a fixed-height
+   container that anchors the sidebar's positioning so the
+   visual reads without busting the layout.
+
+   ICONS: This showcase uses the canonical sets only — NavIconDark
+   for sidebar nav items (the exact same glyphs AppShell uses today)
+   and the bespoke product icons (SignalsIcon, ScoresIcon, MonitorIcon,
+   IntelligenceIcon) for the Phase 1 Products group. Wordmark uses
+   the real <Wordmark> primitive. No invented inline glyphs here. */
+
+function SidebarShowcaseSection() {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  /* Icon picks here use the Tabs-bespoke glyphs (KeyIcon, BillingIcon,
+     CompareIcon, WebhookIcon — defined above for AR-228) wherever the
+     same concept appears in the Sidebar showcase. Keeps the four
+     "Settings / Billing / Compare / Webhooks" concepts visually
+     consistent across primitive showcases. NavIconDark stays for
+     dash + map + api (concepts the bespoke set doesn't have). The
+     two vocabularies will get canonicalized into a single
+     `_shared/dashboard/dashboard-nav-icons.tsx` set in a follow-up. */
+  const defaultSections: SidebarSection[] = [
+    {
+      label: "Main",
+      items: [
+        { label: "Dashboard", href: "#", icon: <NavIconDark name="dash" />, active: true },
+        { label: "New report", href: "#", icon: <NavIconDark name="map" /> },
+        { label: "Compare", href: "#", icon: <CompareIcon /> },
+      ],
+    },
+    {
+      label: "Account",
+      items: [
+        { label: "API + usage", href: "#", icon: <NavIconDark name="api" /> },
+        { label: "Billing", href: "#", icon: <BillingIcon /> },
+        { label: "Settings", href: "#", icon: <KeyIcon /> },
+      ],
+    },
+  ];
+
+  const phase1Sections: SidebarSection[] = [
+    {
+      label: "Dashboard",
+      items: [{ label: "Home", href: "#", icon: <NavIconDark name="dash" />, active: true }],
+    },
+    {
+      label: "Products",
+      items: [
+        { label: "Signals",      href: "#", icon: <SignalsIcon width={16} height={16} /> },
+        { label: "Scores",       href: "#", icon: <ScoresIcon width={16} height={16} />,       badge: "NEW" },
+        { label: "Monitor",      href: "#", icon: <MonitorIcon width={16} height={16} />,      badge: 12 },
+        { label: "Intelligence", href: "#", icon: <IntelligenceIcon width={16} height={16} /> },
+      ],
+    },
+    {
+      label: "Org & Levers",
+      items: [
+        {
+          label: "Settings",
+          href: "#",
+          icon: <KeyIcon />,
+          children: [
+            { label: "Members", href: "#", icon: <MembersIcon /> },
+            { label: "Bundles", href: "#", icon: <BundlesIcon /> },
+            { label: "Presets", href: "#", icon: <PresetsIcon /> },
+            { label: "Cohorts", href: "#", icon: <CohortsIcon /> },
+          ],
+        },
+        { label: "Webhooks", href: "#", icon: <WebhookIcon />, badge: 3 },
+      ],
+    },
+    {
+      label: "Account",
+      items: [
+        { label: "Billing",     href: "#", icon: <BillingIcon /> },
+        { label: "API + usage", href: "#", icon: <NavIconDark name="api" /> },
+      ],
+    },
+  ];
+
+  return (
+    <section className="oga-section-quiet oga-prim-section" aria-labelledby="ar-233-heading">
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-233 · Foundational</p>
+          <h2 id="ar-233-heading" className="oga-h2 oga-prim-section__title">
+            Sidebar
+          </h2>
+          <p className="oga-prim-section__caption">
+            The dashboard&apos;s left-column nav, extracted from <code className="oga-prim-code">AppShell</code> into
+            a reusable primitive. Dark surface, sections + items with active
+            state, optional badges + nested children (depth 2), top + bottom
+            slots that consumers compose (wordmark + close, theme toggle + user
+            chip — or, after Phase 1, the org switcher). Mobile drawer
+            behaviour (Escape + body scroll lock + translucent backdrop) is
+            owned by the primitive. This ticket is a pure extraction — the
+            <code className="oga-prim-code">/dashboard</code> sidebar content
+            stays the same (Main + Account); Phase 1 AR-217-B1 will swap in
+            the 4-section sitemap shown in the second variant below.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc">
+          <Variant label="Current AppShell structure" caption="What every authenticated page renders today (Dashboard / New report / Compare under Main; API+usage / Billing / Settings under Account). The Dashboard item shows the active state. Top slot holds a wordmark; bottom slot holds a placeholder for the existing theme toggle + user chip.">
+            <div className="oga-prim-sidebar-frame">
+              <Sidebar
+                sections={defaultSections}
+                top={<Wordmark size={14} tone="dark" />}
+                bottom={
+                  <span className="oga-prim-sidebar-userchip">
+                    <span className="oga-prim-sidebar-userchip__avatar">P</span>
+                    <span>ptengelmann</span>
+                  </span>
+                }
+              />
+            </div>
+          </Variant>
+
+          <Variant label="Phase 1 preview — 4 sections + nesting + badges" caption='What AR-217-B1 will plug in: 4 grouped sections (Dashboard / Products / Org &amp; Levers / Account) with badge counts ("NEW", queue depth) and a nested Settings sub-tree under Org &amp; Levers. Demonstrates the primitive&apos;s nested-children + badge slots in one shot. Not the structure that ships today — preview of the next ticket.'>
+            <div className="oga-prim-sidebar-frame oga-prim-sidebar-frame--tall">
+              <Sidebar
+                sections={phase1Sections}
+                top={<Wordmark size={14} tone="dark" />}
+                bottom={
+                  <span className="oga-prim-sidebar-userchip">
+                    <span className="oga-prim-sidebar-userchip__avatar">P</span>
+                    <span>ptengelmann</span>
+                  </span>
+                }
+              />
+            </div>
+          </Variant>
+
+          <Variant label="Mobile drawer behaviour" caption="On <880px the sidebar lifts off the page into a fixed drawer that slides in from the left with a translucent backdrop. Click the button to open. Escape, backdrop click, or clicking any nav link dismisses it. Body scroll locks while open.">
+            <div className="oga-prim-form-stack">
+              <button
+                type="button"
+                className="oga-btn oga-btn-secondary"
+                onClick={() => setDrawerOpen(true)}
+              >
+                Open mobile drawer
+              </button>
+              <Sidebar
+                sections={defaultSections}
+                open={drawerOpen}
+                onClose={() => setDrawerOpen(false)}
+                top={
+                  <>
+                    <Wordmark size={14} tone="dark" />
+                    <button
+                      type="button"
+                      onClick={() => setDrawerOpen(false)}
+                      aria-label="Close navigation"
+                      className="oga-prim-sidebar-close"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+                        <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      </svg>
+                    </button>
+                  </>
+                }
+              />
+            </div>
           </Variant>
         </div>
       </div>
