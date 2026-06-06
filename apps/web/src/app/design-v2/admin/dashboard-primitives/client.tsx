@@ -30,6 +30,7 @@ import { EmptyState } from "@/app/design-v2/_shared/dashboard/empty-state";
 import { Tooltip } from "@/app/design-v2/_shared/dashboard/tooltip";
 import { CodeBlock } from "@/app/design-v2/_shared/dashboard/code-block";
 import { StatsCard } from "@/app/design-v2/_shared/dashboard/stats-card";
+import { Pagination } from "@/app/design-v2/_shared/dashboard/pagination";
 import "./client.css";
 
 export default function DashboardPrimitivesClient() {
@@ -56,6 +57,8 @@ export default function DashboardPrimitivesClient() {
         <CodeBlockDarkSection />
         <StatsCardSection />
         <StatsCardDarkSection />
+        <PaginationSection />
+        <PaginationDarkSection />
       </div>
     </ToastProvider>
   );
@@ -2441,6 +2444,181 @@ function StatsCardDarkSection() {
               accent="weak"
               surface="dark"
               action={{ label: "Investigate", href: "#" }}
+            />
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   AR-242 <Pagination>
+   ============================================================ */
+
+function PaginationSection() {
+  const [activityCursor, setActivityCursor] = useState(2);
+  const [page, setPage] = useState(7);
+
+  return (
+    <section className="oga-section-quiet oga-prim-section" aria-labelledby="ar-242-heading">
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-242 · Foundational</p>
+          <h2 id="ar-242-heading" className="oga-h2 oga-prim-section__title">
+            Pagination
+          </h2>
+          <p className="oga-prim-section__caption">
+            Composes ABOVE/BELOW <code className="oga-prim-code">&lt;DataTable&gt;</code> for
+            paginated server-side surfaces. Two flavours in one primitive
+            via the <code className="oga-prim-code">mode</code> prop:
+            <code className="oga-prim-code">cursor</code> for the Activity feed
+            (Phase 5, cursor-based per ADR 0024) and
+            <code className="oga-prim-code">page</code> for offset-based lists
+            (Monitor changes feed, exports). Mono caps controls, soft-warm
+            hover signature shared with the rest of the dashboard editorial
+            vocabulary, active page inverts to ink-filled.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc">
+          <Variant label="Cursor mode — Activity feed pattern" caption="Newer / Older buttons with an optional indicator. Drives from hasPrev / hasNext flags the API response provides.">
+            <Pagination
+              mode="cursor"
+              hasPrev={activityCursor > 1}
+              hasNext={activityCursor < 5}
+              onPrev={() => setActivityCursor((c) => Math.max(1, c - 1))}
+              onNext={() => setActivityCursor((c) => Math.min(5, c + 1))}
+              indicator={`Showing events ${activityCursor * 10 - 9}–${activityCursor * 10}`}
+            />
+          </Variant>
+
+          <Variant label="Cursor mode — first page (Newer disabled)" caption="hasPrev=false disables the Newer button. No callback fires on disabled click.">
+            <Pagination
+              mode="cursor"
+              hasPrev={false}
+              hasNext
+              onPrev={() => {}}
+              onNext={() => {}}
+              indicator="Showing events 1–10"
+            />
+          </Variant>
+
+          <Variant label="Cursor mode — last page (Older disabled)" caption="End of feed. Both navigation directions disabled would have indicator only.">
+            <Pagination
+              mode="cursor"
+              hasPrev
+              hasNext={false}
+              onPrev={() => {}}
+              onNext={() => {}}
+              indicator="Showing events 91–98 of 98"
+            />
+          </Variant>
+
+          <Variant label='Cursor mode — custom labels ("Prev" / "Next")' caption="For chronological list views where Newer/Older reads wrong. Pass prevLabel + nextLabel.">
+            <Pagination
+              mode="cursor"
+              hasPrev
+              hasNext
+              onPrev={() => {}}
+              onNext={() => {}}
+              prevLabel="Prev"
+              nextLabel="Next"
+            />
+          </Variant>
+
+          <Variant label="Page mode — short range (5 pages)" caption="totalPages ≤ 7 renders every page. Active page inverts to ink-filled with warm-white text; same recipe as Sidebar's active nav link.">
+            <Pagination
+              mode="page"
+              page={3}
+              totalPages={5}
+              onChange={() => {}}
+            />
+          </Variant>
+
+          <Variant label="Page mode — long range with ellipsis" caption="totalPages > 7 collapses to [1, …, current-1, current, current+1, …, last]. Always shows first + last so jumping to extremes is one click.">
+            <Pagination
+              mode="page"
+              page={page}
+              totalPages={12}
+              onChange={setPage}
+            />
+          </Variant>
+
+          <Variant label="Page mode — near the front (no leading ellipsis)" caption="At page 2 of 12, the first 3 pages render contiguously and only the trailing ellipsis appears.">
+            <Pagination
+              mode="page"
+              page={2}
+              totalPages={12}
+              onChange={() => {}}
+            />
+          </Variant>
+
+          <Variant label="Page mode — near the end (no trailing ellipsis)" caption="At page 11 of 12, the last 3 pages render contiguously and only the leading ellipsis appears.">
+            <Pagination
+              mode="page"
+              page={11}
+              totalPages={12}
+              onChange={() => {}}
+            />
+          </Variant>
+
+          <Variant label="Page mode — huge range (100 pages)" caption="Same ellipsis logic at scale. Page 50 of 100 collapses to [1, …, 49, 50, 51, …, 100].">
+            <Pagination
+              mode="page"
+              page={50}
+              totalPages={100}
+              onChange={() => {}}
+            />
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PaginationDarkSection() {
+  return (
+    <section
+      className="oga-section-dark oga-prim-section"
+      data-oga-surface="dark"
+      aria-labelledby="ar-242-dark-heading"
+    >
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-242 · Dark surface variant</p>
+          <h2 id="ar-242-dark-heading" className="oga-h2 oga-prim-section__title">
+            Pagination on dark
+          </h2>
+          <p className="oga-prim-section__caption">
+            Same primitive on a dark scaffolding page (Monitor changes
+            feed, dark-modal embedded tables with pagination). Borders +
+            text invert to warm-white; active page (page mode) becomes
+            warm-white-filled with ink text — same inversion as DataTable
+            sort indicators on dark.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc oga-prim-doc--dark">
+          <Variant label="Cursor mode on dark" caption="Activity feed style on a dark Monitor sub-view.">
+            <Pagination
+              mode="cursor"
+              hasPrev
+              hasNext
+              onPrev={() => {}}
+              onNext={() => {}}
+              indicator="Showing changes 31–40 of 247"
+              surface="dark"
+            />
+          </Variant>
+
+          <Variant label="Page mode on dark with ellipsis" caption="Same long-range ellipsis logic, inverted palette. Active page reads ink on warm-white.">
+            <Pagination
+              mode="page"
+              page={7}
+              totalPages={12}
+              onChange={() => {}}
+              surface="dark"
             />
           </Variant>
         </div>
