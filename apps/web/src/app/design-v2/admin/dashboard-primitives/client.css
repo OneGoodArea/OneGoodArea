@@ -506,3 +506,35 @@
   border-bottom: 1px dashed var(--oga-ink-30);
   cursor: help;
 }
+
+/* ---------- AR-241 StatsCard showcase ----------
+   3-card top strip pattern — CSS Grid row, equal columns, gap
+   between tiles. Stacks to 1 column below 720px. Matches what
+   /dashboard Home will render via the AR-217-B5 ticket. */
+
+.oga-prim-stats-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--oga-3);
+  width: 100%;
+}
+
+@media (max-width: 720px) {
+  .oga-prim-stats-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Showcase opt-out: some variants (3-card strip, anything that
+   needs the full doc-row width to read realistically) override the
+   default 480px demo max-width. Only used inside specific Variant
+   blocks where the realistic surface width matters. */
+.oga-prim-doc__row:has(.oga-prim-doc__demo--wide) {
+  /* When a row contains a wide demo, the demo column gets the
+     remaining grid space (no max cap). */
+}
+
+.oga-prim-doc__demo--wide {
+  max-width: none;
+  width: 100%;
+}
