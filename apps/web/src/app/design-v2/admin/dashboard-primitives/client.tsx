@@ -28,6 +28,7 @@ import { Wordmark } from "@/app/design-v2/_shared/wordmark";
 import { SignalsIcon, ScoresIcon, MonitorIcon, IntelligenceIcon } from "@/app/design-v2/_shared/product-icons";
 import { EmptyState } from "@/app/design-v2/_shared/dashboard/empty-state";
 import { Tooltip } from "@/app/design-v2/_shared/dashboard/tooltip";
+import { CodeBlock } from "@/app/design-v2/_shared/dashboard/code-block";
 import "./client.css";
 
 export default function DashboardPrimitivesClient() {
@@ -50,6 +51,8 @@ export default function DashboardPrimitivesClient() {
         <EmptyStateDarkSection />
         <TooltipSection />
         <TooltipDarkSection />
+        <CodeBlockSection />
+        <CodeBlockDarkSection />
       </div>
     </ToastProvider>
   );
@@ -2043,6 +2046,193 @@ function TooltipDarkSection() {
                 Delete portfolio
               </button>
             </Tooltip>
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   AR-240 <CodeBlock>
+   ============================================================
+   "Show the curl" pattern — the signature affordance across every
+   product playground + the public /playground + Webhooks reveal. */
+
+const SHOWCASE_CURL = `curl -H "Authorization: Bearer oga_..." \\
+  "https://api.onegoodarea.com/v1/area?postcode=M1+1AE"`;
+
+const SHOWCASE_JSON = `// 200 OK
+{
+  "geo_code": "E01005132",
+  "engine_version": "2.0.2",
+  "signals": {
+    "deprivation.imd_decile": {
+      "value": 2,
+      "normalized_value": 0.78,
+      "percentile": 0.92,
+      "confidence": 1.0
+    }
+  }
+}`;
+
+const SHOWCASE_TS = `import { OneGoodArea } from "@onegoodarea/sdk";
+
+const client = new OneGoodArea({ apiKey: process.env.OGA_KEY });
+
+const area = await client.areas.get({
+  postcode: "M1 1AE",
+  bundle: "lender-default"
+});
+
+return area.signals;`;
+
+function CodeBlockSection() {
+  return (
+    <section className="oga-section-quiet oga-prim-section" aria-labelledby="ar-240-heading">
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-240 · Foundational</p>
+          <h2 id="ar-240-heading" className="oga-h2 oga-prim-section__title">
+            CodeBlock
+          </h2>
+          <p className="oga-prim-section__caption">
+            The &ldquo;Show the curl&rdquo; pattern — Stripe + Linear convention
+            named explicitly in the dashboard proposal. Full-width monospace
+            block + line numbers + copy-to-clipboard + optional mono-caps
+            header strip. Three minimal grammars (<code className="oga-prim-code">bash</code>,
+            <code className="oga-prim-code">json</code>, <code className="oga-prim-code">typescript</code>) reuse the canonical
+            <code className="oga-prim-code">.oga-code-panel__</code>* token classes —
+            single source of truth for syntax colour across the marketing +
+            dashboard surfaces.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc">
+          <Variant label="bash + header — REQUEST · GET /v1/area" caption="The signature curl on every product playground. Header strip in mono caps; copy button top-right.">
+            <CodeBlock
+              code={SHOWCASE_CURL}
+              language="bash"
+              header="REQUEST · GET /v1/area"
+            />
+          </Variant>
+
+          <Variant label="json + header — RESPONSE" caption="The /v1/area response body. Keys, strings, numbers, booleans all token-coloured via the canonical .oga-code-panel__ vocabulary.">
+            <CodeBlock
+              code={SHOWCASE_JSON}
+              language="json"
+              header="RESPONSE · 200 OK"
+            />
+          </Variant>
+
+          <Variant label="typescript — SDK example" caption="The SDK alternative to raw curl. Keywords (const / import / await) highlighted as keys; strings as strings; function calls as fn.">
+            <CodeBlock
+              code={SHOWCASE_TS}
+              language="typescript"
+              header="@onegoodarea/sdk · TypeScript"
+            />
+          </Variant>
+
+          <Variant label="No copy button" caption='copyable={false} hides the copy affordance — for embedded snippets inside larger doc surfaces.'>
+            <CodeBlock
+              code={`echo "RESEND_API_KEY=..."  >> .env.local
+npm run dev`}
+              language="bash"
+              copyable={false}
+            />
+          </Variant>
+
+          <Variant label="No header" caption="Header is optional — for minimal inline snippets.">
+            <CodeBlock
+              code={`POSTCODE=M1 1AE
+curl -H "X-Engine-Version: 2.0.2" \\
+  "https://api.onegoodarea.com/v1/area?postcode=$POSTCODE"`}
+              language="bash"
+            />
+          </Variant>
+
+          <Variant label="HTTP verb canonical colours" caption="Each verb gets the canonical .oga-verb--{verb} colour from styles/brand/components.css — green for GET, amber for POST, yellow for PUT, red for DELETE. Same vocabulary as the /docs/api-reference Surface Map.">
+            <CodeBlock
+              code={`# Read one area
+curl -X GET "https://api.onegoodarea.com/v1/area?postcode=M1+1AE"
+
+# Score with a custom preset
+curl -X POST "https://api.onegoodarea.com/v1/score" -d '{"preset_id":"..."}'
+
+# Update an org bundle
+curl -X PUT "https://api.onegoodarea.com/v1/orgs/org_.../bundles/bnd_..." -d '{...}'
+
+# Remove a member
+curl -X DELETE "https://api.onegoodarea.com/v1/orgs/org_.../members/usr_..."`}
+              language="bash"
+              header="HTTP VERBS · Canonical colour map"
+            />
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CodeBlockDarkSection() {
+  return (
+    <section
+      className="oga-section-dark oga-prim-section"
+      data-oga-surface="dark"
+      aria-labelledby="ar-240-dark-heading"
+    >
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-240 · Dark surface variant</p>
+          <h2 id="ar-240-dark-heading" className="oga-h2 oga-prim-section__title">
+            CodeBlock on dark
+          </h2>
+          <p className="oga-prim-section__caption">
+            Same primitive on a dark scaffolding page (Monitor sub-views,
+            sidebar embedded snippets, dark-modal &ldquo;Show the curl&rdquo;
+            panels). Graphite gradient + dot-field motif anchored at
+            top-right — matches Sidebar + DataTable dark + EmptyState dark.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc oga-prim-doc--dark">
+          <Variant label="bash + header on dark" caption="The same REQUEST showcase as the light variant, on dark scaffolding.">
+            <CodeBlock
+              code={SHOWCASE_CURL}
+              language="bash"
+              header="REQUEST · GET /v1/area"
+              surface="dark"
+            />
+          </Variant>
+
+          <Variant label="json — webhook payload" caption='The webhook reveal-once flow renders the signing secret payload as a CodeBlock on dark — "copy this once; we won&rsquo;t show it again".'>
+            <CodeBlock
+              code={`{
+  "event": "signal.changed",
+  "portfolio_id": "ptf_01HE...",
+  "geo_code": "E01005132",
+  "signal_key": "property.median_price",
+  "previous_value": 197000,
+  "current_value": 214000,
+  "change_pct": 8.6
+}`}
+              language="json"
+              header="EVENT · signal.changed"
+              surface="dark"
+            />
+          </Variant>
+
+          <Variant label="HTTP verbs on dark — auto-brighten" caption="The canonical .oga-verb--{verb} colours auto-brighten on data-oga-surface=&quot;dark&quot; (set by the primitive itself when surface=&quot;dark&quot;). GET reads brighter green, POST brighter amber, etc. — same lift as the api-reference Surface Map on its dark sections.">
+            <CodeBlock
+              code={`# Read
+curl -X GET    "https://api.onegoodarea.com/v1/area"
+curl -X POST   "https://api.onegoodarea.com/v1/score"
+curl -X PUT    "https://api.onegoodarea.com/v1/orgs/.../bundles/..."
+curl -X DELETE "https://api.onegoodarea.com/v1/orgs/.../members/..."`}
+              language="bash"
+              header="HTTP VERBS · Canonical colour map (dark)"
+              surface="dark"
+            />
           </Variant>
         </div>
       </div>
