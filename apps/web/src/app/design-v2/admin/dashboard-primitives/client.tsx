@@ -26,6 +26,7 @@ import type { SidebarSection } from "@/app/design-v2/_shared/dashboard/sidebar";
 import { NavIconDark } from "@/app/design-v2/_shared/app-shell";
 import { Wordmark } from "@/app/design-v2/_shared/wordmark";
 import { SignalsIcon, ScoresIcon, MonitorIcon, IntelligenceIcon } from "@/app/design-v2/_shared/product-icons";
+import { EmptyState } from "@/app/design-v2/_shared/dashboard/empty-state";
 import "./client.css";
 
 export default function DashboardPrimitivesClient() {
@@ -44,6 +45,8 @@ export default function DashboardPrimitivesClient() {
         <DataTableSection />
         <DataTableDarkSection />
         <SidebarShowcaseSection />
+        <EmptyStateSection />
+        <EmptyStateDarkSection />
       </div>
     </ToastProvider>
   );
@@ -1754,6 +1757,143 @@ function SidebarShowcaseSection() {
                 }
               />
             </div>
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   AR-238 <EmptyState>
+   ============================================================
+   ICONS: uses the canonical bespoke set defined above (MembersIcon,
+   PortfolioIcon, WebhookIcon, BundlesIcon, AlertsIcon, ChangesIcon) —
+   same icons the Tabs + Sidebar showcases use. No invented inline
+   glyphs here. [[feedback-icons-and-canonical-assets]] */
+
+function EmptyStateSection() {
+  return (
+    <section className="oga-section-quiet oga-prim-section" aria-labelledby="ar-238-heading">
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-238 · Foundational</p>
+          <h2 id="ar-238-heading" className="oga-h2 oga-prim-section__title">
+            EmptyState
+          </h2>
+          <p className="oga-prim-section__caption">
+            The first surface in every list page when there&apos;s nothing
+            to show yet. Consumes a bespoke icon (from the canonical
+            sets — NavIconDark / product-icons / the Tabs-set glyphs),
+            a mono-caps title, a supporting line, and one or two CTAs.
+            Composes inside <code className="oga-prim-code">&lt;DataTable emptyState=&#123;...&#125;&gt;</code> AND
+            standalone on a page. Brand v3 vocabulary: warm-white
+            gradient + edge-lit material recipe matching <code className="oga-prim-code">.oga-code-panel</code>.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc">
+          <Variant label="Standalone — single primary action" caption='What every Levers list page (members / bundles / presets / cohorts) shows on first visit. Members icon from the canonical bespoke set.'>
+            <EmptyState
+              icon={<MembersIcon />}
+              title="No members yet"
+              body="Invite a teammate to start collaborating in this organisation."
+              action={{ label: "Invite member", href: "#" }}
+            />
+          </Variant>
+
+          <Variant label="With secondary action" caption="Portfolios list — primary CTA creates the first portfolio, secondary CTA links to the docs.">
+            <EmptyState
+              icon={<PortfolioIcon />}
+              title="No portfolios yet"
+              body="Add a portfolio to start tracking signal changes across your areas. We&rsquo;ll alert you when something material moves."
+              action={{ label: "Create portfolio", href: "#" }}
+              secondaryAction={{ label: "Read the docs", href: "#" }}
+            />
+          </Variant>
+
+          <Variant label="No action — informational" caption="Activity feed when there&apos;s no activity yet. No CTA — just acknowledge the state.">
+            <EmptyState
+              icon={<AlertsIcon />}
+              title="No activity yet"
+              body="When something changes — a member is added, a preset saved, a webhook delivered — it&rsquo;ll show up here."
+            />
+          </Variant>
+
+          <Variant label="No icon — restrained" caption='Minimal variant used inside <DataTable emptyState> when the table itself already has a header providing context.'>
+            <EmptyState
+              title="No webhook deliveries this month"
+              body="Once a webhook fires, the delivery log shows up here with the response code, headers, and payload."
+              action={{ label: "Create webhook", href: "#" }}
+            />
+          </Variant>
+
+          <Variant label="Composed inside <DataTable>" caption="The EmptyState passed as emptyState prop. Same primitive, sized to fit the table body.">
+            <DataTable
+              columns={[
+                { key: "name", header: "Name", cell: (r: { name: string }) => r.name, width: "minmax(180px, 1fr)" },
+                { key: "role", header: "Role", cell: () => "—", width: "120px" },
+                { key: "last", header: "Last active", cell: () => "—", width: "140px", align: "end" },
+              ]}
+              rows={[]}
+              rowKey={(r) => r.name}
+              caption="Members (empty)"
+              emptyState={
+                <EmptyState
+                  icon={<MembersIcon />}
+                  title="No members yet"
+                  body="Invite a teammate to start collaborating in this organisation."
+                  action={{ label: "Invite member", href: "#" }}
+                />
+              }
+            />
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function EmptyStateDarkSection() {
+  return (
+    <section
+      className="oga-section-dark oga-prim-section"
+      data-oga-surface="dark"
+      aria-labelledby="ar-238-dark-heading"
+    >
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-238 · Dark surface variant</p>
+          <h2 id="ar-238-dark-heading" className="oga-h2 oga-prim-section__title">
+            EmptyState on dark
+          </h2>
+          <p className="oga-prim-section__caption">
+            Same primitive on a dark scaffolding page (Monitor sub-views,
+            sidebar org list, dark-modal embedded lists). Surface inverts
+            to graphite gradient + dot-field motif anchored at top-right
+            — same vocabulary as <code className="oga-prim-code">.oga-data-table</code> dark
+            and <code className="oga-prim-code">.oga-sidebar</code>.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc oga-prim-doc--dark">
+          <Variant label="Default — Monitor changes feed (empty)" caption="No portfolio changes detected in the selected period.">
+            <EmptyState
+              icon={<ChangesIcon />}
+              title="No changes in this period"
+              body="Signal changes across this portfolio&rsquo;s areas will appear here as they&rsquo;re detected by the monthly cron."
+              action={{ label: "Adjust filters", href: "#" }}
+            />
+          </Variant>
+
+          <Variant label="With secondary action — Bundles (empty)" caption="On a dark scaffolding page. Primary creates the first bundle; secondary links to docs.">
+            <EmptyState
+              icon={<BundlesIcon />}
+              title="No custom bundles yet"
+              body="Bundles let your org subscribe to a specific subset of signals on /v1/area, /v1/areas, and /v1/query."
+              action={{ label: "Create bundle", href: "#" }}
+              secondaryAction={{ label: "Read about bundles", href: "#" }}
+            />
           </Variant>
         </div>
       </div>
