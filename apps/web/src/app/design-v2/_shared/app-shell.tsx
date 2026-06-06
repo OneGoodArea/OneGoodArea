@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Wordmark } from "./wordmark";
 import { type IconName } from "./icons";
+import { Sidebar, type SidebarSection } from "./dashboard/sidebar";
 import "./app-shell.css";
 
 /* AppShell — authenticated-surface chrome (AR-204 close-out 5/15).
@@ -63,31 +64,71 @@ export function AppShell({
   children: ReactNode;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { data: session } = useSession();
+  const pathname = usePathname();
 
-  useEffect(() => {
-    if (!drawerOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setDrawerOpen(false);
-    };
-    document.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [drawerOpen]);
+  /* Compose the existing nav arrays into the SidebarSection shape the
+     <Sidebar> primitive expects. Active state is derived here (the
+     primitive doesn't know about next/navigation). Phase 1 AR-217-B1
+     will replace this with the new 4-section sitemap; this ticket
+     preserves the current 2-section content (Main + Account). */
+  const sections: SidebarSection[] = [
+    {
+      label: "Main",
+      items: PRIMARY.map((item) => ({
+        label: item.label,
+        href: item.href,
+        icon: <NavIconDark name={item.icon} />,
+        active: isItemActive(pathname, item),
+      })),
+    },
+    {
+      label: "Account",
+      items: SECONDARY.map((item) => ({
+        label: item.label,
+        href: item.href,
+        icon: <NavIconDark name={item.icon} />,
+        active: isItemActive(pathname, item),
+      })),
+    },
+  ];
 
   return (
     <div className="oga-root oga-app" data-drawer-open={drawerOpen ? "true" : undefined}>
-      <Sidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} />
-      {drawerOpen && (
-        <div
-          className="oga-app__backdrop"
-          onClick={() => setDrawerOpen(false)}
-          aria-hidden
-        />
-      )}
+      <Sidebar
+        sections={sections}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        top={
+          <>
+            <Wordmark href="/dashboard" size={20} tone="dark" />
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(false)}
+              aria-label="Close navigation"
+              className="oga-app__sidebar-close"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path
+                  d="M6 6l12 12M18 6L6 18"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+          </>
+        }
+        bottom={
+          <>
+            <SidebarThemeRow />
+            <UserChip
+              name={session?.user?.name || null}
+              email={session?.user?.email || null}
+            />
+          </>
+        }
+      />
       <main className="oga-app__main">
         <MobileTopbar title={title} onMenu={() => setDrawerOpen(true)} />
         {(title || actions) && (
@@ -97,6 +138,11 @@ export function AppShell({
       </main>
     </div>
   );
+}
+
+function isItemActive(pathname: string, item: NavItem): boolean {
+  if (item.exact) return pathname === item.href;
+  return pathname === item.href || pathname.startsWith(item.href + "/");
 }
 
 /* ============================================================
@@ -138,111 +184,10 @@ function MobileTopbar({
   );
 }
 
-/* ============================================================
-   Sidebar (DARK)
-   ============================================================ */
-
-function Sidebar({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
-  const { data: session } = useSession();
-  return (
-    <aside
-      className={open ? "oga-app__sidebar oga-app__sidebar--open" : "oga-app__sidebar"}
-      data-oga-surface="dark"
-    >
-      <div className="oga-app__sidebar-head">
-        <Wordmark href="/dashboard" size={20} tone="dark" />
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close navigation"
-          className="oga-app__sidebar-close"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <path
-              d="M6 6l12 12M18 6L6 18"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
-      </div>
-
-      <div className="oga-app__sidebar-body">
-        <NavGroup label="Main" items={PRIMARY} onItemClick={onClose} />
-        <div className="oga-app__sidebar-gap" />
-        <NavGroup label="Account" items={SECONDARY} onItemClick={onClose} />
-
-        <div className="oga-app__sidebar-spacer" />
-
-        <SidebarThemeRow />
-        <UserChip
-          name={session?.user?.name || null}
-          email={session?.user?.email || null}
-        />
-      </div>
-    </aside>
-  );
-}
-
-function NavGroup({
-  label,
-  items,
-  onItemClick,
-}: {
-  label: string;
-  items: NavItem[];
-  onItemClick?: () => void;
-}) {
-  const pathname = usePathname();
-  return (
-    <div>
-      <div className="oga-app__nav-group-label">{label}</div>
-      <ul className="oga-app__nav-list">
-        {items.map((item) => {
-          const active = item.exact
-            ? pathname === item.href
-            : pathname === item.href ||
-              pathname.startsWith(item.href + "/");
-          return (
-            <li key={item.label}>
-              <NavLink item={item} active={active} onClick={onItemClick} />
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-}
-
-function NavLink({
-  item,
-  active,
-  onClick,
-}: {
-  item: NavItem;
-  active: boolean;
-  onClick?: () => void;
-}) {
-  return (
-    <Link
-      href={item.href}
-      onClick={onClick}
-      className={active ? "oga-app__nav-link oga-app__nav-link--active" : "oga-app__nav-link"}
-    >
-      <span aria-hidden className="oga-app__nav-link-icon">
-        <NavIconDark name={item.icon} />
-      </span>
-      <span>{item.label}</span>
-    </Link>
-  );
-}
+/* Nav icons for the dark sidebar — also exported so the
+   dashboard-primitives showcase + future Phase 1 surfaces consume
+   the same canonical set instead of reinventing 16x16 glyphs. */
+export { NavIconDark };
 
 /* Nav icons for the dark sidebar. currentColor everywhere so the
    active / hover states drive the colour from CSS. */

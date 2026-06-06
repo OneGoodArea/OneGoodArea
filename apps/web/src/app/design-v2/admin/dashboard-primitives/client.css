@@ -373,3 +373,92 @@
   max-width: 42ch;
   text-align: center;
 }
+
+/* ---------- AR-233 Sidebar showcase ----------
+   The Sidebar primitive is normally a 100vh sticky-positioned column.
+   Inside the showcase doc rows, we render it inside a contained
+   preview frame so its positioning + height read without busting the
+   row layout. Width fixed at 260px (the desktop width); height capped
+   so the spacer + bottom slot still anchor visibly. */
+
+.oga-prim-sidebar-frame {
+  position: relative;
+  width: 260px;
+  height: 460px;
+  border-radius: 6px;
+  overflow: hidden;
+  /* Sidebar inside expects to be its own positioning context */
+  isolation: isolate;
+}
+
+.oga-prim-sidebar-frame--tall {
+  height: 560px;
+}
+
+/* Reset the sidebar's sticky/100vh inside the preview frame so it
+   sizes to the frame instead of the page. */
+.oga-prim-sidebar-frame .oga-sidebar {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  border-right: none;
+}
+
+/* Hide the mobile-drawer transform inside the preview frame on
+   desktop showings — the frame is the simulated viewport, not the
+   real one, so the breakpoint shouldn't transform the preview. */
+@media (max-width: 880px) {
+  .oga-prim-sidebar-frame .oga-sidebar {
+    position: absolute;
+    transform: none;
+    width: 100%;
+    box-shadow: none;
+  }
+}
+
+/* Stub bits the showcase composes into the sidebar's top + bottom
+   slots. AppShell uses Wordmark + close button + ThemeRow + UserChip;
+   here we use simplified placeholders so the demo is self-contained. */
+
+.oga-prim-sidebar-userchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(250, 248, 244, 0.04);
+  border: 1px solid rgba(250, 248, 244, 0.10);
+  border-radius: 4px;
+  color: var(--oga-white);
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.oga-prim-sidebar-userchip__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: rgba(250, 248, 244, 0.10);
+  color: var(--oga-white);
+  border-radius: 50%;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.oga-prim-sidebar-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: rgba(250, 248, 244, 0.05);
+  border: 1px solid rgba(250, 248, 244, 0.18);
+  color: var(--oga-white);
+  border-radius: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
