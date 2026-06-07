@@ -27,5 +27,12 @@ services:
     ports:
       - "12111:12111"
 
+  pgadmin:
+    ports:
+      - "8888:80"
+    volumes:
+      - oga-pgadmin-data:/var/lib/pgadmin
+
 volumes:
   oga-postgres-data:
+  oga-pgadmin-data:

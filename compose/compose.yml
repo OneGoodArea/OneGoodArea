@@ -4,7 +4,7 @@ services:
       context: ..
       dockerfile: container/postgres/Containerfile
     image: onegoodarea/postgres:local
-    profiles: ["db"]
+    profiles: ["minimal"]
     environment:
       POSTGRES_DB: oga_local
       POSTGRES_USER: oga_user
@@ -21,7 +21,7 @@ services:
       context: ../services/neon-compat-proxy
       dockerfile: Dockerfile
     image: onegoodarea/neon-compat-proxy:local
-    profiles: ["db"]
+    profiles: ["minimal"]
     environment:
       POSTGRES_USER: oga_user
       POSTGRES_PASSWORD: oga_test_password_local
@@ -92,3 +92,20 @@ services:
   stripe-mock:
     image: stripe/stripe-mock:latest
     profiles: ["full"]
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    profiles: ["minimal"]
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@onegoodarea.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/misc/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

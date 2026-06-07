@@ -28,7 +28,7 @@ CTR_COMPOSE ?= $(CTR_ENGINE) compose
 
 .PHONY: stack-engine-info
 
-stack-engine-info:
+stack-engine-info: ## Show detected container engine and runtime info
 	@echo "container runtime"
 	@echo "  host os         : $(CTR_HOST_OS)"
 	@echo "  engine          : $(CTR_ENGINE)"

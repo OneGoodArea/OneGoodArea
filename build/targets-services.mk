@@ -1,4 +1,4 @@
-.PHONY: api-up api-logs web-up db-seed api-test-coverage-container web-test-coverage-container
+.PHONY: api-up api-logs web-up db-seed compose-down api-test-coverage-container web-test-coverage-container
 
 api-up: ## Boot API service with compose dependencies
 	$(CTR_COMPOSE_CMD) --profile minimal up -d --build api
