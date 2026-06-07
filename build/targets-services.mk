@@ -12,9 +12,6 @@ web-up: ## Boot web service with compose dependencies
 web-logs: ## Follow API service logs
 	$(CTR_COMPOSE_CMD) logs -f web
 
-compose-down: ## Stop compose stack and remove orphan containers
-	$(CTR_COMPOSE_CMD) --profile minimal --profile full down --remove-orphans
-
 db-seed: ## Seed postgres with framework + baseline profile SQL
 	$(CTR_COMPOSE_CMD) exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$${POSTGRES_USER:-oga_user}" -d "$${POSTGRES_DB:-oga_local}"' < apps/web/tests/seeds/framework/001-seed-framework.sql
 	$(CTR_COMPOSE_CMD) exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$${POSTGRES_USER:-oga_user}" -d "$${POSTGRES_DB:-oga_local}"' < apps/web/tests/seeds/profiles/baseline/100-baseline-users.sql
