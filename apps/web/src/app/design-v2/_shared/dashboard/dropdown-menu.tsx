@@ -18,7 +18,8 @@
 
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 import "./dropdown-menu.css";
 
@@ -91,6 +92,54 @@ export function DropdownMenu({
   const panelRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const menuId = useId();
+
+  /* Portal panel position — viewport coordinates from the trigger's
+     bounding rect. Rendering into document.body escapes ALL parent
+     stacking contexts (isolation: isolate, transform, will-change,
+     filter — anything that creates one), so the panel always floats
+     above the page chrome and never gets clipped or click-blocked by
+     the next section after the trigger's parent. AR-246 polish. */
+  const [panelPosition, setPanelPosition] = useState<{
+    top: number;
+    left: number;
+    minWidth: number;
+  } | null>(null);
+
+  /* Recompute panel position when open or on layout-affecting events
+     (resize, scroll on any ancestor). useLayoutEffect so the panel
+     paints in the right spot from the first frame — no flash.
+
+     Note: stale panelPosition state from a previous open cycle is
+     fine — the {open && panelPosition} guard in render gates the
+     portal, so the panel stays unmounted while open=false. Resetting
+     position to null in the effect would trip
+     react-hooks/set-state-in-effect (setState in an effect causes
+     cascading renders). */
+  useLayoutEffect(() => {
+    if (!open) return;
+    function updatePosition() {
+      const trigger = triggerRef.current;
+      if (!trigger) return;
+      const rect = trigger.getBoundingClientRect();
+      setPanelPosition({
+        /* 8px gap below the trigger — matches the original
+           top: calc(100% + var(--oga-2)) recipe. */
+        top: rect.bottom + 8,
+        left: align === "start" ? rect.left : rect.right,
+        minWidth: rect.width,
+      });
+    }
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    /* Capture phase so we catch scrolls on any ancestor (not just
+       window). Reposition rather than close — the panel stays
+       anchored to the trigger as the page moves. */
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [open, align]);
 
   const close = useCallback(() => {
     setOpen(false);
@@ -229,15 +278,23 @@ export function DropdownMenu({
       >
         {trigger}
       </button>
-      {open ? (
+      {open && panelPosition && typeof document !== "undefined"
+        ? createPortal(
         <div
           ref={panelRef}
           id={menuId}
           role="menu"
           aria-orientation="vertical"
           data-align={align}
-          className="oga-dropdown__panel"
+          className="oga-dropdown__panel oga-dropdown__panel--portal"
           onKeyDown={handlePanelKey}
+          style={{
+            top: `${panelPosition.top}px`,
+            ...(align === "start"
+              ? { left: `${panelPosition.left}px` }
+              : { left: `${panelPosition.left}px`, transform: "translateX(-100%)" }),
+            minWidth: `${panelPosition.minWidth}px`,
+          }}
         >
           {header ? (
             <p className="oga-dropdown__header" aria-hidden="true">
@@ -286,8 +343,10 @@ export function DropdownMenu({
               </button>
             );
           })}
-        </div>
-      ) : null}
+        </div>,
+        document.body,
+      )
+      : null}
     </div>
   );
 }

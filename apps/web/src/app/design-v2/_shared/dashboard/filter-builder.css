@@ -21,8 +21,14 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.95),
     0 1px 1px rgba(26, 28, 31, 0.04),
     0 28px 64px -22px rgba(26, 28, 31, 0.18);
-  isolation: isolate;
-  overflow: hidden;
+  /* No `isolation: isolate` (was creating a stacking context that
+     trapped DropdownMenu panels inside the card; when a panel
+     extended past the bottom of the card, the next section painted
+     OVER it because the panel's z-index applied only WITHIN the
+     trapped context). Combined with the DropdownMenu portal change,
+     panels now escape to document.body and float above everything. */
+  /* No `overflow: hidden` either — the ::before accent uses
+     border-radius: inherit to clip itself to the rounded card edge. */
   font-variant-numeric: tabular-nums;
 }
 
@@ -40,6 +46,10 @@
     rgba(26, 28, 31, 0.045) 0%,
     transparent 70%
   );
+  /* Adopt parent's border-radius so the gradient clips to the
+     rounded card edge — replaces the parent's overflow:hidden which
+     also clipped DropdownMenu panels. */
+  border-radius: inherit;
   pointer-events: none;
   z-index: 0;
 }
@@ -376,6 +386,9 @@
     rgba(250, 248, 244, 0.04) 0%,
     transparent 70%
   );
+  /* Same self-clip as the light variant — replaces the parent's
+     overflow:hidden so DropdownMenu panels aren't truncated. */
+  border-radius: inherit;
   pointer-events: none;
   z-index: 0;
 }
