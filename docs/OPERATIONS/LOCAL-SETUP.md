@@ -1,8 +1,8 @@
 # Local setup
 
-Use the Makefile for the common host path: `make app-setup`, `make app-dev`, `make app-test`, `make app-typecheck`, and `make app-lint`.
+Use the Makefile for the common host path: `make app-setup`, `make app-build`, `make app-dev`, `make app-test`, `make app-typecheck`, and `make app-lint`.
 
-You can use `make help` to learn what are the optios
+You can use `make help` to learn what are the options
 
 ## Prerequisites
 
