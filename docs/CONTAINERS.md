@@ -1,210 +1,158 @@
 # Running OneGoodArea in Containers
 
-This document covers running the OneGoodArea application components in containers.
+## Prerequisites
 
-## Web Container (Plan 011)
+- Docker or Podman (auto-detected by Make)
+- Ports available: 55432 (postgres), 55433 (neon-proxy), 8080 (api), 3000 (web), 8888 (pgadmin)
 
-The web container is a **stateless HTTP client** to the API. It requires no `DATABASE_URL` and can connect to an API server anywhere: local container, LAN, or cloud.
-
-### Connection Scenarios
-
-| Scenario | API Location | INTERNAL_API_URL | Make Target | Setup |
-|----------|--------------|------------------|-------------|-------|
-| **Local Container** | `oga-api` on `oga-network` | `http://oga-api:8080` | `make web-up-local` | `make db-net api-run` |
-| **Bare Process** | Same host, :8080 | `http://host.containers.internal:8080` | `make web-up-external` | `make dev` |
-| **LAN / Local VM** | Another machine on network | `http://192.168.1.50:8080` | `make web-up-external` | Ensure reachable |
-| **Oracle Cloud / VPS** | Public cloud domain | `https://api.yourdomain.com` | `make web-up-external` | Ensure reachable |
-
-### Quick Start
-
-**Scenario: API as local container**
+## Quick Start
 
 ```bash
-# Terminal 1: Start database and API
-make db-net db-run db-seed
-make api-build
-make api-run
+# Start the full minimal stack (postgres, neon-proxy, api, web, pgadmin)
+make stack-up-min
 
-# Terminal 2: Start web
-cp env/local/web.env.example env/local/web.env
-# Edit web.env: set INTERNAL_API_URL=http://oga-api:8080
-make web-build
-make web-up-local
+# Optionally rebuild images first
+make stack-up-min BUILD_FLAG=--build
 
-# Browser: http://localhost:3000
+# Follow logs
+make stack-logs
+
+# Stop everything
+make stack-down-min
+
+# Full cleanup (removes volumes/data)
+make stack-clean
 ```
 
-**Scenario: API as bare process on same host**
+## Stack Targets
 
-```bash
-# Terminal 1: Start database and API
-make db-net db-run db-seed
-make dev        # API on :8080
+| Target | Description |
+|--------|-------------|
+| `make stack-up-min` | Boot minimal stack (postgres, neon-proxy, api, web, pgadmin) |
+| `make stack-up-full` | Boot full stack (minimal + mailhog, stripe-mock) |
+| `make stack-up-db` | Boot db-only stack (postgres + full profile services) |
+| `make stack-down-min` | Stop minimal stack |
+| `make stack-down-full` | Stop full stack |
+| `make stack-down` | Stop all compose services |
+| `make stack-logs` | Follow logs for all services |
+| `make stack-clean` | Stop + remove named volumes (destructive) |
+| `make stack-engine-info` | Show detected container engine |
 
-# Terminal 2: Start web
-cp env/local/web.env.example env/local/web.env
-# Edit web.env: set INTERNAL_API_URL=http://host.containers.internal:8080
-make web-build
-make web-up-external
+Set `BUILD_FLAG=--build` to force rebuild: `make stack-up-min BUILD_FLAG=--build`.
 
-# Browser: http://localhost:3000
-```
+## Service Targets
 
-### Web Make Targets
+| Target | Description |
+|--------|-------------|
+| `make api-up` | Boot API service with compose dependencies |
+| `make api-logs` | Follow API logs |
+| `make web-up` | Boot web service with compose dependencies |
+| `make web-logs` | Follow web logs |
+| `make db-seed` | Load framework + baseline seed SQL |
+| `make api-test-coverage-container` | Run API coverage in ephemeral container |
+| `make web-test-coverage-container` | Run web coverage in ephemeral container |
 
-```bash
-make web-build              # Build web image (onegoodarea/web:local)
-make web-up-external        # Start web (API on LAN/cloud/bare)
-make web-up-local           # Start web (API as local container)
-make web-down               # Stop web container
-make web-logs               # Follow web container logs
-make web-open               # Open web app in browser (macOS/Linux)
-```
+## Host Targets
 
-### Environment File
+| Target | Description |
+|--------|-------------|
+| `make app-setup` | Install deps + scaffold local env files |
+| `make app-build` | Build all workspace packages |
+| `make app-dev` | Run API in host watch mode |
+| `make app-test` | Run full test suite |
+| `make app-typecheck` | Run strict TypeScript checks |
+| `make app-lint` | Run ESLint across workspace |
 
-Copy `env/local/web.env.example` to `env/local/web.env` and fill in:
+## Services
 
-- `INTERNAL_API_URL` — where the API server is (required; see scenarios above)
-- `AUTH_SECRET` — must match API's `AUTH_SECRET`
-- `NEXTAUTH_URL` — browser-facing URL (default: `http://localhost:3000`)
-- `NEXT_PUBLIC_APP_URL` — same as NEXTAUTH_URL
-- `STRIPE_*` — provider keys (optional for local testing)
-- `SENTRY_*` — observability (optional; leave blank for local)
+### PostgreSQL
 
-## API Container
+- **Image:** `onegoodarea/postgres:local` (extends `postgres:16-alpine`)
+- **Host port:** `55432` → container `5432`
+- **User:** `oga_user`
+- **Password:** `oga_test_password_local`
+- **Database:** `oga_local`
+- **Data volume:** `oga-postgres-data` (persisted)
 
-The API server container includes the PostgreSQL client and full application server.
+### Neon Compat Proxy
 
-### Quick Start
+Lightweight proxy between API and PostgreSQL providing Neon-compatible wire protocol.
 
-```bash
-# One-time setup
-make db-net db-vol db-run db-seed
-make migrate
+- **Image:** `onegoodarea/neon-compat-proxy:local`
+- **Host port:** `55433`
 
-# Run API in container
-make api-build
-make api-run        # Runs on :8080, connects to localhost:55432
+### API
 
-# Run API in watch mode (development)
-make dev            # Same API on :8080, with hot reload
-```
+- **Image:** `onegoodarea/api:local`
+- **Host port:** `8080`
+- Depends on: postgres (healthy), neon-proxy (healthy)
 
-### API Make Targets
+### Web
 
-```bash
-make api-build      # Build API image (onegoodarea/api:local)
-make api-run        # Start API container on oga-network
-make api-stop       # Stop API container
-make api-clean      # Stop + remove image
-make dev            # Run API in development mode (bare process)
-```
+- **Image:** `onegoodarea/web:local`
+- **Host port:** `3000`
+- Depends on: api (started)
 
-## Database Container (Plan 009)
+### pgAdmin
 
-PostgreSQL 16 runs in a container with a dedicated network and volume.
+pgAdmin 4 for database management, available in the minimal profile.
 
-### Quick Start
+- **Image:** `dpage/pgadmin4:latest`
+- **Host port:** `8888` → container `80`
+- **Login:** `admin@onegoodarea.com` / `admin`
+- **Data volume:** `oga-pgadmin-data` (persists servers, queries, preferences)
+- Depends on: postgres (healthy)
 
-```bash
-# One-time setup
-make db-net         # Create oga-network bridge
-make db-vol         # Create oga-postgres-data volume
-make db-run         # Start postgres container
-make migrate        # Run schema migrations
-make db-seed        # Load baseline seed data
+To connect to PostgreSQL from pgAdmin:
+- **Host:** `postgres`
+- **Port:** `5432`
+- **User:** `oga_user`
+- **Password:** `oga_test_password_local`
 
-# Stop and resume later
-make db-stop        # Stop + remove container (volume persists)
-make db-run         # Restart (data preserved)
+### Mailhog (full profile only)
 
-# Full reset (lose data)
-make db-clean       # Stop + remove volume
-make db-run db-seed # Rebuild from scratch
-```
+- **Image:** `mailhog/mailhog:v1.0.1`
+- **Host ports:** `1025` (SMTP), `8025` (UI)
 
-### Database Make Targets
+### Stripe Mock (full profile only)
 
-```bash
-make db-net         # Create oga-network
-make db-vol         # Create oga-postgres-data volume
-make db-run         # Start postgres container (implies db-net + db-vol)
-make db-stop        # Stop + remove container
-make db-clean       # db-stop + remove volume
-make db-seed        # Load seed SQL files
-```
-
-### Connection Details
-
-- **Host:** `localhost`
-- **Port:** `55432` (host-side) → `5432` (container-side)
-- **User:** `oga`
-- **Password:** `oga`
-- **Database:** `oga`
-
-From inside a container on `oga-network`, use hostname `oga-postgres` instead of `localhost`.
-
-## Portable Per-Service Targets
-
-All three services (API, web, postgres) can also be run via the portable matrix:
-
-```bash
-# Build
-make container-build ENV=local SERVICE=api
-make container-build ENV=local SERVICE=web
-make container-build ENV=local SERVICE=postgres
-
-# Run
-make container-run ENV=local SERVICE=api
-make container-run ENV=local SERVICE=web
-
-# Stop
-make container-stop ENV=local SERVICE=api
-make container-stop ENV=local SERVICE=web
-
-# Logs
-make container-logs ENV=local SERVICE=api
-make container-logs ENV=local SERVICE=web
-```
-
-These are less ergonomic than the specific shortcuts (e.g., `make api-run`) but ensure consistency across environments (local, dev, prod).
+- **Image:** `stripe/stripe-mock:latest`
+- **Host port:** `12111`
 
 ## Networking
 
-All containers use the `oga-network` bridge for inter-container communication.
-
-```bash
-# View network details
-docker network inspect oga-network
-
-# See which containers are on it
-docker network inspect oga-network | grep -A 20 "Containers"
-```
-
-The web container automatically joins `oga-network` when using `make web-up-local` (compose/web-local.yml).
+All services are on the `compose_default` network created by Docker Compose. Services communicate by container name (e.g., `postgres`, `neon-proxy`, `api`, `web`).
 
 ## Troubleshooting
 
-### Web can't reach API
-- Verify API is running: `docker ps | grep oga-api`
-- Check INTERNAL_API_URL in `env/local/web.env`
-- For local container scenario: ensure both are on `oga-network`
-  ```bash
-  docker network inspect oga-network
-  ```
+### Port already allocated
 
-### Database won't start
-- Check if volume exists: `docker volume ls | grep oga-postgres-data`
-- Check for port conflicts: `lsof -i :55432` (macOS) or `ss -tlnp :55432` (Linux)
-- Full reset: `make db-clean && make db-run && make db-seed`
+```bash
+# Check what's using the port
+docker ps --format '{{.Names}} {{.Ports}}' | grep <PORT>
 
-### Healthcheck failures
-- Ensure curl is available in the image (added in Plan 011)
-- Check container logs: `make web-logs` or `docker logs oga-web`
-- Test manually: `curl http://localhost:3000`
+# Stop the offending container
+docker stop <container-name>
+```
+
+### Containers not stopping
+
+All services use `profiles` in compose.yml. The `down` commands include `--profile` flags so compose knows which services exist:
+
+```bash
+make stack-down-min    # uses --profile minimal
+make stack-down-full   # uses --profile minimal --profile full
+```
+
+### Container engine not found
+
+```bash
+# Override engine
+make stack-up-min CTR_ENGINE=docker
+# or
+make stack-up-min CTR_ENGINE=podman
+```
 
 ---
 
-**Last Updated:** Plan 011 (AR-208)  
-**References:** Plans 008, 009, 011; CLAUDE.md Rule 13 (simple, maintainable solutions)
+**Last Updated:** June 2026

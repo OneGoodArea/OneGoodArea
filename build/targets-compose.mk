@@ -18,7 +18,7 @@ stack-up-full: ## Boot full stack (minimal + mocks)
 stack-down-full: ## Stop full stack and remove orphan containers
 	$(CTR_COMPOSE_CMD) --profile minimal --profile full down --remove-orphans
 
-stack-up-db: 
+stack-up-db: ## Boot db-only stack (postgres + full profile)
 	$(CTR_COMPOSE_CMD) --profile db --profile full up -d $(BUILD_FLAG)
 
 stack-down: ## Stop stack and remove orphan containers
