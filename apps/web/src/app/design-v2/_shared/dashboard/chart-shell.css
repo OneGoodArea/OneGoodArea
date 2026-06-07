@@ -1,0 +1,440 @@
+/* ============================================================
+   AR-245 — <ChartShell>
+   Three chart variants (line / bar / sparkline) in one primitive,
+   pure SVG. Hairline axes + gridlines at low ink/white opacity,
+   mono caps tick labels, status palette for series, soft-warm
+   hover tooltip with the panel material from Tooltip. Light + dark.
+   ============================================================ */
+
+/* ============================================================
+   Series colour tokens — ink-first editorial palette.
+   Status colours (green / amber / red) are reserved for actual
+   status semantics. Default chart series cascade through ink and
+   muted ink shades so the chart reads as part of the editorial
+   system, not a generic data-viz toolkit. Dark surface overrides
+   below invert to warm-white shades.
+   ============================================================ */
+
+.oga-chart-shell {
+  --oga-chart-series-1: var(--oga-ink);
+  --oga-chart-series-2: rgba(26, 28, 31, 0.45);
+  --oga-chart-series-3: rgba(26, 28, 31, 0.25);
+  --oga-chart-band-fill: rgba(26, 28, 31, 0.06);
+  --oga-chart-band-stroke: rgba(26, 28, 31, 0.18);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAF8F4 100%);
+  border: 1px solid rgba(26, 28, 31, 0.10);
+  border-radius: 10px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 1px 1px rgba(26, 28, 31, 0.04),
+    0 28px 64px -22px rgba(26, 28, 31, 0.18);
+  isolation: isolate;
+  overflow: hidden;
+  font-family: var(--oga-font-sans);
+}
+
+/* Light-surface asymmetric accent — same bottom-left warm-grey
+   wash signature used on FilterBuilder + StatsCard light. Reads
+   as "calibrated instrument" without competing with the chart. */
+.oga-chart-shell[data-surface="light"]::before,
+.oga-chart-shell:not([data-surface])::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 55% 40% at 0% 100%,
+    rgba(26, 28, 31, 0.045) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Raw mode — no container chrome. Used when the chart embeds in
+   another card (StatsCard sparkline slot, dashboard tile body).
+   Sparkline variant defaults to raw. */
+.oga-chart-shell[data-raw="true"] {
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.oga-chart-shell[data-raw="true"]::before {
+  display: none;
+}
+
+/* ---------- Editorial header ---------- */
+
+.oga-chart-shell__header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.oga-chart-shell__eyebrow {
+  margin: 0;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-chart-shell__title {
+  margin: 0;
+  font-family: var(--oga-font-sans);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--oga-ink);
+}
+
+.oga-chart-shell__caption {
+  margin: 0;
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+}
+
+.oga-chart-shell__container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  /* The y-axis label column sits at the LEFT, absolutely positioned
+     with a fixed pixel width. The plot (SVG + tooltip + x-labels) is
+     pushed right by an equal margin so the two never overlap.
+     Tried CSS Grid first; ran into stretch-height edge cases at some
+     widths where labels still touched the chart. Absolute positioning
+     + matching margin is bulletproof. */
+}
+
+.oga-chart-shell__plot {
+  position: relative;
+  margin-left: 48px;
+  min-width: 0;
+}
+
+.oga-chart-shell__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* ---------- Axes + gridlines ---------- */
+
+.oga-chart-shell__axis {
+  stroke: rgba(26, 28, 31, 0.25);
+  stroke-width: 1;
+}
+
+.oga-chart-shell__gridline {
+  stroke: rgba(26, 28, 31, 0.05);
+  stroke-width: 1;
+  stroke-dasharray: 1.5 3;          /* hairline dotted — quieter than solid */
+}
+
+/* ---------- HTML-overlay tick labels ----------
+   Rendered as HTML, NOT SVG <text>, because the SVG uses
+   preserveAspectRatio="none" which would stretch text glyphs
+   non-uniformly at wide container widths (which is why the y-axis
+   labels read as "overriding" the chart on v1). HTML elements
+   scale naturally with the container; we position them via
+   percentages so they track the chart geometry as the SVG resizes. */
+
+/* Y-labels: absolutely-positioned fixed-pixel column on the left.
+   Height matches the container; vertical position of each label
+   uses percentages so labels track the SVG gridlines as the chart
+   scales with container width. */
+.oga-chart-shell__y-labels {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 48px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+}
+
+.oga-chart-shell__y-label {
+  position: absolute;
+  right: 10px;
+  transform: translateY(-50%);
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--oga-fg-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* X-labels overlay the plot column at the bottom (below the
+   baseline). Horizontal position percentage tracks the data x. */
+.oga-chart-shell__x-labels {
+  position: absolute;
+  inset: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+}
+
+.oga-chart-shell__x-label {
+  position: absolute;
+  /* Anchor at fixed pixel offset from the container bottom rather
+     than to a percentage off the baseline. This guarantees a clean
+     gap between the bottom y-axis label (which sits at the baseline)
+     and the x-axis labels — the previous "baseline + 4px" approach
+     left bottom y-labels and x-labels clustered in the same
+     vertical band, crowding each other ("1.2k" sat on top of
+     "Jun 06"). */
+  bottom: 10px;
+  transform: translateX(-50%);
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--oga-fg-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ---------- Line variant ---------- */
+
+.oga-chart-shell__line {
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.oga-chart-shell__point {
+  transition: r 120ms ease-out;
+}
+
+.oga-chart-shell__band {
+  fill: var(--oga-chart-band-fill);
+  stroke: var(--oga-chart-band-stroke);
+  stroke-width: 1;
+}
+
+/* ---------- Bar variant ---------- */
+
+.oga-chart-shell__bar {
+  fill-opacity: 0.92;
+  transition: fill-opacity 120ms ease-out;
+}
+
+.oga-chart-shell__bar:hover {
+  fill-opacity: 1;
+}
+
+/* The bar variant default fill comes through the inline style on
+   the <rect>; tokens make it ink-first by default but the consumer
+   can pass series[0].color to override (e.g. status-green for an
+   actually-green metric). */
+
+/* ---------- Hover crosshair + tooltip ---------- */
+
+.oga-chart-shell__crosshair {
+  stroke: rgba(26, 28, 31, 0.25);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  pointer-events: none;
+}
+
+.oga-chart-shell__tooltip {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 12px));
+  background: var(--oga-white);
+  border: 1px solid rgba(26, 28, 31, 0.10);
+  border-radius: 4px;
+  padding: 8px 10px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 1px 1px rgba(26, 28, 31, 0.04),
+    0 12px 28px -10px rgba(26, 28, 31, 0.22);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 5;
+}
+
+.oga-chart-shell__tooltip-x {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: 2px;
+}
+
+.oga-chart-shell__tooltip-y {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--oga-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.oga-chart-shell__tooltip-swatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ---------- Legend ---------- */
+
+.oga-chart-shell__legend {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.oga-chart-shell__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-chart-shell__legend-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 2px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+/* ---------- Sparkline-specific ---------- */
+
+.oga-chart-shell[data-variant="sparkline"] .oga-chart-shell__svg {
+  overflow: visible;
+}
+
+/* Sparkline skips the y-axis column — plot fills the container
+   without the 48px left margin. */
+.oga-chart-shell[data-variant="sparkline"] .oga-chart-shell__plot {
+  margin-left: 0;
+}
+
+/* ============================================================
+   Dark surface variant
+   ============================================================ */
+
+.oga-chart-shell[data-surface="dark"] {
+  --oga-chart-series-1: var(--oga-white);
+  --oga-chart-series-2: rgba(250, 248, 244, 0.55);
+  --oga-chart-series-3: rgba(250, 248, 244, 0.35);
+  --oga-chart-band-fill: rgba(250, 248, 244, 0.08);
+  --oga-chart-band-stroke: rgba(250, 248, 244, 0.22);
+
+  background: linear-gradient(180deg, #1F2125 0%, #1A1C1F 100%);
+  border-color: rgba(250, 248, 244, 0.12);
+  color: var(--oga-white);
+  box-shadow:
+    inset 0 1px 0 rgba(250, 248, 244, 0.06),
+    0 1px 1px rgba(0, 0, 0, 0.18),
+    0 28px 64px -22px rgba(0, 0, 0, 0.45);
+}
+
+/* Dark asymmetric accent — top-right warm-white glow. Same
+   vocabulary as FilterBuilder dark and StatsCard dark. */
+.oga-chart-shell[data-surface="dark"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 50% 35% at 100% 0%,
+    rgba(250, 248, 244, 0.04) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.oga-chart-shell[data-surface="dark"][data-raw="true"] {
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+.oga-chart-shell[data-surface="dark"] .oga-chart-shell__eyebrow,
+.oga-chart-shell[data-surface="dark"] .oga-chart-shell__caption {
+  color: rgba(250, 248, 244, 0.65);
+}
+
+.oga-chart-shell[data-surface="dark"] .oga-chart-shell__title {
+  color: var(--oga-white);
+}
+
+.oga-chart-shell[data-surface="dark"] .oga-chart-shell__axis {
+  stroke: rgba(250, 248, 244, 0.22);
+}
+
+.oga-chart-shell[data-surface="dark"] .oga-chart-shell__gridline {
+  stroke: rgba(250, 248, 244, 0.08);
+}
+
+.oga-chart-shell[data-surface="dark"] .oga-chart-shell__y-label,
+.oga-chart-shell[data-surface="dark"] .oga-chart-shell__x-label {
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-chart-shell[data-surface="dark"] .oga-chart-shell__crosshair {
+  stroke: rgba(250, 248, 244, 0.30);
+}
+
+.oga-chart-shell[data-surface="dark"] .oga-chart-shell__tooltip {
+  background: linear-gradient(180deg, #1F2125 0%, #1A1C1F 100%);
+  border-color: rgba(250, 248, 244, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(250, 248, 244, 0.06),
+    0 1px 1px rgba(0, 0, 0, 0.20),
+    0 12px 28px -10px rgba(0, 0, 0, 0.50);
+}
+
+.oga-chart-shell[data-surface="dark"] .oga-chart-shell__tooltip-x {
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-chart-shell[data-surface="dark"] .oga-chart-shell__tooltip-y {
+  color: var(--oga-white);
+}
+
+.oga-chart-shell[data-surface="dark"] .oga-chart-shell__legend-item {
+  color: rgba(250, 248, 244, 0.65);
+}
+
+.oga-chart-shell[data-surface="dark"] .oga-chart-shell__band {
+  fill-opacity: 0.18;
+  stroke-opacity: 0.40;
+}
