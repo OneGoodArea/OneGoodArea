@@ -2706,36 +2706,36 @@ function BreadcrumbSection() {
             />
           </Variant>
 
-          <Variant label="Four-level — Monitor portfolio detail" caption="MonitorIcon (canonical product icon from product-icons.tsx) on the section root, PortfolioIcon (Tabs-set bespoke) on the listing page, no icon on the resource-name leaf (no canonical glyph for a specific portfolio).">
+          <Variant label="Four-level — Monitor portfolio detail" caption="MonitorIcon (canonical product icon from product-icons.tsx) on the section root, PortfolioIcon (Tabs-set bespoke) on both the listing page AND the specific portfolio leaf — same concept type, same icon.">
             <Breadcrumb
               items={[
                 { label: "Dashboard", href: "#", icon: <NavIconDark name="dash" /> },
                 { label: "Monitor", href: "#", icon: <MonitorIcon width={12} height={12} /> },
                 { label: "Portfolios", href: "#", icon: <PortfolioIcon /> },
-                { label: "Acme — High street retail" },
+                { label: "Acme — High street retail", icon: <PortfolioIcon /> },
               ]}
             />
           </Variant>
 
-          <Variant label="Five-level — deeply nested with product icon" caption="IntelligenceIcon (canonical product icon) anchors the section. Saved queries + child resource names ship without icons — no canonical glyph for those concepts.">
+          <Variant label="Five-level — deeply nested with canonical icons all the way down" caption="Every concept in the chain has a canonical glyph: IntelligenceIcon (product) for the section root, QueryIcon (Tabs-set bespoke) for both 'Saved queries' (the category) and 'Lender pack' (a specific saved-query pack), CohortsIcon for the cohort comparison leaf. Resource-level leaves get the icon of their TYPE — not 'no icon because it's a resource'.">
             <Breadcrumb
               items={[
                 { label: "Dashboard", href: "#", icon: <NavIconDark name="dash" /> },
                 { label: "Intelligence", href: "#", icon: <IntelligenceIcon width={12} height={12} /> },
-                { label: "Saved queries", href: "#" },
-                { label: "Lender pack", href: "#" },
-                { label: "Q3 cohort comparison" },
+                { label: "Saved queries", href: "#", icon: <QueryIcon /> },
+                { label: "Lender pack", href: "#", icon: <QueryIcon /> },
+                { label: "Q3 cohort comparison", icon: <CohortsIcon /> },
               ]}
             />
           </Variant>
 
-          <Variant label="Bundles + Webhooks (Tabs-set bespoke icons)" caption="Reuses the same Tabs/Sidebar bespoke icons for the Levers settings tree — BundlesIcon, WebhookIcon, KeyIcon — so the same concept reads the same across primitives.">
+          <Variant label="Bundles + Webhooks (Tabs-set bespoke icons)" caption="Reuses the same Tabs/Sidebar bespoke icons for the Levers settings tree — BundlesIcon, WebhookIcon, KeyIcon — so the same concept reads the same across primitives. 'Lender bundle' (the specific bundle instance) gets BundlesIcon too — same type, same icon.">
             <Breadcrumb
               items={[
                 { label: "Dashboard", href: "#", icon: <NavIconDark name="dash" /> },
                 { label: "Org", href: "#", icon: <OrgIcon /> },
                 { label: "Bundles", href: "#", icon: <BundlesIcon /> },
-                { label: "Lender bundle" },
+                { label: "Lender bundle", icon: <BundlesIcon /> },
               ]}
             />
           </Variant>
@@ -2803,13 +2803,13 @@ function BreadcrumbDarkSection() {
             />
           </Variant>
 
-          <Variant label="Deep chain on dark with chevron + product icon" caption="MonitorIcon (canonical product icon) on the section root, PortfolioIcon on the listing, no icon on the resource-name leaf. Chevron separator on dark.">
+          <Variant label="Deep chain on dark with chevron + product icon" caption="MonitorIcon (canonical product icon) on the section root, PortfolioIcon on both the listing AND the specific portfolio leaf. Chevron separator on dark.">
             <Breadcrumb
               items={[
                 { label: "Dashboard", href: "#", icon: <NavIconDark name="dash" /> },
                 { label: "Monitor", href: "#", icon: <MonitorIcon width={12} height={12} /> },
                 { label: "Portfolios", href: "#", icon: <PortfolioIcon /> },
-                { label: "BrightStar — Lender pack" },
+                { label: "BrightStar — Lender pack", icon: <PortfolioIcon /> },
               ]}
               separator="›"
               surface="dark"
