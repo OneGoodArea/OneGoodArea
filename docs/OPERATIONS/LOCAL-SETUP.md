@@ -1,6 +1,8 @@
 # Local setup
 
-Use the Makefile for the common path: `make setup`, `make dev`, `make migrate`, `make bootstrap-test-key`, `make test`, `make typecheck`, and `make lint`.
+Use the Makefile for the common host path: `make app-setup`, `make app-build`, `make app-dev`, `make app-test`, `make app-typecheck`, and `make app-lint`.
+
+You can use `make help` to learn what are the options
 
 ## Prerequisites
 
@@ -14,10 +16,10 @@ Use the Makefile for the common path: `make setup`, `make dev`, `make migrate`, 
 ```bash
 git clone https://github.com/OneGoodArea/OneGoodArea.git
 cd OneGoodArea
-make setup
+make app-setup
 ```
 
-`make setup` runs a clean install and scaffolds `apps/web/.env.local` and `apps/api/.env.local` from their `.env.example` files if they do not already exist.
+`make app-setup` runs a clean install and scaffolds local env files in `env/local/*.env` from their matching `.env.example` files if they do not already exist.
 
 ## Env vars
 
@@ -41,13 +43,12 @@ GOOGLE_CLIENT_SECRET=...
 ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-Full templates at `apps/web/.env.example` and `apps/api/.env.example`.
+Full templates at `env/local/api.env.example`, `env/local/web.env.example`, and `env/local/postgres.env.example`.
 
 ## Run
 
 ```bash
-make dev
-OGA_SIGNALS_API=true make dev-signals
+make app-dev
 ```
 
 The web app is deployed separately; this local flow is API-only.
@@ -55,26 +56,16 @@ The web app is deployed separately; this local flow is API-only.
 ## Database + keys
 
 ```bash
-make migrate
-make bootstrap-test-key
+make stack-up-min
+make db-seed
 ```
 
-`make bootstrap-test-key` prints a disposable `oga_...` key and a temp password for the test user.
+This boots the minimal compose stack and seeds baseline database fixtures into the running Postgres service.
 
 ## Gates
 
 ```bash
-make test
-make typecheck
-make lint
+make app-test
+make app-typecheck
+make app-lint
 ```
-
-## Refresh signal data
-
-```bash
-make refresh-deprivation
-make refresh-property
-make refresh-crime CRIME_ARCHIVE_DIR=<police-archive-folder>
-```
-
-See [`SIGNAL-REFRESH.md`](../../docs/OPERATIONS/SIGNAL-REFRESH.md) for the full refresh list.
