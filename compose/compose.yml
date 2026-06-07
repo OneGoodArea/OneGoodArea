@@ -4,7 +4,7 @@ services:
       context: ..
       dockerfile: container/postgres/Containerfile
     image: onegoodarea/postgres:local
-    profiles: ["db"]
+    profiles: ["minimal"]
     environment:
       POSTGRES_DB: oga_local
       POSTGRES_USER: oga_user
@@ -21,7 +21,7 @@ services:
       context: ../services/neon-compat-proxy
       dockerfile: Dockerfile
     image: onegoodarea/neon-compat-proxy:local
-    profiles: ["db"]
+    profiles: ["minimal"]
     environment:
       POSTGRES_USER: oga_user
       POSTGRES_PASSWORD: oga_test_password_local
