@@ -34,6 +34,8 @@ import { Pagination } from "@/app/design-v2/_shared/dashboard/pagination";
 import { Breadcrumb } from "@/app/design-v2/_shared/dashboard/breadcrumb";
 import { FilterBuilder } from "@/app/design-v2/_shared/dashboard/filter-builder";
 import type { FilterSignal, FilterClause } from "@/app/design-v2/_shared/dashboard/filter-builder";
+import { ChartShell } from "@/app/design-v2/_shared/dashboard/chart-shell";
+import type { ChartPoint } from "@/app/design-v2/_shared/dashboard/chart-shell";
 import "./client.css";
 
 export default function DashboardPrimitivesClient() {
@@ -66,6 +68,8 @@ export default function DashboardPrimitivesClient() {
         <BreadcrumbDarkSection />
         <FilterBuilderSection />
         <FilterBuilderDarkSection />
+        <ChartShellSection />
+        <ChartShellDarkSection />
       </div>
     </ToastProvider>
   );
@@ -2933,6 +2937,213 @@ function FilterBuilderDarkSection() {
               sortOrder={order}
               onSortOrderChange={setOrder}
               surface="dark"
+            />
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   AR-245 <ChartShell>
+   ============================================================
+   Three variants in one primitive — line / bar / sparkline.
+   2-3 Phase 2+ consumers: Forecast confidence band, Insights
+   peer-relative-z chart, /api-usage page. Sparkline also slots
+   into StatsCard when AR-217-B5 wires the /dashboard Home top
+   strip. Pure SVG — no D3, no Recharts. */
+
+const CS_FORECAST_DATA: ChartPoint[] = [
+  { x: "Jan", y: 110 },
+  { x: "Feb", y: 124 },
+  { x: "Mar", y: 132 },
+  { x: "Apr", y: 138 },
+  { x: "May", y: 148 },
+  { x: "Jun", y: 156 },
+  { x: "Jul", y: 167 },
+  { x: "Aug", y: 178 },
+  { x: "Sep", y: 184 },
+  { x: "Oct", y: 193 },
+  { x: "Nov", y: 205 },
+  { x: "Dec", y: 216 },
+];
+
+const CS_FORECAST_LOWER: ChartPoint[] = CS_FORECAST_DATA.map((p, i) => ({
+  x: p.x,
+  y: p.y - (8 + i * 1.8),
+}));
+const CS_FORECAST_UPPER: ChartPoint[] = CS_FORECAST_DATA.map((p, i) => ({
+  x: p.x,
+  y: p.y + (8 + i * 1.8),
+}));
+
+const CS_MULTI_DATA: ChartPoint[] = [
+  { x: 0, y: 100, series: "subject" },
+  { x: 1, y: 112, series: "subject" },
+  { x: 2, y: 108, series: "subject" },
+  { x: 3, y: 134, series: "subject" },
+  { x: 4, y: 156, series: "subject" },
+  { x: 5, y: 178, series: "subject" },
+  { x: 0, y: 95, series: "peers" },
+  { x: 1, y: 102, series: "peers" },
+  { x: 2, y: 110, series: "peers" },
+  { x: 3, y: 118, series: "peers" },
+  { x: 4, y: 128, series: "peers" },
+  { x: 5, y: 142, series: "peers" },
+];
+
+const CS_API_USAGE: ChartPoint[] = [
+  { x: "Jun 06", y: 1320 },
+  { x: "Jun 07", y: 1480 },
+  { x: "Jun 08", y: 1290 },
+  { x: "Jun 09", y: 1610 },
+  { x: "Jun 10", y: 2104 },
+  { x: "Jun 11", y: 1845 },
+  { x: "Jun 12", y: 1592 },
+];
+
+const CS_SPARK_DATA: ChartPoint[] = Array.from({ length: 30 }, (_, i) => ({
+  x: i,
+  y: 100 + Math.sin(i / 3) * 18 + i * 1.2,
+}));
+
+function ChartShellSection() {
+  return (
+    <section className="oga-section-quiet oga-prim-section" aria-labelledby="ar-245-heading">
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-245 · Bespoke</p>
+          <h2 id="ar-245-heading" className="oga-h2 oga-prim-section__title">
+            ChartShell
+          </h2>
+          <p className="oga-prim-section__caption">
+            Three chart variants in one primitive — <code className="oga-prim-code">line</code> (single +
+            multi-series + optional confidence band area), <code className="oga-prim-code">bar</code>,{" "}
+            <code className="oga-prim-code">sparkline</code> (no axes, inline use). Pure SVG; no D3,
+            no Recharts, no Chart.js. Hairline axes + gridlines at low ink
+            opacity, mono caps tick labels (same family as DataTable
+            headers), soft-warm hover tooltip with the panel material
+            from Tooltip. 2–3 Phase 2+ consumers: Forecast confidence
+            band per ADR 0025, Insights peer-relative-z per ADR 0024,
+            <code className="oga-prim-code">/api-usage</code> daily bars. Plus the sparkline slots into
+            StatsCard for the <code className="oga-prim-code">/dashboard</code> Home top strip in Phase 1.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc">
+          <Variant label="Line — single series with editorial header" caption="Eyebrow + title + caption above the chart give it standalone context. Single ink series on a warm-white card with edge-lit material and the bottom-left asymmetric accent. Hairline dotted gridlines, ink baseline, mono caps tick labels." wide>
+            <ChartShell
+              variant="line"
+              data={CS_FORECAST_DATA}
+              eyebrow="Forecast"
+              title="12-month revenue trend"
+              caption="Projected from the last 36 months of /v1/sites events."
+              xAxis={{ label: "Month" }}
+              yAxis={{ format: (v) => `${v}` }}
+            />
+          </Variant>
+
+          <Variant label="Line + confidence band — Forecast pattern (ADR 0025)" caption="The intended Forecast consumer shape. Confidence band uses a muted ink wash (NOT status-green) — status colours mean status, data shouldn't co-opt them. Reads as quiet uncertainty, not 'something is good'." wide>
+            <ChartShell
+              variant="line"
+              data={CS_FORECAST_DATA}
+              confidenceBand={{ lower: CS_FORECAST_LOWER, upper: CS_FORECAST_UPPER }}
+              eyebrow="Forecast"
+              title="Revenue with 95% confidence band"
+              caption="Lower + upper bounds widen as the projection extends further from observed data."
+              xAxis={{ label: "Month" }}
+              yAxis={{ format: (v) => `${v}` }}
+              aria-label="Forecast trend with 95% confidence band"
+            />
+          </Variant>
+
+          <Variant label="Line — multi-series, ink + muted ink" caption="Two series (subject + peers). Default rotation is ink → muted ink → quieter ink. Editorial palette, not status palette. Legend renders below." wide>
+            <ChartShell
+              variant="line"
+              data={CS_MULTI_DATA}
+              series={[
+                { key: "subject", label: "This area" },
+                { key: "peers", label: "Peer median" },
+              ]}
+              eyebrow="Peer comparison"
+              title="Relative-z against the 14 peer areas"
+              caption="ADR 0024 — subject ranked against demographically matched peers, weekly."
+              xAxis={{ format: (v) => `W${(v as number) + 1}` }}
+            />
+          </Variant>
+
+          <Variant label="Bar — daily API usage (/api-usage pattern)" caption="Vertical bars in ink. Same editorial recipe — eyebrow + title + caption, ink-first palette." wide>
+            <ChartShell
+              variant="bar"
+              data={CS_API_USAGE}
+              eyebrow="API usage"
+              title="Calls per day, last 7 days"
+              caption="Includes both /v1 and /v1/mcp routes. Excludes 4xx responses."
+              xAxis={{ label: "Date" }}
+              yAxis={{ format: (v) => `${v}` }}
+              aria-label="API calls per day"
+            />
+          </Variant>
+
+          <Variant label="Sparkline — raw, embeds in StatsCard" caption="raw=true by default for sparkline variant — no container, no axes, no header, just the line. 48px tall. Slots inside StatsCard when AR-217-B5 wires the /dashboard Home top strip in Phase 1.">
+            <div className="oga-prim-spark-wrap">
+              <ChartShell variant="sparkline" data={CS_SPARK_DATA} />
+            </div>
+          </Variant>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ChartShellDarkSection() {
+  return (
+    <section
+      className="oga-section-dark oga-prim-section"
+      data-oga-surface="dark"
+      aria-labelledby="ar-245-dark-heading"
+    >
+      <div className="oga-prim-section__inner">
+        <header className="oga-prim-section__header">
+          <p className="oga-eyebrow">AR-245 · Dark surface variant</p>
+          <h2 id="ar-245-dark-heading" className="oga-h2 oga-prim-section__title">
+            ChartShell on dark
+          </h2>
+          <p className="oga-prim-section__caption">
+            Same primitive on a dark Monitor / Intelligence scaffolding
+            page. Axes + gridlines + tick labels invert to warm-white at
+            appropriate opacities; confidence band gets a louder fill +
+            stroke opacity so it reads against the graphite background.
+            Tooltip becomes the graphite-gradient + warm-white text card
+            recipe from Tooltip dark.
+          </p>
+        </header>
+
+        <div className="oga-prim-doc oga-prim-doc--dark">
+          <Variant label="Line + band on dark with editorial header" caption="Forecast pattern on a dark Monitor sub-view. Graphite gradient container, top-right warm-white glow, ink-token inverted to warm-white shades." wide>
+            <ChartShell
+              variant="line"
+              data={CS_FORECAST_DATA}
+              confidenceBand={{ lower: CS_FORECAST_LOWER, upper: CS_FORECAST_UPPER }}
+              eyebrow="Forecast"
+              title="Revenue with 95% confidence band"
+              caption="Lower + upper bounds widen as the projection extends."
+              xAxis={{ label: "Month" }}
+              surface="dark"
+              aria-label="Forecast trend with 95% confidence band on dark"
+            />
+          </Variant>
+
+          <Variant label="Bar on dark" caption="API usage bars on graphite. Same editorial recipe — eyebrow + title + caption, warm-white bars." wide>
+            <ChartShell
+              variant="bar"
+              data={CS_API_USAGE}
+              eyebrow="API usage"
+              title="Calls per day, last 7 days"
+              caption="Both /v1 and /v1/mcp. Excludes 4xx."
+              surface="dark"
+              aria-label="API calls per day on dark"
             />
           </Variant>
         </div>

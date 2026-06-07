@@ -525,6 +525,15 @@
   }
 }
 
+/* Narrow wrapper for the sparkline showcase variant — sparklines
+   are meant for inline composition (StatsCard top strip) so the
+   demo renders at a realistic narrow width rather than stretching
+   to fill the doc-row. */
+.oga-prim-spark-wrap {
+  width: 220px;
+  max-width: 100%;
+}
+
 /* Showcase opt-out: some variants (3-card strip, anything that
    needs the full doc-row width to read realistically) override the
    default 480px demo max-width. Only used inside specific Variant
