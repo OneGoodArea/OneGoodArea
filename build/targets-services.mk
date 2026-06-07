@@ -1,4 +1,4 @@
-.PHONY: api-up api-logs web-up db-seed api-test-coverage-container web-test-coverage-container
+.PHONY: api-up api-logs web-up db-seed compose-down api-test-coverage-container web-test-coverage-container
 
 api-up: ## Boot API service with compose dependencies
 	$(CTR_COMPOSE_CMD) --profile minimal up -d --build api
@@ -11,6 +11,9 @@ web-up: ## Boot web service with compose dependencies
 
 web-logs: ## Follow API service logs
 	$(CTR_COMPOSE_CMD) logs -f web
+
+compose-down: ## Stop compose stack and remove orphan containers
+	$(CTR_COMPOSE_CMD) down --remove-orphans
 
 db-seed: ## Seed postgres with framework + baseline profile SQL
 	$(CTR_COMPOSE_CMD) exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$${POSTGRES_USER:-oga_user}" -d "$${POSTGRES_DB:-oga_local}"' < apps/web/tests/seeds/framework/001-seed-framework.sql
