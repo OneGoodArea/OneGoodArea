@@ -140,7 +140,13 @@
 [data-oga-surface="dark"] .oga-fg__textarea,
 [data-oga-surface="dark"] .oga-fg__select {
   color: var(--oga-white);
-  background: rgba(250, 248, 244, 0.06);
+  /* MUST use background-color (NOT the `background` shorthand) so
+     the chevron's background-repeat: no-repeat + background-position
+     declared above on .oga-fg__select are preserved. The shorthand
+     resets all sub-properties to defaults — background-repeat would
+     fall back to "repeat" and the chevron SVG would tile across the
+     entire field as a wavy/zigzag pattern. AR-245 localhost feedback. */
+  background-color: rgba(250, 248, 244, 0.06);
   border-color: rgba(250, 248, 244, 0.18);
 }
 

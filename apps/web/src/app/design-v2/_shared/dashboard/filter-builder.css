@@ -221,10 +221,17 @@
   position: relative;
   display: flex;
   align-items: center;
+  /* min-width: 0 + min-width:0 on the input lets the cell shrink
+     past the input's intrinsic content size. Without these, a long
+     typed value (e.g. 999999999) blows out the column past its
+     allocated 0.8fr grid track and pushes the entire row out of
+     frame. AR-244 localhost feedback. */
+  min-width: 0;
 }
 
 .oga-filter-builder__value-wrap .oga-input {
   width: 100%;
+  min-width: 0;
   padding-right: 28px;
 }
 
