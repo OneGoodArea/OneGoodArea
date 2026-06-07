@@ -73,6 +73,26 @@
   transform-origin: top right;
 }
 
+/* Portal variant — panel renders into document.body via createPortal
+   and is positioned with viewport coordinates from the trigger's
+   bounding rect. Escapes all parent stacking contexts (isolation:
+   isolate, transforms, etc.) so the panel always floats above
+   surrounding content. AR-246 polish (FilterBuilder dropdown
+   was being click-blocked by the next section). */
+.oga-dropdown__panel--portal {
+  position: fixed;
+  /* The top + left + minWidth come through inline `style` from the
+     component (dynamic values flowing into CSS, the accepted
+     pattern). Reset any positional rules that the [data-align]
+     selectors set on the non-portal version. */
+  right: auto;
+  bottom: auto;
+  /* Very high z-index so the panel beats any z-index value set on
+     unrelated page chrome. document.body is the panel's parent so
+     this z-index applies in the root stacking context. */
+  z-index: 9999;
+}
+
 @keyframes oga-dropdown-in {
   from {
     opacity: 0;
