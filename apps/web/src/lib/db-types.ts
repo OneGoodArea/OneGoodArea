@@ -168,6 +168,20 @@ export interface VerificationTokenRow {
   created_at: string;
 }
 
+/* AR-250 [AR-248-B] magic-link sign-in tokens. Shape mirrors
+   VerificationTokenRow exactly; we keep the type separate so consumer
+   code can't accidentally cross-use a verification token where a
+   magic-link token is expected (semantics differ — see ensureMagicLinkTokensTable). */
+export interface MagicLinkTokenRow {
+  id: string;
+  user_id: string;
+  email: string;
+  token: string;
+  expires_at: string;
+  used: boolean;
+  created_at: string;
+}
+
 /**
  * Type-safe row accessor. Cast a Neon result row once at the boundary.
  * Usage: const user = row<UserRow>(rows[0]);

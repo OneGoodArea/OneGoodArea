@@ -45,21 +45,8 @@ import {
   readSignupSourceCookie,
   writeSignupSourceCookie,
 } from "@/lib/signup-source";
+import { safeCallbackUrl } from "@/lib/safe-callback-url";
 import "./get-started.css";
-
-/* Sanitize the ?callbackUrl=... param to prevent open redirect after
-   sign-in: only allow same-origin relative paths (must start with a
-   single "/", reject "//evil.com/..." which would resolve to
-   https://evil.com). Falls back to /dashboard for anything else.
-   Same pattern needed everywhere router.push(searchParams.get('callbackUrl'))
-   is used; mirrored into the legacy /sign-in client in this PR too. */
-function safeCallbackUrl(raw: string | null): string {
-  const FALLBACK = "/dashboard";
-  if (!raw) return FALLBACK;
-  if (!raw.startsWith("/")) return FALLBACK;
-  if (raw.startsWith("//")) return FALLBACK;
-  return raw;
-}
 
 /* ============================================================
    Verification step copy — reused from legacy /sign-up flow
