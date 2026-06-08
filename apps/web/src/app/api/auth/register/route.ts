@@ -9,6 +9,10 @@ import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { ensureUsersTable, ensureVerificationTable } from "@/lib/db-schema";
 import { isAppError } from "@/lib/errors";
 import { row, UserRow } from "@/lib/db-types";
+import {
+  normalizeSignupSource,
+  SIGNUP_SOURCE_DEFAULT,
+} from "@/lib/signup-source";
 
 let _registerTablesReady = false;
 async function ensureRegisterTables() {
@@ -29,7 +33,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { email, password } = await req.json();
+    const body = await req.json();
+    const { email, password } = body as { email?: unknown; password?: unknown };
 
     if (!email || typeof email !== "string") {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
@@ -37,6 +42,18 @@ export async function POST(req: NextRequest) {
     if (!password || typeof password !== "string" || password.length < 8) {
       return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
     }
+
+    /* signup_source attribution — comes from /get-started's
+       ?source=... URL param via cookie. Falls back to "direct" if the
+       client didn't include it OR if it's a malformed value. The
+       client passes it explicitly rather than us reading the cookie
+       here so this endpoint stays usable from non-browser callers
+       (e.g. integration tests, CLI). */
+    const rawSignupSource = (body as { signup_source?: unknown }).signup_source;
+    const signupSource =
+      typeof rawSignupSource === "string"
+        ? normalizeSignupSource(rawSignupSource)
+        : SIGNUP_SOURCE_DEFAULT;
 
     const sanitized = email.trim().toLowerCase();
     await ensureRegisterTables();
@@ -63,8 +80,8 @@ export async function POST(req: NextRequest) {
     const hash = await hashPassword(password);
 
     await sql`
-      INSERT INTO users (id, email, name, password_hash, provider, email_verified)
-      VALUES (${id}, ${sanitized}, ${name}, ${hash}, 'credentials', FALSE)
+      INSERT INTO users (id, email, name, password_hash, provider, email_verified, signup_source)
+      VALUES (${id}, ${sanitized}, ${name}, ${hash}, 'credentials', FALSE, ${signupSource})
     `;
 
     // Send verification email

@@ -1,0 +1,122 @@
+/* AR-249 [AR-248-A] /get-started — minimal additions on top of
+   AuthShell. The shell already owns the two-column dark/cream layout,
+   form fields, eyebrows, and submit buttons. This file only adds the
+   surfaces specific to the email-first flow:
+   - The "Continuing as you@example.com" badge that sits above the
+     password form once the email step is locked in
+   - The GDPR consent checkbox row
+*/
+
+/* ---------- "Continuing as <email>" lock-in row ---------- */
+
+.oga-get-started__email-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--oga-2);
+  padding: var(--oga-2) var(--oga-3);
+  margin-bottom: var(--oga-3);
+  background: rgba(26, 28, 31, 0.04);
+  border: 1px solid rgba(26, 28, 31, 0.10);
+  border-radius: 4px;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+}
+
+.oga-get-started__email-row-label {
+  color: var(--oga-fg-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+.oga-get-started__email-row-value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--oga-ink);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+}
+
+.oga-get-started__email-row-link {
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  cursor: pointer;
+  transition: color var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-get-started__email-row-link:hover {
+  color: var(--oga-ink);
+}
+
+.oga-get-started__email-row-link:focus-visible {
+  outline: 1.5px solid var(--oga-ink);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ---------- GDPR consent row ---------- */
+
+.oga-get-started__consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: var(--oga-3) 0 var(--oga-3);
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+  cursor: pointer;
+}
+
+.oga-get-started__consent-input {
+  appearance: none;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border: 1.5px solid rgba(26, 28, 31, 0.30);
+  border-radius: 3px;
+  background: var(--oga-white);
+  cursor: pointer;
+  transition:
+    background var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-get-started__consent-input:hover {
+  border-color: var(--oga-ink);
+}
+
+.oga-get-started__consent-input:checked {
+  background: var(--oga-ink);
+  border-color: var(--oga-ink);
+  /* Inline SVG checkmark — keeps the consent row self-contained, no
+     extra DOM, no external asset. */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 6l3 3 5-5' stroke='%23FAF8F4' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.oga-get-started__consent-input:focus-visible {
+  outline: 1.5px solid var(--oga-ink);
+  outline-offset: 2px;
+}
+
+.oga-get-started__consent a {
+  color: var(--oga-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

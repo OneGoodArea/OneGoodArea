@@ -18,6 +18,10 @@ export const RATE_LIMITS = {
   widget: { max: 60, windowSeconds: 3600 },
   authRegister: { max: 5, windowSeconds: 60 },
   authSignIn: { max: 10, windowSeconds: 60 },
+  /* Email-existence check for /get-started's email-first flow. Tighter
+     than register to discourage account enumeration but generous enough
+     that a real user retyping their email isn't bounced. */
+  authCheckEmail: { max: 20, windowSeconds: 60 },
 } as const;
 
 // Bulk endpoint hard cap. Larger workloads should use the async pattern (roadmap).

@@ -24,10 +24,23 @@ export default function SignInClient() {
   );
 }
 
+/* Sanitize the ?callbackUrl=... param to prevent open redirect after
+   sign-in: only allow same-origin relative paths (must start with a
+   single "/", reject "//evil.com/..." which would resolve to
+   https://evil.com). Falls back to /dashboard for anything else.
+   Same pattern as /get-started; fix landed in AR-249 sweep. */
+function safeCallbackUrl(raw: string | null): string {
+  const FALLBACK = "/dashboard";
+  if (!raw) return FALLBACK;
+  if (!raw.startsWith("/")) return FALLBACK;
+  if (raw.startsWith("//")) return FALLBACK;
+  return raw;
+}
+
 function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"));
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
