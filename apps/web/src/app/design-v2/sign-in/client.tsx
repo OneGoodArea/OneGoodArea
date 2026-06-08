@@ -15,6 +15,7 @@ import {
   OAuthButtons,
   AuthFooterLink,
 } from "../_shared/auth-shell";
+import { safeCallbackUrl } from "@/lib/safe-callback-url";
 
 export default function SignInClient() {
   return (
@@ -22,19 +23,6 @@ export default function SignInClient() {
       <SignInForm />
     </Suspense>
   );
-}
-
-/* Sanitize the ?callbackUrl=... param to prevent open redirect after
-   sign-in: only allow same-origin relative paths (must start with a
-   single "/", reject "//evil.com/..." which would resolve to
-   https://evil.com). Falls back to /dashboard for anything else.
-   Same pattern as /get-started; fix landed in AR-249 sweep. */
-function safeCallbackUrl(raw: string | null): string {
-  const FALLBACK = "/dashboard";
-  if (!raw) return FALLBACK;
-  if (!raw.startsWith("/")) return FALLBACK;
-  if (raw.startsWith("//")) return FALLBACK;
-  return raw;
 }
 
 function SignInForm() {

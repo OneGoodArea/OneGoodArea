@@ -46,6 +46,38 @@ export async function ensureVerificationTable() {
   `;
 }
 
+/* AR-250 [AR-248-B] magic-link sign-in tokens.
+
+   Kept separate from email_verification_tokens because the two have
+   different semantics:
+   - email_verification_tokens: "click to mark your email as verified"
+     (sets a user flag, doesn't sign you in, expires in 24h)
+   - magic_link_tokens: "click to sign in" (creates a session, may
+     ALSO mark email_verified=TRUE as a side effect of clicking,
+     expires in 15min)
+
+   Mixing them would force every consumer of /verify to disambiguate
+   which kind of token it's handling. Cleaner with two tables. */
+export async function ensureMagicLinkTokensTable() {
+  await sql`
+    CREATE TABLE IF NOT EXISTS magic_link_tokens (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      email TEXT NOT NULL,
+      token TEXT UNIQUE NOT NULL,
+      expires_at TIMESTAMPTZ NOT NULL,
+      used BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
+  /* Helps the /api/auth/magic-link/request endpoint dedupe rapid
+     requests for the same email without a full scan. */
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_magic_link_email_created
+    ON magic_link_tokens (email, created_at DESC)
+  `;
+}
+
 export async function ensureActivityTable() {
   await sql`
     CREATE TABLE IF NOT EXISTS activity_events (

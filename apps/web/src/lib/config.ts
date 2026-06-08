@@ -22,6 +22,11 @@ export const RATE_LIMITS = {
      than register to discourage account enumeration but generous enough
      that a real user retyping their email isn't bounced. */
   authCheckEmail: { max: 20, windowSeconds: 60 },
+  /* Magic-link request: tighter than register because each call
+     triggers a real email send (Resend cost + recipient inbox
+     pressure). 3 per minute per IP is enough for a user retrying
+     after a typo, restrictive against scripted abuse. */
+  authMagicLinkRequest: { max: 3, windowSeconds: 60 },
 } as const;
 
 // Bulk endpoint hard cap. Larger workloads should use the async pattern (roadmap).
