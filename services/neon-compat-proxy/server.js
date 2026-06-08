@@ -42,7 +42,13 @@ const server = http.createServer(async (req, res) => {
           return json(res, 400, { error: "query must be a non-empty string" });
         }
 
-        const result = await pool.query(text, values);
+        // rowMode: "array" returns rows as arrays of positional values
+        // (e.g. [1, "x"]) matching Neon's HTTP protocol contract. The
+        // @neondatabase/serverless driver expects this shape and converts
+        // to objects client-side using the fields metadata. Returning
+        // pg's default object rows (e.g. {col: 1}) trips the driver's
+        // processQueryResult with "c.map is not a function". (AR-247)
+        const result = await pool.query({ text, values, rowMode: "array" });
         return json(res, 200, {
           command: result.command,
           rowCount: result.rowCount,
