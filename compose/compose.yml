@@ -48,6 +48,12 @@ services:
       NODE_ENV: development
       PORT: 8080
       DATABASE_URL: postgres://oga_user:oga_test_password_local@postgres:5432/oga_local
+      # Route the @neondatabase/serverless driver's HTTPS fetch through
+      # the local neon-compat-proxy container instead of Neon Cloud's
+      # hosted endpoint. The proxy speaks the same POST /sql protocol
+      # and translates to the local Postgres via `pg`. Production leaves
+      # this unset and uses Neon's default endpoint. (AR-247)
+      NEON_FETCH_ENDPOINT: http://neon-proxy:55433/sql
       AUTH_SECRET: replace-me
       NEXTAUTH_URL: http://localhost:3000
       OGA_AI_PROVIDER: mock
