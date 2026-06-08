@@ -1,36 +1,26 @@
-/* AR-251 [AR-248-C] /welcome shell — Brand v3.
+/* AR-251 [AR-248-C] /welcome — content layer.
 
-   Surface vocabulary mirrors /get-started: graphite section with one
-   warm-white centered card. Cinematic, no distractions. Step counter
-   sits top-left as 3 hairline dots + "STEP N OF 3" mono caps label.
-   Skip link sits top-right in mono caps muted.
+   Minimal one-step onboarding (Pedro 2026-06-09): company name input
+   + submit. No ICP picker, no demo, no step counter (no second step
+   to count). Buttons reuse the brand .oga-btn family — same vocab
+   as the landing CTAs. Surface owned by AuthShell.
 
-   Step transitions: card content fades + slides up 8px on step
-   change, 200ms ease (per AR-248 proposal §8). Implemented via the
-   data-step attribute on the card + a CSS keyframe re-triggered each
-   render. */
+   Intent capture intentionally removed: in an API + MCP product the
+   dashboard is admin/maintenance, not where data gets consumed. The
+   user picks preset per /v1/score call from their own code — asking
+   at signup adds friction without giving them anything substantive.
+   See client.tsx header comment for the full reasoning. */
 
 .oga-welcome {
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  position: relative;
-}
-
-.oga-welcome__inner {
-  position: relative;
-  z-index: 1;
+  gap: 24px;
   width: 100%;
-  max-width: 720px;
+  max-width: 460px;
   margin: 0 auto;
-  padding: 32px var(--oga-3) 48px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
 }
 
-/* ---------- Header (step counter + skip) ---------- */
+/* ---------- Header (welcome eyebrow + skip) ---------- */
 
 .oga-welcome__header {
   display: flex;
@@ -40,48 +30,23 @@
   flex-wrap: wrap;
 }
 
-.oga-welcome__counter {
+.oga-welcome__brand-eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 14px;
-}
-
-.oga-welcome__dots {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.oga-welcome__dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: rgba(250, 248, 244, 0.16);
-  transition:
-    background var(--oga-dur-fast) var(--oga-ease),
-    transform var(--oga-dur-fast) var(--oga-ease);
-}
-
-.oga-welcome__dot[data-complete="true"] {
-  background: rgba(250, 248, 244, 0.45);
-}
-
-.oga-welcome__dot[data-active="true"] {
-  background: var(--oga-white);
-  width: 18px;
-  border-radius: 3px;
-}
-
-.oga-welcome__counter-label {
+  gap: 8px;
   font-family: var(--oga-font-mono);
   font-size: 10.5px;
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(250, 248, 244, 0.55);
+  color: var(--oga-fg-muted);
+}
+
+.oga-welcome__brand-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--oga-ink);
 }
 
 .oga-welcome__skip {
@@ -95,7 +60,7 @@
   font-weight: 500;
   letter-spacing: 0.10em;
   text-transform: uppercase;
-  color: rgba(250, 248, 244, 0.55);
+  color: var(--oga-fg-muted);
   cursor: pointer;
   border-radius: 3px;
   transition:
@@ -103,99 +68,29 @@
     background var(--oga-dur-fast) var(--oga-ease);
 }
 
-.oga-welcome__skip:hover {
-  color: var(--oga-white);
-  background: rgba(250, 248, 244, 0.06);
+.oga-welcome__skip:hover:not(:disabled) {
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.04);
 }
 
 .oga-welcome__skip:focus-visible {
-  outline: 1.5px solid var(--oga-white);
+  outline: 1.5px solid var(--oga-ink);
   outline-offset: 2px;
 }
 
-/* ---------- Card (warm-white, edge-lit material) ---------- */
-
-.oga-welcome__card {
-  background: linear-gradient(180deg, #FFFFFF 0%, #FAF8F4 100%);
-  border: 1px solid rgba(26, 28, 31, 0.10);
-  border-radius: 10px;
-  padding: 36px 32px 32px;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    0 1px 1px rgba(26, 28, 31, 0.04),
-    0 28px 64px -22px rgba(26, 28, 31, 0.28);
-  position: relative;
-  overflow: hidden;
-  /* Re-keyed via data-step so the animation re-runs each transition. */
-  animation: oga-welcome-step-in 200ms ease both;
+.oga-welcome__skip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
-/* Bottom-left warm-grey accent — same family signature as the
-   dashboard primitives (StatsCard, FilterBuilder, ChartShell). */
-.oga-welcome__card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    ellipse 55% 40% at 0% 100%,
-    rgba(26, 28, 31, 0.045) 0%,
-    transparent 70%
-  );
-  border-radius: inherit;
-  pointer-events: none;
-  z-index: 0;
-}
+/* ---------- Form body + actions ---------- */
 
-.oga-welcome__step {
-  position: relative;
-  z-index: 1;
+.oga-welcome__step-wrap {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 22px;
+  margin-bottom: 24px;
 }
-
-@keyframes oga-welcome-step-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ---------- Step content typography ---------- */
-
-.oga-welcome__eyebrow {
-  margin: 0;
-  font-family: var(--oga-font-mono);
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--oga-fg-muted);
-}
-
-.oga-welcome__title {
-  margin: 0;
-  font-family: var(--oga-font-sans);
-  font-size: 28px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  color: var(--oga-ink);
-  line-height: 1.15;
-}
-
-.oga-welcome__caption {
-  margin: 4px 0 0;
-  font-family: var(--oga-font-sans);
-  font-size: 14.5px;
-  line-height: 1.65;
-  color: var(--oga-fg-muted);
-}
-
-/* ---------- Actions (Back + Continue) ---------- */
 
 .oga-welcome__actions {
   display: flex;
@@ -203,60 +98,4 @@
   justify-content: space-between;
   gap: var(--oga-3);
   flex-wrap: wrap;
-  margin-top: 18px;
-}
-
-.oga-welcome__btn {
-  appearance: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border-radius: 4px;
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition:
-    background var(--oga-dur-fast) var(--oga-ease),
-    border-color var(--oga-dur-fast) var(--oga-ease),
-    color var(--oga-dur-fast) var(--oga-ease),
-    transform var(--oga-dur-fast) var(--oga-ease);
-}
-
-.oga-welcome__btn--primary {
-  background: var(--oga-ink);
-  border: 1px solid var(--oga-ink);
-  color: var(--oga-white);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.10) inset;
-  margin-left: auto;
-}
-
-.oga-welcome__btn--primary:hover {
-  background: #0F1114;
-  transform: translateY(-1px);
-}
-
-.oga-welcome__btn--primary:focus-visible {
-  outline: 1.5px solid var(--oga-ink);
-  outline-offset: 2px;
-}
-
-.oga-welcome__btn--ghost {
-  background: transparent;
-  border: 1px solid rgba(26, 28, 31, 0.18);
-  color: var(--oga-fg-muted);
-}
-
-.oga-welcome__btn--ghost:hover {
-  color: var(--oga-ink);
-  border-color: rgba(26, 28, 31, 0.32);
-  background: rgba(26, 28, 31, 0.02);
-}
-
-.oga-welcome__btn--ghost:focus-visible {
-  outline: 1.5px solid var(--oga-ink);
-  outline-offset: 2px;
 }
