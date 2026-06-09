@@ -130,15 +130,20 @@ export function AuthError({ children }: { children: ReactNode }) {
 
 export function AuthSubmit({
   loading,
+  disabled,
   children,
 }: {
   loading?: boolean;
+  /* Independent disable signal — used by /welcome to gate Continue
+     until the step's input is satisfied (e.g. an intent card picked,
+     workspace name typed). Loading still disables on its own. */
+  disabled?: boolean;
   children: ReactNode;
 }) {
   return (
     <button
       type="submit"
-      disabled={loading}
+      disabled={loading || disabled}
       className="oga-auth-submit"
       data-loading={loading ? "true" : undefined}
     >

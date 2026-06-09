@@ -8,6 +8,7 @@ import { ScoresIcon } from "../../_shared/product-icons";
 import { ProductHero } from "../../_shared/product-hero";
 import { ProductEndpointPanel } from "../../_shared/product-endpoint-panel";
 import { ProductFinalCta } from "../../_shared/product-final-cta";
+import { SCORING_PROFILES } from "@/lib/scoring-profiles";
 import { ProductIcpGrid } from "../../_shared/product-icp-grid";
 import {
   METHODOLOGY_VERSION,
@@ -412,39 +413,10 @@ function JsonScore({
    § 02 — The four presets (cream) — 4 columns × 5 dims
    ============================================================ */
 
-type PresetCard = {
-  slug: Preset;
-  name: string;
-  use: string;
-  Glyph: () => ReactElement;
-};
-
-const PRESET_CARDS: PresetCard[] = [
-  {
-    slug: "moving",
-    name: "Residential origination",
-    use: "How liveable is this area for a household. Drives the area-quality lens on listing detail pages, valuation flows, and relocation tools.",
-    Glyph: GlyphMoving,
-  },
-  {
-    slug: "business",
-    name: "Commercial site selection",
-    use: "Where to open. Foot traffic, competition density, transport access, spending power, occupancy cost. Drives shortlisting at portfolio scale.",
-    Glyph: GlyphBusiness,
-  },
-  {
-    slug: "investing",
-    name: "Investment underwrite",
-    use: "What this area looks like as an asset. Growth trajectory, yield, regeneration context, tenant demand, downside risk.",
-    Glyph: GlyphInvesting,
-  },
-  {
-    slug: "research",
-    name: "Research baseline",
-    use: "Analyst-friendly default. Balanced weights across safety, transport, amenities, demographics and environment. Survives FOI and procurement review.",
-    Glyph: GlyphResearch,
-  },
-];
+/* The four preset cards are now sourced from lib/scoring-profiles —
+   shared with the /welcome onboarding flow's intent picker so the
+   B2B framing stays in sync across surfaces. AR-251 [AR-248-C]. */
+const PRESET_CARDS = SCORING_PROFILES;
 
 function SectionPresets() {
   return (
@@ -492,66 +464,8 @@ function SectionPresets() {
   );
 }
 
-/* Tiny per-preset glyphs — 36x36, dot-and-hairline */
-function GlyphMoving() {
-  return (
-    <svg viewBox="0 0 36 36" width="36" height="36" aria-hidden>
-      {/* house silhouette: roof triangle + base */}
-      <path d="M 6 18 L 18 8 L 30 18" fill="none" stroke="currentColor" strokeWidth="1.2" />
-      <rect x="10" y="18" width="16" height="10" fill="none" stroke="currentColor" strokeWidth="1.2" />
-      <circle cx="18" cy="23" r="1.6" fill="currentColor" />
-    </svg>
-  );
-}
-
-function GlyphBusiness() {
-  return (
-    <svg viewBox="0 0 36 36" width="36" height="36" aria-hidden>
-      {/* storefront: 3 columns + awning */}
-      <line x1="6" y1="10" x2="30" y2="10" stroke="currentColor" strokeWidth="1.2" />
-      <line x1="6" y1="14" x2="30" y2="14" stroke="currentColor" strokeWidth="1.2" />
-      <line x1="10" y1="14" x2="10" y2="28" stroke="currentColor" strokeWidth="1" />
-      <line x1="18" y1="14" x2="18" y2="28" stroke="currentColor" strokeWidth="1" />
-      <line x1="26" y1="14" x2="26" y2="28" stroke="currentColor" strokeWidth="1" />
-      <line x1="6" y1="28" x2="30" y2="28" stroke="currentColor" strokeWidth="1.2" />
-    </svg>
-  );
-}
-
-function GlyphInvesting() {
-  return (
-    <svg viewBox="0 0 36 36" width="36" height="36" aria-hidden>
-      {/* upward trend: 4 dots + ascending hairline */}
-      <line x1="6" y1="28" x2="30" y2="28" stroke="currentColor" strokeWidth="1" />
-      <line x1="6" y1="28" x2="6" y2="6" stroke="currentColor" strokeWidth="1" />
-      <line x1="8" y1="22" x2="30" y2="8" stroke="currentColor" strokeWidth="1.2" />
-      <g fill="currentColor">
-        <circle cx="8"  cy="22" r="1.6" />
-        <circle cx="16" cy="18" r="1.6" />
-        <circle cx="22" cy="14" r="1.6" />
-        <circle cx="30" cy="8"  r="2" />
-      </g>
-    </svg>
-  );
-}
-
-function GlyphResearch() {
-  return (
-    <svg viewBox="0 0 36 36" width="36" height="36" aria-hidden>
-      {/* balanced pentagon of dots — research, all weights equal */}
-      <g fill="currentColor">
-        <circle cx="18" cy="6"  r="1.8" />
-        <circle cx="30" cy="14" r="1.8" />
-        <circle cx="26" cy="28" r="1.8" />
-        <circle cx="10" cy="28" r="1.8" />
-        <circle cx="6"  cy="14" r="1.8" />
-      </g>
-      <g stroke="currentColor" strokeWidth="1" fill="none" opacity="0.5">
-        <path d="M 18 6 L 30 14 L 26 28 L 10 28 L 6 14 Z" />
-      </g>
-    </svg>
-  );
-}
+/* Glyphs moved to lib/scoring-profiles — single source of truth
+   shared with the /welcome onboarding intent picker. AR-251. */
 
 /* ============================================================
    § 03 — Anatomy / pipeline (DARK)
