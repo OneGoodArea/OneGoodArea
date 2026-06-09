@@ -25,6 +25,7 @@ import { geocodeArea } from "./modules/signals/data-sources/postcodes";
 import { scoreArea, parseScoreBody } from "./modules/scoring";
 import { createPortfolio, listPortfolios, getPortfolio, deletePortfolio, addAreas, enrichPortfolio, detectPortfolioChanges, PORTFOLIO_ADD_MAX, type Baseline } from "./modules/monitor";
 import { runQuery, parseQueryRequest } from "./modules/intelligence";
+import { listForUser as listActivityForUser } from "./modules/activity";
 import {
   createPersonalOrgForUser,
   listOrgsForUser,
@@ -436,6 +437,30 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         created_at: r.created_at,
       })),
     };
+  });
+
+  /* AR-235 [AR-217-A18] Activity feed read.
+     Session-authed via the bridge token apps/web mints from NextAuth.
+     Paginated: ?page=1&page_size=20, page_size capped at 100. Returns
+     the caller's activity_events rows ordered newest-first. */
+  app.get("/me/activity", async (request, reply) => {
+    const userId = await authenticateSession(request, reply);
+    if (!userId) return reply;
+
+    const query = request.query as { page?: string; page_size?: string };
+    const rawPage = Number.parseInt(query.page ?? "1", 10);
+    const page = Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
+    const rawSize = Number.parseInt(query.page_size ?? "20", 10);
+    const pageSize =
+      Number.isFinite(rawSize) ? Math.min(100, Math.max(1, rawSize)) : 20;
+
+    const { events, total } = await listActivityForUser(userId, page, pageSize);
+    return reply.code(200).send({
+      events,
+      total,
+      page,
+      page_size: pageSize,
+    });
   });
 
   // The authenticated caller's plan + entitlements. Used by the MCP server at
