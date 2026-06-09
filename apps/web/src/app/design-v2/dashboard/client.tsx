@@ -1,625 +1,314 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+/* AR-254 [AR-217-B5] /dashboard Home new client.
+
+   Wholesale replaces the previous reports-list + saved-areas +
+   inline-API-keys client. The Home is now shaped around the four-
+   product API + MCP positioning:
+
+   1. Verify-email banner (only when users.email_verified=FALSE)
+   2. Hero card: their primary API key + a real curl example +
+      MCP add-on URL. This is the load-bearing "first API call"
+      moment became important when we cut the postcode demo
+      from /welcome in AR-251.
+   3. Usage card: calls used vs plan quota, plan name, upgrade link
+   4. Quick links card: the four /products/* surfaces + docs
+
+   No state ladders, no client fetches everything lands in the
+   first paint. The page.tsx server component does all the data
+   work; this client is presentation + clipboard interactions only. */
+
+import { useState } from "react";
 import Link from "next/link";
+import { AppShell } from "../_shared/app-shell";
+import VerifyBanner from "../_shared/dashboard/verify-banner";
 import {
-  AppShell, AppCard, StatCell, PrimaryCta, GhostCta, appRag,
-} from "../_shared/app-shell";
-import { McpAddOnSection, type McpStatus } from "../_shared/mcp-addon-section";
-import { intentLabel } from "@/lib/intents";
+  SignalsIcon,
+  ScoresIcon,
+  MonitorIcon,
+  IntelligenceIcon,
+} from "../_shared/product-icons";
 import "./dashboard.css";
 
-/* /dashboard — Brand v3 rewrite (AR-204 close-out 14/15).
+interface PrimaryApiKey {
+  key_prefix: string | null;
+  name: string;
+  last_used_at: string | null;
+}
 
-   Visual altitude lift only. IA unchanged (structural restructure
-   around the 4-product API is the next epic — see
-   memory/project_dashboard_redesign_pending.md + task #172).
-   Same shell + same data + same real endpoints. */
+interface McpStatus {
+  access: boolean;
+  addonOwned: boolean;
+  includedFreeViaPlan: boolean;
+}
 
-type Report = { id: string; area: string; intent: string; score: number; created_at: string };
-type SavedArea = { id: string; postcode: string; label: string; intent: string | null; created_at: string };
-type ApiKey = { id: string; key_preview: string; name: string; created_at: string; last_used_at: string | null };
-
-type Props = {
-  reports: Report[];
+interface DashboardHomeClientProps {
+  email: string;
+  emailVerified: boolean;
+  primaryKey: PrimaryApiKey | null;
   plan: string;
   planName: string;
   used: number;
   limit: number;
-  savedAreas: SavedArea[];
-  mcp?: McpStatus;
-};
+  mcp: McpStatus;
+}
 
-export default function DashboardClient(props: Props) {
+export default function DashboardHomeClient(props: DashboardHomeClientProps) {
   return (
-    <AppShell
-      title="Dashboard"
-      subtitle="Reports, monitored postcodes, and usage."
-      actions={<PrimaryCta href="/report">New report</PrimaryCta>}
-    >
+    <AppShell title="Home">
       <Body {...props} />
     </AppShell>
   );
 }
 
 function Body({
-  reports: initialReports,
-  plan,
+  email,
+  emailVerified,
+  primaryKey,
   planName,
   used,
   limit,
-  savedAreas: initialSaved,
   mcp,
-}: Props) {
-  const [reports, setReports] = useState<Report[]>(initialReports);
-  const [savedAreas, setSavedAreas] = useState<SavedArea[]>(initialSaved);
-
-  // V1 grandfathered (developer/business/growth) + V2 active (sandbox/starter_v2/build/scale/growth_v2/enterprise)
-  // all grant API access. Keep in sync with API_PLANS in src/lib/stripe.ts.
-  const apiPlans = ["developer", "business", "growth", "sandbox", "starter_v2", "build", "scale", "growth_v2", "enterprise"];
-  const isApiPlan = apiPlans.includes(plan);
-
-  const stats = useMemo(() => {
-    if (reports.length === 0) return null;
-    const avg = Math.round(reports.reduce((s, r) => s + r.score, 0) / reports.length);
-    const best = reports.reduce((b, r) => (r.score > b.score ? r : b), reports[0]);
-    return { avg, best };
-  }, [reports]);
-
-  async function deleteReport(id: string) {
-    const res = await fetch(`/api/report/${id}`, { method: "DELETE" });
-    if (res.ok) setReports((prev) => prev.filter((r) => r.id !== id));
-  }
-
-  async function removeWatchlist(id: string) {
-    const res = await fetch(`/api/watchlist/${id}`, { method: "DELETE" });
-    if (res.ok) setSavedAreas((prev) => prev.filter((a) => a.id !== id));
-  }
-
+}: DashboardHomeClientProps) {
   return (
-    <div className="oga-dash">
-      <UsageStrip
-        plan={plan}
-        planName={planName}
-        isApiPlan={isApiPlan}
-        used={used}
-        limit={limit}
-      />
+    <div className="oga-home">
+      {!emailVerified && email ? <VerifyBanner email={email} /> : null}
 
-      {stats && (
-        <div className="oga-dash__stats">
-          <StatCell label="Total reports" value={reports.length} />
-          <StatCell
-            label="Average score"
-            value={stats.avg}
-            accent={appRag(stats.avg).tone}
-          />
-          <StatCell
-            label="Top-scoring postcode"
-            value={<span className="oga-dash__stat-top">{stats.best.area}</span>}
-          />
-          <StatCell
-            label="Top score"
-            value={stats.best.score}
-            accent={appRag(stats.best.score).tone}
-          />
-        </div>
-      )}
+      <HeroCard primaryKey={primaryKey} mcp={mcp} />
 
-      {savedAreas.length > 0 && (
-        <Watchlist items={savedAreas} onRemove={removeWatchlist} />
-      )}
-
-      {isApiPlan && <ApiKeysSection />}
-      {isApiPlan && mcp && <McpAddOnSection mcp={mcp} />}
-
-      <ReportsTable reports={reports} onDelete={deleteReport} />
+      <div className="oga-home__row">
+        <UsageCard planName={planName} used={used} limit={limit} />
+        <QuickLinksCard />
+      </div>
     </div>
   );
 }
 
 /* ============================================================
-   Usage strip — DARK 2-col card (Plan | Usage)
+   Hero card API key + curl example + MCP URL
    ============================================================ */
-function UsageStrip({
-  plan,
+
+function HeroCard({
+  primaryKey,
+  mcp,
+}: {
+  primaryKey: PrimaryApiKey | null;
+  mcp: McpStatus;
+}) {
+  const [copied, setCopied] = useState<"" | "key" | "curl" | "mcp">("");
+
+  function copy(text: string, what: "key" | "curl" | "mcp") {
+    navigator.clipboard?.writeText(text);
+    setCopied(what);
+    setTimeout(() => setCopied(""), 1600);
+  }
+
+  const keyPreview = primaryKey?.key_prefix
+    ? `${primaryKey.key_prefix}••••••••`
+    : null;
+
+  const curlExample = `curl https://api.onegoodarea.com/v1/score \\
+  -H "Authorization: Bearer $OGA_API_KEY" \\
+  -G \\
+  --data-urlencode "postcode=SW1A 1AA" \\
+  --data-urlencode "preset=research"`;
+
+  const mcpUrl = mcp.access ? "https://mcp.onegoodarea.com/v1" : null;
+
+  return (
+    <section className="oga-home-hero">
+      <header className="oga-home-hero__head">
+        <span className="oga-home-hero__eyebrow">
+          <span className="oga-home-hero__dot" aria-hidden />
+          Start here
+        </span>
+        <h2 className="oga-home-hero__title">Make your first call.</h2>
+        <p className="oga-home-hero__sub">
+          The data + intelligence layer underneath UK property workflows. Drop
+          the call below into your code. Preset, postcode, and key are the
+          only things you change.
+        </p>
+      </header>
+
+      {/* API key one-liner */}
+      <div className="oga-home-hero__row">
+        <div className="oga-home-hero__row-label">Your primary API key</div>
+        <div className="oga-home-hero__row-value">
+          {keyPreview ? (
+            <>
+              <code className="oga-home-hero__code">{keyPreview}</code>
+              <Link href="/api-usage" className="oga-home-hero__link">
+                Manage keys →
+              </Link>
+            </>
+          ) : (
+            <>
+              <span className="oga-home-hero__nokey">
+                You haven&apos;t created an API key yet.
+              </span>
+              <Link href="/api-usage" className="oga-home-hero__cta">
+                Create your first key →
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Curl example */}
+      <div className="oga-home-hero__codeblock">
+        <div className="oga-home-hero__codeblock-head">
+          <span className="oga-home-hero__codeblock-lang">curl</span>
+          <button
+            type="button"
+            onClick={() => copy(curlExample, "curl")}
+            className="oga-home-hero__copy"
+          >
+            {copied === "curl" ? "Copied ✓" : "Copy"}
+          </button>
+        </div>
+        <pre className="oga-home-hero__pre">
+          <code>{curlExample}</code>
+        </pre>
+      </div>
+
+      {/* MCP add-on row */}
+      <div className="oga-home-hero__row">
+        <div className="oga-home-hero__row-label">MCP for your editor</div>
+        <div className="oga-home-hero__row-value">
+          {mcpUrl ? (
+            <>
+              <code className="oga-home-hero__code">{mcpUrl}</code>
+              <button
+                type="button"
+                onClick={() => copy(mcpUrl, "mcp")}
+                className="oga-home-hero__copy oga-home-hero__copy--inline"
+              >
+                {copied === "mcp" ? "Copied ✓" : "Copy"}
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="oga-home-hero__nokey">
+                MCP integration not yet enabled on your plan.
+              </span>
+              <Link href="/dashboard/billing" className="oga-home-hero__cta">
+                Add MCP access →
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   Usage card
+   ============================================================ */
+
+function UsageCard({
   planName,
-  isApiPlan,
   used,
   limit,
 }: {
-  plan: string;
   planName: string;
-  isApiPlan: boolean;
   used: number;
   limit: number;
 }) {
-  const unlimited = limit === Infinity;
-  const pct = unlimited ? 0 : Math.min((used / limit) * 100, 100);
-  const tone: "strong" | "moderate" | "weak" =
-    pct >= 90 ? "weak" : pct >= 70 ? "moderate" : "strong";
+  const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+  const nearLimit = pct >= 80;
 
   return (
-    <div className="oga-dash__usage" data-oga-surface="dark">
-      {/* Plan */}
-      <div className="oga-dash__usage-cell">
-        <div className="oga-dash__usage-eyebrow">
-          <span aria-hidden className="oga-dash__usage-dot" />
-          Current plan
-        </div>
-        <div className="oga-dash__usage-plan-row">
-          <span className="oga-dash__usage-plan-name">{planName}</span>
-          {isApiPlan && <span className="oga-dash__usage-badge">API</span>}
-        </div>
-        <div>
-          <Link
-            href="/dashboard/billing"
-            className="oga-dash__usage-cta"
-          >
-            {plan === "free" || plan === "sandbox" ? "Upgrade plan" : "Manage billing"}
-            <span aria-hidden>→</span>
-          </Link>
-        </div>
+    <section className="oga-home-card">
+      <header className="oga-home-card__head">
+        <span className="oga-home-card__eyebrow">Usage</span>
+        <span className="oga-home-card__plan">{planName}</span>
+      </header>
+
+      <div className="oga-home-card__stat">
+        <span className="oga-home-card__stat-value">{used.toLocaleString()}</span>
+        <span className="oga-home-card__stat-of">/ {limit.toLocaleString()} this month</span>
       </div>
 
-      {/* Usage */}
-      <div className="oga-dash__usage-cell oga-dash__usage-cell--bordered">
-        <div className="oga-dash__usage-eyebrow">
-          <span>Monthly usage</span>
-          {!unlimited && (
-            <span
-              className="oga-dash__usage-pct"
-              data-tone={tone}
-            >
-              {Math.round(pct)}%
-            </span>
-          )}
-        </div>
-        <div className="oga-dash__usage-count">
-          <span className="oga-dash__usage-count-value">{used}</span>
-          <span className="oga-dash__usage-count-out">/ {unlimited ? "∞" : limit}</span>
-        </div>
-        <div className="oga-dash__usage-bar" data-tone={tone}>
-          <div
-            className="oga-dash__usage-bar-fill"
-            style={{ width: unlimited ? "0%" : `${pct}%` }}
-          />
-        </div>
-        <div className="oga-dash__usage-reset">
-          Resets on the 1st of the month
-        </div>
+      <div className="oga-home-card__bar">
+        <div
+          className="oga-home-card__bar-fill"
+          style={{ width: `${pct}%` }}
+          data-near-limit={nearLimit ? "true" : "false"}
+        />
       </div>
-    </div>
+
+      <div className="oga-home-card__footer">
+        {nearLimit ? (
+          <Link href="/dashboard/billing" className="oga-home-card__link">
+            Upgrade plan →
+          </Link>
+        ) : (
+          <Link href="/api-usage" className="oga-home-card__link">
+            See full usage →
+          </Link>
+        )}
+      </div>
+    </section>
   );
 }
 
 /* ============================================================
-   Monitored postcodes
+   Quick links card
    ============================================================ */
-function Watchlist({
-  items,
-  onRemove,
-}: {
-  items: SavedArea[];
-  onRemove: (id: string) => void;
-}) {
+
+function QuickLinksCard() {
+  const links = [
+    {
+      href: "/products/signals",
+      label: "Signals",
+      Icon: SignalsIcon,
+      desc: "47 normalised UK property signals, one schema.",
+    },
+    {
+      href: "/products/scores",
+      label: "Scores",
+      Icon: ScoresIcon,
+      desc: "Area quality as a single 0–100 number.",
+    },
+    {
+      href: "/products/monitor",
+      label: "Monitor",
+      Icon: MonitorIcon,
+      desc: "Watch postcodes for material change.",
+    },
+    {
+      href: "/products/intelligence",
+      label: "Intelligence",
+      Icon: IntelligenceIcon,
+      desc: "Traceable natural-language queries.",
+    },
+  ];
+
   return (
-    <AppCard title={`Monitored postcodes · ${items.length}`} noPad>
-      <ul className="oga-dash__watchlist">
-        {items.map((area) => (
-          <li key={area.id} className="oga-dash__watchlist-row">
-            <div className="oga-dash__watchlist-text">
-              <div className="oga-dash__watchlist-label">
-                {area.label || area.postcode}
-              </div>
-              <div className="oga-dash__watchlist-meta">
-                {area.postcode}
-                {area.intent ? ` · ${intentLabel(area.intent)}` : ""}
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => onRemove(area.id)}
-              aria-label="Stop monitoring this postcode"
-              className="oga-dash__icon-btn oga-dash__icon-btn--danger"
-            >
-              <XIcon />
-            </button>
+    <section className="oga-home-card">
+      <header className="oga-home-card__head">
+        <span className="oga-home-card__eyebrow">Products</span>
+        <Link href="/docs/api-reference" className="oga-home-card__link">
+          API reference →
+        </Link>
+      </header>
+
+      <ul className="oga-home-links">
+        {links.map((link) => (
+          <li key={link.href}>
+            <Link href={link.href} className="oga-home-links__item">
+              <span className="oga-home-links__icon" aria-hidden>
+                <link.Icon width={18} height={18} />
+              </span>
+              <span className="oga-home-links__body">
+                <span className="oga-home-links__name">{link.label}</span>
+                <span className="oga-home-links__desc">{link.desc}</span>
+              </span>
+            </Link>
           </li>
         ))}
       </ul>
-    </AppCard>
+    </section>
   );
-}
-
-/* ============================================================
-   API keys
-   ============================================================ */
-function ApiKeysSection() {
-  const [keys, setKeys] = useState<ApiKey[] | null>(null);
-  const [newKey, setNewKey] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      const res = await fetch("/api/keys");
-      const data = await res.json();
-      setKeys(data.keys || []);
-    })();
-  }, []);
-
-  async function createKey() {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/keys", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      const data = await res.json();
-      if (data.key) {
-        setNewKey(data.key.key);
-        const kRes = await fetch("/api/keys");
-        const kData = await kRes.json();
-        setKeys(kData.keys || []);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function revokeKey(id: string) {
-    await fetch(`/api/keys/${id}`, { method: "DELETE" });
-    setKeys((prev) => prev?.filter((k) => k.id !== id) || null);
-  }
-
-  function copy(text: string) {
-    navigator.clipboard?.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1600);
-  }
-
-  return (
-    <AppCard
-      title="API keys"
-      note="Bearer tokens for the REST API"
-      noPad
-    >
-      <div className="oga-dash__keys-head">
-        <p className="oga-dash__keys-blurb">
-          Create a key, drop it in your <code className="oga-dash__inline-code">Authorization: Bearer</code> header. 30 requests per minute per key; cached responses don&rsquo;t count.
-        </p>
-        <PrimaryCta onClick={createKey} disabled={loading}>
-          {loading ? "Creating…" : "New key"}
-        </PrimaryCta>
-      </div>
-
-      {newKey && (
-        <div className="oga-dash__keys-reveal">
-          <div className="oga-dash__keys-reveal-eyebrow">
-            Save this key now &middot; it won&rsquo;t be shown again
-          </div>
-          <div className="oga-dash__keys-reveal-row">
-            <code className="oga-dash__keys-reveal-code">{newKey}</code>
-            <button
-              type="button"
-              onClick={() => copy(newKey)}
-              className="oga-dash__keys-copy"
-              data-copied={copied}
-            >
-              {copied ? "Copied ✓" : "Copy"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="oga-dash__keys-list-wrap">
-        {keys === null ? (
-          <div className="oga-dash__keys-empty">Loading keys&hellip;</div>
-        ) : keys.length === 0 ? (
-          <div className="oga-dash__keys-empty-body">
-            No keys yet. Create one to start making requests.
-          </div>
-        ) : (
-          <ul className="oga-dash__keys-list">
-            {keys.map((k) => (
-              <li key={k.id} className="oga-dash__keys-row">
-                <div className="oga-dash__keys-row-text">
-                  <code className="oga-dash__inline-code">{k.key_preview}</code>
-                  <span className="oga-dash__keys-name">{k.name}</span>
-                  <span className="oga-dash__keys-meta">
-                    {k.last_used_at
-                      ? `Last used ${formatDate(k.last_used_at)}`
-                      : "Never used"}
-                  </span>
-                </div>
-                <GhostCta onClick={() => revokeKey(k.id)} danger>
-                  Revoke
-                </GhostCta>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </AppCard>
-  );
-}
-
-/* ============================================================
-   Reports list
-   ============================================================ */
-function ReportsTable({
-  reports,
-  onDelete,
-}: {
-  reports: Report[];
-  onDelete: (id: string) => void;
-}) {
-  const [search, setSearch] = useState("");
-  const [intentFilter, setIntentFilter] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<"date" | "score" | "area">("date");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
-
-  const intents = useMemo(
-    () => Array.from(new Set(reports.map((r) => r.intent))),
-    [reports],
-  );
-  const filtered = useMemo(
-    () =>
-      reports
-        .filter((r) => {
-          if (search && !r.area.toLowerCase().includes(search.toLowerCase())) return false;
-          if (intentFilter !== "all" && r.intent !== intentFilter) return false;
-          return true;
-        })
-        .sort((a, b) => {
-          let cmp = 0;
-          if (sortBy === "score") cmp = a.score - b.score;
-          else if (sortBy === "area") cmp = a.area.localeCompare(b.area);
-          else cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-          return sortDir === "desc" ? -cmp : cmp;
-        }),
-    [reports, search, intentFilter, sortBy, sortDir],
-  );
-
-  function toggleSort(col: "date" | "score" | "area") {
-    if (sortBy === col) setSortDir((d) => (d === "desc" ? "asc" : "desc"));
-    else {
-      setSortBy(col);
-      setSortDir("desc");
-    }
-  }
-
-  function exportCSV() {
-    const header = "Area,Intent,Score,Status,Generated";
-    const rowStrings = filtered.map((r) => {
-      const rag = appRag(r.score);
-      const date = new Date(r.created_at).toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      });
-      return `"${r.area.replace(/"/g, '""')}","${r.intent}",${r.score},"${rag.label}","${date}"`;
-    });
-    const csv = [header, ...rowStrings].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `onegoodarea-reports-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  return (
-    <AppCard title={`Reports · ${reports.length}`} noPad>
-      {/* Toolbar */}
-      <div className="oga-dash__rep-toolbar">
-        <input
-          type="search"
-          placeholder="Search area…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="oga-dash__rep-search"
-        />
-        <select
-          value={intentFilter}
-          onChange={(e) => setIntentFilter(e.target.value)}
-          className="oga-dash__rep-filter"
-        >
-          <option value="all">All workflows</option>
-          {intents.map((i) => (
-            <option key={i} value={i}>
-              {intentLabel(i)}
-            </option>
-          ))}
-        </select>
-        {filtered.length > 0 && (
-          <GhostCta onClick={exportCSV}>Export CSV</GhostCta>
-        )}
-      </div>
-
-      {filtered.length > 0 && (
-        <div className="oga-dash__rep-head">
-          <SortHeader
-            label="Postcode"
-            active={sortBy === "area"}
-            dir={sortDir}
-            onClick={() => toggleSort("area")}
-          />
-          <span>Workflow</span>
-          <SortHeader
-            label="Score"
-            active={sortBy === "score"}
-            dir={sortDir}
-            onClick={() => toggleSort("score")}
-          />
-          <SortHeader
-            label="Created"
-            active={sortBy === "date"}
-            dir={sortDir}
-            onClick={() => toggleSort("date")}
-          />
-          <span />
-        </div>
-      )}
-
-      {filtered.length === 0 ? (
-        <EmptyState hasReports={reports.length > 0} />
-      ) : (
-        <ul className="oga-dash__rep-list">
-          {filtered.map((r) => (
-            <ReportRow key={r.id} report={r} onDelete={onDelete} />
-          ))}
-        </ul>
-      )}
-    </AppCard>
-  );
-}
-
-function SortHeader({
-  label,
-  active,
-  dir,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  dir: "asc" | "desc";
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="oga-dash__sort"
-      data-active={active}
-    >
-      {label}
-      {active && (
-        <span aria-hidden className="oga-dash__sort-arrow">
-          {dir === "desc" ? "▼" : "▲"}
-        </span>
-      )}
-    </button>
-  );
-}
-
-function ReportRow({
-  report,
-  onDelete,
-}: {
-  report: Report;
-  onDelete: (id: string) => void;
-}) {
-  const rag = appRag(report.score);
-  const [confirm, setConfirm] = useState(false);
-
-  return (
-    <li className="oga-dash__rep-row">
-      <Link
-        href={`/report/${report.id}`}
-        className="oga-dash__rep-area"
-      >
-        {report.area}
-      </Link>
-
-      <span className="oga-dash__rep-intent">{intentLabel(report.intent)}</span>
-
-      <span className="oga-dash__rep-score" style={{ color: rag.dot }}>
-        <span
-          aria-hidden
-          className="oga-dash__rep-score-dot"
-          style={{ background: rag.dot }}
-        />
-        {report.score}
-      </span>
-
-      <span className="oga-dash__rep-date">{formatDate(report.created_at)}</span>
-
-      <div className="oga-dash__rep-actions">
-        {confirm ? (
-          <div className="oga-dash__rep-confirm">
-            <button
-              type="button"
-              onClick={() => {
-                onDelete(report.id);
-                setConfirm(false);
-              }}
-              className="oga-dash__rep-confirm-yes"
-            >
-              Delete
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirm(false)}
-              className="oga-dash__rep-confirm-no"
-            >
-              No
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setConfirm(true)}
-            aria-label="Delete report"
-            className="oga-dash__icon-btn oga-dash__icon-btn--danger"
-          >
-            <TrashIcon />
-          </button>
-        )}
-      </div>
-    </li>
-  );
-}
-
-function EmptyState({ hasReports }: { hasReports: boolean }) {
-  return (
-    <div className="oga-dash__empty">
-      <div className="oga-dash__empty-title">
-        {hasReports ? "No reports match your filter" : "No reports yet"}
-      </div>
-      <p className="oga-dash__empty-body">
-        {hasReports
-          ? "Clear the search or change the workflow filter to see your reports again."
-          : "Generate your first report. The Sandbox tier includes free API calls a month, no card required."}
-      </p>
-      {!hasReports && (
-        <PrimaryCta href="/report">Generate a report</PrimaryCta>
-      )}
-    </div>
-  );
-}
-
-/* ============================================================
-   Icons
-   ============================================================ */
-function XIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M6 6 L18 18 M18 6 L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-function TrashIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M5 7 H19 M9 7 V5 A1 1 0 0 1 10 4 H14 A1 1 0 0 1 15 5 V7 M7 7 V20 A1 1 0 0 0 8 21 H16 A1 1 0 0 0 17 20 V7 M10 11 V17 M14 11 V17"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        fill="none"
-      />
-    </svg>
-  );
-}
-
-function formatDate(d: string) {
-  return new Date(d).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
 }

@@ -1,99 +1,110 @@
 import { auth } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { redirect } from "next/navigation";
-import { getUserPlan, getMonthlyReportCount, hasMcpAccess, hasAddon, getMcpUsageThisMonth } from "@/lib/usage";
+import {
+  getUserPlan,
+  getMonthlyReportCount,
+  hasMcpAccess,
+  hasAddon,
+} from "@/lib/usage";
 import { PLANS } from "@/lib/stripe";
-import DashboardClient from "@/app/design-v2/dashboard/client";
-import { rows, ReportRow, SavedAreaRow } from "@/lib/db-types";
+import DashboardHomeClient from "@/app/design-v2/dashboard/client";
 import type { Metadata } from "next";
 
+/* AR-254 [AR-217-B5] /dashboard Home replaces the legacy report-
+   centric dashboard with the new API + MCP-shaped Home page.
+
+   Server query: just the data the new client needs.
+     - users.email_verified to gate the verify banner
+     - first non-revoked api_keys row (key_prefix + name + last_used)
+       for the hero card. Returns null if the user has no keys yet , 
+       the client renders the "Create your first API key" CTA path.
+     - plan + monthly usage for the usage card
+     - MCP access + add-on ownership for the MCP card
+
+   The old surface's reports list + saved areas + inline API keys
+   management moved out of /dashboard. Reports live in their own
+   route already; saved areas merge into /dashboard/monitor once
+   that lands (Phase 2). API key management was always at /api-usage
+   too the dashboard just duplicated the surface, which is what
+   the Home redesign retires. */
+
 export const metadata: Metadata = {
-  title: "My Reports | OneGoodArea",
-  description: "View your generated area intelligence reports.",
+  title: "Home | OneGoodArea",
+  description:
+    "Your API key, the most common call, MCP access, and usage at a glance.",
 };
 
-async function getUserReports(userId: string) {
-  const result = await sql`
-    SELECT id, area, intent, score, created_at
-    FROM reports
-    WHERE user_id = ${userId}
-    ORDER BY created_at DESC
-  `;
-
-  const typed = rows<ReportRow>(result);
-
-  return typed.map((row) => ({
-    id: row.id,
-    area: row.area,
-    intent: row.intent,
-    score: row.score,
-    created_at: row.created_at,
-  }));
+interface PrimaryApiKey {
+  key_prefix: string | null;
+  name: string;
+  last_used_at: string | null;
 }
 
-async function getSavedAreas(userId: string) {
+async function getPrimaryApiKey(userId: string): Promise<PrimaryApiKey | null> {
+  /* Primary key = first non-revoked key sorted by created_at asc.
+     A returning user might have many; the Home only shows one. The
+     full /api-usage surface is where they manage the rest. */
   try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS saved_areas (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-        user_id TEXT NOT NULL,
-        postcode TEXT NOT NULL,
-        label TEXT NOT NULL DEFAULT '',
-        intent TEXT,
-        created_at TIMESTAMPTZ DEFAULT now(),
-        UNIQUE(user_id, postcode)
-      )
-    `;
-    const result = await sql`
-      SELECT id, postcode, label, intent, created_at
-      FROM saved_areas
-      WHERE user_id = ${userId}
-      ORDER BY created_at DESC
-    `;
-    const typed = rows<SavedAreaRow>(result);
-    return typed.map((row) => ({
-      id: row.id,
-      postcode: row.postcode,
-      label: row.label || "",
-      intent: row.intent || null,
-      created_at: row.created_at,
-    }));
+    const result = (await sql`
+      SELECT key_prefix, name, last_used_at
+      FROM api_keys
+      WHERE user_id = ${userId} AND revoked = FALSE
+      ORDER BY created_at ASC
+      LIMIT 1
+    `) as Array<{
+      key_prefix: string | null;
+      name: string;
+      last_used_at: string | null;
+    }>;
+    return result[0] ?? null;
   } catch {
-    return [];
+    return null;
+  }
+}
+
+async function getEmailVerified(userId: string): Promise<boolean> {
+  try {
+    const result = (await sql`
+      SELECT email_verified FROM users WHERE id = ${userId} LIMIT 1
+    `) as Array<{ email_verified: boolean }>;
+    return result[0]?.email_verified ?? false;
+  } catch {
+    return true;
   }
 }
 
 export default async function DashboardPage() {
   const session = await auth();
   const userId = session?.user?.id;
-  if (!userId) redirect("/sign-in");
+  if (!userId) redirect("/get-started?callbackUrl=/dashboard");
 
-  const [reports, plan, used, savedAreas, mcpAccess, mcpAddonOwned, mcpUsage] = await Promise.all([
-    getUserReports(userId),
-    getUserPlan(userId),
-    getMonthlyReportCount(userId),
-    getSavedAreas(userId),
-    hasMcpAccess(userId),
-    hasAddon(userId, "mcp"),
-    getMcpUsageThisMonth(userId),
-  ]);
+  const [plan, used, mcpAccess, mcpAddonOwned, primaryKey, emailVerified] =
+    await Promise.all([
+      getUserPlan(userId),
+      getMonthlyReportCount(userId),
+      hasMcpAccess(userId),
+      hasAddon(userId, "mcp"),
+      getPrimaryApiKey(userId),
+      getEmailVerified(userId),
+    ]);
 
   const planConfig = PLANS[plan];
   const planIncludesMcp = planConfig?.mcpAccess === true;
 
   return (
-    <DashboardClient
-      reports={reports}
+    <DashboardHomeClient
+      email={session?.user?.email ?? ""}
+      emailVerified={emailVerified}
+      primaryKey={primaryKey}
       plan={plan}
-      planName={planConfig.name}
+      planName={planConfig?.name ?? "Sandbox"}
       used={used}
-      limit={planConfig.reportsPerMonth}
-      savedAreas={savedAreas}
+      limit={planConfig?.reportsPerMonth ?? 35}
       mcp={{
         access: mcpAccess,
         addonOwned: mcpAddonOwned,
         includedFreeViaPlan: planIncludesMcp,
-        callsThisMonth: mcpUsage,
       }}
     />
   );

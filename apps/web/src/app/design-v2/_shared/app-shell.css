@@ -29,13 +29,14 @@
   --oga-sidebar-width: 84px;
 }
 
-/* AR-252: collapsed brand-mark link.
-   Wraps the 29-dot Mark in a link back to /dashboard, replacing the
-   full Wordmark when the sidebar is in icon-only mode. Same hover
-   signature (subtle rotation on hover) as the Wordmark to keep the
-   interaction language consistent. */
+/* AR-252 / AR-254: brand-mark + wordmark variants both always
+   present in the DOM (server can't know the localStorage-persisted
+   collapsed state until the client hydrates, and we render the
+   same markup on both sides to avoid a structural hydration mismatch).
+   CSS hides whichever doesn't match the current collapsed state.
+   Default: Mark hidden, Wordmark shown. data-collapsed="true" flips. */
 .oga-app__sidebar-mark {
-  display: inline-flex;
+  display: none;
   align-items: center;
   justify-content: center;
   text-decoration: none;
@@ -48,6 +49,15 @@
   outline: 1.5px solid rgba(250, 248, 244, 0.4);
   outline-offset: 4px;
   border-radius: 50%;
+}
+.oga-app__sidebar-wordmark {
+  display: inline-flex;
+}
+.oga-app[data-collapsed="true"] .oga-app__sidebar-mark {
+  display: inline-flex;
+}
+.oga-app[data-collapsed="true"] .oga-app__sidebar-wordmark {
+  display: none;
 }
 @media (max-width: 880px) {
   .oga-app {

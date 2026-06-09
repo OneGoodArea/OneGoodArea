@@ -203,22 +203,23 @@ export function AppShell({
         onClose={() => setDrawerOpen(false)}
         top={
           <>
-            {/* AR-252: collapsed sidebar shows the 29-dot brand mark
-                only — full Wordmark text doesn't fit in 64px. Both
-                variants link back to /dashboard. The Mark size (32)
-                roughly matches the visual weight of the size-20
-                wordmark's mark in the expanded state. */}
-            {collapsed ? (
-              <Link
-                href="/dashboard"
-                aria-label="OneGoodArea — back to dashboard"
-                className="oga-app__sidebar-mark"
-              >
-                <Mark size={32} tone="dark" />
-              </Link>
-            ) : (
+            {/* AR-252 / AR-254: both Mark and Wordmark always live in
+                the DOM. CSS shows whichever matches .oga-app[data-
+                collapsed], so the server (default expanded) and the
+                client (persisted collapsed) render the SAME markup —
+                no structural diff = no hydration warning. The Mark
+                size (32) roughly matches the visual weight of the
+                size-20 wordmark's mark in the expanded state. */}
+            <Link
+              href="/dashboard"
+              aria-label="OneGoodArea — back to dashboard"
+              className="oga-app__sidebar-mark"
+            >
+              <Mark size={32} tone="dark" />
+            </Link>
+            <span className="oga-app__sidebar-wordmark">
               <Wordmark href="/dashboard" size={20} tone="dark" />
-            )}
+            </span>
             <button
               type="button"
               onClick={() => setDrawerOpen(false)}
