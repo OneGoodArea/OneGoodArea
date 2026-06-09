@@ -1,34 +1,35 @@
 "use client";
 
-/* AR-254 [AR-217-B5] /dashboard Home new client.
+/* AR-256 [AR-217-B5] /dashboard Home rebalanced.
 
-   Wholesale replaces the previous reports-list + saved-areas +
-   inline-API-keys client. The Home is now shaped around the four-
-   product API + MCP positioning:
+   AR-254 shipped a single hero card with the API key + curl + a
+   one-line MCP mention. AR-256 rebalances that to match the product
+   positioning where API and MCP are equal halves of the product.
+   Two equal cards at the top: one for REST API integration, one
+   for MCP integration. Each carries its own tab switcher (languages
+   for the API card, editors for the MCP card) so a fresh customer
+   sees both surfaces with realistic snippets, not a one-liner.
 
-   1. Verify-email banner (only when users.email_verified=FALSE)
-   2. Hero card: their primary API key + a real curl example +
-      MCP add-on URL. This is the load-bearing "first API call"
-      moment became important when we cut the postcode demo
-      from /welcome in AR-251.
-   3. Usage card: calls used vs plan quota, plan name, upgrade link
-   4. Quick links card: the four /products/* surfaces + docs
+   QuickLinksCard (which pointed at /products/* marketing surfaces)
+   is replaced by a DocsCard pointing at the actual docs routes
+   (/docs, /docs/api-reference, /docs/mcp). A signed-in customer
+   doesn't need the marketing tour, they need integration docs.
 
-   No state ladders, no client fetches everything lands in the
-   first paint. The page.tsx server component does all the data
-   work; this client is presentation + clipboard interactions only. */
+   AR-255 latest-call strip is preserved and lifted to a top-level
+   strip above the hero row so it frames the whole page, not just
+   the API card. */
 
-import { useState } from "react";
+import { useState, type ReactElement } from "react";
 import Link from "next/link";
 import { AppShell } from "../_shared/app-shell";
 import VerifyBanner from "../_shared/dashboard/verify-banner";
-import {
-  SignalsIcon,
-  ScoresIcon,
-  MonitorIcon,
-  IntelligenceIcon,
-} from "../_shared/product-icons";
+import { ApiReferenceIcon, McpServerIcon } from "../_shared/docs-icons";
+import { CursorLogo, ClaudeLogo } from "../_shared/editor-icons";
 import "./dashboard.css";
+
+/* ============================================================
+   Types
+   ============================================================ */
 
 interface PrimaryApiKey {
   key_prefix: string | null;
@@ -53,8 +54,6 @@ interface DashboardHomeClientProps {
   email: string;
   emailVerified: boolean;
   primaryKey: PrimaryApiKey | null;
-  /** Most recent /v1/score-style row from reports, if any. Drives
-      the AR-255 contextual hero copy + latest-call strip. */
   latestCall: LatestCall | null;
   plan: string;
   planName: string;
@@ -62,6 +61,10 @@ interface DashboardHomeClientProps {
   limit: number;
   mcp: McpStatus;
 }
+
+/* ============================================================
+   Entry
+   ============================================================ */
 
 export default function DashboardHomeClient(props: DashboardHomeClientProps) {
   return (
@@ -81,46 +84,51 @@ function Body({
   limit,
   mcp,
 }: DashboardHomeClientProps) {
+  const hasEverCalled = latestCall !== null;
+  const intro = hasEverCalled
+    ? "Your two integration surfaces. Copy what you need."
+    : "Two ways to use OneGoodArea: call the REST API from your code, or connect MCP to your editor. Both work today.";
+
   return (
     <div className="oga-home">
       {!emailVerified && email ? <VerifyBanner email={email} /> : null}
 
-      <HeroCard
-        primaryKey={primaryKey}
-        mcp={mcp}
-        used={used}
-        latestCall={latestCall}
-      />
+      <header className="oga-home__intro">
+        <p>{intro}</p>
+      </header>
+
+      {latestCall ? <LatestCallStrip call={latestCall} /> : null}
+
+      <div className="oga-home__hero-row">
+        <ApiCard primaryKey={primaryKey} />
+        <McpCard mcp={mcp} />
+      </div>
 
       <div className="oga-home__row">
         <UsageCard planName={planName} used={used} limit={limit} />
-        <QuickLinksCard />
+        <DocsCard />
       </div>
     </div>
   );
 }
 
 /* ============================================================
-   AR-255: Latest call strip (renders inside hero, above the
-   primary-key row, only when the user has made >= 1 call).
-   Editorial single line, no card chrome, no buttons. The card
-   row below is where you act; this row is just confirmation
-   the API is alive and what it last produced.
+   Latest-call strip (AR-255, lifted here from inside the hero)
    ============================================================ */
 
 function LatestCallStrip({ call }: { call: LatestCall }) {
   return (
-    <div className="oga-home-hero__latest" role="status">
-      <span className="oga-home-hero__latest-dot" aria-hidden />
-      <span className="oga-home-hero__latest-label">Latest call</span>
-      <span className="oga-home-hero__latest-detail">
+    <div className="oga-home-latest" role="status">
+      <span className="oga-home-latest__dot" aria-hidden />
+      <span className="oga-home-latest__label">Latest call</span>
+      <span className="oga-home-latest__detail">
         <code>{call.area}</code>
         <span aria-hidden>·</span>
         <code>preset={call.preset}</code>
         <span aria-hidden>·</span>
         <span>score {Math.round(call.score)}</span>
         <span aria-hidden>·</span>
-        <span className="oga-home-hero__latest-when">
+        <span className="oga-home-latest__when">
           {formatAgo(call.created_at)}
         </span>
       </span>
@@ -129,9 +137,6 @@ function LatestCallStrip({ call }: { call: LatestCall }) {
 }
 
 function formatAgo(iso: string): string {
-  /* Compact relative time. Local-only, no library. The dashboard
-     re-renders on each visit so we don't need to keep this
-     ticking; a static snapshot at render time is fine. */
   const then = new Date(iso).getTime();
   const now = Date.now();
   const diffSec = Math.max(0, Math.floor((now - then) / 1000));
@@ -149,148 +154,302 @@ function formatAgo(iso: string): string {
 }
 
 /* ============================================================
-   Hero card API key + curl example + MCP URL
+   Generic tabs primitive (used by API + MCP cards)
+   ============================================================
+   Editorial mono caps tabs with an ink underline on active. Owns
+   its own state via the parent's useState. No keyboard hotkeys
+   beyond default button focus, the tab count is small (3) so
+   ARIA tablist patterns would be overkill for this surface. */
+
+interface TabDef<Id extends string> {
+  id: Id;
+  label: string;
+  /** Optional leading glyph (editor logo for MCP tabs). */
+  icon?: ReactElement;
+  /** Optional color hint for the tab label + underline. Used by API
+      language tabs to color-code curl / JS / Python the same way
+      .oga-verb--get / --post / --patch are colored on the API
+      reference page. Free-form so this stays a primitive concern. */
+  color?: string;
+}
+
+function Tabs<Id extends string>({
+  tabs,
+  active,
+  onChange,
+  ariaLabel,
+}: {
+  tabs: ReadonlyArray<TabDef<Id>>;
+  active: Id;
+  onChange: (id: Id) => void;
+  ariaLabel: string;
+}) {
+  return (
+    <div className="oga-home-tabs" role="tablist" aria-label={ariaLabel}>
+      {tabs.map((tab) => {
+        const isActive = tab.id === active;
+        const style = tab.color
+          ? ({ "--tab-color": tab.color } as React.CSSProperties)
+          : undefined;
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            onClick={() => onChange(tab.id)}
+            className={
+              isActive
+                ? "oga-home-tabs__tab oga-home-tabs__tab--active"
+                : "oga-home-tabs__tab"
+            }
+            data-colored={tab.color ? "true" : undefined}
+            style={style}
+          >
+            {tab.icon ? (
+              <span aria-hidden className="oga-home-tabs__tab-icon">
+                {tab.icon}
+              </span>
+            ) : null}
+            <span>{tab.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ============================================================
+   API card: key + language tabs + code sample
    ============================================================ */
 
-function HeroCard({
-  primaryKey,
-  mcp,
-  used,
-  latestCall,
-}: {
-  primaryKey: PrimaryApiKey | null;
-  mcp: McpStatus;
-  used: number;
-  latestCall: LatestCall | null;
-}) {
-  const [copied, setCopied] = useState<"" | "key" | "curl" | "mcp">("");
+type ApiLang = "curl" | "javascript" | "python";
 
-  function copy(text: string, what: "key" | "curl" | "mcp") {
-    navigator.clipboard?.writeText(text);
-    setCopied(what);
-    setTimeout(() => setCopied(""), 1600);
-  }
+/* AR-256: language colors borrow the same dark-surface verb palette
+   used by .oga-verb--get / --post / --patch on the API reference
+   page (#7AC295 green, #F0B270 amber, #E8D27A yellow). Same
+   vocabulary, applied to language tabs instead of HTTP verbs. */
+const API_TABS: ReadonlyArray<TabDef<ApiLang>> = [
+  { id: "curl",       label: "curl",       color: "#F0B270" },
+  { id: "javascript", label: "JavaScript", color: "#E8D27A" },
+  { id: "python",     label: "Python",     color: "#7AC295" },
+];
+
+function ApiCard({ primaryKey }: { primaryKey: PrimaryApiKey | null }) {
+  const [lang, setLang] = useState<ApiLang>("curl");
+  const [copied, setCopied] = useState(false);
 
   const keyPreview = primaryKey?.key_prefix
     ? `${primaryKey.key_prefix}••••••••`
     : null;
 
-  const curlExample = `curl https://api.onegoodarea.com/v1/score \\
+  const samples: Record<ApiLang, string> = {
+    curl: `curl https://api.onegoodarea.com/v1/score \\
   -H "Authorization: Bearer $OGA_API_KEY" \\
   -G \\
   --data-urlencode "postcode=SW1A 1AA" \\
-  --data-urlencode "preset=research"`;
+  --data-urlencode "preset=research"`,
 
-  const mcpUrl = mcp.access ? "https://mcp.onegoodarea.com/v1" : null;
+    javascript: `const params = new URLSearchParams({
+  postcode: "SW1A 1AA",
+  preset: "research",
+});
 
-  /* AR-255: hero copy gates on "have you EVER made a call", not
-     "have you made one this month". The `used` count resets every
-     month, but a user who made calls last month isn't a first-time
-     user. Without this gate the hero says "Make your first call"
-     while the latest-call strip below it shows a real previous call,
-     which reads as broken. The presence of a latestCall is the
-     truthful "you've used the API before" signal. */
-  const hasEverCalled = latestCall !== null;
-  const eyebrow = hasEverCalled ? "Quick reference" : "Start here";
-  const title = hasEverCalled ? "Quick reference." : "Make your first call.";
-  const sub = hasEverCalled
-    ? "The call you came back to copy. Same shape your production code makes against /v1/score, same engine version, same confidence stamping on the response."
-    : "The data + intelligence layer underneath UK property workflows. Drop the call below into your code. Preset, postcode, and key are the only things you change.";
+const res = await fetch(
+  \`https://api.onegoodarea.com/v1/score?\${params}\`,
+  { headers: { Authorization: \`Bearer \${process.env.OGA_API_KEY}\` } },
+);
+const data = await res.json();`,
 
-  /* `used` still drives the in-month usage card. It's passed in
-     because the hero's sub copy could reference it in the future
-     ("X calls this month") but currently doesn't. Keep the prop
-     so AR-235 + later activity-feed work doesn't need to thread it
-     back in. */
-  void used;
+    python: `import os, requests
+
+r = requests.get(
+    "https://api.onegoodarea.com/v1/score",
+    headers={"Authorization": f"Bearer {os.environ['OGA_API_KEY']}"},
+    params={"postcode": "SW1A 1AA", "preset": "research"},
+)
+data = r.json()`,
+  };
+
+  function copySample() {
+    navigator.clipboard?.writeText(samples[lang]);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1600);
+  }
 
   return (
-    <section className="oga-home-hero">
-      <header className="oga-home-hero__head">
-        <span className="oga-home-hero__eyebrow">
-          <span className="oga-home-hero__dot" aria-hidden />
-          {eyebrow}
+    <section className="oga-home-card oga-home-card--code">
+      <header className="oga-home-card__head">
+        <span className="oga-home-card__eyebrow oga-home-card__eyebrow--icon">
+          <span aria-hidden className="oga-home-card__eyebrow-glyph">
+            <ApiReferenceIcon />
+          </span>
+          REST API
         </span>
-        <h2 className="oga-home-hero__title">{title}</h2>
-        <p className="oga-home-hero__sub">{sub}</p>
+        <Link href="/docs/api-reference" className="oga-home-card__link">
+          Full reference →
+        </Link>
       </header>
 
-      {latestCall ? <LatestCallStrip call={latestCall} /> : null}
-
-      {/* API key one-liner */}
-      <div className="oga-home-hero__row">
-        <div className="oga-home-hero__row-label">Your primary API key</div>
-        <div className="oga-home-hero__row-value">
-          {keyPreview ? (
-            <>
-              <code className="oga-home-hero__code">{keyPreview}</code>
-              <Link href="/api-usage" className="oga-home-hero__link">
-                Manage keys →
-              </Link>
-            </>
-          ) : (
-            <>
-              <span className="oga-home-hero__nokey">
-                You haven&apos;t created an API key yet.
-              </span>
-              <Link href="/api-usage" className="oga-home-hero__cta">
-                Create your first key →
-              </Link>
-            </>
-          )}
-        </div>
+      <div className="oga-home-card__keyrow">
+        <span className="oga-home-card__keylabel">Your primary key</span>
+        {keyPreview ? (
+          <>
+            <code className="oga-home-card__keyvalue">{keyPreview}</code>
+            <Link href="/api-usage" className="oga-home-card__keylink">
+              Manage →
+            </Link>
+          </>
+        ) : (
+          <>
+            <span className="oga-home-card__keyempty">No key yet.</span>
+            <Link href="/api-usage" className="oga-home-card__keylink">
+              Create →
+            </Link>
+          </>
+        )}
       </div>
 
-      {/* Curl example */}
-      <div className="oga-home-hero__codeblock">
-        <div className="oga-home-hero__codeblock-head">
-          <span className="oga-home-hero__codeblock-lang">curl</span>
+      <div className="oga-home-codeblock">
+        <Tabs
+          tabs={API_TABS}
+          active={lang}
+          onChange={setLang}
+          ariaLabel="Code language"
+        />
+        <div className="oga-home-codeblock__head">
+          <span className="oga-home-codeblock__path">
+            GET /v1/score
+          </span>
           <button
             type="button"
-            onClick={() => copy(curlExample, "curl")}
-            className="oga-home-hero__copy"
+            onClick={copySample}
+            className="oga-home-codeblock__copy"
           >
-            {copied === "curl" ? "Copied ✓" : "Copy"}
+            {copied ? "Copied ✓" : "Copy"}
           </button>
         </div>
-        <pre className="oga-home-hero__pre">
-          <code>{curlExample}</code>
+        <pre className="oga-home-codeblock__pre">
+          <code>{samples[lang]}</code>
         </pre>
-      </div>
-
-      {/* MCP add-on row */}
-      <div className="oga-home-hero__row">
-        <div className="oga-home-hero__row-label">MCP for your editor</div>
-        <div className="oga-home-hero__row-value">
-          {mcpUrl ? (
-            <>
-              <code className="oga-home-hero__code">{mcpUrl}</code>
-              <button
-                type="button"
-                onClick={() => copy(mcpUrl, "mcp")}
-                className="oga-home-hero__copy oga-home-hero__copy--inline"
-              >
-                {copied === "mcp" ? "Copied ✓" : "Copy"}
-              </button>
-            </>
-          ) : (
-            <>
-              <span className="oga-home-hero__nokey">
-                MCP integration not yet enabled on your plan.
-              </span>
-              <Link href="/dashboard/billing" className="oga-home-hero__cta">
-                Add MCP access →
-              </Link>
-            </>
-          )}
-        </div>
       </div>
     </section>
   );
 }
 
 /* ============================================================
-   Usage card
+   MCP card: server URL + editor tabs + JSON config snippet
+   ============================================================
+   The mcpServers JSON shape below is the cross-editor canonical
+   format. Per-editor variations (where the JSON lives, whether it
+   wraps inside a parent object) are described in /docs/mcp so the
+   canonical truth lives there, not duplicated on the dashboard. */
+
+type McpEditor = "cursor" | "claude-code" | "claude-desktop";
+
+/* AR-256: editor tabs carry the editor's logo as a leading glyph.
+   Cursor uses its own mark; Claude Code + Claude Desktop both
+   share the Claude mark since they're both Anthropic Claude
+   surfaces. */
+const MCP_TABS: ReadonlyArray<TabDef<McpEditor>> = [
+  { id: "cursor",         label: "Cursor",         icon: <CursorLogo width={12} height={12} /> },
+  { id: "claude-code",    label: "Claude Code",    icon: <ClaudeLogo width={12} height={12} /> },
+  { id: "claude-desktop", label: "Claude Desktop", icon: <ClaudeLogo width={12} height={12} /> },
+];
+
+/* Per-editor: where the user pastes the JSON. The actual `mcpServers`
+   shape is identical, only the surrounding container differs. */
+const MCP_HINT: Record<McpEditor, string> = {
+  cursor: "Add to ~/.cursor/mcp.json",
+  "claude-code": "Add to .mcp.json in your project root",
+  "claude-desktop": "Add to claude_desktop_config.json",
+};
+
+function McpCard({ mcp }: { mcp: McpStatus }) {
+  const [editor, setEditor] = useState<McpEditor>("cursor");
+  const [copied, setCopied] = useState(false);
+  const mcpUrl = mcp.access ? "https://mcp.onegoodarea.com/v1" : null;
+
+  const snippet = `{
+  "mcpServers": {
+    "onegoodarea": {
+      "url": "https://mcp.onegoodarea.com/v1",
+      "headers": {
+        "Authorization": "Bearer YOUR_OGA_API_KEY"
+      }
+    }
+  }
+}`;
+
+  function copySnippet() {
+    navigator.clipboard?.writeText(snippet);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1600);
+  }
+
+  return (
+    <section className="oga-home-card oga-home-card--code">
+      <header className="oga-home-card__head">
+        <span className="oga-home-card__eyebrow oga-home-card__eyebrow--icon">
+          <span aria-hidden className="oga-home-card__eyebrow-glyph">
+            <McpServerIcon />
+          </span>
+          MCP
+        </span>
+        <Link href="/docs/mcp" className="oga-home-card__link">
+          Setup guide →
+        </Link>
+      </header>
+
+      <div className="oga-home-card__keyrow">
+        <span className="oga-home-card__keylabel">Server URL</span>
+        {mcpUrl ? (
+          <>
+            <code className="oga-home-card__keyvalue">{mcpUrl}</code>
+            <span className="oga-home-card__keystatus">Enabled</span>
+          </>
+        ) : (
+          <>
+            <span className="oga-home-card__keyempty">
+              Not enabled on your plan.
+            </span>
+            <Link
+              href="/dashboard/billing"
+              className="oga-home-card__keylink"
+            >
+              Add MCP →
+            </Link>
+          </>
+        )}
+      </div>
+
+      <div className="oga-home-codeblock">
+        <Tabs
+          tabs={MCP_TABS}
+          active={editor}
+          onChange={setEditor}
+          ariaLabel="Editor"
+        />
+        <div className="oga-home-codeblock__head">
+          <span className="oga-home-codeblock__path">{MCP_HINT[editor]}</span>
+          <button
+            type="button"
+            onClick={copySnippet}
+            className="oga-home-codeblock__copy"
+          >
+            {copied ? "Copied ✓" : "Copy"}
+          </button>
+        </div>
+        <pre className="oga-home-codeblock__pre">
+          <code>{snippet}</code>
+        </pre>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   Usage card (unchanged from AR-254)
    ============================================================ */
 
 function UsageCard({
@@ -313,8 +472,12 @@ function UsageCard({
       </header>
 
       <div className="oga-home-card__stat">
-        <span className="oga-home-card__stat-value">{used.toLocaleString()}</span>
-        <span className="oga-home-card__stat-of">/ {limit.toLocaleString()} this month</span>
+        <span className="oga-home-card__stat-value">
+          {used.toLocaleString()}
+        </span>
+        <span className="oga-home-card__stat-of">
+          / {limit.toLocaleString()} this month
+        </span>
       </div>
 
       <div className="oga-home-card__bar">
@@ -341,57 +504,42 @@ function UsageCard({
 }
 
 /* ============================================================
-   Quick links card
+   Docs card (replaces the AR-254 QuickLinksCard which pointed at
+   /products/* marketing surfaces a signed-in customer doesn't need).
    ============================================================ */
 
-function QuickLinksCard() {
-  const links = [
+function DocsCard() {
+  const entries = [
     {
-      href: "/products/signals",
-      label: "Signals",
-      Icon: SignalsIcon,
-      desc: "47 normalised UK property signals, one schema.",
+      href: "/docs",
+      label: "Quickstart",
+      desc: "From sign-up to first call. The shortest path through the API.",
     },
     {
-      href: "/products/scores",
-      label: "Scores",
-      Icon: ScoresIcon,
-      desc: "Area quality as a single 0–100 number.",
+      href: "/docs/api-reference",
+      label: "Full API reference",
+      desc: "Every endpoint, every parameter, every response field.",
     },
     {
-      href: "/products/monitor",
-      label: "Monitor",
-      Icon: MonitorIcon,
-      desc: "Watch postcodes for material change.",
-    },
-    {
-      href: "/products/intelligence",
-      label: "Intelligence",
-      Icon: IntelligenceIcon,
-      desc: "Traceable natural-language queries.",
+      href: "/docs/mcp",
+      label: "MCP setup guide",
+      desc: "Cursor, Claude Code, Claude Desktop, and the protocol details.",
     },
   ];
 
   return (
     <section className="oga-home-card">
       <header className="oga-home-card__head">
-        <span className="oga-home-card__eyebrow">Products</span>
-        <Link href="/docs/api-reference" className="oga-home-card__link">
-          API reference →
-        </Link>
+        <span className="oga-home-card__eyebrow">Docs</span>
       </header>
 
-      <ul className="oga-home-links">
-        {links.map((link) => (
-          <li key={link.href}>
-            <Link href={link.href} className="oga-home-links__item">
-              <span className="oga-home-links__icon" aria-hidden>
-                <link.Icon width={18} height={18} />
-              </span>
-              <span className="oga-home-links__body">
-                <span className="oga-home-links__name">{link.label}</span>
-                <span className="oga-home-links__desc">{link.desc}</span>
-              </span>
+      <ul className="oga-home-docs">
+        {entries.map((e) => (
+          <li key={e.href}>
+            <Link href={e.href} className="oga-home-docs__item">
+              <span className="oga-home-docs__name">{e.label}</span>
+              <span className="oga-home-docs__desc">{e.desc}</span>
+              <span aria-hidden className="oga-home-docs__chev">→</span>
             </Link>
           </li>
         ))}
