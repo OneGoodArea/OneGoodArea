@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { neon } from "@neondatabase/serverless";
 import { auth } from "@/lib/auth";
 import WelcomeClient from "@/app/design-v2/welcome/client";
 
@@ -8,7 +9,14 @@ import WelcomeClient from "@/app/design-v2/welcome/client";
    email-derived workspace seed to the client. Avoids the useSession
    client-hook + SessionProvider plumbing that was tripping a
    ClientFetchError ("Unexpected token '<'") in dev. Server-side
-   auth() is the canonical NextAuth v5 read path. */
+   auth() is the canonical NextAuth v5 read path.
+
+   AR-253: also reads users.email_verified so the client can show a
+   verification reminder banner. The verify gate was dropped from
+   onboarding (proposal §2: verification REQUIRED to write data but
+   NOT required to enter the dashboard) — the banner is the gentle
+   nudge that replaces it. One extra SELECT per /welcome render; the
+   row is the same one auth() just touched, so it's hot in cache. */
 
 export const metadata: Metadata = {
   title: "Welcome | OneGoodArea",
@@ -17,8 +25,22 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+async function readEmailVerified(userId: string): Promise<boolean> {
+  const url = process.env.DATABASE_URL;
+  if (!url) return true;
+  const sql = neon(url);
+  const rows = (await sql`
+    SELECT email_verified FROM users WHERE id = ${userId} LIMIT 1
+  `) as Array<{ email_verified: boolean }>;
+  return rows[0]?.email_verified ?? false;
+}
+
 export default async function WelcomePage() {
   const session = await auth();
   const email = session?.user?.email ?? null;
-  return <WelcomeClient initialEmail={email} />;
+  const userId = session?.user?.id ?? null;
+  const emailVerified = userId ? await readEmailVerified(userId) : true;
+  return (
+    <WelcomeClient initialEmail={email} initialEmailVerified={emailVerified} />
+  );
 }

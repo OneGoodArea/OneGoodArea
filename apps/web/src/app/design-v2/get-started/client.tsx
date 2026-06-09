@@ -6,11 +6,12 @@
    - Single URL, no separate /login vs /register
    - Email-first: type email, click Continue, we check existence
    - If existing account -> password-only sign-in form (NextAuth credentials)
-   - If new account -> password + GDPR consent -> register, then "check
-     your email" verification screen (reused pattern from legacy
-     /sign-up client)
+   - If new account -> password + GDPR consent -> register -> auto-
+     signin -> /welcome (AR-253: dropped the "check your email" verify
+     gate per proposal §2 "verification REQUIRED to write data but NOT
+     required to enter the dashboard". Verification email still sends
+     in background; the reminder + resend live on /welcome.)
    - NO OAuth buttons (proposal lock — email + password only for v1)
-   - NO magic link this ticket (AR-248-B owns that infra)
    - ?source=... URL param captured to cookie + included on register
      for users.signup_source attribution
 
@@ -22,7 +23,6 @@
 
 import {
   Suspense,
-  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -39,7 +39,6 @@ import {
   AuthError,
   AuthSubmit,
   AuthFooterLink,
-  AuthStatusIcon,
 } from "../_shared/auth-shell";
 import {
   readSignupSourceCookie,
@@ -47,16 +46,6 @@ import {
 } from "@/lib/signup-source";
 import { safeCallbackUrl } from "@/lib/safe-callback-url";
 import "./get-started.css";
-
-/* ============================================================
-   Verification step copy — reused from legacy /sign-up flow
-   ============================================================ */
-
-const VERIFY_STEPS = [
-  "Open the email from OneGoodArea",
-  "Click the verification link",
-  "Land in /welcome — three short steps before your first signal",
-];
 
 /* ============================================================
    Top-level wrapper with Suspense for useSearchParams
@@ -80,7 +69,7 @@ export default function GetStartedClient() {
    Form
    ============================================================ */
 
-type Step = "email" | "credentials" | "verify-sent";
+type Step = "email" | "credentials";
 type Mode = "signin" | "signup";
 
 function GetStartedForm() {
@@ -96,10 +85,6 @@ function GetStartedForm() {
   const [consentChecked, setConsentChecked] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  /* Resend-verification UX state (verify-sent step). */
-  const [resending, setResending] = useState(false);
-  const [resent, setResent] = useState(false);
 
   /* signup_source: capture from URL on mount, write to cookie so it
      survives navigation; fall back to existing cookie if no ?source
@@ -232,31 +217,39 @@ function GetStartedForm() {
         setLoading(false);
         return;
       }
-      setStep("verify-sent");
-      setLoading(false);
+
+      /* AR-253: auto-signin immediately after register so the user
+         lands in /welcome with a session. Proposal §2 explicitly
+         drops the email-verify gate at this step — verification is
+         only required to write data, not to enter the dashboard. The
+         verification email still sends in background; the reminder
+         + resend live on /welcome. The credentials provider doesn't
+         gate on email_verified (apps/web/src/lib/auth.ts §authorize),
+         so this signIn succeeds for a freshly-registered user.
+
+         If signIn fails (shouldn't happen — we just wrote the row
+         with this exact password — but defensive), surface the
+         error inline. The user can retry sign-in via the email step. */
+      const signInResult = await signIn("credentials", {
+        email: email.trim().toLowerCase(),
+        password,
+        redirect: false,
+      });
+      if (signInResult?.error) {
+        setError(
+          "Your account was created, but automatic sign-in failed. Use the sign-in form on this page.",
+        );
+        setMode("signin");
+        setLoading(false);
+        return;
+      }
+      router.push("/welcome");
+      router.refresh();
     } catch {
       setError("We couldn't reach the server. Retry, or contact support if this persists.");
       setLoading(false);
     }
   };
-
-  const handleResendVerification = useCallback(async () => {
-    if (resending || resent) return;
-    setResending(true);
-    try {
-      await fetch("/api/auth/resend-verification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase() }),
-      });
-      setResent(true);
-    } catch {
-      /* Silent fail — user can retry. We don't want to surface email
-         delivery internals on this surface. */
-    } finally {
-      setResending(false);
-    }
-  }, [email, resending, resent]);
 
   const resetToEmailStep = () => {
     setStep("email");
@@ -271,73 +264,6 @@ function GetStartedForm() {
     if (step === "credentials") return "Step 2 of 2";
     return undefined;
   }, [step]);
-
-  /* ============================================================
-     Verify-sent — terminal screen after successful sign-up
-     ============================================================ */
-
-  if (step === "verify-sent") {
-    return (
-      <AuthShell>
-        <div className="oga-auth-center">
-          <AuthStatusIcon tone="success">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path
-                d="M4 8 L12 3 L20 8 V20 H4 Z"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M4 8 L12 13 L20 8"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </AuthStatusIcon>
-
-          <AuthTitle
-            title="Check your email."
-            sub={
-              <>
-                We sent a verification link to{" "}
-                <code className="oga-auth-code">{email}</code>
-              </>
-            }
-          />
-
-          <ol className="oga-auth-steps">
-            {VERIFY_STEPS.map((stepText, i) => (
-              <li key={stepText} className="oga-auth-steps__item">
-                <span aria-hidden className="oga-auth-steps__num">
-                  {i + 1}
-                </span>
-                {stepText}
-              </li>
-            ))}
-          </ol>
-
-          <div className="oga-auth-meta">
-            Link expires in 24 hours · Check your spam folder
-          </div>
-
-          <button
-            type="button"
-            onClick={handleResendVerification}
-            disabled={resending || resent}
-            className="oga-auth-link-btn"
-          >
-            {resending
-              ? "Sending…"
-              : resent
-                ? "Verification email resent ✓"
-                : "Didn't receive it? Resend"}
-          </button>
-        </div>
-      </AuthShell>
-    );
-  }
 
   /* ============================================================
      Email step + credentials step share the form shell
@@ -359,7 +285,7 @@ function GetStartedForm() {
             ? "Sign in or create a free Sandbox account. 35 API calls a month for evaluation. No card to start."
             : mode === "signin"
               ? "Pick up where you left off. Your API keys, portfolios, and saved scoring presets are waiting."
-              : "We'll send a verification link, then walk you through three short steps before your first signal."
+              : "Name your workspace next and you're in. We'll send a verification link to your inbox — verify whenever you're ready to make your first API call."
         }
       />
 

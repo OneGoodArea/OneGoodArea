@@ -33,14 +33,44 @@ interface WelcomeClientProps {
   /** Email from the server-side session; null if the user isn't
       signed in (preview / unauthed direct visit). */
   initialEmail: string | null;
+  /** users.email_verified at page render. When false we show a
+      dismissable banner reminding the user to verify so they can
+      unlock writes. Defaults to true on the unauthed preview path
+      so we never show the nudge when we don't know the user. */
+  initialEmailVerified: boolean;
 }
 
-export default function WelcomeClient({ initialEmail }: WelcomeClientProps) {
+export default function WelcomeClient({
+  initialEmail,
+  initialEmailVerified,
+}: WelcomeClientProps) {
   const router = useRouter();
 
   const [userTypedCompany, setUserTypedCompany] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [verifyBannerOpen, setVerifyBannerOpen] = useState(
+    !initialEmailVerified,
+  );
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
+
+  async function handleResendVerification() {
+    if (resending || resent || !initialEmail) return;
+    setResending(true);
+    try {
+      await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: initialEmail }),
+      });
+      setResent(true);
+    } catch {
+      /* Silent fail — banner stays in "Resend" state so user can retry. */
+    } finally {
+      setResending(false);
+    }
+  }
 
   const defaultCompanyName = useMemo(() => {
     /* Auto-org seed: capitalised email local-part if we have one,
@@ -107,6 +137,36 @@ export default function WelcomeClient({ initialEmail }: WelcomeClientProps) {
             Skip for now
           </button>
         </header>
+
+        {verifyBannerOpen && initialEmail ? (
+          <div className="oga-welcome__verify-banner" role="status">
+            <div className="oga-welcome__verify-banner-body">
+              <strong>Verify your email to make API calls.</strong>
+              <span>
+                We sent a link to <code>{initialEmail}</code>. Verifying isn
+                &apos;t required to explore — it unlocks writes.
+              </span>
+            </div>
+            <div className="oga-welcome__verify-banner-actions">
+              <button
+                type="button"
+                onClick={handleResendVerification}
+                disabled={resending || resent}
+                className="oga-welcome__verify-banner-link"
+              >
+                {resending ? "Sending…" : resent ? "Resent ✓" : "Resend"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setVerifyBannerOpen(false)}
+                aria-label="Dismiss"
+                className="oga-welcome__verify-banner-dismiss"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="oga-welcome__step-wrap">
