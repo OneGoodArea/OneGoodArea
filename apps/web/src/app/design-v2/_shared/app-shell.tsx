@@ -5,47 +5,97 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Wordmark } from "./wordmark";
+import { Mark } from "./mark";
 import { type IconName } from "./icons";
 import { Sidebar, type SidebarSection } from "./dashboard/sidebar";
+import {
+  SignalsIcon,
+  ScoresIcon,
+  MonitorIcon,
+  IntelligenceIcon,
+} from "./product-icons";
+import {
+  MembersIcon,
+  BundlesIcon,
+  PresetsIcon,
+  CohortsIcon,
+  WebhookIcon,
+} from "./dashboard/nav-icons";
 import "./app-shell.css";
 
-/* AppShell — authenticated-surface chrome (AR-204 close-out 5/15).
+/* AppShell — authenticated-surface chrome.
 
-   Brand v3 rewrite. Replaces the legacy .aiq + Fraunces +
-   chartreuse-glow + JS-driven hover spaghetti.
+   Sidebar reorganised AR-252 to the four-section sitemap per
+   docs/DESIGN/dashboard-proposal.md §Sitemap:
 
-   Surface plan:
-     Sidebar (left)        DARK    sidebar nav + user chip + theme row
-     Main (right)          cream   page header + content slot
+     Dashboard        — Home / Recent activity
+     Products         — Signals / Scores / Monitor / Intelligence
+     Org & Levers     — Members / Signal bundles / Scoring presets /
+                        Peer cohorts (admin+ conceptually; gate not yet
+                        wired — no /v1/me-equivalent in session)
+     Account          — API keys & usage / Webhooks / Billing / Settings
 
-   IMPORTANT: the 8 wrapped pages (/dashboard, /billing, /api-usage,
-   /settings, /admin, /report, /report/[id], /compare) still carry
-   legacy inline styles + tokens internally. The wrapping aiq
-   className lets those .aiq tokens cascade until each page is
-   individually migrated in the next sweep steps (or wiped by the
-   dashboard restructure per docs/DESIGN/dashboard-proposal.md).
+   Methodology pin / White-label / IP allowlist (Phase 4 Levers) are
+   intentionally omitted here — they land with the Phase 4 build.
 
-   Public API preserved: AppShell, AppCard, StatCell, PrimaryCta,
-   GhostCta, appRag. Same prop signatures so all 8 callers compile
-   without modification. */
+   Removed from the previous structure: /report ("New report") and
+   /compare. Both pages still exist for direct navigation but no
+   longer appear in the sidebar — the dashboard restructure treats
+   them as superseded by the four-product API surface (Scores,
+   Intelligence) called from the customer's own code, not via manual
+   one-off reports through our UI.
 
-type NavItem = {
+   Surface plan (unchanged):
+     Sidebar (left)   DARK    nav + user chip + theme row
+     Main (right)     cream   page header + content slot
+
+   IMPORTANT: the existing wrapped pages still carry legacy inline
+   styles + .aiq tokens cascading from the root className. Public
+   API (AppShell, AppCard, StatCell, PrimaryCta, GhostCta, appRag)
+   preserved — same prop signatures so all callers compile without
+   modification. */
+
+type DashboardIconName = "dash" | "read" | "api" | "key" | "billing";
+
+interface NavItem {
   href: string;
   label: string;
-  icon: IconName;
+  /** Inline glyph element — we pass the React node directly so each
+      section can mix NavIconDark (Dashboard + Account), product-
+      icons (Products), and the bespoke Tabs-set from nav-icons
+      (Org & Levers + Webhooks) without forcing one icon registry. */
+  icon: ReactNode;
   exact?: boolean;
-};
+}
 
-const PRIMARY: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard",  icon: "dash",    exact: true },
-  { href: "/report",    label: "New report", icon: "map" },
-  { href: "/compare",   label: "Compare",    icon: "compare" },
+/* Section-level configuration. Each section knows its own label and
+   items; the AppShell composes them into SidebarSection[] with active
+   state derived from the current pathname. */
+
+const DASHBOARD_SECTION: NavItem[] = [
+  { href: "/dashboard",          label: "Home",            icon: <NavIconDark name="dash" />, exact: true },
+  { href: "/dashboard/activity", label: "Recent activity", icon: <NavIconDark name="read" /> },
 ];
 
-const SECONDARY: NavItem[] = [
-  { href: "/api-usage",         label: "API + usage", icon: "api" },
-  { href: "/dashboard/billing", label: "Billing",     icon: "billing" },
-  { href: "/settings",          label: "Settings",    icon: "key" },
+const PRODUCTS_SECTION: NavItem[] = [
+  { href: "/dashboard/signals",      label: "Signals",      icon: <SignalsIcon width={16} height={16} /> },
+  { href: "/dashboard/scores",       label: "Scores",       icon: <ScoresIcon width={16} height={16} /> },
+  { href: "/dashboard/monitor",      label: "Monitor",      icon: <MonitorIcon width={16} height={16} /> },
+  { href: "/dashboard/intelligence", label: "Intelligence", icon: <IntelligenceIcon width={16} height={16} /> },
+];
+
+const ORG_SECTION: NavItem[] = [
+  { href: "/dashboard/org/members", label: "Members",         icon: <MembersIcon /> },
+  { href: "/dashboard/org/bundles", label: "Signal bundles",  icon: <BundlesIcon /> },
+  { href: "/dashboard/org/presets", label: "Scoring presets", icon: <PresetsIcon /> },
+  { href: "/dashboard/org/cohorts", label: "Peer cohorts",    icon: <CohortsIcon /> },
+];
+
+const ACCOUNT_SECTION: NavItem[] = [
+  { href: "/api-usage",           label: "API keys & usage", icon: <NavIconDark name="api" /> },
+  { href: "/dashboard/webhooks",  label: "Webhooks",         icon: <WebhookIcon /> },
+  { href: "/dashboard/billing",   label: "Billing",          icon: <NavIconDark name="billing" /> },
+  { href: "/settings",            label: "Settings",         icon: <NavIconDark name="key" /> },
 ];
 
 /* ============================================================
@@ -64,44 +114,111 @@ export function AppShell({
   children: ReactNode;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  /* AR-252: desktop sidebar collapse. Persisted in localStorage so
+     the preference survives navigations + sessions. Read synchronously
+     in the useState lazy initializer (typeof window guard for SSR) so
+     the FIRST render after navigation already matches the persisted
+     state — no flash from default-false → useEffect-true on each page
+     change. The hydration mismatch from server (false) → client (true)
+     is suppressed on the root element only. */
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return localStorage.getItem("oga-sidebar-collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
+  function toggleCollapsed() {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("oga-sidebar-collapsed", String(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }
   const { data: session } = useSession();
   const pathname = usePathname();
 
-  /* Compose the existing nav arrays into the SidebarSection shape the
+  /* Compose the four sections into the SidebarSection shape the
      <Sidebar> primitive expects. Active state is derived here (the
-     primitive doesn't know about next/navigation). Phase 1 AR-217-B1
-     will replace this with the new 4-section sitemap; this ticket
-     preserves the current 2-section content (Main + Account). */
+     primitive doesn't know about next/navigation). Section visibility
+     gates land later — for now all four are always rendered for
+     signed-in users; Org & Levers admin-gating waits on session-side
+     role context (no /v1/me equivalent on the session yet). */
   const sections: SidebarSection[] = [
     {
-      label: "Main",
-      items: PRIMARY.map((item) => ({
+      label: "Dashboard",
+      items: DASHBOARD_SECTION.map((item) => ({
         label: item.label,
         href: item.href,
-        icon: <NavIconDark name={item.icon} />,
+        icon: item.icon,
+        active: isItemActive(pathname, item),
+      })),
+    },
+    {
+      label: "Products",
+      items: PRODUCTS_SECTION.map((item) => ({
+        label: item.label,
+        href: item.href,
+        icon: item.icon,
+        active: isItemActive(pathname, item),
+      })),
+    },
+    {
+      label: "Org & Levers",
+      items: ORG_SECTION.map((item) => ({
+        label: item.label,
+        href: item.href,
+        icon: item.icon,
         active: isItemActive(pathname, item),
       })),
     },
     {
       label: "Account",
-      items: SECONDARY.map((item) => ({
+      items: ACCOUNT_SECTION.map((item) => ({
         label: item.label,
         href: item.href,
-        icon: <NavIconDark name={item.icon} />,
+        icon: item.icon,
         active: isItemActive(pathname, item),
       })),
     },
   ];
 
   return (
-    <div className="oga-root oga-app" data-drawer-open={drawerOpen ? "true" : undefined}>
+    <div
+      className="oga-root oga-app"
+      data-drawer-open={drawerOpen ? "true" : undefined}
+      data-collapsed={collapsed ? "true" : undefined}
+      suppressHydrationWarning
+    >
       <Sidebar
         sections={sections}
+        collapsed={collapsed}
+        onToggleCollapsed={toggleCollapsed}
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         top={
           <>
-            <Wordmark href="/dashboard" size={20} tone="dark" />
+            {/* AR-252: collapsed sidebar shows the 29-dot brand mark
+                only — full Wordmark text doesn't fit in 64px. Both
+                variants link back to /dashboard. The Mark size (32)
+                roughly matches the visual weight of the size-20
+                wordmark's mark in the expanded state. */}
+            {collapsed ? (
+              <Link
+                href="/dashboard"
+                aria-label="OneGoodArea — back to dashboard"
+                className="oga-app__sidebar-mark"
+              >
+                <Mark size={32} tone="dark" />
+              </Link>
+            ) : (
+              <Wordmark href="/dashboard" size={20} tone="dark" />
+            )}
             <button
               type="button"
               onClick={() => setDrawerOpen(false)}
@@ -140,7 +257,7 @@ export function AppShell({
   );
 }
 
-function isItemActive(pathname: string, item: NavItem): boolean {
+function isItemActive(pathname: string, item: Pick<NavItem, "href" | "exact">): boolean {
   if (item.exact) return pathname === item.href;
   return pathname === item.href || pathname.startsWith(item.href + "/");
 }
@@ -191,7 +308,7 @@ export { NavIconDark };
 
 /* Nav icons for the dark sidebar. currentColor everywhere so the
    active / hover states drive the colour from CSS. */
-function NavIconDark({ name }: { name: IconName }) {
+function NavIconDark({ name }: { name: DashboardIconName | IconName }) {
   const common: SVGProps<SVGSVGElement> = {
     width: 16,
     height: 16,

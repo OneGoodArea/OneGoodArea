@@ -14,11 +14,14 @@
 .oga-sidebar {
   /* Graphite-ink gradient + edge-lit material recipe shared with
      .oga-data-table[data-surface="dark"] + .oga-code-panel (homepage
-     code surfaces). Replaces the previous flat var(--oga-ink) so the
-     sidebar reads as part of the same calibrated-instrument family
-     as the rest of Brand v3 dark surfaces. */
+     code surfaces). */
   position: sticky;
   top: 0;
+  /* AR-252: z-index so the dropdown + collapsed-mode tooltips
+     (which now escape via overflow:visible) paint above the main
+     content column. Without this the sidebar's stacking context
+     sits underneath main in DOM order. */
+  z-index: 30;
   height: 100vh;
   padding: 26px 20px 22px;
   display: flex;
@@ -26,15 +29,141 @@
   background: linear-gradient(180deg, #1F2125 0%, #1A1C1F 100%);
   border-right: 1px solid rgba(250, 248, 244, 0.10);
   color: var(--oga-white);
-  overflow: hidden;
+  /* AR-252: overflow:visible so collapsed-mode tooltips + the user
+     menu dropdown can escape the column. The ::before dot-field is
+     absolute with inset:0 so it's already bounded by the sidebar's
+     content box — overflow:visible doesn't let it leak. */
+  overflow: visible;
   box-sizing: border-box;
   box-shadow:
     inset 0 1px 0 rgba(250, 248, 244, 0.06),
     inset -1px 0 0 rgba(250, 248, 244, 0.03);
-  /* Isolation so the ::before dot-field paints below the children
-     without leaking out of the sidebar's bounds */
   isolation: isolate;
+  /* AR-252: smooth collapse transition. Width animates between
+     expanded (default 240px from parent grid) and collapsed (84px)
+     when .oga-sidebar--collapsed is toggled. */
+  transition: width 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
+
+/* The ::before dot-field can't honour overflow:visible safely (its
+   mask paints over the sidebar's full bounds). Clip the dot-field
+   to the sidebar via a sibling clipping mechanism: the gradient bg
+   on .oga-sidebar already terminates at the sidebar's edges via
+   linear-gradient. The ::before's mask handles the fade. Result is
+   the same visual as before. */
+
+/* ---------- Collapsed state (desktop icon-only) ----------
+   AR-252: when .oga-sidebar--collapsed is applied (driven by the
+   consumer's persisted preference), the sidebar shrinks to 68px and
+   reads as deliberately icon-only — not "expanded with everything
+   hidden." Mobile drawer (<= 880px) overrides this — at that width
+   an icon-only mode reads as broken.
+
+   Design notes:
+   - The mark (Mark component, 32px dot grid) replaces the full
+     wordmark in AppShell — the wordmark text doesn't fit and looked
+     cut off in the first pass.
+   - Group labels (PRODUCTS, ORG & LEVERS, etc.) become a single
+     centered ink hairline so users still feel the section boundary.
+   - Labels animate opacity → 0 instead of display:none, so the
+     transition reads as continuous, not a jump-cut.
+   - Hovering an icon raises a tooltip (right-side popover) showing
+     the label. Without tooltips a collapsed sidebar feels broken;
+     this is the load-bearing affordance. Pure CSS, no JS state. */
+@media (min-width: 881px) {
+  .oga-sidebar--collapsed {
+    /* Width comes from the parent grid (--oga-sidebar-width); the
+       padding ensures the icons sit centered with breathing room. */
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  /* Top slot — center the mark, hide the mobile close button (not
+     used on desktop anyway). */
+  .oga-sidebar--collapsed .oga-sidebar__top {
+    justify-content: center;
+    margin-bottom: 30px;
+  }
+
+  /* Group spacing tightens slightly so 4 sections + bottom slot still
+     fit comfortably in 100vh on a 13" laptop. */
+  .oga-sidebar--collapsed .oga-sidebar__group {
+    margin-bottom: 18px;
+  }
+
+  /* Group eyebrow becomes a centered 14px hairline — implicit section
+     boundary without visible mono-caps copy that wouldn't fit. The
+     text content is hidden via 0 height + overflow but kept in the
+     DOM for screen readers. */
+  .oga-sidebar--collapsed .oga-sidebar__group-label {
+    height: 0;
+    margin-bottom: 8px;
+    padding-left: 0;
+    overflow: hidden;
+    position: relative;
+    color: transparent;
+  }
+  .oga-sidebar--collapsed .oga-sidebar__group:not(:first-of-type) .oga-sidebar__group-label::before {
+    content: "";
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 16px;
+    height: 1px;
+    background: rgba(250, 248, 244, 0.12);
+  }
+
+  /* Links — anchored geometry so active state can't reflow the icon.
+     - width: 100% so the link spans the column
+     - justify-content: center centers the icon
+     - gap: 0 (no inter-child spacing — label is display:none anyway)
+     - padding identical on idle + active so font-weight bump (500 →
+       600) on active doesn't affect layout */
+  .oga-sidebar--collapsed .oga-sidebar__link {
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: center;
+    gap: 0;
+    padding: 9px 0;
+    position: relative;
+  }
+  .oga-sidebar--collapsed .oga-sidebar__link--active {
+    padding: 9px 0;
+  }
+  .oga-sidebar--collapsed .oga-sidebar__link-icon {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+  }
+  /* Label cleanly removed when collapsed — no in-flow space, no
+     opacity transition fighting with the tooltip. The dedicated
+     tooltip element does all the hover work. */
+  .oga-sidebar--collapsed .oga-sidebar__link-label {
+    display: none;
+  }
+  .oga-sidebar--collapsed .oga-sidebar__link-badge {
+    /* Badge -> small amber dot at the top-right of the icon. */
+    position: absolute;
+    top: 4px;
+    right: 12px;
+    min-width: 6px;
+    width: 6px;
+    height: 6px;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--oga-amber, #d49900);
+    color: transparent;
+    overflow: hidden;
+  }
+}
+
+/* AR-252: custom tooltip element removed — collapsed-mode tooltips
+   now use the native title attribute on the link itself. See the
+   matching comment in sidebar.tsx for why. */
 
 /* Dot-field motif — exact same recipe as .oga-section-dark (used on
    every dark editorial section across the site: the products page
@@ -124,27 +253,18 @@
   display: flex;
   flex-direction: column;
   flex: 1;
+  /* AR-252: vertical scroll for long nav (16+ items on 720p laptop
+     hits the wall otherwise) — no scrollbar visible. Horizontal
+     tooltips don't escape this anyway in browsers, so we switched
+     collapsed-mode tooltips to the native title attribute instead
+     of fighting overflow chains. */
   overflow-y: auto;
-  /* Match the dark scrollbar treatment used in .oga-data-table */
-  scrollbar-width: thin;
-  scrollbar-color: rgba(250, 248, 244, 0.18) transparent;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .oga-sidebar__body::-webkit-scrollbar {
-  width: 6px;
-}
-
-.oga-sidebar__body::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.oga-sidebar__body::-webkit-scrollbar-thumb {
-  background: rgba(250, 248, 244, 0.18);
-  border-radius: 3px;
-}
-
-.oga-sidebar__body::-webkit-scrollbar-thumb:hover {
-  background: rgba(250, 248, 244, 0.28);
+  display: none;
 }
 
 /* ---------- Groups + spacer ----------
@@ -208,9 +328,14 @@
   background: transparent;
   border-radius: var(--oga-radius-sm);
   text-decoration: none;
+  /* AR-252: longer + softer transition so the active class
+     swap on navigation reads as a smooth fade, not a snap. The
+     previous --oga-dur-fast (~120ms) felt jolty when both the
+     outgoing AND incoming link transitioned simultaneously on
+     route change. 200ms ease-out is the sweet spot. */
   transition:
-    background var(--oga-dur-fast) var(--oga-ease),
-    color var(--oga-dur-fast) var(--oga-ease);
+    background 200ms ease-out,
+    color 200ms ease-out;
 }
 
 .oga-sidebar__link:hover {
@@ -218,10 +343,12 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
+/* Active state — same font-weight as idle (font-weight isn't an
+   animatable property so 500 → 600 jumps; keeping 500 lets the
+   color/background carry the whole signal smoothly). */
 .oga-sidebar__link--active {
   color: var(--oga-ink);
   background: var(--oga-white);
-  font-weight: 600;
 }
 
 .oga-sidebar__link--active:hover {
@@ -286,4 +413,150 @@
   flex-direction: column;
   gap: 8px;
   margin-top: 12px;
+}
+
+/* ---------- Collapsed: bottom-slot redesign ----------
+   The expanded bottom slot has two wide rows (theme toggle, user
+   chip) that don't shrink gracefully. Collapsed, both become 40×40
+   centered square buttons with the same hover treatment as the nav
+   icons — same vocabulary as the rest of the column, not "hidden
+   labels with leftover padding."
+
+   The user-menu dropdown pops out to the right when collapsed
+   (there's no room above a 68px column), and gets a wider width so
+   the email + menu links read comfortably outside the sidebar. */
+@media (min-width: 881px) {
+  .oga-sidebar--collapsed .oga-sidebar__bottom {
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Theme button — strip the verbose layout, keep just the glyph
+     centered in a 40×40 button mirroring the nav-icon footprint. */
+  .oga-sidebar--collapsed .oga-app__theme {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 4px;
+  }
+  .oga-sidebar--collapsed .oga-app__theme-next,
+  .oga-sidebar--collapsed .oga-app__theme-left > span:last-child {
+    /* "Theme" text + "Light →" hint hidden; just the moon/sun glyph
+       inside .oga-app__theme-glyph stays. */
+    display: none;
+  }
+  .oga-sidebar--collapsed .oga-app__theme-left {
+    margin: 0;
+  }
+
+  /* User chip — becomes a circular 40×40 avatar with just the initial.
+     The name and chevron are gone; clicking still opens the menu. */
+  .oga-sidebar--collapsed .oga-app__user-btn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 50%;
+  }
+  .oga-sidebar--collapsed .oga-app__user-name,
+  .oga-sidebar--collapsed .oga-app__user-chevron {
+    display: none;
+  }
+  /* Dropdown menu — opens to the right of the avatar, sized
+     comfortably so email + links read outside the narrow column. */
+  .oga-sidebar--collapsed .oga-app__user-menu {
+    left: calc(100% + 8px);
+    right: auto;
+    bottom: 0;
+    width: 240px;
+  }
+}
+
+/* ---------- Collapse toggle ----------
+   AR-252: floor-of-the-sidebar chevron button. Rendered only when
+   the consumer wires onToggleCollapsed.
+
+   Expanded: sits at the right edge below the user chip, deliberately
+   subtle so it doesn't pull focus from the nav. A thin hairline
+   separator above it marks it as chrome-not-nav.
+
+   Collapsed: centered 40×40 button matching the theme/user-chip
+   vocabulary; the chevron points the direction it'll move (right
+   when collapsed = "expand outward"). */
+
+.oga-sidebar__collapse-toggle {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(250, 248, 244, 0.08);
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  background: transparent;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding-bottom: 4px;
+  padding-right: 6px;
+  border-radius: 0;
+  transition:
+    color var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-sidebar__collapse-toggle::before {
+  /* When expanded, render the verb to the left of the chevron. The
+     chevron alone is too quiet to find; the word "Collapse" makes
+     the affordance explicit without being loud. */
+  content: "Collapse";
+}
+
+.oga-sidebar__collapse-toggle:hover {
+  color: var(--oga-white);
+}
+
+.oga-sidebar__collapse-toggle:focus-visible {
+  outline: 1.5px solid rgba(250, 248, 244, 0.40);
+  outline-offset: 2px;
+}
+
+/* Collapsed variant: square icon-only button matching the
+   theme/user-chip footprint above it. Word label hidden. */
+.oga-sidebar--collapsed .oga-sidebar__collapse-toggle {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  margin-top: 4px;
+  border-top: none;
+  align-self: center;
+  justify-content: center;
+  border-radius: 4px;
+  background: rgba(250, 248, 244, 0.04);
+  transition:
+    background var(--oga-dur-fast) var(--oga-ease),
+    color var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-sidebar--collapsed .oga-sidebar__collapse-toggle::before {
+  display: none;
+}
+.oga-sidebar--collapsed .oga-sidebar__collapse-toggle:hover {
+  background: rgba(250, 248, 244, 0.10);
+  color: var(--oga-white);
+}
+
+/* Hidden on mobile — drawer behaviour replaces the desktop collapse. */
+@media (max-width: 880px) {
+  .oga-sidebar__collapse-toggle {
+    display: none;
+  }
 }

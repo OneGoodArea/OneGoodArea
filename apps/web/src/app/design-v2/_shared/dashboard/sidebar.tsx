@@ -85,6 +85,16 @@ export interface SidebarProps {
   /** Fired when the user dismisses the drawer (Escape, backdrop click,
       or clicking a nav item — consumers wire their own dismissal). */
   onClose?: () => void;
+  /** AR-252: desktop icon-only collapse. When true the sidebar shrinks
+      to ~60px showing icons only — labels, group eyebrows, and the
+      verbose top/bottom slot contents collapse. Mobile (≤880px) ignores
+      this and uses the drawer behaviour instead. Consumer manages
+      state + persistence (typically localStorage). */
+  collapsed?: boolean;
+  /** Toggles desktop collapse — wires the floor-of-the-sidebar button
+      to the consumer's setState + persistence. Omit to hide the
+      toggle entirely (some surfaces don't want collapse). */
+  onToggleCollapsed?: () => void;
   /** Accessible label for the <aside>. Defaults to "Sidebar
       navigation". */
   "aria-label"?: string;
@@ -100,6 +110,8 @@ export function Sidebar({
   bottom,
   open = false,
   onClose,
+  collapsed = false,
+  onToggleCollapsed,
   "aria-label": ariaLabel = "Sidebar navigation",
 }: SidebarProps) {
   /* Mobile drawer behaviour:
@@ -120,6 +132,10 @@ export function Sidebar({
     };
   }, [open, onClose]);
 
+  const classes = ["oga-sidebar"];
+  if (open) classes.push("oga-sidebar--open");
+  if (collapsed) classes.push("oga-sidebar--collapsed");
+
   return (
     <>
       {open ? (
@@ -130,8 +146,9 @@ export function Sidebar({
         />
       ) : null}
       <aside
-        className={open ? "oga-sidebar oga-sidebar--open" : "oga-sidebar"}
+        className={classes.join(" ")}
         data-oga-surface="dark"
+        data-collapsed={collapsed ? "true" : "false"}
         aria-label={ariaLabel}
       >
         {top ? <div className="oga-sidebar__top">{top}</div> : null}
@@ -148,6 +165,34 @@ export function Sidebar({
         </nav>
 
         {bottom ? <div className="oga-sidebar__bottom">{bottom}</div> : null}
+
+        {onToggleCollapsed ? (
+          <button
+            type="button"
+            onClick={onToggleCollapsed}
+            className="oga-sidebar__collapse-toggle"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              aria-hidden
+            >
+              {/* Chevron pointing right when collapsed (= "expand"),
+                  left when expanded (= "collapse"). */}
+              <path
+                d={collapsed ? "M5 3 L9 7 L5 11" : "M9 3 L5 7 L9 11"}
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        ) : null}
       </aside>
     </>
   );
@@ -207,6 +252,14 @@ function SidebarLink({ item, onClick, nested }: SidebarLinkProps) {
       onClick={onClick}
       className={classes.join(" ")}
       aria-current={item.active ? "page" : undefined}
+      /* AR-252: native browser tooltip on hover for collapsed mode.
+         The custom CSS tooltip fought a chain of overflow contexts
+         (.oga-sidebar__body needs overflow-y:auto for long nav, but
+         that forces overflow-x to clip too — even with overflow-x:
+         visible attempts) and never escaped reliably. title= is
+         ugly-by-default but actually works, doesn't break scroll,
+         and respects the user's OS-level tooltip preferences. */
+      title={item.label}
     >
       {item.icon ? (
         <span aria-hidden className="oga-sidebar__link-icon">
