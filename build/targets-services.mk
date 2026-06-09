@@ -1,24 +1,20 @@
-.PHONY: api-up api-logs web-up db-seed compose-down api-test-coverage-container web-test-coverage-container
+.PHONY: compose-down api-test-container api-test-coverage-container web-test-container web-test-coverage-container
 
-api-up: ## Boot API service with compose dependencies
-	$(CTR_COMPOSE_CMD) --profile minimal up -d --build api
+COMPOSE_TEST_FILE ?= compose/compose.test.yml
+CTR_COMPOSE_TEST_CMD = $(CTR_COMPOSE) -f $(COMPOSE_TEST_FILE) --project-name oga-test
 
-api-logs: ## Follow API service logs
-	$(CTR_COMPOSE_CMD) logs -f api
+api-test-container: ## Run API tests in ephemeral container (plain, no coverage)
+	$(CTR_COMPOSE_TEST_CMD) run --rm --entrypoint sh api-test -lc "npm install --no-audit --no-fund && npm run test -w @onegoodarea/api"; \
+	EXIT=$$?; $(CTR_COMPOSE_TEST_CMD) down; exit $$EXIT
 
-web-up: ## Boot web service with compose dependencies
-	$(CTR_COMPOSE_CMD) --profile minimal up -d --build web
+api-test-coverage-container: ## Run API tests with coverage in ephemeral container
+	$(CTR_COMPOSE_TEST_CMD) run --rm --entrypoint sh api-test -lc "npm install --no-audit --no-fund && npm run test:coverage -w @onegoodarea/api"; \
+	EXIT=$$?; $(CTR_COMPOSE_TEST_CMD) down; exit $$EXIT
 
-web-logs: ## Follow API service logs
-	$(CTR_COMPOSE_CMD) logs -f web
+web-test-container: ## Run web tests in ephemeral container (plain, no coverage)
+	$(CTR_COMPOSE_TEST_CMD) run --rm --entrypoint sh web-test -lc "npm run test -w @onegoodarea/web"; \
+	EXIT=$$?; $(CTR_COMPOSE_TEST_CMD) down; exit $$EXIT
 
-db-seed: ## Seed postgres with framework + baseline profile SQL
-	$(CTR_COMPOSE_CMD) exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$${POSTGRES_USER:-oga_user}" -d "$${POSTGRES_DB:-oga_local}"' < apps/web/tests/seeds/framework/001-seed-framework.sql
-	$(CTR_COMPOSE_CMD) exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$${POSTGRES_USER:-oga_user}" -d "$${POSTGRES_DB:-oga_local}"' < apps/web/tests/seeds/profiles/baseline/100-baseline-users.sql
-	$(CTR_COMPOSE_CMD) exec -T postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$${POSTGRES_USER:-oga_user}" -d "$${POSTGRES_DB:-oga_local}"' < apps/web/tests/seeds/profiles/baseline/110-baseline-report-cache.sql
-
-api-test-coverage-container: ## Run API coverage in ephemeral API container
-	$(CTR_COMPOSE_CMD) run --rm -v $(CURDIR)/.artifacts:/app/.artifacts --entrypoint sh api -lc "npm run test:coverage -w @onegoodarea/api"
-
-web-test-coverage-container: ## Run web coverage in ephemeral web container
-	$(CTR_COMPOSE_CMD) run --rm -v $(CURDIR)/.artifacts:/app/.artifacts --entrypoint sh web -lc "npm run test:coverage -w @onegoodarea/web"
+web-test-coverage-container: ## Run web tests with coverage in ephemeral container
+	$(CTR_COMPOSE_TEST_CMD) run --rm --entrypoint sh web-test -lc "npm run test:coverage -w @onegoodarea/web"; \
+	EXIT=$$?; $(CTR_COMPOSE_TEST_CMD) down; exit $$EXIT

@@ -18,3 +18,5 @@
 * audit for security, consider the table definitions and content
 * same applies to site login and email verification during registration
 
+## Site
+* QR Code & Analytics for it

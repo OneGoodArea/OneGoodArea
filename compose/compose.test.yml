@@ -1,0 +1,85 @@
+# compose/compose.test.yml -- ephemeral test stack (Plan 017).
+#
+# Isolated from the dev stack (compose/compose.yml). Every `make *-test-container`
+# and `make *-test-coverage-container` target runs against this project.
+#
+# Key properties:
+#   - postgres-test has NO volumes — fully ephemeral, no pollution of dev data
+#   - Separate DB / user / password (oga_test) — zero chance of crossing dev rows
+#   - api-test overrides NODE_ENV=development so npm install pulls vitest devDeps
+#   - web-test targets the `build` stage of container/web/Containerfile, which
+#     carries full source + devDependencies from the `deps` stage
+
+services:
+  postgres-test:
+    image: onegoodarea/postgres:local
+    environment:
+      POSTGRES_DB: oga_test
+      POSTGRES_USER: oga_test
+      POSTGRES_PASSWORD: oga_test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oga_test -d oga_test"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  neon-proxy-test:
+    image: onegoodarea/neon-compat-proxy:local
+    environment:
+      POSTGRES_HOST: postgres-test
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: oga_test
+      POSTGRES_USER: oga_test
+      POSTGRES_PASSWORD: oga_test
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "healthcheck.js"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  api-test:
+    image: onegoodarea/api:local
+    environment:
+      NODE_ENV: development
+      PORT: "8080"
+      DATABASE_URL: postgres://oga_test:oga_test@postgres-test:5432/oga_test
+      NEON_FETCH_ENDPOINT: http://neon-proxy-test:55433/sql
+      AUTH_SECRET: test-secret-do-not-use-in-prod
+      NEXTAUTH_URL: http://localhost:3000
+      OGA_AI_PROVIDER: mock
+      OGA_EMAIL_PROVIDER: mock
+      OGA_SIGNALS_API: "true"
+      OGA_SIGNALS_STORE_READ: "true"
+      CRON_SECRET: test-secret-do-not-use-in-prod
+    depends_on:
+      neon-proxy-test:
+        condition: service_healthy
+      postgres-test:
+        condition: service_healthy
+    volumes:
+      - ../.artifacts:/app/.artifacts
+      - ../apps/api/tests:/app/apps/api/tests:ro
+
+  web-test:
+    build:
+      context: ..
+      dockerfile: container/web/Containerfile
+      target: build
+    image: onegoodarea/web-test:local
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://oga_test:oga_test@postgres-test:5432/oga_test
+      AUTH_SECRET: test-secret-do-not-use-in-prod
+      NEXTAUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    volumes:
+      - ../.artifacts:/app/.artifacts
+      - ../apps/web/tests:/app/apps/web/tests:ro
