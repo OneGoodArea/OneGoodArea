@@ -1,0 +1,216 @@
+/* AR-257 /dashboard/activity. Same brand v3 surface vocabulary as
+   the dashboard Home: cream column, warm-white event rows divided
+   by hairlines, mono caps meta, editorial paragraph for the page
+   sub. No card chrome on the list itself, just a vertical stack
+   inside a single hairline-bordered container. */
+
+.oga-activity {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 8px 40px 40px;
+}
+
+@media (max-width: 700px) {
+  .oga-activity {
+    padding: 8px 20px 32px;
+  }
+}
+
+.oga-activity__sub {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--oga-ink-50);
+  margin: 0;
+  max-width: 620px;
+}
+
+.oga-activity__error {
+  padding: 14px 18px;
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-left: 2px solid #b07d3a;
+  border-radius: 3px;
+  font-size: 13.5px;
+  color: var(--oga-ink);
+}
+
+.oga-activity__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.oga-activity__row {
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  gap: 14px;
+  padding: 14px 18px;
+  align-items: start;
+  border-bottom: 1px solid var(--oga-ink-10);
+}
+
+.oga-activity__row:last-child {
+  border-bottom: none;
+}
+
+.oga-activity__dot {
+  margin-top: 7px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--oga-ink);
+  align-self: start;
+}
+
+.oga-activity__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.oga-activity__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--oga-ink);
+  line-height: 1.25;
+}
+
+.oga-activity__meta {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-ink-50);
+  word-break: break-all;
+}
+
+.oga-activity__event-code {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  color: var(--oga-ink-30);
+  letter-spacing: 0.02em;
+  align-self: flex-start;
+}
+
+.oga-activity__when {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-ink-50);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+/* ---------- Pagination ---------- */
+
+.oga-activity__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+
+.oga-activity__count {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-activity__paginator {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.oga-activity__page-btn {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--oga-ink-30);
+  border-radius: 3px;
+  padding: 6px 14px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-ink);
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.oga-activity__page-btn:hover:not(:disabled) {
+  background: rgba(26, 28, 31, 0.04);
+  border-color: var(--oga-ink);
+}
+
+.oga-activity__page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---------- Empty state ---------- */
+
+.oga-activity__empty {
+  padding: 40px 24px;
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.oga-activity__empty p {
+  margin: 0;
+  font-size: 15px;
+  color: var(--oga-ink);
+}
+
+.oga-activity__empty-hint {
+  font-size: 13px;
+  color: var(--oga-ink-50);
+  max-width: 420px;
+}
+
+/* ---------- Skeleton (loading state) ---------- */
+
+.oga-activity__list--loading {
+  pointer-events: none;
+}
+
+.oga-activity__dot--skeleton {
+  background: rgba(26, 28, 31, 0.10);
+}
+
+.oga-activity__skeleton {
+  display: inline-block;
+  background: rgba(26, 28, 31, 0.08);
+  border-radius: 2px;
+  height: 12px;
+}
+
+.oga-activity__skeleton--label {
+  width: 180px;
+  height: 14px;
+}
+
+.oga-activity__skeleton--meta {
+  width: 260px;
+}
+
+.oga-activity__skeleton--when {
+  width: 56px;
+  margin-top: 4px;
+}
