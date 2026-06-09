@@ -1,0 +1,150 @@
+/* AR-234 OrgSwitcher styles. Dark sidebar context. */
+
+.oga-org-switcher__trigger {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  background: transparent;
+  border: 1px solid rgba(250, 248, 244, 0.08);
+  border-radius: 4px;
+  color: var(--oga-white);
+  font-family: var(--oga-font-sans);
+  cursor: pointer;
+  transition:
+    background var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-org-switcher__trigger:hover {
+  background: rgba(250, 248, 244, 0.04);
+  border-color: rgba(250, 248, 244, 0.16);
+}
+
+.oga-org-switcher__trigger:focus-visible {
+  outline: 1.5px solid rgba(250, 248, 244, 0.4);
+  outline-offset: 2px;
+}
+
+.oga-org-switcher__trigger-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.oga-org-switcher__avatar {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(250, 248, 244, 0.12);
+  color: var(--oga-white);
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.oga-org-switcher__labels {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.oga-org-switcher__name {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--oga-white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.oga-org-switcher__role {
+  font-family: var(--oga-font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.5);
+}
+
+.oga-org-switcher__chevron {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(250, 248, 244, 0.5);
+  width: 14px;
+  height: 14px;
+}
+
+/* Loading placeholder so first paint doesn't hop when /api/orgs
+   resolves. Same footprint as the live trigger. */
+
+.oga-org-switcher--loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid rgba(250, 248, 244, 0.06);
+  border-radius: 4px;
+}
+
+.oga-org-switcher--loading .oga-org-switcher__avatar {
+  background: rgba(250, 248, 244, 0.06);
+}
+
+.oga-org-switcher__skeleton {
+  flex: 1;
+  height: 12px;
+  background: rgba(250, 248, 244, 0.06);
+  border-radius: 2px;
+}
+
+/* Dropdown item avatar (inside the DropdownMenu panel). The panel
+   itself lives in the cream surface family (it's portalled out of the
+   dark sidebar), so this avatar uses ink not warm-white. */
+
+.oga-org-switcher__item-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(26, 28, 31, 0.08);
+  color: var(--oga-ink);
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Collapsed-sidebar variant: the parent .oga-sidebar--collapsed hides
+   the labels + chevron and centers the avatar. The trigger button
+   keeps its border so it still reads as an interactive surface. */
+
+@media (min-width: 881px) {
+  .oga-sidebar--collapsed .oga-org-switcher__trigger {
+    padding: 6px;
+    justify-content: center;
+  }
+  .oga-sidebar--collapsed .oga-org-switcher__labels,
+  .oga-sidebar--collapsed .oga-org-switcher__chevron {
+    display: none;
+  }
+  .oga-sidebar--collapsed .oga-org-switcher__trigger-row {
+    width: auto;
+    gap: 0;
+  }
+}

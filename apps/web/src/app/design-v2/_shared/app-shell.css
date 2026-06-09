@@ -29,6 +29,22 @@
   --oga-sidebar-width: 84px;
 }
 
+/* AR-234: brand row inside the sidebar top slot. Keeps the
+   horizontal flex layout (mark/wordmark on the left, mobile-close
+   button on the right) while the parent .oga-sidebar__top is now a
+   vertical column hosting the brand row + the OrgSwitcher beneath. */
+.oga-app__sidebar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.oga-app[data-collapsed="true"] .oga-app__sidebar-brand {
+  justify-content: center;
+}
+
 /* AR-252 / AR-254: brand-mark + wordmark variants both always
    present in the DOM (server can't know the localStorage-persisted
    collapsed state until the client hydrates, and we render the
