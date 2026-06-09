@@ -1,23 +1,20 @@
-/* AR-254 [AR-217-B5] /dashboard Home content styles.
+/* AR-256 [AR-217-B5] /dashboard Home content styles.
 
-   Brand v3 surface vocabulary: cream column, hairline borders, warm-
-   white card surfaces, mono caps eyebrows, dark editorial pre/code
-   block. Same calibrated-instrument family as /products/* +
-   /methodology + /docs/api-reference.
+   Rebalanced hero: two equal cards side-by-side at the top (REST API
+   + MCP), each with its own tab switcher and code block. Latest-call
+   strip lifted to a top-level page strip above the hero row.
+   Quick-links replaced by Docs card pointing at /docs.
 
-   No legacy .oga-dash__* utilities from the old reports-list client
-   were preserved that surface is gone wholesale. */
+   Brand v3 surface vocabulary: cream column, warm-white card surfaces,
+   hairline borders, mono caps eyebrows, serif title, dark editorial
+   codeblocks. No max-width cap on the body, cards stretch to fill the
+   main column on wide monitors. */
 
 .oga-home {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
   padding: 8px 40px 40px;
-  /* AR-254: no max-width cap. Cards fill the available main column
-     so wide monitors don't get a "massive white right side". Text
-     inside the cards has its own per-element readability caps
-     (titles + paragraphs), so stretching cards doesn't make body
-     copy unreadable. */
 }
 
 @media (max-width: 700px) {
@@ -26,102 +23,63 @@
   }
 }
 
+/* Editorial intro line above the hero row. Single sentence, no
+   decoration. Provides the page-level framing that the old hero
+   card carried in its title. */
+
+.oga-home__intro {
+  margin: 4px 0 4px;
+}
+
+.oga-home__intro p {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: 17px;
+  line-height: 1.45;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--oga-ink);
+  margin: 0;
+  max-width: 760px;
+}
+
+/* ============================================================
+   Two-column hero row + bottom row (both grid 1fr 1fr)
+   ============================================================ */
+
+.oga-home__hero-row,
 .oga-home__row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+  align-items: stretch;
 }
 
 @media (max-width: 900px) {
+  .oga-home__hero-row,
   .oga-home__row {
     grid-template-columns: 1fr;
   }
 }
 
 /* ============================================================
-   Hero card
+   Latest-call strip (top-level, above hero row)
    ============================================================ */
 
-.oga-home-hero {
-  background: var(--oga-bg-warm, #FAF8F4);
-  border: 1px solid var(--oga-ink-10);
-  border-radius: 4px;
-  padding: 28px 30px;
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-}
-
-.oga-home-hero__head {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 2px;
-}
-
-.oga-home-hero__eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--oga-font-mono);
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--oga-ink-50);
-}
-
-.oga-home-hero__dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--oga-ink);
-}
-
-.oga-home-hero__title {
-  font-family: var(--oga-font-serif, var(--oga-font-sans));
-  font-size: 26px;
-  font-weight: 500;
-  line-height: 1.2;
-  color: var(--oga-ink);
-  margin: 0;
-  max-width: 720px;
-}
-
-.oga-home-hero__sub {
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--oga-ink-50);
-  margin: 0;
-  max-width: 620px;
-}
-
-.oga-home-hero__row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-top: 16px;
-  border-top: 1px solid var(--oga-ink-10);
-}
-
-/* AR-255: latest-call strip. Editorial single line, sits between
-   the header and the first card row. Mono caps label on the left
-   in muted ink, then a chain of detail items separated by middle
-   dots. No card chrome, no buttons. */
-
-.oga-home-hero__latest {
+.oga-home-latest {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  padding-top: 14px;
-  border-top: 1px solid var(--oga-ink-10);
+  padding: 10px 14px;
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 3px;
   font-size: 13px;
   line-height: 1.5;
   color: var(--oga-ink);
   flex-wrap: wrap;
 }
 
-.oga-home-hero__latest-dot {
+.oga-home-latest__dot {
   flex-shrink: 0;
   width: 6px;
   height: 6px;
@@ -130,7 +88,7 @@
   align-self: center;
 }
 
-.oga-home-hero__latest-label {
+.oga-home-latest__label {
   font-family: var(--oga-font-mono);
   font-size: 10.5px;
   font-weight: 500;
@@ -140,14 +98,14 @@
   flex-shrink: 0;
 }
 
-.oga-home-hero__latest-detail {
+.oga-home-latest__detail {
   display: inline-flex;
   align-items: baseline;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.oga-home-hero__latest-detail code {
+.oga-home-latest__detail code {
   font-family: var(--oga-font-mono);
   font-size: 12px;
   color: var(--oga-ink);
@@ -156,134 +114,12 @@
   border-radius: 2px;
 }
 
-.oga-home-hero__latest-when {
+.oga-home-latest__when {
   color: var(--oga-ink-50);
-}
-
-.oga-home-hero__row-label {
-  font-family: var(--oga-font-mono);
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--oga-ink-50);
-}
-
-.oga-home-hero__row-value {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.oga-home-hero__code {
-  font-family: var(--oga-font-mono);
-  font-size: 13px;
-  color: var(--oga-ink);
-  background: rgba(26, 28, 31, 0.05);
-  padding: 4px 8px;
-  border-radius: 2px;
-  word-break: break-all;
-}
-
-.oga-home-hero__nokey {
-  font-size: 13.5px;
-  color: var(--oga-ink-50);
-  font-style: italic;
-}
-
-.oga-home-hero__link,
-.oga-home-hero__cta {
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
-  color: var(--oga-ink);
-  text-decoration: none;
-  border-bottom: 1px solid var(--oga-ink-30);
-  padding-bottom: 1px;
-  transition: border-color 120ms ease;
-}
-
-.oga-home-hero__link:hover,
-.oga-home-hero__cta:hover {
-  border-color: var(--oga-ink);
-}
-
-/* Codeblock dark editorial surface mirroring docs/api-reference */
-
-.oga-home-hero__codeblock {
-  background: linear-gradient(180deg, #1F2125 0%, #1A1C1F 100%);
-  border: 1px solid rgba(250, 248, 244, 0.08);
-  border-radius: 3px;
-  overflow: hidden;
-  color: var(--oga-white);
-}
-
-.oga-home-hero__codeblock-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  border-bottom: 1px solid rgba(250, 248, 244, 0.08);
-  background: rgba(0, 0, 0, 0.15);
-}
-
-.oga-home-hero__codeblock-lang {
-  font-family: var(--oga-font-mono);
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(250, 248, 244, 0.5);
-}
-
-.oga-home-hero__copy {
-  appearance: none;
-  background: rgba(250, 248, 244, 0.06);
-  border: 1px solid rgba(250, 248, 244, 0.10);
-  border-radius: 2px;
-  padding: 4px 10px;
-  font-family: var(--oga-font-mono);
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
-  color: rgba(250, 248, 244, 0.75);
-  cursor: pointer;
-  transition: background 120ms ease, color 120ms ease;
-}
-
-.oga-home-hero__copy:hover {
-  background: rgba(250, 248, 244, 0.12);
-  color: var(--oga-white);
-}
-
-.oga-home-hero__copy--inline {
-  background: rgba(26, 28, 31, 0.05);
-  border-color: var(--oga-ink-10);
-  color: var(--oga-ink);
-}
-
-.oga-home-hero__copy--inline:hover {
-  background: rgba(26, 28, 31, 0.10);
-  color: var(--oga-ink);
-}
-
-.oga-home-hero__pre {
-  margin: 0;
-  padding: 14px 16px;
-  font-family: var(--oga-font-mono);
-  font-size: 12.5px;
-  line-height: 1.65;
-  color: rgba(250, 248, 244, 0.92);
-  overflow-x: auto;
-  white-space: pre;
 }
 
 /* ============================================================
-   Usage + Quick Links cards
+   Card primitive (Usage, Docs, API, MCP all share this)
    ============================================================ */
 
 .oga-home-card {
@@ -294,7 +130,13 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  min-height: 220px;
+  min-height: 240px;
+}
+
+/* Code variant: tighter internal padding because the codeblock
+   needs more room and brings its own internal padding. */
+.oga-home-card--code {
+  gap: 16px;
 }
 
 .oga-home-card__head {
@@ -313,6 +155,31 @@
   color: var(--oga-ink-50);
 }
 
+/* Variant with leading glyph for API + MCP card eyebrows. The icon
+   sits inline next to the mono caps text, sized to roughly match
+   the text's cap height. Color follows the eyebrow's muted ink so
+   the glyph reads as part of the same label, not a logo lockup. */
+.oga-home-card__eyebrow--icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--oga-ink);
+}
+
+.oga-home-card__eyebrow-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--oga-ink);
+}
+
+.oga-home-card__eyebrow-glyph svg {
+  width: 18px;
+  height: 18px;
+}
+
 .oga-home-card__plan {
   font-family: var(--oga-font-mono);
   font-size: 11px;
@@ -323,6 +190,243 @@
   border-radius: 2px;
 }
 
+.oga-home-card__link {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--oga-ink-30);
+  padding-bottom: 1px;
+  transition: border-color 120ms ease;
+}
+
+.oga-home-card__link:hover {
+  border-color: var(--oga-ink);
+}
+
+/* ============================================================
+   Card key-row (API + MCP: identifier + manage link)
+   ============================================================ */
+
+.oga-home-card__keyrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--oga-ink-10);
+}
+
+.oga-home-card__keylabel {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+  flex-shrink: 0;
+}
+
+.oga-home-card__keyvalue {
+  font-family: var(--oga-font-mono);
+  font-size: 12.5px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 4px 8px;
+  border-radius: 2px;
+  word-break: break-all;
+  flex: 1 1 auto;
+}
+
+.oga-home-card__keyempty {
+  font-size: 13px;
+  color: var(--oga-ink-50);
+  font-style: italic;
+  flex: 1 1 auto;
+}
+
+.oga-home-card__keylink {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--oga-ink-30);
+  padding-bottom: 1px;
+  transition: border-color 120ms ease;
+  flex-shrink: 0;
+}
+
+.oga-home-card__keylink:hover {
+  border-color: var(--oga-ink);
+}
+
+.oga-home-card__keystatus {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.06);
+  padding: 3px 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   Tabs (used by API + MCP cards)
+   ============================================================ */
+
+.oga-home-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  background: rgba(0, 0, 0, 0.18);
+  border-bottom: 1px solid rgba(250, 248, 244, 0.08);
+}
+
+.oga-home-tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 14px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.5);
+  cursor: pointer;
+  transition: color 120ms ease, border-color 120ms ease;
+}
+
+.oga-home-tabs__tab:hover {
+  color: rgba(250, 248, 244, 0.85);
+}
+
+.oga-home-tabs__tab--active {
+  color: var(--oga-white);
+  border-bottom-color: var(--oga-white);
+}
+
+/* AR-256: per-tab color hint. The Tabs primitive sets --tab-color
+   inline when a tab carries a color (used by API language tabs,
+   mirroring the .oga-verb--get/post/patch palette on the API
+   reference page). Inactive colored tabs render the label in their
+   color at a hint-dim opacity; active colored tabs go full color
+   with a matching underline. Editor tabs (Cursor / Claude*) don't
+   set the color, so they fall through to the default treatment. */
+.oga-home-tabs__tab[data-colored="true"] {
+  color: var(--tab-color);
+  opacity: 0.55;
+}
+
+.oga-home-tabs__tab[data-colored="true"]:hover {
+  opacity: 0.85;
+}
+
+.oga-home-tabs__tab[data-colored="true"].oga-home-tabs__tab--active {
+  color: var(--tab-color);
+  border-bottom-color: var(--tab-color);
+  opacity: 1;
+}
+
+.oga-home-tabs__tab-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+}
+
+.oga-home-tabs__tab-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.oga-home-tabs__tab:focus-visible {
+  outline: 1.5px solid rgba(250, 248, 244, 0.4);
+  outline-offset: -2px;
+}
+
+/* ============================================================
+   Codeblock (dark editorial surface, used by API + MCP cards)
+   ============================================================ */
+
+.oga-home-codeblock {
+  background: linear-gradient(180deg, #1F2125 0%, #1A1C1F 100%);
+  border: 1px solid rgba(250, 248, 244, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+  color: var(--oga-white);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.oga-home-codeblock__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(250, 248, 244, 0.08);
+  background: rgba(0, 0, 0, 0.10);
+}
+
+.oga-home-codeblock__path {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-home-codeblock__copy {
+  appearance: none;
+  background: rgba(250, 248, 244, 0.06);
+  border: 1px solid rgba(250, 248, 244, 0.10);
+  border-radius: 2px;
+  padding: 4px 10px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.75);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.oga-home-codeblock__copy:hover {
+  background: rgba(250, 248, 244, 0.12);
+  color: var(--oga-white);
+}
+
+.oga-home-codeblock__pre {
+  margin: 0;
+  padding: 14px 16px;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  line-height: 1.65;
+  color: rgba(250, 248, 244, 0.92);
+  overflow-x: auto;
+  white-space: pre;
+  flex: 1;
+}
+
+/* ============================================================
+   Usage card body (unchanged from AR-254)
+   ============================================================ */
+
 .oga-home-card__stat {
   display: flex;
   align-items: baseline;
@@ -331,10 +435,11 @@
 
 .oga-home-card__stat-value {
   font-family: var(--oga-font-serif, var(--oga-font-sans));
-  font-size: 32px;
+  font-size: 36px;
   font-weight: 500;
   color: var(--oga-ink);
   line-height: 1;
+  letter-spacing: -0.015em;
 }
 
 .oga-home-card__stat-of {
@@ -366,80 +471,67 @@
   justify-content: flex-end;
 }
 
-.oga-home-card__link {
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
-  color: var(--oga-ink);
-  text-decoration: none;
-  border-bottom: 1px solid var(--oga-ink-30);
-  padding-bottom: 1px;
-  transition: border-color 120ms ease;
-}
-
-.oga-home-card__link:hover {
-  border-color: var(--oga-ink);
-}
-
 /* ============================================================
-   Quick links list
+   Docs card list
    ============================================================ */
 
-.oga-home-links {
+.oga-home-docs {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1;
 }
 
-.oga-home-links__item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 10px 8px;
-  margin: 0 -8px;
+.oga-home-docs__item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  column-gap: 14px;
+  row-gap: 2px;
+  padding: 12px 10px;
+  margin: 0 -10px;
   border-radius: 3px;
   text-decoration: none;
   color: var(--oga-ink);
   transition: background 120ms ease;
 }
 
-.oga-home-links__item:hover {
+.oga-home-docs__item:hover {
   background: rgba(26, 28, 31, 0.04);
 }
 
-.oga-home-links__icon {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: rgba(26, 28, 31, 0.05);
-  border-radius: 4px;
-  color: var(--oga-ink);
-}
-
-.oga-home-links__body {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.oga-home-links__name {
-  font-size: 13.5px;
+.oga-home-docs__name {
+  grid-column: 1;
+  grid-row: 1;
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: 15.5px;
   font-weight: 500;
+  letter-spacing: -0.01em;
   color: var(--oga-ink);
   line-height: 1.2;
 }
 
-.oga-home-links__desc {
-  font-size: 12px;
+.oga-home-docs__desc {
+  grid-column: 1;
+  grid-row: 2;
+  font-size: 12.5px;
+  line-height: 1.45;
   color: var(--oga-ink-50);
-  line-height: 1.4;
+}
+
+.oga-home-docs__chev {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-size: 16px;
+  color: var(--oga-ink-30);
+  transition: color 120ms ease, transform 120ms ease;
+}
+
+.oga-home-docs__item:hover .oga-home-docs__chev {
+  color: var(--oga-ink);
+  transform: translateX(2px);
 }
