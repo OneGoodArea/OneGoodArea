@@ -54,11 +54,16 @@ function SuccessState() {
       </AuthStatusIcon>
       <AuthTitle
         title="Email verified."
-        sub="Your account is ready. Sign in to make your first API call. The Sandbox tier includes 35 API calls a month for evaluation, no card required."
+        sub="Your account is ready and writes are now unlocked — the API will accept calls signed with your key. Sandbox tier includes 35 API calls a month for evaluation, no card required."
       />
       <div className="oga-auth-actions">
-        <Link href="/sign-in" className="oga-auth-pill">
-          Sign in
+        {/* AR-253: dashboard is the destination, not /sign-in. If the
+            user clicked verify while already signed in (post-AR-253
+            primary flow), /dashboard renders. If they clicked verify
+            in a fresh browser (different device, etc.), the auth
+            middleware will bounce them to /sign-in automatically. */}
+        <Link href="/dashboard" className="oga-auth-pill">
+          Open dashboard
           <span aria-hidden>→</span>
         </Link>
         <Link href="/" className="oga-auth-pill oga-auth-pill--ghost">

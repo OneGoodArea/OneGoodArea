@@ -83,6 +83,107 @@
   cursor: not-allowed;
 }
 
+/* ---------- Verify-email reminder banner (AR-253) ----------
+
+   Sits between the header and the form when users.email_verified is
+   false. Editorial card treatment: warm-white surface inside the
+   cream column with an ink hairline border + small amber accent dot
+   to mark it as informational (not error). Dismissable; resend
+   action collapses to a tick on success. */
+
+.oga-welcome__verify-banner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--oga-bg-warm);
+  border: 1px solid var(--oga-line-soft);
+  border-left: 2px solid var(--oga-amber, #b07d3a);
+  border-radius: 3px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--oga-fg);
+}
+
+.oga-welcome__verify-banner-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.oga-welcome__verify-banner-body strong {
+  font-weight: 600;
+  color: var(--oga-ink);
+}
+
+.oga-welcome__verify-banner-body code {
+  font-family: var(--oga-font-mono);
+  font-size: 12.5px;
+  background: rgba(26, 28, 31, 0.05);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+.oga-welcome__verify-banner-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.oga-welcome__verify-banner-link {
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 4px 6px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--oga-ink);
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-welcome__verify-banner-link:hover:not(:disabled) {
+  background: rgba(26, 28, 31, 0.06);
+}
+
+.oga-welcome__verify-banner-link:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.oga-welcome__verify-banner-dismiss {
+  appearance: none;
+  background: transparent;
+  border: none;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--oga-fg-muted);
+  cursor: pointer;
+  border-radius: 2px;
+  transition:
+    color var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-welcome__verify-banner-dismiss:hover {
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.06);
+}
+
 /* ---------- Form body + actions ---------- */
 
 .oga-welcome__step-wrap {
