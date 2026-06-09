@@ -239,11 +239,14 @@
    org switcher. Consumer composes the contents. */
 
 .oga-sidebar__top {
-  margin-bottom: 34px;
+  /* AR-234: top slot is now a vertical column. The first child is
+     the brand row (.oga-app__sidebar-brand, set in app-shell.css)
+     which keeps the horizontal flex layout for mark/wordmark/close.
+     The second child is the OrgSwitcher. */
+  margin-bottom: 24px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  flex-direction: column;
+  gap: 14px;
   flex-shrink: 0;
 }
 

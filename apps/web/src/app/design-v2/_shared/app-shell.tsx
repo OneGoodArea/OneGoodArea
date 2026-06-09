@@ -3,9 +3,10 @@
 import { useEffect, useState, type ReactNode, type SVGProps } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { Wordmark } from "./wordmark";
 import { Mark } from "./mark";
+import { OrgSwitcher } from "./dashboard/org-switcher";
 import { type IconName } from "./icons";
 import { Sidebar, type SidebarSection } from "./dashboard/sidebar";
 import {
@@ -203,47 +204,56 @@ export function AppShell({
         onClose={() => setDrawerOpen(false)}
         top={
           <>
-            {/* AR-252 / AR-254: both Mark and Wordmark always live in
-                the DOM. CSS shows whichever matches .oga-app[data-
-                collapsed], so the server (default expanded) and the
-                client (persisted collapsed) render the SAME markup —
-                no structural diff = no hydration warning. The Mark
-                size (32) roughly matches the visual weight of the
-                size-20 wordmark's mark in the expanded state. */}
-            <Link
-              href="/dashboard"
-              aria-label="OneGoodArea — back to dashboard"
-              className="oga-app__sidebar-mark"
-            >
-              <Mark size={32} tone="dark" />
-            </Link>
-            <span className="oga-app__sidebar-wordmark">
-              <Wordmark href="/dashboard" size={20} tone="dark" />
-            </span>
-            <button
-              type="button"
-              onClick={() => setDrawerOpen(false)}
-              aria-label="Close navigation"
-              className="oga-app__sidebar-close"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path
-                  d="M6 6l12 12M18 6L6 18"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
+            {/* AR-234: top slot now stacks the brand row + the
+                OrgSwitcher. The brand row stays a horizontal flex
+                row (Mark/Wordmark on the left, mobile-close on the
+                right); OrgSwitcher sits below it as a full-width
+                row inside the same dark column.
+
+                AR-252 / AR-254: both Mark and Wordmark always live
+                in the DOM. CSS shows whichever matches .oga-app
+                [data-collapsed], so server (default expanded) and
+                client (persisted collapsed) render the SAME markup,
+                no hydration warning. */}
+            <div className="oga-app__sidebar-brand">
+              <Link
+                href="/dashboard"
+                aria-label="OneGoodArea, back to dashboard"
+                className="oga-app__sidebar-mark"
+              >
+                <Mark size={32} tone="dark" />
+              </Link>
+              <span className="oga-app__sidebar-wordmark">
+                <Wordmark href="/dashboard" size={20} tone="dark" />
+              </span>
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(false)}
+                aria-label="Close navigation"
+                className="oga-app__sidebar-close"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path
+                    d="M6 6l12 12M18 6L6 18"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            </div>
+            <OrgSwitcher userEmail={session?.user?.email ?? null} />
           </>
         }
         bottom={
           <>
+            {/* AR-234: UserChip removed. Account actions (email,
+                Settings, Help, Sign out) consolidated into the
+                OrgSwitcher dropdown in the top slot. Sidebar bottom
+                is now just the theme toggle, the Sidebar primitive
+                appends the collapse-toggle button below this slot
+                automatically. */}
             <SidebarThemeRow />
-            <UserChip
-              name={session?.user?.name || null}
-              email={session?.user?.email || null}
-            />
           </>
         }
       />
@@ -459,70 +469,6 @@ function SidebarThemeRow() {
         <span aria-hidden>→</span>
       </span>
     </button>
-  );
-}
-
-/* ============================================================
-   User chip + sign-out menu
-   ============================================================ */
-
-function UserChip({
-  name,
-  email,
-}: {
-  name: string | null;
-  email: string | null;
-}) {
-  const [open, setOpen] = useState(false);
-  const display = name || email || "Account";
-  const initial = (name || email || "?").slice(0, 1).toUpperCase();
-  return (
-    <div className="oga-app__user">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className={open ? "oga-app__user-btn oga-app__user-btn--open" : "oga-app__user-btn"}
-      >
-        <span aria-hidden className="oga-app__user-avatar">
-          {initial}
-        </span>
-        <span className="oga-app__user-name">{display}</span>
-        <span aria-hidden className="oga-app__user-chevron">▼</span>
-      </button>
-
-      {open && (
-        <div className="oga-app__user-menu">
-          {email && <div className="oga-app__user-email">{email}</div>}
-          <MenuLink href="/settings" label="Settings" onClick={() => setOpen(false)} />
-          <MenuLink href="/help" label="Help" onClick={() => setOpen(false)} />
-          <button
-            type="button"
-            onClick={() => {
-              signOut({ callbackUrl: "/" });
-            }}
-            className="oga-app__user-signout"
-          >
-            Sign out
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function MenuLink({
-  href,
-  label,
-  onClick,
-}: {
-  href: string;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <Link href={href} onClick={onClick} className="oga-app__user-menu-link">
-      {label}
-    </Link>
   );
 }
 
