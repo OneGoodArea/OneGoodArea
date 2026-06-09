@@ -64,14 +64,19 @@
 /* OneGoodArea cream surface as the html-level background.
    Brand v3 tokens live in src/styles/brand/tokens.css; surface utilities
    in src/styles/brand/backgrounds.css; components in components.css. */
+/* AR-252: html bg updated to match the Brand v3 canvas token
+   (#EFECE6). Was #F6F9F4 (legacy AR-1 green-tinged off-white) which
+   showed through as "white" past the .oga-app's bottom edge whenever
+   page content was taller than the viewport. Marketing/info pages
+   paint their own bg utilities over body so they're unaffected. */
 html {
-  background: #F6F9F4;
+  background: var(--oga-canvas, #EFECE6);
   color: #0B2018;
 }
 
 [data-theme="dark"] html,
 html[data-theme="dark"] {
-  background: #0A1713;
+  background: #1A1C1F;
   color: #E4EAE3;
 }
 

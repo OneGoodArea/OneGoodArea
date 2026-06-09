@@ -26,6 +26,17 @@ import type { SidebarSection } from "@/app/design-v2/_shared/dashboard/sidebar";
 import { NavIconDark } from "@/app/design-v2/_shared/app-shell";
 import { Wordmark } from "@/app/design-v2/_shared/wordmark";
 import { SignalsIcon, ScoresIcon, MonitorIcon, IntelligenceIcon } from "@/app/design-v2/_shared/product-icons";
+/* AR-252: the 6 canonical Tabs-set bespoke icons live in a shared
+   module now that they have a real consumer (AppShell sidebar).
+   Local copies below were removed; showcases import from here. */
+import {
+  MembersIcon,
+  WebhookIcon,
+  CohortsIcon,
+  BundlesIcon,
+  OrgIcon,
+  PresetsIcon,
+} from "@/app/design-v2/_shared/dashboard/nav-icons";
 import { EmptyState } from "@/app/design-v2/_shared/dashboard/empty-state";
 import { Tooltip } from "@/app/design-v2/_shared/dashboard/tooltip";
 import { CodeBlock } from "@/app/design-v2/_shared/dashboard/code-block";
@@ -1000,16 +1011,7 @@ function ProfileIcon() {
   );
 }
 
-function MembersIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-      <circle cx="5" cy="5" r="2" stroke="currentColor" strokeWidth="1.3" />
-      <circle cx="10" cy="5.5" r="1.6" stroke="currentColor" strokeWidth="1.3" />
-      <path d="M1.5 11.5c.6-1.7 2-2.7 3.5-2.7s2.9 1 3.5 2.7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-      <path d="M9 11.5c.4-1.4 1.5-2.2 2.7-2.2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-    </svg>
-  );
-}
+/* MembersIcon: moved to @/app/design-v2/_shared/dashboard/nav-icons (AR-252). */
 
 function KeyIcon() {
   /* Mirrors AiqIcon "key" silhouette — circle bow + stem with teeth. */
@@ -1021,22 +1023,7 @@ function KeyIcon() {
   );
 }
 
-function WebhookIcon() {
-  /* Mirrors GlyphWebhooks (homepage section 04) at tab scale: source
-     node on the left emitting 2 concentric arcs outward to a
-     subscriber dot on the right. Same visual idea (push), compressed
-     to a 14x14 inline glyph. The hero illustration has 3 arcs +
-     pulse animation; at this size 2 arcs read cleaner and no
-     animation. */
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-      <circle cx="3.5" cy="7" r="1.6" fill="currentColor" />
-      <path d="M5.5 4.5a3.2 3.2 0 0 1 0 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-      <path d="M7.5 3a5 5 0 0 1 0 8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" opacity="0.55" />
-      <circle cx="11" cy="7" r="1" stroke="currentColor" strokeWidth="1.2" />
-    </svg>
-  );
-}
+/* WebhookIcon: moved to @/app/design-v2/_shared/dashboard/nav-icons (AR-252). */
 
 function BillingIcon() {
   /* Mirrors AiqIcon "billing" silhouette — card with stripe */
@@ -1060,60 +1047,8 @@ function PortfolioIcon() {
   );
 }
 
-function CohortsIcon() {
-  /* Three intersecting circles — cohort overlap */
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-      <circle cx="5" cy="5" r="2.8" stroke="currentColor" strokeWidth="1.3" />
-      <circle cx="9" cy="5" r="2.8" stroke="currentColor" strokeWidth="1.3" />
-      <circle cx="7" cy="9" r="2.8" stroke="currentColor" strokeWidth="1.3" />
-    </svg>
-  );
-}
-
-function BundlesIcon() {
-  /* Stack of layers */
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-      <path d="M7 1.5l5.5 2.5L7 6.5 1.5 4 7 1.5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
-      <path d="M1.5 7L7 9.5 12.5 7" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
-      <path d="M1.5 10L7 12.5 12.5 10" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function OrgIcon() {
-  /* Institutional silhouette — pediment + 4 columns. Reads as
-     "the organisation" (the container of members + bundles + presets
-     etc.). 14x14 bespoke line glyph in the same vocabulary as the
-     rest of the Tabs-set set. Added 2026-06-06 for AR-243 because
-     "Org" appears in breadcrumb chains across Phase 4 Levers pages
-     and no canonical glyph existed yet. */
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-      {/* Roof / pediment */}
-      <path d="M1.5 4.5L7 1.5L12.5 4.5" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
-      {/* Floor line */}
-      <path d="M1.5 12.5h11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-      {/* Columns */}
-      <path d="M3 5v7.5M5.5 5v7.5M8.5 5v7.5M11 5v7.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function PresetsIcon() {
-  /* Three horizontal sliders with knobs at different positions —
-     visual of "tunable weight configuration", which is what a preset
-     is (composition of per-dimension weights). */
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-      <path d="M1.5 3.5h11M1.5 7h11M1.5 10.5h11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-      <circle cx="4"  cy="3.5"  r="1.4" fill="currentColor" />
-      <circle cx="9"  cy="7"    r="1.4" fill="currentColor" />
-      <circle cx="6"  cy="10.5" r="1.4" fill="currentColor" />
-    </svg>
-  );
-}
+/* CohortsIcon / BundlesIcon / OrgIcon / PresetsIcon: moved to
+   @/app/design-v2/_shared/dashboard/nav-icons (AR-252). */
 
 function CompareIcon() {
   /* Mirrors AiqIcon "compare" silhouette — split rectangle */

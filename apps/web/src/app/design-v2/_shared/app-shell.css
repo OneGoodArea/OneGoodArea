@@ -18,8 +18,36 @@
 .oga-app {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 240px 1fr;
+  /* AR-252: grid column width comes from --oga-sidebar-width so the
+     desktop collapse can swap 240px ↔ 64px without rewriting layout
+     rules. AppShell sets the variable based on `collapsed` state. */
+  grid-template-columns: var(--oga-sidebar-width, 240px) 1fr;
   background: var(--oga-canvas);
+  transition: grid-template-columns 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.oga-app[data-collapsed="true"] {
+  --oga-sidebar-width: 84px;
+}
+
+/* AR-252: collapsed brand-mark link.
+   Wraps the 29-dot Mark in a link back to /dashboard, replacing the
+   full Wordmark when the sidebar is in icon-only mode. Same hover
+   signature (subtle rotation on hover) as the Wordmark to keep the
+   interaction language consistent. */
+.oga-app__sidebar-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: transform var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-app__sidebar-mark:hover {
+  transform: rotate(6deg);
+}
+.oga-app__sidebar-mark:focus-visible {
+  outline: 1.5px solid rgba(250, 248, 244, 0.4);
+  outline-offset: 4px;
+  border-radius: 50%;
 }
 @media (max-width: 880px) {
   .oga-app {
@@ -242,13 +270,19 @@
   transform: rotate(180deg);
 }
 
+/* User menu — explicit literal colors instead of var(--oga-fg) /
+   var(--oga-fg-muted), because those flip to white in dark theme but
+   our background here is always cream (--oga-white is the literal
+   FAF8F4, not a theme-flipping alias). Without the override we'd get
+   white-on-white in dark mode. Same trick used by other "always
+   light" popovers across the app. */
 .oga-app__user-menu {
   position: absolute;
   bottom: calc(100% + 6px);
   left: 0;
   right: 0;
   background: var(--oga-white);
-  border: 1px solid var(--oga-border);
+  border: 1px solid var(--oga-ink-10);
   border-radius: var(--oga-radius-sm);
   box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.28);
   overflow: hidden;
@@ -256,10 +290,10 @@
 }
 .oga-app__user-email {
   padding: 10px 14px;
-  border-bottom: 1px solid var(--oga-border);
+  border-bottom: 1px solid var(--oga-ink-10);
   font-family: var(--oga-font-mono);
   font-size: 10.5px;
-  color: var(--oga-fg-muted);
+  color: var(--oga-ink-50);
   letter-spacing: 0.02em;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -270,7 +304,7 @@
   padding: 10px 14px;
   font-family: var(--oga-font-sans);
   font-size: 13px;
-  color: var(--oga-fg);
+  color: var(--oga-ink);
   text-decoration: none;
   transition: background var(--oga-dur-fast) var(--oga-ease);
 }
@@ -290,7 +324,7 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  border-top: 1px solid var(--oga-border);
+  border-top: 1px solid var(--oga-ink-10);
   transition: background var(--oga-dur-fast) var(--oga-ease);
 }
 .oga-app__user-signout:hover {
