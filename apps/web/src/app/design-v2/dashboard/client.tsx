@@ -36,6 +36,13 @@ interface PrimaryApiKey {
   last_used_at: string | null;
 }
 
+interface LatestCall {
+  preset: string;
+  area: string;
+  score: number;
+  created_at: string;
+}
+
 interface McpStatus {
   access: boolean;
   addonOwned: boolean;
@@ -46,6 +53,9 @@ interface DashboardHomeClientProps {
   email: string;
   emailVerified: boolean;
   primaryKey: PrimaryApiKey | null;
+  /** Most recent /v1/score-style row from reports, if any. Drives
+      the AR-255 contextual hero copy + latest-call strip. */
+  latestCall: LatestCall | null;
   plan: string;
   planName: string;
   used: number;
@@ -65,6 +75,7 @@ function Body({
   email,
   emailVerified,
   primaryKey,
+  latestCall,
   planName,
   used,
   limit,
@@ -74,7 +85,12 @@ function Body({
     <div className="oga-home">
       {!emailVerified && email ? <VerifyBanner email={email} /> : null}
 
-      <HeroCard primaryKey={primaryKey} mcp={mcp} />
+      <HeroCard
+        primaryKey={primaryKey}
+        mcp={mcp}
+        used={used}
+        latestCall={latestCall}
+      />
 
       <div className="oga-home__row">
         <UsageCard planName={planName} used={used} limit={limit} />
@@ -85,15 +101,67 @@ function Body({
 }
 
 /* ============================================================
+   AR-255: Latest call strip (renders inside hero, above the
+   primary-key row, only when the user has made >= 1 call).
+   Editorial single line, no card chrome, no buttons. The card
+   row below is where you act; this row is just confirmation
+   the API is alive and what it last produced.
+   ============================================================ */
+
+function LatestCallStrip({ call }: { call: LatestCall }) {
+  return (
+    <div className="oga-home-hero__latest" role="status">
+      <span className="oga-home-hero__latest-dot" aria-hidden />
+      <span className="oga-home-hero__latest-label">Latest call</span>
+      <span className="oga-home-hero__latest-detail">
+        <code>{call.area}</code>
+        <span aria-hidden>·</span>
+        <code>preset={call.preset}</code>
+        <span aria-hidden>·</span>
+        <span>score {Math.round(call.score)}</span>
+        <span aria-hidden>·</span>
+        <span className="oga-home-hero__latest-when">
+          {formatAgo(call.created_at)}
+        </span>
+      </span>
+    </div>
+  );
+}
+
+function formatAgo(iso: string): string {
+  /* Compact relative time. Local-only, no library. The dashboard
+     re-renders on each visit so we don't need to keep this
+     ticking; a static snapshot at render time is fine. */
+  const then = new Date(iso).getTime();
+  const now = Date.now();
+  const diffSec = Math.max(0, Math.floor((now - then) / 1000));
+  if (diffSec < 60) return "just now";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 7) return `${diffDay}d ago`;
+  const diffWk = Math.floor(diffDay / 7);
+  if (diffWk < 5) return `${diffWk}w ago`;
+  const diffMo = Math.floor(diffDay / 30);
+  return `${diffMo}mo ago`;
+}
+
+/* ============================================================
    Hero card API key + curl example + MCP URL
    ============================================================ */
 
 function HeroCard({
   primaryKey,
   mcp,
+  used,
+  latestCall,
 }: {
   primaryKey: PrimaryApiKey | null;
   mcp: McpStatus;
+  used: number;
+  latestCall: LatestCall | null;
 }) {
   const [copied, setCopied] = useState<"" | "key" | "curl" | "mcp">("");
 
@@ -115,20 +183,39 @@ function HeroCard({
 
   const mcpUrl = mcp.access ? "https://mcp.onegoodarea.com/v1" : null;
 
+  /* AR-255: hero copy gates on "have you EVER made a call", not
+     "have you made one this month". The `used` count resets every
+     month, but a user who made calls last month isn't a first-time
+     user. Without this gate the hero says "Make your first call"
+     while the latest-call strip below it shows a real previous call,
+     which reads as broken. The presence of a latestCall is the
+     truthful "you've used the API before" signal. */
+  const hasEverCalled = latestCall !== null;
+  const eyebrow = hasEverCalled ? "Quick reference" : "Start here";
+  const title = hasEverCalled ? "Quick reference." : "Make your first call.";
+  const sub = hasEverCalled
+    ? "The call you came back to copy. Same shape your production code makes against /v1/score, same engine version, same confidence stamping on the response."
+    : "The data + intelligence layer underneath UK property workflows. Drop the call below into your code. Preset, postcode, and key are the only things you change.";
+
+  /* `used` still drives the in-month usage card. It's passed in
+     because the hero's sub copy could reference it in the future
+     ("X calls this month") but currently doesn't. Keep the prop
+     so AR-235 + later activity-feed work doesn't need to thread it
+     back in. */
+  void used;
+
   return (
     <section className="oga-home-hero">
       <header className="oga-home-hero__head">
         <span className="oga-home-hero__eyebrow">
           <span className="oga-home-hero__dot" aria-hidden />
-          Start here
+          {eyebrow}
         </span>
-        <h2 className="oga-home-hero__title">Make your first call.</h2>
-        <p className="oga-home-hero__sub">
-          The data + intelligence layer underneath UK property workflows. Drop
-          the call below into your code. Preset, postcode, and key are the
-          only things you change.
-        </p>
+        <h2 className="oga-home-hero__title">{title}</h2>
+        <p className="oga-home-hero__sub">{sub}</p>
       </header>
+
+      {latestCall ? <LatestCallStrip call={latestCall} /> : null}
 
       {/* API key one-liner */}
       <div className="oga-home-hero__row">

@@ -19,6 +19,12 @@ export const metadata: Metadata = {
 };
 
 export default function DesignV2DashboardPage() {
+  /* AR-255 preview mock: latestCall pinned to a fixed ISO string so
+     the strip exercises formatAgo without invoking Date.now in the
+     render (which trips react-hooks/no-impure-in-render). The "ago"
+     label will slowly drift further into the past as time passes,
+     fine for a design preview that just needs to show the strip's
+     visual treatment. */
   return (
     <DashboardHomeClient
       email="reviewer@example.com"
@@ -27,6 +33,12 @@ export default function DesignV2DashboardPage() {
         key_prefix: "oga_live_AbCdEf",
         name: "Default",
         last_used_at: null,
+      }}
+      latestCall={{
+        preset: "research",
+        area: "SW1A 1AA",
+        score: 78,
+        created_at: "2026-06-09T18:37:00Z",
       }}
       plan="sandbox"
       planName="Sandbox"
