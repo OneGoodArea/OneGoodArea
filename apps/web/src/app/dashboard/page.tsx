@@ -41,6 +41,37 @@ interface PrimaryApiKey {
   last_used_at: string | null;
 }
 
+interface LatestCall {
+  /** Preset slug used for the call (moving / business / investing /
+      research). Matches the intent column on reports for now; will
+      migrate to a dedicated preset_id column once we split scoring
+      preset from intent at the schema level. */
+  preset: string;
+  /** Postcode / area the call was about. */
+  area: string;
+  score: number;
+  created_at: string;
+}
+
+async function getLatestCall(userId: string): Promise<LatestCall | null> {
+  /* Latest report row, ordered desc. We DON'T gate by month here:
+     even if last call was last month, showing the most recent call
+     is more useful than nothing. The usage card carries the
+     this-month framing separately. */
+  try {
+    const result = (await sql`
+      SELECT intent AS preset, area, score, created_at
+      FROM reports
+      WHERE user_id = ${userId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `) as Array<LatestCall>;
+    return result[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function getPrimaryApiKey(userId: string): Promise<PrimaryApiKey | null> {
   /* Primary key = first non-revoked key sorted by created_at asc.
      A returning user might have many; the Home only shows one. The
@@ -79,15 +110,23 @@ export default async function DashboardPage() {
   const userId = session?.user?.id;
   if (!userId) redirect("/get-started?callbackUrl=/dashboard");
 
-  const [plan, used, mcpAccess, mcpAddonOwned, primaryKey, emailVerified] =
-    await Promise.all([
-      getUserPlan(userId),
-      getMonthlyReportCount(userId),
-      hasMcpAccess(userId),
-      hasAddon(userId, "mcp"),
-      getPrimaryApiKey(userId),
-      getEmailVerified(userId),
-    ]);
+  const [
+    plan,
+    used,
+    mcpAccess,
+    mcpAddonOwned,
+    primaryKey,
+    emailVerified,
+    latestCall,
+  ] = await Promise.all([
+    getUserPlan(userId),
+    getMonthlyReportCount(userId),
+    hasMcpAccess(userId),
+    hasAddon(userId, "mcp"),
+    getPrimaryApiKey(userId),
+    getEmailVerified(userId),
+    getLatestCall(userId),
+  ]);
 
   const planConfig = PLANS[plan];
   const planIncludesMcp = planConfig?.mcpAccess === true;
@@ -97,6 +136,7 @@ export default async function DashboardPage() {
       email={session?.user?.email ?? ""}
       emailVerified={emailVerified}
       primaryKey={primaryKey}
+      latestCall={latestCall}
       plan={plan}
       planName={planConfig?.name ?? "Sandbox"}
       used={used}
