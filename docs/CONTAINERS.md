@@ -87,11 +87,18 @@ Lightweight proxy between API and PostgreSQL providing Neon-compatible wire prot
 - **Host port:** `8080`
 - Depends on: postgres (healthy), neon-proxy (healthy)
 
+**Image architecture (Plan 017):** Multi-stage build.
+- **Build stage:** Full npm install + TypeScript source → esbuild bundles to `dist/server.cjs`. Also used as the `api-test` target in `compose.test.yml`.
+- **Runtime stage:** Fresh `node:22-slim`, slim `npm install --omit=dev` (production deps only), `dist/server.cjs`, `curl` for healthchecks. No source code, no TypeScript, no dev tooling.
+
 ### Web
 
 - **Image:** `onegoodarea/web:local`
 - **Host port:** `3000`
 - Depends on: api (started)
+
+**Image architecture (Plan 011):** Multi-stage build (`deps` → `build` → `runtime`).
+- **Runtime stage:** Next.js `output: "standalone"` with automatic dependency tracing — only statically reachable modules are included. `curl` installed for healthchecks. No source code, no dev tooling.
 
 ### pgAdmin
 
@@ -155,4 +162,4 @@ make stack-up-min CTR_ENGINE=podman
 
 ---
 
-**Last Updated:** June 2026
+**Last Updated:** June 2026 (Plan 017)

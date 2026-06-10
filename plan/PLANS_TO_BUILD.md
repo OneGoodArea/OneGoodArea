@@ -1,7 +1,7 @@
 # PLans that we think we need to build
 
 ## Containers
-* Optimize Container Content. Web Container has Only WEB, API has ONLY APIS
+* ~~Optimize Container Content. Web Container has Only WEB, API has ONLY APIS~~ → **Plan 017** (`plan/017_container_minimization.md`)
 
 ## CICD
 * build containers in github
