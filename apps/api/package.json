@@ -31,14 +31,14 @@
     "@neondatabase/serverless": "^1.1.0",
     "@anthropic-ai/sdk": "^0.95.2",
     "@onegoodarea/contracts": "*",
-    "esbuild": "^0.28.0",
     "jose": "^6.2.3",
     "resend": "^6.12.3",
-    "stripe": "^20.4.0",
-    "tsx": "^4.19.2"
+    "stripe": "^20.4.0"
   },
   "devDependencies": {
     "@types/node": "^25",
-    "msw": "^2.14.6"
+    "esbuild": "^0.28.0",
+    "msw": "^2.14.6",
+    "tsx": "^4.19.2"
   }
 }
