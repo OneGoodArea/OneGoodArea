@@ -22,7 +22,12 @@
 FROM node:22-slim AS build
 WORKDIR /app
 
-ENV NODE_ENV=production
+# AR-270: NODE_ENV is deliberately UNSET in the build stage. Plan 017 moved
+# esbuild + tsx to devDependencies; setting NODE_ENV=production before
+# `npm install` makes npm skip devDependencies, which means esbuild isn't
+# installed and the next `npm run build` step fails with exit 1. The
+# runtime stage below sets NODE_ENV=production (correct — we want it at
+# runtime), but here the install needs devDeps to bundle the server.
 
 # Manifests first (layer caching). Every declared workspace's package.json must
 # be present to resolve the workspace tree, hence apps/web's manifest is copied
