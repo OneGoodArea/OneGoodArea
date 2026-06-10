@@ -13,6 +13,9 @@
 
 services:
   postgres-test:
+    build:
+      context: ..
+      dockerfile: container/postgres/Containerfile
     image: onegoodarea/postgres:local
     environment:
       POSTGRES_DB: oga_test
@@ -26,6 +29,9 @@ services:
       start_period: 5s
 
   neon-proxy-test:
+    build:
+      context: ../services/neon-compat-proxy
+      dockerfile: Dockerfile
     image: onegoodarea/neon-compat-proxy:local
     environment:
       POSTGRES_HOST: postgres-test
