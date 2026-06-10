@@ -453,27 +453,10 @@
     margin: 0;
   }
 
-  /* User chip — becomes a circular 40×40 avatar with just the initial.
-     The name and chevron are gone; clicking still opens the menu. */
-  .oga-sidebar--collapsed .oga-app__user-btn {
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    justify-content: center;
-    border-radius: 50%;
-  }
-  .oga-sidebar--collapsed .oga-app__user-name,
-  .oga-sidebar--collapsed .oga-app__user-chevron {
-    display: none;
-  }
-  /* Dropdown menu — opens to the right of the avatar, sized
-     comfortably so email + links read outside the narrow column. */
-  .oga-sidebar--collapsed .oga-app__user-menu {
-    left: calc(100% + 8px);
-    right: auto;
-    bottom: 0;
-    width: 240px;
-  }
+  /* AR-258: collapsed-mode UserChip overrides deleted. AR-234 removed
+     the UserChip itself (account actions consolidated into the
+     OrgSwitcher dropdown), and these selectors had nothing left to
+     target. */
 }
 
 /* ---------- Collapse toggle ----------
