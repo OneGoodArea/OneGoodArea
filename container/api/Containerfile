@@ -10,11 +10,15 @@
 # was too slow/heavy to bind a port in time. The prebuilt bundle boots in
 # milliseconds with low memory.
 #
-# Plan 017: MULTI-STAGE — build stage does full install + esbuild bundle;
-# runtime stage carries only the bundle + production node_modules.
-# tsx/esbuild are now devDependencies (present only in the build stage).
+# Plan 017: MULTI-STAGE — build stage does full install (needed for test target)
+# + esbuild bundle; runtime stage does its own slim `npm install --omit=dev`
+# and carries only dist/server.cjs + slim node_modules + curl.
+# compose.test.yml targets the `build` stage for tests (full source + deps).
 
 # --- BUILD STAGE ----------------------------------------------------------
+# Full npm install — includes devDeps so this stage can also serve as the
+# api-test target in compose.test.yml. The runtime stage below does its own
+# slim install, so the full node_modules here are never shipped to prod.
 FROM node:22-slim AS build
 WORKDIR /app
 
@@ -32,9 +36,8 @@ COPY packages/contracts/package.json ./packages/contracts/
 # Linux-only optional deps (e.g. @emnapi/* pulled by Tailwind's native bindings),
 # which makes `npm ci` fail the strict in-sync check on the Linux build host.
 # `npm install` resolves the platform deps.
-# `--omit=dev` skips root devDeps (tailwindcss, typescript, vitest, eslint,
-# next, @next) — they are never needed for the API build or runtime.
-RUN npm install --omit=dev --no-audit --no-fund
+# Full install (no --omit=dev) so this stage doubles as the api-test target.
+RUN npm install --no-audit --no-fund
 
 # Only the backend + its shared contracts source (NOT apps/web source).
 COPY packages/contracts ./packages/contracts
@@ -42,9 +45,7 @@ COPY apps/api ./apps/api
 
 # Bundle the server to dist/server.cjs. esbuild inlines all reachable JS
 # and workspace source, so no TypeScript or workspace resolution is needed
-# at runtime. The esbuild dependency is present in the build stage via
-# devDependencies (npm install --omit=dev keeps workspace deps but drops
-# root devDeps).
+# at runtime.
 RUN npm run build -w @onegoodarea/api
 
 # --- RUNTIME STAGE --------------------------------------------------------
@@ -53,22 +54,24 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 # Hosts (Render/Cloud Run/Koyeb) inject PORT; 8080 is the default for local runs.
-# server.ts already reads process.env.PORT and binds 0.0.0.0.
 ENV PORT=8080
 
 # Install curl for healthchecks (Plan 011 / Plan 017).
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the esbuild bundle — this is the only application code we need.
-COPY --from=build /app/apps/api/dist/server.cjs ./apps/api/dist/server.cjs
+# Manifests needed for the slim `npm install --omit=dev` below.
+COPY package.json package-lock.json ./
+COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
+COPY packages/contracts/package.json ./packages/contracts/
 
-# Copy production node_modules (slim: only workspace deps installed via
-# --omit=dev). The bundle inlines most JS but some native modules
-# (@neondatabase/serverless WASM, optional native bindings) may be
-# loaded at runtime by require() calls inside the bundle.
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/package.json ./
+# Slim install — production deps only. The esbuild bundle inlines most JS,
+# but native modules (@neondatabase/serverless WASM) are loaded at runtime.
+RUN npm install --omit=dev --no-audit --no-fund
+
+# Copy the esbuild bundle — this is the only application code we ship.
+COPY --from=build /app/apps/api/dist/server.cjs ./apps/api/dist/server.cjs
 
 EXPOSE 8080
 CMD ["node", "apps/api/dist/server.cjs"]
