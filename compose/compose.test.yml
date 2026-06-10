@@ -6,7 +6,8 @@
 # Key properties:
 #   - postgres-test has NO volumes — fully ephemeral, no pollution of dev data
 #   - Separate DB / user / password (oga_test) — zero chance of crossing dev rows
-#   - api-test overrides NODE_ENV=development so npm install pulls vitest devDeps
+#   - api-test targets the `build` stage (full source + node_modules) since the
+#     runtime stage now carries only dist/server.cjs + slim production deps (Plan 017)
 #   - web-test targets the `build` stage of container/web/Containerfile, which
 #     carries full source + devDependencies from the `deps` stage
 
@@ -43,7 +44,11 @@ services:
       start_period: 5s
 
   api-test:
-    image: onegoodarea/api:local
+    build:
+      context: ..
+      dockerfile: container/api/Containerfile
+      target: build
+    image: onegoodarea/api-test:local
     environment:
       NODE_ENV: development
       PORT: "8080"
