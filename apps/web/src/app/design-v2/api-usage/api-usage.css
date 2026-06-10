@@ -352,3 +352,317 @@
   line-height: 1.5;
   color: var(--oga-fg-subtle);
 }
+
+/* ============================================================
+   AR-265: Create-key button + new-key reveal
+   ============================================================ */
+
+.oga-api-usage__keys-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--oga-border);
+  flex-wrap: wrap;
+}
+
+.oga-api-usage__keys-blurb {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-fg-subtle);
+  margin: 0;
+  max-width: 540px;
+}
+
+.oga-api-usage__inline-code {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: var(--oga-fg);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 1px 5px;
+  border-radius: 2px;
+  margin: 0 4px;
+}
+
+.oga-api-usage__create-btn {
+  appearance: none;
+  background: var(--oga-ink);
+  border: 1px solid var(--oga-ink);
+  border-radius: 3px;
+  padding: 7px 14px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-white);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.oga-api-usage__create-btn:hover:not(:disabled) {
+  background: #2A2C30;
+  border-color: #2A2C30;
+}
+
+.oga-api-usage__create-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.oga-api-usage__create-error {
+  margin: 0 20px;
+  padding: 10px 14px;
+  background: rgba(180, 54, 28, 0.06);
+  border: 1px solid rgba(180, 54, 28, 0.25);
+  border-left: 2px solid #B4361C;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #B4361C;
+}
+
+.oga-api-usage__newkey {
+  margin: 14px 20px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, #1F2125 0%, #1A1C1F 100%);
+  border: 1px solid rgba(250, 248, 244, 0.10);
+  border-left: 2px solid #D49900;
+  border-radius: 3px;
+  color: var(--oga-white);
+}
+
+.oga-api-usage__newkey-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.oga-api-usage__newkey-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #D49900;
+}
+
+.oga-api-usage__newkey-hint {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: rgba(250, 248, 244, 0.70);
+  margin: 0;
+  max-width: 540px;
+}
+
+.oga-api-usage__newkey-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.oga-api-usage__newkey-value {
+  font-family: var(--oga-font-mono);
+  font-size: 12.5px;
+  color: var(--oga-white);
+  background: rgba(0, 0, 0, 0.40);
+  padding: 8px 12px;
+  border-radius: 3px;
+  flex: 1;
+  min-width: 220px;
+  word-break: break-all;
+  user-select: all;
+}
+
+.oga-api-usage__newkey-copy,
+.oga-api-usage__newkey-dismiss {
+  appearance: none;
+  background: rgba(250, 248, 244, 0.06);
+  border: 1px solid rgba(250, 248, 244, 0.12);
+  border-radius: 2px;
+  padding: 6px 12px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.85);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.oga-api-usage__newkey-copy:hover,
+.oga-api-usage__newkey-dismiss:hover {
+  background: rgba(250, 248, 244, 0.12);
+  color: var(--oga-white);
+}
+
+/* AR-265: revoke button per key row. */
+
+.oga-api-usage__key-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.oga-api-usage__revoke-btn {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--oga-border);
+  border-radius: 2px;
+  padding: 5px 10px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: #a01b00;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.oga-api-usage__revoke-btn:hover {
+  background: rgba(180, 54, 28, 0.06);
+  border-color: rgba(180, 54, 28, 0.45);
+}
+
+/* AR-265: Create + Revoke modal contents */
+
+.oga-api-usage__modal-body {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0 0 16px;
+}
+
+.oga-api-usage__modal-body--on-dark {
+  color: rgba(250, 248, 244, 0.72);
+}
+
+.oga-api-usage__modal-body--on-dark strong {
+  color: var(--oga-white);
+  font-weight: 500;
+}
+
+.oga-api-usage__modal-code {
+  font-family: var(--oga-font-mono);
+  font-size: 12.5px;
+  color: var(--oga-white);
+  background: rgba(0, 0, 0, 0.40);
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.oga-api-usage__modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.oga-api-usage__modal-field-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-api-usage__modal-input {
+  padding: 10px 12px;
+  border: 1px solid var(--oga-border);
+  border-radius: 3px;
+  background: var(--oga-white);
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  color: var(--oga-fg);
+  transition: border-color 120ms ease;
+}
+
+.oga-api-usage__modal-input::placeholder {
+  color: var(--oga-fg-muted);
+}
+
+.oga-api-usage__modal-input:focus {
+  outline: none;
+  border-color: var(--oga-ink);
+}
+
+.oga-api-usage__modal-error {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--oga-status-red);
+}
+
+/* Footer buttons */
+
+.oga-api-usage__modal-primary,
+.oga-api-usage__modal-secondary,
+.oga-api-usage__modal-danger {
+  appearance: none;
+  border-radius: 3px;
+  padding: 8px 16px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+  white-space: nowrap;
+}
+
+.oga-api-usage__modal-primary {
+  background: var(--oga-ink);
+  border: 1px solid var(--oga-ink);
+  color: var(--oga-white);
+}
+
+.oga-api-usage__modal-primary:hover:not(:disabled) {
+  background: #2A2C30;
+  border-color: #2A2C30;
+}
+
+.oga-api-usage__modal-secondary {
+  background: transparent;
+  border: 1px solid var(--oga-border);
+  color: var(--oga-fg);
+}
+
+.oga-api-usage__modal-secondary:hover:not(:disabled) {
+  background: rgba(26, 28, 31, 0.04);
+  border-color: var(--oga-ink-30);
+}
+
+.oga-api-usage__modal-secondary--on-dark {
+  border-color: rgba(250, 248, 244, 0.18);
+  color: var(--oga-white);
+}
+
+.oga-api-usage__modal-secondary--on-dark:hover:not(:disabled) {
+  background: rgba(250, 248, 244, 0.08);
+  border-color: rgba(250, 248, 244, 0.40);
+}
+
+.oga-api-usage__modal-danger {
+  background: var(--oga-status-red);
+  border: 1px solid var(--oga-status-red);
+  color: var(--oga-white);
+}
+
+.oga-api-usage__modal-danger:hover:not(:disabled) {
+  background: #9A2E18;
+  border-color: #9A2E18;
+}
+
+.oga-api-usage__modal-primary:disabled,
+.oga-api-usage__modal-secondary:disabled,
+.oga-api-usage__modal-danger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
