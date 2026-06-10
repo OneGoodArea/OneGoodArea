@@ -1,115 +1,48 @@
 "use client";
 
-/* AR-260 /dashboard/scores workbench.
+/* AR-262 /dashboard/scores rewrite.
 
-   Pick a postcode + a preset, see the 0-100 composite score, the 5
-   weighted dimensions with per-dimension scores + confidence stamps,
-   area type, engine version stamp. Same product-header vocabulary
-   as /dashboard/signals (AR-259): the ScoresIcon framed as a brand
-   mark at the top, mono caps PRODUCT eyebrow, serif title, tagline.
+   Pedro flagged during AR-260 review: a workbench duplicates what
+   the customer's code already does via /v1/score. The dashboard
+   should manage objects + show stats, not perform actions. This
+   client replaces the workbench with:
+   - 4 built-in scoring profiles as reference (moving, business,
+     investing, research)
+   - Their org's saved scoring presets (Levers feature) with empty
+     state when there are none
+   - Per-preset call count over the last 30 days from
+     api.score.computed activity_events
+   - Code example showing how to call /v1/score with preset_id
 
-   MVP fixtures: 4 postcodes x 4 presets, lifted from the marketing
-   /products/scores prebaked specimen data. Live /v1/score integration
-   is a follow-up ticket (needs the dashboard to either use the user's
-   own api key client-side or proxy via the bridge token, neither of
-   which is wired today). */
+   Data fetched client-side from /api/me/scoring-presets and
+   /api/me/score-usage (same Neon SQL the dashboard already runs
+   against for orgs + activity). */
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { AppShell } from "../_shared/app-shell";
 import { ScoresIcon } from "../_shared/product-icons";
 import { SCORING_PROFILES, type ProfileSlug } from "@/lib/scoring-profiles";
 import "./client.css";
 
-type Preset = ProfileSlug;
-
-interface PresetDef {
-  id: Preset;
-  dimensions: Array<{ key: string; label: string; weight: number }>;
+interface SavedPreset {
+  id: string;
+  org_id: string;
+  slug: string;
+  name: string;
+  base_preset: ProfileSlug;
+  weights: Record<string, number>;
+  created_at: string;
+  updated_at: string;
 }
 
-/* Preset dimensions + default weights mirror the deterministic
-   engine. The workflow names + bespoke glyphs come from
-   @/lib/scoring-profiles (SCORING_PROFILES) which is the single
-   source of truth shared with /products/scores and /welcome. */
-const PRESET_DIMS: Record<Preset, PresetDef["dimensions"]> = {
-  moving: [
-    { key: "safety_crime",       label: "Safety and Crime",        weight: 25 },
-    { key: "schools_education",  label: "Schools and Education",   weight: 25 },
-    { key: "transport_commute",  label: "Transport and Commute",   weight: 20 },
-    { key: "daily_amenities",    label: "Daily Amenities",         weight: 15 },
-    { key: "cost_of_living",     label: "Cost of Living",          weight: 15 },
-  ],
-  business: [
-    { key: "foot_traffic_demand", label: "Foot Traffic and Demand", weight: 30 },
-    { key: "competition_density", label: "Competition Density",      weight: 20 },
-    { key: "transport_access",    label: "Transport Access",         weight: 15 },
-    { key: "local_spending_power",label: "Local Spending Power",     weight: 20 },
-    { key: "commercial_costs",    label: "Commercial Costs",         weight: 15 },
-  ],
-  investing: [
-    { key: "price_growth",                label: "Price Growth",             weight: 30 },
-    { key: "rental_yield",                label: "Rental Yield",             weight: 25 },
-    { key: "regeneration_infrastructure", label: "Regeneration",             weight: 15 },
-    { key: "tenant_demand",               label: "Tenant Demand",            weight: 20 },
-    { key: "risk_factors",                label: "Risk Factors",             weight: 10 },
-  ],
-  research: [
-    { key: "safety_crime",         label: "Safety and Crime",         weight: 20 },
-    { key: "transport_links",      label: "Transport Links",          weight: 20 },
-    { key: "amenities_services",   label: "Amenities and Services",   weight: 20 },
-    { key: "demographics_economy", label: "Demographics and Economy", weight: 20 },
-    { key: "environment_quality",  label: "Environment Quality",      weight: 20 },
-  ],
-};
-
-function profileFor(slug: ProfileSlug) {
-  return SCORING_PROFILES.find((p) => p.slug === slug)!;
+interface UsageBreakdown {
+  window_days: number;
+  total: number;
+  by_preset: Array<{ preset: string; count: number }>;
 }
 
-type AreaType = "urban" | "suburban" | "rural";
-type Confidence = "high" | "med" | "low";
-
-interface SpecScore {
-  score: number;
-  area_type: AreaType;
-  dims: Array<{ score: number; confidence: Confidence }>;
-}
-
-/* Prebaked specimens per (postcode x preset). Realistic-shaped,
-   parallels the marketing /products/scores client. Engine version
-   is whatever main carries. */
-const ENGINE_VERSION = "2.0.2";
-
-const PREBAKED: Record<string, Record<Preset, SpecScore>> = {
-  "M1 1AE": {
-    moving:    { score: 58, area_type: "urban", dims: [{score:42,confidence:"high"},{score:68,confidence:"high"},{score:84,confidence:"high"},{score:72,confidence:"med"},{score:54,confidence:"med"}] },
-    business:  { score: 71, area_type: "urban", dims: [{score:88,confidence:"high"},{score:62,confidence:"high"},{score:84,confidence:"high"},{score:58,confidence:"med"},{score:48,confidence:"med"}] },
-    investing: { score: 65, area_type: "urban", dims: [{score:78,confidence:"high"},{score:71,confidence:"med"},{score:64,confidence:"med"},{score:58,confidence:"med"},{score:52,confidence:"high"}] },
-    research:  { score: 62, area_type: "urban", dims: [{score:42,confidence:"high"},{score:84,confidence:"high"},{score:72,confidence:"med"},{score:58,confidence:"high"},{score:55,confidence:"med"}] },
-  },
-  "EC1A 1BB": {
-    moving:    { score: 62, area_type: "urban", dims: [{score:35,confidence:"high"},{score:62,confidence:"high"},{score:96,confidence:"high"},{score:88,confidence:"high"},{score:32,confidence:"high"}] },
-    business:  { score: 86, area_type: "urban", dims: [{score:95,confidence:"high"},{score:78,confidence:"high"},{score:96,confidence:"high"},{score:92,confidence:"high"},{score:38,confidence:"high"}] },
-    investing: { score: 71, area_type: "urban", dims: [{score:48,confidence:"med"},{score:82,confidence:"high"},{score:88,confidence:"high"},{score:84,confidence:"high"},{score:62,confidence:"high"}] },
-    research:  { score: 74, area_type: "urban", dims: [{score:35,confidence:"high"},{score:96,confidence:"high"},{score:88,confidence:"high"},{score:82,confidence:"high"},{score:62,confidence:"med"}] },
-  },
-  "B1 1AA": {
-    moving:    { score: 54, area_type: "urban", dims: [{score:45,confidence:"high"},{score:58,confidence:"high"},{score:72,confidence:"high"},{score:65,confidence:"med"},{score:62,confidence:"med"}] },
-    business:  { score: 68, area_type: "urban", dims: [{score:78,confidence:"high"},{score:55,confidence:"high"},{score:72,confidence:"high"},{score:55,confidence:"med"},{score:65,confidence:"med"}] },
-    investing: { score: 73, area_type: "urban", dims: [{score:86,confidence:"high"},{score:74,confidence:"high"},{score:68,confidence:"med"},{score:62,confidence:"med"},{score:55,confidence:"high"}] },
-    research:  { score: 60, area_type: "urban", dims: [{score:45,confidence:"high"},{score:72,confidence:"high"},{score:65,confidence:"med"},{score:58,confidence:"high"},{score:62,confidence:"med"}] },
-  },
-  "YO1 7PR": {
-    moving:    { score: 72, area_type: "suburban", dims: [{score:82,confidence:"high"},{score:78,confidence:"high"},{score:62,confidence:"med"},{score:68,confidence:"med"},{score:72,confidence:"med"}] },
-    business:  { score: 58, area_type: "suburban", dims: [{score:55,confidence:"med"},{score:68,confidence:"high"},{score:62,confidence:"med"},{score:52,confidence:"med"},{score:72,confidence:"med"}] },
-    investing: { score: 61, area_type: "suburban", dims: [{score:55,confidence:"med"},{score:62,confidence:"med"},{score:58,confidence:"med"},{score:64,confidence:"med"},{score:68,confidence:"high"}] },
-    research:  { score: 70, area_type: "suburban", dims: [{score:82,confidence:"high"},{score:62,confidence:"med"},{score:68,confidence:"med"},{score:71,confidence:"high"},{score:76,confidence:"med"}] },
-  },
-};
-
-const POSTCODES = Object.keys(PREBAKED);
-
-export default function ScoresWorkbenchClient() {
+export default function ScoresPresetsClient() {
   return (
     <AppShell>
       <Body />
@@ -118,125 +51,91 @@ export default function ScoresWorkbenchClient() {
 }
 
 function Body() {
-  const [postcode, setPostcode] = useState<string>(POSTCODES[0]);
-  const [preset, setPreset] = useState<Preset>("moving");
-  const profile = profileFor(preset);
-  const dimensions = PRESET_DIMS[preset];
-  const result = PREBAKED[postcode][preset];
+  const [presets, setPresets] = useState<SavedPreset[] | null>(null);
+  const [usage, setUsage] = useState<UsageBreakdown | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const aggConf = aggregateConfidence(
-    result.dims.map((d) => d.confidence),
-    dimensions.map((d) => d.weight),
-  );
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const [pRes, uRes] = await Promise.all([
+          fetch("/api/me/scoring-presets", { cache: "no-store" }),
+          fetch("/api/me/score-usage", { cache: "no-store" }),
+        ]);
+        if (cancelled) return;
+        const pJson = pRes.ok ? await pRes.json() : { presets: [] };
+        const uJson = uRes.ok
+          ? await uRes.json()
+          : { window_days: 30, total: 0, by_preset: [] };
+        setPresets((pJson.presets as SavedPreset[]) ?? []);
+        setUsage(uJson as UsageBreakdown);
+      } catch {
+        setPresets([]);
+        setUsage({ window_days: 30, total: 0, by_preset: [] });
+      } finally {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- final load flag
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /* Map "moving" / "business" / "investing" / "research" → call count
+     over the last 30 days from the score-usage endpoint. Saved-preset
+     calls use preset_id values that don't map cleanly here; surface
+     those as a single "Saved presets" total. */
+  const countsByBase = useMemo(() => {
+    const out: Record<string, number> = {};
+    let savedTotal = 0;
+    if (usage) {
+      const baseSlugs = new Set<string>(
+        SCORING_PROFILES.map((p) => p.slug as string),
+      );
+      for (const row of usage.by_preset) {
+        if (baseSlugs.has(row.preset)) {
+          out[row.preset] = (out[row.preset] ?? 0) + row.count;
+        } else {
+          savedTotal += row.count;
+        }
+      }
+    }
+    return { byBase: out, savedTotal };
+  }, [usage]);
 
   return (
-    <div className="oga-scoresb">
-      <header className="oga-scoresb__product">
-        <span className="oga-scoresb__product-mark" aria-hidden>
+    <div className="oga-scoresp">
+      <header className="oga-scoresp__product">
+        <span className="oga-scoresp__product-mark" aria-hidden>
           <ScoresIcon width={56} height={56} />
         </span>
-        <div className="oga-scoresb__product-text">
-          <span className="oga-scoresb__product-eyebrow">Product</span>
-          <h2 className="oga-scoresb__product-title">Scores</h2>
-          <p className="oga-scoresb__product-tagline">
-            Deterministic composite scoring. Pick a postcode and a profile,
-            see the 0-100 number, the five weighted dimensions, and the
-            per-dimension confidence. The engine version is stamped on every
-            response. AI never touches the scoring path.
+        <div className="oga-scoresp__product-text">
+          <span className="oga-scoresp__product-eyebrow">Product</span>
+          <h2 className="oga-scoresp__product-title">Scores</h2>
+          <p className="oga-scoresp__product-tagline">
+            Manage the scoring profiles your code calls against. Four
+            built-in profiles are always available. Save your own as named
+            presets at the org level and reference them by{" "}
+            <code>preset_id</code> on every <code>/v1/score</code> call.
           </p>
         </div>
       </header>
 
-      {/* AR-260: honest about the data. Numbers below are prebaked
-          fixtures so the workbench is exercisable without an API
-          call. Real /v1/score with the user's key lands in a
-          follow-up ticket. */}
-      <aside className="oga-scoresb__demo" role="status">
-        <span className="oga-scoresb__demo-dot" aria-hidden />
-        <span className="oga-scoresb__demo-label">Sample data</span>
-        <span className="oga-scoresb__demo-body">
-          Numbers below are prebaked specimens for four representative
-          postcodes. The live /v1/score endpoint runs the same engine on
-          your real postcodes the moment your code calls it.
-        </span>
-      </aside>
-
-      <div className="oga-scoresb__pickers">
-        <div
-          className="oga-scoresb__picker"
-          role="tablist"
-          aria-label="Postcode"
-        >
-          <span className="oga-scoresb__picker-label">Postcode</span>
-          <div className="oga-scoresb__chips">
-            {POSTCODES.map((p) => (
-              <button
-                key={p}
-                type="button"
-                role="tab"
-                aria-selected={p === postcode}
-                onClick={() => setPostcode(p)}
-                className={
-                  p === postcode
-                    ? "oga-scoresb__chip oga-scoresb__chip--active"
-                    : "oga-scoresb__chip"
-                }
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div
-          className="oga-scoresb__picker oga-scoresb__picker--profiles"
-          role="tablist"
-          aria-label="Scoring profile"
-        >
-          <span className="oga-scoresb__picker-label">Profile</span>
-          <div className="oga-scoresb__profile-chips">
-            {SCORING_PROFILES.map((p) => {
-              const isActive = p.slug === preset;
-              const Glyph = p.Glyph;
-              return (
-                <button
-                  key={p.slug}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  onClick={() => setPreset(p.slug)}
-                  className={
-                    isActive
-                      ? "oga-scoresb__profile oga-scoresb__profile--active"
-                      : "oga-scoresb__profile"
-                  }
-                >
-                  <span className="oga-scoresb__profile-glyph" aria-hidden>
-                    <Glyph />
-                  </span>
-                  <span className="oga-scoresb__profile-text">
-                    <span className="oga-scoresb__profile-name">{p.name}</span>
-                    <span className="oga-scoresb__profile-slug">
-                      preset: {p.slug}
-                    </span>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      <ResultCard
-        postcode={postcode}
-        preset={preset}
-        dimensions={dimensions}
-        result={result}
-        aggConf={aggConf}
+      <UsageStrip
+        usage={usage}
+        countsByBase={countsByBase.byBase}
+        savedTotal={countsByBase.savedTotal}
       />
 
-      <div className="oga-scoresb__split">
-        <CodeBlock postcode={postcode} preset={preset} />
+      <BuiltInProfiles countsByBase={countsByBase.byBase} />
+
+      <SavedPresets presets={presets} loading={loading} />
+
+      <div className="oga-scoresp__split">
+        <CodeBlock />
         <SchemaPanel />
       </div>
     </div>
@@ -244,96 +143,94 @@ function Body() {
 }
 
 /* ============================================================
-   Result card: composite + dimensions
+   Usage strip: total + per-preset breakdown
    ============================================================ */
 
-function ResultCard({
-  postcode,
-  preset,
-  dimensions,
-  result,
-  aggConf,
+function UsageStrip({
+  usage,
+  countsByBase,
+  savedTotal,
 }: {
-  postcode: string;
-  preset: Preset;
-  dimensions: PresetDef["dimensions"];
-  result: SpecScore;
-  aggConf: number;
+  usage: UsageBreakdown | null;
+  countsByBase: Record<string, number>;
+  savedTotal: number;
 }) {
-  const profile = profileFor(preset);
-  const Glyph = profile.Glyph;
+  const total = usage?.total ?? 0;
   return (
-    <section className="oga-scoresb-result">
-      <header className="oga-scoresb-result__head">
-        <div className="oga-scoresb-result__head-left">
-          <div className="oga-scoresb-result__composite">
-            <span className="oga-scoresb-result__composite-value">
-              {result.score}
-            </span>
-            <span className="oga-scoresb-result__composite-of">/ 100</span>
-          </div>
-          <div className="oga-scoresb-result__composite-meta">
-            <code className="oga-scoresb-result__pcode">{postcode}</code>
-            <span className="oga-scoresb-result__chip" data-kind="area">
-              {result.area_type}
-            </span>
-            <span
-              className="oga-scoresb-result__chip"
-              data-kind={confidenceBand(aggConf)}
-            >
-              confidence {Math.round(aggConf * 100)}%
-            </span>
-          </div>
-        </div>
-        <div className="oga-scoresb-result__head-right">
-          <span className="oga-scoresb-result__profile-glyph" aria-hidden>
-            <Glyph />
-          </span>
-          <span className="oga-scoresb-result__preset-eyebrow">Profile</span>
-          <span className="oga-scoresb-result__preset-workflow">
-            {profile.name}
-          </span>
-          <span className="oga-scoresb-result__preset-id">
-            preset: {preset}
-          </span>
-          <span className="oga-scoresb-result__engine">
-            engine v{ENGINE_VERSION}
-          </span>
-        </div>
+    <section className="oga-scoresp-usage">
+      <header className="oga-scoresp-usage__head">
+        <span className="oga-scoresp-usage__eyebrow">
+          Score calls · last {usage?.window_days ?? 30} days
+        </span>
+        <span className="oga-scoresp-usage__total">
+          {total.toLocaleString()}
+        </span>
       </header>
-
-      <ul className="oga-scoresb-result__dims">
-        {dimensions.map((dim, i) => {
-          const value = result.dims[i];
-          const contribution = Math.round((value.score * dim.weight) / 100);
+      <div className="oga-scoresp-usage__row">
+        {SCORING_PROFILES.map((p) => {
+          const c = countsByBase[p.slug] ?? 0;
           return (
-            <li key={dim.key} className="oga-scoresb-result__dim">
-              <div className="oga-scoresb-result__dim-head">
-                <span className="oga-scoresb-result__dim-label">
-                  {dim.label}
-                </span>
-                <span className="oga-scoresb-result__dim-weight">
-                  weight {dim.weight}%
-                </span>
+            <div key={p.slug} className="oga-scoresp-usage__cell">
+              <span className="oga-scoresp-usage__cell-label">{p.name}</span>
+              <span className="oga-scoresp-usage__cell-value">
+                {c.toLocaleString()}
+              </span>
+              <span className="oga-scoresp-usage__cell-slug">
+                preset: {p.slug}
+              </span>
+            </div>
+          );
+        })}
+        <div className="oga-scoresp-usage__cell oga-scoresp-usage__cell--saved">
+          <span className="oga-scoresp-usage__cell-label">Saved presets</span>
+          <span className="oga-scoresp-usage__cell-value">
+            {savedTotal.toLocaleString()}
+          </span>
+          <span className="oga-scoresp-usage__cell-slug">
+            calls via preset_id
+          </span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   Built-in profiles (reference)
+   ============================================================ */
+
+function BuiltInProfiles({
+  countsByBase,
+}: {
+  countsByBase: Record<string, number>;
+}) {
+  return (
+    <section className="oga-scoresp-section">
+      <header className="oga-scoresp-section__head">
+        <h3 className="oga-scoresp-section__title">Built-in profiles</h3>
+        <p className="oga-scoresp-section__hint">
+          Four profiles ship with the engine, each with its own five-
+          dimension set. Pass <code>preset</code> on /v1/score to use any
+          of them as-is.
+        </p>
+      </header>
+      <ul className="oga-scoresp-profiles">
+        {SCORING_PROFILES.map((p) => {
+          const Glyph = p.Glyph;
+          const count = countsByBase[p.slug] ?? 0;
+          return (
+            <li key={p.slug} className="oga-scoresp-profile">
+              <span className="oga-scoresp-profile__glyph" aria-hidden>
+                <Glyph />
+              </span>
+              <div className="oga-scoresp-profile__body">
+                <span className="oga-scoresp-profile__name">{p.name}</span>
+                <span className="oga-scoresp-profile__use">{p.use}</span>
               </div>
-              <div className="oga-scoresb-result__dim-bar">
-                <div
-                  className="oga-scoresb-result__dim-bar-fill"
-                  style={{ width: `${value.score}%` }}
-                />
-              </div>
-              <div className="oga-scoresb-result__dim-foot">
-                <span className="oga-scoresb-result__dim-score">
-                  {value.score}
-                </span>
-                <span
-                  className="oga-scoresb-result__chip"
-                  data-kind={value.confidence}
-                >
-                  {value.confidence}
-                </span>
-                <span className="oga-scoresb-result__dim-contrib">
-                  contributes {contribution}
+              <div className="oga-scoresp-profile__meta">
+                <code className="oga-scoresp-profile__slug">{p.slug}</code>
+                <span className="oga-scoresp-profile__count">
+                  {count.toLocaleString()} calls
                 </span>
               </div>
             </li>
@@ -345,18 +242,107 @@ function ResultCard({
 }
 
 /* ============================================================
-   Code block + schema reference
+   Saved presets (org-level Levers feature)
    ============================================================ */
 
-function CodeBlock({ postcode, preset }: { postcode: string; preset: Preset }) {
-  const curl = `curl https://api.onegoodarea.com/v1/score \\
+function SavedPresets({
+  presets,
+  loading,
+}: {
+  presets: SavedPreset[] | null;
+  loading: boolean;
+}) {
+  return (
+    <section className="oga-scoresp-section">
+      <header className="oga-scoresp-section__head">
+        <h3 className="oga-scoresp-section__title">Your saved presets</h3>
+        <p className="oga-scoresp-section__hint">
+          Named recipes saved against your org. Each one wraps a built-in
+          profile with its own weights. Reference one on a call by passing{" "}
+          <code>preset_id</code> instead of <code>preset</code>.
+        </p>
+      </header>
+
+      {loading ? (
+        <div className="oga-scoresp-saved oga-scoresp-saved--loading" aria-hidden>
+          <span className="oga-scoresp-skeleton oga-scoresp-skeleton--name" />
+          <span className="oga-scoresp-skeleton oga-scoresp-skeleton--row" />
+          <span className="oga-scoresp-skeleton oga-scoresp-skeleton--row" />
+        </div>
+      ) : presets && presets.length === 0 ? (
+        <div className="oga-scoresp-saved oga-scoresp-saved--empty">
+          <p className="oga-scoresp-saved__empty-title">
+            No saved presets yet.
+          </p>
+          <p className="oga-scoresp-saved__empty-body">
+            Save a recipe with{" "}
+            <code>POST /v1/orgs/:id/presets</code> from your code, or wait
+            for the upcoming Levers UI to land. Saved presets sit on top of
+            the four built-in profiles and let you pin a custom weights
+            recipe for repeat use.
+          </p>
+          <Link
+            href="/docs/api-reference#presets"
+            className="oga-scoresp-saved__empty-link"
+          >
+            Read the presets docs →
+          </Link>
+        </div>
+      ) : (
+        <ul className="oga-scoresp-saved__list">
+          {(presets ?? []).map((preset) => (
+            <li key={preset.id} className="oga-scoresp-saved-row">
+              <div className="oga-scoresp-saved-row__head">
+                <span className="oga-scoresp-saved-row__name">
+                  {preset.name}
+                </span>
+                <code className="oga-scoresp-saved-row__slug">
+                  preset_id: {preset.slug}
+                </code>
+              </div>
+              <div className="oga-scoresp-saved-row__meta">
+                <span>
+                  base:{" "}
+                  <code className="oga-scoresp-saved-row__base">
+                    {preset.base_preset}
+                  </code>
+                </span>
+                <span>
+                  weights: <code>{summariseWeights(preset.weights)}</code>
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function summariseWeights(weights: Record<string, number>): string {
+  const entries = Object.entries(weights);
+  if (entries.length === 0) return "{}";
+  return entries.map(([k, v]) => `${k}=${v}`).join(", ");
+}
+
+/* ============================================================
+   Code example + schema reference
+   ============================================================ */
+
+function CodeBlock() {
+  const curl = `# Call /v1/score with one of the four built-in profiles
+curl https://api.onegoodarea.com/v1/score \\
   -H "Authorization: Bearer $OGA_API_KEY" \\
   -H "Content-Type: application/json" \\
   -X POST \\
-  -d '{
-    "area": "${postcode}",
-    "preset": "${preset}"
-  }'`;
+  -d '{ "area": "SW1A 1AA", "preset": "research" }'
+
+# ... or call it with one of your org's saved presets
+curl https://api.onegoodarea.com/v1/score \\
+  -H "Authorization: Bearer $OGA_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -X POST \\
+  -d '{ "area": "SW1A 1AA", "preset_id": "your-saved-slug" }'`;
   const [copied, setCopied] = useState(false);
   function copy() {
     navigator.clipboard?.writeText(curl);
@@ -364,26 +350,27 @@ function CodeBlock({ postcode, preset }: { postcode: string; preset: Preset }) {
     setTimeout(() => setCopied(false), 1600);
   }
   return (
-    <div className="oga-scoresb-code">
-      <div className="oga-scoresb-code__head">
-        <span className="oga-scoresb-code__path">
-          POST /v1/score <strong>preset=&quot;{preset}&quot;</strong>
+    <div className="oga-scoresp-code">
+      <div className="oga-scoresp-code__head">
+        <span className="oga-scoresp-code__path">
+          POST /v1/score · with <strong>preset</strong> or{" "}
+          <strong>preset_id</strong>
         </span>
         <button
           type="button"
           onClick={copy}
-          className="oga-scoresb-code__copy"
+          className="oga-scoresp-code__copy"
         >
           {copied ? "Copied ✓" : "Copy"}
         </button>
       </div>
-      <pre className="oga-scoresb-code__pre">
+      <pre className="oga-scoresp-code__pre">
         <code>{curl}</code>
       </pre>
-      <p className="oga-scoresb-code__hint">
-        Override the preset&apos;s default weights per request by passing{" "}
-        <code>weights</code>, or save your own recipe against your org and
-        reference it with <code>preset_id</code>.
+      <p className="oga-scoresp-code__hint">
+        <code>preset</code> and <code>preset_id</code> are mutually
+        exclusive. Pass <code>weights</code> alongside <code>preset</code>{" "}
+        to override per request without saving.
       </p>
     </div>
   );
@@ -391,62 +378,40 @@ function CodeBlock({ postcode, preset }: { postcode: string; preset: Preset }) {
 
 function SchemaPanel() {
   const rows: Array<{ field: string; type: string; desc: string }> = [
-    { field: "area",            type: "string",            desc: "Resolved area or postcode." },
-    { field: "preset",          type: "Preset",            desc: "moving / business / investing / research." },
-    { field: "score",           type: "number 0-100",      desc: "Composite score." },
-    { field: "area_type",       type: "AreaType",          desc: "urban / suburban / rural." },
-    { field: "dimensions",      type: "ScoreDimension[]",  desc: "5 weighted components." },
-    { field: "  .key",          type: "string",            desc: "Stable dimension slug." },
-    { field: "  .label",        type: "string",            desc: "Display label." },
-    { field: "  .score",        type: "number 0-100",      desc: "Dimension score." },
-    { field: "  .weight",       type: "number",            desc: "Weight applied. Sums to 100." },
-    { field: "  .confidence",   type: "number 0-1",        desc: "Per-dimension data quality." },
-    { field: "confidence",      type: "number 0-1",        desc: "Aggregate confidence." },
-    { field: "weights_source",  type: "preset | custom",   desc: "Whether overrides were used." },
-    { field: "engine_version",  type: "string",            desc: "Methodology version that ran." },
+    { field: "ScoringPreset",  type: "",                                       desc: "" },
+    { field: "  .id",          type: "string",                                 desc: "Stable preset id." },
+    { field: "  .org_id",      type: "string",                                 desc: "Owning org." },
+    { field: "  .slug",        type: "string",                                 desc: "Reference slug used as preset_id." },
+    { field: "  .name",        type: "string",                                 desc: "Display name." },
+    { field: "  .base_preset", type: "moving | business | investing | research", desc: "Which dimension set." },
+    { field: "  .weights",     type: "Record<dim_key, number>",                desc: "Per-dimension weights." },
+    { field: "  .created_at",  type: "string",                                 desc: "ISO timestamp." },
+    { field: "ScoreResult",    type: "",                                       desc: "Returned by /v1/score." },
+    { field: "  .score",       type: "number 0-100",                           desc: "Composite." },
+    { field: "  .dimensions",  type: "ScoreDimension[]",                       desc: "5 weighted components." },
+    { field: "  .confidence",  type: "number 0-1",                             desc: "Aggregate confidence." },
+    { field: "  .weights_source", type: "preset | custom",                     desc: "Whether overrides were used." },
+    { field: "  .engine_version", type: "string",                              desc: "Methodology version." },
   ];
 
   return (
-    <div className="oga-scoresb-schema">
-      <header className="oga-scoresb-schema__head">
-        <span className="oga-scoresb-schema__eyebrow">Score schema</span>
-        <p className="oga-scoresb-schema__hint">
-          Every /v1/score response carries these fields. Same shape across
-          all four presets.
+    <div className="oga-scoresp-schema">
+      <header className="oga-scoresp-schema__head">
+        <span className="oga-scoresp-schema__eyebrow">Scoring schema</span>
+        <p className="oga-scoresp-schema__hint">
+          The two shapes the Scores product cares about: presets you
+          manage at the org level and the response your code consumes.
         </p>
       </header>
-      <ul className="oga-scoresb-schema__rows">
+      <ul className="oga-scoresp-schema__rows">
         {rows.map((r) => (
           <li key={r.field}>
-            <code className="oga-scoresb-schema__field">{r.field}</code>
-            <code className="oga-scoresb-schema__type">{r.type}</code>
-            <span className="oga-scoresb-schema__desc">{r.desc}</span>
+            <code className="oga-scoresp-schema__field">{r.field}</code>
+            <code className="oga-scoresp-schema__type">{r.type}</code>
+            <span className="oga-scoresp-schema__desc">{r.desc}</span>
           </li>
         ))}
       </ul>
     </div>
   );
-}
-
-/* ============================================================
-   Helpers
-   ============================================================ */
-
-function confidenceBand(conf: number): Confidence {
-  if (conf >= 0.75) return "high";
-  if (conf >= 0.50) return "med";
-  return "low";
-}
-
-function aggregateConfidence(confs: Confidence[], weights: number[]): number {
-  const num = (c: Confidence) =>
-    c === "high" ? 0.85 : c === "med" ? 0.65 : 0.35;
-  let sum = 0;
-  let wsum = 0;
-  for (let i = 0; i < confs.length; i++) {
-    const w = weights[i] ?? 0;
-    sum += num(confs[i]) * w;
-    wsum += w;
-  }
-  return wsum > 0 ? sum / wsum : 0;
 }
