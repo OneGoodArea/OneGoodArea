@@ -4,7 +4,13 @@
    Brand v3 visual treatment on top.
    ============================================================ */
 
-/* ---------- Reset ---------- */
+/* ---------- Reset + viewport positioning ----------
+   Native <dialog> has implicit margin:auto + position:fixed when
+   opened via showModal(), which is what centers it. Setting margin:0
+   here used to kill that, leaving the inner card pinned top-left.
+   Fix: make the dialog itself the centering container — full
+   viewport box, flex-centered children. Works the same on every
+   browser since we're not relying on the native auto-centering. */
 
 .oga-modal {
   padding: 0;
@@ -12,9 +18,17 @@
   border: none;
   background: transparent;
   color: inherit;
+  width: 100vw;
+  height: 100vh;
   max-width: 100vw;
   max-height: 100vh;
   overflow: visible;
+}
+
+.oga-modal[open] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .oga-modal:not([open]) {

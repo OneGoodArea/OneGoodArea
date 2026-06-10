@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { AppShell, AppCard, GhostCta } from "../_shared/app-shell";
+import { Modal } from "../_shared/dashboard/modal";
 import "./api-usage.css";
 
 /* /api-usage — Brand v3 rewrite (AR-204 close-out 6/15).
@@ -40,6 +41,25 @@ export default function ApiUsageClient() {
   const [data, setData] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  /* AR-265: one-time-reveal for a newly created key. The full key
+     comes back from POST /api/keys; subsequent reads only return
+     the preview. Persisting it client-side until the user explicitly
+     dismisses prevents the standard "I missed copying" trap. */
+  const [newKey, setNewKey] = useState<string | null>(null);
+  /* Create modal state. createName is the staged name input;
+     creatingInFlight covers the brief window between submit and the
+     fetched usage refresh. */
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createName, setCreateName] = useState("Default");
+  const [creatingInFlight, setCreatingInFlight] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  /* Revoke modal state. Carries the key the user clicked Revoke on,
+     until they either confirm (DELETE) or cancel (clear state). */
+  const [revokeTarget, setRevokeTarget] = useState<
+    { id: string; preview: string } | null
+  >(null);
+  const [revokingInFlight, setRevokingInFlight] = useState(false);
+  const [revokeError, setRevokeError] = useState<string | null>(null);
 
   const fetchUsage = useCallback(async () => {
     try {
@@ -60,6 +80,67 @@ export default function ApiUsageClient() {
       setLoading(false);
     }
   }, [router]);
+
+  const openCreateModal = useCallback(() => {
+    setCreateName("Default");
+    setCreateError(null);
+    setCreateOpen(true);
+  }, []);
+
+  const submitCreate = useCallback(async () => {
+    const trimmed = createName.trim() || "Default";
+    setCreatingInFlight(true);
+    setCreateError(null);
+    try {
+      const res = await fetch("/api/keys", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: trimmed }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        setCreateError(body?.error ?? "Couldn't create key. Try again.");
+        return;
+      }
+      const json = (await res.json()) as { key?: { key?: string } };
+      const plaintext = json.key?.key;
+      if (plaintext) setNewKey(plaintext);
+      setCreateOpen(false);
+      await fetchUsage();
+    } catch {
+      setCreateError("Network error creating key.");
+    } finally {
+      setCreatingInFlight(false);
+    }
+  }, [createName, fetchUsage]);
+
+  const requestRevoke = useCallback((keyId: string, preview: string) => {
+    setRevokeError(null);
+    setRevokeTarget({ id: keyId, preview });
+  }, []);
+
+  const submitRevoke = useCallback(async () => {
+    if (!revokeTarget) return;
+    setRevokingInFlight(true);
+    setRevokeError(null);
+    try {
+      const res = await fetch(`/api/keys/${revokeTarget.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        setRevokeError("Couldn't revoke the key. Try again.");
+        return;
+      }
+      setRevokeTarget(null);
+      await fetchUsage();
+    } catch {
+      setRevokeError("Network error revoking key.");
+    } finally {
+      setRevokingInFlight(false);
+    }
+  }, [revokeTarget, fetchUsage]);
 
   useEffect(() => {
     // Valid: fetch usage on session change. setState calls happen inside
@@ -92,9 +173,130 @@ export default function ApiUsageClient() {
         ) : error ? (
           <ErrorBox error={error} />
         ) : (
-          data && <Content data={data} />
+          data && (
+            <Content
+              data={data}
+              newKey={newKey}
+              onOpenCreate={openCreateModal}
+              onRequestRevoke={requestRevoke}
+              onDismissNewKey={() => setNewKey(null)}
+            />
+          )
         )}
       </div>
+
+      {/* AR-265: create-key modal. Light surface (this isn't destructive,
+          just a name input). Pressing Enter inside the input submits. */}
+      <Modal
+        open={createOpen}
+        onClose={() => (creatingInFlight ? null : setCreateOpen(false))}
+        title="Create API key"
+        size="sm"
+        closeOnBackdrop={!creatingInFlight}
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setCreateOpen(false)}
+              disabled={creatingInFlight}
+              className="oga-api-usage__modal-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={submitCreate}
+              disabled={creatingInFlight}
+              className="oga-api-usage__modal-primary"
+            >
+              {creatingInFlight ? "Creating…" : "Create key"}
+            </button>
+          </>
+        }
+      >
+        <p className="oga-api-usage__modal-body">
+          Name the key so you can tell it apart later. Use something like the
+          environment or service it belongs to: <em>Production</em>,{" "}
+          <em>Staging worker</em>, <em>Local dev</em>.
+        </p>
+        <label className="oga-api-usage__modal-field">
+          <span className="oga-api-usage__modal-field-label">Key name</span>
+          <input
+            type="text"
+            value={createName}
+            onChange={(e) => setCreateName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !creatingInFlight) {
+                e.preventDefault();
+                submitCreate();
+              }
+            }}
+            placeholder="Default"
+            maxLength={100}
+            autoFocus
+            className="oga-api-usage__modal-input"
+          />
+        </label>
+        {createError ? (
+          <p className="oga-api-usage__modal-error" role="alert">
+            {createError}
+          </p>
+        ) : null}
+      </Modal>
+
+      {/* AR-265: revoke confirmation modal. Dark surface to escalate
+          the destructive moment; the surface change carries the
+          weight, copy stays plain. */}
+      <Modal
+        open={revokeTarget !== null}
+        onClose={() => (revokingInFlight ? null : setRevokeTarget(null))}
+        title="Revoke API key"
+        size="sm"
+        surface="dark"
+        closeOnBackdrop={false}
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setRevokeTarget(null)}
+              disabled={revokingInFlight}
+              className="oga-api-usage__modal-secondary oga-api-usage__modal-secondary--on-dark"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={submitRevoke}
+              disabled={revokingInFlight}
+              className="oga-api-usage__modal-danger"
+            >
+              {revokingInFlight ? "Revoking…" : "Revoke key"}
+            </button>
+          </>
+        }
+      >
+        {revokeTarget ? (
+          <>
+            <p className="oga-api-usage__modal-body oga-api-usage__modal-body--on-dark">
+              Anything calling{" "}
+              <code className="oga-api-usage__modal-code">
+                {revokeTarget.preview}
+              </code>{" "}
+              will start returning <strong>401 Unauthorized</strong> on the
+              next request. This can&apos;t be undone.
+            </p>
+            <p className="oga-api-usage__modal-body oga-api-usage__modal-body--on-dark">
+              Check the &quot;Used&quot; column on the keys list to confirm
+              whether anything still depends on this key.
+            </p>
+            {revokeError ? (
+              <p className="oga-api-usage__modal-error" role="alert">
+                {revokeError}
+              </p>
+            ) : null}
+          </>
+        ) : null}
+      </Modal>
     </AppShell>
   );
 }
@@ -112,7 +314,19 @@ function ErrorBox({ error }: { error: string }) {
   return <div className="oga-api-usage__error">{error}</div>;
 }
 
-function Content({ data }: { data: UsageData }) {
+function Content({
+  data,
+  newKey,
+  onOpenCreate,
+  onRequestRevoke,
+  onDismissNewKey,
+}: {
+  data: UsageData;
+  newKey: string | null;
+  onOpenCreate: () => void;
+  onRequestRevoke: (keyId: string, preview: string) => void;
+  onDismissNewKey: () => void;
+}) {
   const pct = Math.min((data.requestsThisMonth / data.monthlyLimit) * 100, 100);
   const tone: "strong" | "moderate" | "weak" =
     pct >= 90 ? "weak" : pct >= 70 ? "moderate" : "strong";
@@ -172,10 +386,35 @@ function Content({ data }: { data: UsageData }) {
       </AppCard>
 
       {/* Keys */}
-      <AppCard title={`API keys · ${data.keys.length}`} noPad>
+      <AppCard
+        title={`API keys · ${data.keys.length}`}
+        noPad
+      >
+        <div className="oga-api-usage__keys-head">
+          <p className="oga-api-usage__keys-blurb">
+            Bearer tokens for the REST API. Use any one as
+            <code className="oga-api-usage__inline-code">
+              Authorization: Bearer ...
+            </code>
+            on /v1 calls. Keys are shown in full once at creation only.
+          </p>
+          <button
+            type="button"
+            onClick={onOpenCreate}
+            className="oga-api-usage__create-btn"
+          >
+            + Create key
+          </button>
+        </div>
+
+        {newKey ? (
+          <NewKeyReveal value={newKey} onDismiss={onDismissNewKey} />
+        ) : null}
+
         {data.keys.length === 0 ? (
           <div className="oga-api-usage__empty">
-            No keys yet. Head to the dashboard to create one.
+            No keys yet. Click <strong>+ Create key</strong> above to generate
+            your first one.
           </div>
         ) : (
           <ul className="oga-api-usage__keys">
@@ -185,11 +424,21 @@ function Content({ data }: { data: UsageData }) {
                   <code className="oga-api-usage__key-preview">{k.key_preview}</code>
                   <span className="oga-api-usage__key-name">{k.name}</span>
                 </div>
-                <span className="oga-api-usage__key-meta">
-                  {k.last_used_at
-                    ? `Used ${formatTimestamp(k.last_used_at)}`
-                    : "Never used"}
-                </span>
+                <div className="oga-api-usage__key-right">
+                  <span className="oga-api-usage__key-meta">
+                    {k.last_used_at
+                      ? `Used ${formatTimestamp(k.last_used_at)}`
+                      : "Never used"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onRequestRevoke(k.id, k.key_preview)}
+                    className="oga-api-usage__revoke-btn"
+                    aria-label={`Revoke key ${k.key_preview}`}
+                  >
+                    Revoke
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -297,4 +546,52 @@ function formatDay(day: string): string {
     day: "numeric",
     month: "short",
   });
+}
+
+/* AR-265: one-time reveal of the just-created key. Standard pattern:
+   the plaintext value comes back exactly once from POST /api/keys, the
+   user copies it, the panel dismisses, the row joins the regular keys
+   list with only its prefix visible thereafter. No way to retrieve the
+   plaintext again after dismiss. */
+function NewKeyReveal({
+  value,
+  onDismiss,
+}: {
+  value: string;
+  onDismiss: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  function copy() {
+    navigator.clipboard?.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1600);
+  }
+  return (
+    <div className="oga-api-usage__newkey" role="status">
+      <div className="oga-api-usage__newkey-head">
+        <span className="oga-api-usage__newkey-label">New key</span>
+        <p className="oga-api-usage__newkey-hint">
+          Copy this now. We hash it at rest, the full value won&apos;t be
+          shown again. Treat it like a password.
+        </p>
+      </div>
+      <div className="oga-api-usage__newkey-row">
+        <code className="oga-api-usage__newkey-value">{value}</code>
+        <button
+          type="button"
+          onClick={copy}
+          className="oga-api-usage__newkey-copy"
+        >
+          {copied ? "Copied ✓" : "Copy"}
+        </button>
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="oga-api-usage__newkey-dismiss"
+        >
+          Dismiss
+        </button>
+      </div>
+    </div>
+  );
 }
