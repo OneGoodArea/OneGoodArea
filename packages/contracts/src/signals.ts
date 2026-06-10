@@ -116,6 +116,64 @@ export const SignalSchema = z.object({
 });
 export type Signal = z.infer<typeof SignalSchema>;
 
+/* ── Signal catalogue ── */
+
+/** AR-259: static catalogue of the signal keys currently exposed by
+   /v1/signals/:category. One row per addressable signal. Source of
+   truth for catalogue surfaces (dashboard /signals, docs reference,
+   etc.). Mirrors what apps/api/src/modules/signals/area-profile.ts
+   produces per request; when a signal is added there it MUST be
+   added here too. */
+export interface SignalCatalogueEntry {
+  /** Stable category-namespaced identifier, e.g. "property.median_price". */
+  key: string;
+  category: SignalCategory;
+  /** Display label. */
+  label: string;
+  /** Unit of the raw value: "count", "GBP", "decile", "rank", "pct",
+      "per_month", etc. */
+  unit: string;
+  /** Which direction reads as "better" for this signal. */
+  direction: SignalDirection;
+  /** Dataset attribution shown on every signal response. */
+  source: string;
+}
+
+export const SIGNAL_CATALOGUE: SignalCatalogueEntry[] = [
+  /* crime, police.uk */
+  { key: "crime.total_12m",        category: "crime",        label: "Recorded crimes (12 months)",            unit: "count",     direction: "lower_is_better",  source: "police.uk" },
+  { key: "crime.monthly_rate",     category: "crime",        label: "Recorded crimes per month",              unit: "per_month", direction: "lower_is_better",  source: "police.uk" },
+
+  /* deprivation, IMD / WIMD / SIMD */
+  { key: "deprivation.imd_decile", category: "deprivation",  label: "Deprivation decile (1 most, 10 least)",  unit: "decile",    direction: "higher_is_better", source: "IMD / WIMD / SIMD" },
+  { key: "deprivation.imd_rank",   category: "deprivation",  label: "Deprivation rank (higher is less)",      unit: "rank",      direction: "higher_is_better", source: "IMD / WIMD / SIMD" },
+
+  /* property, HM Land Registry */
+  { key: "property.median_price",       category: "property", label: "Median sale price",                unit: "GBP",   direction: "neutral",          source: "HM Land Registry" },
+  { key: "property.price_change_pct",   category: "property", label: "Price change (year on year)",      unit: "pct",   direction: "neutral",          source: "HM Land Registry" },
+  { key: "property.transaction_count",  category: "property", label: "Sale transactions in period",      unit: "count", direction: "neutral",          source: "HM Land Registry" },
+
+  /* schools, Ofsted / Estyn / Education Scotland */
+  { key: "schools.rated_count",                 category: "schools", label: "Inspected schools within range",         unit: "count", direction: "neutral",          source: "Ofsted / Estyn / Education Scotland" },
+  { key: "schools.good_or_outstanding_pct",     category: "schools", label: "Schools rated Good or Outstanding",      unit: "pct",   direction: "higher_is_better", source: "Ofsted / Estyn / Education Scotland" },
+
+  /* amenities, OpenStreetMap */
+  { key: "amenities.total",             category: "amenities", label: "Amenities nearby (total)",     unit: "count", direction: "higher_is_better", source: "OpenStreetMap" },
+  { key: "amenities.restaurants_cafes", category: "amenities", label: "Restaurants and cafes",        unit: "count", direction: "higher_is_better", source: "OpenStreetMap" },
+  { key: "amenities.pubs_bars",         category: "amenities", label: "Pubs and bars",                unit: "count", direction: "higher_is_better", source: "OpenStreetMap" },
+  { key: "amenities.healthcare",        category: "amenities", label: "Healthcare facilities",        unit: "count", direction: "higher_is_better", source: "OpenStreetMap" },
+  { key: "amenities.shops",             category: "amenities", label: "Shops",                        unit: "count", direction: "higher_is_better", source: "OpenStreetMap" },
+  { key: "amenities.parks_leisure",     category: "amenities", label: "Parks and leisure",            unit: "count", direction: "higher_is_better", source: "OpenStreetMap" },
+
+  /* transport, OpenStreetMap */
+  { key: "transport.stations",  category: "transport", label: "Transport stations nearby", unit: "count", direction: "higher_is_better", source: "OpenStreetMap" },
+  { key: "transport.bus_stops", category: "transport", label: "Bus stops nearby",          unit: "count", direction: "higher_is_better", source: "OpenStreetMap" },
+
+  /* environment, Environment Agency */
+  { key: "environment.flood_areas_nearby",    category: "environment", label: "Flood-risk areas nearby", unit: "count", direction: "lower_is_better", source: "Environment Agency" },
+  { key: "environment.active_flood_warnings", category: "environment", label: "Active flood warnings",   unit: "count", direction: "lower_is_better", source: "Environment Agency" },
+];
+
 /* ── Area profile (the GET /v1/area response) ── */
 
 /** All signals for one area: the response of GET /v1/area. The flagship Signals

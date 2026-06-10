@@ -1,0 +1,524 @@
+/* AR-259 /dashboard/signals catalogue. Same brand v3 vocabulary as
+   the dashboard Home: cream column, warm-white cards with hairline
+   borders, mono caps eyebrows. Schema reference + code example use
+   the dark editorial codeblock pattern. */
+
+.oga-sig {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 8px 40px 40px;
+}
+
+@media (max-width: 700px) {
+  .oga-sig {
+    padding: 8px 20px 32px;
+  }
+}
+
+/* AR-259: product header at the top of the page. Big editorial
+   moment with the SignalsIcon to the left of the title + tagline.
+   Sits inside the AppShell title is "Signals" too, but this is the
+   body-level product moment, the chrome title is the page chrome. */
+
+.oga-sig__product {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  align-items: start;
+  padding: 8px 0 24px;
+  border-bottom: 1px solid var(--oga-ink-10);
+}
+
+.oga-sig__product-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: rgba(26, 28, 31, 0.04);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 6px;
+  color: var(--oga-ink);
+  flex-shrink: 0;
+}
+
+.oga-sig__product-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.oga-sig__product-eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-sig__product-title {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: clamp(28px, 3vw, 36px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--oga-ink);
+  margin: 0;
+}
+
+.oga-sig__product-tagline {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--oga-ink-50);
+  margin: 4px 0 0;
+  max-width: 720px;
+}
+
+@media (max-width: 600px) {
+  .oga-sig__product-mark {
+    width: 52px;
+    height: 52px;
+  }
+}
+
+/* ============================================================
+   Category cards grid
+   ============================================================ */
+
+.oga-sig__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  /* AR-259: stretch so all cards in the same row equalise heights.
+     With auto-fill the cards are placed in rows of N columns; within
+     each row, the tallest card defines the row height and the
+     others stretch up. */
+  align-items: stretch;
+}
+
+.oga-sig-card {
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: border-color 120ms ease;
+  /* AR-259: cards stretch with align-items: stretch on the parent
+     grid. Display flex column so the head fills the card vertically
+     when stretched. */
+  display: flex;
+  flex-direction: column;
+}
+
+.oga-sig-card--open {
+  border-color: var(--oga-ink-30);
+  /* When a card opens, span both columns so its expanded key list
+     has room to breathe. Falls back to single-column on narrow
+     viewports. */
+  grid-column: 1 / -1;
+}
+
+.oga-sig-card__head {
+  /* AR-259: 3 columns, glyph on the left, text in the middle, chevron
+     on the right. Rows: eyebrow / title / blurb / meta. The glyph
+     spans the eyebrow + title + blurb rows so it sits next to the
+     editorial column rather than just the eyebrow. flex:1 + the
+     parent flex column means heads stretch to fill the equalised
+     row height, so meta lines up at the bottom across cards. */
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto 1fr auto;
+  column-gap: 14px;
+  row-gap: 4px;
+  width: 100%;
+  padding: 18px 22px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+  transition: background 120ms ease;
+  flex: 1;
+}
+
+.oga-sig-card__head:hover {
+  background: rgba(26, 28, 31, 0.03);
+}
+
+.oga-sig-card__glyph {
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  align-self: start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(26, 28, 31, 0.05);
+  border-radius: 4px;
+  color: var(--oga-ink);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.oga-sig-card--open .oga-sig-card__glyph {
+  background: var(--oga-ink);
+  color: var(--oga-white);
+}
+
+.oga-sig-card__eyebrow {
+  grid-column: 2;
+  grid-row: 1;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-sig-card__title {
+  grid-column: 2;
+  grid-row: 2;
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--oga-ink);
+  margin: 0;
+}
+
+.oga-sig-card__blurb {
+  grid-column: 2;
+  grid-row: 3;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--oga-ink-50);
+  margin: 0;
+  margin-top: 2px;
+}
+
+.oga-sig-card__meta {
+  grid-column: 2;
+  grid-row: 4;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.oga-sig-card__count {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.06);
+  padding: 3px 8px;
+  border-radius: 2px;
+}
+
+.oga-sig-card__sources {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-ink-50);
+  word-break: break-word;
+}
+
+.oga-sig-card__chev {
+  grid-column: 3;
+  grid-row: 1 / span 4;
+  align-self: center;
+  font-family: var(--oga-font-mono);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--oga-ink-50);
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.oga-sig-card--open .oga-sig-card__chev {
+  color: var(--oga-ink);
+}
+
+/* ---------- Expanded keys list ---------- */
+
+.oga-sig-card__keys {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--oga-ink-10);
+}
+
+.oga-sig-key {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1.5fr) auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 22px;
+  border-bottom: 1px solid var(--oga-ink-10);
+}
+
+.oga-sig-key:last-child {
+  border-bottom: none;
+}
+
+.oga-sig-key__name {
+  font-family: var(--oga-font-mono);
+  font-size: 12.5px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 3px 8px;
+  border-radius: 2px;
+  word-break: break-all;
+  align-self: center;
+  justify-self: start;
+}
+
+.oga-sig-key__label {
+  font-size: 13.5px;
+  color: var(--oga-ink);
+  line-height: 1.4;
+}
+
+.oga-sig-key__unit {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+  white-space: nowrap;
+}
+
+.oga-sig-key__dir {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.oga-sig-key__dir[data-dir="higher_is_better"] {
+  color: #2E7548;
+  background: rgba(46, 117, 72, 0.08);
+}
+.oga-sig-key__dir[data-dir="lower_is_better"] {
+  color: #B4361C;
+  background: rgba(180, 54, 28, 0.08);
+}
+.oga-sig-key__dir[data-dir="neutral"] {
+  color: var(--oga-ink-50);
+  background: rgba(26, 28, 31, 0.05);
+}
+
+@media (max-width: 700px) {
+  .oga-sig-key {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .oga-sig-key__unit,
+  .oga-sig-key__dir {
+    justify-self: start;
+  }
+}
+
+/* ============================================================
+   Lower split: code example + schema reference
+   ============================================================ */
+
+.oga-sig__split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .oga-sig__split {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Code example ---------- */
+
+.oga-sig-code {
+  background: linear-gradient(180deg, #1F2125 0%, #1A1C1F 100%);
+  border: 1px solid rgba(250, 248, 244, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+  color: var(--oga-white);
+  display: flex;
+  flex-direction: column;
+}
+
+.oga-sig-code__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(250, 248, 244, 0.08);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.oga-sig-code__path {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-sig-code__path strong {
+  color: var(--oga-white);
+  font-weight: 500;
+}
+
+.oga-sig-code__copy {
+  appearance: none;
+  background: rgba(250, 248, 244, 0.06);
+  border: 1px solid rgba(250, 248, 244, 0.10);
+  border-radius: 2px;
+  padding: 4px 10px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.75);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.oga-sig-code__copy:hover {
+  background: rgba(250, 248, 244, 0.12);
+  color: var(--oga-white);
+}
+
+.oga-sig-code__pre {
+  margin: 0;
+  padding: 16px 18px;
+  font-family: var(--oga-font-mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: rgba(250, 248, 244, 0.92);
+  overflow-x: auto;
+  white-space: pre;
+  flex: 1;
+}
+
+.oga-sig-code__hint {
+  margin: 0;
+  padding: 12px 18px 14px;
+  background: rgba(0, 0, 0, 0.10);
+  border-top: 1px solid rgba(250, 248, 244, 0.06);
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(250, 248, 244, 0.60);
+}
+
+.oga-sig-code__hint code {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: rgba(250, 248, 244, 0.85);
+  background: rgba(250, 248, 244, 0.06);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+/* ---------- Schema reference ---------- */
+
+.oga-sig-schema {
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.oga-sig-schema__head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.oga-sig-schema__eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-sig-schema__hint {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-ink-50);
+  margin: 0;
+}
+
+.oga-sig-schema__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.oga-sig-schema__rows li {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) minmax(140px, auto) 1fr;
+  gap: 12px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--oga-ink-10);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.oga-sig-schema__rows li:last-child {
+  border-bottom: none;
+}
+
+.oga-sig-schema__field {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 2px 6px;
+  border-radius: 2px;
+  justify-self: start;
+}
+
+.oga-sig-schema__type {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: var(--oga-ink-50);
+  background: transparent;
+  padding: 0;
+}
+
+.oga-sig-schema__desc {
+  color: var(--oga-ink-50);
+}
+
+@media (max-width: 600px) {
+  .oga-sig-schema__rows li {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
