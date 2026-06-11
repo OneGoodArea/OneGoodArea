@@ -88,6 +88,14 @@ export const AddMemberRequestSchema = z.object({
 }).strict();
 export type AddMemberRequest = z.infer<typeof AddMemberRequestSchema>;
 
+/** PATCH /v1/orgs/:id/members/:userId — change a member's role (AR-273).
+    Granting owner remains owner-only; admin-creates-admin/member is OK.
+    The endpoint enforces both rules (RBAC + role-elevation guard). */
+export const UpdateMemberRoleRequestSchema = z.object({
+  role: OrgRoleSchema,
+}).strict();
+export type UpdateMemberRoleRequest = z.infer<typeof UpdateMemberRoleRequestSchema>;
+
 /* ── response shapes (the lists are arrays; the singular reads return
    one row or null/404 at the endpoint layer). ────────────────────────── */
 
