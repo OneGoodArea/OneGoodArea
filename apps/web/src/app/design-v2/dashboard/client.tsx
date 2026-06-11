@@ -68,7 +68,7 @@ interface DashboardHomeClientProps {
 
 export default function DashboardHomeClient(props: DashboardHomeClientProps) {
   return (
-    <AppShell title="Home">
+    <AppShell>
       <Body {...props} />
     </AppShell>
   );
@@ -91,11 +91,21 @@ function Body({
 
   return (
     <div className="oga-home">
-      {!emailVerified && email ? <VerifyBanner email={email} /> : null}
-
-      <header className="oga-home__intro">
-        <p>{intro}</p>
+      {/* Product-style header — same vocabulary as dashboard-monitor /
+          signals / scores. Editorial mark + eyebrow + serif title +
+          tagline + a hairline divider beneath. */}
+      <header className="oga-home__product">
+        <span className="oga-home__product-mark" aria-hidden>
+          <HomeMark />
+        </span>
+        <div className="oga-home__product-text">
+          <span className="oga-home__product-eyebrow">Home</span>
+          <h2 className="oga-home__product-title">Welcome back.</h2>
+          <p className="oga-home__product-tagline">{intro}</p>
+        </div>
       </header>
+
+      {!emailVerified && email ? <VerifyBanner email={email} /> : null}
 
       {latestCall ? <LatestCallStrip call={latestCall} /> : null}
 
@@ -115,6 +125,32 @@ function Body({
 /* ============================================================
    Latest-call strip (AR-255, lifted here from inside the hero)
    ============================================================ */
+
+/* Brand mark for the product-style home header. Reuses the exact
+   "dash" path data from NavIconDark (the sidebar's Home glyph) at
+   product-mark scale so the two surfaces line up visually. The
+   sidebar version is 16×16 stroke-only; here the tallest bar is
+   filled and the whole thing is scaled up to 56×56. */
+function HomeMark() {
+  return (
+    <svg
+      width="56"
+      height="56"
+      viewBox="0 0 28 28"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.7}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M4 23 H24" />
+      <rect x="6" y="16" width="4" height="6" />
+      <rect x="12" y="12" width="4" height="10" />
+      <rect x="18" y="7" width="4" height="15" fill="currentColor" />
+    </svg>
+  );
+}
 
 function LatestCallStrip({ call }: { call: LatestCall }) {
   return (
