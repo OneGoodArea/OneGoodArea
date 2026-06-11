@@ -1,30 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { PlanId } from "@/lib/stripe";
-import { AppShell } from "../_shared/app-shell";
+import { AppShell, AppCard } from "../_shared/app-shell";
 import {
   DISPLAY_PLANS,
-  PlanGrid,
+  PLAN_VIZ,
   type DisplayPlan,
-  Spinner,
 } from "../_shared/plan-grid";
 import { McpAddOnSection, type McpStatus } from "../_shared/mcp-addon-section";
 import "./billing.css";
 
-/* /billing — Brand v3 rewrite (AR-204 close-out 8/15).
+/* /dashboard/billing — AR-280 rebuild.
 
-   In-app billing surface. Lean by design: current plan + plan grid
-   + MCP add-on + manage-subscription. The full feature comparison
-   lives at /pricing and opens in a new tab so users don't lose
-   their place. Stripe Checkout fires from this surface only (never
-   from the marketing page). When ?plan=<id> is in the URL, a
-   confirm panel is shown above the grid — never auto-fires checkout.
-
-   Per the dashboard proposal (PR #104), this page may move from
-   /billing -> /dashboard/billing in a future restructure. Shape
-   preserved. */
+   Pre-AR-280 the page mixed brand-v3 product framing with the
+   shared marketing PlanGrid + a dark CurrentPlanStrip + sans
+   pill buttons. None of that matched the operational mono-caps
+   vocabulary the rest of the dashboard now uses. This file is the
+   wholesale visual rewrite: AppCard sections, brand mono-caps
+   buttons, a compact local PlanList in place of the marketing
+   PlanGrid, tighter spacing. Functional flows unchanged: Stripe
+   Checkout + Stripe Portal + the ?plan= confirm-and-go shape. */
 
 type Props = {
   plan: PlanId;
@@ -36,12 +34,32 @@ type Props = {
 
 export default function BillingClient(props: Props) {
   return (
-    <AppShell
-      title="Billing"
-      subtitle="Manage your plan, MCP add-on, and subscription."
-    >
+    <AppShell>
       <Body {...props} />
     </AppShell>
+  );
+}
+
+/* Reuses the exact "billing" path data from NavIconDark (the
+   sidebar's Billing glyph: a credit card with magstripe + chip),
+   scaled from 16x16 to 56x56 inside the 64x64 boxed mark. */
+function BillingMark() {
+  return (
+    <svg
+      width="56"
+      height="56"
+      viewBox="0 0 28 28"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.7}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="4" y="8" width="20" height="13" rx="1.5" />
+      <path d="M4 12.5 H24" />
+      <rect x="6" y="16" width="6" height="2.4" fill="currentColor" stroke="none" />
+    </svg>
   );
 }
 
@@ -54,8 +72,9 @@ function Body({ plan, planName, used, limit, mcp }: Props) {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
 
-  /* If the URL plan matches what the user already has, drop the query so the
-     confirm panel doesn't pretend they need to switch to their own plan. */
+  /* If the URL plan matches what the user already has, drop the
+     query so the confirm panel doesn't pretend they need to switch
+     to their own plan. */
   useEffect(() => {
     if (requestedPlan && requestedPlan === plan) {
       router.replace("/dashboard/billing");
@@ -82,7 +101,7 @@ function Body({ plan, planName, used, limit, mcp }: Props) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setCheckoutError(data.error || "Could not start checkout. Please try again.");
+        setCheckoutError(data.error || "Could not start checkout. Try again.");
         setCheckoutLoading(false);
         return;
       }
@@ -90,10 +109,10 @@ function Body({ plan, planName, used, limit, mcp }: Props) {
         window.location.href = data.url;
         return;
       }
-      setCheckoutError("Could not start checkout. Please try again.");
+      setCheckoutError("Could not start checkout. Try again.");
       setCheckoutLoading(false);
     } catch {
-      setCheckoutError("Network error. Please try again.");
+      setCheckoutError("Network error. Try again.");
       setCheckoutLoading(false);
     }
   }
@@ -124,7 +143,23 @@ function Body({ plan, planName, used, limit, mcp }: Props) {
 
   return (
     <div className="oga-billing">
-      {showConfirmPanel && requestedDisplayPlan && (
+      <header className="oga-billing__product">
+        <span className="oga-billing__product-mark" aria-hidden>
+          <BillingMark />
+        </span>
+        <div className="oga-billing__product-text">
+          <span className="oga-billing__product-eyebrow">Account</span>
+          <h2 className="oga-billing__product-title">Billing</h2>
+          <p className="oga-billing__product-tagline">
+            Your plan, monthly usage, and add-ons. Stripe owns the payment
+            step and the card on file. Clicking{" "}
+            <strong>Continue to Stripe</strong> redirects to their hosted
+            checkout and back to the dashboard.
+          </p>
+        </div>
+      </header>
+
+      {showConfirmPanel && requestedDisplayPlan ? (
         <ConfirmPanel
           plan={requestedDisplayPlan}
           loading={checkoutLoading}
@@ -132,26 +167,37 @@ function Body({ plan, planName, used, limit, mcp }: Props) {
           onContinue={() => continueToCheckout(requestedDisplayPlan.id)}
           onDismiss={dismissConfirm}
         />
-      )}
+      ) : null}
 
-      <CurrentPlanStrip
-        planName={planName}
-        used={used}
-        limit={limit}
-        onBilling={openPortal}
-        billingLoading={portalLoading}
-        showManage={onPaidPlan}
-      />
+      <AppCard title="Current plan" noPad>
+        <CurrentPlanContent
+          planName={planName}
+          used={used}
+          limit={limit}
+          onBilling={openPortal}
+          billingLoading={portalLoading}
+          showManage={onPaidPlan}
+        />
+      </AppCard>
 
-      <PlanGrid
-        plans={DISPLAY_PLANS}
-        currentPlan={plan}
-        loading={null}
-        mode="billing"
-        onSelect={handlePlanSelect}
-      />
-
-      <FullComparisonLink />
+      <AppCard title="Switch plan" noPad>
+        <PlanList
+          plans={DISPLAY_PLANS}
+          currentPlan={plan}
+          onSelect={handlePlanSelect}
+        />
+        <div className="oga-billing__compare-foot">
+          Need the full feature comparison?{" "}
+          <Link
+            href="/pricing"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="oga-billing__compare-link"
+          >
+            Open pricing page <span aria-hidden>↗</span>
+          </Link>
+        </div>
+      </AppCard>
 
       <McpAddOnSection mcp={mcp} />
     </div>
@@ -159,66 +205,9 @@ function Body({ plan, planName, used, limit, mcp }: Props) {
 }
 
 /* ============================================================
-   Confirm panel (shown when ?plan=<id> is in the URL)
+   Current plan content (inside an AppCard)
    ============================================================ */
-function ConfirmPanel({
-  plan,
-  loading,
-  error,
-  onContinue,
-  onDismiss,
-}: {
-  plan: DisplayPlan;
-  loading: boolean;
-  error: string | null;
-  onContinue: () => void;
-  onDismiss: () => void;
-}) {
-  return (
-    <div className="oga-billing__confirm" data-oga-surface="dark">
-      <div className="oga-billing__confirm-body">
-        <div className="oga-billing__confirm-eyebrow">
-          <span aria-hidden className="oga-billing__confirm-eyebrow-dot" />
-          <span>You picked</span>
-        </div>
-        <div className="oga-billing__confirm-title">
-          {plan.name} <span className="oga-billing__confirm-price">· {plan.price}</span>{" "}
-          <span className="oga-billing__confirm-cadence">{plan.cadence}</span>
-        </div>
-        <div className="oga-billing__confirm-meta">
-          {plan.reports}
-          {plan.perReport ? ` · ${plan.perReport}` : ""}
-        </div>
-        {error && <div className="oga-billing__confirm-error">{error}</div>}
-      </div>
-
-      <div className="oga-billing__confirm-actions">
-        <button
-          type="button"
-          onClick={onContinue}
-          disabled={loading}
-          className="oga-billing__confirm-primary"
-        >
-          {loading ? <Spinner /> : "Continue to Stripe"}
-          {!loading && <span aria-hidden>→</span>}
-        </button>
-        <button
-          type="button"
-          onClick={onDismiss}
-          disabled={loading}
-          className="oga-billing__confirm-ghost"
-        >
-          Choose a different plan
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/* ============================================================
-   Current plan strip (DARK, 2-col)
-   ============================================================ */
-function CurrentPlanStrip({
+function CurrentPlanContent({
   planName,
   used,
   limit,
@@ -239,71 +228,155 @@ function CurrentPlanStrip({
     pct >= 90 ? "weak" : pct >= 70 ? "moderate" : "strong";
 
   return (
-    <div
-      className="oga-billing__current"
-      data-oga-surface="dark"
-      data-tone={tone}
-    >
-      <div className="oga-billing__current-col">
-        <div className="oga-billing__current-eyebrow">
-          <span aria-hidden className="oga-billing__current-eyebrow-dot" />
-          <span>Current plan</span>
+    <div className="oga-billing__current">
+      <div className="oga-billing__current-left">
+        <span className="oga-billing__row-label">Plan</span>
+        <span className="oga-billing__current-plan">{planName}</span>
+      </div>
+
+      <div className="oga-billing__current-mid">
+        <div className="oga-billing__row-head">
+          <span className="oga-billing__row-label">Monthly usage</span>
+          {!unlimited ? (
+            <span className="oga-billing__current-pct" data-tone={tone}>
+              {Math.round(pct)}%
+            </span>
+          ) : null}
         </div>
-        <div className="oga-billing__current-plan">{planName}</div>
-        {showManage && (
+        <div className="oga-billing__current-counts">
+          <span className="oga-billing__current-used">{used.toLocaleString()}</span>
+          <span className="oga-billing__current-limit">
+            / {unlimited ? "∞" : limit.toLocaleString()}
+          </span>
+        </div>
+        <div className="oga-billing__bar">
+          <div
+            className="oga-billing__bar-fill"
+            data-tone={tone}
+            style={{ width: unlimited ? "0%" : `${pct}%` }}
+          />
+        </div>
+        <span className="oga-billing__current-reset">
+          Resets on the 1st of the month
+        </span>
+      </div>
+
+      <div className="oga-billing__current-right">
+        {showManage ? (
           <button
             type="button"
             onClick={onBilling}
             disabled={billingLoading}
-            className="oga-billing__current-manage"
+            className="oga-billing__btn-primary"
           >
-            {billingLoading ? "Opening…" : "Manage subscription"}
+            {billingLoading ? "Opening…" : "Manage on Stripe"}
           </button>
-        )}
-      </div>
-
-      <div className="oga-billing__current-col">
-        <div className="oga-billing__current-usage-head">
-          <span>Monthly usage</span>
-          {!unlimited && (
-            <span className="oga-billing__current-pct">{Math.round(pct)}%</span>
-          )}
-        </div>
-        <div className="oga-billing__current-usage-row">
-          <span className="oga-billing__current-usage-value">{used}</span>
-          <span className="oga-billing__current-usage-limit">
-            / {unlimited ? "∞" : limit}
+        ) : (
+          <span className="oga-billing__current-hint">
+            Manage card + invoices appears here once you upgrade.
           </span>
-        </div>
-        <div className="oga-billing__current-bar">
-          <div
-            className="oga-billing__current-bar-fill"
-            style={{ width: unlimited ? "0%" : `${pct}%` }}
-          />
-        </div>
-        <div className="oga-billing__current-reset">
-          Resets on the 1st of the month
-        </div>
+        )}
       </div>
     </div>
   );
 }
 
 /* ============================================================
-   Full-comparison link (opens /pricing in a new tab)
+   Plan list (compact rows — replaces the marketing PlanGrid)
    ============================================================ */
-function FullComparisonLink() {
+function PlanList({
+  plans,
+  currentPlan,
+  onSelect,
+}: {
+  plans: DisplayPlan[];
+  currentPlan: string | null;
+  onSelect: (id: PlanId) => void;
+}) {
   return (
-    <div className="oga-billing__compare">
-      <a
-        href="/pricing"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="oga-billing__compare-link"
-      >
-        View full feature comparison
-        <span aria-hidden>↗</span>
-      </a>
+    <ul className="oga-billing__plans">
+      {plans.map((p) => {
+        const isCurrent = currentPlan === p.id;
+        const Viz = PLAN_VIZ[p.id];
+        return (
+          <li key={p.id} className="oga-billing__plan-row" data-current={isCurrent}>
+            <span className="oga-billing__plan-glyph" aria-hidden>
+              {Viz ? <Viz /> : null}
+            </span>
+            <div className="oga-billing__plan-meta">
+              <span className="oga-billing__plan-name">{p.name}</span>
+              <span className="oga-billing__plan-tagline">{p.blurb}</span>
+            </div>
+            <span className="oga-billing__plan-price">{p.price}</span>
+            {isCurrent ? (
+              <span className="oga-billing__plan-current-chip">Current</span>
+            ) : p.disabled ? (
+              <span className="oga-billing__plan-disabled">Contact sales</span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onSelect(p.id)}
+                className="oga-billing__btn-ghost"
+              >
+                Switch
+              </button>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/* ============================================================
+   Confirm panel (shown when ?plan=<id> is in the URL)
+   ============================================================ */
+function ConfirmPanel({
+  plan,
+  loading,
+  error,
+  onContinue,
+  onDismiss,
+}: {
+  plan: DisplayPlan;
+  loading: boolean;
+  error: string | null;
+  onContinue: () => void;
+  onDismiss: () => void;
+}) {
+  return (
+    <div className="oga-billing__confirm" role="status">
+      <div className="oga-billing__confirm-head">
+        <span className="oga-billing__row-label">Switching to</span>
+        <span className="oga-billing__confirm-plan">{plan.name}</span>
+        <span className="oga-billing__confirm-price">{plan.price}</span>
+      </div>
+      <p className="oga-billing__confirm-body">
+        We&apos;ll redirect you to Stripe&apos;s hosted checkout to enter
+        card details and confirm. You&apos;ll come back to the dashboard
+        when payment succeeds.
+      </p>
+      {error ? (
+        <p className="oga-billing__confirm-error" role="alert">{error}</p>
+      ) : null}
+      <div className="oga-billing__confirm-actions">
+        <button
+          type="button"
+          onClick={onContinue}
+          disabled={loading}
+          className="oga-billing__btn-primary"
+        >
+          {loading ? "Opening…" : "Continue to Stripe"}
+        </button>
+        <button
+          type="button"
+          onClick={onDismiss}
+          disabled={loading}
+          className="oga-billing__btn-ghost"
+        >
+          Choose a different plan
+        </button>
+      </div>
     </div>
   );
 }
