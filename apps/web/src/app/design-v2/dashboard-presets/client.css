@@ -1,0 +1,736 @@
+/* ============================================================
+   AR-276 /dashboard/org/presets styles.
+   Same brand v3 vocabulary as AR-274 Bundles: product header
+   (Monitor pattern), cream column with 40px gutters, warm-white
+   card with hairline borders, brand modals. Adds a base-picker
+   for the 4 SCORING_PROFILES and a weights table for dimensions.
+   ============================================================ */
+
+.oga-pre {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 8px 40px 40px;
+}
+
+@media (max-width: 700px) {
+  .oga-pre {
+    padding: 8px 20px 32px;
+  }
+}
+
+.oga-pre__placeholder {
+  min-height: 240px;
+}
+
+/* ── Product-style header (verbatim from dashboard-monitor) ──────── */
+
+.oga-pre__product {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  align-items: start;
+  padding: 8px 0 24px;
+  border-bottom: 1px solid var(--oga-ink-10);
+}
+
+.oga-pre__product-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: rgba(26, 28, 31, 0.04);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 6px;
+  color: var(--oga-ink);
+  flex-shrink: 0;
+}
+
+.oga-pre__product-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.oga-pre__product-eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-pre__product-title {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: clamp(28px, 3vw, 36px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--oga-ink);
+  margin: 0;
+}
+
+.oga-pre__product-tagline {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--oga-ink-50);
+  margin: 4px 0 0;
+  max-width: 720px;
+}
+
+.oga-pre__product-tagline code {
+  font-family: var(--oga-font-mono);
+  font-size: 12.5px;
+  background: rgba(26, 28, 31, 0.05);
+  padding: 1px 5px;
+  border-radius: 2px;
+  color: var(--oga-ink);
+}
+
+/* ── How it works panel ──────────────────────────────────────────── */
+
+.oga-pre__how {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 24px;
+  align-items: stretch;
+  padding: 22px 24px;
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+}
+
+@media (max-width: 820px) {
+  .oga-pre__how {
+    grid-template-columns: 1fr;
+  }
+}
+
+.oga-pre__how-title {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+  margin: 0 0 12px;
+}
+
+.oga-pre__how-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.oga-pre__how-list li {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 12px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--oga-ink-50);
+}
+
+.oga-pre__how-list strong {
+  color: var(--oga-ink);
+  font-weight: 500;
+}
+
+.oga-pre__how-list code {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  background: rgba(26, 28, 31, 0.06);
+  padding: 1px 5px;
+  border-radius: 2px;
+  color: var(--oga-ink);
+}
+
+.oga-pre__how-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--oga-ink);
+  color: var(--oga-white);
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.oga-pre__how-code {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.oga-pre__how-code-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-pre__how-code-block {
+  margin: 0;
+  padding: 14px 16px;
+  background: #1A1C1F;
+  color: rgba(250, 248, 244, 0.92);
+  border-radius: 4px;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────── */
+
+.oga-pre__toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.oga-pre__primary-btn {
+  appearance: none;
+  background: var(--oga-ink);
+  border: 1px solid var(--oga-ink);
+  border-radius: 3px;
+  padding: 9px 16px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-white);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.oga-pre__primary-btn:hover {
+  background: #2A2C30;
+  border-color: #2A2C30;
+}
+
+/* ── Loading + error ─────────────────────────────────────────────── */
+
+.oga-pre__loading,
+.oga-pre__error {
+  padding: 28px 20px;
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--oga-ink-50);
+}
+
+.oga-pre__error { color: var(--oga-status-red); }
+
+.oga-pre__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.oga-pre__loading-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--oga-ink-10);
+  border-top-color: var(--oga-ink);
+  border-radius: 50%;
+  animation: oga-pre-spin 0.9s linear infinite;
+}
+
+@keyframes oga-pre-spin { to { transform: rotate(360deg); } }
+
+/* ── List rows ───────────────────────────────────────────────────── */
+
+.oga-pre__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.oga-pre__row {
+  display: grid;
+  grid-template-columns: 1.4fr auto auto auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--oga-ink-10);
+  transition: background 120ms ease;
+}
+
+.oga-pre__row:last-child { border-bottom: none; }
+.oga-pre__row:hover { background: rgba(26, 28, 31, 0.02); }
+
+.oga-pre__row-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.oga-pre__row-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--oga-ink);
+}
+
+.oga-pre__row-slug {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: var(--oga-ink-50);
+}
+
+.oga-pre__row-base {
+  font-size: 12px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.04);
+  padding: 3px 8px;
+  border-radius: 2px;
+  white-space: nowrap;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.oga-pre__row-count {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+  white-space: nowrap;
+}
+
+.oga-pre__row-updated {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+  white-space: nowrap;
+}
+
+.oga-pre__row-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.oga-pre__ghost-btn,
+.oga-pre__danger-btn {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 2px;
+  padding: 5px 10px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+  white-space: nowrap;
+}
+
+.oga-pre__ghost-btn { color: var(--oga-ink); }
+
+.oga-pre__ghost-btn:hover {
+  background: rgba(26, 28, 31, 0.04);
+  border-color: rgba(26, 28, 31, 0.45);
+}
+
+.oga-pre__danger-btn { color: #a01b00; }
+
+.oga-pre__danger-btn:hover {
+  background: rgba(180, 54, 28, 0.06);
+  border-color: rgba(180, 54, 28, 0.45);
+}
+
+/* ── Empty state ─────────────────────────────────────────────────── */
+
+.oga-pre__empty {
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.oga-pre__empty-title {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--oga-ink);
+  margin: 0 0 6px;
+}
+
+.oga-pre__empty-body {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--oga-ink-50);
+  margin: 0 auto;
+  max-width: 540px;
+}
+
+/* ── Modal common (mirrors AR-274 Bundles) ──────────────────────── */
+
+.oga-pre__modal-body {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--oga-ink-50);
+  margin: 0 0 16px;
+}
+
+.oga-pre__modal-body--on-dark { color: rgba(250, 248, 244, 0.72); }
+.oga-pre__modal-body strong { color: var(--oga-ink); font-weight: 500; }
+.oga-pre__modal-body--on-dark strong { color: var(--oga-white); }
+
+.oga-pre__modal-code {
+  font-family: var(--oga-font-mono);
+  font-size: 12.5px;
+  color: var(--oga-white);
+  background: rgba(0, 0, 0, 0.40);
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.oga-pre__modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 18px;
+}
+
+.oga-pre__modal-field-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-pre__modal-input {
+  padding: 10px 12px;
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 3px;
+  background: var(--oga-white);
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  color: var(--oga-ink);
+  transition: border-color 120ms ease;
+}
+
+.oga-pre__modal-input::placeholder { color: var(--oga-ink-50); }
+.oga-pre__modal-input:focus { outline: none; border-color: var(--oga-ink); }
+
+.oga-pre__modal-error {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--oga-status-red);
+}
+
+.oga-pre__modal-intro {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--oga-ink-50);
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  background: rgba(26, 28, 31, 0.03);
+  border-left: 2px solid var(--oga-ink-30, rgba(26, 28, 31, 0.45));
+  border-radius: 2px;
+}
+
+.oga-pre__modal-field-helper {
+  font-size: 12px;
+  color: var(--oga-ink-50);
+  line-height: 1.5;
+}
+
+.oga-pre__inline-code {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.06);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+.oga-pre__modal-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 16px 0 0;
+}
+
+.oga-pre__modal-preview-code {
+  margin: 0;
+  padding: 12px 14px;
+  background: #1A1C1F;
+  color: rgba(250, 248, 244, 0.92);
+  border-radius: 3px;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.oga-pre__modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.oga-pre__modal-hint {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--oga-ink-50);
+  flex: 1;
+  min-width: 0;
+}
+
+.oga-pre__modal-footer-buttons {
+  display: inline-flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ── Base preset picker (radio cards) ────────────────────────────── */
+
+.oga-pre__base-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  .oga-pre__base-picker { grid-template-columns: 1fr; }
+}
+
+.oga-pre__base-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.oga-pre__base-option[data-checked="true"] {
+  border-color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.04);
+}
+
+.oga-pre__base-option:hover { background: rgba(26, 28, 31, 0.02); }
+
+.oga-pre__base-radio {
+  margin-top: 3px;
+  accent-color: var(--oga-ink);
+}
+
+.oga-pre__base-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  color: var(--oga-ink);
+}
+
+.oga-pre__base-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.oga-pre__base-name {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--oga-ink);
+}
+
+.oga-pre__base-use {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--oga-ink-50);
+}
+
+/* ── Weights table ───────────────────────────────────────────────── */
+
+.oga-pre__weights {
+  list-style: none;
+  margin: 0;
+  padding: 12px 14px;
+  background: rgba(26, 28, 31, 0.02);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.oga-pre__weight-row {
+  display: grid;
+  grid-template-columns: 28px 1fr auto 100px;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 4px;
+  border-bottom: 1px dashed var(--oga-ink-10);
+}
+
+.oga-pre__weight-row:last-child {
+  border-bottom: none;
+}
+
+.oga-pre__weight-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--oga-ink-50);
+}
+
+.oga-pre__weight-label {
+  font-size: 13.5px;
+  color: var(--oga-ink);
+}
+
+.oga-pre__weight-key {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-ink-50);
+  white-space: nowrap;
+}
+
+.oga-pre__weight-input {
+  padding: 6px 10px;
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 3px;
+  background: var(--oga-white);
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
+  color: var(--oga-ink);
+  text-align: right;
+  width: 100%;
+  transition: border-color 120ms ease;
+}
+
+.oga-pre__weight-input:focus {
+  outline: none;
+  border-color: var(--oga-ink);
+}
+
+@media (max-width: 600px) {
+  .oga-pre__weight-row {
+    grid-template-columns: 24px 1fr 80px;
+  }
+  .oga-pre__weight-key {
+    grid-column: 2 / -1;
+  }
+}
+
+/* ── Footer buttons (mirrors AR-274) ─────────────────────────────── */
+
+.oga-pre__modal-primary,
+.oga-pre__modal-secondary,
+.oga-pre__modal-danger {
+  appearance: none;
+  border-radius: 3px;
+  padding: 8px 16px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+  white-space: nowrap;
+}
+
+.oga-pre__modal-primary {
+  background: var(--oga-ink);
+  border: 1px solid var(--oga-ink);
+  color: var(--oga-white);
+}
+
+.oga-pre__modal-primary:hover:not(:disabled) {
+  background: #2A2C30;
+  border-color: #2A2C30;
+}
+
+.oga-pre__modal-secondary {
+  background: transparent;
+  border: 1px solid var(--oga-ink-10);
+  color: var(--oga-ink);
+}
+
+.oga-pre__modal-secondary:hover:not(:disabled) {
+  background: rgba(26, 28, 31, 0.04);
+  border-color: rgba(26, 28, 31, 0.45);
+}
+
+.oga-pre__modal-secondary--on-dark {
+  border-color: rgba(250, 248, 244, 0.18);
+  color: var(--oga-white);
+}
+
+.oga-pre__modal-secondary--on-dark:hover:not(:disabled) {
+  background: rgba(250, 248, 244, 0.08);
+  border-color: rgba(250, 248, 244, 0.40);
+}
+
+.oga-pre__modal-danger {
+  background: var(--oga-status-red);
+  border: 1px solid var(--oga-status-red);
+  color: var(--oga-white);
+}
+
+.oga-pre__modal-danger:hover:not(:disabled) {
+  background: #9A2E18;
+  border-color: #9A2E18;
+}
+
+.oga-pre__modal-primary:disabled,
+.oga-pre__modal-secondary:disabled,
+.oga-pre__modal-danger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+
+@media (max-width: 720px) {
+  .oga-pre__row {
+    grid-template-columns: 1fr auto;
+    row-gap: 6px;
+  }
+  .oga-pre__row-base,
+  .oga-pre__row-count,
+  .oga-pre__row-updated {
+    grid-column: 1 / -1;
+  }
+  .oga-pre__row-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+}

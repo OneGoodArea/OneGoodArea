@@ -106,12 +106,19 @@ export function OrgIcon(): ReactElement {
   );
 }
 
-export function PresetsIcon(): ReactElement {
+export function PresetsIcon({
+  width = 14,
+  height = 14,
+}: {
+  width?: number;
+  height?: number;
+} = {}): ReactElement {
   /* Three horizontal sliders with knobs at different positions —
      "tunable weight configuration", which is what a scoring preset
-     is (composition of per-dimension weights). */
+     is (composition of per-dimension weights). viewBox stays 14x14;
+     width/height scale for AR-276 product-header use. */
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <svg width={width} height={height} viewBox="0 0 14 14" fill="none" aria-hidden="true">
       <path d="M1.5 3.5h11M1.5 7h11M1.5 10.5h11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
       <circle cx="4" cy="3.5" r="1.4" fill="currentColor" />
       <circle cx="9" cy="7" r="1.4" fill="currentColor" />
