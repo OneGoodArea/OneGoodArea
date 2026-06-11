@@ -353,3 +353,49 @@ export async function sendReportEmail(email: string, reportId: string, report: A
 
   logger.info("Report email sent", { email, reportId, area: report.area });
 }
+
+/* AR-272: org invitation email. Same template as apps/api's sender; we
+   keep separate copies because the two apps have parallel email module
+   trees (apps/api/src/infrastructure/email vs apps/web/src/lib/email).
+   Plaintext token in the URL is the ONE copy that exists anywhere —
+   server stores SHA-256 hash. */
+export async function sendOrgInvitationEmail(params: {
+  to: string;
+  token: string;
+  orgName: string;
+  role: "member" | "admin";
+}) {
+  const acceptUrl = `${APP_URL}/accept-invite?token=${encodeURIComponent(params.token)}`;
+  const safeOrg = escapeHtml(params.orgName);
+  const roleLabel = params.role === "admin" ? "Admin" : "Member";
+
+  const content = `
+    <h1 style="font-family:${FONT_SERIF}; font-size:26px; font-weight:400; letter-spacing:-0.5px; color:${COLORS.inkDeep}; margin:0 0 10px 0; line-height:1.15;">
+      You&apos;ve been invited to <em style="font-style:italic; color:${COLORS.ink}; border-bottom:2px solid ${COLORS.signal}; padding-bottom:1px;">${safeOrg}</em>.
+    </h1>
+    <p style="font-family:${FONT_SANS}; font-size:15px; line-height:1.55; color:${COLORS.text2}; margin:0 0 24px 0;">
+      Join the team on OneGoodArea, the data and intelligence layer for UK property workflows. You&apos;ll join as <strong style="color:${COLORS.inkDeep}; font-weight:500;">${roleLabel}</strong>.
+    </p>
+    ${ctaButton("Accept invitation", acceptUrl)}
+    <p style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text3}; margin:0 0 8px 0; letter-spacing:1.5px; text-transform:uppercase;">
+      Or paste this link
+    </p>
+    <p style="font-family:${FONT_MONO}; font-size:11px; color:${COLORS.ink}; word-break:break-all; margin:0 0 26px 0;">
+      ${acceptUrl}
+    </p>
+    <div style="border-top:1px solid ${COLORS.borderDim}; padding-top:18px;">
+      <p style="font-family:${FONT_SANS}; font-size:13px; color:${COLORS.text3}; margin:0; line-height:1.5;">
+        This invitation expires in 7 days. If you weren&apos;t expecting this, ignore the email — the link can only be used once and only by the person it was sent to.
+      </p>
+    </div>
+  `;
+
+  await (await getEmailProvider()).send({
+    from: EMAIL_FROM,
+    to: params.to,
+    subject: `You’ve been invited to ${params.orgName} on OneGoodArea`,
+    html: baseTemplate(content),
+  });
+
+  logger.info("Org invitation email sent", { to: params.to, orgName: params.orgName, role: params.role });
+}

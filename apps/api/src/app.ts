@@ -43,6 +43,7 @@ import {
   CreateOrgRequestSchema,
   UpdateOrgRequestSchema,
   AddMemberRequestSchema,
+  CreateInvitationRequestSchema,
   CreateBundleRequestSchema,
   UpdateBundleRequestSchema,
   CreatePresetRequestSchema,
@@ -81,6 +82,12 @@ import {
   updateCohort,
   deleteCohort,
 } from "./modules/orgs/cohorts";
+import {
+  listPendingInvitations,
+  createInvitation,
+  revokeInvitation,
+  acceptInvitation,
+} from "./modules/orgs/invitations";
 import { getSupportedEngineVersions } from "./modules/reports/engine-version";
 import {
   getUserPlan,
@@ -1293,6 +1300,146 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     } catch (error) {
       if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
       logger.error("[v1/orgs/:id/members/:userId] delete error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  // ── AR-272 (Phase 3 / Levers UI backend): org invitations ──
+  //
+  // POST /v1/orgs/:id/invitations         create + email (admin+)
+  // GET  /v1/orgs/:id/invitations         list pending (member+)
+  // DELETE /v1/orgs/:id/invitations/:iid  revoke pending (admin+)
+  // POST /v1/invitations/:token/accept    accept (signed-in caller)
+  //
+  // Tokens are hashed at rest (SHA-256); plaintext lives only in the
+  // outbound email. 7-day expiry, single-use. Owner role cannot be
+  // granted via invite — Zod's InvitationRoleSchema enforces it.
+
+  app.post("/v1/orgs/:id/invitations", async (request, reply) => {
+    try {
+      const callerId = await requireApiAccess(request, reply);
+      if (!callerId) return reply;
+      const { id: orgId } = request.params as { id: string };
+      const role = await getRoleInOrg(orgId, callerId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
+      const parsed = CreateInvitationRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      const result = await createInvitation({
+        orgId,
+        invitedByUserId: callerId,
+        email: parsed.data.email,
+        role: parsed.data.role,
+      });
+      if (!result.ok) {
+        // 409 covers both "already pending" and "already a member" — same
+        // resolution from the caller's perspective: the invite isn't needed.
+        return reply.code(409).send({ error: result.error.code, code: result.error.code });
+      }
+      trackEvent("api.org.invitation_created", callerId, {
+        orgId,
+        invitationId: result.invitation.id,
+        role: result.invitation.role,
+      });
+      return reply.code(201).send({ invitation: result.invitation });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/invitations] create error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/v1/orgs/:id/invitations", async (request, reply) => {
+    try {
+      const callerId = await requireApiAccess(request, reply);
+      if (!callerId) return reply;
+      const { id: orgId } = request.params as { id: string };
+      const role = await getRoleInOrg(orgId, callerId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      const invitations = await listPendingInvitations(orgId);
+      return reply.code(200).send({ invitations });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/invitations] list error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/v1/orgs/:id/invitations/:invitationId", async (request, reply) => {
+    try {
+      const callerId = await requireApiAccess(request, reply);
+      if (!callerId) return reply;
+      const { id: orgId, invitationId } = request.params as { id: string; invitationId: string };
+      const role = await getRoleInOrg(orgId, callerId);
+      if (!role) return reply.code(404).send({ error: "Org not found" });
+      if (!hasAtLeastRole(role, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
+      const ok = await revokeInvitation(invitationId, orgId);
+      if (!ok) return reply.code(404).send({ error: "Invitation not found or already resolved" });
+      trackEvent("api.org.invitation_revoked", callerId, { orgId, invitationId });
+      return reply.code(200).send({ revoked: true });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/invitations/:invitationId] delete error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/v1/invitations/:token/accept", async (request, reply) => {
+    try {
+      const callerId = await requireApiAccess(request, reply);
+      if (!callerId) return reply;
+      const callerEmail = await getUserEmail(callerId);
+      if (!callerEmail) return reply.code(403).send({ error: "Caller email not available." });
+      const { token } = request.params as { token: string };
+      const result = await acceptInvitation({
+        plaintextToken: token,
+        userId: callerId,
+        userEmail: callerEmail,
+      });
+      if (!result.ok) {
+        // 410 Gone for expired/revoked/already-accepted (the resource
+        // existed but is no longer usable). 403 for email_mismatch (the
+        // caller is authenticated, just not the right person). 404 for
+        // not_found (no such token).
+        const status =
+          result.error.code === "invitation_not_found" ? 404 :
+          result.error.code === "email_mismatch" ? 403 :
+          410;
+        return reply.code(status).send({ error: result.error.code, code: result.error.code });
+      }
+      trackEvent("api.org.invitation_accepted", callerId, {
+        orgId: result.org_id,
+        role: result.role,
+      });
+      // Re-fetch org for the response body so the dashboard knows where
+      // to route the user. The accept just made callerId a member, so
+      // getOrgIfMember will resolve.
+      const orgRow = await getOrgIfMember(result.org_id, callerId);
+      if (!orgRow) {
+        // Vanishingly rare — invitation pointed at an org that's since
+        // been deleted. Acceptance succeeded; just return the ids.
+        return reply.code(200).send({
+          org_id: result.org_id,
+          org_slug: "",
+          org_name: "",
+          role: result.role,
+        });
+      }
+      return reply.code(200).send({
+        org_id: orgRow.id,
+        org_slug: orgRow.slug,
+        org_name: orgRow.display_name ?? orgRow.name,
+        role: result.role,
+      });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/invitations/:token/accept] error:", error);
       return reply.code(500).send({ error: "Internal server error" });
     }
   });

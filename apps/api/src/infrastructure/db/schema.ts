@@ -767,4 +767,38 @@ export const MIGRATIONS: Migration[] = [
       `CREATE INDEX IF NOT EXISTS idx_portfolio_areas_portfolio ON portfolio_areas (portfolio_id)`,
     ],
   },
+  // AR-272 (Phase 3 / Levers UI backend): org invitation flow. The
+  // existing POST /v1/orgs/:id/members only adds an existing user_id,
+  // so this table backs the email-driven invite path. Token is stored
+  // as a SHA-256 hash (token_hash); the plaintext exists only in the
+  // outbound email. role is CHECK-constrained to (member, admin) —
+  // owner cannot be granted via invite by design.
+  //
+  // Partial unique index uq_org_invitations_pending prevents two
+  // concurrent open invites for the same (org, email) pair —
+  // simpler than a "resend" endpoint and cheaper than a soft retry.
+  // Revoked or accepted invites drop out of the predicate so an
+  // admin can re-invite after revoking.
+  {
+    name: "org_invitations",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS org_invitations (
+        id TEXT PRIMARY KEY,
+        org_id TEXT NOT NULL,
+        email TEXT NOT NULL,
+        role TEXT NOT NULL CHECK (role IN ('member', 'admin')),
+        token_hash TEXT NOT NULL UNIQUE,
+        invited_by_user_id TEXT NOT NULL,
+        expires_at TIMESTAMPTZ NOT NULL,
+        accepted_at TIMESTAMPTZ,
+        accepted_by_user_id TEXT,
+        revoked_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_org_invitations_org ON org_invitations (org_id, created_at DESC)`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS uq_org_invitations_pending
+         ON org_invitations (org_id, email)
+         WHERE accepted_at IS NULL AND revoked_at IS NULL`,
+    ],
+  },
 ];

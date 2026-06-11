@@ -16,6 +16,7 @@ export * from "./scores";
 export * from "./portfolios";
 export * from "./intelligence";
 export * from "./orgs";
+export * from "./invitations";
 export * from "./bundles";
 export * from "./presets";
 export * from "./methodology";
