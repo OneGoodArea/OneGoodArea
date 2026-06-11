@@ -919,6 +919,23 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       const parsed = parseScoreBody(bodyForParse);
       if (!parsed.ok) return reply.code(400).send({ error: parsed.error });
 
+      // AR-274 follow-on: bundle gate for /v1/score. Same param shape as
+      // /v1/query (?bundle= OR body.bundle). The bundle's signal_keys
+      // are passed to scoreArea, which nulls out sources whose category
+      // prefixes aren't represented in the bundle. v2's computeScores
+      // handles null sources by 0-confidencing the affected dimension;
+      // applyWeights composes the partial score. v2's math is unchanged.
+      const rawQuery = (request.query ?? {}) as { bundle?: unknown };
+      const rawBody = (request.body ?? {}) as { bundle?: unknown };
+      const bundleId =
+        typeof rawQuery.bundle === "string" ? rawQuery.bundle :
+        typeof rawBody.bundle === "string" ? rawBody.bundle : undefined;
+      const resolved = await resolveBundleForCaller(bundleId, ctx.orgId, ctx.userId, reply);
+      if (!resolved.ok) return reply;
+      if (resolved.allowed) {
+        parsed.query.bundle_allowed_keys = resolved.allowed;
+      }
+
       const result = await scoreArea(parsed.query);
       if (!result) {
         return reply.code(404).send({
@@ -931,9 +948,11 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         preset: parsed.query.preset,
         weights: parsed.query.weights ? "custom" : "preset",
         preset_id: presetId ?? null,
+        bundle: bundleId ?? null,
         score: result.score,
       });
       reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(ctx.orgId, ctx.userId));
+      if (bundleId) reply.header("X-Bundle-Applied", bundleId);
       return reply.code(200).send(result);
     } catch (error) {
       if (isAppError(error)) {

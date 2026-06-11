@@ -124,12 +124,19 @@ export async function listBundles(orgId: string): Promise<SignalBundle[]> {
 }
 
 /** Fetch one bundle, scoped to its org (so callers can't read across
-    orgs by guessing a bundle id). Returns null if not found. */
-export async function getBundle(orgId: string, bundleId: string): Promise<SignalBundle | null> {
+    orgs by guessing a bundle id). Matches on EITHER id or slug —
+    the dashboard surfaces the slug as the public identifier (it's
+    what shows on the bundle row and what the "How bundles work" copy
+    tells customers to pass in `?bundle=`), but legacy internal callers
+    pass the bndl_xxxxx id. Both work; both are scoped by org. Returns
+    null if neither matches. (AR-274 fix: pre-274 this only matched
+    by id, so passing the user-facing slug 404'd silently — exactly
+    the trap the engine-gap tests caught.) */
+export async function getBundle(orgId: string, bundleIdOrSlug: string): Promise<SignalBundle | null> {
   const result = rows<SignalBundleRow>(await sql`
     SELECT id, org_id, slug, name, signal_keys, created_at, updated_at
       FROM signal_bundles
-     WHERE org_id = ${orgId} AND id = ${bundleId}
+     WHERE org_id = ${orgId} AND (id = ${bundleIdOrSlug} OR slug = ${bundleIdOrSlug})
      LIMIT 1
   `);
   if (result.length === 0) return null;
