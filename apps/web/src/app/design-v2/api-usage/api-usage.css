@@ -1,22 +1,80 @@
-/* /api-usage CSS — Brand v3 (AR-204 close-out 6/15).
-   Co-located, zero design declarations in TSX (only runtime
-   percentage values cross the boundary for chart bar heights +
-   progress fill width). */
+/* /api-usage CSS — Brand v3.
+   AR-278 polish: AppShell title dropped, product-style header inside
+   content area matching the Monitor/Members/Bundles/Presets/Cohorts
+   pattern. Padding shell flipped to the 8px 40px 40px shape every
+   other org/account page now uses. */
 
 .oga-api-usage {
-  padding: 28px 40px 64px;
   display: flex;
   flex-direction: column;
-  gap: 22px;
-}
-.oga-api-usage__placeholder {
-  padding: 40px;
+  gap: 24px;
+  padding: 8px 40px 40px;
 }
 
-@media (max-width: 880px) {
+@media (max-width: 700px) {
   .oga-api-usage {
-    padding: 24px 20px 48px;
+    padding: 8px 20px 32px;
   }
+}
+
+.oga-api-usage__placeholder { min-height: 240px; }
+
+/* ── Product-style header (verbatim from dashboard-monitor) ──────── */
+
+.oga-api-usage__product {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  align-items: start;
+  padding: 8px 0 24px;
+  border-bottom: 1px solid var(--oga-ink-10);
+}
+
+.oga-api-usage__product-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: rgba(26, 28, 31, 0.04);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 6px;
+  color: var(--oga-ink);
+  flex-shrink: 0;
+}
+
+.oga-api-usage__product-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.oga-api-usage__product-eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-api-usage__product-title {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: clamp(28px, 3vw, 36px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--oga-ink);
+  margin: 0;
+}
+
+.oga-api-usage__product-tagline {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--oga-ink-50);
+  margin: 4px 0 0;
+  max-width: 720px;
 }
 
 /* ============================================================

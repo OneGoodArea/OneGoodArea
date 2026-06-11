@@ -1,10 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { AppShell, AppCard, GhostCta } from "../_shared/app-shell";
+import { AppShell, AppCard } from "../_shared/app-shell";
 import { Modal } from "../_shared/dashboard/modal";
 import "./api-usage.css";
 
@@ -151,7 +150,7 @@ export default function ApiUsageClient() {
 
   if (status === "loading") {
     return (
-      <AppShell title="API usage">
+      <AppShell>
         <div className="oga-api-usage__placeholder" />
       </AppShell>
     );
@@ -162,12 +161,23 @@ export default function ApiUsageClient() {
   }
 
   return (
-    <AppShell
-      title="API usage"
-      subtitle="Monthly quota, daily traffic, and your keys."
-      actions={<GhostCta href="/docs">Read the docs</GhostCta>}
-    >
+    <AppShell>
       <div className="oga-api-usage">
+        <header className="oga-api-usage__product">
+          <span className="oga-api-usage__product-mark" aria-hidden>
+            <UsageMark />
+          </span>
+          <div className="oga-api-usage__product-text">
+            <span className="oga-api-usage__product-eyebrow">Account</span>
+            <h2 className="oga-api-usage__product-title">API usage</h2>
+            <p className="oga-api-usage__product-tagline">
+              Monthly quota, daily traffic, and the keys your code calls with.
+              Keys are SHA-256 hashed at rest — copy the full value when you
+              create one, treat it like a password from then on.
+            </p>
+          </div>
+        </header>
+
         {loading ? (
           <Loading />
         ) : error ? (
@@ -445,24 +455,6 @@ function Content({
         )}
       </AppCard>
 
-      {/* Quick actions */}
-      <div className="oga-api-usage__quick">
-        <QuickCard
-          href="/docs"
-          title="API docs"
-          body="Quickstart, auth, request/response, rate limits."
-        />
-        <QuickCard
-          href="/docs/mcp"
-          title="MCP server"
-          body="Use OneGoodArea inline in Claude Desktop, Cursor, or any MCP client."
-        />
-        <QuickCard
-          href="/pricing"
-          title="Upgrade plan"
-          body="Move up the tier ladder when you hit the quota."
-        />
-      </div>
     </>
   );
 }
@@ -509,23 +501,27 @@ function SimpleBlock({ label, value }: { label: string; value: string }) {
   );
 }
 
-function QuickCard({
-  href,
-  title,
-  body,
-}: {
-  href: string;
-  title: string;
-  body: string;
-}) {
+/* AR-278: mark for the product-style header. Reuses the exact "api"
+   path data from NavIconDark (the sidebar's API keys & usage glyph),
+   scaled from 16x16 to 56x56 inside the 64x64 boxed mark so the
+   sidebar item and the page header line up visually. */
+function UsageMark() {
   return (
-    <Link href={href} className="oga-api-usage__quick-card">
-      <div className="oga-api-usage__quick-head">
-        <span className="oga-api-usage__quick-title">{title}</span>
-        <span aria-hidden className="oga-api-usage__quick-arrow">→</span>
-      </div>
-      <div className="oga-api-usage__quick-body">{body}</div>
-    </Link>
+    <svg
+      width="56"
+      height="56"
+      viewBox="0 0 28 28"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.7}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M10 4 C7 4 7.5 8 7.5 11 C7.5 12.8 5.5 14 5.5 14 C5.5 14 7.5 15.2 7.5 17 C7.5 20 7 24 10 24" />
+      <path d="M18 4 C21 4 20.5 8 20.5 11 C20.5 12.8 22.5 14 22.5 14 C22.5 14 20.5 15.2 20.5 17 C20.5 20 21 24 18 24" />
+      <circle cx="14" cy="14" r="1.4" fill="currentColor" stroke="none" />
+    </svg>
   );
 }
 
