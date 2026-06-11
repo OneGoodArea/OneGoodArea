@@ -67,11 +67,19 @@ export function CohortsIcon(): ReactElement {
   );
 }
 
-export function BundlesIcon(): ReactElement {
+export function BundlesIcon({
+  width = 14,
+  height = 14,
+}: {
+  width?: number;
+  height?: number;
+} = {}): ReactElement {
   /* Stack of three layers — same vocabulary the signal-bundles ADR
-     uses when it talks about a bundle as a composition of signals. */
+     uses when it talks about a bundle as a composition of signals.
+     viewBox stays 14x14; width/height scale the rendered glyph for
+     product-header use (AR-274) without re-cutting the paths. */
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <svg width={width} height={height} viewBox="0 0 14 14" fill="none" aria-hidden="true">
       <path d="M7 1.5l5.5 2.5L7 6.5 1.5 4 7 1.5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
       <path d="M1.5 7L7 9.5 12.5 7" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
       <path d="M1.5 10L7 12.5 12.5 10" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />

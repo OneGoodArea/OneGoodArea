@@ -1,18 +1,21 @@
 import type { Metadata } from "next";
-import ComingSoonPage from "@/app/design-v2/_shared/dashboard/coming-soon-page";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import BundlesClient from "@/app/design-v2/dashboard-bundles/client";
+
+/* AR-274 /dashboard/org/bundles. Replaces the AR-252 ComingSoonPage
+   placeholder. Server component is thin: auth gate then render the
+   bundles client. */
 
 export const metadata: Metadata = {
   title: "Signal bundles | OneGoodArea",
   robots: { index: false, follow: false },
 };
 
-export default function Page() {
-  return (
-    <ComingSoonPage
-      pageTitle="Signal bundles"
-      phase="Phase 3 — Levers"
-      title="Signal bundles"
-      description="Curate the subset of normalised signals your org cares about, save as a named bundle, and route every /v1/score and /v1/query call through it by default. One source of truth — when the bundle changes, every consumer in your stack picks it up."
-    />
-  );
+export default async function Page() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/get-started?callbackUrl=/dashboard/org/bundles");
+  }
+  return <BundlesClient />;
 }
