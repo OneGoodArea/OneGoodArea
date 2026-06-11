@@ -1,0 +1,518 @@
+/* ============================================================
+   AR-273 /dashboard/org/members styles.
+   Brand v3: cream column, warm-white cards, hairline borders,
+   mono caps eyebrows, serif titles. Mirrors the AR-265
+   /api-usage modal vocabulary.
+   ============================================================ */
+
+.oga-mem {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 8px 40px 40px;
+}
+
+@media (max-width: 700px) {
+  .oga-mem {
+    padding: 8px 20px 32px;
+  }
+}
+
+/* ── Product-style header (verbatim from dashboard-monitor) ──────── */
+
+.oga-mem__product {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  align-items: start;
+  padding: 8px 0 24px;
+  border-bottom: 1px solid var(--oga-ink-10);
+}
+
+.oga-mem__product-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: rgba(26, 28, 31, 0.04);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 6px;
+  color: var(--oga-ink);
+  flex-shrink: 0;
+}
+
+.oga-mem__product-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.oga-mem__product-eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-mem__product-title {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: clamp(28px, 3vw, 36px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--oga-ink);
+  margin: 0;
+}
+
+.oga-mem__product-tagline {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--oga-ink-50);
+  margin: 4px 0 0;
+  max-width: 720px;
+}
+
+/* ── Toolbar row (invite button below the header) ──────────────── */
+
+.oga-mem__toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 4px 0 0;
+}
+
+.oga-mem__invite-cta {
+  appearance: none;
+  background: var(--oga-ink);
+  border: 1px solid var(--oga-ink);
+  border-radius: 3px;
+  padding: 9px 16px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-white);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.oga-mem__invite-cta:hover {
+  background: #2A2C30;
+  border-color: #2A2C30;
+}
+
+.oga-mem__placeholder {
+  min-height: 240px;
+}
+
+/* ── Loading + error ─────────────────────────────────────────── */
+
+.oga-mem__loading,
+.oga-mem__error {
+  padding: 28px 20px;
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--oga-fg-muted);
+}
+
+.oga-mem__error {
+  color: var(--oga-status-red);
+}
+
+.oga-mem__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.oga-mem__loading-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--oga-ink-10);
+  border-top-color: var(--oga-ink);
+  border-radius: 50%;
+  animation: oga-mem-spin 0.9s linear infinite;
+}
+
+@keyframes oga-mem-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── List + row ──────────────────────────────────────────────── */
+
+.oga-mem__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.oga-mem__row {
+  display: grid;
+  grid-template-columns: 36px 1fr auto auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--oga-border);
+  transition: background 120ms ease;
+}
+
+.oga-mem__row:last-child {
+  border-bottom: none;
+}
+
+.oga-mem__row:hover {
+  background: rgba(26, 28, 31, 0.02);
+}
+
+.oga-mem__avatar {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--oga-canvas);
+  border: 1px solid var(--oga-border);
+  font-family: var(--oga-font-serif, Georgia, serif);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--oga-ink);
+}
+
+.oga-mem__row-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.oga-mem__row-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.oga-mem__row-email {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: var(--oga-fg-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.oga-mem__row-joined {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  white-space: nowrap;
+}
+
+.oga-mem__row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.oga-mem__empty {
+  padding: 28px 20px;
+  text-align: center;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+}
+
+.oga-mem__empty strong {
+  color: var(--oga-fg);
+  font-weight: 500;
+}
+
+/* ── Role chip ───────────────────────────────────────────────── */
+
+.oga-mem__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 2px;
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid var(--oga-border);
+  white-space: nowrap;
+}
+
+.oga-mem__chip[data-role="owner"] {
+  background: var(--oga-ink);
+  color: var(--oga-white);
+  border-color: var(--oga-ink);
+}
+
+.oga-mem__chip[data-role="admin"] {
+  background: transparent;
+  color: var(--oga-ink);
+  border-color: var(--oga-ink-30, rgba(26, 28, 31, 0.45));
+}
+
+.oga-mem__chip[data-role="member"] {
+  background: transparent;
+  color: var(--oga-fg-muted);
+}
+
+/* ── Row buttons ─────────────────────────────────────────────── */
+
+.oga-mem__ghost-btn,
+.oga-mem__danger-btn {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--oga-border);
+  border-radius: 2px;
+  padding: 5px 10px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+  white-space: nowrap;
+}
+
+.oga-mem__ghost-btn {
+  color: var(--oga-fg);
+}
+
+.oga-mem__ghost-btn:hover {
+  background: rgba(26, 28, 31, 0.04);
+  border-color: var(--oga-ink-30);
+}
+
+.oga-mem__danger-btn {
+  color: #a01b00;
+}
+
+.oga-mem__danger-btn:hover {
+  background: rgba(180, 54, 28, 0.06);
+  border-color: rgba(180, 54, 28, 0.45);
+}
+
+/* ── Modal pieces (mirrors AR-265 vocabulary) ────────────────── */
+
+.oga-mem__modal-body {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0 0 16px;
+}
+
+.oga-mem__modal-body--on-dark {
+  color: rgba(250, 248, 244, 0.72);
+}
+
+.oga-mem__modal-body strong {
+  color: var(--oga-fg);
+  font-weight: 500;
+}
+
+.oga-mem__modal-body--on-dark strong {
+  color: var(--oga-white);
+}
+
+.oga-mem__modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 16px;
+  border: none;
+  padding: 0;
+}
+
+.oga-mem__modal-field-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-mem__modal-input {
+  padding: 10px 12px;
+  border: 1px solid var(--oga-border);
+  border-radius: 3px;
+  background: var(--oga-white);
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  color: var(--oga-fg);
+  transition: border-color 120ms ease;
+}
+
+.oga-mem__modal-input::placeholder {
+  color: var(--oga-fg-muted);
+}
+
+.oga-mem__modal-input:focus {
+  outline: none;
+  border-color: var(--oga-ink);
+}
+
+.oga-mem__modal-error {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--oga-status-red);
+}
+
+/* ── Role picker (radio cards) ────────────────────────────────── */
+
+.oga-mem__role-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.oga-mem__role-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--oga-border);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.oga-mem__role-option[data-checked="true"] {
+  border-color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.03);
+}
+
+.oga-mem__role-option[data-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.oga-mem__role-option:not([data-disabled="true"]):hover {
+  background: rgba(26, 28, 31, 0.02);
+}
+
+.oga-mem__role-radio {
+  margin-top: 3px;
+  accent-color: var(--oga-ink);
+}
+
+.oga-mem__role-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.oga-mem__role-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--oga-fg);
+}
+
+.oga-mem__role-desc {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--oga-fg-muted);
+}
+
+/* ── Modal footer buttons (mirrors AR-265) ───────────────────── */
+
+.oga-mem__modal-primary,
+.oga-mem__modal-secondary,
+.oga-mem__modal-danger {
+  appearance: none;
+  border-radius: 3px;
+  padding: 8px 16px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+  white-space: nowrap;
+}
+
+.oga-mem__modal-primary {
+  background: var(--oga-ink);
+  border: 1px solid var(--oga-ink);
+  color: var(--oga-white);
+}
+
+.oga-mem__modal-primary:hover:not(:disabled) {
+  background: #2A2C30;
+  border-color: #2A2C30;
+}
+
+.oga-mem__modal-secondary {
+  background: transparent;
+  border: 1px solid var(--oga-border);
+  color: var(--oga-fg);
+}
+
+.oga-mem__modal-secondary:hover:not(:disabled) {
+  background: rgba(26, 28, 31, 0.04);
+  border-color: var(--oga-ink-30);
+}
+
+.oga-mem__modal-secondary--on-dark {
+  border-color: rgba(250, 248, 244, 0.18);
+  color: var(--oga-white);
+}
+
+.oga-mem__modal-secondary--on-dark:hover:not(:disabled) {
+  background: rgba(250, 248, 244, 0.08);
+  border-color: rgba(250, 248, 244, 0.40);
+}
+
+.oga-mem__modal-danger {
+  background: var(--oga-status-red);
+  border: 1px solid var(--oga-status-red);
+  color: var(--oga-white);
+}
+
+.oga-mem__modal-danger:hover:not(:disabled) {
+  background: #9A2E18;
+  border-color: #9A2E18;
+}
+
+.oga-mem__modal-primary:disabled,
+.oga-mem__modal-secondary:disabled,
+.oga-mem__modal-danger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Responsive: collapse the joined-date column on narrow ──── */
+
+@media (max-width: 720px) {
+  .oga-mem__row {
+    grid-template-columns: 36px 1fr auto;
+    row-gap: 6px;
+  }
+  .oga-mem__row-joined {
+    display: none;
+  }
+  .oga-mem__row-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+}

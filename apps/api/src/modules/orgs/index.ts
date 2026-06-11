@@ -201,3 +201,15 @@ export async function removeMember(orgId: string, userId: string): Promise<boole
 export async function countOwners(orgId: string): Promise<number> {
   return repo.countOwners(orgId);
 }
+
+/** Change a member's role (AR-273). Returns true if a row was updated.
+    The endpoint layer handles RBAC + last-owner protection; this just
+    flips the column. Idempotent — same role twice is a no-op that still
+    returns true. */
+export async function changeMemberRole(
+  orgId: string,
+  userId: string,
+  role: OrgRole,
+): Promise<boolean> {
+  return repo.updateMemberRole(orgId, userId, role);
+}

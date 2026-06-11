@@ -36,6 +36,7 @@ import {
   updateOrg,
   addMember,
   removeMember,
+  changeMemberRole,
   countOwners,
   hasAtLeastRole,
 } from "./modules/orgs";
@@ -43,6 +44,7 @@ import {
   CreateOrgRequestSchema,
   UpdateOrgRequestSchema,
   AddMemberRequestSchema,
+  UpdateMemberRoleRequestSchema,
   CreateInvitationRequestSchema,
   CreateBundleRequestSchema,
   UpdateBundleRequestSchema,
@@ -1251,6 +1253,71 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     } catch (error) {
       if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
       logger.error("[v1/orgs/:id/members] add error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  // AR-273: change a member's role. RBAC + role-elevation rules mirror
+  // POST /v1/orgs/:id/members:
+  //   - admin or owner can call
+  //   - granting 'owner' is owner-only
+  //   - downgrading the last owner is refused (would orphan the org)
+  app.patch("/v1/orgs/:id/members/:userId", async (request, reply) => {
+    try {
+      const callerId = await requireApiAccess(request, reply);
+      if (!callerId) return reply;
+      const { id: orgId, userId: targetId } = request.params as { id: string; userId: string };
+      const callerRole = await getRoleInOrg(orgId, callerId);
+      if (!callerRole) return reply.code(404).send({ error: "Org not found" });
+      if (!hasAtLeastRole(callerRole, "admin")) {
+        return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+      }
+      const parsed = UpdateMemberRoleRequestSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+      }
+      const targetRole = parsed.data.role;
+      if (targetRole === "owner" && !hasAtLeastRole(callerRole, "owner")) {
+        return reply.code(403).send({
+          error: "Only an owner can grant the owner role.",
+          code: "cannot_grant_owner",
+        });
+      }
+      const currentRole = await getRoleInOrg(orgId, targetId);
+      if (!currentRole) return reply.code(404).send({ error: "Member not found in org" });
+      // Chain-of-authority: modifying an owner-role member is owner-only,
+      // mirroring the DELETE endpoint's cannot_remove_owner_as_admin gate.
+      // Applies unconditionally on currentRole === "owner" — without this,
+      // an admin in a 2+ owner org could demote any owner to member and
+      // take effective control.
+      if (currentRole === "owner" && !hasAtLeastRole(callerRole, "owner")) {
+        return reply.code(403).send({
+          error: "Only an owner can modify an owner.",
+          code: "cannot_modify_owner_as_admin",
+        });
+      }
+      // Last-owner protection: refuse to demote the only remaining owner.
+      if (currentRole === "owner" && targetRole !== "owner") {
+        const owners = await countOwners(orgId);
+        if (owners <= 1) {
+          return reply.code(409).send({
+            error: "Cannot demote the last owner of the org.",
+            code: "last_owner",
+          });
+        }
+      }
+      const ok = await changeMemberRole(orgId, targetId, targetRole);
+      if (!ok) return reply.code(404).send({ error: "Member not found in org" });
+      trackEvent("api.org.member_role_changed", callerId, {
+        orgId,
+        targetUserId: targetId,
+        from: currentRole,
+        to: targetRole,
+      });
+      return reply.code(200).send({ ok: true });
+    } catch (error) {
+      if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      logger.error("[v1/orgs/:id/members/:userId] patch error:", error);
       return reply.code(500).send({ error: "Internal server error" });
     }
   });

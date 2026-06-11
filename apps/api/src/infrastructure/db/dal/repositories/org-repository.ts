@@ -126,4 +126,17 @@ export class OrgRepository {
     `);
     return result[0]?.n ?? 0;
   }
+
+  /** AR-273: change a member's role. RETURNING tells the module whether
+      a row actually matched — used by the endpoint to differentiate 200
+      vs 404. */
+  async updateMemberRole(orgId: string, userId: string, role: OrgRole): Promise<boolean> {
+    const result = await sql`
+      UPDATE org_members
+         SET role = ${role}
+       WHERE org_id = ${orgId} AND user_id = ${userId}
+       RETURNING user_id
+    `;
+    return result.length > 0;
+  }
 }
