@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
-import ComingSoonPage from "@/app/design-v2/_shared/dashboard/coming-soon-page";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import PresetsClient from "@/app/design-v2/dashboard-presets/client";
+
+/* AR-276 /dashboard/org/presets. Replaces the AR-252 ComingSoonPage.
+   Server component is thin: auth-gate then render the presets client. */
 
 export const metadata: Metadata = {
   title: "Scoring presets | OneGoodArea",
   robots: { index: false, follow: false },
 };
 
-export default function Page() {
-  return (
-    <ComingSoonPage
-      pageTitle="Scoring presets"
-      phase="Phase 3 — Levers"
-      title="Custom scoring presets"
-      description="Beyond the four built-in profiles (moving, business, investing, research), define your own dimension weights as a named preset — slug it, version it, share it across the org. Pass the slug as preset_id on any /v1/score call."
-    />
-  );
+export default async function Page() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/get-started?callbackUrl=/dashboard/org/presets");
+  }
+  return <PresetsClient />;
 }
