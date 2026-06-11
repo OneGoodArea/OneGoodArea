@@ -82,6 +82,16 @@ export async function PATCH(
 
   const currentRole = await getTargetRole(ctx.orgId, targetUserId);
   if (!currentRole) return NextResponse.json({ error: "Member not found" }, { status: 404 });
+  /* Chain-of-authority gate — admins must not be able to touch owner
+     rows, period. Without this, an admin in a 2+ owner org could
+     demote an owner via PATCH and take effective control. Last-owner
+     protection alone isn't enough. Mirrors apps/api's PATCH gate. */
+  if (currentRole === "owner" && !hasAtLeastRole(ctx.role, "owner")) {
+    return NextResponse.json(
+      { error: "Only an owner can modify an owner", code: "cannot_modify_owner_as_admin" },
+      { status: 403 },
+    );
+  }
   if (currentRole === "owner" && parsed.data.role !== "owner") {
     const owners = await countOwners(ctx.orgId);
     if (owners <= 1) {
@@ -121,6 +131,16 @@ export async function DELETE(
 
   const currentRole = await getTargetRole(ctx.orgId, targetUserId);
   if (!currentRole) return NextResponse.json({ error: "Member not found" }, { status: 404 });
+  /* Chain-of-authority — admins must not be able to remove owners.
+     Mirrors apps/api's DELETE gate; if this drifts again the right
+     fix is to route this BFF through the apps/api endpoint instead
+     of duplicating the SQL. */
+  if (currentRole === "owner" && !hasAtLeastRole(ctx.role, "owner")) {
+    return NextResponse.json(
+      { error: "Only an owner can remove an owner", code: "cannot_remove_owner_as_admin" },
+      { status: 403 },
+    );
+  }
   if (currentRole === "owner") {
     const owners = await countOwners(ctx.orgId);
     if (owners <= 1) {

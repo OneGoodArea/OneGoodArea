@@ -254,15 +254,23 @@ function MembersList({
   }
 
   const callerCanManage = hasAtLeastRole(callerRole, "admin");
+  const callerIsOwner = callerRole === "owner";
   const ownerCount = members.filter((m) => m.role === "owner").length;
 
   return (
     <ul className="oga-mem__list">
       {members.map((m) => {
-        /* Last-owner protection mirrors the server. UI hides the
-           actions so users don't get a 409 from the API. */
-        const isLastOwner = m.role === "owner" && ownerCount <= 1;
-        const showActions = callerCanManage && !isLastOwner;
+        /* UI mirrors the server's chain-of-authority + last-owner guards
+           so users don't get 403/409 from clicks that were never going
+           to succeed:
+             - Only an owner can modify another owner (chain-of-authority).
+               Admin callers see no actions on owner rows at all, not
+               just the last one — server enforces cannot_modify_owner_as_admin.
+             - Even an owner can't demote/remove the only remaining owner. */
+        const isOwnerTarget = m.role === "owner";
+        const isLastOwner = isOwnerTarget && ownerCount <= 1;
+        const ownerGateOk = !isOwnerTarget || callerIsOwner;
+        const showActions = callerCanManage && ownerGateOk && !isLastOwner;
         return (
           <li key={m.user_id} className="oga-mem__row">
             <Avatar label={m.name ?? m.email} />
@@ -783,6 +791,8 @@ function messageForRoleError(code: string | undefined, fallback: string | undefi
   switch (code) {
     case "cannot_grant_owner":
       return "Only an owner can grant the owner role.";
+    case "cannot_modify_owner_as_admin":
+      return "Only an owner can change an owner's role.";
     case "last_owner":
       return "You can't demote the last owner of the org.";
     case "admin_required":

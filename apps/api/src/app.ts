@@ -1283,9 +1283,20 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
           code: "cannot_grant_owner",
         });
       }
-      // Last-owner protection: refuse to demote the only remaining owner.
       const currentRole = await getRoleInOrg(orgId, targetId);
       if (!currentRole) return reply.code(404).send({ error: "Member not found in org" });
+      // Chain-of-authority: modifying an owner-role member is owner-only,
+      // mirroring the DELETE endpoint's cannot_remove_owner_as_admin gate.
+      // Applies unconditionally on currentRole === "owner" — without this,
+      // an admin in a 2+ owner org could demote any owner to member and
+      // take effective control.
+      if (currentRole === "owner" && !hasAtLeastRole(callerRole, "owner")) {
+        return reply.code(403).send({
+          error: "Only an owner can modify an owner.",
+          code: "cannot_modify_owner_as_admin",
+        });
+      }
+      // Last-owner protection: refuse to demote the only remaining owner.
       if (currentRole === "owner" && targetRole !== "owner") {
         const owners = await countOwners(orgId);
         if (owners <= 1) {
