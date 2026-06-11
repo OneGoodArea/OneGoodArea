@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
-import ComingSoonPage from "@/app/design-v2/_shared/dashboard/coming-soon-page";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import CohortsClient from "@/app/design-v2/dashboard-cohorts/client";
+
+/* AR-277 /dashboard/org/cohorts. Replaces the AR-252 ComingSoonPage.
+   Thin auth-gate, then render the cohorts client. */
 
 export const metadata: Metadata = {
   title: "Peer cohorts | OneGoodArea",
   robots: { index: false, follow: false },
 };
 
-export default function Page() {
-  return (
-    <ComingSoonPage
-      pageTitle="Peer cohorts"
-      phase="Phase 3 — Levers"
-      title="Peer cohorts"
-      description="Define a comparison set — postcodes that resemble each other on the dimensions you care about. Use cohorts to benchmark an area against its peers rather than the national average. Saved cohorts plug into /v1/peers, /v1/score and the dashboard's comparison views."
-    />
-  );
+export default async function Page() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/get-started?callbackUrl=/dashboard/org/cohorts");
+  }
+  return <CohortsClient />;
 }

@@ -56,10 +56,17 @@ export function WebhookIcon(): ReactElement {
   );
 }
 
-export function CohortsIcon(): ReactElement {
-  /* Three intersecting circles — cohort overlap. */
+export function CohortsIcon({
+  width = 14,
+  height = 14,
+}: {
+  width?: number;
+  height?: number;
+} = {}): ReactElement {
+  /* Three intersecting circles — cohort overlap. viewBox stays 14x14;
+     width/height scale for AR-277 product-header use. */
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <svg width={width} height={height} viewBox="0 0 14 14" fill="none" aria-hidden="true">
       <circle cx="5" cy="5" r="2.8" stroke="currentColor" strokeWidth="1.3" />
       <circle cx="9" cy="5" r="2.8" stroke="currentColor" strokeWidth="1.3" />
       <circle cx="7" cy="9" r="2.8" stroke="currentColor" strokeWidth="1.3" />
