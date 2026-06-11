@@ -29,8 +29,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { AppShell, AppCard, GhostCta } from "../_shared/app-shell";
+import { AppShell, AppCard } from "../_shared/app-shell";
 import { Modal } from "../_shared/dashboard/modal";
+import { MembersIcon } from "../_shared/dashboard/nav-icons";
 import "./client.css";
 
 type Role = "owner" | "admin" | "member";
@@ -114,7 +115,7 @@ export default function MembersClient() {
 
   if (status === "loading") {
     return (
-      <AppShell title="Team members">
+      <AppShell>
         <div className="oga-mem__placeholder" />
       </AppShell>
     );
@@ -127,16 +128,38 @@ export default function MembersClient() {
   const callerCanManage = hasAtLeastRole(data?.callerRole ?? null, "admin");
 
   return (
-    <AppShell
-      title="Team members"
-      subtitle="Invite teammates, manage their roles, and revoke pending invitations."
-      actions={
-        callerCanManage ? (
-          <GhostCta onClick={() => setInviteOpen(true)}>+ Invite member</GhostCta>
-        ) : null
-      }
-    >
+    <AppShell>
       <div className="oga-mem">
+        {/* Product-style header — mirrors dashboard-monitor / signals /
+            scores exactly. 2-column grid (boxed mark + text), hairline
+            divider beneath. */}
+        <header className="oga-mem__product">
+          <span className="oga-mem__product-mark" aria-hidden>
+            <MembersIcon width={56} height={56} />
+          </span>
+          <div className="oga-mem__product-text">
+            <span className="oga-mem__product-eyebrow">Team</span>
+            <h2 className="oga-mem__product-title">Team members</h2>
+            <p className="oga-mem__product-tagline">
+              Invite teammates by email, assign Member or Admin roles, and
+              revoke pending invitations. Owners hold the chain of authority,
+              only an Owner can grant Owner or modify another Owner&apos;s role.
+            </p>
+          </div>
+        </header>
+
+        {callerCanManage ? (
+          <div className="oga-mem__toolbar">
+            <button
+              type="button"
+              onClick={() => setInviteOpen(true)}
+              className="oga-mem__invite-cta"
+            >
+              + Invite member
+            </button>
+          </div>
+        ) : null}
+
         {loading ? (
           <Loading />
         ) : error ? (

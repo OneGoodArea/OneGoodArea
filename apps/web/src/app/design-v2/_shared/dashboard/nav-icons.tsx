@@ -20,9 +20,19 @@
 
 import type { ReactElement } from "react";
 
-export function MembersIcon(): ReactElement {
+export function MembersIcon({
+  width = 14,
+  height = 14,
+}: {
+  width?: number;
+  height?: number;
+} = {}): ReactElement {
+  /* viewBox stays 14x14 — width/height props scale the rendered glyph
+     for product-header use (e.g. width={56}) without re-cutting the
+     SVG paths. Default arg lets existing callers (sidebar, sample
+     dashboards) keep their no-prop call shape. */
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <svg width={width} height={height} viewBox="0 0 14 14" fill="none" aria-hidden="true">
       <circle cx="5" cy="5" r="2" stroke="currentColor" strokeWidth="1.3" />
       <circle cx="10" cy="5.5" r="1.6" stroke="currentColor" strokeWidth="1.3" />
       <path d="M1.5 11.5c.6-1.7 2-2.7 3.5-2.7s2.9 1 3.5 2.7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
