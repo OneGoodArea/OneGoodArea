@@ -63,6 +63,24 @@ export interface OrgMemberRow {
   joined_at: string;
 }
 
+/** AR-272 — org_invitations row. Plaintext token NEVER lives here; we
+    keep only the SHA-256 hash. The email is stored lowercased so the
+    partial-unique pending index doesn't get bypassed by mixed-case
+    duplicates. */
+export interface OrgInvitationRow {
+  id: string;
+  org_id: string;
+  email: string;
+  role: "member" | "admin";
+  token_hash: string;
+  invited_by_user_id: string;
+  expires_at: string;
+  accepted_at: string | null;
+  accepted_by_user_id: string | null;
+  revoked_at: string | null;
+  created_at: string;
+}
+
 /** Levers (AR-195) — signal_bundles row. signal_keys is a Postgres TEXT[]
     that the Neon driver surfaces as a JS string[]. */
 export interface SignalBundleRow {
