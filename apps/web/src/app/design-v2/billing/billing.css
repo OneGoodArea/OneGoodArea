@@ -1,331 +1,444 @@
-/* /billing CSS — Brand v3 (AR-204 close-out 8/15).
-   Co-located, zero design declarations in TSX (only the
-   progress-bar fill width crosses as a runtime value).
-
-   Two DARK panels (ConfirmPanel + CurrentPlanStrip) sit above the
-   PlanGrid + FullComparisonLink + McpAddOnSection on a cream main.
-   Drops the legacy chartreuse glow + chartreuse italic accents.
-*/
+/* /dashboard/billing — AR-280 visual rewrite.
+   Brand v3 vocabulary throughout: AppCards for sections, mono-caps
+   buttons (dark ink primary, transparent ghost), tight spacing,
+   product-style header. No more legacy dark CurrentPlanStrip, no
+   more shared marketing PlanGrid. */
 
 .oga-billing {
-  padding: 28px 40px 64px;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 24px;
+  padding: 8px 40px 40px;
 }
-@media (max-width: 880px) {
+
+@media (max-width: 700px) {
   .oga-billing {
-    padding: 24px 20px 48px;
+    padding: 8px 20px 32px;
   }
 }
 
-/* ============================================================
-   Confirm panel (DARK)
-   ============================================================ */
-.oga-billing__confirm {
-  background: var(--oga-ink);
-  color: var(--oga-white);
-  border: 1px solid var(--oga-ink);
-  border-radius: var(--oga-radius-sm);
-  padding: 26px 28px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 24px;
-  flex-wrap: wrap;
+/* ── Product-style header (verbatim from dashboard-monitor) ──────── */
+
+.oga-billing__product {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  align-items: start;
+  padding: 8px 0 24px;
+  border-bottom: 1px solid var(--oga-ink-10);
 }
-.oga-billing__confirm-body {
-  max-width: 60ch;
+
+.oga-billing__product-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: rgba(26, 28, 31, 0.04);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 6px;
+  color: var(--oga-ink);
+  flex-shrink: 0;
+}
+
+.oga-billing__product-text {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
+  min-width: 0;
 }
-.oga-billing__confirm-eyebrow {
+
+.oga-billing__product-eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-billing__product-title {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: clamp(28px, 3vw, 36px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--oga-ink);
+  margin: 0;
+}
+
+.oga-billing__product-tagline {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--oga-ink-50);
+  margin: 4px 0 0;
+  max-width: 720px;
+}
+
+.oga-billing__product-tagline strong {
+  color: var(--oga-ink);
+  font-weight: 500;
+}
+
+/* ── Shared row label (mono caps eyebrow inside cards) ───────────── */
+
+.oga-billing__row-label {
   font-family: var(--oga-font-mono);
   font-size: 10px;
   font-weight: 500;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(250, 248, 244, 0.65);
+  color: var(--oga-ink-50);
+}
+
+/* ── Current plan card ───────────────────────────────────────────── */
+
+.oga-billing__current {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr auto;
+  gap: 28px;
+  align-items: center;
+  padding: 18px 22px;
+}
+
+@media (max-width: 760px) {
+  .oga-billing__current {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 16px;
+  }
+}
+
+.oga-billing__current-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.oga-billing__current-plan {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--oga-ink);
+  line-height: 1.05;
+  letter-spacing: -0.012em;
+}
+
+.oga-billing__current-mid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.oga-billing__row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.oga-billing__current-pct {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--oga-ink);
+}
+
+.oga-billing__current-pct[data-tone="moderate"] {
+  color: #b07d3a;
+}
+
+.oga-billing__current-pct[data-tone="weak"] {
+  color: var(--oga-status-red);
+}
+
+.oga-billing__current-counts {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--oga-font-mono);
+}
+
+.oga-billing__current-used {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--oga-ink);
+}
+
+.oga-billing__current-limit {
+  font-size: 13px;
+  color: var(--oga-ink-50);
+}
+
+.oga-billing__bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(26, 28, 31, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.oga-billing__bar-fill {
+  height: 100%;
+  background: var(--oga-ink);
+  border-radius: 2px;
+  transition: width 200ms ease;
+}
+
+.oga-billing__bar-fill[data-tone="moderate"] { background: #b07d3a; }
+.oga-billing__bar-fill[data-tone="weak"]     { background: var(--oga-status-red); }
+
+.oga-billing__current-reset {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-billing__current-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.oga-billing__current-hint {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--oga-ink-50);
+  max-width: 220px;
+  text-align: right;
+}
+
+/* ── Plan list (replaces marketing PlanGrid in the dashboard) ────── */
+
+.oga-billing__plans {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.oga-billing__plan-row {
+  display: grid;
+  grid-template-columns: 44px 1fr auto auto;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--oga-ink-10);
+  transition: background 120ms ease;
+}
+
+.oga-billing__plan-glyph {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  color: var(--oga-ink);
+  flex-shrink: 0;
 }
-.oga-billing__confirm-eyebrow-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--oga-white);
+
+.oga-billing__plan-glyph svg {
+  width: 100%;
+  height: 100%;
 }
-.oga-billing__confirm-title {
-  font-family: var(--oga-font-sans);
-  font-size: 28px;
-  font-weight: 500;
-  letter-spacing: -0.018em;
-  color: var(--oga-white);
-  line-height: 1.1;
+
+.oga-billing__plan-row:last-of-type {
+  border-bottom: none;
 }
-.oga-billing__confirm-price {
-  color: var(--oga-white);
-  font-weight: 500;
+
+.oga-billing__plan-row:hover {
+  background: rgba(26, 28, 31, 0.02);
 }
-.oga-billing__confirm-cadence {
-  font-family: var(--oga-font-mono);
+
+.oga-billing__plan-row[data-current="true"] {
+  background: rgba(26, 28, 31, 0.03);
+}
+
+.oga-billing__plan-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.oga-billing__plan-name {
   font-size: 14px;
-  letter-spacing: 0.04em;
-  color: rgba(250, 248, 244, 0.55);
+  font-weight: 500;
+  color: var(--oga-ink);
 }
-.oga-billing__confirm-meta {
+
+.oga-billing__plan-tagline {
+  font-size: 12.5px;
+  color: var(--oga-ink-50);
+  line-height: 1.4;
+}
+
+.oga-billing__plan-price {
   font-family: var(--oga-font-mono);
-  font-size: 11.5px;
-  color: rgba(250, 248, 244, 0.65);
-  letter-spacing: 0.04em;
+  font-size: 12.5px;
+  color: var(--oga-ink);
+  white-space: nowrap;
 }
-.oga-billing__confirm-error {
-  margin-top: 6px;
+
+.oga-billing__plan-current-chip {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+  background: rgba(26, 28, 31, 0.06);
+  padding: 4px 10px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.oga-billing__plan-disabled {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .oga-billing__plan-row {
+    grid-template-columns: 36px 1fr auto;
+    row-gap: 8px;
+  }
+  .oga-billing__plan-glyph {
+    width: 36px;
+    height: 36px;
+  }
+  .oga-billing__plan-price {
+    grid-column: 2 / -1;
+  }
+}
+
+/* ── Compare footer (inside the Switch plan card) ────────────────── */
+
+.oga-billing__compare-foot {
+  padding: 14px 22px;
+  border-top: 1px solid var(--oga-ink-10);
+  font-size: 13px;
+  color: var(--oga-ink-50);
+}
+
+.oga-billing__compare-link {
   font-family: var(--oga-font-mono);
   font-size: 11px;
-  color: #ffb8a8;
-  padding: 8px 12px;
-  background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.32);
-  border-radius: var(--oga-radius-sm);
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--oga-ink-30, rgba(26, 28, 31, 0.45));
+  padding-bottom: 1px;
+  margin-left: 4px;
+  transition: border-color 120ms ease;
+}
+
+.oga-billing__compare-link:hover {
+  border-color: var(--oga-ink);
+}
+
+/* ── Confirm panel (when ?plan=<id> is in the URL) ───────────────── */
+
+.oga-billing__confirm {
+  padding: 18px 22px;
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-left: 2px solid var(--oga-ink);
+  border-radius: 4px;
+}
+
+.oga-billing__confirm-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.oga-billing__confirm-plan {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  color: var(--oga-ink);
+}
+
+.oga-billing__confirm-price {
+  font-family: var(--oga-font-mono);
+  font-size: 12.5px;
+  color: var(--oga-ink-50);
+}
+
+.oga-billing__confirm-body {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--oga-ink-50);
+  margin: 0 0 14px;
+  max-width: 60ch;
+}
+
+.oga-billing__confirm-error {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--oga-status-red);
 }
 
 .oga-billing__confirm-actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  align-items: center;
-}
-.oga-billing__confirm-primary {
-  font-family: var(--oga-font-sans);
-  font-size: 13.5px;
-  font-weight: 500;
-  letter-spacing: -0.005em;
-  color: var(--oga-ink);
-  background: var(--oga-white);
-  padding: 12px 20px;
-  border-radius: var(--oga-radius-sm);
-  border: 1px solid var(--oga-white);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: filter var(--oga-dur-fast) var(--oga-ease);
-}
-.oga-billing__confirm-primary:hover:not(:disabled) {
-  filter: brightness(0.94);
-}
-.oga-billing__confirm-primary:disabled {
-  opacity: 0.7;
-  cursor: default;
-}
-.oga-billing__confirm-ghost {
-  font-family: var(--oga-font-sans);
-  font-size: 13.5px;
-  font-weight: 500;
-  letter-spacing: -0.005em;
-  color: var(--oga-white);
-  background: transparent;
-  border: 1px solid rgba(250, 248, 244, 0.24);
-  padding: 11px 18px;
-  border-radius: var(--oga-radius-sm);
-  cursor: pointer;
-  transition:
-    background var(--oga-dur-fast) var(--oga-ease),
-    border-color var(--oga-dur-fast) var(--oga-ease);
-}
-.oga-billing__confirm-ghost:hover:not(:disabled) {
-  background: rgba(250, 248, 244, 0.06);
-  border-color: rgba(250, 248, 244, 0.5);
-}
-.oga-billing__confirm-ghost:disabled {
-  opacity: 0.5;
-  cursor: default;
 }
 
-/* ============================================================
-   Current plan strip (DARK, 2-col)
-   ============================================================ */
-.oga-billing__current {
+/* ── Brand mono-caps buttons (dark ink primary, transparent ghost) ── */
+
+.oga-billing__btn-primary,
+.oga-billing__btn-ghost {
+  appearance: none;
+  border-radius: 3px;
+  padding: 8px 16px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+  white-space: nowrap;
+}
+
+.oga-billing__btn-primary {
   background: var(--oga-ink);
+  border: 1px solid var(--oga-ink);
   color: var(--oga-white);
-  border-radius: var(--oga-radius-sm);
-  overflow: hidden;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0;
-}
-@media (max-width: 720px) {
-  .oga-billing__current {
-    grid-template-columns: 1fr;
-  }
-}
-.oga-billing__current-col {
-  padding: 26px 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.oga-billing__current-col + .oga-billing__current-col {
-  border-left: 1px solid rgba(250, 248, 244, 0.08);
-}
-@media (max-width: 720px) {
-  .oga-billing__current-col + .oga-billing__current-col {
-    border-left: none;
-    border-top: 1px solid rgba(250, 248, 244, 0.08);
-  }
 }
 
-.oga-billing__current-eyebrow {
-  font-family: var(--oga-font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(250, 248, 244, 0.7);
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
+.oga-billing__btn-primary:hover:not(:disabled) {
+  background: #2A2C30;
+  border-color: #2A2C30;
 }
-.oga-billing__current-eyebrow-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--oga-white);
-}
-.oga-billing__current-plan {
-  font-family: var(--oga-font-sans);
-  font-size: 32px;
-  font-weight: 500;
-  letter-spacing: -0.018em;
-  color: var(--oga-white);
-  line-height: 1;
-}
-.oga-billing__current-manage {
-  margin-top: 6px;
-  align-self: flex-start;
-  font-family: var(--oga-font-sans);
-  font-size: 13.5px;
-  font-weight: 500;
-  letter-spacing: -0.005em;
-  color: var(--oga-white);
+
+.oga-billing__btn-ghost {
   background: transparent;
-  border: 1px solid rgba(250, 248, 244, 0.24);
-  padding: 10px 18px;
-  border-radius: var(--oga-radius-sm);
-  cursor: pointer;
-  transition:
-    background var(--oga-dur-fast) var(--oga-ease),
-    border-color var(--oga-dur-fast) var(--oga-ease);
-}
-.oga-billing__current-manage:hover:not(:disabled) {
-  background: rgba(250, 248, 244, 0.06);
-  border-color: rgba(250, 248, 244, 0.5);
-}
-.oga-billing__current-manage:disabled {
-  opacity: 0.7;
-  cursor: default;
+  border: 1px solid var(--oga-ink-10);
+  color: var(--oga-ink);
 }
 
-.oga-billing__current-usage-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-family: var(--oga-font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(250, 248, 244, 0.6);
-}
-.oga-billing__current-pct {
-  /* tone-driven via parent data-tone */
-}
-.oga-billing__current[data-tone="strong"] .oga-billing__current-pct {
-  color: var(--oga-white);
-}
-.oga-billing__current[data-tone="moderate"] .oga-billing__current-pct {
-  color: #ffe07a;
-}
-.oga-billing__current[data-tone="weak"] .oga-billing__current-pct {
-  color: #ffb8a8;
+.oga-billing__btn-ghost:hover:not(:disabled) {
+  background: rgba(26, 28, 31, 0.04);
+  border-color: rgba(26, 28, 31, 0.45);
 }
 
-.oga-billing__current-usage-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-.oga-billing__current-usage-value {
-  font-family: var(--oga-font-sans);
-  font-size: 38px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  color: var(--oga-white);
-  line-height: 1;
-}
-.oga-billing__current-usage-limit {
-  font-family: var(--oga-font-mono);
-  font-size: 14px;
-  color: rgba(250, 248, 244, 0.5);
-}
-
-.oga-billing__current-bar {
-  height: 5px;
-  width: 100%;
-  background: rgba(250, 248, 244, 0.08);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.oga-billing__current-bar-fill {
-  height: 100%;
-  background: var(--oga-white);
-  transition: width 420ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-.oga-billing__current[data-tone="moderate"] .oga-billing__current-bar-fill {
-  background: #ffe07a;
-}
-.oga-billing__current[data-tone="weak"] .oga-billing__current-bar-fill {
-  background: #ffb8a8;
-}
-
-.oga-billing__current-reset {
-  font-family: var(--oga-font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  color: rgba(250, 248, 244, 0.45);
-}
-
-/* ============================================================
-   Full comparison link (cream, ghost rectangle)
-   ============================================================ */
-.oga-billing__compare {
-  display: flex;
-  justify-content: center;
-  padding: 4px 0 12px;
-}
-.oga-billing__compare-link {
-  font-family: var(--oga-font-sans);
-  font-size: 13.5px;
-  font-weight: 500;
-  letter-spacing: -0.005em;
-  color: var(--oga-fg);
-  background: var(--oga-white);
-  padding: 10px 18px;
-  border-radius: var(--oga-radius-sm);
-  text-decoration: none;
-  border: 1px solid var(--oga-border);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition:
-    border-color var(--oga-dur-fast) var(--oga-ease),
-    background var(--oga-dur-fast) var(--oga-ease);
-}
-.oga-billing__compare-link:hover {
-  border-color: var(--oga-fg);
-  background: var(--oga-canvas);
+.oga-billing__btn-primary:disabled,
+.oga-billing__btn-ghost:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
