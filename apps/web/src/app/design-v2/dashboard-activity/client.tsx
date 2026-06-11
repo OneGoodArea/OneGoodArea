@@ -55,9 +55,31 @@ function labelFor(event: string): string {
 
 export default function ActivityClient() {
   return (
-    <AppShell title="Recent activity">
+    <AppShell>
       <Body />
     </AppShell>
+  );
+}
+
+/* Brand mark for the activity product header. Reuses the exact "read"
+   path data from NavIconDark (the sidebar's Recent activity glyph) at
+   product-mark scale so the two surfaces line up visually. */
+function ActivityMark() {
+  return (
+    <svg
+      width="56"
+      height="56"
+      viewBox="0 0 28 28"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.7}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M4 7 L14 9 L24 7 V22 L14 20 L4 22 Z" />
+      <path d="M14 9 V20" />
+    </svg>
   );
 }
 
@@ -102,10 +124,19 @@ function Body() {
 
   return (
     <div className="oga-activity">
-      <p className="oga-activity__sub">
-        Every API call, every change. Newest first. Each row links to the
-        event metadata your code received.
-      </p>
+      <header className="oga-activity__product">
+        <span className="oga-activity__product-mark" aria-hidden>
+          <ActivityMark />
+        </span>
+        <div className="oga-activity__product-text">
+          <span className="oga-activity__product-eyebrow">Activity</span>
+          <h2 className="oga-activity__product-title">Recent activity</h2>
+          <p className="oga-activity__product-tagline">
+            Every API call, every change. Newest first. Each row links to the
+            event metadata your code received.
+          </p>
+        </div>
+      </header>
 
       {loading && !data ? <SkeletonList /> : null}
 
