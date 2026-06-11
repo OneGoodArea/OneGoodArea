@@ -1,21 +1,27 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent, type InputHTMLAttributes, type ReactNode } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { AppShell, AppCard, PrimaryCta, GhostCta } from "../_shared/app-shell";
+import { AppShell, AppCard, GhostCta } from "../_shared/app-shell";
 import "./settings.css";
 
-/* /settings — Brand v3 rewrite (AR-204 close-out 7/15).
+/* /settings — AR-279 polish + post-restructure content audit.
 
-   Account info, password change, subscription, delete account.
-   All real endpoints preserved: /api/settings/password,
-   /api/settings/subscription, /api/settings/delete-account,
-   /api/stripe/cancel, /api/stripe/portal.
+   Pre-AR-279 the page mixed account-level concerns (name, email,
+   password, delete) with subscription mgmt (plan name, Stripe
+   portal, cancel). After the signal-first restructure and the
+   Phase 3 Levers UI, subscription mgmt belongs to the upcoming
+   /dashboard/billing surface (AR-280). This page is now strictly
+   ACCOUNT-LEVEL: who you are, how you authenticate, and how you
+   leave. Subscription card becomes a thin summary that links out
+   to /dashboard/billing for the real mgmt actions.
 
-   Per the dashboard proposal (PR #104), this page will later gain
-   an "Org membership" row showing the user's orgs + role in each.
-   This PR is just the token migration + visual cleanup. */
+   Endpoints preserved untouched:
+     /api/settings/password         change password
+     /api/settings/subscription     read summary (plan + cancelAt)
+     /api/settings/delete-account   delete account */
 
 type Subscription = {
   plan: string;
@@ -51,7 +57,7 @@ export default function SettingsClient() {
 
   if (status === "loading") {
     return (
-      <AppShell title="Settings">
+      <AppShell>
         <div className="oga-settings__placeholder" />
       </AppShell>
     );
@@ -62,21 +68,65 @@ export default function SettingsClient() {
   }
 
   return (
-    <AppShell title="Settings" subtitle="Account, password, subscription, data.">
+    <AppShell>
       <div className="oga-settings">
+        <header className="oga-settings__product">
+          <span className="oga-settings__product-mark" aria-hidden>
+            <SettingsMark />
+          </span>
+          <div className="oga-settings__product-text">
+            <span className="oga-settings__product-eyebrow">Account</span>
+            <h2 className="oga-settings__product-title">Settings</h2>
+            <p className="oga-settings__product-tagline">
+              Who you are, how you authenticate, and how you leave. For
+              subscription mgmt + invoices use{" "}
+              <Link href="/dashboard/billing" className="oga-settings__inline-link">
+                Billing
+              </Link>
+              . For team mgmt use{" "}
+              <Link href="/dashboard/org/members" className="oga-settings__inline-link">
+                Team members
+              </Link>
+              .
+            </p>
+          </div>
+        </header>
+
         <AccountInfo
           name={session.user.name || null}
           email={session.user.email || null}
         />
-        <Subscription
-          sub={subscription}
-          loading={subLoading}
-          onRefresh={fetchSubscription}
-        />
+        <SubscriptionSummary sub={subscription} loading={subLoading} />
         <PasswordChange />
         <DangerZone />
       </div>
     </AppShell>
+  );
+}
+
+/* AR-279: mark for the product-style header. Reuses the exact "key"
+   path data from NavIconDark (the sidebar's Settings glyph: a key
+   silhouette), scaled from 16x16 to 56x56 inside the 64x64 boxed
+   mark so the sidebar item and the page header line up visually. */
+function SettingsMark() {
+  return (
+    <svg
+      width="56"
+      height="56"
+      viewBox="0 0 28 28"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.7}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="9" cy="11" r="4" />
+      <circle cx="9" cy="11" r="1.2" fill="currentColor" stroke="none" />
+      <path d="M13 11 L23 11" />
+      <path d="M20 11 L20 13.5" />
+      <path d="M17 11 L17 13" />
+    </svg>
   );
 }
 
@@ -107,56 +157,16 @@ function AccountInfo({
 }
 
 /* ============================================================
-   Subscription
+   Subscription summary (thin — real mgmt lives in /dashboard/billing)
    ============================================================ */
-function Subscription({
+function SubscriptionSummary({
   sub,
   loading,
-  onRefresh,
 }: {
   sub: Subscription | null;
   loading: boolean;
-  onRefresh: () => Promise<void>;
 }) {
-  const [cancelLoading, setCancelLoading] = useState(false);
-  const [cancelError, setCancelError] = useState<string | null>(null);
-  const [cancelSuccess, setCancelSuccess] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [portalLoading, setPortalLoading] = useState(false);
-
-  async function openPortal() {
-    setPortalLoading(true);
-    try {
-      const res = await fetch("/api/stripe/portal", { method: "POST" });
-      const data = await res.json();
-      if (data.url) window.location.href = data.url;
-    } finally {
-      setPortalLoading(false);
-    }
-  }
-
-  async function cancel() {
-    setCancelError(null);
-    setCancelLoading(true);
-    try {
-      const res = await fetch("/api/stripe/cancel", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) {
-        setCancelError(data.error || "Failed to cancel subscription");
-        return;
-      }
-      setCancelSuccess(true);
-      setShowConfirm(false);
-      await onRefresh();
-    } catch {
-      setCancelError("Something went wrong");
-    } finally {
-      setCancelLoading(false);
-    }
-  }
-
-  const planName = sub?.planName || "Free";
-  const isFree = !sub || sub.plan === "free";
+  const planName = sub?.planName || "Sandbox";
   const cancelsAt = sub?.cancelAt
     ? new Date(sub.cancelAt).toLocaleDateString("en-GB", {
         day: "numeric",
@@ -166,68 +176,27 @@ function Subscription({
     : null;
 
   return (
-    <AppCard title="Subscription">
+    <AppCard title="Plan">
       {loading ? (
-        <LoadingRow label="Loading subscription…" />
+        <LoadingRow label="Loading plan…" />
       ) : (
-        <>
-          <div className="oga-settings__sub-row">
-            <div>
-              <div className="oga-settings__sub-plan">{planName}</div>
-              {cancelsAt && (
-                <div className="oga-settings__sub-cancels">
-                  Cancels on {cancelsAt}
-                </div>
-              )}
-            </div>
-            <div className="oga-settings__sub-actions">
-              {isFree ? (
-                <PrimaryCta href="/pricing">Upgrade plan</PrimaryCta>
-              ) : (
-                <>
-                  <GhostCta onClick={openPortal}>
-                    {portalLoading ? "Opening…" : "Manage billing"}
-                  </GhostCta>
-                  {!sub?.cancelAt && sub?.hasStripeSubscription && (
-                    <GhostCta onClick={() => setShowConfirm(true)} danger>
-                      Cancel
-                    </GhostCta>
-                  )}
-                </>
-              )}
-            </div>
+        <div className="oga-settings__sub-row">
+          <div>
+            <div className="oga-settings__sub-plan">{planName}</div>
+            {cancelsAt ? (
+              <div className="oga-settings__sub-cancels">
+                Cancels on {cancelsAt}
+              </div>
+            ) : (
+              <div className="oga-settings__sub-cancels">
+                Current plan.
+              </div>
+            )}
           </div>
-
-          {showConfirm && (
-            <div className="oga-settings__alert oga-settings__alert--danger">
-              <div className="oga-settings__alert-title">
-                Cancel your subscription?
-              </div>
-              <p className="oga-settings__alert-body">
-                You&rsquo;ll keep access to the Service until the end of your
-                current billing period. No more charges after that.
-              </p>
-              {cancelError && (
-                <div className="oga-settings__alert-error">{cancelError}</div>
-              )}
-              <div className="oga-settings__alert-actions">
-                <GhostCta onClick={cancel} danger>
-                  {cancelLoading ? "Cancelling…" : "Yes, cancel"}
-                </GhostCta>
-                <GhostCta onClick={() => setShowConfirm(false)}>
-                  Keep subscription
-                </GhostCta>
-              </div>
-            </div>
-          )}
-
-          {cancelSuccess && (
-            <div className="oga-settings__alert oga-settings__alert--success">
-              Subscription cancelled. You&rsquo;ll keep access until your
-              billing period ends.
-            </div>
-          )}
-        </>
+          <div className="oga-settings__sub-actions">
+            <GhostCta href="/dashboard/billing">Manage in Billing</GhostCta>
+          </div>
+        </div>
       )}
     </AppCard>
   );
@@ -404,9 +373,13 @@ function DangerZone() {
       <div className="oga-settings__danger-body">
         <div className="oga-settings__danger-title">Delete your account</div>
         <p className="oga-settings__danger-text">
-          Deletes your account, reports, monitored postcodes, and API keys.
-          Cannot be undone. Your Stripe subscription is cancelled separately
-          via the billing portal.
+          Deletes your account, API keys, monitored portfolios, saved bundles,
+          presets, cohorts, and your membership in any organisation. Cannot
+          be undone. Your Stripe subscription is cancelled separately via{" "}
+          <Link href="/dashboard/billing" className="oga-settings__inline-link">
+            Billing
+          </Link>
+          .
         </p>
         {!showConfirm ? (
           <GhostCta onClick={() => setShowConfirm(true)} danger>
