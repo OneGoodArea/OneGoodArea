@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { sql } from "@/lib/db";
-import { getUserPlan } from "@/lib/usage";
+import { callApi } from "@/lib/server/api-client";
 import { rows as typedRows, type ReportRow } from "@/lib/db-types";
 import type { AreaReport } from "@/lib/types";
 import CompareClient from "./client";
@@ -47,8 +47,8 @@ export default async function DesignV2ComparePage({
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) redirect("/sign-in?callbackUrl=/compare");
-  const plan = await getUserPlan(userId);
-  if (plan === "free") redirect("/pricing");
+  const { data } = await callApi<{ plan: string }>("/settings/subscription", { userId });
+  if (data?.plan === "free") redirect("/pricing");
 
   const params = await searchParams;
   const reportIds = params.reports?.split(",").filter(Boolean) || [];
