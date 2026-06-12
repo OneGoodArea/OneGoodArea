@@ -3,6 +3,7 @@ import { INTENTS, type Intent, isIntent, SIGNAL_CATEGORIES, isSignalCategory } f
 import { validateApiKey, createApiKey, listApiKeys, revokeApiKey } from "./modules/api-keys";
 import { verifySessionToken } from "./modules/auth/session-token";
 import { hashPassword, verifyPassword, generateToken } from "./modules/auth/crypto";
+import { normalizeSignupSource, SIGNUP_SOURCE_DEFAULT } from "./modules/auth/signup-source";
 import { sendVerificationEmail, sendPasswordResetEmail, sendMagicLinkEmail, sendReportEmail } from "./infrastructure/email/senders";
 import { sql } from "./infrastructure/db/client";
 import {
@@ -3294,7 +3295,8 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         return reply.code(429).send({ error: "Too many attempts. Please try again later." });
       }
 
-      const { email, password } = (request.body ?? {}) as { email?: unknown; password?: unknown };
+      const { email, password } = (request.body ?? {}) as { email?: unknown; password?: unknown; signup_source?: unknown };
+      const signupSource = normalizeSignupSource(typeof signup_source === "string" ? signup_source : undefined);
       if (!email || typeof email !== "string") {
         return reply.code(400).send({ error: "Email is required" });
       }
@@ -3324,8 +3326,8 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       const hash = await hashPassword(password);
 
       await sql`
-        INSERT INTO users (id, email, name, password_hash, provider, email_verified)
-        VALUES (${id}, ${sanitized}, ${name}, ${hash}, 'credentials', FALSE)
+        INSERT INTO users (id, email, name, password_hash, provider, email_verified, signup_source)
+        VALUES (${id}, ${sanitized}, ${name}, ${hash}, 'credentials', FALSE, ${signupSource})
       `;
 
       // Levers (AR-194): every new user gets a personal org auto-created
