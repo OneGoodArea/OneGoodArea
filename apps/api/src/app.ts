@@ -1196,7 +1196,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.post("/v1/orgs", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const parsed = CreateOrgRequestSchema.safeParse(request.body ?? {});
       if (!parsed.success) {
@@ -1223,7 +1223,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.get("/v1/orgs", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const orgs = await listOrgsForUser(userId);
       return reply.code(200).send({ orgs });
@@ -1236,7 +1236,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.get("/v1/orgs/:id", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id } = request.params as { id: string };
       const org = await getOrgIfMember(id, userId);
@@ -1251,7 +1251,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.patch("/v1/orgs/:id", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id } = request.params as { id: string };
       const role = await getRoleInOrg(id, userId);
@@ -1280,7 +1280,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.get("/v1/orgs/:id/members", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id } = request.params as { id: string };
       const role = await getRoleInOrg(id, userId);
@@ -1296,7 +1296,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.post("/v1/orgs/:id/members", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id } = request.params as { id: string };
       const role = await getRoleInOrg(id, userId);
@@ -1338,7 +1338,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   //   - downgrading the last owner is refused (would orphan the org)
   app.patch("/v1/orgs/:id/members/:userId", async (request, reply) => {
     try {
-      const callerId = await requireApiAccess(request, reply);
+      const callerId = await authenticateEither(request, reply);
       if (!callerId) return reply;
       const { id: orgId, userId: targetId } = request.params as { id: string; userId: string };
       const callerRole = await getRoleInOrg(orgId, callerId);
@@ -1398,7 +1398,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.delete("/v1/orgs/:id/members/:userId", async (request, reply) => {
     try {
-      const callerId = await requireApiAccess(request, reply);
+      const callerId = await authenticateEither(request, reply);
       if (!callerId) return reply;
       const { id, userId: targetId } = request.params as { id: string; userId: string };
       const callerRole = await getRoleInOrg(id, callerId);
@@ -1458,7 +1458,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.post("/v1/orgs/:id/invitations", async (request, reply) => {
     try {
-      const callerId = await requireApiAccess(request, reply);
+      const callerId = await authenticateEither(request, reply);
       if (!callerId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, callerId);
@@ -1496,7 +1496,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.get("/v1/orgs/:id/invitations", async (request, reply) => {
     try {
-      const callerId = await requireApiAccess(request, reply);
+      const callerId = await authenticateEither(request, reply);
       if (!callerId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, callerId);
@@ -1512,7 +1512,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.delete("/v1/orgs/:id/invitations/:invitationId", async (request, reply) => {
     try {
-      const callerId = await requireApiAccess(request, reply);
+      const callerId = await authenticateEither(request, reply);
       if (!callerId) return reply;
       const { id: orgId, invitationId } = request.params as { id: string; invitationId: string };
       const role = await getRoleInOrg(orgId, callerId);
@@ -1533,7 +1533,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.post("/v1/invitations/:token/accept", async (request, reply) => {
     try {
-      const callerId = await requireApiAccess(request, reply);
+      const callerId = await authenticateEither(request, reply);
       if (!callerId) return reply;
       const callerEmail = await getUserEmail(callerId);
       if (!callerEmail) return reply.code(403).send({ error: "Caller email not available." });
@@ -1594,7 +1594,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.post("/v1/orgs/:id/bundles", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -1634,7 +1634,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.get("/v1/orgs/:id/bundles", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -1650,7 +1650,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.get("/v1/orgs/:id/bundles/:bundleId", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId, bundleId } = request.params as { id: string; bundleId: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -1667,7 +1667,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.patch("/v1/orgs/:id/bundles/:bundleId", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId, bundleId } = request.params as { id: string; bundleId: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -1709,7 +1709,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.delete("/v1/orgs/:id/bundles/:bundleId", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId, bundleId } = request.params as { id: string; bundleId: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -1737,7 +1737,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.post("/v1/orgs/:id/presets", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -1778,7 +1778,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.get("/v1/orgs/:id/presets", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -1794,7 +1794,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.get("/v1/orgs/:id/presets/:presetId", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId, presetId } = request.params as { id: string; presetId: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -1811,7 +1811,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.patch("/v1/orgs/:id/presets/:presetId", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId, presetId } = request.params as { id: string; presetId: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -1860,7 +1860,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.delete("/v1/orgs/:id/presets/:presetId", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId, presetId } = request.params as { id: string; presetId: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -1890,7 +1890,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.get("/v1/orgs/:id/methodology", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -1906,7 +1906,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.put("/v1/orgs/:id/methodology", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -1945,7 +1945,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.post("/v1/orgs/:id/cohorts", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -1978,7 +1978,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.get("/v1/orgs/:id/cohorts", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -1994,7 +1994,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.get("/v1/orgs/:id/cohorts/:cohortId", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId, cohortId } = request.params as { id: string; cohortId: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -2011,7 +2011,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.patch("/v1/orgs/:id/cohorts/:cohortId", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId, cohortId } = request.params as { id: string; cohortId: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -2044,7 +2044,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.delete("/v1/orgs/:id/cohorts/:cohortId", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId, cohortId } = request.params as { id: string; cohortId: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -2065,7 +2065,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   app.delete("/v1/orgs/:id/methodology", async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -3348,7 +3348,8 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         return reply.code(429).send({ error: "Too many attempts. Please try again later." });
       }
 
-      const { email, password } = (request.body ?? {}) as { email?: unknown; password?: unknown };
+      const { email, password, signup_source } = (request.body ?? {}) as { email?: unknown; password?: unknown; signup_source?: unknown };
+      const signupSource = normalizeSignupSource(typeof signup_source === "string" ? signup_source : undefined);
       if (!email || typeof email !== "string") {
         return reply.code(400).send({ error: "Email is required" });
       }
