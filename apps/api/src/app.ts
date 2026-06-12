@@ -24,7 +24,7 @@ import { runForecast, parseForecastInput, FORECAST_DEFAULT_WINDOW, FORECAST_DEFA
 import { geocodeArea } from "./modules/signals/data-sources/postcodes";
 import { scoreArea, parseScoreBody } from "./modules/scoring";
 import { createPortfolio, listPortfolios, getPortfolio, deletePortfolio, addAreas, enrichPortfolio, detectPortfolioChanges, PORTFOLIO_ADD_MAX, type Baseline } from "./modules/monitor";
-import { runQuery, parseQueryRequest } from "./modules/intelligence";
+import { runQuery, parseQueryRequest, AmbiguousLocationError } from "./modules/intelligence";
 import { listForUser as listActivityForUser } from "./modules/activity";
 import {
   createPersonalOrgForUser,
@@ -2058,7 +2058,21 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       const resolved = await resolveBundleForCaller(bundleId, ctx.orgId, ctx.userId, reply);
       if (!resolved.ok) return reply;
 
-      const result = await runQuery(parsed.req);
+      let result: Awaited<ReturnType<typeof runQuery>>;
+      try {
+        result = await runQuery(parsed.req);
+      } catch (err) {
+        // AR-267: typed surface for ambiguous place names. Don't 500 —
+        // tell the caller which candidates to disambiguate between.
+        if (err instanceof AmbiguousLocationError) {
+          return reply.code(422).send({
+            error: `Place name "${err.query}" is ambiguous. Choose a specific candidate or re-ask with a postcode.`,
+            code: "ambiguous_location",
+            candidates: err.candidates,
+          });
+        }
+        throw err;
+      }
       if (!result.ok) {
         return reply.code(422).send({ error: result.error.message, code: result.error.code, raw: result.error.raw });
       }

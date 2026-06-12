@@ -386,8 +386,25 @@ export const QueryResponseSchema = z.union([
 ]);
 export type QueryResponse = z.infer<typeof QueryResponseSchema>;
 
-/** A typed planner failure — exposed so the endpoint can translate to 422. */
-export interface PlannerError { code: "invalid_plan" | "no_json" | "llm_error"; message: string; raw?: string }
+/** A typed planner failure — exposed so the endpoint can translate to 422.
+
+    AR-267: "ambiguous_location" carries up to 5 candidate areas when a
+    non-postcode place name resolves to multiple distinct places (e.g.
+    "Brixton" -> London SW2 OR Devon PL8). The endpoint surfaces these so
+    the caller can re-ask with a specific postcode. NEVER 200 with an
+    arbitrarily-picked candidate. */
+export interface AmbiguousLocationCandidate {
+  label: string;        // human-readable e.g. "Brixton, Lambeth, London"
+  postcode: string;     // a representative postcode in the candidate area
+  district: string;     // admin district (LAD name) for disambiguation
+  country: string;      // England / Wales / Scotland
+}
+export interface PlannerError {
+  code: "invalid_plan" | "no_json" | "llm_error" | "ambiguous_location";
+  message: string;
+  raw?: string;
+  candidates?: AmbiguousLocationCandidate[];
+}
 
 /* Silence "unused" — SignalSchema may be needed when Signal-level result shapes
    land (e.g. a future plan op that returns signals directly). */

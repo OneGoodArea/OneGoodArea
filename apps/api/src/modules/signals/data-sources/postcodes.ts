@@ -102,42 +102,42 @@ async function geocodePostcode(postcode: string): Promise<GeocodedArea | null> {
   }
 }
 
-async function geocodePlace(query: string): Promise<GeocodedArea | null> {
-  try {
-    // First try postcodes autocomplete in case it's a partial postcode
-    const autocompleteRes = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(query)}/autocomplete`);
-    if (autocompleteRes.ok) {
-      const autocompleteData = (await autocompleteRes.json()) as { result?: string[] };
-      if (autocompleteData.result && autocompleteData.result.length > 0) {
-        return geocodePostcode(autocompleteData.result[0]);
-      }
-    }
+/* Type ranking for /places hits. Lower = more "centre-of-place" — prefer
+   cities/towns over hamlets when picking ONE result. The ranking gap also
+   drives ambiguity detection (AR-267): two top hits within the same tier
+   AND with the same canonical name are flagged as ambiguous. */
+const PLACE_TYPE_RANK: Record<string, number> = {
+  City: 1, Town: 2, "Section of Named Road": 3,
+  Village: 4, "Named Road": 5, "Suburban Area": 6,
+  Hamlet: 7, "Other Settlement": 8,
+};
 
-    // Try place search — fetch multiple results and prefer cities/towns over hamlets
+type RankedPlace = PlaceResult & { local_type: string };
+
+async function fetchPlaces(query: string): Promise<RankedPlace[] | null> {
+  try {
     const res = await fetch(`https://api.postcodes.io/places?q=${encodeURIComponent(query)}&limit=10`);
     if (!res.ok) return null;
-
-    const data = (await res.json()) as {
-      status?: number;
-      result?: Array<PlaceResult & { local_type: string }>;
-    };
+    const data = (await res.json()) as { status?: number; result?: RankedPlace[] };
     if (data.status !== 200 || !data.result || data.result.length === 0) return null;
-
-    const typeRank: Record<string, number> = {
-      City: 1, Town: 2, "Section of Named Road": 3,
-      Village: 4, "Named Road": 5, "Suburban Area": 6,
-      Hamlet: 7, "Other Settlement": 8,
-    };
-    const ranked = [...data.result].sort((a: { local_type: string }, b: { local_type: string }) =>
-      (typeRank[a.local_type] ?? 9) - (typeRank[b.local_type] ?? 9)
+    return [...data.result].sort(
+      (a, b) => (PLACE_TYPE_RANK[a.local_type] ?? 9) - (PLACE_TYPE_RANK[b.local_type] ?? 9),
     );
-    const r: PlaceResult = ranked[0];
+  } catch {
+    return null;
+  }
+}
 
-    // Now reverse geocode to get full postcode data
+/** Resolve a ranked place into a full GeocodedArea by reverse-geocoding its
+    centre point through postcodes.io's nearest-postcode endpoint. Falls
+    back to a partial record if the reverse lookup fails (so we still
+    return something for known-good places sitting outside postcode units
+    like national parks). */
+async function placeToGeocodedArea(query: string, r: RankedPlace): Promise<GeocodedArea> {
+  try {
     const reverseRes = await fetch(
-      `https://api.postcodes.io/postcodes?lon=${r.longitude}&lat=${r.latitude}&limit=1`
+      `https://api.postcodes.io/postcodes?lon=${r.longitude}&lat=${r.latitude}&limit=1`,
     );
-
     if (reverseRes.ok) {
       const reverseData = (await reverseRes.json()) as { result?: PostcodeResult[] };
       if (reverseData.result && reverseData.result.length > 0) {
@@ -160,23 +160,120 @@ async function geocodePlace(query: string): Promise<GeocodedArea | null> {
         };
       }
     }
+  } catch { /* fall through to the partial fallback */ }
 
-    return {
-      query,
-      latitude: r.latitude,
-      longitude: r.longitude,
-      admin_district: r.district || "",
-      region: r.region || "",
-      ward: "",
-      constituency: "",
-      country: r.country || "",
-      lsoa: "",
-      lsoa11: "",
-      msoa: "",
-      rural_urban: "",
-      area_type: "suburban",
-    };
-  } catch {
-    return null;
+  return {
+    query,
+    latitude: r.latitude,
+    longitude: r.longitude,
+    admin_district: r.district || "",
+    region: r.region || "",
+    ward: "",
+    constituency: "",
+    country: r.country || "",
+    lsoa: "",
+    lsoa11: "",
+    msoa: "",
+    rural_urban: "",
+    area_type: "suburban",
+  };
+}
+
+async function geocodePlace(query: string): Promise<GeocodedArea | null> {
+  // First try postcodes autocomplete in case it's a partial postcode
+  try {
+    const autocompleteRes = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(query)}/autocomplete`);
+    if (autocompleteRes.ok) {
+      const autocompleteData = (await autocompleteRes.json()) as { result?: string[] };
+      if (autocompleteData.result && autocompleteData.result.length > 0) {
+        return geocodePostcode(autocompleteData.result[0]);
+      }
+    }
+  } catch { /* fall through to place search */ }
+
+  const ranked = await fetchPlaces(query);
+  if (!ranked) return null;
+  return placeToGeocodedArea(query, ranked[0]);
+}
+
+/* ── AR-267: ambiguity-aware resolver for the NL query plane ──
+
+   geocodeArea (above) silently picked the top-ranked /places hit, which
+   meant "Brixton" landed in Devon (Village rank 4) instead of London
+   (Suburban Area rank 6) — a 200 OK with wrong-area data. /v1/query now
+   uses geocodeAreaStrict, which returns a tagged result so the planner
+   layer can return 422 with the candidate list when the answer is
+   ambiguous.
+
+   "Ambiguous" means: at least two /places hits share the same canonical
+   place name (case-insensitive, trimmed). Single-tier dominance alone
+   (e.g. one City vs one Village) is NOT ambiguous — that's the existing
+   heuristic and it's correct most of the time. The name-collision rule
+   catches the actual Brixton-shaped bug without false-positiving on
+   normal place lookups. */
+
+export interface AmbiguousAreaCandidate {
+  label: string;
+  postcode: string;
+  district: string;
+  country: string;
+}
+
+export type GeocodeAreaResult =
+  | { kind: "ok"; area: GeocodedArea }
+  | { kind: "ambiguous"; candidates: AmbiguousAreaCandidate[] }
+  | { kind: "not_found" };
+
+const MAX_AMBIGUOUS_CANDIDATES = 5;
+
+function normalisePlaceName(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+async function buildAmbiguousCandidate(r: RankedPlace): Promise<AmbiguousAreaCandidate> {
+  const partial = await placeToGeocodedArea(r.name, r);
+  const districtBits = [r.district, r.county].filter(Boolean).join(", ");
+  const label = districtBits ? `${r.name}, ${districtBits}` : r.name;
+  return {
+    label,
+    postcode: partial.query,
+    district: r.district || partial.admin_district || "",
+    country: r.country || partial.country || "",
+  };
+}
+
+export async function geocodeAreaStrict(query: string): Promise<GeocodeAreaResult> {
+  const q = query.trim();
+  if (POSTCODE_REGEX.test(q)) {
+    const area = await geocodePostcode(q);
+    return area ? { kind: "ok", area } : { kind: "not_found" };
   }
+
+  // Same partial-postcode autocomplete fast path as geocodeArea.
+  try {
+    const autocompleteRes = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(q)}/autocomplete`);
+    if (autocompleteRes.ok) {
+      const autocompleteData = (await autocompleteRes.json()) as { result?: string[] };
+      if (autocompleteData.result && autocompleteData.result.length > 0) {
+        const area = await geocodePostcode(autocompleteData.result[0]);
+        return area ? { kind: "ok", area } : { kind: "not_found" };
+      }
+    }
+  } catch { /* fall through */ }
+
+  const ranked = await fetchPlaces(q);
+  if (!ranked || ranked.length === 0) return { kind: "not_found" };
+
+  // Ambiguity = ≥2 hits with the same canonical name. Anything else
+  // (single hit, or top hit dominates by name uniqueness) is OK.
+  const target = normalisePlaceName(ranked[0].name);
+  const sameName = ranked.filter((p) => normalisePlaceName(p.name) === target);
+  if (sameName.length >= 2) {
+    const candidates = await Promise.all(
+      sameName.slice(0, MAX_AMBIGUOUS_CANDIDATES).map(buildAmbiguousCandidate),
+    );
+    return { kind: "ambiguous", candidates };
+  }
+
+  return { kind: "ok", area: await placeToGeocodedArea(q, ranked[0]) };
 }
