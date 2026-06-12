@@ -38,20 +38,27 @@ function getRecentMonths(count: number): string[] {
   return months;
 }
 
+/* AR-268: tagged fetch result so the aggregator can tell "HTTP 200 with []"
+   (genuine zero-crime month in covered area) from "request failed"
+   (timeout / 5xx / network). Conflating the two made area-profile.ts label
+   every England/Wales postcode that happens to have low recorded crime as
+   "No police.uk coverage" — false for M20 2RN and any low-traffic LSOA. */
+type MonthFetch = { ok: true; crimes: PoliceCrime[] } | { ok: false };
+
 async function fetchCrimesForMonth(
   lat: number,
   lng: number,
   month: string
-): Promise<PoliceCrime[]> {
+): Promise<MonthFetch> {
   try {
     const res = await fetch(
       `https://data.police.uk/api/crimes-street/all-crime?lat=${lat}&lng=${lng}&date=${month}`,
       { signal: AbortSignal.timeout(10000) }
     );
-    if (!res.ok) return [];
-    return (await res.json()) as PoliceCrime[];
+    if (!res.ok) return { ok: false };
+    return { ok: true, crimes: (await res.json()) as PoliceCrime[] };
   } catch {
-    return [];
+    return { ok: false };
   }
 }
 
@@ -64,8 +71,28 @@ export async function getCrimeData(lat: number, lng: number): Promise<CrimeSumma
       months.map((month) => fetchCrimesForMonth(lat, lng, month))
     );
 
-    const allCrimes = results.flat();
-    if (allCrimes.length === 0) return null;
+    /* Null only when EVERY month errored. If at least one fetch succeeded
+       (even with []) the area is covered and we return an empty summary
+       so downstream can say "zero crimes recorded" instead of "no coverage". */
+    const okResults = results.filter((r): r is { ok: true; crimes: PoliceCrime[] } => r.ok);
+    if (okResults.length === 0) return null;
+
+    const allCrimes = okResults.flatMap((r) => r.crimes);
+    const monthsWithCrimes = okResults.filter((r) => r.crimes.length > 0).length;
+
+    if (allCrimes.length === 0) {
+      /* months_covered keeps the legacy "months with crimes" semantic
+         (engine v2 divides by it). The mere presence of a non-null
+         summary tells area-profile.ts that police.uk DID respond. */
+      return {
+        total_crimes: 0,
+        months_covered: 0,
+        by_category: {},
+        top_streets: [],
+        outcome_breakdown: {},
+        monthly_trend: [],
+      };
+    }
 
     // Aggregate by category
     const byCategory: Record<string, number> = {};
@@ -105,7 +132,7 @@ export async function getCrimeData(lat: number, lng: number): Promise<CrimeSumma
 
     return {
       total_crimes: allCrimes.length,
-      months_covered: results.filter((r) => r.length > 0).length,
+      months_covered: monthsWithCrimes,
       by_category: byCategory,
       top_streets: topStreets,
       outcome_breakdown: outcomeCounts,

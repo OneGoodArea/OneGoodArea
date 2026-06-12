@@ -31,14 +31,42 @@ const FIXTURE = [
 ];
 
 describe("getCrimeData", () => {
-  it("returns null when every month is empty", async () => {
+  it("returns a zero-crime summary when every month is empty (AR-268)", async () => {
+    /* AR-268: previously this returned null and area-profile.ts then
+       labelled the area "No police.uk coverage" — false for every
+       England/Wales LSOA. Now a definitive HTTP-200-but-empty yields
+       a summary with total_crimes: 0 so callers can distinguish. */
     server.use(http.get(ENDPOINT, () => HttpResponse.json([])));
+    const result = await getCrimeData(53.4, -2.2);
+    expect(result).not.toBeNull();
+    expect(result).toEqual({
+      total_crimes: 0,
+      months_covered: 0,
+      by_category: {},
+      top_streets: [],
+      outcome_breakdown: {},
+      monthly_trend: [],
+    });
+  });
+
+  it("returns null when every month errors (AR-268: distinguishes from empty)", async () => {
+    server.use(http.get(ENDPOINT, () => new HttpResponse(null, { status: 500 })));
     expect(await getCrimeData(53.4, -2.2)).toBeNull();
   });
 
-  it("returns null when the upstream errors", async () => {
-    server.use(http.get(ENDPOINT, () => new HttpResponse(null, { status: 500 })));
-    expect(await getCrimeData(53.4, -2.2)).toBeNull();
+  it("returns the zero summary when SOME months error but at least one returned OK with []", async () => {
+    /* If 1 of 3 months responded HTTP 200 with [], the area IS covered;
+       conservative behaviour is to report the zero count. */
+    let n = 0;
+    server.use(
+      http.get(ENDPOINT, () => {
+        n += 1;
+        return n === 1 ? HttpResponse.json([]) : new HttpResponse(null, { status: 500 });
+      }),
+    );
+    const result = await getCrimeData(53.4, -2.2);
+    expect(result).not.toBeNull();
+    expect(result!.total_crimes).toBe(0);
   });
 
   it("aggregates crimes across the 3 trailing months", async () => {
