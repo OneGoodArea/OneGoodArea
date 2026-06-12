@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { getAnalytics, getTrafficAnalytics } from "@/lib/activity";
+import { callApi } from "@/lib/server/api-client";
 import AdminClient from "./client";
 
 export const metadata: Metadata = {
@@ -18,10 +18,17 @@ export default async function DesignV2AdminPage() {
     redirect("/dashboard");
   }
 
-  const [analytics, traffic] = await Promise.all([
-    getAnalytics(),
-    getTrafficAnalytics(),
+  const userId = session?.user?.id!;
+
+  const [analyticsRes, trafficRes] = await Promise.all([
+    callApi("/admin/analytics", { userId }),
+    callApi("/admin/traffic-analytics", { userId }),
   ]);
 
-  return <AdminClient analytics={analytics} traffic={traffic} />;
+  return (
+    <AdminClient
+      analytics={analyticsRes.data ?? null}
+      traffic={trafficRes.data ?? null}
+    />
+  );
 }
