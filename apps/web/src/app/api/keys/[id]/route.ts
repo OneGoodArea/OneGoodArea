@@ -1,15 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
-import { withAuthParams } from "@/lib/with-auth";
-import { revokeApiKey } from "@/lib/api-keys";
+import { type NextRequest } from "next/server";
+import { proxySession } from "@/lib/server/proxy";
 
-export const DELETE = withAuthParams<{ id: string }>(
-  async (_req: NextRequest, { userId, params }) => {
-    const revoked = await revokeApiKey(userId, params.id);
+/* DELETE /api/keys/[id] — proxied to apps/api DELETE /keys/:id
+   The API container handles session auth + revokeApiKey internally. */
 
-    if (!revoked) {
-      return NextResponse.json({ error: "Key not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ success: true });
-  }
-);
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+  return proxySession(req, `/keys/${id}`, { method: "DELETE" });
+}
