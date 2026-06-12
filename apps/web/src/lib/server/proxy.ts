@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
-import { callApi } from "./api-client";
+import { callApi, apiBaseUrl } from "./api-client";
 
 /* BFF proxy helper. The cutover "flip" turns each DB-touching Next /api route
    into a one-liner that forwards to apps/api through this:
@@ -52,4 +52,25 @@ export async function proxySession(
   });
 
   return NextResponse.json(res.data, { status: res.status });
+}
+
+/** Proxy a public (no-auth) Next route to apps/api. Forwards the JSON
+    body as-is — no bridge token, no API key. Use this for auth endpoints
+    (register, login, forgot-password, etc.) that are open to unauthenticated
+    callers. */
+export async function proxyPublic(
+  req: NextRequest,
+  apiPath: string,
+): Promise<NextResponse> {
+  const apiUrl = `${apiBaseUrl()}${apiPath}`;
+  const body = req.method !== "GET" ? await req.json().catch(() => undefined) : undefined;
+
+  const res = await fetch(apiUrl, {
+    method: req.method,
+    headers: body ? { "content-type": "application/json" } : {},
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  const data = await res.json().catch(() => null);
+  return NextResponse.json(data, { status: res.status });
 }
