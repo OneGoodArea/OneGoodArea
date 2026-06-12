@@ -15,6 +15,14 @@ describe("buildPlannerPrompt", () => {
     expect(p).toMatch(/output ONLY the JSON/i);
     expect(p).toMatch(/No prose/i);
   });
+  it("teaches the model the compare_areas op (AR-266)", () => {
+    const p = buildPlannerPrompt("compare M1 1AE and EC1A 1BB");
+    expect(p).toContain("compare_areas");
+    // Worked example must show array-of-2 form (not silent-drop).
+    expect(p).toMatch(/"areas":\["M1 1AE","EC1A 1BB"\]/);
+    // Explicit guidance against the silent-drop bug AR-266 is fixing.
+    expect(p).toMatch(/NEVER use get_area and drop/);
+  });
 });
 
 describe("extractJson", () => {
@@ -99,6 +107,23 @@ describe("parsePlanText (strict)", () => {
     const r = parsePlanText('{"op":"rank_areas","params":{"signal":"crime.total_12m","max_percentile":150}}');
     expect(r.ok).toBe(false);
   });
+  it("accepts a compare_areas plan with 2..5 areas (AR-266)", () => {
+    const r = parsePlanText('{"op":"compare_areas","params":{"areas":["M1 1AE","EC1A 1BB"]}}');
+    expect(r.ok).toBe(true);
+    if (r.ok && r.plan.op === "compare_areas") {
+      expect(r.plan.params.areas).toEqual(["M1 1AE", "EC1A 1BB"]);
+    }
+  });
+  it("rejects a compare_areas plan with only one area (AR-266: silent-drop prevention)", () => {
+    const r = parsePlanText('{"op":"compare_areas","params":{"areas":["M1 1AE"]}}');
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error.code).toBe("invalid_plan");
+  });
+  it("rejects a compare_areas plan with >5 areas (AR-266: cap to keep payload bounded)", () => {
+    const r = parsePlanText('{"op":"compare_areas","params":{"areas":["A","B","C","D","E","F"]}}');
+    expect(r.ok).toBe(false);
+  });
+
   it("returns no_json when the LLM returned prose only", () => {
     const r = parsePlanText("I think the best area is Manchester.");
     expect(r.ok).toBe(false);

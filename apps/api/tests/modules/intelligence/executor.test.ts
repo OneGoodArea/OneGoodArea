@@ -163,6 +163,75 @@ describe("executePlan — get_area", () => {
   });
 });
 
+describe("executePlan — compare_areas (AR-266)", () => {
+  /* Smoke fixture: only the fields the executor + schema actually touch.
+     getAreaProfile is mocked to round-robin so each slot gets a distinct
+     profile and we can assert order is preserved. */
+  function mkProfile(postcode: string) {
+    return {
+      geo: { query: postcode, postcode, latitude: 0, longitude: 0, lsoa: `lsoa_${postcode}`, msoa: "x", admin_district: "x", region: "x", country: "England", area_type: "urban" },
+      signals: [],
+      meta: { engine_version: "2.0.2", generated_at: "2026-06-12T00:00:00.000Z", sources: [], fetch_mode: "live" },
+    } as never;
+  }
+
+  it("fans out getAreaProfile per slot and returns areas in plan order", async () => {
+    mockGetAreaProfile
+      .mockResolvedValueOnce(mkProfile("M1 1AE"))
+      .mockResolvedValueOnce(mkProfile("EC1A 1BB"));
+    const res = await executePlan(
+      { op: "compare_areas", params: { areas: ["M1 1AE", "EC1A 1BB"] } },
+      { planSource: "nl" },
+    );
+    expect(mockGetAreaProfile).toHaveBeenCalledTimes(2);
+    expect(mockGetAreaProfile).toHaveBeenNthCalledWith(1, "M1 1AE");
+    expect(mockGetAreaProfile).toHaveBeenNthCalledWith(2, "EC1A 1BB");
+    expect(res.results).not.toBeNull();
+    if (res.results) {
+      const r = res.results as { areas: Array<{ query: string; profile: { geo: { postcode: string } } | null }>; meta: { scope: string } };
+      expect(r.areas).toHaveLength(2);
+      expect(r.areas[0].query).toBe("M1 1AE");
+      expect(r.areas[1].query).toBe("EC1A 1BB");
+      expect(r.areas[0].profile?.geo.postcode).toBe("M1 1AE");
+      expect(r.areas[1].profile?.geo.postcode).toBe("EC1A 1BB");
+      expect(r.meta.scope).toBe("areas=2");
+    }
+  });
+
+  it("preserves not-found slots as null instead of dropping them (predictable shape)", async () => {
+    mockGetAreaProfile
+      .mockResolvedValueOnce(mkProfile("M1 1AE"))
+      .mockResolvedValueOnce(null) // middle slot missed
+      .mockResolvedValueOnce(mkProfile("LS6 4DP"));
+    const res = await executePlan(
+      { op: "compare_areas", params: { areas: ["M1 1AE", "NowhereCity", "LS6 4DP"] } },
+      { planSource: "nl" },
+    );
+    if (res.results) {
+      const r = res.results as { areas: Array<{ query: string; profile: unknown }> };
+      expect(r.areas).toHaveLength(3);
+      expect(r.areas[0].profile).not.toBeNull();
+      expect(r.areas[1].profile).toBeNull();   // explicit, not silently dropped
+      expect(r.areas[1].query).toBe("NowhereCity");
+      expect(r.areas[2].profile).not.toBeNull();
+    }
+  });
+
+  it("handles the max-allowed 5-area case", async () => {
+    mockGetAreaProfile.mockResolvedValue(mkProfile("X"));
+    const res = await executePlan(
+      { op: "compare_areas", params: { areas: ["A", "B", "C", "D", "E"] } },
+      { planSource: "client" },
+    );
+    expect(mockGetAreaProfile).toHaveBeenCalledTimes(5);
+    if (res.results) {
+      const r = res.results as { areas: unknown[]; meta: { scope: string } };
+      expect(r.areas).toHaveLength(5);
+      expect(r.meta.scope).toBe("areas=5");
+    }
+  });
+});
+
 describe("executePlan — score_area", () => {
   it("dispatches to scoreArea with default preset 'research'", async () => {
     mockScoreArea.mockResolvedValue({ area: "M1 1AE", preset: "research" } as never);
