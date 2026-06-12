@@ -41,13 +41,20 @@ export function MembersIcon({
   );
 }
 
-export function WebhookIcon(): ReactElement {
+export function WebhookIcon({
+  width = 14,
+  height = 14,
+}: {
+  width?: number;
+  height?: number;
+} = {}): ReactElement {
   /* Mirrors GlyphWebhooks (homepage section 04) at tab scale: source
      node on the left emitting concentric arcs outward to a subscriber
      dot on the right. Compressed from the 3-arc + pulse hero to 2
-     arcs + no animation at 14×14. */
+     arcs + no animation at 14×14. viewBox stays 14x14; width/height
+     scale for AR-281 product-header use. */
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <svg width={width} height={height} viewBox="0 0 14 14" fill="none" aria-hidden="true">
       <circle cx="3.5" cy="7" r="1.6" fill="currentColor" />
       <path d="M5.5 4.5a3.2 3.2 0 0 1 0 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
       <path d="M7.5 3a5 5 0 0 1 0 8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" opacity="0.55" />
