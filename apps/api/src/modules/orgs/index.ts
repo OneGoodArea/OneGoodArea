@@ -75,6 +75,7 @@ function orgFromRow(r: OrgRow): Org {
     name: r.name,
     display_name: r.display_name ?? null,
     brand_url: r.brand_url ?? null,
+    logo_url: r.logo_url ?? null,
     created_at: String(r.created_at),
     updated_at: String(r.updated_at),
   };
@@ -153,12 +154,12 @@ export async function createPersonalOrgForUser(userId: string, email: string): P
     upstream (ADR 0033). Patch semantics:
       - field absent (undefined) -> keep current value
       - field set to a string   -> overwrite
-      - display_name / brand_url set to null -> clear to NULL
+      - display_name / brand_url / logo_url set to null -> clear to NULL
 
     Read-modify-write pattern: fetch the current row, apply the patch in
     JS, write back. One extra SELECT per PATCH, but the alternative is
-    8+ SQL branches across 4 fields × 2 states. Same pattern as
-    updatePreset / updateCohort. */
+    a combinatorial SQL fan-out across all fields × 2 states. Same
+    pattern as updatePreset / updateCohort. */
 export async function updateOrg(
   orgId: string,
   patch: {
@@ -166,6 +167,7 @@ export async function updateOrg(
     slug?: string;
     display_name?: string | null;
     brand_url?: string | null;
+    logo_url?: string | null;
   },
 ): Promise<Org | null> {
   const current = await repo.findById(orgId);
@@ -175,6 +177,7 @@ export async function updateOrg(
     slug: patch.slug ?? current.slug,
     display_name: patch.display_name !== undefined ? patch.display_name : current.display_name,
     brand_url: patch.brand_url !== undefined ? patch.brand_url : current.brand_url,
+    logo_url: patch.logo_url !== undefined ? patch.logo_url : current.logo_url,
   };
   const updated = await repo.update(orgId, next);
   if (!updated) return null;

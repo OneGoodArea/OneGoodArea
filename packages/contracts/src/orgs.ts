@@ -19,13 +19,16 @@ export type OrgRole = z.infer<typeof OrgRoleSchema>;
     Levers AR-200 added optional white-label fields. `display_name` is
     the customer-facing label; null means "fall back to `name`". `brand_url`
     is the org's public homepage URL — for "Powered by X" links on
-    embeds. Both nullable so a caller can clear them with `null`. */
+    embeds. AR-284 adds `logo_url` for the dashboard's org-mark
+    surfaces (sidebar OrgSwitcher, org settings page). All three
+    nullable so a caller can clear them with `null`. */
 export const OrgSchema = z.object({
   id: z.string().min(1),
   slug: z.string().min(1),
   name: z.string().min(1),
   display_name: z.string().nullable().optional(),
   brand_url: z.string().nullable().optional(),
+  logo_url: z.string().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
 }).strict();
@@ -68,13 +71,17 @@ export const UpdateOrgRequestSchema = z.object({
   slug: z.string().regex(/^[a-z0-9-]+$/).min(2).max(60).optional(),
   display_name: z.string().min(1).max(200).nullable().optional(),
   brand_url: z.string().url().max(500).nullable().optional(),
+  /* AR-284: org logo (paste-URL for v1). Same nullable semantics as
+     brand_url — explicit null clears, omitted leaves unchanged. */
+  logo_url: z.string().url().max(2000).nullable().optional(),
 }).strict().refine(
   (b) =>
     b.name !== undefined ||
     b.slug !== undefined ||
     b.display_name !== undefined ||
-    b.brand_url !== undefined,
-  { message: "At least one of name, slug, display_name, or brand_url must be provided." },
+    b.brand_url !== undefined ||
+    b.logo_url !== undefined,
+  { message: "At least one of name, slug, display_name, brand_url, or logo_url must be provided." },
 );
 export type UpdateOrgRequest = z.infer<typeof UpdateOrgRequestSchema>;
 

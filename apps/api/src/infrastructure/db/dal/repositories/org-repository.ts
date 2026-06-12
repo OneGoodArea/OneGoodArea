@@ -8,7 +8,7 @@ export class OrgRepository {
 
   async listForUser(userId: string): Promise<(OrgRow & { role: OrgRole })[]> {
     return rows<OrgRow & { role: OrgRole }>(await sql`
-      SELECT o.id, o.slug, o.name, o.display_name, o.brand_url, o.created_at, o.updated_at, m.role
+      SELECT o.id, o.slug, o.name, o.display_name, o.brand_url, o.logo_url, o.created_at, o.updated_at, m.role
         FROM orgs o
         JOIN org_members m ON m.org_id = o.id
        WHERE m.user_id = ${userId}
@@ -18,7 +18,7 @@ export class OrgRepository {
 
   async findForMember(orgId: string, userId: string): Promise<OrgRow | null> {
     const result = rows<OrgRow>(await sql`
-      SELECT o.id, o.slug, o.name, o.display_name, o.brand_url, o.created_at, o.updated_at
+      SELECT o.id, o.slug, o.name, o.display_name, o.brand_url, o.logo_url, o.created_at, o.updated_at
         FROM orgs o
         JOIN org_members m ON m.org_id = o.id
        WHERE o.id = ${orgId} AND m.user_id = ${userId}
@@ -45,7 +45,7 @@ export class OrgRepository {
 
   async findById(orgId: string): Promise<OrgRow | null> {
     const result = rows<OrgRow>(await sql`
-      SELECT id, slug, name, display_name, brand_url, created_at, updated_at
+      SELECT id, slug, name, display_name, brand_url, logo_url, created_at, updated_at
         FROM orgs
        WHERE id = ${orgId}
        LIMIT 1
@@ -59,7 +59,7 @@ export class OrgRepository {
     const result = rows<OrgRow>(await sql`
       INSERT INTO orgs (id, slug, name)
       VALUES (${id}, ${slug}, ${name})
-      RETURNING id, slug, name, display_name, brand_url, created_at, updated_at
+      RETURNING id, slug, name, display_name, brand_url, logo_url, created_at, updated_at
     `);
     if (result.length === 0) throw new Error("orgs insert returned no row");
     return result[0];
@@ -95,7 +95,13 @@ export class OrgRepository {
 
   async update(
     orgId: string,
-    fields: { name: string; slug: string; display_name: string | null; brand_url: string | null },
+    fields: {
+      name: string;
+      slug: string;
+      display_name: string | null;
+      brand_url: string | null;
+      logo_url: string | null;
+    },
   ): Promise<OrgRow | null> {
     const result = rows<OrgRow>(await sql`
       UPDATE orgs
@@ -103,9 +109,10 @@ export class OrgRepository {
              slug = ${fields.slug},
              display_name = ${fields.display_name},
              brand_url = ${fields.brand_url},
+             logo_url = ${fields.logo_url},
              updated_at = NOW()
        WHERE id = ${orgId}
-       RETURNING id, slug, name, display_name, brand_url, created_at, updated_at
+       RETURNING id, slug, name, display_name, brand_url, logo_url, created_at, updated_at
     `);
     return result[0] ?? null;
   }

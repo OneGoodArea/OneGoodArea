@@ -45,13 +45,16 @@ export interface ApiKeyRow {
 
 /** Levers (AR-193) — per-org tenancy primitives. White-label fields
     `display_name` + `brand_url` added by AR-200 (both nullable; reads
-    fall back to `name` when display_name is null). */
+    fall back to `name` when display_name is null). AR-284 adds
+    `logo_url` for the dashboard's org-mark surfaces (paste-URL for
+    v1; Vercel Blob upload is a follow-up). */
 export interface OrgRow {
   id: string;
   slug: string;
   name: string;
   display_name: string | null;
   brand_url: string | null;
+  logo_url: string | null;
   created_at: string;
   updated_at: string;
 }

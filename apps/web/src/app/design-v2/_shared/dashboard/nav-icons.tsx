@@ -101,15 +101,22 @@ export function BundlesIcon({
   );
 }
 
-export function OrgIcon(): ReactElement {
+export function OrgIcon({
+  width = 14,
+  height = 14,
+}: {
+  width?: number;
+  height?: number;
+} = {}): ReactElement {
   /* Institutional silhouette — pediment + 4 columns. Reads as "the
      organisation" (the container of members + bundles + presets etc.).
      Added 2026-06-06 for AR-243 because "Org" appears in breadcrumb
      chains across Phase 4 Levers pages and no canonical glyph
      existed yet; reused here as the Org & Levers sidebar section
-     header. */
+     header. AR-284 made it scalable for the /dashboard/org product
+     header at 56x56. */
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <svg width={width} height={height} viewBox="0 0 14 14" fill="none" aria-hidden="true">
       {/* Roof / pediment */}
       <path d="M1.5 4.5L7 1.5L12.5 4.5" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
       {/* Floor line */}

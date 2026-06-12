@@ -126,6 +126,10 @@ export const MIGRATIONS: Migration[] = [
       // org's public homepage for "Powered by X" links. See ADR 0034.
       `ALTER TABLE orgs ADD COLUMN IF NOT EXISTS display_name TEXT`,
       `ALTER TABLE orgs ADD COLUMN IF NOT EXISTS brand_url TEXT`,
+      // AR-284: org logo URL (paste-URL for v1; Vercel Blob upload
+      // pipeline is a follow-up). Nullable; falls back to initials
+      // in the dashboard chrome when null.
+      `ALTER TABLE orgs ADD COLUMN IF NOT EXISTS logo_url TEXT`,
       `CREATE INDEX IF NOT EXISTS orgs_slug_idx ON orgs (slug)`,
     ],
   },
