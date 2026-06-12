@@ -12,7 +12,9 @@ import { sql } from "@/lib/db";
    reveals it again — same pattern as API keys), GET omits the
    secret. Direct-DB pattern matching the other /api/me/* BFFs. */
 
-const SUPPORTED_EVENT_TYPES = ["report.created", "score.changed", "signal.changed"] as const;
+/* AR-283: dropped score.changed (was never fired). Keep mirror with
+   apps/api/src/modules/webhooks/index.ts SUPPORTED_EVENT_TYPES. */
+const SUPPORTED_EVENT_TYPES = ["report.created", "signal.changed"] as const;
 type WebhookEventType = (typeof SUPPORTED_EVENT_TYPES)[number];
 
 const SECRET_PREFIX = "whsec_";

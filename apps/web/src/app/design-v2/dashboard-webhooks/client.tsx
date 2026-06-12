@@ -21,10 +21,14 @@ import { Modal } from "../_shared/dashboard/modal";
 import { WebhookIcon } from "../_shared/dashboard/nav-icons";
 import "./client.css";
 
+/* AR-283: honest taxonomy. Only the two events that actually fire in
+   the backend today. score.threshold_crossed + portfolio.changed +
+   signal.breakout are on the roadmap once the threshold tracking +
+   portfolio summary workers ship; advertising them here before they
+   fire would silently leave customers with broken subscriptions. */
 const SUPPORTED_EVENTS = [
-  { id: "report.created",  label: "Report created",  blurb: "An AI-narrated area report finished generation." },
-  { id: "score.changed",   label: "Score changed",   blurb: "A monitored postcode's composite score moved past your threshold." },
-  { id: "signal.changed",  label: "Signal changed",  blurb: "An individual signal value crossed a material change threshold." },
+  { id: "report.created",  label: "Report created",  blurb: "A generated area report finished. Fires once per POST /v1/report success." },
+  { id: "signal.changed",  label: "Signal changed",  blurb: "A signal in a monitored portfolio crossed a material-change threshold. Fired by Monitor's change detection." },
 ] as const;
 type WebhookEventType = (typeof SUPPORTED_EVENTS)[number]["id"];
 
@@ -48,7 +52,8 @@ export default function WebhooksClient() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [revokeTarget, setRevokeTarget] = useState<Subscription | null>(null);
-  const [newSecret, setNewSecret] = useState<{ secret: string; subscription: Subscription } | null>(null);
+  const [rotateTarget, setRotateTarget] = useState<Subscription | null>(null);
+  const [newSecret, setNewSecret] = useState<{ secret: string; subscription: Subscription; reason: "created" | "rotated" } | null>(null);
 
   const reload = useCallback(async () => {
     try {
@@ -119,6 +124,7 @@ export default function WebhooksClient() {
           <SecretReveal
             secret={newSecret.secret}
             subscription={newSecret.subscription}
+            reason={newSecret.reason}
             onDismiss={() => setNewSecret(null)}
           />
         ) : null}
@@ -131,6 +137,7 @@ export default function WebhooksClient() {
           <AppCard title={`Subscriptions · ${subscriptions.length}`} noPad>
             <SubscriptionsList
               subscriptions={subscriptions}
+              onRotate={setRotateTarget}
               onRevoke={setRevokeTarget}
             />
           </AppCard>
@@ -142,7 +149,17 @@ export default function WebhooksClient() {
         onClose={() => setCreateOpen(false)}
         onCreated={(secret, subscription) => {
           setCreateOpen(false);
-          setNewSecret({ secret, subscription });
+          setNewSecret({ secret, subscription, reason: "created" });
+          reload();
+        }}
+      />
+
+      <RotateModal
+        target={rotateTarget}
+        onClose={() => setRotateTarget(null)}
+        onRotated={(secret, subscription) => {
+          setRotateTarget(null);
+          setNewSecret({ secret, subscription, reason: "rotated" });
           reload();
         }}
       />
@@ -223,10 +240,12 @@ app.post("/webhooks/oga", express.raw(), (req, res) => {
 function SecretReveal({
   secret,
   subscription,
+  reason,
   onDismiss,
 }: {
   secret: string;
   subscription: Subscription;
+  reason: "created" | "rotated";
   onDismiss: () => void;
 }) {
   const [copied, setCopied] = useState(false);
@@ -238,11 +257,17 @@ function SecretReveal({
   return (
     <div className="oga-wh__secret" role="status">
       <div className="oga-wh__secret-head">
-        <span className="oga-wh__secret-label">New webhook secret</span>
+        <span className="oga-wh__secret-label">
+          {reason === "rotated" ? "Rotated webhook secret" : "New webhook secret"}
+        </span>
         <p className="oga-wh__secret-hint">
-          Copy this now — we won&apos;t show it again. Use it to verify the
-          HMAC-SHA256 signature on every delivery to{" "}
-          <code className="oga-wh__inline-code">{subscription.url}</code>.
+          {reason === "rotated"
+            ? "The previous secret is now invalid — any in-flight retries will fail signature verification on the receiver. Update your verifier with this value before the next delivery."
+            : "Copy this now — we won't show it again. Use it to verify the HMAC-SHA256 signature on every delivery to "}
+          {reason === "created" ? (
+            <code className="oga-wh__inline-code">{subscription.url}</code>
+          ) : null}
+          {reason === "created" ? "." : null}
         </p>
       </div>
       <div className="oga-wh__secret-row">
@@ -277,9 +302,11 @@ function ErrorBox({ error }: { error: string }) {
 
 function SubscriptionsList({
   subscriptions,
+  onRotate,
   onRevoke,
 }: {
   subscriptions: Subscription[];
+  onRotate: (s: Subscription) => void;
   onRevoke: (s: Subscription) => void;
 }) {
   if (subscriptions.length === 0) {
@@ -310,6 +337,14 @@ function SubscriptionsList({
             <DeliveryStat label="Last failure" iso={s.last_failure_at} tone="warn" />
           </div>
           <div className="oga-wh__row-actions">
+            <button
+              type="button"
+              onClick={() => onRotate(s)}
+              className="oga-wh__ghost-btn"
+              aria-label={`Rotate secret for ${s.url}`}
+            >
+              Rotate secret
+            </button>
             <button
               type="button"
               onClick={() => onRevoke(s)}
@@ -498,6 +533,96 @@ function CreateModal({
       </div>
 
       {err ? <p className="oga-wh__modal-error" role="alert">{err}</p> : null}
+    </Modal>
+  );
+}
+
+/* ── Rotate modal ───────────────────────────────────────────────────── */
+
+function RotateModal({
+  target,
+  onClose,
+  onRotated,
+}: {
+  target: Subscription | null;
+  onClose: () => void;
+  onRotated: (secret: string, subscription: Subscription) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (target) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setBusy(false);
+      setErr(null);
+    }
+  }, [target]);
+
+  async function submit() {
+    if (!target) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      const res = await fetch(`/api/me/webhooks/${target.id}/rotate-secret`, { method: "POST" });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        setErr(body?.error ?? "Couldn't rotate secret. Try again.");
+        return;
+      }
+      const body = (await res.json()) as { secret: string };
+      onRotated(body.secret, target);
+    } catch {
+      setErr("Network error.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Modal
+      open={target !== null}
+      onClose={() => (busy ? null : onClose())}
+      title="Rotate webhook secret"
+      size="sm"
+      surface="dark"
+      closeOnBackdrop={false}
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="oga-wh__modal-secondary oga-wh__modal-secondary--on-dark"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={busy}
+            className="oga-wh__modal-primary"
+          >
+            {busy ? "Rotating…" : "Rotate secret"}
+          </button>
+        </>
+      }
+    >
+      {target ? (
+        <>
+          <p className="oga-wh__modal-body oga-wh__modal-body--on-dark">
+            We&apos;ll generate a fresh signing secret for{" "}
+            <code className="oga-wh__modal-code">{target.url}</code>{" "}
+            and surface it once. The current secret stops verifying
+            signatures immediately — any deliveries still in the retry
+            queue will fail signature verification on your receiver
+            until you redeploy with the new value. Standard practice:
+            rotate during a low-traffic window or after dual-key support
+            on your side.
+          </p>
+          {err ? <p className="oga-wh__modal-error" role="alert">{err}</p> : null}
+        </>
+      ) : null}
     </Modal>
   );
 }

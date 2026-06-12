@@ -23,7 +23,14 @@ import { logger } from "../tracking/structured-logger";
 const WEBHOOK_DELIVERY_TIMEOUT_MS = 5000;
 const SECRET_PREFIX = "whsec_";
 
-export const SUPPORTED_EVENT_TYPES = ["report.created", "score.changed", "signal.changed"] as const;
+/* AR-283: dropped score.changed -- it lived in this list since AR-129
+   but was NEVER fired anywhere in the codebase. Customers subscribing
+   to it silently got nothing. signal.changed fires from
+   modules/monitor/change-detection.ts (real). report.created fires
+   from modules/reports/report-generator.ts (real). When proper score
+   threshold tracking ships, add score.threshold_crossed here (new
+   semantic) rather than reviving the empty score.changed slot. */
+export const SUPPORTED_EVENT_TYPES = ["report.created", "signal.changed"] as const;
 export type WebhookEventType = (typeof SUPPORTED_EVENT_TYPES)[number];
 
 export interface WebhookSubscriptionRow {
@@ -181,6 +188,25 @@ export async function revokeWebhookSubscription(userId: string, id: string): Pro
     RETURNING id
   `;
   return result.length > 0;
+}
+
+/** AR-283: rotate the signing secret on an active subscription.
+    Generates a fresh whsec_ secret, persists it, returns the plaintext
+    ONCE for the dashboard's one-time-reveal panel. The old secret
+    stops verifying signatures the instant this commits -- any in-flight
+    deliveries still in the retry queue at the moment of rotation will
+    fail signature verification on the receiver side. Returns null if
+    the subscription doesn't belong to the caller or was already revoked. */
+export async function rotateWebhookSecret(userId: string, id: string): Promise<string | null> {
+  const newSecret = generateWebhookSecret();
+  const result = await sql`
+    UPDATE webhook_subscriptions
+       SET secret = ${newSecret}
+     WHERE id = ${id} AND user_id = ${userId} AND status = 'active'
+     RETURNING id
+  `;
+  if (result.length === 0) return null;
+  return newSecret;
 }
 
 /* ── Delivery ── */

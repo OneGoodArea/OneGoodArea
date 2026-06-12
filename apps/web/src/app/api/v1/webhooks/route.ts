@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "events must be a non-empty array of supported types: 'report.created' or 'score.changed'",
+            "events must be a non-empty array of supported types: 'report.created' or 'signal.changed'",
         },
         { status: 400, headers },
       );
