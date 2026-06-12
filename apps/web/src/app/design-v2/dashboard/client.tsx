@@ -25,6 +25,7 @@ import { AppShell } from "../_shared/app-shell";
 import VerifyBanner from "../_shared/dashboard/verify-banner";
 import { ApiReferenceIcon, McpServerIcon } from "../_shared/docs-icons";
 import { CursorLogo, ClaudeLogo } from "../_shared/editor-icons";
+import { CurlLogo, JavaScriptLogo, PythonLogo } from "../_shared/lang-icons";
 import "./dashboard.css";
 
 /* ============================================================
@@ -264,11 +265,16 @@ type ApiLang = "curl" | "javascript" | "python";
 /* AR-256: language colors borrow the same dark-surface verb palette
    used by .oga-verb--get / --post / --patch on the API reference
    page (#7AC295 green, #F0B270 amber, #E8D27A yellow). Same
-   vocabulary, applied to language tabs instead of HTTP verbs. */
+   vocabulary, applied to language tabs instead of HTTP verbs.
+
+   AR-288: each tab now also carries a brand mark so the API card
+   reads like the MCP card (Cursor / Claude tabs). icon + color
+   compose — the glyph identifies the language at a glance, the
+   colored underline tracks the active selection. */
 const API_TABS: ReadonlyArray<TabDef<ApiLang>> = [
-  { id: "curl",       label: "curl",       color: "#F0B270" },
-  { id: "javascript", label: "JavaScript", color: "#E8D27A" },
-  { id: "python",     label: "Python",     color: "#7AC295" },
+  { id: "curl",       label: "curl",       color: "#F0B270", icon: <CurlLogo width={12} height={12} /> },
+  { id: "javascript", label: "JavaScript", color: "#E8D27A", icon: <JavaScriptLogo width={12} height={12} /> },
+  { id: "python",     label: "Python",     color: "#7AC295", icon: <PythonLogo width={12} height={12} /> },
 ];
 
 function ApiCard({ primaryKey }: { primaryKey: PrimaryApiKey | null }) {

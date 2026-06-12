@@ -244,14 +244,17 @@
 }
 
 /* ============================================================
-   Daily chart
+   Daily chart (AR-288: interactive — hover/focus to inspect bars)
    ============================================================ */
+.oga-api-usage__chart-wrap {
+  position: relative;
+  padding-top: 40px;          /* room for the floating tooltip */
+}
 .oga-api-usage__chart {
   display: flex;
   align-items: flex-end;
   gap: 4px;
   height: 160px;
-  padding-top: 8px;
 }
 .oga-api-usage__bar {
   flex: 1;
@@ -259,27 +262,78 @@
   background: var(--oga-fg);
   border: 1px solid var(--oga-fg);
   border-radius: 2px 2px 0 0;
-  transition: background var(--oga-dur-fast) var(--oga-ease);
+  transition: background var(--oga-dur-fast) var(--oga-ease),
+              border-color var(--oga-dur-fast) var(--oga-ease),
+              transform var(--oga-dur-fast) var(--oga-ease);
   min-width: 4px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  overflow: visible;
+  padding: 0;                 /* reset button styling */
+  cursor: pointer;
+  font: inherit;
+}
+.oga-api-usage__bar:focus {
+  outline: none;
 }
 .oga-api-usage__bar--empty {
   background: var(--oga-ink-06, rgba(26, 28, 31, 0.06));
   border: 1px dashed var(--oga-border);
+  cursor: pointer;
 }
-.oga-api-usage__bar-tip {
+.oga-api-usage__bar:hover,
+.oga-api-usage__bar:focus-visible,
+.oga-api-usage__bar--active {
+  background: var(--oga-ink, #1a1c1f);
+  border-color: var(--oga-ink, #1a1c1f);
+  transform: translateY(-2px);
+}
+.oga-api-usage__bar--empty:hover,
+.oga-api-usage__bar--empty:focus-visible,
+.oga-api-usage__bar--empty.oga-api-usage__bar--active {
+  background: var(--oga-ink-30, rgba(26, 28, 31, 0.25));
+  border-color: var(--oga-ink-30, rgba(26, 28, 31, 0.25));
+  border-style: solid;
+}
+
+/* Floating tooltip — positioned via inline `left: %` from the
+   active bar's index. transform centres it horizontally; the
+   chart-wrap padding makes vertical room. */
+.oga-api-usage__tooltip {
   position: absolute;
-  top: -22px;
-  left: 50%;
+  top: 0;
   transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--oga-ink, #1a1c1f);
+  color: var(--oga-white, #FAF8F4);
+  padding: 8px 12px;
+  border-radius: 4px;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 2;
+}
+.oga-api-usage__tooltip::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: inherit;
+}
+.oga-api-usage__tooltip-day {
   font-family: var(--oga-font-mono);
   font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.65);
+}
+.oga-api-usage__tooltip-count {
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
   font-weight: 600;
-  color: var(--oga-fg);
-  white-space: nowrap;
+  color: var(--oga-white, #FAF8F4);
 }
 .oga-api-usage__chart-axis {
   display: flex;

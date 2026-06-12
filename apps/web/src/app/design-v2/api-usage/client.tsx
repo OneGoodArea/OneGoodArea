@@ -324,6 +324,88 @@ function ErrorBox({ error }: { error: string }) {
   return <div className="oga-api-usage__error">{error}</div>;
 }
 
+/* AR-288 interactive daily chart.
+
+   30 bars representing the last 30 days. Each bar is focusable
+   (keyboard) + responds to hover; selecting one floats a tooltip
+   above the bars with the full date + exact request count. The
+   tooltip lives in the chart container (NOT positioned per-bar)
+   so it sits above the bars without overflowing the card. */
+function DailyChart({
+  dailyData,
+  maxDaily,
+}: {
+  dailyData: DailyData[];
+  maxDaily: number;
+}) {
+  const [activeIdx, setActiveIdx] = useState<number | null>(null);
+  const active = activeIdx === null ? null : dailyData[activeIdx];
+  const total = dailyData.reduce((s, d) => s + d.count, 0);
+
+  return (
+    <AppCard title="Last 30 days" note={`Peak · ${maxDaily} req · Total · ${total} req`}>
+      <div className="oga-api-usage__chart-wrap">
+        <div
+          className="oga-api-usage__chart"
+          onMouseLeave={() => setActiveIdx(null)}
+        >
+          {dailyData.map((d, i) => {
+            const h = Math.max(
+              (d.count / maxDaily) * 100,
+              d.count === 0 ? 2 : 8,
+            );
+            const isActive = i === activeIdx;
+            const baseClass = d.count === 0
+              ? "oga-api-usage__bar oga-api-usage__bar--empty"
+              : "oga-api-usage__bar";
+            return (
+              <button
+                type="button"
+                key={d.day}
+                className={
+                  isActive
+                    ? `${baseClass} oga-api-usage__bar--active`
+                    : baseClass
+                }
+                style={{ height: `${h}%` }}
+                onMouseEnter={() => setActiveIdx(i)}
+                onFocus={() => setActiveIdx(i)}
+                onBlur={() => setActiveIdx(null)}
+                aria-label={`${formatDay(d.day)} — ${d.count} request${d.count === 1 ? "" : "s"}`}
+              />
+            );
+          })}
+        </div>
+
+        {active ? (
+          <div
+            className="oga-api-usage__tooltip"
+            /* Position the tooltip horizontally over the active bar.
+               activeIdx / (length - 1) gives a 0..1 progression; we
+               clamp the centre so the tooltip doesn't overflow the
+               left or right edges of the chart container. */
+            style={{
+              left: `${Math.min(
+                Math.max((activeIdx! / Math.max(dailyData.length - 1, 1)) * 100, 8),
+                92,
+              )}%`,
+            }}
+          >
+            <span className="oga-api-usage__tooltip-day">{formatDay(active.day)}</span>
+            <span className="oga-api-usage__tooltip-count">
+              {active.count.toLocaleString()} request{active.count === 1 ? "" : "s"}
+            </span>
+          </div>
+        ) : null}
+      </div>
+      <div className="oga-api-usage__chart-axis">
+        <span>{formatDay(dailyData[0]?.day || "")}</span>
+        <span>today</span>
+      </div>
+    </AppCard>
+  );
+}
+
 function Content({
   data,
   newKey,
@@ -362,38 +444,10 @@ function Content({
         </div>
       </AppCard>
 
-      {/* Daily chart */}
-      <AppCard title="Last 30 days" note={`Peak · ${maxDaily} req`}>
-        <div className="oga-api-usage__chart">
-          {data.dailyData.map((d, i) => {
-            const h = Math.max(
-              (d.count / maxDaily) * 100,
-              d.count === 0 ? 2 : 8,
-            );
-            const isLast = i === data.dailyData.length - 1;
-            return (
-              <div
-                key={d.day}
-                className={
-                  d.count === 0
-                    ? "oga-api-usage__bar oga-api-usage__bar--empty"
-                    : "oga-api-usage__bar"
-                }
-                style={{ height: `${h}%` }}
-                title={`${formatDay(d.day)} · ${d.count} request${d.count === 1 ? "" : "s"}`}
-              >
-                {isLast && d.count > 0 && (
-                  <div className="oga-api-usage__bar-tip">{d.count}</div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        <div className="oga-api-usage__chart-axis">
-          <span>{formatDay(data.dailyData[0]?.day || "")}</span>
-          <span>today</span>
-        </div>
-      </AppCard>
+      {/* Daily chart — interactive: hover/focus a bar to see the
+          full date + exact count, keyboard accessible (each bar is
+          a button-shaped focusable element). AR-288. */}
+      <DailyChart dailyData={data.dailyData} maxDaily={maxDaily} />
 
       {/* Keys */}
       <AppCard
