@@ -25,7 +25,7 @@ export {
   plan as planFromNl,
   SUPPORTED_SIGNALS,
 } from "./planner";
-export { executePlan } from "./executor";
+export { executePlan, AmbiguousLocationError } from "./executor";
 
 /** Strict validation of the incoming request — exactly one of question | plan. */
 export function parseQueryRequest(body: unknown): { ok: true; req: QueryRequest } | { ok: false; error: string } {
