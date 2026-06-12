@@ -186,6 +186,38 @@ export async function sendPasswordResetEmail(email: string, token: string) {
   });
 }
 
+export async function sendMagicLinkEmail(email: string, token: string) {
+  const magicUrl = `${APP_URL}/auth/magic-link?token=${token}`;
+
+  const content = `
+    <h1 style="font-family:${FONT_SERIF}; font-size:26px; font-weight:400; letter-spacing:-0.5px; color:${COLORS.inkDeep}; margin:0 0 10px 0; line-height:1.15;">
+      Sign in to <em style="font-style:italic; color:${COLORS.ink}; border-bottom:2px solid ${COLORS.signal}; padding-bottom:1px;">OneGoodArea</em>.
+    </h1>
+    <p style="font-family:${FONT_SANS}; font-size:15px; line-height:1.55; color:${COLORS.text2}; margin:0 0 26px 0;">
+      Click the button below to sign in. This link is single-use and expires in 15 minutes.
+    </p>
+    ${ctaButton("Sign in", magicUrl)}
+    <p style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text3}; margin:0 0 8px 0; letter-spacing:1.5px; text-transform:uppercase;">
+      Or paste this link
+    </p>
+    <p style="font-family:${FONT_MONO}; font-size:11px; color:${COLORS.ink}; word-break:break-all; margin:0 0 26px 0;">
+      ${magicUrl}
+    </p>
+    <div style="border-top:1px solid ${COLORS.borderDim}; padding-top:18px;">
+      <p style="font-family:${FONT_SANS}; font-size:13px; color:${COLORS.text3}; margin:0; line-height:1.5;">
+        This link expires in 15 minutes. If you didn&apos;t request this, ignore this email.
+      </p>
+    </div>
+  `;
+
+  await getEmailProvider().send({
+    from: EMAIL_FROM,
+    to: email,
+    subject: "Sign in to OneGoodArea",
+    html: baseTemplate(content),
+  });
+}
+
 export async function sendReportEmail(email: string, reportId: string, report: AreaReport) {
   logger.info(`[report-email] Sending report email to ${email} for report ${reportId}`);
 
