@@ -134,9 +134,17 @@ export async function executePlan(plan: QueryPlan, opts: ExecuteOpts): Promise<Q
   if (plan.op === "compare_areas") {
     /* AR-266: fan out getAreaProfile per slot in parallel; preserve
        not-founds as null slots (NOT dropped) so the caller can see
-       exactly which input failed. Order matches plan.params.areas. */
+       exactly which input failed. Order matches plan.params.areas.
+
+       Follow-up to AR-267: each slot is disambiguated FIRST. If any
+       slot's place name resolves to multiple distinct places, the
+       whole call throws AmbiguousLocationError — partial-pick across
+       3-area comparisons would be the same silent-drop bug AR-267 is
+       fixing for single-area ops. Postcode slots short-circuit the
+       strict resolver. */
     const queries = plan.params.areas;
-    const profiles = await Promise.all(queries.map((a) => getAreaProfile(a)));
+    const resolved = await Promise.all(queries.map((a) => resolveAreaInputStrict(a)));
+    const profiles = await Promise.all(resolved.map((a) => getAreaProfile(a)));
     return {
       plan, plan_source,
       results: {
