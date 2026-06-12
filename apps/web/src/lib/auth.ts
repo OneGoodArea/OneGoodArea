@@ -9,7 +9,6 @@ import {
   ensureMagicLinkTokensTable,
 } from "@/lib/db-schema";
 import { row, UserRow, MagicLinkTokenRow } from "@/lib/db-types";
-import { generateId } from "@/lib/id";
 import { apiBaseUrl } from "@/lib/server/api-client";
 
 let _authTablesReady = false;
