@@ -86,6 +86,21 @@ export async function executePlan(plan: QueryPlan, opts: ExecuteOpts): Promise<Q
     });
     return { plan, plan_source, results: score, meta };
   }
+  if (plan.op === "compare_areas") {
+    /* AR-266: fan out getAreaProfile per slot in parallel; preserve
+       not-founds as null slots (NOT dropped) so the caller can see
+       exactly which input failed. Order matches plan.params.areas. */
+    const queries = plan.params.areas;
+    const profiles = await Promise.all(queries.map((a) => getAreaProfile(a)));
+    return {
+      plan, plan_source,
+      results: {
+        areas: queries.map((query, i) => ({ query, profile: profiles[i] })),
+        meta: { generated_at: meta.generated_at, scope: `areas=${queries.length}` },
+      },
+      meta,
+    };
+  }
   if (plan.op === "find_forecast") {
     // find_forecast — resolve target -> LSOA, fit linear regression on the
     // trailing window of signal_timeseries, project horizon_months ahead.

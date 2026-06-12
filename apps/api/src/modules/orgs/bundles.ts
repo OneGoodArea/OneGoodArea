@@ -83,6 +83,10 @@ export function extractSignalKeysFromPlan(plan: QueryPlan): string[] {
       return [plan.params.signal_key];
     case "get_area":
     case "score_area":
+    case "compare_areas":
+      // AR-266: like get_area/score_area, doesn't reference specific
+      // signal keys. Bundle gating happens via per-signal filters
+      // downstream, not at the plan level.
       return [];
   }
 }
