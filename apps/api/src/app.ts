@@ -3,7 +3,7 @@ import { INTENTS, type Intent, isIntent, SIGNAL_CATEGORIES, isSignalCategory } f
 import { validateApiKey, createApiKey, listApiKeys, revokeApiKey } from "./modules/api-keys";
 import { verifySessionToken } from "./modules/auth/session-token";
 import { hashPassword, verifyPassword, generateToken } from "./modules/auth/crypto";
-import { sendVerificationEmail, sendPasswordResetEmail, sendReportEmail } from "./infrastructure/email/senders";
+import { sendVerificationEmail, sendPasswordResetEmail, sendMagicLinkEmail, sendReportEmail } from "./infrastructure/email/senders";
 import { sql } from "./infrastructure/db/client";
 import {
   rows,
@@ -3500,6 +3500,200 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   });
 
   // Change the logged-in user's password (verifies the current one first).
+
+  // Validate email + password and return the user object. Public endpoint used
+  // by the NextAuth credentials provider's authorize() callback via the web
+  // container's BFF proxy. Rate-limited: 5 attempts/min per IP.
+  // New for AR-203 Phase 1B — web auth migration.
+  app.post("/auth/login", async (request, reply) => {
+    try {
+      const ip = headerString(request.headers["x-forwarded-for"])?.split(",")[0]?.trim() || "unknown";
+      const rl = await rateLimit(`login:${ip}`, {
+        max: 5,
+        windowSeconds: 60,
+      });
+      if (!rl.success) {
+        reply.headers(rateLimitHeaders(5, rl));
+        return reply.code(429).send({ error: "Too many attempts. Please try again later." });
+      }
+
+      const { email, password } = (request.body ?? {}) as { email?: unknown; password?: unknown };
+      if (!email || typeof email !== "string" || !password || typeof password !== "string") {
+        return reply.code(400).send({ error: "Email and password are required" });
+      }
+
+      const sanitized = email.trim().toLowerCase();
+      const result = await sql`
+        SELECT id, email, name, image, password_hash FROM users
+        WHERE email = ${sanitized} AND provider = 'credentials'
+      `;
+      if (result.length === 0 || !result[0].password_hash) {
+        return reply.code(401).send({ error: "invalid_credentials" });
+      }
+
+      const foundUser = row<
+        Pick<UserRow, "id" | "email" | "name" | "image" | "password_hash">
+      >(result[0]);
+
+      const { valid, needsRehash } = await verifyPassword(password as string, foundUser.password_hash!);
+      if (!valid) {
+        return reply.code(401).send({ error: "invalid_credentials" });
+      }
+
+      // Transparently upgrade legacy SHA-256 hashes to PBKDF2
+      if (needsRehash) {
+        const newHash = await hashPassword(password as string);
+        sql`UPDATE users SET password_hash = ${newHash} WHERE id = ${foundUser.id}`.catch(() => {});
+      }
+
+      return reply.send({
+        id: foundUser.id,
+        email: foundUser.email,
+        name: foundUser.name,
+      });
+    } catch (error) {
+      logger.error("Login error:", error);
+      return reply.code(500).send({ error: "Something went wrong" });
+    }
+  });
+
+  // Request a magic-link sign-in email. Always 200 (anti-enumeration) except
+  // for rate limit (3/min per IP). Mints a 15-minute token in magic_link_tokens
+  // and sends the email via the configured provider.
+  // New for AR-203 Phase 1B — web auth migration.
+  app.post("/auth/magic-link/request", async (request, reply) => {
+    try {
+      const ip = headerString(request.headers["x-forwarded-for"])?.split(",")[0]?.trim() || "unknown";
+      const rl = await rateLimit(`magic-link-request:${ip}`, {
+        max: 3,
+        windowSeconds: 60,
+      });
+      if (!rl.success) {
+        reply.headers(rateLimitHeaders(3, rl));
+        return reply.code(429).send({ error: "Too many attempts. Please try again in a minute." });
+      }
+
+      const { email } = (request.body ?? {}) as { email?: unknown };
+      if (!email || typeof email !== "string" || email.trim().length === 0 || !email.includes("@")) {
+        return reply.send({ ok: true });
+      }
+
+      const sanitized = email.trim().toLowerCase();
+
+      const users = await sql`SELECT id, provider FROM users WHERE email = ${sanitized}`;
+      if (users.length === 0 || (users[0].provider && users[0].provider !== "credentials")) {
+        return reply.send({ ok: true });
+      }
+
+      const user = row<Pick<UserRow, "id" | "provider">>(users[0]);
+      const token = generateToken();
+      const tokenId = generateId("mlt");
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+      await sql`
+        INSERT INTO magic_link_tokens (id, user_id, email, token, expires_at)
+        VALUES (${tokenId}, ${user.id}, ${sanitized}, ${token}, ${expiresAt})
+      `;
+
+      try {
+        await sendMagicLinkEmail(sanitized, token);
+      } catch (e) {
+        logger.error("Magic link email send failed:", e);
+      }
+
+      return reply.send({ ok: true });
+    } catch (e) {
+      logger.error("Magic link request error:", e);
+      return reply.send({ ok: true });
+    }
+  });
+
+  // Check whether an email address has an account, and which provider.
+  // Rate-limited (20/min per IP). Used by the /get-started email-first flow.
+  // New for AR-203 Phase 1B — web auth migration.
+  app.get("/auth/check-email", async (request, reply) => {
+    try {
+      const ip = headerString(request.headers["x-forwarded-for"])?.split(",")[0]?.trim() || "unknown";
+      const rl = await rateLimit(`check-email:${ip}`, {
+        max: 20,
+        windowSeconds: 60,
+      });
+      if (!rl.success) {
+        reply.headers(rateLimitHeaders(20, rl));
+        return reply.code(429).send({ error: "Too many attempts. Please try again later." });
+      }
+
+      const query = request.query as { email?: string };
+      const rawEmail = query.email;
+      if (!rawEmail || typeof rawEmail !== "string") {
+        return reply.code(400).send({ error: "Email is required" });
+      }
+
+      const email = rawEmail.trim().toLowerCase();
+      if (email.length === 0 || !email.includes("@")) {
+        return reply.send({ exists: false });
+      }
+
+      const result = await sql`SELECT provider FROM users WHERE email = ${email}`;
+      if (result.length === 0) {
+        return reply.send({ exists: false });
+      }
+
+      const { provider } = row<Pick<UserRow, "provider">>(result[0]);
+      return reply.send({ exists: true, provider: provider ?? "credentials" });
+    } catch (error) {
+      logger.error("[check-email] Error:", error);
+      return reply.code(500).send({ error: "Something went wrong" });
+    }
+  });
+
+  // Handle OAuth sign-in callback from NextAuth. Upserts the user (creates if
+  // new, updates name/image if changed) and returns the user id. Also tracks
+  // the sign-in event. Called by the NextAuth signIn() callback via the web
+  // container's BFF proxy.
+  // New for AR-203 Phase 1B — web auth migration.
+  app.post("/auth/oauth-callback", async (request, reply) => {
+    try {
+      const { email, name, image, provider } = (request.body ?? {}) as {
+        email?: unknown;
+        name?: unknown;
+        image?: unknown;
+        provider?: unknown;
+      };
+
+      if (!email || typeof email !== "string") {
+        return reply.code(400).send({ error: "Email is required" });
+      }
+      const safeProvider = provider === "google" || provider === "github" ? provider : undefined;
+      if (!safeProvider) {
+        return reply.code(400).send({ error: "Provider must be google or github" });
+      }
+
+      const sanitized = email.trim().toLowerCase();
+      const existing = await sql`SELECT id FROM users WHERE email = ${sanitized}`;
+
+      let id: string;
+      if (existing.length === 0) {
+        id = generateId("user");
+        await sql`
+          INSERT INTO users (id, email, name, image, provider, email_verified)
+          VALUES (${id}, ${sanitized}, ${String(name ?? "")}, ${image ? String(image) : null}, ${safeProvider}, TRUE)
+        `;
+      } else {
+        id = row<Pick<UserRow, "id">>(existing[0]).id;
+        await sql`
+          UPDATE users SET name = ${String(name ?? "")}, image = ${image ? String(image) : null}
+          WHERE id = ${id}
+        `;
+      }
+
+      return reply.send({ id });
+    } catch (error) {
+      logger.error("OAuth callback error:", error);
+      return reply.code(500).send({ error: "Something went wrong" });
+    }
+  });
+
   // Session-authed; credentials accounts only. Migrated from
   // /api/settings/password.
   app.post("/settings/password", async (request, reply) => {
