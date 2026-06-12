@@ -133,6 +133,8 @@ import {
   validateWebhookUrl,
   validateEventTypes,
 } from "./modules/webhooks";
+import { getAnalytics, getTrafficAnalytics } from "./modules/admin";
+
 import { handleStripeWebhook } from "./modules/billing/webhook-handler";
 import { isAppError } from "./infrastructure/errors/custom-errors";
 import { logger } from "./modules/tracking/structured-logger";
@@ -3780,6 +3782,40 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // Authenticated by CRON_SECRET (the container scheduler sends it as a Bearer
   // token), not session/api-key. ?limit=N + ?dry_run=true supported. Migrated
   // from /api/cron/rescore; the worker logic lives in modules/reports/rescore.
+
+  // Admin analytics — aggregate usage + revenue (superuser only).
+  app.get("/admin/analytics", async (request, reply) => {
+    try {
+      const userId = await authenticateSession(request, reply);
+      if (!userId) return reply;
+      if (!(await isSuperuser(userId))) {
+        return reply.code(403).send({ error: "Forbidden" });
+      }
+      const data = await getAnalytics();
+      return reply.send(data);
+    } catch (error) {
+      logger.error("Admin analytics error:", error);
+      return reply.code(500).send({ error: "Failed to fetch analytics" });
+    }
+  });
+
+  // Admin traffic analytics — pageview aggregation (superuser only).
+  app.get("/admin/traffic-analytics", async (request, reply) => {
+    try {
+      const userId = await authenticateSession(request, reply);
+      if (!userId) return reply;
+      if (!(await isSuperuser(userId))) {
+        return reply.code(403).send({ error: "Forbidden" });
+      }
+      const data = await getTrafficAnalytics();
+      if (!data) return reply.code(503).send({ error: "Traffic data unavailable" });
+      return reply.send(data);
+    } catch (error) {
+      logger.error("Admin traffic analytics error:", error);
+      return reply.code(500).send({ error: "Failed to fetch traffic analytics" });
+    }
+  });
+
   app.get("/cron/rescore", async (request, reply) => {
     const expected = process.env.CRON_SECRET;
     if (!expected) {
