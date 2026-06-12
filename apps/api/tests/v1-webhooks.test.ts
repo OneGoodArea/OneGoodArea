@@ -126,13 +126,15 @@ describe("POST /v1/webhooks", () => {
   });
 
   it("dedupes and filters the events list before persisting", async () => {
+    /* AR-283: score.changed was removed (never fired). Replaced with
+       signal.changed which is the real other event in the taxonomy. */
     await postWebhook({
       url: "https://example.com/hook",
-      events: ["report.created", "report.created", "bogus.event", "score.changed"],
+      events: ["report.created", "report.created", "bogus.event", "signal.changed"],
     });
     expect(mockCreate).toHaveBeenCalledWith("user_1", "https://example.com/hook", [
       "report.created",
-      "score.changed",
+      "signal.changed",
     ]);
   });
 });

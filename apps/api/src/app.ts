@@ -127,6 +127,7 @@ import {
   createWebhookSubscription,
   listWebhookSubscriptions,
   revokeWebhookSubscription,
+  rotateWebhookSecret,
   validateWebhookUrl,
   validateEventTypes,
 } from "./modules/webhooks";
@@ -2444,7 +2445,7 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       const eventList = validateEventTypes(events);
       if (!eventList) {
         return reply.code(400).send({
-          error: "events must be a non-empty array of supported types: 'report.created' or 'score.changed'",
+          error: "events must be a non-empty array of supported types: 'report.created' or 'signal.changed'",
         });
       }
 
@@ -2496,6 +2497,30 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         return reply.code(error.statusCode).send({ error: error.message, code: error.code });
       }
       logger.error("[v1/webhooks/:id DELETE] error:", error);
+      return reply.code(500).send({ error: "Internal server error" });
+    }
+  });
+
+  // AR-283: rotate the signing secret on an active subscription. The
+  // plaintext secret comes back ONCE in the response (the dashboard
+  // surfaces it in the same one-time-reveal panel as create). 404 if
+  // the subscription doesn't belong to the caller or was revoked.
+  app.post<{ Params: { id: string } }>("/v1/webhooks/:id/rotate-secret", async (request, reply) => {
+    try {
+      const userId = await requireApiAccess(request, reply);
+      if (!userId) return reply;
+
+      const { id } = request.params;
+      const newSecret = await rotateWebhookSecret(userId, id);
+      if (!newSecret) {
+        return reply.code(404).send({ error: "Webhook subscription not found or already revoked" });
+      }
+      return reply.send({ id, secret: newSecret });
+    } catch (error) {
+      if (isAppError(error)) {
+        return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+      }
+      logger.error("[v1/webhooks/:id/rotate-secret POST] error:", error);
       return reply.code(500).send({ error: "Internal server error" });
     }
   });
