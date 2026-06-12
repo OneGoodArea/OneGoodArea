@@ -21,6 +21,7 @@ import {
   PresetsIcon,
   CohortsIcon,
   WebhookIcon,
+  OrgIcon,
 } from "./dashboard/nav-icons";
 import "./app-shell.css";
 
@@ -86,6 +87,7 @@ const PRODUCTS_SECTION: NavItem[] = [
 ];
 
 const ORG_SECTION: NavItem[] = [
+  { href: "/dashboard/org",         label: "Organisation",    icon: <OrgIcon />, exact: true },
   { href: "/dashboard/org/members", label: "Members",         icon: <MembersIcon /> },
   { href: "/dashboard/org/bundles", label: "Signal bundles",  icon: <BundlesIcon /> },
   { href: "/dashboard/org/presets", label: "Scoring presets", icon: <PresetsIcon /> },
