@@ -199,6 +199,10 @@ describe("executePlan — compare_areas (AR-266)", () => {
   });
 
   it("preserves not-found slots as null instead of dropping them (predictable shape)", async () => {
+    // AR-266 follow-up: "NowhereCity" isn't a postcode, so resolveAreaInputStrict
+    // consults the strict resolver. not_found passes through unchanged and the
+    // downstream handler returns null for that slot.
+    mockGeocodeAreaStrict.mockResolvedValue({ kind: "not_found" });
     mockGetAreaProfile
       .mockResolvedValueOnce(mkProfile("M1 1AE"))
       .mockResolvedValueOnce(null) // middle slot missed
@@ -218,6 +222,9 @@ describe("executePlan — compare_areas (AR-266)", () => {
   });
 
   it("handles the max-allowed 5-area case", async () => {
+    // Non-postcode slots take the strict-resolver path; default to not_found
+    // so each input passes through unchanged.
+    mockGeocodeAreaStrict.mockResolvedValue({ kind: "not_found" });
     mockGetAreaProfile.mockResolvedValue(mkProfile("X"));
     const res = await executePlan(
       { op: "compare_areas", params: { areas: ["A", "B", "C", "D", "E"] } },
@@ -229,6 +236,41 @@ describe("executePlan — compare_areas (AR-266)", () => {
       expect(r.areas).toHaveLength(5);
       expect(r.meta.scope).toBe("areas=5");
     }
+  });
+
+  it("throws AmbiguousLocationError when ANY slot is an ambiguous place name (AR-266 follow-up)", async () => {
+    /* The compare_areas op is a 3-slot question:
+       [postcode, ambiguous place, postcode]. Partial-pick (resolving 2 of 3
+       slots correctly + silently picking the wrong Brixton for slot 2)
+       would be the same silent-drop bug AR-267 fixes for single-area ops.
+       So one ambiguous slot fails the whole call — caller re-asks with a
+       specific postcode for that slot. */
+    mockGeocodeAreaStrict.mockResolvedValueOnce({
+      kind: "ambiguous",
+      candidates: [
+        { label: "Brixton, Lambeth, London", postcode: "SW2 1AA", district: "Lambeth", country: "England" },
+        { label: "Brixton, South Hams, Devon", postcode: "PL8 2AQ", district: "South Hams", country: "England" },
+      ],
+    });
+    await expect(
+      executePlan(
+        { op: "compare_areas", params: { areas: ["M1 1AE", "Brixton", "EC1A 1BB"] } },
+        { planSource: "nl" },
+      ),
+    ).rejects.toBeInstanceOf(AmbiguousLocationError);
+    expect(mockGetAreaProfile).not.toHaveBeenCalled();
+  });
+
+  it("skips the strict resolver entirely when every slot is a postcode (AR-266 follow-up)", async () => {
+    mockGetAreaProfile
+      .mockResolvedValueOnce(mkProfile("M1 1AE"))
+      .mockResolvedValueOnce(mkProfile("EC1A 1BB"));
+    await executePlan(
+      { op: "compare_areas", params: { areas: ["M1 1AE", "EC1A 1BB"] } },
+      { planSource: "client" },
+    );
+    expect(mockGeocodeAreaStrict).not.toHaveBeenCalled();
+    expect(mockGetAreaProfile).toHaveBeenCalledTimes(2);
   });
 });
 
