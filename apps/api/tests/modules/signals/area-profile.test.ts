@@ -113,6 +113,37 @@ describe("buildAreaProfile", () => {
     expect(byKey(sparse.signals, "crime.total_12m").confidence).toBe(0.4);
   });
 
+  it("reports the zero-crime case honestly instead of 'no coverage' (AR-268)", () => {
+    /* M20 2RN-style: police.uk responded HTTP 200 for every month but
+       returned []. That used to surface as confidence 0 + "No police.uk
+       coverage for this area." — false for any UK LSOA. Now: modest
+       confidence + honest "zero crimes recorded" copy. */
+    const zero = buildAreaProfile(geo, {
+      ...fullSources,
+      crime: {
+        total_crimes: 0,
+        months_covered: 0,
+        by_category: {},
+        top_streets: [],
+        outcome_breakdown: {},
+        monthly_trend: [],
+      },
+    });
+    const total = byKey(zero.signals, "crime.total_12m");
+    expect(total.value).toBe(0);
+    expect(total.confidence).toBe(0.6);
+    expect(total.confidence_reason).toMatch(/zero crimes/i);
+    expect(total.confidence_reason).not.toMatch(/no .* coverage/i);
+  });
+
+  it("flags police.uk fetch failure distinctly from missing data (AR-268)", () => {
+    const failed = buildAreaProfile(geo, { ...fullSources, crime: null });
+    const total = byKey(failed.signals, "crime.total_12m");
+    expect(total.value).toBeNull();
+    expect(total.confidence).toBe(0);
+    expect(total.confidence_reason).toMatch(/request failed/i);
+  });
+
   it("lists only the sources that actually contributed", () => {
     const { meta } = buildAreaProfile(geo, fullSources);
     expect(meta.sources).toEqual(
@@ -130,7 +161,10 @@ describe("buildAreaProfile", () => {
     for (const s of empty.signals) {
       expect(s.value).toBeNull();
       expect(s.confidence).toBe(0);
-      expect(s.confidence_reason).toMatch(/no .* coverage|no .* found/i);
+      /* AR-268: police.uk null now means "request failed" (every England/
+         Wales LSOA is covered, so missing data is an outage, not absence
+         of coverage). Other null sources still report "no coverage". */
+      expect(s.confidence_reason).toMatch(/no .* coverage|no .* found|request failed/i);
     }
     expect(empty.meta.sources).toEqual([]);
     // Still a valid profile.

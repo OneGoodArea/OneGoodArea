@@ -65,6 +65,22 @@ const notAvailable = (source: string): Conf => ({
   confidence_reason: `No ${source} coverage for this area.`,
 });
 
+/* AR-268: police.uk responded but recorded zero crimes for the queried
+   window. NOT the same as "no coverage" — every England/Wales LSOA is
+   covered. Low-traffic residential areas legitimately produce this. */
+const zeroCrimesRecorded: Conf = {
+  confidence: 0.6,
+  confidence_reason: "police.uk recorded zero crimes in the last 3 months for this area.",
+};
+
+/* AR-268: police.uk request failed (timeout / 5xx / network). Distinct
+   from a definitive zero so we don't mislabel a transient outage as
+   "no coverage". */
+const fetchFailed = (source: string): Conf => ({
+  confidence: 0,
+  confidence_reason: `${source} request failed for this area; try again shortly.`,
+});
+
 const available = (source: string, note?: string): Conf => ({
   confidence: 0.9,
   confidence_reason: note ?? `${source} returned data for this area.`,
@@ -155,7 +171,15 @@ export function buildAreaProfile(
   /* crime — police.uk */
   {
     const period = crimePeriod(crime);
-    const conf = crime ? crimeConfidence(crime.months_covered) : notAvailable("police.uk");
+    /* AR-268: three-way fork instead of crime-or-not. null = fetch failed,
+       total_crimes === 0 = API said zero, otherwise the usual sample-size
+       confidence ladder. */
+    const conf =
+      crime === null
+        ? fetchFailed("police.uk")
+        : crime.total_crimes === 0
+          ? zeroCrimesRecorded
+          : crimeConfidence(crime.months_covered);
     const monthlyRate =
       crime && crime.months_covered > 0 ? Math.round(crime.total_crimes / crime.months_covered) : null;
     signals.push(
