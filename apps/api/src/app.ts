@@ -99,9 +99,11 @@ import {
   trackMcpCall,
   listAddons,
   getMcpUsageThisMonth,
+  getMonthlyReportCount,
   getStripeCustomerId,
   getUserEmail,
   hasAddon,
+  isSuperuser,
 } from "./modules/usage";
 import {
   PLANS,
@@ -2881,6 +2883,99 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
       logger.error("Usage check error:", error);
       return reply.code(500).send({ error: "Failed to check usage" });
     }
+
+
+  // Composite dashboard data — plan, usage, MCP status, primary API key,
+  // email verification, and latest report call. Session-authed. Combines
+  // what /dashboard and /dashboard/billing pages need in one round-trip.
+  app.get("/dashboard", async (request, reply) => {
+    try {
+      const userId = await authenticateSession(request, reply);
+      if (!userId) return reply; // 401 already sent
+
+      const [
+        plan,
+        used,
+        mcpAccess,
+        mcpAddonOwned,
+        mcpUsage,
+      ] = await Promise.all([
+        getUserPlan(userId),
+        getMonthlyReportCount(userId),
+        hasMcpAccess(userId),
+        hasAddon(userId, "mcp"),
+        getMcpUsageThisMonth(userId),
+      ]);
+
+      const planConfig = PLANS[plan as PlanId];
+      const planIncludesMcp = planConfig?.mcpAccess === true;
+
+      // Primary API key (first non-revoked, created first).
+      let primaryKey: { key_prefix: string | null; name: string; last_used_at: string | null } | null = null;
+      try {
+        const keyRows = await sql`
+          SELECT key_prefix, name, last_used_at
+          FROM api_keys
+          WHERE user_id = ${userId} AND revoked = FALSE
+          ORDER BY created_at ASC
+          LIMIT 1
+        `;
+        if (keyRows.length > 0) {
+          primaryKey = keyRows[0] as { key_prefix: string | null; name: string; last_used_at: string | null };
+        }
+      } catch {
+        // Soft-fail: primary key is nice-to-have.
+      }
+
+      // Email verification status.
+      let emailVerified = false;
+      try {
+        const userRows = await sql`SELECT email_verified FROM users WHERE id = ${userId} LIMIT 1`;
+        if (userRows.length > 0) {
+          emailVerified = (userRows[0] as { email_verified: boolean }).email_verified;
+        }
+      } catch {
+        // Soft-fail: assume verified.
+        emailVerified = true;
+      }
+
+      // Latest report call (area + score + preset).
+      let latestCall: { preset: string; area: string; score: number; created_at: string } | null = null;
+      try {
+        const reportRows = await sql`
+          SELECT intent AS preset, area, score, created_at
+          FROM reports
+          WHERE user_id = ${userId}
+          ORDER BY created_at DESC
+          LIMIT 1
+        `;
+        if (reportRows.length > 0) {
+          latestCall = reportRows[0] as { preset: string; area: string; score: number; created_at: string };
+        }
+      } catch {
+        // Soft-fail: latest call is nice-to-have.
+      }
+
+      return reply.send({
+        plan,
+        planName: planConfig.name,
+        used,
+        limit: planConfig.reportsPerMonth,
+        mcp: {
+          access: mcpAccess,
+          addonOwned: mcpAddonOwned,
+          includedFreeViaPlan: planIncludesMcp,
+          callsThisMonth: mcpUsage,
+        },
+        emailVerified,
+        primaryKey,
+        latestCall,
+      });
+    } catch (error) {
+      logger.error("Dashboard data error:", error);
+      return reply.code(500).send({ error: "Failed to fetch dashboard data" });
+    }
+  });
   });
 
   // The logged-in user's plan + whether a Stripe sub is scheduled to cancel.
