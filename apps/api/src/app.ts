@@ -3647,6 +3647,45 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
+  // POST variant — web /get-started sends email in JSON body rather than
+  // query string. Same logic as GET, different input source.
+  // Added for AR-203 Phase 1B — web auth migration.
+  app.post("/auth/check-email", async (request, reply) => {
+    try {
+      const ip = headerString(request.headers["x-forwarded-for"])?.split(",")[0]?.trim() || "unknown";
+      const rl = await rateLimit(`check-email:${ip}`, {
+        max: 20,
+        windowSeconds: 60,
+      });
+      if (!rl.success) {
+        reply.headers(rateLimitHeaders(20, rl));
+        return reply.code(429).send({ error: "Too many attempts. Please try again later." });
+      }
+
+      const body = request.body as { email?: unknown } | undefined;
+      const rawEmail = body?.email;
+      if (!rawEmail || typeof rawEmail !== "string") {
+        return reply.code(400).send({ error: "Email is required" });
+      }
+
+      const email = rawEmail.trim().toLowerCase();
+      if (email.length === 0 || !email.includes("@")) {
+        return reply.send({ exists: false });
+      }
+
+      const result = await sql`SELECT provider FROM users WHERE email = ${email}`;
+      if (result.length === 0) {
+        return reply.send({ exists: false });
+      }
+
+      const { provider } = row<Pick<UserRow, "provider">>(result[0]);
+      return reply.send({ exists: true, provider: provider ?? "credentials" });
+    } catch (error) {
+      logger.error("[check-email] Error:", error);
+      return reply.code(500).send({ error: "Something went wrong" });
+    }
+  });
+
   // Handle OAuth sign-in callback from NextAuth. Upserts the user (creates if
   // new, updates name/image if changed) and returns the user id. Also tracks
   // the sign-in event. Called by the NextAuth signIn() callback via the web
