@@ -34,8 +34,18 @@ export async function GET() {
 
   const plan = await getUserPlan(userId);
 
+  /* AR-287: every public API endpoint emits a distinct `api.*` event
+     in activity_events — api.query.executed, api.score.computed,
+     api.peers.queried, api.signals.category, ~30 in total. The graph
+     + total + last-request stats are meant to reflect ALL API traffic
+     (it says "API requests"), so they match against the prefix `api.%`.
+
+     The "this month" stat keeps the narrower `api.report.generated`
+     filter because that ONE counter is tied to the report quota
+     (PLANS[plan].reportsPerMonth is a report quota, not a generic-API
+     quota). Mixing them would mislabel non-report API calls as quota
+     consumption. */
   try {
-    // Query activity_events for api.report.generated events for this user
     const [
       totalRequests,
       requestsThisMonth,
@@ -43,13 +53,13 @@ export async function GET() {
       lastRequest,
       apiKeys,
     ] = await Promise.all([
-      // Total API requests (all time)
+      // Total API requests (all time, all api.* events)
       sql`
         SELECT COUNT(*)::int as count
         FROM activity_events
-        WHERE user_id = ${userId} AND event = 'api.report.generated'
+        WHERE user_id = ${userId} AND event LIKE 'api.%'
       `,
-      // Requests this month
+      // Reports this month — quota counter, kept scoped to report generation
       sql`
         SELECT COUNT(*)::int as count
         FROM activity_events
@@ -57,25 +67,25 @@ export async function GET() {
           AND event = 'api.report.generated'
           AND created_at >= date_trunc('month', NOW())
       `,
-      // Requests per day (last 30 days)
+      // Traffic per day (last 30 days, all api.* events)
       sql`
         SELECT date_trunc('day', created_at)::date as day, COUNT(*)::int as count
         FROM activity_events
         WHERE user_id = ${userId}
-          AND event = 'api.report.generated'
+          AND event LIKE 'api.%'
           AND created_at >= NOW() - INTERVAL '30 days'
         GROUP BY day
         ORDER BY day
       `,
-      // Last request timestamp
+      // Last API request of any kind
       sql`
         SELECT created_at
         FROM activity_events
-        WHERE user_id = ${userId} AND event = 'api.report.generated'
+        WHERE user_id = ${userId} AND event LIKE 'api.%'
         ORDER BY created_at DESC
         LIMIT 1
       `,
-      // Active API keys with usage count from activity_events metadata
+      // Active API keys (unchanged)
       sql`
         SELECT
           ak.id,
