@@ -3687,6 +3687,8 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
         `;
       }
 
+      trackEvent("auth.signin", id, { provider: safeProvider });
+
       return reply.send({ id });
     } catch (error) {
       logger.error("OAuth callback error:", error);
