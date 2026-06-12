@@ -53,3 +53,111 @@ export async function proxySession(
 
   return NextResponse.json(res.data, { status: res.status });
 }
+
+/** Proxy an API-key-authenticated Next route to apps/api. Forwards the
+    original request (headers + body) untouched — the API container handles
+    `validateApiKey` internally. Use this for public v1 API routes
+    (me, report, batch, webhooks) that accept Bearer API keys. */
+export async function proxyApiKey(req: NextRequest): Promise<NextResponse> {
+  const apiUrl = `${apiBaseUrl()}${req.nextUrl.pathname}${req.nextUrl.search}`;
+
+  // Forward relevant headers, skip hop-by-hop
+  const forwardedHeaders = new Headers();
+  for (const [key, value] of req.headers.entries()) {
+    if (!["host", "connection", "content-length", "transfer-encoding"].includes(key.toLowerCase())) {
+      forwardedHeaders.set(key, value);
+    }
+  }
+
+  // Read body for non-GET requests
+  let body: string | undefined;
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    body = await req.text();
+  }
+
+  const res = await fetch(apiUrl, {
+    method: req.method,
+    headers: forwardedHeaders,
+    body,
+  });
+
+  return new NextResponse(res.body, {
+    status: res.status,
+    headers: {
+      "content-type": res.headers.get("content-type") || "application/json",
+    },
+  });
+}
+
+/** Proxy a public (no-auth) Next route to apps/api. Forwards the JSON
+    body as-is — no bridge token, no API key. Use this for auth endpoints
+    (register, login, forgot-password, etc.) that are open to unauthenticated
+    callers. */
+export async function proxyPublic(
+  req: NextRequest,
+  apiPath: string,
+): Promise<NextResponse> {
+  const apiUrl = `${apiBaseUrl()}${apiPath}`;
+  const body = req.method !== "GET" ? await req.json().catch(() => undefined) : undefined;
+
+  const res = await fetch(apiUrl, {
+    method: req.method,
+    headers: body ? { "content-type": "application/json" } : {},
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  const data = await res.json().catch(() => null);
+  return NextResponse.json(data, { status: res.status });
+}
+
+/** Proxy a session-authenticated org-scoped route to apps/api. Resolves
+    the user's primary org via a single indexed lookup, then forwards to the
+    /v1/orgs/:id/* endpoint using a bridge token. 401 if not logged in, 404
+    if the user has no org. Body is forwarded for POST/PUT/PATCH. */
+export async function proxyOrgRoute(
+  req: NextRequest,
+  apiPath: (orgId: string) => string,
+): Promise<NextResponse> {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const orgId = await resolveOrgId(userId);
+  if (!orgId) {
+    return NextResponse.json({ error: "No org" }, { status: 404 });
+  }
+
+  const body = req.method !== "GET" && req.method !== "HEAD"
+    ? await req.json().catch(() => undefined)
+    : undefined;
+
+  const res = await callApi(apiPath(orgId), {
+    userId,
+    method: req.method,
+    body,
+  });
+
+  return NextResponse.json(res.data, { status: res.status });
+}
+
+/** Stripe webhook proxy — forwards the raw body + Stripe-Signature header
+    to the API container without parsing. Stripe signs the raw body with a
+    webhook secret, so we must preserve the exact bytes for HMAC verification
+    to succeed. No auth (HMAC signature replaces session/API-key auth). */
+export async function proxyStripeWebhook(req: NextRequest): Promise<NextResponse> {
+  const rawBody = await req.text();
+  const sig = req.headers.get("stripe-signature");
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (sig) headers["stripe-signature"] = sig;
+
+  const res = await fetch(`${apiBaseUrl()}/stripe/webhook`, {
+    method: "POST",
+    headers,
+    body: rawBody,
+  });
+
+  const data = await res.json().catch(() => null);
+  return NextResponse.json(data, { status: res.status });
+}
