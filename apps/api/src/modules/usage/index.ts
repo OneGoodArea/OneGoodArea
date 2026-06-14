@@ -12,7 +12,7 @@ import { SUPERUSER_EMAILS } from "../../infrastructure/config";
 /** Aggregate count returned by COUNT(*)::int queries. */
 interface CountRow { count: number; }
 
-async function isSuperuser(userId: string): Promise<boolean> {
+export async function isSuperuser(userId: string): Promise<boolean> {
   const rows = await sql`SELECT email FROM users WHERE id = ${userId}`;
   if (rows.length === 0) return false;
   const user = row<Pick<UserRow, "email">>(rows[0]);
