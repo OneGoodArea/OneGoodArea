@@ -72,6 +72,28 @@ export const MIGRATIONS: Migration[] = [
         metadata JSONB DEFAULT '{}',
         created_at TIMESTAMPTZ DEFAULT NOW()
       )`,
+      // AR-289: org_id surfaces per-org dashboards (/api-usage scoped
+      // to the active org). Nullable for legacy events; trackEvent
+      // writes it for every new row that came in through an api-key.
+      `ALTER TABLE activity_events ADD COLUMN IF NOT EXISTS org_id TEXT`,
+      // Composite index that matches the /api-usage BFF's 4 read
+      // queries (user + org + event prefix + recent-30-days window).
+      `CREATE INDEX IF NOT EXISTS activity_events_usage_idx
+         ON activity_events (user_id, org_id, event, created_at)`,
+      // One-shot backfill: copy org_id from the api_keys row that
+      // belongs to the same user. For users with a single org (the
+      // common case today) this attributes every historical api.*
+      // event correctly. Users with multiple keys across multiple
+      // orgs may get inaccurate attribution for historical rows;
+      // documented in AR-289. New rows are always accurate (written
+      // directly by trackEvent at insert time).
+      `UPDATE activity_events ae
+          SET org_id = ak.org_id
+         FROM api_keys ak
+        WHERE ae.user_id = ak.user_id
+          AND ae.org_id IS NULL
+          AND ae.event LIKE 'api.%'
+          AND ak.org_id IS NOT NULL`,
     ],
   },
   {

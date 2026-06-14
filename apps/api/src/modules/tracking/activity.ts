@@ -13,13 +13,19 @@ import { logger } from "./structured-logger";
 export async function trackEvent(
   event: string,
   userId?: string | null,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
+  /* AR-289: caller's org. Surfaces per-org dashboards (/api-usage
+     scoped to the active org). Optional + nullable so legacy +
+     session-mode callers that don't have an org context continue
+     to work — those rows land with org_id = NULL and are excluded
+     from per-org views but still count toward user-wide totals. */
+  orgId?: string | null,
 ) {
   try {
     const id = generateId("evt");
     await sql`
-      INSERT INTO activity_events (id, user_id, event, metadata)
-      VALUES (${id}, ${userId || null}, ${event}, ${JSON.stringify(metadata || {})})
+      INSERT INTO activity_events (id, user_id, event, metadata, org_id)
+      VALUES (${id}, ${userId || null}, ${event}, ${JSON.stringify(metadata || {})}, ${orgId || null})
     `;
   } catch (error) {
     // Activity tracking should never break the main request

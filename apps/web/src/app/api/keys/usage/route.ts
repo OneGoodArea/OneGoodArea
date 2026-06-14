@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { hasApiAccess, getUserPlan } from "@/lib/usage";
 import { PLANS, PlanId } from "@/lib/stripe";
@@ -17,7 +17,18 @@ type ApiKeyPreview = Pick<ApiKeyRow, "id" | "name" | "created_at" | "last_used_a
   key_preview: string;
 };
 
-export async function GET() {
+/* AR-287 broadened the filter to all `api.*` events.
+   AR-289 adds per-org scoping: when ?org=<id> is passed, the BFF
+   validates the caller is a member of that org and filters every
+   query by `org_id = ?`. Without ?org=, the existing user-wide
+   behaviour is preserved (for browsers that haven't yet sent the
+   active-org id, and for users with only one org).
+
+   The "this month" quota counter stays user-scoped — it's tied to
+   PLANS[plan].reportsPerMonth which is a report quota, not an
+   org quota. Mixing scopes there would mislabel quota consumption. */
+
+export async function GET(req: NextRequest): Promise<NextResponse> {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) {
@@ -32,19 +43,31 @@ export async function GET() {
     );
   }
 
+  /* AR-289: parse + validate the org context. ?org= is optional;
+     when present, the caller MUST be a member of that org (else 403
+     — prevents information disclosure via guessed org ids). When
+     absent, the chart shows user-wide stats (existing behaviour). */
+  const url = new URL(req.url);
+  const orgIdParam = url.searchParams.get("org");
+  let scopedOrgId: string | null = null;
+  if (orgIdParam) {
+    const memberships = (await sql`
+      SELECT 1
+        FROM org_members
+       WHERE user_id = ${userId} AND org_id = ${orgIdParam}
+       LIMIT 1
+    `) as Array<unknown>;
+    if (memberships.length === 0) {
+      return NextResponse.json(
+        { error: "You aren't a member of that organisation.", code: "not_a_member" },
+        { status: 403 },
+      );
+    }
+    scopedOrgId = orgIdParam;
+  }
+
   const plan = await getUserPlan(userId);
 
-  /* AR-287: every public API endpoint emits a distinct `api.*` event
-     in activity_events — api.query.executed, api.score.computed,
-     api.peers.queried, api.signals.category, ~30 in total. The graph
-     + total + last-request stats are meant to reflect ALL API traffic
-     (it says "API requests"), so they match against the prefix `api.%`.
-
-     The "this month" stat keeps the narrower `api.report.generated`
-     filter because that ONE counter is tied to the report quota
-     (PLANS[plan].reportsPerMonth is a report quota, not a generic-API
-     quota). Mixing them would mislabel non-report API calls as quota
-     consumption. */
   try {
     const [
       totalRequests,
@@ -54,12 +77,19 @@ export async function GET() {
       apiKeys,
     ] = await Promise.all([
       // Total API requests (all time, all api.* events)
-      sql`
-        SELECT COUNT(*)::int as count
-        FROM activity_events
-        WHERE user_id = ${userId} AND event LIKE 'api.%'
-      `,
-      // Reports this month — quota counter, kept scoped to report generation
+      scopedOrgId
+        ? sql`
+            SELECT COUNT(*)::int as count
+            FROM activity_events
+            WHERE user_id = ${userId} AND event LIKE 'api.%' AND org_id = ${scopedOrgId}
+          `
+        : sql`
+            SELECT COUNT(*)::int as count
+            FROM activity_events
+            WHERE user_id = ${userId} AND event LIKE 'api.%'
+          `,
+      // Reports this month — quota counter, kept user-scoped (it's a
+      // user-plan quota, not an org quota). Same regardless of ?org=.
       sql`
         SELECT COUNT(*)::int as count
         FROM activity_events
@@ -68,24 +98,43 @@ export async function GET() {
           AND created_at >= date_trunc('month', NOW())
       `,
       // Traffic per day (last 30 days, all api.* events)
-      sql`
-        SELECT date_trunc('day', created_at)::date as day, COUNT(*)::int as count
-        FROM activity_events
-        WHERE user_id = ${userId}
-          AND event LIKE 'api.%'
-          AND created_at >= NOW() - INTERVAL '30 days'
-        GROUP BY day
-        ORDER BY day
-      `,
+      scopedOrgId
+        ? sql`
+            SELECT date_trunc('day', created_at)::date as day, COUNT(*)::int as count
+            FROM activity_events
+            WHERE user_id = ${userId}
+              AND event LIKE 'api.%'
+              AND org_id = ${scopedOrgId}
+              AND created_at >= NOW() - INTERVAL '30 days'
+            GROUP BY day
+            ORDER BY day
+          `
+        : sql`
+            SELECT date_trunc('day', created_at)::date as day, COUNT(*)::int as count
+            FROM activity_events
+            WHERE user_id = ${userId}
+              AND event LIKE 'api.%'
+              AND created_at >= NOW() - INTERVAL '30 days'
+            GROUP BY day
+            ORDER BY day
+          `,
       // Last API request of any kind
-      sql`
-        SELECT created_at
-        FROM activity_events
-        WHERE user_id = ${userId} AND event LIKE 'api.%'
-        ORDER BY created_at DESC
-        LIMIT 1
-      `,
-      // Active API keys (unchanged)
+      scopedOrgId
+        ? sql`
+            SELECT created_at
+            FROM activity_events
+            WHERE user_id = ${userId} AND event LIKE 'api.%' AND org_id = ${scopedOrgId}
+            ORDER BY created_at DESC
+            LIMIT 1
+          `
+        : sql`
+            SELECT created_at
+            FROM activity_events
+            WHERE user_id = ${userId} AND event LIKE 'api.%'
+            ORDER BY created_at DESC
+            LIMIT 1
+          `,
+      // Active API keys (unchanged — keys are user-owned, not org-scoped)
       sql`
         SELECT
           ak.id,
@@ -99,7 +148,6 @@ export async function GET() {
       `,
     ]);
 
-    // Type the raw query results
     const totalCount = row<CountRow>(totalRequests[0]);
     const monthCount = row<CountRow>(requestsThisMonth[0]);
     const dailyCounts = typedRows<DayCountRow>(requestsByDay);
@@ -138,6 +186,7 @@ export async function GET() {
         created_at: k.created_at,
         last_used_at: k.last_used_at,
       })),
+      scope: scopedOrgId ? { org_id: scopedOrgId } : { org_id: null },
     });
   } catch (error) {
     logger.error("[API Usage] Error:", error);
