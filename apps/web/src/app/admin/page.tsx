@@ -19,7 +19,7 @@ export default async function AdminPage() {
     redirect("/dashboard");
   }
 
-  const userId = session?.user?.id!;
+  const userId = session!.user!.id as string;
 
   const [analyticsRes, trafficRes] = await Promise.all([
     callApi("/admin/analytics", { userId }),
