@@ -426,6 +426,20 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
         { name: "Admin", description: "Admin analytics (superuser only)" },
         { name: "Cron", description: "Scheduled jobs" },
       ],
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: "http",
+            scheme: "bearer",
+            description: "API key from /keys. Header: Authorization: Bearer oga_live_...",
+          },
+          bridgeToken: {
+            type: "http",
+            scheme: "bearer",
+            description: "Bridge token minted by the web BFF. Internal use only.",
+          },
+        },
+      },
     },
   });
 
