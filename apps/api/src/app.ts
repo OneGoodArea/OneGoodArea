@@ -3648,24 +3648,30 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
     const plan = await getUserPlan(userId);
 
     try {
+      /* AR-306: count ALL api.* events (api.report.generated, api.me.read,
+         api.score.scored, api.batch.processed, api.query.executed, etc.)
+         not just /v1/report. Without this the dashboard chart undercounts
+         by a wide margin once a user touches anything but /v1/report.
+         Re-applies the AR-287 fix that was lost when web's /api/keys/usage
+         BFF became a thin proxy in PR #197 (Plan 010). */
       const [totalRequests, requestsThisMonth, requestsByDay, lastRequest, apiKeys] = await Promise.all([
         sql`
           SELECT COUNT(*)::int as count
           FROM activity_events
-          WHERE user_id = ${userId} AND event = 'api.report.generated'
+          WHERE user_id = ${userId} AND event LIKE 'api.%'
         `,
         sql`
           SELECT COUNT(*)::int as count
           FROM activity_events
           WHERE user_id = ${userId}
-            AND event = 'api.report.generated'
+            AND event LIKE 'api.%'
             AND created_at >= date_trunc('month', NOW())
         `,
         sql`
           SELECT date_trunc('day', created_at)::date as day, COUNT(*)::int as count
           FROM activity_events
           WHERE user_id = ${userId}
-            AND event = 'api.report.generated'
+            AND event LIKE 'api.%'
             AND created_at >= NOW() - INTERVAL '30 days'
           GROUP BY day
           ORDER BY day
@@ -3673,7 +3679,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
         sql`
           SELECT created_at
           FROM activity_events
-          WHERE user_id = ${userId} AND event = 'api.report.generated'
+          WHERE user_id = ${userId} AND event LIKE 'api.%'
           ORDER BY created_at DESC
           LIMIT 1
         `,
