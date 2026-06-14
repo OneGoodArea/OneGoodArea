@@ -2,7 +2,7 @@ import { describe, it, expect, afterAll } from "vitest";
 import { buildApp } from "@/app";
 import { INTENTS } from "@onegoodarea/contracts";
 
-const app = buildApp();
+const app = await buildApp();
 afterAll(() => app.close());
 
 describe("apps/api scaffold", () => {

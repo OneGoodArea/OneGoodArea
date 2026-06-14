@@ -11,7 +11,7 @@ import { sql } from "@/infrastructure/db/client";
 
 const mockVerify = vi.mocked(verifySessionToken);
 const mockSql = vi.mocked(sql);
-const app = buildApp();
+const app = await buildApp();
 
 beforeEach(() => {
   mockVerify.mockReset();

@@ -16,6 +16,23 @@ export const PortfolioAreaSchema = z.object({
 });
 export type PortfolioArea = z.infer<typeof PortfolioAreaSchema>;
 
+/* ── Request bodies ── */
+
+/** POST /v1/portfolios — create a new portfolio. */
+export const CreatePortfolioRequestSchema = z.object({
+  name: z.string().min(1).max(200),
+}).strict();
+export type CreatePortfolioRequest = z.infer<typeof CreatePortfolioRequestSchema>;
+
+/** POST /v1/portfolios/:id/areas — add areas to a portfolio. */
+export const AddAreaRequestSchema = z.object({
+  areas: z.array(z.object({
+    area: z.string().min(1),
+    label: z.string().nullable().optional(),
+  })).min(1).max(100),
+}).strict();
+export type AddAreaRequest = z.infer<typeof AddAreaRequestSchema>;
+
 /** A portfolio summary (list view). */
 export const PortfolioSchema = z.object({
   id: z.string(),

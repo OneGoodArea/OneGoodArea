@@ -22,7 +22,7 @@ import { rateLimit } from "@/infrastructure/rate-limit";
 import { hasApiAccess, canGenerateReport } from "@/modules/usage";
 import { generateReport } from "@/modules/reports/report-generator";
 
-const app = buildApp();
+const app = await buildApp();
 
 beforeEach(() => {
   vi.clearAllMocks();

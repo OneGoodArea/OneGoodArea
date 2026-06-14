@@ -174,6 +174,20 @@ export const SIGNAL_CATALOGUE: SignalCatalogueEntry[] = [
   { key: "environment.active_flood_warnings", category: "environment", label: "Active flood warnings",   unit: "count", direction: "lower_is_better", source: "Environment Agency" },
 ];
 
+/* ── Request query params for signal routes ── */
+
+/** Query params for GET /v1/area. One of `area` or `postcode` is required. */
+export const AreaRequestSchema = z.object({
+  /** UK postcode or place name, e.g. "SW1A 1AA" or "Clapham". */
+  area: z.string().min(1).optional(),
+  /** Alias for `area` — accepts a UK postcode. */
+  postcode: z.string().min(1).optional(),
+}).strict().refine(
+  (p) => p.area !== undefined || p.postcode !== undefined,
+  { message: "Either area or postcode query parameter is required." },
+);
+export type AreaRequest = z.infer<typeof AreaRequestSchema>;
+
 /* ── Area profile (the GET /v1/area response) ── */
 
 /** All signals for one area: the response of GET /v1/area. The flagship Signals

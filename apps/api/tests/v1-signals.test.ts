@@ -14,7 +14,7 @@ import { hasApiAccess } from "@/modules/usage";
 import { getAreaProfile } from "@/modules/signals";
 import { trackEvent } from "@/modules/tracking/activity";
 
-const app = buildApp();
+const app = await buildApp();
 afterAll(() => {
   app.close();
   delete process.env.OGA_SIGNALS_API;

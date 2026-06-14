@@ -17,7 +17,7 @@ import { rateLimit } from "@/infrastructure/rate-limit";
 import { hasApiAccess } from "@/modules/usage";
 import * as monitor from "@/modules/monitor";
 
-const app = buildApp();
+const app = await buildApp();
 afterAll(() => { app.close(); delete process.env.OGA_SIGNALS_API; });
 
 const auth = { authorization: "Bearer oga_good" };
