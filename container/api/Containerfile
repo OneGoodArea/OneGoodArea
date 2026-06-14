@@ -12,7 +12,7 @@
 #
 # Plan 017: MULTI-STAGE — build stage does full install (needed for test target)
 # + esbuild bundle; runtime stage does its own slim `npm install --omit=dev`
-# and carries only dist/server.cjs + slim node_modules + curl.
+# and carries only dist/server.mjs + slim node_modules + curl.
 # compose.test.yml targets the `build` stage for tests (full source + deps).
 
 # --- BUILD STAGE ----------------------------------------------------------
@@ -45,7 +45,7 @@ RUN npm install --no-audit --no-fund
 COPY packages/contracts ./packages/contracts
 COPY apps/api ./apps/api
 
-# Bundle the server to dist/server.cjs. esbuild inlines all reachable JS
+# Bundle the server to dist/server.mjs. esbuild inlines all reachable JS
 # and workspace source, so no TypeScript or workspace resolution is needed
 # at runtime.
 RUN npm run build -w @onegoodarea/api
@@ -73,7 +73,7 @@ COPY packages/contracts/package.json ./packages/contracts/
 RUN npm install --omit=dev --no-audit --no-fund
 
 # Copy the esbuild bundle — this is the only application code we ship.
-COPY --from=build /app/apps/api/dist/server.cjs ./apps/api/dist/server.cjs
+COPY --from=build /app/apps/api/dist/server.mjs ./apps/api/dist/server.mjs
 
 EXPOSE 8080
-CMD ["node", "apps/api/dist/server.cjs"]
+CMD ["node", "apps/api/dist/server.mjs"]
