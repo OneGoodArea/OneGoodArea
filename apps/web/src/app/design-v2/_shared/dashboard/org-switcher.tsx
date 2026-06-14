@@ -59,13 +59,23 @@ export function OrgSwitcher({ userEmail }: OrgSwitcherProps) {
   const [orgs, setOrgs] = useState<OrgSummary[] | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  /* AR-307: when /api/orgs fails (most often 401 from a stale/expired
+     session), the switcher must NOT stay in the loading placeholder
+     forever. Track the failure so we can render a minimal Account-only
+     menu that still lets the user sign out + re-auth. */
+  const [loadError, setLoadError] = useState<"unauthorized" | "other" | null>(null);
 
   const load = useCallback(async () => {
     try {
       const res = await fetch("/api/orgs", { cache: "no-store" });
-      if (!res.ok) return;
+      if (!res.ok) {
+        setLoadError(res.status === 401 ? "unauthorized" : "other");
+        setOrgs([]);
+        return;
+      }
       const data = (await res.json()) as { orgs: OrgSummary[] };
       setOrgs(data.orgs);
+      setLoadError(null);
       const stored =
         typeof window !== "undefined"
           ? window.localStorage.getItem(ACTIVE_ORG_KEY)
@@ -76,7 +86,8 @@ export function OrgSwitcher({ userEmail }: OrgSwitcherProps) {
         null;
       setActiveId(resolved);
     } catch {
-      /* Network error: render the placeholder. */
+      setLoadError("other");
+      setOrgs([]);
     }
   }, []);
 
@@ -126,6 +137,40 @@ export function OrgSwitcher({ userEmail }: OrgSwitcherProps) {
         <span className="oga-org-switcher__avatar" />
         <span className="oga-org-switcher__skeleton" />
       </div>
+    );
+  }
+
+  /* AR-307: session-load failure. Render a minimal Account-only menu
+     so the user can sign out / sign in again even when /api/orgs 401s
+     (stale cookie, expired session, deploy drift). Without this we'd
+     hide the switcher entirely on the fresh-DB branch below — but on
+     a 401 the user IS signed in client-side and needs a way out. */
+  if (loadError === "unauthorized") {
+    return (
+      <DropdownMenu
+        header="Account"
+        align="start"
+        triggerLabel="Account menu"
+        triggerClassName="oga-org-switcher__trigger"
+        trigger={
+          <span className="oga-org-switcher__trigger-row">
+            <span className="oga-org-switcher__avatar" aria-hidden>?</span>
+            <span className="oga-org-switcher__labels">
+              <span className="oga-org-switcher__name">Session expired</span>
+              <span className="oga-org-switcher__role">Sign in again</span>
+            </span>
+          </span>
+        }
+        items={[
+          ...(userEmail ? [{ label: userEmail, onClick: () => {}, disabled: true }] : []),
+          { label: "Sign in again", onClick: () => router.push("/sign-in") },
+          {
+            label: "Sign out",
+            onClick: () => { signOut({ callbackUrl: "/" }); },
+            danger: true,
+          },
+        ]}
+      />
     );
   }
 
