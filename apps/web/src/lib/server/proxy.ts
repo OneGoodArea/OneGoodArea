@@ -119,6 +119,7 @@ export async function proxyApiKey(req: NextRequest): Promise<NextResponse> {
     },
   });
 }
+
 /** Proxy a session-authenticated org-scoped route to apps/api. Resolves
     the user's primary org via a single indexed lookup, then forwards to the
     /v1/orgs/:id/* endpoint using a bridge token. 401 if not logged in, 404
@@ -149,4 +150,25 @@ export async function proxyOrgRoute(
   });
 
   return NextResponse.json(res.data, { status: res.status });
+}
+
+
+/** Stripe webhook proxy — forwards the raw body + Stripe-Signature header
+    to the API container without parsing. Stripe signs the raw body with a
+    webhook secret, so we must preserve the exact bytes for HMAC verification
+    to succeed. No auth (HMAC signature replaces session/API-key auth). */
+export async function proxyStripeWebhook(req: NextRequest): Promise<NextResponse> {
+  const rawBody = await req.text();
+  const sig = req.headers.get("stripe-signature");
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (sig) headers["stripe-signature"] = sig;
+
+  const res = await fetch(`${apiBaseUrl()}/stripe/webhook`, {
+    method: "POST",
+    headers,
+    body: rawBody,
+  });
+
+  const data = await res.json().catch(() => null);
+  return NextResponse.json(data, { status: res.status });
 }
