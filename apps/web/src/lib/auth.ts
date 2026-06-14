@@ -3,16 +3,13 @@ import Google from "next-auth/providers/google";
 import GitHub from "next-auth/providers/github";
 import Credentials from "next-auth/providers/credentials";
 import { sql } from "@/lib/db";
-import { trackEvent } from "@/lib/activity";
-import { hashPassword, verifyPassword } from "@/lib/crypto";
 import {
   ensureUsersTable,
   ensureVerificationTable,
   ensureMagicLinkTokensTable,
 } from "@/lib/db-schema";
 import { row, UserRow, MagicLinkTokenRow } from "@/lib/db-types";
-import { generateId } from "@/lib/id";
-import { logger } from "@/lib/logger";
+import { apiBaseUrl } from "@/lib/server/api-client";
 
 let _authTablesReady = false;
 async function ensureAuthTables() {
@@ -46,53 +43,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        await ensureAuthTables();
-
         const email = credentials.email as string;
         const password = credentials.password as string;
         const action = credentials.action as string | undefined;
 
+        // Registration path: call API register, then login
         if (action === "register") {
-          // Sign up
-          const existing = await sql`SELECT id FROM users WHERE email = ${email}`;
-          if (existing.length > 0) return null;
-
-          const id = generateId("user");
           const name = (credentials.name as string) || email.split("@")[0];
-          const hash = await hashPassword(password);
-
-          await sql`
-            INSERT INTO users (id, email, name, password_hash, provider, email_verified)
-            VALUES (${id}, ${email}, ${name}, ${hash}, 'credentials', FALSE)
-          `;
-
-          return { id, email, name };
+          const regRes = await fetch(`${apiBaseUrl()}/auth/register`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ email, password, name }),
+          });
+          if (!regRes.ok) return null;
         }
 
-        // Sign in
-        const signInRows = await sql`
-          SELECT id, email, name, image, password_hash FROM users
-          WHERE email = ${email} AND provider = 'credentials'
-        `;
-        if (signInRows.length === 0 || !signInRows[0].password_hash) return null;
-
-        const foundUser = row<UserRow>(signInRows[0]);
-
-        const { valid, needsRehash } = await verifyPassword(password, foundUser.password_hash!);
-        if (!valid) return null;
-
-        // Transparently upgrade legacy SHA-256 hashes to PBKDF2
-        if (needsRehash) {
-          const newHash = await hashPassword(password);
-          sql`UPDATE users SET password_hash = ${newHash} WHERE id = ${foundUser.id}`.catch(() => {});
-        }
-
-        return {
-          id: foundUser.id,
-          email: foundUser.email,
-          name: foundUser.name,
-          image: foundUser.image,
-        };
+        // Login via API (handles credential validation + PBKDF2 rehash)
+        const res = await fetch(`${apiBaseUrl()}/auth/login`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        if (!res.ok) return null;
+        return res.json();
       },
     }),
     /* AR-250 [AR-248-B] Magic-link sign-in provider. Consumes a token
@@ -185,28 +158,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async signIn({ user, account }) {
       if (account?.provider === "google" || account?.provider === "github") {
-        await ensureAuthTables();
-
-        const existing = await sql`SELECT id FROM users WHERE email = ${user.email}`;
-
-        if (existing.length === 0) {
-          const id = generateId("user");
-          await sql`
-            INSERT INTO users (id, email, name, image, provider, email_verified)
-            VALUES (${id}, ${user.email}, ${user.name}, ${user.image}, ${account.provider}, TRUE)
-          `;
-          user.id = id;
-        } else {
-          const existingUser = row<Pick<UserRow, "id">>(existing[0]);
-          user.id = existingUser.id;
-          // Update name/image if changed
-          await sql`
-            UPDATE users SET name = ${user.name}, image = ${user.image}
-            WHERE id = ${existingUser.id}
-          `;
+        const res = await fetch(`${apiBaseUrl()}/auth/oauth-callback`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            email: user.email,
+            name: user.name,
+            image: user.image,
+            provider: account.provider,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          user.id = data.id;
         }
       }
-      trackEvent("auth.signin", user.id, { provider: account?.provider || "credentials" });
       return true;
     },
     async jwt({ token, user }) {
