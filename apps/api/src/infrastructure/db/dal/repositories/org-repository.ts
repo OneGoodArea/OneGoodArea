@@ -35,11 +35,16 @@ export class OrgRepository {
   }
 
   async listMembers(orgId: string): Promise<OrgMemberRow[]> {
+    /* AR-310: LEFT JOIN users so the dashboard members page can render
+       name + email without an N+1. LEFT (not INNER) keeps the row visible
+       if the user record was deleted but the org_members FK stub remains. */
     return rows<OrgMemberRow>(await sql`
-      SELECT org_id, user_id, role, joined_at
-        FROM org_members
-       WHERE org_id = ${orgId}
-       ORDER BY joined_at ASC
+      SELECT om.org_id, om.user_id, om.role, om.joined_at,
+             u.email, u.name
+        FROM org_members om
+   LEFT JOIN users u ON u.id = om.user_id
+       WHERE om.org_id = ${orgId}
+       ORDER BY om.joined_at ASC
     `);
   }
 

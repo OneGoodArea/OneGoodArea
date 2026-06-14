@@ -34,12 +34,18 @@ export const OrgSchema = z.object({
 }).strict();
 export type Org = z.infer<typeof OrgSchema>;
 
-/** An org_members row. role is the canonical OrgRole enum. */
+/** An org_members row. role is the canonical OrgRole enum.
+    AR-310: email + name come from the LEFT JOIN with users — the dashboard
+    members surface needs both to render rows without an N+1. email is "" on
+    the legacy "user deleted but FK stub remains" path; name is null when the
+    user never set a display name. */
 export const OrgMemberSchema = z.object({
   org_id: z.string().min(1),
   user_id: z.string().min(1),
   role: OrgRoleSchema,
   joined_at: z.string(),
+  email: z.string(),
+  name: z.string().nullable(),
 }).strict();
 export type OrgMember = z.infer<typeof OrgMemberSchema>;
 

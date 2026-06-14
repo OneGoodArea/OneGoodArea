@@ -64,6 +64,11 @@ export interface OrgMemberRow {
   user_id: string;
   role: "owner" | "admin" | "member";
   joined_at: string;
+  /* AR-310: populated by listMembers via LEFT JOIN users — undefined on
+     paths that don't join. Nullable email handles the "user deleted but
+     FK stub remains" edge case. */
+  email?: string | null;
+  name?: string | null;
 }
 
 /** AR-272 — org_invitations row. Plaintext token NEVER lives here; we
