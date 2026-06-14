@@ -1,25 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
-import { withAuth } from "@/lib/with-auth";
-import { hasApiAccess } from "@/lib/usage";
-import { createApiKey, listApiKeys } from "@/lib/api-keys";
+import { type NextRequest } from "next/server";
+import { proxySession } from "@/lib/server/proxy";
 
-export const GET = withAuth(async (_req, { userId }) => {
-  const keys = await listApiKeys(userId);
-  return NextResponse.json({ keys });
-});
+/* GET  /api/keys     — proxied to apps/api GET  /keys (list API keys)
+   POST /api/keys     — proxied to apps/api POST /keys (create API key)
+   The API container handles session auth, hasApiAccess gate for POST,
+   listApiKeys, and createApiKey. */
 
-export const POST = withAuth(async (req: NextRequest, { userId }) => {
-  const apiAllowed = await hasApiAccess(userId);
-  if (!apiAllowed) {
-    return NextResponse.json(
-      { error: "API keys are not available on your current plan. Upgrade at /pricing." },
-      { status: 403 }
-    );
-  }
+export async function GET(req: NextRequest) {
+  return proxySession(req, "/keys");
+}
 
-  const body = await req.json().catch(() => ({}));
-  const name = body.name || "Default";
-
-  const key = await createApiKey(userId, name);
-  return NextResponse.json({ key });
-});
+export async function POST(req: NextRequest) {
+  return proxySession(req, "/keys", { forwardBody: true });
+}
