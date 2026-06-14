@@ -1,4 +1,4 @@
-.PHONY: stack-up-min stack-up-full stack-down stack-logs stack-clean
+.PHONY: stack-up-min stack-up-full stack-down stack-logs stack-clean build-api-image build-web-image
 
 COMPOSE_FILE ?= compose/compose.yml
 COMPOSE_OVERRIDE_FILE ?= compose/compose.override.yml
@@ -29,3 +29,9 @@ stack-logs: ## Follow logs for active stack services
 
 stack-clean: ## Stop stack and remove named volumes
 	$(CTR_COMPOSE_CMD) down --remove-orphans --volumes
+
+build-api-image: ## Build the api Docker image from current branch sources
+	$(CTR_COMPOSE_CMD) build api
+
+build-web-image: ## Build the web Docker image from current branch sources
+	$(CTR_COMPOSE_CMD) build web
