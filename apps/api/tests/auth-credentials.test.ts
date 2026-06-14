@@ -16,7 +16,7 @@ import { rateLimit } from "@/infrastructure/rate-limit";
 import { sql } from "@/infrastructure/db/client";
 import { sendVerificationEmail, sendPasswordResetEmail } from "@/infrastructure/email/senders";
 
-const app = buildApp();
+const app = await buildApp();
 const mockRate = vi.mocked(rateLimit);
 const mockSql = vi.mocked(sql);
 const mockVerifyEmail = vi.mocked(sendVerificationEmail);

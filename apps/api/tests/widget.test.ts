@@ -8,7 +8,7 @@ import { buildApp } from "@/app";
 import { rateLimit } from "@/infrastructure/rate-limit";
 import { getCachedReport } from "@/modules/reports/report-cache";
 
-const app = buildApp();
+const app = await buildApp();
 const mockRate = vi.mocked(rateLimit);
 const mockCache = vi.mocked(getCachedReport);
 

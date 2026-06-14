@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
-import { callApi } from "./api-client";
+import { callApi, apiBaseUrl } from "./api-client";
+import { resolveOrgId } from "./org";
 
 /* BFF proxy helper. The cutover "flip" turns each DB-touching Next /api route
    into a one-liner that forwards to apps/api through this:
@@ -54,6 +55,36 @@ export async function proxySession(
   return NextResponse.json(res.data, { status: res.status });
 }
 
+/** Proxy a public (no-auth) Next route to apps/api. Forwards the JSON
+    body as-is — no bridge token, no API key. Use this for auth endpoints
+    (register, login, forgot-password, etc.) that are open to unauthenticated
+    callers.
+
+    Set opts.forwardHeaders to pass through incoming headers the API needs
+    (e.g. user-agent, x-vercel-ip-country for pageview tracking). */
+export async function proxyPublic(
+  req: NextRequest,
+  apiPath: string,
+  opts: { forwardHeaders?: string[] } = {},
+): Promise<NextResponse> {
+  const apiUrl = `${apiBaseUrl()}${apiPath}`;
+  const body = req.method !== "GET" ? await req.json().catch(() => undefined) : undefined;
+
+  const headers: Record<string, string> = body ? { "content-type": "application/json" } : {};
+  for (const name of opts.forwardHeaders ?? []) {
+    const value = req.headers.get(name);
+    if (value !== null) headers[name] = value;
+  }
+
+  const res = await fetch(apiUrl, {
+    method: req.method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  const data = await res.json().catch(() => null);
+  return NextResponse.json(data, { status: res.status });
+}
 /** Proxy an API-key-authenticated Next route to apps/api. Forwards the
     original request (headers + body) untouched — the API container handles
     `validateApiKey` internally. Use this for public v1 API routes
@@ -89,27 +120,6 @@ export async function proxyApiKey(req: NextRequest): Promise<NextResponse> {
   });
 }
 
-/** Proxy a public (no-auth) Next route to apps/api. Forwards the JSON
-    body as-is — no bridge token, no API key. Use this for auth endpoints
-    (register, login, forgot-password, etc.) that are open to unauthenticated
-    callers. */
-export async function proxyPublic(
-  req: NextRequest,
-  apiPath: string,
-): Promise<NextResponse> {
-  const apiUrl = `${apiBaseUrl()}${apiPath}`;
-  const body = req.method !== "GET" ? await req.json().catch(() => undefined) : undefined;
-
-  const res = await fetch(apiUrl, {
-    method: req.method,
-    headers: body ? { "content-type": "application/json" } : {},
-    body: body ? JSON.stringify(body) : undefined,
-  });
-
-  const data = await res.json().catch(() => null);
-  return NextResponse.json(data, { status: res.status });
-}
-
 /** Proxy a session-authenticated org-scoped route to apps/api. Resolves
     the user's primary org via a single indexed lookup, then forwards to the
     /v1/orgs/:id/* endpoint using a bridge token. 401 if not logged in, 404
@@ -141,6 +151,7 @@ export async function proxyOrgRoute(
 
   return NextResponse.json(res.data, { status: res.status });
 }
+
 
 /** Stripe webhook proxy — forwards the raw body + Stripe-Signature header
     to the API container without parsing. Stripe signs the raw body with a
