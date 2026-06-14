@@ -1987,7 +1987,9 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       const role = await getRoleInOrg(orgId, userId);
       if (!role) return reply.code(404).send({ error: "Org not found" });
       const bundles = await listBundles(orgId);
-      return reply.code(200).send({ bundles });
+      /* AR-311: include org_id + caller_role so the dashboard client can
+         gate the Create button + show the slug-derived save target. */
+      return reply.code(200).send({ bundles, org_id: orgId, caller_role: role });
     } catch (error) {
       if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
       logger.error("[v1/orgs/:id/bundles] list error:", error);
@@ -2176,7 +2178,8 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       const role = await getRoleInOrg(orgId, userId);
       if (!role) return reply.code(404).send({ error: "Org not found" });
       const presets = await listPresets(orgId);
-      return reply.code(200).send({ presets });
+      /* AR-311: include org_id + caller_role for client gating. */
+      return reply.code(200).send({ presets, org_id: orgId, caller_role: role });
     } catch (error) {
       if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
       logger.error("[v1/orgs/:id/presets] list error:", error);
@@ -2439,7 +2442,8 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       const role = await getRoleInOrg(orgId, userId);
       if (!role) return reply.code(404).send({ error: "Org not found" });
       const cohorts = await listCohorts(orgId);
-      return reply.code(200).send({ cohorts });
+      /* AR-311: include org_id + caller_role for client gating. */
+      return reply.code(200).send({ cohorts, org_id: orgId, caller_role: role });
     } catch (error) {
       if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
       logger.error("[v1/orgs/:id/cohorts] list error:", error);
