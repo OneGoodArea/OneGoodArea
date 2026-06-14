@@ -87,6 +87,13 @@ function memberFromRow(r: OrgMemberRow): OrgMember {
     user_id: r.user_id,
     role: r.role,
     joined_at: String(r.joined_at),
+    /* AR-310: email/name come from the LEFT JOIN in listMembers. Null on
+       legacy rows where the user record was deleted; default to empty
+       string so the contract's email type stays string (the strict
+       schema rejects null). The client falls back to email-localpart
+       when name is empty. */
+    email: r.email ?? "",
+    name: r.name ?? null,
   };
 }
 
