@@ -84,3 +84,38 @@ export async function proxyPublic(
   const data = await res.json().catch(() => null);
   return NextResponse.json(data, { status: res.status });
 }
+
+/** Proxy an API-key-authenticated Next route to apps/api. Forwards the
+    original request (headers + body) untouched — the API container handles
+    `validateApiKey` internally. Use this for public v1 API routes
+    (me, report, batch, webhooks) that accept Bearer API keys. */
+export async function proxyApiKey(req: NextRequest): Promise<NextResponse> {
+  const apiUrl = `${apiBaseUrl()}${req.nextUrl.pathname}${req.nextUrl.search}`;
+
+  // Forward relevant headers, skip hop-by-hop
+  const forwardedHeaders = new Headers();
+  for (const [key, value] of req.headers.entries()) {
+    if (!["host", "connection", "content-length", "transfer-encoding"].includes(key.toLowerCase())) {
+      forwardedHeaders.set(key, value);
+    }
+  }
+
+  // Read body for non-GET requests
+  let body: string | undefined;
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    body = await req.text();
+  }
+
+  const res = await fetch(apiUrl, {
+    method: req.method,
+    headers: forwardedHeaders,
+    body,
+  });
+
+  return new NextResponse(res.body, {
+    status: res.status,
+    headers: {
+      "content-type": res.headers.get("content-type") || "application/json",
+    },
+  });
+}

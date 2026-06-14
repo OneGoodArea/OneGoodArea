@@ -27,7 +27,7 @@ import {
 } from "@/modules/usage";
 import { METHODOLOGY_VERSION } from "@/modules/reports/methodology";
 
-const app = buildApp();
+const app = await buildApp();
 
 beforeEach(() => {
   vi.clearAllMocks();

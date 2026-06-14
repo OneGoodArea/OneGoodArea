@@ -1,4 +1,6 @@
 import Fastify, { type FastifyInstance, type FastifyRequest, type FastifyReply } from "fastify";
+import fastifySwagger from "@fastify/swagger";
+import fastifySwaggerUi from "@fastify/swagger-ui";
 import { INTENTS, type Intent, isIntent, SIGNAL_CATEGORIES, isSignalCategory } from "@onegoodarea/contracts";
 import { validateApiKey, createApiKey, listApiKeys, revokeApiKey } from "./modules/api-keys";
 import { verifySessionToken } from "./modules/auth/session-token";
@@ -388,8 +390,64 @@ interface CountRow { count: number; }
 interface DayCountRow { day: string; count: number; }
 type ApiKeyPreview = Pick<ApiKeyRow, "id" | "name" | "created_at" | "last_used_at"> & { key_preview: string };
 
-export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
-  const app = Fastify({ logger: opts.logger ?? false });
+export async function buildApp(opts: { logger?: boolean } = {}): Promise<FastifyInstance> {
+  const app = Fastify({ logger: opts.logger ?? false, ajv: { customOptions: { keywords: ["example"] } } });
+
+  // OpenAPI/Swagger documentation — /docs (Swagger UI) and /openapi.json (raw spec).
+  await app.register(fastifySwagger, {
+    openapi: {
+      info: {
+        title: "OneGoodArea API",
+        version: "1.0.0",
+        description: "Area intelligence API — scores, signals, reports, and org management.",
+      },
+      servers: [{ url: process.env.API_PUBLIC_URL || "http://localhost:4000" }],
+      tags: [
+        { name: "Meta", description: "Health and version endpoints" },
+        { name: "Reports", description: "Generate and retrieve area reports" },
+        { name: "Signals", description: "Signal-first area profiles" },
+        { name: "Scores", description: "Scoring engine" },
+        { name: "Portfolios", description: "Portfolio management" },
+        { name: "Orgs", description: "Organization and member management" },
+        { name: "Invitations", description: "Org invitations" },
+        { name: "Bundles", description: "Signal bundles" },
+        { name: "Presets", description: "Scoring presets" },
+        { name: "Methodology", description: "Engine version pins" },
+        { name: "Cohorts", description: "Area cohorts" },
+        { name: "Intelligence", description: "Query, peers, insights, forecast" },
+        { name: "Webhooks", description: "Outbound webhook subscriptions" },
+        { name: "Usage", description: "Plan and quota endpoints" },
+        { name: "Keys", description: "API key management" },
+        { name: "Auth", description: "Authentication endpoints" },
+        { name: "Stripe", description: "Billing and subscriptions" },
+        { name: "Settings", description: "Account settings" },
+        { name: "Dashboard", description: "Dashboard composite data" },
+        { name: "Tracking", description: "Analytics and pageview tracking" },
+        { name: "Watchlist", description: "Saved areas watchlist" },
+        { name: "Admin", description: "Admin analytics (superuser only)" },
+        { name: "Cron", description: "Scheduled jobs" },
+      ],
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: "http",
+            scheme: "bearer",
+            description: "API key from /keys. Header: Authorization: Bearer oga_live_...",
+          },
+          bridgeToken: {
+            type: "http",
+            scheme: "bearer",
+            description: "Bridge token minted by the web BFF. Internal use only.",
+          },
+        },
+      },
+    },
+  });
+
+  await app.register(fastifySwaggerUi, {
+    routePrefix: "/docs",
+    uiConfig: { docExpansion: "list", deepLinking: true },
+  });
 
   // JSON parser that also stashes the raw body string on the request. Routes
   // still receive a parsed `request.body` (identical to Fastify's default); the
@@ -417,17 +475,44 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   });
 
   // Liveness probe for the container host (Render/Fly/etc.).
-  app.get("/health", async () => ({ status: "ok" }));
+  app.get("/health",
+    {
+    schema: {
+          "tags": [
+              "Meta"
+          ],
+          "summary": "Health check",
+          "description": "Liveness probe for container hosts."
+      },
+    }, async () => ({ status: "ok" }));
 
   // Proves apps/api can consume packages/contracts (shared source of truth).
-  app.get("/v1/meta", async () => ({
+  app.get("/v1/meta",
+    {
+    schema: {
+          "tags": [
+              "Meta"
+          ],
+          "summary": "API metadata",
+          "description": "Returns supported intents, signal categories, and engine version."
+      },
+    }, async () => ({
     service: "onegoodarea-api",
     phase: "1-reports-vertical",
     intents: INTENTS,
   }));
 
   // The authenticated caller's recent reports (dashboard / "my reports" list).
-  app.get("/me/reports", async (request, reply) => {
+  app.get("/me/reports",
+    {
+    schema: {
+          "tags": [
+              "Reports"
+          ],
+          "summary": "List my reports",
+          "description": "Paginated list of reports generated by the authenticated user."
+      },
+    }, async (request, reply) => {
     const userId = await authenticate(request, reply);
     if (!userId) return reply; // 401 already sent
 
@@ -454,7 +539,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
      Session-authed via the bridge token apps/web mints from NextAuth.
      Paginated: ?page=1&page_size=20, page_size capped at 100. Returns
      the caller's activity_events rows ordered newest-first. */
-  app.get("/me/activity", async (request, reply) => {
+  app.get("/me/activity",
+    {
+    schema: {
+          "tags": [
+              "Reports"
+          ],
+          "summary": "My activity log",
+          "description": "Recent API activity for the authenticated user."
+      },
+    }, async (request, reply) => {
     const userId = await authenticateSession(request, reply);
     if (!userId) return reply;
 
@@ -477,7 +571,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // The authenticated caller's plan + entitlements. Used by the MCP server at
   // startup to check mcpAccess, and by any consumer needing entitlement without
   // running a report. Migrated from the legacy /api/v1/me route.
-  app.get("/v1/me", async (request, reply) => {
+  app.get("/v1/me",
+    {
+    schema: {
+          "tags": [
+              "Reports"
+          ],
+          "summary": "Current user profile",
+          "description": "Returns the authenticated user's profile and usage stats."
+      },
+    }, async (request, reply) => {
     const authHeader = headerString(request.headers.authorization);
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return reply.code(401).send({ error: "Missing API key. Use: Authorization: Bearer oga_..." });
@@ -591,7 +694,17 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // point. Mirrors the legacy /api/v1/report route: auth -> rate-limit -> API
   // access -> monthly quota -> input validation -> engine-version pin -> MCP
   // gate -> idempotency-wrapped generateReport.
-  app.post("/v1/report", async (request, reply) => {
+  app.post("/v1/report",
+    {
+    schema: {
+          "tags": [
+              "Reports"
+          ],
+          "summary": "Generate a report",
+          "description": "Produces a decision-grade area report for a postcode or place name.",
+          "body": { "type": "object", "properties": { "area": { "type": "string" }, "intent": { "type": "string" } }, "example": { "area": "SW1A 1AA", "intent": "moving" } }
+      },
+    }, async (request, reply) => {
     try {
       const authHeader = headerString(request.headers.authorization);
       if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -690,7 +803,17 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // Gate = auth + per-key rate-limit + plan API access (the same requireApiAccess
   // gate the webhooks CRUD uses). The monthly REPORT quota deliberately does NOT
   // apply: no report is generated, so it is not metered against that allowance.
-  app.get("/v1/area", async (request, reply) => {
+  app.get("/v1/area",
+    {
+    schema: {
+          "tags": [
+              "Signals"
+          ],
+          "summary": "Get area profile",
+          "description": "Full signal profile for a UK postcode or place name. Returns geo metadata plus all signal categories with sources.",
+          "querystring": { "type": "object", "properties": { "area": { "type": "string", "example": "SW1A 1AA" }, "postcode": { "type": "string" } } }
+      },
+    }, async (request, reply) => {
     try {
       if (!getConfig().signalsApiEnabled) {
         return reply.code(404).send({ error: "Not found" });
@@ -757,7 +880,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // one category, so it validates against the same shape callers already parse.
   // Same dark flag + gate as /v1/area. v1 still fans out to all sources then
   // filters (the persisted store makes single-category reads cheap later).
-  app.get("/v1/signals/:category", async (request, reply) => {
+  app.get("/v1/signals/:category",
+    {
+    schema: {
+          "tags": [
+              "Signals"
+          ],
+          "summary": "Get signals by category",
+          "description": "Returns all signals for a specific category (crime, deprivation, property, schools, amenities, transport, environment)."
+      },
+    }, async (request, reply) => {
     try {
       if (!getConfig().signalsApiEnabled) {
         return reply.code(404).send({ error: "Not found" });
@@ -810,7 +942,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // "Find LSOAs (optionally within a country/LAD) where signal X is in the bottom
   // decile / above a threshold, ranked." Only the store can answer this; the
   // live-fetch path is one-area-at-a-time. Same dark flag + gate as /v1/area.
-  app.get("/v1/areas", async (request, reply) => {
+  app.get("/v1/areas",
+    {
+    schema: {
+          "tags": [
+              "Signals"
+          ],
+          "summary": "Query areas by signal",
+          "description": "Rank areas by a signal value. Supports country/LAD scoping, percentile and value filters, and compound multi-signal queries."
+      },
+    }, async (request, reply) => {
     try {
       if (!getConfig().signalsApiEnabled) {
         return reply.code(404).send({ error: "Not found" });
@@ -862,7 +1003,17 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // dimensions. Returns components + weights + confidence (transparent), no AI.
   // Same dark flag + gate as /v1/area; not metered against the monthly report
   // quota (no report is generated).
-  app.post("/v1/score", async (request, reply) => {
+  app.post("/v1/score",
+    {
+    schema: {
+          "tags": [
+              "Scores"
+          ],
+          "summary": "Score an area",
+          "description": "Deterministic composite score for an area by preset or custom weights. Returns component dimensions + confidence.",
+          "body": { "type": "object", "properties": { "area": { "type": "string" }, "preset": { "type": "string" } }, "example": { "area": "M1 1AE", "preset": "business" } }
+      },
+    }, async (request, reply) => {
     try {
       if (!getConfig().signalsApiEnabled) {
         return reply.code(404).send({ error: "Not found" });
@@ -974,7 +1125,17 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     return requireApiAccess(request, reply);
   };
 
-  app.post("/v1/portfolios", async (request, reply) => {
+  app.post("/v1/portfolios",
+    {
+    schema: {
+          "tags": [
+              "Portfolios"
+          ],
+          "summary": "Create portfolio",
+          "description": "Create a new portfolio to track a book of areas.",
+          "body": { "type": "object", "properties": { "name": { "type": "string" } }, "example": { "name": "London investments" } }
+      },
+    }, async (request, reply) => {
     try {
       const userId = await guardSignals(request, reply);
       if (!userId) return reply;
@@ -991,7 +1152,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.get("/v1/portfolios", async (request, reply) => {
+  app.get("/v1/portfolios",
+    {
+    schema: {
+          "tags": [
+              "Portfolios"
+          ],
+          "summary": "List portfolios",
+          "description": "List all portfolios for the authenticated user."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await guardSignals(request, reply);
       if (!userId) return reply;
@@ -1003,7 +1173,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.get("/v1/portfolios/:id", async (request, reply) => {
+  app.get("/v1/portfolios/:id",
+    {
+    schema: {
+          "tags": [
+              "Portfolios"
+          ],
+          "summary": "Get portfolio",
+          "description": "Get a portfolio with its tracked areas."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await guardSignals(request, reply);
       if (!userId) return reply;
@@ -1018,7 +1197,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.delete("/v1/portfolios/:id", async (request, reply) => {
+  app.delete("/v1/portfolios/:id",
+    {
+    schema: {
+          "tags": [
+              "Portfolios"
+          ],
+          "summary": "Delete portfolio",
+          "description": "Delete a portfolio and its tracked areas."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await guardSignals(request, reply);
       if (!userId) return reply;
@@ -1033,7 +1221,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.post("/v1/portfolios/:id/areas", async (request, reply) => {
+  app.post("/v1/portfolios/:id/areas",
+    {
+    schema: {
+          "tags": [
+              "Portfolios"
+          ],
+          "summary": "Add areas to portfolio",
+          "description": "Add one or more areas to a portfolio."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await guardSignals(request, reply);
       if (!userId) return reply;
@@ -1064,7 +1261,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.post("/v1/portfolios/:id/enrich", async (request, reply) => {
+  app.post("/v1/portfolios/:id/enrich",
+    {
+    schema: {
+          "tags": [
+              "Portfolios"
+          ],
+          "summary": "Enrich portfolio",
+          "description": "Bulk-score every area in the portfolio."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await guardSignals(request, reply);
       if (!userId) return reply;
@@ -1088,7 +1294,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // Change detection: diff the portfolio's areas across time-series periods,
   // fire signal.changed webhooks for material moves. Needs accrued history
   // (prices move; deprivation is static).
-  app.post("/v1/portfolios/:id/changes", async (request, reply) => {
+  app.post("/v1/portfolios/:id/changes",
+    {
+    schema: {
+          "tags": [
+              "Portfolios"
+          ],
+          "summary": "Detect portfolio changes",
+          "description": "Detect material signal changes for tracked areas between periods."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await guardSignals(request, reply);
       if (!userId) return reply;
@@ -1141,7 +1356,17 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // (apps/web dashboard) will route via the BFF bridge → same endpoints.
   // Mutations are owner-only; reads are member+.
 
-  app.post("/v1/orgs", async (request, reply) => {
+  app.post("/v1/orgs",
+    {
+    schema: {
+          "tags": [
+              "Orgs"
+          ],
+          "summary": "Create organization",
+          "description": "Creates a new organization. The caller becomes the owner.",
+          "body": { "type": "object", "properties": { "name": { "type": "string" }, "slug": { "type": "string" } }, "example": { "name": "Acme Corp", "slug": "acme-corp" } }
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1168,7 +1393,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.get("/v1/orgs", async (request, reply) => {
+  app.get("/v1/orgs",
+    {
+    schema: {
+          "tags": [
+              "Orgs"
+          ],
+          "summary": "List organizations",
+          "description": "List organizations the caller is a member of, with their role."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1181,7 +1415,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.get("/v1/orgs/:id", async (request, reply) => {
+  app.get("/v1/orgs/:id",
+    {
+    schema: {
+          "tags": [
+              "Orgs"
+          ],
+          "summary": "Get organization",
+          "description": "Get organization details by ID."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1196,7 +1439,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.patch("/v1/orgs/:id", async (request, reply) => {
+  app.patch("/v1/orgs/:id",
+    {
+    schema: {
+          "tags": [
+              "Orgs"
+          ],
+          "summary": "Update organization",
+          "description": "Update organization name, slug, or white-label settings."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1225,7 +1477,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.get("/v1/orgs/:id/members", async (request, reply) => {
+  app.get("/v1/orgs/:id/members",
+    {
+    schema: {
+          "tags": [
+              "Orgs"
+          ],
+          "summary": "List members",
+          "description": "List all members of an organization."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1241,7 +1502,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.post("/v1/orgs/:id/members", async (request, reply) => {
+  app.post("/v1/orgs/:id/members",
+    {
+    schema: {
+          "tags": [
+              "Orgs"
+          ],
+          "summary": "Add member",
+          "description": "Add an existing user to the organization."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1283,7 +1553,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   //   - admin or owner can call
   //   - granting 'owner' is owner-only
   //   - downgrading the last owner is refused (would orphan the org)
-  app.patch("/v1/orgs/:id/members/:userId", async (request, reply) => {
+  app.patch("/v1/orgs/:id/members/:userId",
+    {
+    schema: {
+          "tags": [
+              "Orgs"
+          ],
+          "summary": "Update member role",
+          "description": "Change a member's role in the organization."
+      },
+    }, async (request, reply) => {
     try {
       const callerId = await requireApiAccess(request, reply);
       if (!callerId) return reply;
@@ -1343,7 +1622,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.delete("/v1/orgs/:id/members/:userId", async (request, reply) => {
+  app.delete("/v1/orgs/:id/members/:userId",
+    {
+    schema: {
+          "tags": [
+              "Orgs"
+          ],
+          "summary": "Remove member",
+          "description": "Remove a member from the organization."
+      },
+    }, async (request, reply) => {
     try {
       const callerId = await requireApiAccess(request, reply);
       if (!callerId) return reply;
@@ -1403,7 +1691,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // outbound email. 7-day expiry, single-use. Owner role cannot be
   // granted via invite — Zod's InvitationRoleSchema enforces it.
 
-  app.post("/v1/orgs/:id/invitations", async (request, reply) => {
+  app.post("/v1/orgs/:id/invitations",
+    {
+    schema: {
+          "tags": [
+              "Invitations"
+          ],
+          "summary": "Create invitation",
+          "description": "Create an invitation to join the organization."
+      },
+    }, async (request, reply) => {
     try {
       const callerId = await requireApiAccess(request, reply);
       if (!callerId) return reply;
@@ -1441,7 +1738,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.get("/v1/orgs/:id/invitations", async (request, reply) => {
+  app.get("/v1/orgs/:id/invitations",
+    {
+    schema: {
+          "tags": [
+              "Invitations"
+          ],
+          "summary": "List invitations",
+          "description": "List pending invitations for the organization."
+      },
+    }, async (request, reply) => {
     try {
       const callerId = await requireApiAccess(request, reply);
       if (!callerId) return reply;
@@ -1457,7 +1763,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.delete("/v1/orgs/:id/invitations/:invitationId", async (request, reply) => {
+  app.delete("/v1/orgs/:id/invitations/:invitationId",
+    {
+    schema: {
+          "tags": [
+              "Invitations"
+          ],
+          "summary": "Revoke invitation",
+          "description": "Revoke a pending invitation."
+      },
+    }, async (request, reply) => {
     try {
       const callerId = await requireApiAccess(request, reply);
       if (!callerId) return reply;
@@ -1478,7 +1793,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.post("/v1/invitations/:token/accept", async (request, reply) => {
+  app.post("/v1/invitations/:token/accept",
+    {
+    schema: {
+          "tags": [
+              "Invitations"
+          ],
+          "summary": "Accept invitation",
+          "description": "Accept an organization invitation by token."
+      },
+    }, async (request, reply) => {
     try {
       const callerId = await requireApiAccess(request, reply);
       if (!callerId) return reply;
@@ -1539,7 +1863,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // /v1/query — absent the param, behaviour is unchanged. Owner-only
   // mutations; reads require membership. See ADR 0029.
 
-  app.post("/v1/orgs/:id/bundles", async (request, reply) => {
+  app.post("/v1/orgs/:id/bundles",
+    {
+    schema: {
+          "tags": [
+              "Bundles"
+          ],
+          "summary": "Create bundle",
+          "description": "Create a signal bundle for an organization."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1579,7 +1912,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.get("/v1/orgs/:id/bundles", async (request, reply) => {
+  app.get("/v1/orgs/:id/bundles",
+    {
+    schema: {
+          "tags": [
+              "Bundles"
+          ],
+          "summary": "List bundles",
+          "description": "List signal bundles for an organization."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1595,7 +1937,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.get("/v1/orgs/:id/bundles/:bundleId", async (request, reply) => {
+  app.get("/v1/orgs/:id/bundles/:bundleId",
+    {
+    schema: {
+          "tags": [
+              "Bundles"
+          ],
+          "summary": "Get bundle",
+          "description": "Get a signal bundle by ID."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1612,7 +1963,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.patch("/v1/orgs/:id/bundles/:bundleId", async (request, reply) => {
+  app.patch("/v1/orgs/:id/bundles/:bundleId",
+    {
+    schema: {
+          "tags": [
+              "Bundles"
+          ],
+          "summary": "Update bundle",
+          "description": "Update a signal bundle's name or signal keys."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1654,7 +2014,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.delete("/v1/orgs/:id/bundles/:bundleId", async (request, reply) => {
+  app.delete("/v1/orgs/:id/bundles/:bundleId",
+    {
+    schema: {
+          "tags": [
+              "Bundles"
+          ],
+          "summary": "Delete bundle",
+          "description": "Delete a signal bundle."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1682,7 +2051,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // engine is reused untouched — Levers config sits on top.
   // Owner-only mutations; reads require membership. See ADR 0030.
 
-  app.post("/v1/orgs/:id/presets", async (request, reply) => {
+  app.post("/v1/orgs/:id/presets",
+    {
+    schema: {
+          "tags": [
+              "Presets"
+          ],
+          "summary": "Create preset",
+          "description": "Create a scoring preset for an organization."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1723,7 +2101,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.get("/v1/orgs/:id/presets", async (request, reply) => {
+  app.get("/v1/orgs/:id/presets",
+    {
+    schema: {
+          "tags": [
+              "Presets"
+          ],
+          "summary": "List presets",
+          "description": "List scoring presets for an organization."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1739,7 +2126,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.get("/v1/orgs/:id/presets/:presetId", async (request, reply) => {
+  app.get("/v1/orgs/:id/presets/:presetId",
+    {
+    schema: {
+          "tags": [
+              "Presets"
+          ],
+          "summary": "Get preset",
+          "description": "Get a scoring preset by ID."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1756,7 +2152,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.patch("/v1/orgs/:id/presets/:presetId", async (request, reply) => {
+  app.patch("/v1/orgs/:id/presets/:presetId",
+    {
+    schema: {
+          "tags": [
+              "Presets"
+          ],
+          "summary": "Update preset",
+          "description": "Update a scoring preset's name, base preset, or weights."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1805,7 +2210,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.delete("/v1/orgs/:id/presets/:presetId", async (request, reply) => {
+  app.delete("/v1/orgs/:id/presets/:presetId",
+    {
+    schema: {
+          "tags": [
+              "Presets"
+          ],
+          "summary": "Delete preset",
+          "description": "Delete a scoring preset."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1835,7 +2249,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // SUPPORTED_ENGINE_VERSIONS so reads never see an invalid pin.
   // See ADR 0031.
 
-  app.get("/v1/orgs/:id/methodology", async (request, reply) => {
+  app.get("/v1/orgs/:id/methodology",
+    {
+    schema: {
+          "tags": [
+              "Methodology"
+          ],
+          "summary": "Get methodology pin",
+          "description": "Get the engine version pin for an organization."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1851,7 +2274,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.put("/v1/orgs/:id/methodology", async (request, reply) => {
+  app.put("/v1/orgs/:id/methodology",
+    {
+    schema: {
+          "tags": [
+              "Methodology"
+          ],
+          "summary": "Set methodology pin",
+          "description": "Pin a specific engine version for the organization."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1890,7 +2322,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // a candidate filter on the existing global k-NN peer graph. Owner-
   // only mutations; reads require membership. See ADR 0032.
 
-  app.post("/v1/orgs/:id/cohorts", async (request, reply) => {
+  app.post("/v1/orgs/:id/cohorts",
+    {
+    schema: {
+          "tags": [
+              "Cohorts"
+          ],
+          "summary": "Create cohort",
+          "description": "Create an area cohort for an organization."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1923,7 +2364,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.get("/v1/orgs/:id/cohorts", async (request, reply) => {
+  app.get("/v1/orgs/:id/cohorts",
+    {
+    schema: {
+          "tags": [
+              "Cohorts"
+          ],
+          "summary": "List cohorts",
+          "description": "List area cohorts for an organization."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1939,7 +2389,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.get("/v1/orgs/:id/cohorts/:cohortId", async (request, reply) => {
+  app.get("/v1/orgs/:id/cohorts/:cohortId",
+    {
+    schema: {
+          "tags": [
+              "Cohorts"
+          ],
+          "summary": "Get cohort",
+          "description": "Get an area cohort by ID."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1956,7 +2415,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.patch("/v1/orgs/:id/cohorts/:cohortId", async (request, reply) => {
+  app.patch("/v1/orgs/:id/cohorts/:cohortId",
+    {
+    schema: {
+          "tags": [
+              "Cohorts"
+          ],
+          "summary": "Update cohort",
+          "description": "Update an area cohort."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -1989,7 +2457,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.delete("/v1/orgs/:id/cohorts/:cohortId", async (request, reply) => {
+  app.delete("/v1/orgs/:id/cohorts/:cohortId",
+    {
+    schema: {
+          "tags": [
+              "Cohorts"
+          ],
+          "summary": "Delete cohort",
+          "description": "Delete an area cohort."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -2010,7 +2487,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     }
   });
 
-  app.delete("/v1/orgs/:id/methodology", async (request, reply) => {
+  app.delete("/v1/orgs/:id/methodology",
+    {
+    schema: {
+          "tags": [
+              "Methodology"
+          ],
+          "summary": "Clear methodology pin",
+          "description": "Remove the engine version pin (revert to latest)."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -2038,7 +2524,17 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // routes through the planner -> Zod-validated plan -> SAME deterministic
   // executor. Response always echoes the executed plan + plan_source so
   // consumers can audit + replay. NOT narrative — see ADR 0017.
-  app.post("/v1/query", async (request, reply) => {
+  app.post("/v1/query",
+    {
+    schema: {
+          "tags": [
+              "Intelligence"
+          ],
+          "summary": "Query intelligence",
+          "description": "Run a query plan or natural-language question against the intelligence moat. Supports rank_areas, get_area, score_area, compare_areas, find_peers, find_insights, and find_forecast.",
+          "body": { "type": "object", "properties": { "question": { "type": "string" } }, "example": { "question": "best areas for families in London" } }
+      },
+    }, async (request, reply) => {
     try {
       if (!getConfig().signalsApiEnabled) {
         return reply.code(404).send({ error: "Not found" });
@@ -2108,7 +2604,17 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // signals = all the target has normalized; default k=20 (max 200); default
   // min_signals=3. Distance = SQRT(AVG((t_i - c_i)^2)) over dims BOTH have.
   // See ADR 0023.
-  app.post("/v1/peers", async (request, reply) => {
+  app.post("/v1/peers",
+    {
+    schema: {
+          "tags": [
+              "Intelligence"
+          ],
+          "summary": "Find peers",
+          "description": "Find k-nearest-neighbour peers for an area by normalized signal values.",
+          "body": { "type": "object", "properties": { "area": { "type": "string" }, "k": { "type": "number" } }, "example": { "area": "SW1A 1AA", "k": 10 } }
+      },
+    }, async (request, reply) => {
     try {
       if (!getConfig().signalsApiEnabled) {
         return reply.code(404).send({ error: "Not found" });
@@ -2211,7 +2717,17 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // (e.g. crime.total_12m_peer_relative_z). Reads signal_values; the
   // expensive peer math runs OFFLINE in refresh:peers + derive:signals.
   // Country/LAD scope + optional min_abs_z threshold. See ADR 0024.
-  app.post("/v1/insights", async (request, reply) => {
+  app.post("/v1/insights",
+    {
+    schema: {
+          "tags": [
+              "Intelligence"
+          ],
+          "summary": "Find insights",
+          "description": "Rank areas by anomaly (ABS peer-relative z-score) on a chosen signal.",
+          "body": { "type": "object", "properties": { "signal_key": { "type": "string" }, "country": { "type": "string" }, "k": { "type": "number" } }, "example": { "signal_key": "crime.total_12m", "country": "England", "k": 20 } }
+      },
+    }, async (request, reply) => {
     try {
       const userId = await guardSignals(request, reply);
       if (!userId) return reply;
@@ -2263,7 +2779,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // SAME runForecast serves both this endpoint and POST /v1/query's
   // find_forecast plan op.
   void (FORECAST_DEFAULT_WINDOW + FORECAST_DEFAULT_HORIZON); // keep imports alive
-  app.post("/v1/forecast", async (request, reply) => {
+  app.post("/v1/forecast",
+    {
+    schema: {
+          "tags": [
+              "Intelligence"
+          ],
+          "summary": "Forecast signal",
+          "description": "Project a signal forward in time using linear regression over the trailing window."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await guardSignals(request, reply);
       if (!userId) return reply;
@@ -2342,7 +2867,17 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // AR-130 bulk scoring: up to BATCH_MAX_ITEMS areas per call, bounded
   // concurrency, per-item result array. Pre-checks total quota (fail fast).
   // Migrated from the legacy /api/v1/batch route.
-  app.post("/v1/batch", async (request, reply) => {
+  app.post("/v1/batch",
+    {
+    schema: {
+          "tags": [
+              "Webhooks"
+          ],
+          "summary": "Batch report",
+          "description": "Generate reports for multiple areas in a single request.",
+          "body": { "type": "object", "properties": { "items": { "type": "array" } }, "example": { "items": [{ "area": "SW1A 1AA", "intent": "moving" }] } }
+      },
+    }, async (request, reply) => {
     try {
       const authHeader = headerString(request.headers.authorization);
       if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -2441,7 +2976,17 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // AR-129: register an outbound webhook subscription. Returns the signing
   // secret ONCE (never recoverable). Migrated from the legacy
   // /api/v1/webhooks POST route.
-  app.post("/v1/webhooks", async (request, reply) => {
+  app.post("/v1/webhooks",
+    {
+    schema: {
+          "tags": [
+              "Webhooks"
+          ],
+          "summary": "Create webhook",
+          "description": "Register a webhook endpoint for event notifications.",
+          "body": { "type": "object", "properties": { "url": { "type": "string" }, "events": { "type": "array", "items": { "type": "string" } } }, "example": { "url": "https://example.com/hooks", "events": ["report.created"] } }
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply; // gate response already sent
@@ -2477,7 +3022,16 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   // AR-129: list the caller's active webhook subscriptions (secret omitted).
   // Migrated from the legacy /api/v1/webhooks GET route.
-  app.get("/v1/webhooks", async (request, reply) => {
+  app.get("/v1/webhooks",
+    {
+    schema: {
+          "tags": [
+              "Webhooks"
+          ],
+          "summary": "List webhooks",
+          "description": "List registered webhooks."
+      },
+    }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply; // gate response already sent
@@ -2496,7 +3050,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // AR-129: revoke a webhook subscription by id. 404 if it does not belong to
   // the caller or was already revoked. Migrated from the legacy
   // /api/v1/webhooks/[id] DELETE route.
-  app.delete<{ Params: { id: string } }>("/v1/webhooks/:id", async (request, reply) => {
+  app.delete<{ Params: { id: string } }>("/v1/webhooks/:id", {
+    schema: { tags: ["Webhooks"], summary: "Delete webhook", description: "Delete a registered webhook." },
+  }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply; // gate response already sent
@@ -2520,7 +3076,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // plaintext secret comes back ONCE in the response (the dashboard
   // surfaces it in the same one-time-reveal panel as create). 404 if
   // the subscription doesn't belong to the caller or was revoked.
-  app.post<{ Params: { id: string } }>("/v1/webhooks/:id/rotate-secret", async (request, reply) => {
+  app.post<{ Params: { id: string } }>("/v1/webhooks/:id/rotate-secret", {
+    schema: { tags: ["Webhooks"], summary: "Rotate webhook secret", description: "Rotate the signing secret for a webhook." },
+  }, async (request, reply) => {
     try {
       const userId = await requireApiAccess(request, reply);
       if (!userId) return reply;
@@ -3027,7 +3585,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // Session-authed. Migrated from /api/report/[id]. (The POST that GENERATES a
   // browser report is deferred — it depends on the not-yet-migrated email
   // module for report delivery.)
-  app.get<{ Params: { id: string } }>("/report/:id", async (request, reply) => {
+  app.get<{ Params: { id: string } }>("/report/:id", {
+    schema: { tags: ["Reports"], summary: "Get report by ID", description: "Retrieve a previously generated report by its ID." },
+  }, async (request, reply) => {
     try {
       const userId = await authenticateSession(request, reply);
       if (!userId) return reply; // 401 already sent
@@ -3059,7 +3619,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   // Delete one of the caller's own reports. Session-authed. Migrated from
   // /api/report/[id].
-  app.delete<{ Params: { id: string } }>("/report/:id", async (request, reply) => {
+  app.delete<{ Params: { id: string } }>("/report/:id", {
+    schema: { tags: ["Reports"], summary: "Delete report", description: "Delete a previously generated report by its ID." },
+  }, async (request, reply) => {
     try {
       const userId = await authenticateSession(request, reply);
       if (!userId) return reply; // 401 already sent
@@ -3787,7 +4349,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // Generate a report from the dashboard (browser flow). Session-authed; rate-
   // limited per user; counts against the monthly quota; emails the report.
   // Distinct from the api-key POST /v1/report. Migrated from /api/report.
-  app.post("/report", async (request, reply) => {
+  app.post("/report", {
+    schema: { tags: ["Reports"], summary: "Generate report (web)", description: "Generates a report and returns the rendered HTML page. Web-only endpoint." },
+  }, async (request, reply) => {
     try {
       const userId = await authenticateSession(request, reply);
       if (!userId) return reply; // 401 already sent
@@ -3847,7 +4411,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   // The caller's saved areas (watchlist). Session-authed. Migrated from
   // /api/watchlist. (Schema confirmed against the live dashboards; see the
   // saved_areas migration note.)
-  app.get("/watchlist", async (request, reply) => {
+  app.get("/watchlist", {
+    schema: { tags: ["Watchlist"], summary: "Get watchlist", description: "Get the authenticated user's saved areas watchlist." },
+  }, async (request, reply) => {
     try {
       const userId = await authenticateSession(request, reply);
       if (!userId) return reply; // 401 already sent
@@ -3866,7 +4432,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
   });
 
   // Save an area to the watchlist. Session-authed. 409 if already saved.
-  app.post("/watchlist", async (request, reply) => {
+  app.post("/watchlist", {
+    schema: { tags: ["Watchlist"], summary: "Add to watchlist", description: "Add an area to the user's watchlist." },
+  }, async (request, reply) => {
     try {
       const userId = await authenticateSession(request, reply);
       if (!userId) return reply; // 401 already sent
@@ -3898,7 +4466,9 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
 
   // Remove an area from the watchlist. Session-authed. Migrated from
   // /api/watchlist/[id].
-  app.delete<{ Params: { id: string } }>("/watchlist/:id", async (request, reply) => {
+  app.delete<{ Params: { id: string } }>("/watchlist/:id", {
+    schema: { tags: ["Watchlist"], summary: "Remove from watchlist", description: "Remove an area from the user's watchlist." },
+  }, async (request, reply) => {
     try {
       const userId = await authenticateSession(request, reply);
       if (!userId) return reply; // 401 already sent

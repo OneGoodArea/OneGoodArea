@@ -6,7 +6,7 @@ import { buildApp } from "./app";
 const port = Number(process.env.PORT ?? 8080);
 const host = process.env.HOST ?? "0.0.0.0";
 
-const app = buildApp({ logger: true });
+const app = await buildApp({ logger: true });
 
 app
   .listen({ port, host })

@@ -7,7 +7,7 @@ import { buildApp } from "@/app";
 import { verifySessionToken } from "@/modules/auth/session-token";
 import { sql } from "@/infrastructure/db/client";
 
-const app = buildApp();
+const app = await buildApp();
 const mockVerify = vi.mocked(verifySessionToken);
 const mockSql = vi.mocked(sql);
 

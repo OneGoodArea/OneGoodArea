@@ -18,7 +18,7 @@ import { canGenerateReport, getUserPlan, hasApiAccess } from "@/modules/usage";
 import { stripe } from "@/modules/billing/stripe-client";
 import { sql } from "@/infrastructure/db/client";
 
-const app = buildApp();
+const app = await buildApp();
 
 const mockVerify = vi.mocked(verifySessionToken);
 const mockQuota = vi.mocked(canGenerateReport);

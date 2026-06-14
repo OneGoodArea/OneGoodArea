@@ -5,7 +5,7 @@ vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
 import { buildApp } from "@/app";
 import { sql } from "@/infrastructure/db/client";
 
-const app = buildApp();
+const app = await buildApp();
 const mockSql = vi.mocked(sql);
 
 const JSON_HEADERS = { "content-type": "application/json" };

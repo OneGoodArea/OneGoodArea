@@ -6,7 +6,7 @@ vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
 import { buildApp } from "@/app";
 import { runRescoreCron } from "@/modules/reports/rescore";
 
-const app = buildApp();
+const app = await buildApp();
 const mockRun = vi.mocked(runRescoreCron);
 
 const SUMMARY = {
