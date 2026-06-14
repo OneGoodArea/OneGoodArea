@@ -27,7 +27,7 @@ import {
   revokeWebhookSubscription,
 } from "@/modules/webhooks";
 
-const app = buildApp();
+const app = await buildApp();
 
 const mockValidate = vi.mocked(validateApiKey);
 const mockRate = vi.mocked(rateLimit);

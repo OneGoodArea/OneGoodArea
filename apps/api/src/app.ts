@@ -1,4 +1,6 @@
 import Fastify, { type FastifyInstance, type FastifyRequest, type FastifyReply } from "fastify";
+import fastifySwagger from "@fastify/swagger";
+import fastifySwaggerUi from "@fastify/swagger-ui";
 import { INTENTS, type Intent, isIntent, SIGNAL_CATEGORIES, isSignalCategory } from "@onegoodarea/contracts";
 import { validateApiKey, createApiKey, listApiKeys, revokeApiKey } from "./modules/api-keys";
 import { verifySessionToken } from "./modules/auth/session-token";
@@ -387,8 +389,50 @@ interface CountRow { count: number; }
 interface DayCountRow { day: string; count: number; }
 type ApiKeyPreview = Pick<ApiKeyRow, "id" | "name" | "created_at" | "last_used_at"> & { key_preview: string };
 
-export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
+export async function buildApp(opts: { logger?: boolean } = {}): Promise<FastifyInstance> {
   const app = Fastify({ logger: opts.logger ?? false });
+
+  // OpenAPI/Swagger documentation — /docs (Swagger UI) and /openapi.json (raw spec).
+  await app.register(fastifySwagger, {
+    openapi: {
+      info: {
+        title: "OneGoodArea API",
+        version: "1.0.0",
+        description: "Area intelligence API — scores, signals, reports, and org management.",
+      },
+      servers: [{ url: process.env.API_PUBLIC_URL || "http://localhost:4000" }],
+      tags: [
+        { name: "Meta", description: "Health and version endpoints" },
+        { name: "Reports", description: "Generate and retrieve area reports" },
+        { name: "Signals", description: "Signal-first area profiles" },
+        { name: "Scores", description: "Scoring engine" },
+        { name: "Portfolios", description: "Portfolio management" },
+        { name: "Orgs", description: "Organization and member management" },
+        { name: "Invitations", description: "Org invitations" },
+        { name: "Bundles", description: "Signal bundles" },
+        { name: "Presets", description: "Scoring presets" },
+        { name: "Methodology", description: "Engine version pins" },
+        { name: "Cohorts", description: "Area cohorts" },
+        { name: "Intelligence", description: "Query, peers, insights, forecast" },
+        { name: "Webhooks", description: "Outbound webhook subscriptions" },
+        { name: "Usage", description: "Plan and quota endpoints" },
+        { name: "Keys", description: "API key management" },
+        { name: "Auth", description: "Authentication endpoints" },
+        { name: "Stripe", description: "Billing and subscriptions" },
+        { name: "Settings", description: "Account settings" },
+        { name: "Dashboard", description: "Dashboard composite data" },
+        { name: "Tracking", description: "Analytics and pageview tracking" },
+        { name: "Watchlist", description: "Saved areas watchlist" },
+        { name: "Admin", description: "Admin analytics (superuser only)" },
+        { name: "Cron", description: "Scheduled jobs" },
+      ],
+    },
+  });
+
+  await app.register(fastifySwaggerUi, {
+    routePrefix: "/docs",
+    uiConfig: { docExpansion: "list", deepLinking: true },
+  });
 
   // JSON parser that also stashes the raw body string on the request. Routes
   // still receive a parsed `request.body` (identical to Fastify's default); the

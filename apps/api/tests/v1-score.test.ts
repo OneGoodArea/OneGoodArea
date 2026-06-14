@@ -16,7 +16,7 @@ import { scoreArea } from "@/modules/scoring";
 import { trackEvent } from "@/modules/tracking/activity";
 import { sql } from "@/infrastructure/db/client";
 
-const app = buildApp();
+const app = await buildApp();
 afterAll(() => { app.close(); delete process.env.OGA_SIGNALS_API; });
 
 const mockValidate = vi.mocked(validateApiKey);

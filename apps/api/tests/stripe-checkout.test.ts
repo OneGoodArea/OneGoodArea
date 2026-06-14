@@ -24,7 +24,7 @@ import { stripe } from "@/modules/billing/stripe-client";
 import { trackEvent } from "@/modules/tracking/activity";
 import { sql } from "@/infrastructure/db/client";
 
-const app = buildApp();
+const app = await buildApp();
 
 const mockVerify = vi.mocked(verifySessionToken);
 const mockEmail = vi.mocked(getUserEmail);

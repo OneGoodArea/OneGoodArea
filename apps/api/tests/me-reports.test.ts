@@ -9,7 +9,7 @@ import { sql } from "@/infrastructure/db/client";
 
 const mockValidate = vi.mocked(validateApiKey);
 const mockSql = vi.mocked(sql);
-const app = buildApp();
+const app = await buildApp();
 
 beforeEach(() => {
   mockValidate.mockReset();
