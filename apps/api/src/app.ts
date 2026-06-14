@@ -277,6 +277,60 @@ async function requireApiAccessWithOrg(
   return { userId, orgId: result.orgId ?? null };
 }
 
+/** Dual-auth helper for org CRUD endpoints. Tries bridge token (session
+   user) first — no rate limit, no plan check. Falls back to API key with
+   the full requireApiAccess gate (auth + rate-limit + plan check).
+   Returns userId on success, null (with 401/403/429 already sent) on failure.
+   Used by Phase 1C to let both apps/web dashboard and external API consumers
+   hit the same /v1/orgs/* endpoints. */
+async function authenticateEither(
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<string | null> {
+  const header = request.headers.authorization;
+  if (!header?.startsWith("Bearer ")) {
+    reply.code(401).send({ error: "Unauthorized" });
+    return null;
+  }
+  const token = header.slice(7);
+
+  // 1. Try bridge token (session user — no rate limit, no plan check)
+  const session = await verifySessionToken(token);
+  if (session) return session.userId;
+
+  // 2. Fall back to API key — full gate
+  const result = await validateApiKey(token, clientIpOf(request));
+  if (!result) {
+    reply.code(401).send({ error: "Invalid or revoked API key" });
+    return null;
+  }
+  if ("blocked" in result) {
+    reply.code(403).send({
+      error: "Request IP is not in the key's allowlist.",
+      code: result.blocked,
+    });
+    return null;
+  }
+
+  const rl = await rateLimit(`api:${token}`, {
+    max: RATE_LIMITS.apiReport.max,
+    windowSeconds: RATE_LIMITS.apiReport.windowSeconds,
+  });
+  reply.headers(rateLimitHeaders(RATE_LIMITS.apiReport.max, rl));
+  if (!rl.success) {
+    reply.code(429).send({ error: "Too many requests. Rate limit: 30 requests per minute." });
+    return null;
+  }
+
+  if (!(await hasApiAccess(result.userId))) {
+    reply.code(403).send({ error: "API access not available on your current plan. Upgrade at /pricing." });
+    return null;
+  }
+
+  return result.userId;
+}
+
+
 /** Session (browser-user) auth via the JWT bridge — the counterpart to
    authenticate() (programmatic api-key auth). Verifies the short-lived token
    apps/web's server mints from its NextAuth session and resolves the userId, or
@@ -1368,7 +1422,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const parsed = CreateOrgRequestSchema.safeParse(request.body ?? {});
       if (!parsed.success) {
@@ -1404,7 +1458,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const orgs = await listOrgsForUser(userId);
       return reply.code(200).send({ orgs });
@@ -1426,7 +1480,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id } = request.params as { id: string };
       const org = await getOrgIfMember(id, userId);
@@ -1450,7 +1504,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id } = request.params as { id: string };
       const role = await getRoleInOrg(id, userId);
@@ -1488,7 +1542,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id } = request.params as { id: string };
       const role = await getRoleInOrg(id, userId);
@@ -1513,7 +1567,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id } = request.params as { id: string };
       const role = await getRoleInOrg(id, userId);
@@ -1564,7 +1618,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const callerId = await requireApiAccess(request, reply);
+      const callerId = await authenticateEither(request, reply);
       if (!callerId) return reply;
       const { id: orgId, userId: targetId } = request.params as { id: string; userId: string };
       const callerRole = await getRoleInOrg(orgId, callerId);
@@ -1633,7 +1687,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const callerId = await requireApiAccess(request, reply);
+      const callerId = await authenticateEither(request, reply);
       if (!callerId) return reply;
       const { id, userId: targetId } = request.params as { id: string; userId: string };
       const callerRole = await getRoleInOrg(id, callerId);
@@ -1702,7 +1756,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const callerId = await requireApiAccess(request, reply);
+      const callerId = await authenticateEither(request, reply);
       if (!callerId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, callerId);
@@ -1749,7 +1803,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const callerId = await requireApiAccess(request, reply);
+      const callerId = await authenticateEither(request, reply);
       if (!callerId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, callerId);
@@ -1774,7 +1828,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const callerId = await requireApiAccess(request, reply);
+      const callerId = await authenticateEither(request, reply);
       if (!callerId) return reply;
       const { id: orgId, invitationId } = request.params as { id: string; invitationId: string };
       const role = await getRoleInOrg(orgId, callerId);
@@ -1804,7 +1858,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const callerId = await requireApiAccess(request, reply);
+      const callerId = await authenticateEither(request, reply);
       if (!callerId) return reply;
       const callerEmail = await getUserEmail(callerId);
       if (!callerEmail) return reply.code(403).send({ error: "Caller email not available." });
@@ -1874,7 +1928,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -1923,7 +1977,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -1948,7 +2002,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId, bundleId } = request.params as { id: string; bundleId: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -1974,7 +2028,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId, bundleId } = request.params as { id: string; bundleId: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -2025,7 +2079,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId, bundleId } = request.params as { id: string; bundleId: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -2062,7 +2116,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -2112,7 +2166,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -2137,7 +2191,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId, presetId } = request.params as { id: string; presetId: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -2163,7 +2217,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId, presetId } = request.params as { id: string; presetId: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -2221,7 +2275,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId, presetId } = request.params as { id: string; presetId: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -2260,7 +2314,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -2285,7 +2339,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -2333,7 +2387,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -2375,7 +2429,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -2400,7 +2454,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId, cohortId } = request.params as { id: string; cohortId: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -2426,7 +2480,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId, cohortId } = request.params as { id: string; cohortId: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -2468,7 +2522,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId, cohortId } = request.params as { id: string; cohortId: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -2498,7 +2552,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       },
     }, async (request, reply) => {
     try {
-      const userId = await requireApiAccess(request, reply);
+      const userId = await authenticateEither(request, reply);
       if (!userId) return reply;
       const { id: orgId } = request.params as { id: string };
       const role = await getRoleInOrg(orgId, userId);
@@ -3857,7 +3911,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
         return reply.code(429).send({ error: "Too many attempts. Please try again later." });
       }
 
-      const { email, password } = (request.body ?? {}) as { email?: unknown; password?: unknown; signup_source?: unknown };
+      const { email, password, signup_source } = (request.body ?? {}) as { email?: unknown; password?: unknown; signup_source?: unknown };
       const signupSource = normalizeSignupSource(typeof signup_source === "string" ? signup_source : undefined);
       if (!email || typeof email !== "string") {
         return reply.code(400).send({ error: "Email is required" });

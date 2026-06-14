@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { callApi, apiBaseUrl } from "./api-client";
+import { resolveOrgId } from "./org";
 
 /* BFF proxy helper. The cutover "flip" turns each DB-touching Next /api route
    into a one-liner that forwards to apps/api through this:
@@ -84,7 +85,6 @@ export async function proxyPublic(
   const data = await res.json().catch(() => null);
   return NextResponse.json(data, { status: res.status });
 }
-
 /** Proxy an API-key-authenticated Next route to apps/api. Forwards the
     original request (headers + body) untouched — the API container handles
     `validateApiKey` internally. Use this for public v1 API routes
@@ -118,4 +118,35 @@ export async function proxyApiKey(req: NextRequest): Promise<NextResponse> {
       "content-type": res.headers.get("content-type") || "application/json",
     },
   });
+}
+/** Proxy a session-authenticated org-scoped route to apps/api. Resolves
+    the user's primary org via a single indexed lookup, then forwards to the
+    /v1/orgs/:id/* endpoint using a bridge token. 401 if not logged in, 404
+    if the user has no org. Body is forwarded for POST/PUT/PATCH. */
+export async function proxyOrgRoute(
+  req: NextRequest,
+  apiPath: (orgId: string) => string,
+): Promise<NextResponse> {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const orgId = await resolveOrgId(userId);
+  if (!orgId) {
+    return NextResponse.json({ error: "No org" }, { status: 404 });
+  }
+
+  const body = req.method !== "GET" && req.method !== "HEAD"
+    ? await req.json().catch(() => undefined)
+    : undefined;
+
+  const res = await callApi(apiPath(orgId), {
+    userId,
+    method: req.method,
+    body,
+  });
+
+  return NextResponse.json(res.data, { status: res.status });
 }
