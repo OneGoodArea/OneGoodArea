@@ -390,7 +390,7 @@ interface DayCountRow { day: string; count: number; }
 type ApiKeyPreview = Pick<ApiKeyRow, "id" | "name" | "created_at" | "last_used_at"> & { key_preview: string };
 
 export async function buildApp(opts: { logger?: boolean } = {}): Promise<FastifyInstance> {
-  const app = Fastify({ logger: opts.logger ?? false });
+  const app = Fastify({ logger: opts.logger ?? false, ajv: { customOptions: { keywords: ["example"] } } });
 
   // OpenAPI/Swagger documentation — /docs (Swagger UI) and /openapi.json (raw spec).
   await app.register(fastifySwagger, {
@@ -686,7 +686,8 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
               "Reports"
           ],
           "summary": "Generate a report",
-          "description": "Produces a decision-grade area report for a postcode or place name."
+          "description": "Produces a decision-grade area report for a postcode or place name.",
+          "body": { "type": "object", "properties": { "area": { "type": "string" }, "intent": { "type": "string" } }, "example": { "area": "SW1A 1AA", "intent": "moving" } }
       },
     }, async (request, reply) => {
     try {
@@ -794,7 +795,8 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
               "Signals"
           ],
           "summary": "Get area profile",
-          "description": "Full signal profile for a UK postcode or place name. Returns geo metadata plus all signal categories with sources."
+          "description": "Full signal profile for a UK postcode or place name. Returns geo metadata plus all signal categories with sources.",
+          "querystring": { "type": "object", "properties": { "area": { "type": "string", "example": "SW1A 1AA" }, "postcode": { "type": "string" } } }
       },
     }, async (request, reply) => {
     try {
@@ -993,7 +995,8 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
               "Scores"
           ],
           "summary": "Score an area",
-          "description": "Deterministic composite score for an area by preset or custom weights. Returns component dimensions + confidence."
+          "description": "Deterministic composite score for an area by preset or custom weights. Returns component dimensions + confidence.",
+          "body": { "type": "object", "properties": { "area": { "type": "string" }, "preset": { "type": "string" } }, "example": { "area": "M1 1AE", "preset": "business" } }
       },
     }, async (request, reply) => {
     try {
@@ -1114,7 +1117,8 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
               "Portfolios"
           ],
           "summary": "Create portfolio",
-          "description": "Create a new portfolio to track a book of areas."
+          "description": "Create a new portfolio to track a book of areas.",
+          "body": { "type": "object", "properties": { "name": { "type": "string" } }, "example": { "name": "London investments" } }
       },
     }, async (request, reply) => {
     try {
@@ -1344,7 +1348,8 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
               "Orgs"
           ],
           "summary": "Create organization",
-          "description": "Creates a new organization. The caller becomes the owner."
+          "description": "Creates a new organization. The caller becomes the owner.",
+          "body": { "type": "object", "properties": { "name": { "type": "string" }, "slug": { "type": "string" } }, "example": { "name": "Acme Corp", "slug": "acme-corp" } }
       },
     }, async (request, reply) => {
     try {
@@ -2511,7 +2516,8 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
               "Intelligence"
           ],
           "summary": "Query intelligence",
-          "description": "Run a query plan or natural-language question against the intelligence moat. Supports rank_areas, get_area, score_area, compare_areas, find_peers, find_insights, and find_forecast."
+          "description": "Run a query plan or natural-language question against the intelligence moat. Supports rank_areas, get_area, score_area, compare_areas, find_peers, find_insights, and find_forecast.",
+          "body": { "type": "object", "properties": { "question": { "type": "string" } }, "example": { "question": "best areas for families in London" } }
       },
     }, async (request, reply) => {
     try {
@@ -2590,7 +2596,8 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
               "Intelligence"
           ],
           "summary": "Find peers",
-          "description": "Find k-nearest-neighbour peers for an area by normalized signal values."
+          "description": "Find k-nearest-neighbour peers for an area by normalized signal values.",
+          "body": { "type": "object", "properties": { "area": { "type": "string" }, "k": { "type": "number" } }, "example": { "area": "SW1A 1AA", "k": 10 } }
       },
     }, async (request, reply) => {
     try {
@@ -2702,7 +2709,8 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
               "Intelligence"
           ],
           "summary": "Find insights",
-          "description": "Rank areas by anomaly (ABS peer-relative z-score) on a chosen signal."
+          "description": "Rank areas by anomaly (ABS peer-relative z-score) on a chosen signal.",
+          "body": { "type": "object", "properties": { "signal_key": { "type": "string" }, "country": { "type": "string" }, "k": { "type": "number" } }, "example": { "signal_key": "crime.total_12m", "country": "England", "k": 20 } }
       },
     }, async (request, reply) => {
     try {
@@ -2851,7 +2859,8 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
               "Webhooks"
           ],
           "summary": "Batch report",
-          "description": "Generate reports for multiple areas in a single request."
+          "description": "Generate reports for multiple areas in a single request.",
+          "body": { "type": "object", "properties": { "items": { "type": "array" } }, "example": { "items": [{ "area": "SW1A 1AA", "intent": "moving" }] } }
       },
     }, async (request, reply) => {
     try {
@@ -2959,7 +2968,8 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
               "Webhooks"
           ],
           "summary": "Create webhook",
-          "description": "Register a webhook endpoint for event notifications."
+          "description": "Register a webhook endpoint for event notifications.",
+          "body": { "type": "object", "properties": { "url": { "type": "string" }, "events": { "type": "array", "items": { "type": "string" } } }, "example": { "url": "https://example.com/hooks", "events": ["report.created"] } }
       },
     }, async (request, reply) => {
     try {
