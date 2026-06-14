@@ -7,7 +7,7 @@
 #   - postgres-test has NO volumes — fully ephemeral, no pollution of dev data
 #   - Separate DB / user / password (oga_test) — zero chance of crossing dev rows
 #   - api-test targets the `build` stage (full source + node_modules) since the
-#     runtime stage now carries only dist/server.cjs + slim production deps (Plan 017)
+#     runtime stage now carries only dist/server.mjs + slim production deps (Plan 017)
 #   - web-test targets the `build` stage of container/web/Containerfile, which
 #     carries full source + devDependencies from the `deps` stage
 
