@@ -50,6 +50,8 @@ type TrafficData = {
   topCountries: { country: string; count: number }[];
 };
 
+export type { Analytics, TrafficData };
+
 const PLAN_PRICES: Record<string, number> = {
   starter: 29,
   pro: 79,
@@ -72,9 +74,19 @@ export default function AdminClient({
   analytics,
   traffic,
 }: {
-  analytics: Analytics;
+  analytics: Analytics | null;
   traffic: TrafficData | null;
 }) {
+  if (!analytics) {
+    return (
+      <AppShell title="Admin" subtitle="Live platform analytics · Pedro only">
+        <div className="oga-admin">
+          <div className="oga-admin__empty">No analytics data available</div>
+        </div>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell title="Admin" subtitle="Live platform analytics · Pedro only">
       <div className="oga-admin">

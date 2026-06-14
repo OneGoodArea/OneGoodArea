@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { callApi } from "@/lib/server/api-client";
 import AdminClient from "@/app/design-v2/admin/client";
+import type { Analytics, TrafficData } from "@/app/design-v2/admin/client";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,18 +10,6 @@ export const metadata: Metadata = {
 };
 
 const ADMIN_EMAILS = ["ptengelmann@gmail.com"];
-
-interface TrafficData {
-  totalPageviews: number;
-  pageviewsToday: number;
-  uniqueVisitorsToday: number;
-  uniqueVisitors30d: number;
-  pageviewsPerDay: { day: string; count: number }[];
-  topPages: { path: string; count: number }[];
-  topReferrers: { referrer: string; count: number }[];
-  deviceBreakdown: { device: string; count: number }[];
-  topCountries: { country: string; count: number }[];
-}
 
 export default async function AdminPage() {
   const session = await auth();
@@ -39,7 +28,7 @@ export default async function AdminPage() {
 
   return (
     <AdminClient
-      analytics={analyticsRes.data ?? null}
+      analytics={analyticsRes.data as Analytics | null}
       traffic={trafficRes.data as TrafficData | null}
     />
   );
