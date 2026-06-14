@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { callApi } from "@/lib/server/api-client";
 import BillingClient from "@/app/design-v2/billing/client";
+import { type PlanId } from "@/lib/stripe";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -39,7 +40,7 @@ export default async function BillingPage() {
 
   return (
     <BillingClient
-      plan={data?.plan ?? "sandbox"}
+      plan={data?.plan as PlanId ?? "sandbox"}
       planName={data?.planName ?? "Sandbox"}
       used={data?.used ?? 0}
       limit={data?.limit ?? 35}

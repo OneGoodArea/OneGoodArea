@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { callApi } from "@/lib/server/api-client";
 import AdminClient from "./client";
+import type { Analytics, TrafficData } from "./client";
 
 export const metadata: Metadata = {
   title: "Admin | OneGoodArea (Design V2)",
@@ -27,8 +28,8 @@ export default async function DesignV2AdminPage() {
 
   return (
     <AdminClient
-      analytics={analyticsRes.data ?? null}
-      traffic={trafficRes.data ?? null}
+      analytics={analyticsRes.data as Analytics | null}
+      traffic={trafficRes.data as TrafficData | null}
     />
   );
 }
