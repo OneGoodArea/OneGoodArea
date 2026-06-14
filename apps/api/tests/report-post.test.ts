@@ -16,7 +16,7 @@ import { generateReport } from "@/modules/reports/report-generator";
 import { trackEvent } from "@/modules/tracking/activity";
 import { sendReportEmail } from "@/infrastructure/email/senders";
 
-const app = buildApp();
+const app = await buildApp();
 const mockVerify = vi.mocked(verifySessionToken);
 const mockRate = vi.mocked(rateLimit);
 const mockQuota = vi.mocked(canGenerateReport);

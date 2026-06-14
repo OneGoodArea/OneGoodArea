@@ -19,7 +19,7 @@ import { hasApiAccess, canGenerateReport } from "@/modules/usage";
 import { generateReport } from "@/modules/reports/report-generator";
 import { trackEvent } from "@/modules/tracking/activity";
 
-const app = buildApp();
+const app = await buildApp();
 
 const mockValidate = vi.mocked(validateApiKey);
 const mockRate = vi.mocked(rateLimit);

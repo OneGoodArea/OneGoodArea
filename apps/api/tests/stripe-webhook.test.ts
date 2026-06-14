@@ -5,7 +5,7 @@ vi.mock("@/modules/billing/webhook-handler", () => ({ handleStripeWebhook: vi.fn
 import { buildApp } from "@/app";
 import { handleStripeWebhook } from "@/modules/billing/webhook-handler";
 
-const app = buildApp();
+const app = await buildApp();
 const mockHandle = vi.mocked(handleStripeWebhook);
 
 beforeEach(() => {

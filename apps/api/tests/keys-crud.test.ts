@@ -15,7 +15,7 @@ import { verifySessionToken } from "@/modules/auth/session-token";
 import { createApiKey, listApiKeys, revokeApiKey } from "@/modules/api-keys";
 import { hasApiAccess } from "@/modules/usage";
 
-const app = buildApp();
+const app = await buildApp();
 
 const mockVerify = vi.mocked(verifySessionToken);
 const mockCreate = vi.mocked(createApiKey);

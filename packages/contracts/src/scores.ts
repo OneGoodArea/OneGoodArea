@@ -24,6 +24,18 @@ export const ScoreDimensionSchema = z.object({
 });
 export type ScoreDimension = z.infer<typeof ScoreDimensionSchema>;
 
+/** Request body for POST /v1/score. */
+export const ScoreRequestSchema = z.object({
+  /** UK postcode or place name to score. */
+  area: z.string().min(1),
+  /** Scoring preset. Defaults to "research" if omitted. */
+  preset: z.enum(["moving", "business", "investing", "research"]).optional(),
+  /** Custom weight overrides for the preset's dimensions. Must be a subset of the
+      preset's valid dimension keys; each value must be a positive number. */
+  weights: z.record(z.string(), z.number()).optional(),
+}).strict();
+export type ScoreRequest = z.infer<typeof ScoreRequestSchema>;
+
 /** The response of POST /v1/score. */
 export const ScoreResultSchema = z.object({
   /** The resolved area (postcode or place) that was scored. */
