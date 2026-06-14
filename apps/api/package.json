@@ -9,7 +9,7 @@
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
     "bootstrap:test-key": "tsx src/scripts/bootstrap-test-key.ts",
-    "build": "esbuild src/server.ts --bundle --platform=node --format=cjs --outfile=dist/server.cjs --target=node22",
+    "build": "esbuild src/server.ts --bundle --platform=node --format=cjs --outfile=dist/server.cjs --target=node22 && node -e \"const fs = require('fs'); const path = require('path'); const src = path.join(__dirname, '../..', 'node_modules/@fastify/swagger-ui/static'); const dst = path.join(__dirname, 'dist/static'); if (fs.existsSync(src)) { fs.cpSync(src, dst, { recursive: true, force: true }); }\"",
     "start:prod": "node dist/server.cjs",
     "migrate": "tsx src/infrastructure/db/migrate.ts",
     "refresh:deprivation": "tsx src/modules/signals/refresh/deprivation.ts",
