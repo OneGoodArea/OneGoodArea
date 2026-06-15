@@ -9,17 +9,19 @@ export const metadata: Metadata = {
   title: "Admin Analytics | OneGoodArea",
 };
 
-const ADMIN_EMAILS = ["ptengelmann@gmail.com"];
-
+/* AR-313 Phase 0: gate is DB-backed via users.is_superuser (AR-312).
+   The previous hardcoded ADMIN_EMAILS list is gone — toggling admin
+   access is now a single UPDATE, no deploy. */
 export default async function AdminPage() {
   const session = await auth();
-  const email = session?.user?.email;
+  const userId = session?.user?.id;
+  if (!userId) redirect("/sign-in?callbackUrl=/admin");
 
-  if (!email || !ADMIN_EMAILS.includes(email)) {
-    redirect("/dashboard");
-  }
-
-  const userId = session!.user!.id as string;
+  const { data: gate } = await callApi<{ is_superuser: boolean }>(
+    "/me/is-superuser",
+    { userId },
+  );
+  if (!gate?.is_superuser) redirect("/dashboard");
 
   const [analyticsRes, trafficRes] = await Promise.all([
     callApi("/admin/analytics", { userId }),

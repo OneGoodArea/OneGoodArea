@@ -502,3 +502,50 @@
   border-radius: 50%;
   background: var(--oga-fg);
 }
+
+/* AR-313 Phase 0 — tab nav + placeholder panels. Inherits AppShell
+   tokens; no new design vocabulary. */
+.oga-admin__tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--oga-rule);
+  margin-bottom: 24px;
+}
+.oga-admin__tab {
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 12px 16px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--oga-fg-muted);
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: color 120ms ease, border-color 120ms ease;
+}
+.oga-admin__tab:hover {
+  color: var(--oga-fg);
+}
+.oga-admin__tab--active {
+  color: var(--oga-fg);
+  border-bottom-color: var(--oga-fg);
+}
+.oga-admin__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.oga-admin__coming {
+  color: var(--oga-fg);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 8px;
+}
+.oga-admin__coming-muted {
+  color: var(--oga-fg-muted);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}

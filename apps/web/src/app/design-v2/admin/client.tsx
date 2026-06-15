@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { AppShell, AppCard, StatCell } from "../_shared/app-shell";
 import "./admin.css";
 
@@ -70,6 +70,20 @@ const EVENT_LABELS: Record<string, string> = {
   "password.changed": "Changed password",
 };
 
+/* AR-313 Phase 0: four tabs grouped by business question
+   (Audience / Usage / Revenue / Health). Audience + Usage + Health
+   are placeholders for now; Revenue holds the existing MRR + funnel +
+   activity + traffic panels so nothing visible regresses. Phases 1-4
+   migrate each panel to its proper tab + add the missing stats. */
+type AdminTab = "audience" | "usage" | "revenue" | "health";
+
+const TABS: { id: AdminTab; label: string; phase: number; question: string }[] = [
+  { id: "audience", label: "Audience", phase: 1, question: "Who's using us — users, orgs, geography, churn signals." },
+  { id: "usage", label: "Usage", phase: 2, question: "What they're using — 4 products, endpoint heatmap, engine-version cohorts." },
+  { id: "revenue", label: "Revenue", phase: 3, question: "What we're earning — MRR, plans, conversion funnel, add-ons." },
+  { id: "health", label: "Health", phase: 4, question: "System health — latency, errors, cron jobs, signal-store freshness." },
+];
+
 export default function AdminClient({
   analytics,
   traffic,
@@ -77,26 +91,56 @@ export default function AdminClient({
   analytics: Analytics | null;
   traffic: TrafficData | null;
 }) {
-  if (!analytics) {
-    return (
-      <AppShell title="Admin" subtitle="Live platform analytics · Pedro only">
-        <div className="oga-admin">
-          <div className="oga-admin__empty">No analytics data available</div>
-        </div>
-      </AppShell>
-    );
-  }
+  const [tab, setTab] = useState<AdminTab>("revenue");
 
   return (
-    <AppShell title="Admin" subtitle="Live platform analytics · Pedro only">
+    <AppShell title="Admin" subtitle="Live platform analytics — superusers only">
       <div className="oga-admin">
-        <KpiRow analytics={analytics} />
-        <RevenueAndFunnel analytics={analytics} />
-        <ChartsRow analytics={analytics} />
-        <ActivityAndAreas analytics={analytics} />
-        {traffic && <TrafficSection traffic={traffic} />}
+        <nav className="oga-admin__tabs" role="tablist" aria-label="Admin sections">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              role="tab"
+              type="button"
+              aria-selected={tab === t.id}
+              className={`oga-admin__tab${tab === t.id ? " oga-admin__tab--active" : ""}`}
+              onClick={() => setTab(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="oga-admin__panel" role="tabpanel">
+          {tab === "revenue" ? (
+            analytics ? (
+              <>
+                <KpiRow analytics={analytics} />
+                <RevenueAndFunnel analytics={analytics} />
+                <ChartsRow analytics={analytics} />
+                <ActivityAndAreas analytics={analytics} />
+                {traffic && <TrafficSection traffic={traffic} />}
+              </>
+            ) : (
+              <div className="oga-admin__empty">No analytics data available</div>
+            )
+          ) : (
+            <ComingSoon tab={TABS.find((t) => t.id === tab)!} />
+          )}
+        </div>
       </div>
     </AppShell>
+  );
+}
+
+function ComingSoon({ tab }: { tab: { label: string; phase: number; question: string } }) {
+  return (
+    <AppCard title={tab.label} note={`Phase ${tab.phase} of the admin redesign (AR-313).`}>
+      <p className="oga-admin__coming">{tab.question}</p>
+      <p className="oga-admin__coming-muted">
+        This tab is a placeholder. Real metrics arrive in Phase {tab.phase}. Revenue tab holds the current view in the meantime.
+      </p>
+    </AppCard>
   );
 }
 
