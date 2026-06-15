@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
 
 import { sql } from "@/infrastructure/db/client";
-import { getAnalytics, getTrafficAnalytics } from "@/modules/admin/index";
+import { getAnalytics, getTrafficAnalytics, getUsageStats } from "@/modules/admin/index";
 
 const mockSql = vi.mocked(sql);
 
@@ -67,5 +67,62 @@ describe("getTrafficAnalytics", () => {
     // Empty result sets -> row(undefined).count throws inside the try -> null.
     mockSql.mockResolvedValue([] as never);
     expect(await getTrafficAnalytics()).toBeNull();
+  });
+});
+
+describe("getUsageStats", () => {
+  it("aggregates per-product totals + top endpoints from api.* events", async () => {
+    /* AR-313 Phase 2: the function fires 3 queries — calls_7d count,
+       calls_30d count, and the full grouped-by-event roll-up which
+       the function maps to products + slices for the top-20 list. */
+    mockSql
+      .mockResolvedValueOnce([{ count: 42 }] as never)   // calls_7d
+      .mockResolvedValueOnce([{ count: 156 }] as never)  // calls_30d
+      .mockResolvedValueOnce([
+        { event: "api.score.computed", count: 50, last_seen: "2026-06-14T10:00:00Z" },
+        { event: "api.signals.category", count: 40, last_seen: "2026-06-14T09:00:00Z" },
+        { event: "api.portfolio.created", count: 20, last_seen: "2026-06-13T15:00:00Z" },
+        { event: "api.query.executed", count: 15, last_seen: "2026-06-13T08:00:00Z" },
+        { event: "api.bundle.created", count: 5, last_seen: "2026-06-12T22:00:00Z" },
+        { event: "api.area.profiled", count: 26, last_seen: "2026-06-14T11:00:00Z" },
+      ] as never);
+
+    const u = await getUsageStats();
+
+    expect(u.totals.calls_7d).toBe(42);
+    expect(u.totals.calls_30d).toBe(156);
+
+    // Per-product roll-up: every product appears (zero for any with no
+    // matching events), totals sum by product mapping.
+    const productByName = new Map(u.per_product.map((p) => [p.product, p.calls_30d]));
+    expect(productByName.get("Signals")).toBe(66);       // 40 + 26 (api.signals.category + api.area.profiled)
+    expect(productByName.get("Scores")).toBe(50);        // api.score.computed
+    expect(productByName.get("Monitor")).toBe(20);       // api.portfolio.created
+    expect(productByName.get("Intelligence")).toBe(15);  // api.query.executed
+    expect(productByName.get("Org & Levers")).toBe(5);   // api.bundle.created
+
+    // Top product = highest per-product total = Signals (66)
+    expect(u.totals.top_product).toBe("Signals");
+    // Top endpoint = first row by count = api.score.computed
+    expect(u.totals.top_endpoint).toBe("api.score.computed");
+
+    expect(u.top_endpoints).toHaveLength(6);
+    expect(u.top_endpoints[0]).toMatchObject({ event: "api.score.computed", count: 50 });
+  });
+
+  it("handles a zero-traffic period gracefully (every product at 0, no top picks)", async () => {
+    mockSql
+      .mockResolvedValueOnce([{ count: 0 }] as never)
+      .mockResolvedValueOnce([{ count: 0 }] as never)
+      .mockResolvedValueOnce([] as never);
+
+    const u = await getUsageStats();
+    expect(u.totals.calls_7d).toBe(0);
+    expect(u.totals.calls_30d).toBe(0);
+    expect(u.totals.top_product).toBeNull();
+    expect(u.totals.top_endpoint).toBeNull();
+    expect(u.per_product).toHaveLength(5);
+    expect(u.per_product.every((p) => p.calls_30d === 0)).toBe(true);
+    expect(u.top_endpoints).toHaveLength(0);
   });
 });

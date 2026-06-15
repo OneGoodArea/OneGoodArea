@@ -232,3 +232,72 @@ All sub-panels reuse existing patterns: `KpiRow` style for the top StatCell row,
 4. Switching between Audience/Revenue is fast (no full re-fetch — both data already on the page).
 5. apps/api + apps/web tsc clean, tests pass (new test for `getAudienceStats` ideally).
 6. Pedro confirms localhost.
+
+---
+
+## Phase 2 — Detail (locked 2026-06-15)
+
+### Goal
+
+Replace the Usage tab placeholder with the **"what they're using"** panel. Surfaces the 4-product world + endpoint heatmap. Engine-version cohort deferred (activity_events doesn't carry the version stamp today; would need an enrichment ticket).
+
+### Decisions
+
+- **Composite endpoint** `GET /admin/usage` — same one-fetch-per-tab pattern as Phase 1.
+- **Product mapping** by event prefix (mapping table below). 5 buckets: Signals / Scores / Monitor / Intelligence / Org & Levers. The 4 products are the user-facing ones; Org & Levers is internal but reflects real activity worth showing.
+- **Top endpoints** = top 20 distinct `event` names from `activity_events WHERE event LIKE 'api.%' AND created_at >= NOW() - INTERVAL '30 days'`. Each row shows the event name + count + last seen (so you can spot stale endpoints).
+- **No engine-version panel.** The X-Engine-Version stamp lives on response headers, not in activity_events.metadata. Filing follow-up ticket to enrich tracking; until then we don't fake the data.
+
+### Product → event mapping
+
+| Product | Event prefixes |
+|---|---|
+| **Signals** | `api.signals.*`, `api.area.profiled` |
+| **Scores** | `api.score.*`, `api.report.*`, `api.batch.*` |
+| **Monitor** | `api.portfolio.*` |
+| **Intelligence** | `api.query.*`, `api.insights.*`, `api.forecast.*`, `api.peers.*`, `api.areas.queried` |
+| **Org & Levers** | `api.org.*`, `api.bundle.*`, `api.cohort.*`, `api.preset.*`, `api.methodology.*` |
+
+Mapping lives server-side in `apps/api/src/modules/admin/index.ts` so it stays in sync with the trackEvent calls in `app.ts`. Pure data; no shared state with the frontend.
+
+### Response shape
+
+```ts
+type UsageStats = {
+  totals: {
+    calls_7d: number;
+    calls_30d: number;
+    top_product: string | null;
+    top_endpoint: string | null;
+  };
+  per_product: { product: "Signals" | "Scores" | "Monitor" | "Intelligence" | "Org & Levers"; calls_30d: number }[];
+  top_endpoints: { event: string; count: number; last_seen: string }[]; // top 20, 30d window
+};
+```
+
+### Files touched
+
+| File | Change | Lines |
+|---|---|---|
+| `apps/api/src/modules/admin/index.ts` | New `getUsageStats()` + the product mapping table | ~80 |
+| `apps/api/src/app.ts` | New `GET /admin/usage` handler | ~20 |
+| `apps/web/src/app/api/admin/usage/route.ts` | New BFF | ~5 |
+| `apps/web/src/app/admin/page.tsx` | Fetch usage alongside audience | ~3 |
+| `apps/web/src/app/design-v2/admin/page.tsx` | Sync | ~3 |
+| `apps/web/src/app/design-v2/admin/client.tsx` | New `UsagePanel`; render in Usage tab | ~90 |
+| `apps/web/src/app/design-v2/admin/admin.css` | Per-product bar chart, top-endpoints list styling | ~30 |
+| `apps/api/tests/modules/admin/index.test.ts` | New test for `getUsageStats` | ~30 |
+
+### Out of Phase 2
+
+- Engine-version cohort (no source today; file separate ticket).
+- Per-user drill-down ("who hit /v1/score the most"). Aggregate only.
+- "Endpoint detail" page. Top-N is enough for v1.
+
+### Acceptance
+
+1. `GET /api/admin/usage` returns the typed shape; numbers match ad-hoc `SELECT COUNT(*) FROM activity_events WHERE event LIKE 'api.score.%'` etc.
+2. Usage tab on `/admin` renders KPI row + per-product bars + top endpoints list. No "Coming in Phase 2" card.
+3. Top endpoints reflects actual taxonomy — none of them say `api.report.generated` as #1 unless reports actually are the most-called endpoint (test sanity-check).
+4. apps/api + apps/web tsc clean. New `getUsageStats` test passes.
+5. Pedro tests on localhost.

@@ -136,7 +136,7 @@ import {
   validateWebhookUrl,
   validateEventTypes,
 } from "./modules/webhooks";
-import { getAnalytics, getTrafficAnalytics, getAudienceStats } from "./modules/admin";
+import { getAnalytics, getTrafficAnalytics, getAudienceStats, getUsageStats } from "./modules/admin";
 
 import { handleStripeWebhook } from "./modules/billing/webhook-handler";
 import { isAppError } from "./infrastructure/errors/custom-errors";
@@ -4728,6 +4728,32 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       } catch (error) {
         logger.error("Admin audience stats error:", error);
         return reply.code(500).send({ error: "Failed to fetch audience stats" });
+      }
+    });
+
+  /* AR-313 Phase 2: composite "what they're using" stats. Per-product
+     breakdown (5 buckets via apps/api-side mapping) + top 20 endpoints
+     by call count over the last 30d. */
+  app.get("/admin/usage",
+    {
+      schema: {
+        tags: ["Admin"],
+        summary: "Usage stats (superuser only)",
+        description: "Composite stats for the Usage tab: per-product call counts + endpoint heatmap.",
+      },
+    },
+    async (request, reply) => {
+      try {
+        const userId = await authenticateSession(request, reply);
+        if (!userId) return reply;
+        if (!(await isSuperuser(userId))) {
+          return reply.code(403).send({ error: "Forbidden" });
+        }
+        const data = await getUsageStats();
+        return reply.send(data);
+      } catch (error) {
+        logger.error("Admin usage stats error:", error);
+        return reply.code(500).send({ error: "Failed to fetch usage stats" });
       }
     });
 

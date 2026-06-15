@@ -81,7 +81,28 @@ type AudienceStats = {
   };
 };
 
-export type { Analytics, TrafficData, AudienceStats };
+/* AR-313 Phase 2: "what they're using" shape returned by GET /admin/usage.
+   Per-product breakdown groups events by their api.* prefix server-side
+   (Signals / Scores / Monitor / Intelligence / Org & Levers). */
+type AdminProduct =
+  | "Signals"
+  | "Scores"
+  | "Monitor"
+  | "Intelligence"
+  | "Org & Levers";
+
+type UsageStats = {
+  totals: {
+    calls_7d: number;
+    calls_30d: number;
+    top_product: AdminProduct | null;
+    top_endpoint: string | null;
+  };
+  per_product: { product: AdminProduct; calls_30d: number }[];
+  top_endpoints: { event: string; count: number; last_seen: string }[];
+};
+
+export type { Analytics, TrafficData, AudienceStats, UsageStats };
 
 const PLAN_PRICES: Record<string, number> = {
   starter: 29,
@@ -119,10 +140,12 @@ export default function AdminClient({
   analytics,
   traffic,
   audience,
+  usage,
 }: {
   analytics: Analytics | null;
   traffic: TrafficData | null;
   audience: AudienceStats | null;
+  usage: UsageStats | null;
 }) {
   const [tab, setTab] = useState<AdminTab>("revenue");
 
@@ -183,6 +206,12 @@ export default function AdminClient({
               <AudiencePanel audience={audience} />
             ) : (
               <div className="oga-admin__empty">No audience data available</div>
+            )
+          ) : tab === "usage" ? (
+            usage ? (
+              <UsagePanel usage={usage} />
+            ) : (
+              <div className="oga-admin__empty">No usage data available</div>
             )
           ) : (
             <ComingSoon tab={TABS.find((t) => t.id === tab)!} />
@@ -329,6 +358,101 @@ function StaleUsersList({
         <li key={u.user_id} className="oga-admin__stale-row">
           <span className="oga-admin__stale-email">{u.email}</span>
           <span className="oga-admin__stale-days">{u.days_inactive}d inactive</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/* ============================================================
+   AR-313 Phase 2 — Usage panel
+   ============================================================ */
+function UsagePanel({ usage }: { usage: UsageStats }) {
+  return (
+    <>
+      <div className="oga-admin__kpi">
+        <StatCell label="API calls (7d)" value={usage.totals.calls_7d} accent="strong" />
+        <StatCell label="API calls (30d)" value={usage.totals.calls_30d} />
+        <StatCell label="Top product (30d)" value={usage.totals.top_product ?? "—"} />
+        <StatCell label="Top endpoint (30d)" value={usage.totals.top_endpoint ?? "—"} />
+      </div>
+
+      <AppCard title="By product" note="Last 30 days · api.* events">
+        {usage.per_product.every((p) => p.calls_30d === 0) ? (
+          <EmptyNote>No api.* calls in the last 30 days.</EmptyNote>
+        ) : (
+          <ProductBars data={usage.per_product} />
+        )}
+      </AppCard>
+
+      <AppCard
+        title="Top endpoints"
+        note={`Last 30 days · ${usage.top_endpoints.length} of ${usage.top_endpoints.length} shown`}
+      >
+        {usage.top_endpoints.length === 0 ? (
+          <EmptyNote>No endpoints called in the last 30 days.</EmptyNote>
+        ) : (
+          <EndpointHeatmap endpoints={usage.top_endpoints} />
+        )}
+      </AppCard>
+    </>
+  );
+}
+
+function ProductBars({
+  data,
+}: {
+  data: { product: string; calls_30d: number }[];
+}) {
+  const max = Math.max(...data.map((d) => d.calls_30d), 1);
+  const total = data.reduce((s, d) => s + d.calls_30d, 0);
+  return (
+    <ul className="oga-admin__intents">
+      {data.map((d) => {
+        const pct = total > 0 ? Math.round((d.calls_30d / total) * 100) : 0;
+        return (
+          <li key={d.product} className="oga-admin__intent-row">
+            <span className="oga-admin__intent-label">{d.product}</span>
+            <div className="oga-admin__intent-track">
+              <div
+                className="oga-admin__intent-fill"
+                style={{ width: `${(d.calls_30d / max) * 100}%` }}
+              />
+            </div>
+            <span className="oga-admin__intent-count">{d.calls_30d.toLocaleString()}</span>
+            <span className="oga-admin__intent-pct">{pct}%</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function EndpointHeatmap({
+  endpoints,
+}: {
+  endpoints: { event: string; count: number; last_seen: string }[];
+}) {
+  const max = Math.max(...endpoints.map((e) => e.count), 1);
+  return (
+    <ul className="oga-admin__list">
+      {endpoints.map((e, i) => (
+        <li key={e.event} className="oga-admin__endpoint-row">
+          <span className="oga-admin__endpoint-rank">{String(i + 1).padStart(2, "0")}</span>
+          <span className="oga-admin__endpoint-name">{e.event}</span>
+          <div className="oga-admin__endpoint-track">
+            <div
+              className="oga-admin__endpoint-fill"
+              style={{ width: `${(e.count / max) * 100}%` }}
+            />
+          </div>
+          <span className="oga-admin__endpoint-count">{e.count.toLocaleString()}</span>
+          <span
+            className="oga-admin__endpoint-last"
+            suppressHydrationWarning
+          >
+            {relativeTime(e.last_seen)}
+          </span>
         </li>
       ))}
     </ul>
