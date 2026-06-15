@@ -395,6 +395,9 @@ feat/AR-205-api-env-audit
 
 ---
 
-**Status:** Planning complete, ready to implement  
-**JIRA:** [AR-205](https://podnex.atlassian.net/browse/AR-205)  
-**Next Action:** Create branch `feat/AR-205-api-env-audit` and implement Commit 1 first (critical fix)
+**Status:** Partial implementation complete (Commits 1-4 done, Commits 5-6 pending)  
+**JIRA:** [AR-205](https://podnex.atlassian.net/browse/AR-205) (main env audit & centralisation)  
+**Follow-up:** [AR-317](https://podnex.atlassian.net/browse/AR-317) (complete remaining 12 modules)  
+**Plan:** [plan/013_complete_env_centralisation_ar205b.md](./013_complete_env_centralisation_ar205b.md)  
+**Branch:** `feat/AR-205-api-env-audit`  
+**Next Action:** Complete AR-317 to finish env centralisation across all modules
