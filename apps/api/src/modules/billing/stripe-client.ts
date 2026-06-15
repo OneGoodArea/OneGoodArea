@@ -1,10 +1,10 @@
 import Stripe from "stripe";
+import { getConfig } from "../../infrastructure/config";
 
 /* Stripe SDK client. Migrated VERBATIM from legacy src/lib/stripe.ts (the
    getStripeClient + `stripe` proxy half only; the PLANS/ADDONS catalog was
-   split out earlier into ./plans). No internal imports to repoint — it reads
-   STRIPE_SECRET_KEY straight from process.env (consistent with how the rest of
-   apps/api treats Stripe secrets: container-injected env, not the Next loader).
+   split out earlier into ./plans). Reads STRIPE_SECRET_KEY from centralised
+   config (container-injected env, not the Next loader).
 
    The export is a lazy Proxy so importing this module never constructs a client
    or requires the key; the client is built on first property access and cached,
@@ -18,7 +18,8 @@ function getStripeClient() {
     return stripeClient;
   }
 
-  const secretKey = process.env.STRIPE_SECRET_KEY;
+  const config = getConfig();
+  const secretKey = config.stripeSecretKey;
   if (!secretKey) {
     throw new Error("Neither apiKey nor config.authenticator provided");
   }
