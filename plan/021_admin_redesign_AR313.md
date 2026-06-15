@@ -350,3 +350,42 @@ type RevenueExtras = {
 3. MCP add-on panel shows totals + add-on uptake ratio
 4. apps/api + apps/web tsc clean, new test for `getRevenueExtras` passes
 5. Pedro confirms localhost
+
+---
+
+## Phase 4 — DEFERRED (2026-06-15)
+
+Pedro elected to skip Health for now. Reasoning: surfacing latency / error rate / cron-run history requires a real architectural choice (in-memory ring vs new `system_metrics` table vs Render API + Sentry) and the panel only pays off when there's an incident to investigate. With 2 users on the platform there isn't a strong signal to design against. Revisit when prod sees real traffic or after the first prod incident that would have benefited.
+
+File a fresh epic / ticket when the trigger fires. Don't pre-build.
+
+## Phase 5 — REVISITED + CLOSED (2026-06-15)
+
+Original Phase 5 was "Retire `/admin/analytics` + `/admin/traffic-analytics` once absorbed." After Phases 1-3 the legacy endpoints are NOT absorbed — they still feed Revenue tab's KPI row + RevenuePanel + ConversionPanel + ChartsRow + ActivityAndAreas + TrafficSection. Retiring them would require either:
+
+1. Splitting that data across 4+ new narrow endpoints (refactor for refactor's sake), OR
+2. Doing nothing functional.
+
+Keeping the legacy endpoints alongside the new ones is correct. They serve different sub-shapes; the cost of running 5 admin endpoints is negligible.
+
+Closing Phase 5 as no-op. Epic done.
+
+---
+
+## Epic AR-313 — STATUS 2026-06-15
+
+| Phase | What | State |
+|---|---|---|
+| 0 | DB-backed gate + 4-tab shell | ✅ Shipped (#223) |
+| 1 | Audience + retired "reports" nomenclature + own shell | ✅ Shipped (#224) |
+| 2 | Usage — products + endpoint heatmap | ✅ Shipped (#225) |
+| 3 | Revenue — ARR + MCP uptake + V2 MRR fix | ✅ Shipped (#226) |
+| 4 | Health | DEFERRED (no clear trigger yet) |
+| 5 | Retire legacy endpoints | CLOSED (no-op — keep them) |
+
+**Follow-ups filed:**
+- [AR-314](https://podnex.atlassian.net/browse/AR-314) — Script tag warning in layout.tsx (Next 16 strict mode)
+- [AR-315](https://podnex.atlassian.net/browse/AR-315) — Engine-version cohort needs activity_events enrichment
+- [AR-316](https://podnex.atlassian.net/browse/AR-316) — ARR trend chart needs subscription snapshots
+
+Epic complete.
