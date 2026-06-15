@@ -20,11 +20,11 @@ Marcos flagged 2026-06-12 that `apps/api/src/app.ts` is too large and should be 
 
 | Metric | Value |
 |---|---|
-| `app.ts` total lines | **3,687** |
-| Route registrations | **81** |
-| Unique route paths | **54** |
+| `app.ts` total lines | **4,811** |
+| Route registrations | **94** |
+| Unique route paths | **~60** |
 | Top-level helper functions | **11** (auth, CORS, ip extraction, bundle resolution, etc.) |
-| Module-level imports | **~40** (from `./modules/*` + infrastructure + contracts) |
+| Module-level imports | **~50** (from `./modules/*` + infrastructure + contracts) |
 
 The business logic already lives in `apps/api/src/modules/{orgs,signals,scoring,intelligence,monitor,api-keys,...}`. What sits in `app.ts` is mostly:
 
@@ -59,7 +59,8 @@ We WILL create:
 apps/api/src/
 ├── app.ts                      # ~150 LOC — Fastify build + middleware + register*Routes calls
 ├── shared/
-│   ├── auth.ts                 # requireApiAccess, requireApiAccessWithOrg, authenticateSession, etc.
+│   ├── auth-api.ts             # authenticate, requireApiAccess, requireApiAccessWithOrg (API-key callers)
+│   ├── auth-session.ts         # authenticateSession (NextAuth bridge callers)
 │   ├── bundles.ts              # resolveBundleForCaller, effectiveEngineVersionForCaller
 │   ├── http.ts                 # widgetCorsHeaders, clientIpOf, headerString, isFromMcpServer
 │   └── errors.ts               # isAppError narrowing helper (re-exported from infrastructure/errors if it lives there)
@@ -80,7 +81,8 @@ apps/api/src/
 │   ├── org-cohorts.ts          # /v1/orgs/:id/cohorts + cohort CRUD
 │   ├── org-methodology.ts      # /v1/orgs/:id/methodology (GET/PUT/DELETE)
 │   ├── intelligence.ts         # /v1/query, /v1/peers, /v1/insights, /v1/forecast
-│   └── webhooks.ts             # /v1/webhooks + /v1/webhooks/:id (+ AR-283 rotate-secret when it deploys)
+│   ├── webhooks.ts             # /v1/webhooks POST+GET, /v1/webhooks/:id DELETE+rotate-secret (AR-283 shipped)
+│   └── admin.ts                # /admin/analytics, /admin/traffic-analytics, /admin/audience, /admin/usage, /admin/revenue
 └── modules/                    # UNCHANGED — business logic stays where it is
 ```
 
@@ -92,24 +94,25 @@ apps/api/src/
 
 | File | Routes (lines in current `app.ts`) | Approx LOC |
 |---|---|---|
-| `routes/system.ts` | `/health` (418), `/v1/meta` (421), `/cron/rescore` (3663) | ~60 |
-| `routes/auth.ts` | `/auth/register` (3263), `/auth/resend-verification` (3343), `/auth/forgot-password` (3390), `/auth/reset-password` (3438), `/settings/password` (3480), `/settings/delete-account` (3113) | ~280 |
-| `routes/me.ts` | `/v1/me` (478), `/me/reports` (428), `/me/activity` (455), `/usage` (2848), `/settings/subscription` (2863), `/watchlist` GET (3588), `/watchlist` POST (3607), `/watchlist/:id` DELETE (3639), `/track` (3143) | ~330 |
-| `routes/api-keys.ts` | `/keys` GET (3060), `/keys` POST (3074), `/keys/:id` DELETE (3093), `/keys/usage` (2904) | ~150 |
-| `routes/reports.ts` | `/v1/report` (592), `/report` POST (3528), `/report/:id` GET (3004), `/report/:id` DELETE (3036) | ~280 |
-| `routes/stripe.ts` | `/stripe/webhook` (2522), `/stripe/portal` (2533), `/stripe/cancel` (2557), `/stripe/checkout` (2610), `/stripe/addon-checkout` (2740) | ~320 |
-| `routes/signals.ts` | `/v1/area` (691), `/v1/signals/:category` (758), `/v1/areas` (811), `/widget` (3199) | ~220 |
-| `routes/scoring.ts` | `/v1/score` (863), `/v1/batch` (2343) | ~210 |
-| `routes/portfolios.ts` | `/v1/portfolios` GET (992), POST (975), `/v1/portfolios/:id` GET (1004), DELETE (1019), `/v1/portfolios/:id/areas` (1034), `/v1/portfolios/:id/enrich` (1065), `/v1/portfolios/:id/changes` (1089) | ~270 |
-| `routes/orgs.ts` | `/v1/orgs` POST (1142), GET (1169), `/v1/orgs/:id` GET (1182), PATCH (1197) | ~85 |
-| `routes/org-members.ts` | members CRUD (1226, 1242, 1284, 1344), invitations CRUD (1404, 1442, 1458), accept (1479) | ~280 |
-| `routes/org-bundles.ts` | bundles CRUD (1540, 1580, 1596, 1613, 1655) | ~180 |
-| `routes/org-presets.ts` | presets CRUD (1683, 1724, 1740, 1757, 1806) | ~170 |
-| `routes/org-cohorts.ts` | cohorts CRUD (1891, 1924, 1940, 1957, 1990) | ~150 |
-| `routes/org-methodology.ts` | methodology GET (1836), PUT (1852), DELETE (2011) | ~50 |
-| `routes/intelligence.ts` | `/v1/query` (2039), `/v1/peers` (2109), `/v1/insights` (2212), `/v1/forecast` (2264) | ~340 |
-| `routes/webhooks.ts` | `/v1/webhooks` POST (2442), GET (2478), DELETE (2497) | ~110 |
-| **Total** | **81 routes** | **~3,485 LOC** (distributed) |
+| `routes/system.ts` | `/health` (536), `/v1/meta` (548), `/cron/rescore` (4786) | ~60 |
+| `routes/auth.ts` | `/auth/register` (4030), `/auth/resend-verification` (4111), `/auth/forgot-password` (4158), `/auth/reset-password` (4206), `/auth/login` (4251), `/auth/magic-link/request` (4307), `/auth/check-email` GET (4357), `/auth/check-email` POST (4396), `/auth/oauth-callback` (4437), `/settings/password` (4483), `/settings/delete-account` (3880) | ~430 |
+| `routes/me.ts` | `/v1/me` (651), `/me/reports` (564), `/me/activity` (600), `/me/is-superuser` (633), `/usage` (3513), `/dashboard` (3529), `/settings/subscription` (3620), `/watchlist` GET (4593), `/watchlist` POST (4614), `/watchlist/:id` DELETE (4648), `/track` (3910) | ~380 |
+| `routes/api-keys.ts` | `/keys` GET (3827), `/keys` POST (3841), `/keys/:id` DELETE (3860), `/keys/usage` (3661) | ~150 |
+| `routes/reports.ts` | `/v1/report` (774), `/report` POST (4531), `/report/:id` GET (3767), `/report/:id` DELETE (3801) | ~280 |
+| `routes/stripe.ts` | `/stripe/webhook` (3187), `/stripe/portal` (3198), `/stripe/cancel` (3222), `/stripe/checkout` (3275), `/stripe/addon-checkout` (3405) | ~320 |
+| `routes/signals.ts` | `/v1/area` (883), `/v1/signals/:category` (960), `/v1/areas` (1022), `/widget` (3966) | ~220 |
+| `routes/scoring.ts` | `/v1/score` (1083), `/v1/batch` (2951) | ~210 |
+| `routes/portfolios.ts` | `/v1/portfolios` POST (1205), GET (1232), `/v1/portfolios/:id` GET (1253), DELETE (1277), `/v1/portfolios/:id/areas` (1301), `/v1/portfolios/:id/enrich` (1341), `/v1/portfolios/:id/changes` (1374) | ~270 |
+| `routes/orgs.ts` | `/v1/orgs` POST (1436), GET (1473), `/v1/orgs/:id` GET (1495), PATCH (1519) | ~90 |
+| `routes/org-members.ts` | members GET (1557), POST (1582), PATCH (1633), DELETE (1702), invitations POST (1771), GET (1818), DELETE (1843), accept (1873) | ~300 |
+| `routes/org-bundles.ts` | POST (1943), GET (1992), GET `/:bundleId` (2019), PATCH (2045), DELETE (2096) | ~200 |
+| `routes/org-presets.ts` | POST (2133), GET (2183), GET `/:presetId` (2209), PATCH (2235), DELETE (2293) | ~190 |
+| `routes/org-cohorts.ts` | POST (2405), GET (2447), GET `/:cohortId` (2473), PATCH (2499), DELETE (2541) | ~170 |
+| `routes/org-methodology.ts` | GET (2332), PUT (2357), DELETE (2571) | ~60 |
+| `routes/intelligence.ts` | `/v1/query` (2608), `/v1/peers` (2688), `/v1/insights` (2801), `/v1/forecast` (2863) | ~360 |
+| `routes/webhooks.ts` | `/v1/webhooks` POST (3060), GET (3106), `/v1/webhooks/:id` DELETE (3134), `/v1/webhooks/:id/rotate-secret` POST (3160) | ~130 |
+| `routes/admin.ts` | `/admin/analytics` (4676), `/admin/traffic-analytics` (4692), `/admin/audience` (4711), `/admin/usage` (4737), `/admin/revenue` (4763) | ~90 |
+| **Total** | **94 routes** | **~3,710 LOC** (distributed) |
 | `app.ts` after split | wiring only | **~150 LOC** |
 
 ---
@@ -210,7 +213,8 @@ These currently live as top-level functions in `app.ts`. They are USED by multip
 
 | Current location | New location | Used by |
 |---|---|---|
-| `authenticate` (197), `requireApiAccess` (223), `requireApiAccessWithOrg` (255), `authenticateSession` (280) | `shared/auth.ts` | every route file |
+| `authenticate`, `requireApiAccess`, `requireApiAccessWithOrg` | `shared/auth-api.ts` | every route file (API-key callers) |
+| `authenticateSession` | `shared/auth-session.ts` | `routes/auth.ts`, `routes/me.ts`, and any session-gated routes |
 | `resolveOrgPinForCaller` (308), `effectiveEngineVersionForCaller` (333), `resolveBundleForCaller` (349) | `shared/bundles.ts` | `routes/scoring.ts`, `routes/signals.ts`, `routes/intelligence.ts` |
 | `isFromMcpServer` (146), `headerString` (152), `clientIpOf` (161), `widgetCorsHeaders` (171) | `shared/http.ts` | `routes/me.ts` (track), `routes/signals.ts` (widget), several others |
 
@@ -224,11 +228,11 @@ This is too big for one PR. We split into **3 stacked PRs** that each verify the
 
 ### PR 1 — `shared/` extractions (foundation)
 
-- Create `shared/auth.ts`, `shared/bundles.ts`, `shared/http.ts`.
+- Create `shared/auth-api.ts`, `shared/auth-session.ts`, `shared/bundles.ts`, `shared/http.ts`.
 - Move the helper functions VERBATIM (no signature changes).
 - Update `app.ts` to import them from `shared/*` instead of defining them inline.
-- No route changes yet — `app.ts` still owns all 81 routes.
-- Verifies: typecheck + apps/api full suite (914+ tests) + lint clean.
+- No route changes yet — `app.ts` still owns all 94 routes.
+- Verifies: `make build-api-image && make build-web-image` + typecheck + lint clean.
 
 ### PR 2 — Route extractions, batch A (low-risk domains first)
 
@@ -240,12 +244,13 @@ Lift these route files in one PR (each is mostly mechanical):
 - `routes/reports.ts`
 - `routes/stripe.ts`
 - `routes/webhooks.ts`
+- `routes/admin.ts`
 
 After PR 2:
-- `app.ts` shrinks to ~2,000 LOC (orgs + signals + scoring + portfolios + intelligence still inline).
+- `app.ts` shrinks to ~2,200 LOC (orgs + signals + scoring + portfolios + intelligence still inline).
 - Every route in batch A registers via its new module. Endpoints respond byte-identically.
 
-Verifies: typecheck + full suite + e2e smoke (re-run the `2026-06-12` doc against staging/local).
+Verifies: `make build-api-image && make build-web-image` + e2e smoke (re-run the `2026-06-12` doc against staging/local).
 
 ### PR 3 — Route extractions, batch B (the rest)
 
@@ -263,19 +268,25 @@ Lift the remaining route files:
 
 After PR 3:
 - `app.ts` is ~150 LOC.
-- All 81 routes registered via the new structure.
+- All 94 routes registered via the new structure.
 
-Verifies: typecheck + full suite + e2e smoke (final run). The e2e doc is the regression net.
+Verifies: `make build-api-image && make build-web-image` + e2e smoke (final run). The e2e doc is the regression net.
+
+### PR 4 — Test file relocation
+
+Create `tests/routes/` directory. For each new route module, add or relocate tests as `tests/routes/<domain>.test.ts`. Any existing `tests/modules/*` tests that exercise route-level behaviour (request/response shape, auth gating) move here; pure business-logic unit tests stay in `tests/modules/*`.
+
+Verifies: same total pass count as before relocation. No orphaned tests.
 
 ---
 
 ## 10. Verification before each PR merges
 
-1. `cd apps/api && npx tsc --noEmit` — clean.
-2. `cd apps/api && npx vitest run` — current 914/914 passing; no regression.
+1. `make build-api-image && make build-web-image` — rebuild both container images from current branch sources. Both builds must succeed with no errors.
+2. `cd apps/api && npx tsc --noEmit` — typecheck clean.
 3. `npm run lint` from repo root — 0 errors.
-4. **E2E smoke**: re-run the curl sweep from `docs/TESTING/api-end-to-end-2026-06-12.md` against the PR's Render preview (or local stack). Same status codes, same response shapes, same latency profile per endpoint. The doc IS the spec.
-5. **Manual route discovery**: `fastify.printRoutes()` output before and after each PR must list the same 81 routes (same paths, same methods).
+4. **E2E smoke**: re-run the curl sweep from `docs/TESTING/api-end-to-end-2026-06-12.md` against the PR's container stack (or Render preview). Same status codes, same response shapes.
+5. **Manual route discovery**: `fastify.printRoutes()` output before and after each PR must list the same 94 routes (same paths, same methods).
 
 ---
 
@@ -289,12 +300,12 @@ Verifies: typecheck + full suite + e2e smoke (final run). The e2e doc is the reg
 
 ---
 
-## 12. Open questions for Marcos's review
+## 12. Decisions
 
-1. **Three PRs vs one?** The plan above is three stacked PRs for a clean review chain. If you prefer one big-bang refactor, we can merge PR 2 + PR 3 into one — but the review surface becomes ~3,500 LOC of moves to verify against the original. I lean toward three PRs.
-2. **`shared/auth.ts` shape**: one file with all four auth helpers, or split into `shared/auth-api.ts` (API-key callers) + `shared/auth-session.ts` (NextAuth bridge callers)? The four functions are tightly related so I'd keep them in one file unless you'd rather see them by surface.
-3. **`org-methodology.ts` (only 3 routes, ~50 LOC)** — too small to be its own file, fold into `routes/orgs.ts`? It's the only "engineering" surface inside the org tree (the others are CRUD over child resources), so it does fit cohesively. I lean toward keeping it separate for symmetry with the other org-* files.
-4. **Test file colocation**: when we add new tests for `routes/<domain>.ts`, mirror as `tests/routes/<domain>.test.ts`, or merge them into the per-handler test files that already exist under `tests/modules/*`? My instinct is the former — route-level integration tests deserve their own folder.
+1. **Three PRs vs one?** → Four PRs: three stacked route-extraction PRs + PR 4 for test relocation.
+2. **`shared/auth.ts` shape** → Split into `shared/auth-api.ts` (API-key callers: `authenticate`, `requireApiAccess`, `requireApiAccessWithOrg`) + `shared/auth-session.ts` (NextAuth bridge: `authenticateSession`).
+3. **`org-methodology.ts`** → Kept as its own file for symmetry with the other `org-*` siblings.
+4. **Test file colocation** → `tests/routes/<domain>.test.ts`. Existing `tests/modules/*` tests that exercise route-level behaviour relocate in PR 4; pure unit tests stay where they are.
 
 ---
 
@@ -309,4 +320,4 @@ After sign-off:
 
 ---
 
-_Plan author: Claude Code, 2026-06-12, signed off in branch `chore/AR-286-app-ts-split-plan`._
+_Plan author: Claude Code, 2026-06-12. Updated 2026-06-15: inventory refreshed (94 routes, 4,811 LOC), admin domain added, auth split into auth-api/auth-session, verification updated to container builds, PR 4 (test relocation) added, open questions resolved._
