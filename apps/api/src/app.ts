@@ -626,6 +626,25 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
     });
   });
 
+  /* AR-313 Phase 0: BFF gate for /admin. Returns the session caller's
+     superuser flag without exposing any other user state. Reuses
+     isSuperuser() (AR-312) so the DB column is the only source of truth —
+     no hardcoded ADMIN_EMAILS list anywhere. */
+  app.get("/me/is-superuser",
+    {
+      schema: {
+        tags: ["Admin"],
+        summary: "Is the caller a superuser?",
+        description: "Returns { is_superuser: boolean }. Session-authed; 401 if not signed in.",
+      },
+    },
+    async (request, reply) => {
+      const userId = await authenticateSession(request, reply);
+      if (!userId) return reply;
+      const is_superuser = await isSuperuser(userId);
+      return reply.code(200).send({ is_superuser });
+    });
+
   // The authenticated caller's plan + entitlements. Used by the MCP server at
   // startup to check mcpAccess, and by any consumer needing entitlement without
   // running a report. Migrated from the legacy /api/v1/me route.
