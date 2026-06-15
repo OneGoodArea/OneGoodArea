@@ -12,6 +12,10 @@ export interface UserRow {
   provider: string;
   email_verified: boolean;
   created_at: string;
+  /* AR-312: superuser flag. Optional in the type so existing callers
+     that SELECT a narrower set of columns still typecheck — only
+     isSuperuser actually reads this field. */
+  is_superuser?: boolean;
 }
 
 export interface ReportRow {

@@ -11,6 +11,9 @@ const mockSql = vi.mocked(sql);
    call order so tests are robust. Configure the fake DB per test. */
 let db: {
   email: string;
+  /* AR-312: DB-backed superuser flag. Default false; the "ptengelmann gets
+     business" tests set it TRUE to exercise the DB-column branch. */
+  isSuperuser: boolean;
   subscriptionPlan: string | null; // null = no active sub row
   reportCount: number;
   addons: string[];
@@ -18,7 +21,12 @@ let db: {
 
 function routeQuery(strings: TemplateStringsArray): Promise<unknown[]> {
   const q = strings.join(" ");
-  if (q.includes("SELECT email FROM users")) return Promise.resolve([{ email: db.email }]);
+  /* AR-312: isSuperuser now SELECTS email + is_superuser. Match on the
+     unique "FROM users WHERE id" substring so the routing survives column
+     additions in the SELECT list. */
+  if (q.includes("FROM users WHERE id")) {
+    return Promise.resolve([{ email: db.email, is_superuser: db.isSuperuser }]);
+  }
   if (q.includes("FROM subscriptions")) {
     return Promise.resolve(db.subscriptionPlan ? [{ plan: db.subscriptionPlan }] : []);
   }
@@ -30,7 +38,7 @@ function routeQuery(strings: TemplateStringsArray): Promise<unknown[]> {
 }
 
 beforeEach(() => {
-  db = { email: "user@example.com", subscriptionPlan: null, reportCount: 0, addons: [] };
+  db = { email: "user@example.com", isSuperuser: false, subscriptionPlan: null, reportCount: 0, addons: [] };
   mockSql.mockReset();
   mockSql.mockImplementation(routeQuery as never);
 });
@@ -46,7 +54,9 @@ describe("getUserPlan", () => {
   });
 
   it("returns business for a superuser regardless of subscription", async () => {
-    db.email = "ptengelmann@gmail.com";
+    /* AR-312: DB column is the source of truth in prod. Test exercises
+       that path explicitly. Email match is no longer the gate. */
+    db.isSuperuser = true;
     expect(await getUserPlan("u1")).toBe("business");
   });
 });
@@ -73,7 +83,8 @@ describe("canGenerateReport", () => {
   });
 
   it("gives a superuser an unlimited quota", async () => {
-    db.email = "ptengelmann@gmail.com";
+    /* AR-312: superuser via DB column, not email. */
+    db.isSuperuser = true;
     db.reportCount = 999999;
     const r = await canGenerateReport("u1");
     expect(r.allowed).toBe(true);
