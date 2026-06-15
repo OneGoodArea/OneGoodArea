@@ -15,6 +15,7 @@
 
    See ADR 0026. */
 
+import { getConfig } from "../../../infrastructure/config";
 import { plan as planFromNl } from "../planner";
 import { getAiProvider, type AiProvider } from "../../reports/ai";
 import { EVAL_CASES, type EvalCase } from "./cases";
@@ -59,7 +60,8 @@ export async function runEval(
    Skipped unless OGA_EVAL_PLAN=true to avoid accidental LLM spend in CI. */
 const invokedDirectly = Boolean(process.argv[1]?.endsWith("run.ts"));
 if (invokedDirectly) {
-  if (process.env.OGA_EVAL_PLAN !== "true") {
+  const config = getConfig();
+  if (!config.evalPlanEnabled) {
     console.log("[eval] SKIPPED — set OGA_EVAL_PLAN=true to run against the live AiProvider.");
     process.exit(0);
   }

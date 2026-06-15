@@ -5,6 +5,8 @@
  * In local runtime (OGA_LOCAL_RUNTIME_ENABLED=true), enables debug output and JSON formatting.
  */
 
+import { getConfig } from "../../infrastructure/config";
+
 type LogLevel = 'trace' | 'debug' | 'verbose' | 'info' | 'warn' | 'error';
 
 const LogLevelRank: Record<LogLevel, number> = {
@@ -16,15 +18,15 @@ const LogLevelRank: Record<LogLevel, number> = {
   error: 5,
 };
 
-// Inline env parsing to avoid circular dependency on getRuntimeConfig()
 function getLogLevel(): LogLevel {
-  const envLogLevel = process.env.OGA_LOG_LEVEL;
-  if (envLogLevel && envLogLevel in LogLevelRank) {
-    return envLogLevel as LogLevel;
+  const config = getConfig();
+  const logLevel = config.logLevel;
+  // Validate against known levels
+  if (logLevel && logLevel in LogLevelRank) {
+    return logLevel as LogLevel;
   }
-  // Default to debug if local runtime enabled, otherwise info
-  const isLocalRuntime = process.env.OGA_LOCAL_RUNTIME_ENABLED === 'true';
-  return isLocalRuntime ? 'debug' : 'info';
+  // Fallback: use info, or debug if local runtime is enabled
+  return config.localRuntimeEnabled ? 'debug' : 'info';
 }
 
 function shouldLog(level: LogLevel): boolean {

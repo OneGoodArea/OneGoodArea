@@ -45,56 +45,81 @@ Plan 012 (AR-205) partially completed the env centralisation refactor:
 
 ---
 
-## 2. Implementation Plan (1 commit)
+## 2. Implementation Plan (12 commits, one per module)
 
-### Commit: Update remaining 12 modules to use getConfig()
+Each module gets its own commit for maximum reviewability and granularity.
 
 For each module:
 1. Add `import { getConfig } from '../../infrastructure/config'` (adjust path depth)
 2. Replace `process.env.VAR_NAME` with `config.fieldName` calls
 3. Ensure path is to centralized `infrastructure/config/index.ts`
+4. Typecheck passes before moving to next module
 
-**Module-by-module checklist:**
+### Commit sequence:
 
-- [ ] `infrastructure/email/providers/resend-provider.ts` → `config.resendApiKey`
-- [ ] `infrastructure/email/senders.ts` → `config.nodeEnv`
-- [ ] `modules/auth/session-token.ts` → `config.authSecret`
-- [ ] `modules/billing/stripe-client.ts` → `config.stripe*`
-- [ ] `modules/billing/webhook-handler.ts` → `config.stripeWebhookSecret`
-- [ ] `modules/reports/ai/anthropic-provider.ts` → `config.anthropicApiKey`, `config.mockAi.*`
-- [ ] `modules/reports/ai/mock-provider.ts` → `config.mockAi.*`
-- [ ] `modules/tracking/structured-logger.ts` → `config.logLevel`, `config.localRuntimeEnabled`
-- [ ] `modules/usage/index.ts` → `config.aiProvider`
-- [ ] `modules/intelligence/eval/run.ts` → `config.evalPlanEnabled`
-- [ ] `scripts/bootstrap-test-key.ts` → `config.databaseUrl`
+**Infrastructure & Email (3 commits)**
+- [ ] Commit 1: `refactor(email): use getConfig() for RESEND_API_KEY in resend-provider.ts`
+- [ ] Commit 2: `refactor(email): use getConfig() for NODE_ENV in senders.ts`
+- [ ] Commit 3: `refactor(auth): use getConfig() for AUTH_SECRET in session-token.ts`
+
+**Billing (2 commits)**
+- [ ] Commit 4: `refactor(billing): use getConfig() for Stripe keys in stripe-client.ts`
+- [ ] Commit 5: `refactor(billing): use getConfig() for webhook secret in webhook-handler.ts`
+
+**AI & Reporting (2 commits)**
+- [ ] Commit 6: `refactor(ai): use getConfig() for Anthropic key and mock knobs in anthropic-provider.ts`
+- [ ] Commit 7: `refactor(ai): use getConfig() for mock knobs in mock-provider.ts`
+
+**Utilities & Scripts (3 commits)**
+- [ ] Commit 8: `refactor(logging): use getConfig() for log level in structured-logger.ts`
+- [ ] Commit 9: `refactor(usage): use getConfig() for AI provider in usage/index.ts`
+- [ ] Commit 10: `refactor(eval): use getConfig() for eval plan gate in intelligence/eval/run.ts`
+- [ ] Commit 11: `refactor(scripts): use getConfig() for database URL in bootstrap-test-key.ts`
 
 ---
 
 ## 3. Branch & Commit Sequence
 
 ```
-feat/AR-205-api-env-audit
-├── ca67a84 fix(billing): remove non-null assertions on V1 legacy plan priceIds
-├── 7cab390 refactor(config): centralise all API environment variable reads
-├── c2e2d66 docs(env): update env/local/api.env.example with complete 37-var inventory
-├── bfa60ce refactor(config): update consuming modules to use getConfig()
-└── [NEW] refactor(config): update remaining 12 modules to use getConfig()
+fix/AR-317-complete-env-centralisation (from main, which includes AR-205 merged)
+├── Commit 1: refactor(email): use getConfig() for RESEND_API_KEY in resend-provider.ts
+├── Commit 2: refactor(email): use getConfig() for NODE_ENV in senders.ts
+├── Commit 3: refactor(auth): use getConfig() for AUTH_SECRET in session-token.ts
+├── Commit 4: refactor(billing): use getConfig() for Stripe keys in stripe-client.ts
+├── Commit 5: refactor(billing): use getConfig() for webhook secret in webhook-handler.ts
+├── Commit 6: refactor(ai): use getConfig() for Anthropic key and mock knobs in anthropic-provider.ts
+├── Commit 7: refactor(ai): use getConfig() for mock knobs in mock-provider.ts
+├── Commit 8: refactor(logging): use getConfig() for log level in structured-logger.ts
+├── Commit 9: refactor(usage): use getConfig() for AI provider in usage/index.ts
+├── Commit 10: refactor(eval): use getConfig() for eval plan gate in intelligence/eval/run.ts
+└── Commit 11: refactor(scripts): use getConfig() for database URL in bootstrap-test-key.ts
 ```
 
----
-
-## 4. Remaining Work After This Plan
-
-- **Commit 4**: Update `env/dev/api.env.example` with Stripe TEST IDs and dev-specific config
-- **Commit 5**: Update `env/prod/api.env.example` with production config template
-- **Commit 6** (optional): Add startup validation guard in `server.ts` to fail fast on missing critical vars
+**Why 11 commits instead of 12:**
+- `modules/billing/plans.ts` was already updated in AR-205 (Commit 1), so only 11 remaining modules need updates
 
 ---
 
-## 5. Success Criteria
+## 4. Future Work (after AR-317)
 
-- [ ] All 12 remaining modules updated to use `getConfig()`
-- [ ] Zero `process.env.*` reads outside `infrastructure/config/index.ts` (verify: `grep -r "process\.env\." apps/api/src --include="*.ts" | grep -v "config/index" | wc -l` = 0)
+These can be addressed in separate plans if needed:
+- Update `env/dev/api.env.example` with Stripe TEST IDs and dev-specific config
+- Update `env/prod/api.env.example` with production config template
+- (Optional) Add startup validation guard in `server.ts` to fail fast on missing critical vars
+
+---
+
+## 5. Success Criteria (per commit and final)
+
+**Per-commit validation:**
+- [ ] Each commit: `npm run typecheck -w @onegoodarea/api` passes clean
+- [ ] Each commit: `npm run build -w @onegoodarea/api` succeeds
+- [ ] Each commit: git status shows only the single modified file + package-lock.json (if touched)
+
+**Final validation (after all 11 commits):**
+- [ ] All 11 remaining modules updated to use `getConfig()`
+- [ ] Zero `process.env.*` reads outside `infrastructure/config/index.ts` 
+  - Verify: `grep -r "process\.env\." apps/api/src --include="*.ts" | grep -v "config/index" | wc -l` = 0
 - [ ] `npm run typecheck -w @onegoodarea/api` passes clean
 - [ ] `npm run build -w @onegoodarea/api` succeeds
 - [ ] `npm test -w @onegoodarea/api` passes (no regressions)
@@ -111,7 +136,9 @@ feat/AR-205-api-env-audit
 
 ---
 
-**Status**: Ready to implement  
-**JIRA**: AR-205b (created separately)  
-**Depends on**: AR-205 (current branch)  
-**Est. time**: 15-20 mins
+**Status**: Ready to implement (plan finalized)  
+**JIRA**: [AR-317](https://podnex.atlassian.net/browse/AR-317) (To Do)  
+**Branch**: `fix/AR-317-complete-env-centralisation` (created from main)  
+**Depends on**: AR-205 (already merged to main)  
+**Scope**: 11 commits, one per remaining module  
+**Est. time**: 25-35 mins (3 mins per commit + typecheck/build validation)

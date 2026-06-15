@@ -1,7 +1,7 @@
 import { sql } from "../../infrastructure/db/client";
 import { PLANS, type PlanId, API_PLANS, type AddonKey } from "../billing/plans";
 import { type UserRow, type SubscriptionRow, row } from "../../infrastructure/db/types";
-import { SUPERUSER_EMAILS } from "../../infrastructure/config";
+import { SUPERUSER_EMAILS, getConfig } from "../../infrastructure/config";
 
 /* Plan entitlements + usage quotas. Migrated from legacy src/lib/usage.ts.
    Changes: plan catalog imported from ../billing/plans (split from the Stripe
@@ -22,7 +22,8 @@ export async function isSuperuser(userId: string): Promise<boolean> {
   if (rows.length === 0) return false;
   const user = row<Pick<UserRow, "email" | "is_superuser">>(rows[0]);
   if (user.is_superuser === true) return true;
-  if (process.env.NODE_ENV === "production") return false;
+  const config = getConfig();
+  if (config.nodeEnv === "production") return false;
   return SUPERUSER_EMAILS.includes(user.email);
 }
 

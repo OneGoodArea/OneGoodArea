@@ -1,3 +1,4 @@
+import { getConfig } from "../../../infrastructure/config";
 import type { AiProvider } from "./types";
 
 /* Migrated VERBATIM from legacy src/lib/ai/providers/mock-provider.ts.
@@ -75,11 +76,12 @@ export class MockAiProvider implements AiProvider {
   private callCount = 0;
 
   constructor(options?: Partial<MockAiOptions>) {
+    const config = getConfig();
     this.options = {
-      forceFailure: process.env.OGA_MOCK_AI_FORCE_FAILURE === "true" || false,
-      latencyMs: Number(process.env.OGA_MOCK_AI_LATENCY_MS || 0),
-      tokenLimit: Number(process.env.OGA_MOCK_AI_TOKEN_LIMIT || 4096),
-      rateLimitEveryN: Number(process.env.OGA_MOCK_AI_RATE_LIMIT_EVERY_N || 0),
+      forceFailure: config.mockAi.forceFailure,
+      latencyMs: config.mockAi.latencyMs,
+      tokenLimit: config.mockAi.tokenLimit,
+      rateLimitEveryN: config.mockAi.rateLimitEveryN,
       ...options,
     };
   }

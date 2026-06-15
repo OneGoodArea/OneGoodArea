@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { getConfig } from "../../infrastructure/config";
 import { stripe } from "./stripe-client";
 import { asSubscription } from "./stripe-types";
 import { sql } from "../../infrastructure/db/client";
@@ -62,12 +63,15 @@ export async function handleStripeWebhook(
 ): Promise<{ status: number; body: Record<string, unknown> }> {
   let event: Stripe.Event;
 
-  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+  const config = getConfig();
+  const webhookSecret = config.stripeWebhookSecret;
+
+  if (!webhookSecret) {
     return { status: 500, body: { error: "Webhook secret not configured" } };
   }
 
   try {
-    event = stripe.webhooks.constructEvent(rawBody, signature!, process.env.STRIPE_WEBHOOK_SECRET);
+    event = stripe.webhooks.constructEvent(rawBody, signature!, webhookSecret);
   } catch {
     return { status: 400, body: { error: "Invalid signature" } };
   }
