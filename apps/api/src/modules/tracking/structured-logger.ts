@@ -67,6 +67,19 @@ function normalizeContext(context?: LogContext): LogContext | undefined {
   return Object.fromEntries(normalizedEntries);
 }
 
+/* AR-308: mask URI passwords before any log line is emitted. Catches
+   connection strings (postgres://user:pw@host, redis://...:pw@host,
+   https://user:token@api) that leak when a driver's error message or
+   stack trace inlines the full URI. Runs on the final JSON string so
+   it covers message, stack, context, and any nested error chain in
+   one pass. Anchored on `://user:`...`@` so plain user@host or
+   user:port forms aren't touched. */
+const URI_PASSWORD_PATTERN = /(\b\w+:\/\/[^:\s@"]+:)[^@\s"]+(@)/g;
+
+export function redactSecrets(s: string): string {
+  return s.replace(URI_PASSWORD_PATTERN, "$1***$2");
+}
+
 function formatStructured(level: LogLevel, message: string, context?: LogContext): string {
   const normalizedContext = normalizeContext(context);
   const correlationId = typeof normalizedContext?.correlationId === "string"
@@ -81,7 +94,7 @@ function formatStructured(level: LogLevel, message: string, context?: LogContext
     message,
     ...(normalizedContext && Object.keys(normalizedContext).length > 0 ? { context: normalizedContext } : {}),
   };
-  return JSON.stringify(log);
+  return redactSecrets(JSON.stringify(log));
 }
 
 function normalizeArgs(args: unknown[]): { message: string; context?: LogContext } {
