@@ -301,3 +301,52 @@ type UsageStats = {
 3. Top endpoints reflects actual taxonomy — none of them say `api.report.generated` as #1 unless reports actually are the most-called endpoint (test sanity-check).
 4. apps/api + apps/web tsc clean. New `getUsageStats` test passes.
 5. Pedro tests on localhost.
+
+---
+
+## Phase 3 — Detail (locked 2026-06-15)
+
+### Goal
+
+Tighten the Revenue tab around what the name promises. The funnel relabel + reports retirement already shipped in Phase 1. Phase 3 adds:
+
+1. **MCP add-on uptake panel** — how many paying customers use MCP (add-on or via plan inclusive)
+2. **ARR KPI** — current ARR (MRR × 12) added to the KPI row
+3. **ARR trend chart** — DEFERRED. No historical subscription snapshots; building a trend from `created_at` alone misrepresents cancellations. Filing AR-316 to add monthly snapshots, then surface the trend.
+
+### Decisions
+
+- New endpoint `GET /admin/revenue` returns the new revenue-specific stats (MCP uptake + addons list). The existing `/admin/analytics` keeps providing MRR + plan distribution + funnel. Two narrow endpoints; not collapsing them in this phase.
+- No tab IA reshuffling in this phase. Activity / Top areas / Traffic stay in Revenue for now — they're internal tool conveniences, moving them is its own design choice.
+
+### Response shape
+
+```ts
+type RevenueExtras = {
+  arr: number;
+  mcp: {
+    total_paying: number;
+    with_mcp_addon: number;
+    in_mcp_inclusive_plan: number;
+  };
+  addons: { addon_key: string; active_count: number }[];
+};
+```
+
+### Files touched
+
+| File | Change | Lines |
+|---|---|---|
+| `apps/api/src/modules/admin/index.ts` | New `getRevenueExtras()` | ~40 |
+| `apps/api/src/app.ts` | New `GET /admin/revenue` handler | ~20 |
+| `apps/web/src/app/api/admin/revenue/route.ts` | New BFF | ~5 |
+| `apps/web/src/app/admin/page.tsx` + `apps/web/src/app/design-v2/admin/page.tsx` | Fetch + pass through | ~3 |
+| `apps/web/src/app/design-v2/admin/client.tsx` | KPI row gets ARR; new McpUptakePanel | ~50 |
+
+### Acceptance
+
+1. `GET /api/admin/revenue` returns the typed shape
+2. Revenue tab KPI row has ARR alongside the API calls counters
+3. MCP add-on panel shows totals + add-on uptake ratio
+4. apps/api + apps/web tsc clean, new test for `getRevenueExtras` passes
+5. Pedro confirms localhost

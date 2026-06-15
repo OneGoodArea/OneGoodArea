@@ -136,7 +136,7 @@ import {
   validateWebhookUrl,
   validateEventTypes,
 } from "./modules/webhooks";
-import { getAnalytics, getTrafficAnalytics, getAudienceStats, getUsageStats } from "./modules/admin";
+import { getAnalytics, getTrafficAnalytics, getAudienceStats, getUsageStats, getRevenueExtras } from "./modules/admin";
 
 import { handleStripeWebhook } from "./modules/billing/webhook-handler";
 import { isAppError } from "./infrastructure/errors/custom-errors";
@@ -4754,6 +4754,32 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       } catch (error) {
         logger.error("Admin usage stats error:", error);
         return reply.code(500).send({ error: "Failed to fetch usage stats" });
+      }
+    });
+
+  /* AR-313 Phase 3: revenue-specific extras (ARR, MCP add-on uptake).
+     The existing /admin/analytics keeps providing MRR + plan
+     distribution + funnel base counts. */
+  app.get("/admin/revenue",
+    {
+      schema: {
+        tags: ["Admin"],
+        summary: "Revenue extras (superuser only)",
+        description: "ARR + MCP add-on uptake + active add-on counts.",
+      },
+    },
+    async (request, reply) => {
+      try {
+        const userId = await authenticateSession(request, reply);
+        if (!userId) return reply;
+        if (!(await isSuperuser(userId))) {
+          return reply.code(403).send({ error: "Forbidden" });
+        }
+        const data = await getRevenueExtras();
+        return reply.send(data);
+      } catch (error) {
+        logger.error("Admin revenue extras error:", error);
+        return reply.code(500).send({ error: "Failed to fetch revenue extras" });
       }
     });
 
