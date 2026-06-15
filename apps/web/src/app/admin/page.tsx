@@ -7,6 +7,7 @@ import type {
   TrafficData,
   AudienceStats,
   UsageStats,
+  RevenueExtras,
 } from "@/app/design-v2/admin/client";
 import type { Metadata } from "next";
 
@@ -32,11 +33,12 @@ export default async function AdminPage() {
   );
   if (!gate?.is_superuser) redirect("/dashboard");
 
-  const [analyticsRes, trafficRes, audienceRes, usageRes] = await Promise.all([
+  const [analyticsRes, trafficRes, audienceRes, usageRes, revenueRes] = await Promise.all([
     callApi("/admin/analytics", { userId }),
     callApi("/admin/traffic-analytics", { userId }),
     callApi("/admin/audience", { userId }),
     callApi("/admin/usage", { userId }),
+    callApi("/admin/revenue", { userId }),
   ]);
 
   /* Only pass through bodies on success — apps/api error responses
@@ -48,6 +50,7 @@ export default async function AdminPage() {
       traffic={trafficRes.ok ? (trafficRes.data as TrafficData) : null}
       audience={audienceRes.ok ? (audienceRes.data as AudienceStats) : null}
       usage={usageRes.ok ? (usageRes.data as UsageStats) : null}
+      revenue={revenueRes.ok ? (revenueRes.data as RevenueExtras) : null}
     />
   );
 }

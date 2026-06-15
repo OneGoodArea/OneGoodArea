@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
 
 import { sql } from "@/infrastructure/db/client";
-import { getAnalytics, getTrafficAnalytics, getUsageStats } from "@/modules/admin/index";
+import { getAnalytics, getTrafficAnalytics, getUsageStats, getRevenueExtras } from "@/modules/admin/index";
 
 const mockSql = vi.mocked(sql);
 
@@ -124,5 +124,48 @@ describe("getUsageStats", () => {
     expect(u.per_product).toHaveLength(5);
     expect(u.per_product.every((p) => p.calls_30d === 0)).toBe(true);
     expect(u.top_endpoints).toHaveLength(0);
+  });
+});
+
+describe("getRevenueExtras", () => {
+  it("computes ARR (= MRR × 12) + MCP uptake by add-on and inclusive plan", async () => {
+    /* AR-313 Phase 3: 3 parallel queries — subscriptions-by-plan,
+       active mcp add-on count, addons grouped by key. Plan keys match
+       the actual catalog (build/growth_v2/enterprise — see plans.ts). */
+    mockSql
+      .mockResolvedValueOnce([
+        { plan: "build", count: 2 },        // £149 × 2 = £298
+        { plan: "growth_v2", count: 1 },    // £1,499 × 1 = £1,499 (MCP inclusive)
+        { plan: "enterprise", count: 1 },   // £4,999 × 1 = £4,999 (MCP inclusive)
+      ] as never)
+      .mockResolvedValueOnce([{ count: 3 }] as never)  // 3 separate MCP add-on subs
+      .mockResolvedValueOnce([
+        { addon_key: "mcp", active_count: 3 },
+      ] as never);
+
+    const r = await getRevenueExtras();
+
+    // MRR = 298 + 1499 + 4999 = £6,796 → ARR = £81,552
+    expect(r.arr).toBe(81552);
+
+    expect(r.mcp.total_paying).toBe(4);           // 2 + 1 + 1
+    expect(r.mcp.with_mcp_addon).toBe(3);
+    expect(r.mcp.in_mcp_inclusive_plan).toBe(2);  // growth_v2 + enterprise
+
+    expect(r.addons).toEqual([{ addon_key: "mcp", active_count: 3 }]);
+  });
+
+  it("returns zeroes when there are no active subscriptions", async () => {
+    mockSql
+      .mockResolvedValueOnce([] as never)
+      .mockResolvedValueOnce([{ count: 0 }] as never)
+      .mockResolvedValueOnce([] as never);
+
+    const r = await getRevenueExtras();
+    expect(r.arr).toBe(0);
+    expect(r.mcp.total_paying).toBe(0);
+    expect(r.mcp.with_mcp_addon).toBe(0);
+    expect(r.mcp.in_mcp_inclusive_plan).toBe(0);
+    expect(r.addons).toEqual([]);
   });
 });

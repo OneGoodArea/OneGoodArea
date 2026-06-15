@@ -102,7 +102,20 @@ type UsageStats = {
   top_endpoints: { event: string; count: number; last_seen: string }[];
 };
 
-export type { Analytics, TrafficData, AudienceStats, UsageStats };
+/* AR-313 Phase 3: revenue extras for the Revenue tab. ARR is computed
+   server-side (MRR × 12) so the client doesn't recalc. ARR trend chart
+   deferred — see AR-316. */
+type RevenueExtras = {
+  arr: number;
+  mcp: {
+    total_paying: number;
+    with_mcp_addon: number;
+    in_mcp_inclusive_plan: number;
+  };
+  addons: { addon_key: string; active_count: number }[];
+};
+
+export type { Analytics, TrafficData, AudienceStats, UsageStats, RevenueExtras };
 
 const PLAN_PRICES: Record<string, number> = {
   starter: 29,
@@ -141,11 +154,13 @@ export default function AdminClient({
   traffic,
   audience,
   usage,
+  revenue,
 }: {
   analytics: Analytics | null;
   traffic: TrafficData | null;
   audience: AudienceStats | null;
   usage: UsageStats | null;
+  revenue: RevenueExtras | null;
 }) {
   const [tab, setTab] = useState<AdminTab>("revenue");
 
@@ -192,8 +207,9 @@ export default function AdminClient({
           {tab === "revenue" ? (
             analytics ? (
               <>
-                <KpiRow analytics={analytics} />
+                <KpiRow analytics={analytics} revenue={revenue} />
                 <RevenueAndFunnel analytics={analytics} />
+                {revenue && <McpUptakePanel revenue={revenue} />}
                 <ChartsRow analytics={analytics} />
                 <ActivityAndAreas analytics={analytics} />
                 {traffic && <TrafficSection traffic={traffic} />}
@@ -473,7 +489,13 @@ function ComingSoon({ tab }: { tab: { label: string; phase: number; question: st
 /* ============================================================
    KPI row
    ============================================================ */
-function KpiRow({ analytics }: { analytics: Analytics }) {
+function KpiRow({
+  analytics,
+  revenue,
+}: {
+  analytics: Analytics;
+  revenue: RevenueExtras | null;
+}) {
   return (
     <div className="oga-admin__kpi">
       <StatCell label="Total users" value={analytics.totalUsers} />
@@ -484,6 +506,9 @@ function KpiRow({ analytics }: { analytics: Analytics }) {
         accent="strong"
       />
       <StatCell label="Active (30d)" value={analytics.activeUsersThisMonth} />
+      {revenue && (
+        <StatCell label="ARR" value={`£${revenue.arr.toLocaleString()}`} />
+      )}
     </div>
   );
 }
@@ -638,6 +663,52 @@ function ConversionPanel({
           );
         })}
       </ul>
+    </AppCard>
+  );
+}
+
+/* ============================================================
+   AR-313 Phase 3 — MCP uptake panel
+   Shows how many paying customers use MCP (via add-on OR via an
+   inclusive plan like Growth+). Useful for tracking MCP adoption
+   as a separate revenue/usage motion from base plans.
+   ============================================================ */
+function McpUptakePanel({ revenue }: { revenue: RevenueExtras }) {
+  const { mcp, addons } = revenue;
+  const totalMcp = mcp.with_mcp_addon + mcp.in_mcp_inclusive_plan;
+  const pctOfPaying = mcp.total_paying > 0
+    ? Math.round((totalMcp / mcp.total_paying) * 100)
+    : 0;
+  return (
+    <AppCard
+      title="MCP uptake"
+      note={`${totalMcp} of ${mcp.total_paying} paying customers · ${pctOfPaying}%`}
+    >
+      <div className="oga-admin__mcp-grid">
+        <div className="oga-admin__mcp-cell">
+          <span className="oga-admin__mcp-value">{mcp.with_mcp_addon}</span>
+          <span className="oga-admin__mcp-label">via add-on (£29/mo)</span>
+        </div>
+        <div className="oga-admin__mcp-cell">
+          <span className="oga-admin__mcp-value">{mcp.in_mcp_inclusive_plan}</span>
+          <span className="oga-admin__mcp-label">via inclusive plan (Growth+ / Enterprise)</span>
+        </div>
+        <div className="oga-admin__mcp-cell oga-admin__mcp-cell--total">
+          <span className="oga-admin__mcp-value">{totalMcp}</span>
+          <span className="oga-admin__mcp-label">total MCP users</span>
+        </div>
+      </div>
+
+      {addons.length > 1 && (
+        <ul className="oga-admin__list oga-admin__addons">
+          {addons.map((a) => (
+            <li key={a.addon_key} className="oga-admin__addon-row">
+              <span className="oga-admin__addon-key">{a.addon_key}</span>
+              <span className="oga-admin__addon-count">{a.active_count} active</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </AppCard>
   );
 }

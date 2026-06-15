@@ -68,11 +68,24 @@ export const BATCH_MAX_ITEMS = 100;
 // fan-out into Anthropic + parallel data sources so we don't slam the upstream.
 export const BATCH_CONCURRENCY = 5;
 
-// Monthly GBP price per plan, used for the admin MRR calculation.
+/* Monthly GBP price per plan, used for the admin MRR + ARR calculation.
+
+   AR-313 Phase 3 (2026-06-15): added the v2 plan keys. Pre-V2 versions
+   of this table only listed v1 names (starter / pro / developer /
+   business / growth) which silently returned 0 for any v2 customer's
+   MRR contribution — the admin MRR has been undercounting V2 ARR since
+   v2 launched. v1 entries kept for grandfathered subscribers. */
 export const PLAN_PRICES_GBP: Record<string, number> = {
+  // v1 (grandfathered subscribers only)
   starter: 29,
   pro: 79,
   developer: 49,
   business: 249,
   growth: 499,
+  // v2 (current)
+  starter_v2: 49,
+  build: 149,
+  scale: 499,
+  growth_v2: 1499,
+  enterprise: 4999,
 };

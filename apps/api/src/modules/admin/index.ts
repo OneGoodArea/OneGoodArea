@@ -489,3 +489,66 @@ export async function getUsageStats(): Promise<UsageStats> {
     top_endpoints,
   };
 }
+
+/* AR-313 Phase 3: revenue-specific extras for the Revenue tab. ARR
+   trend chart deferred (no historical subscription snapshots — see
+   AR-316). For now: current ARR (= MRR × 12) and MCP add-on uptake
+   (separate add-on subscriptions + customers whose plan includes MCP
+   for free). */
+
+export interface RevenueExtras {
+  arr: number;
+  mcp: {
+    total_paying: number;
+    with_mcp_addon: number;
+    in_mcp_inclusive_plan: number;
+  };
+  addons: { addon_key: string; active_count: number }[];
+}
+
+/* Plans whose base entitlement includes MCP — see modules/billing/plans
+   (mcpAccess: true). Keep this list in sync if new plans land. */
+const MCP_INCLUSIVE_PLANS = ["growth_v2", "enterprise"];
+
+export async function getRevenueExtras(): Promise<RevenueExtras> {
+  const [subscriptionsByPlan, mcpAddonActive, addonsByKey] = await Promise.all([
+    sql`
+      SELECT plan, COUNT(*)::int as count FROM subscriptions
+       WHERE status = 'active' AND plan != 'free' AND stripe_subscription_id IS NOT NULL
+       GROUP BY plan
+    `,
+    sql`
+      SELECT COUNT(*)::int as count FROM subscription_addons
+       WHERE addon_key = 'mcp' AND status = 'active'
+    `,
+    sql`
+      SELECT addon_key, COUNT(*)::int as active_count FROM subscription_addons
+       WHERE status = 'active'
+       GROUP BY addon_key
+       ORDER BY active_count DESC
+    `,
+  ]);
+
+  const planBreakdown = typedRows<PlanCountRow>(subscriptionsByPlan);
+  const planPrices = PLAN_PRICES_GBP;
+  const mrr = planBreakdown.reduce(
+    (sum, r) => sum + (planPrices[r.plan] ?? 0) * r.count,
+    0,
+  );
+  const totalPaying = planBreakdown.reduce((sum, r) => sum + r.count, 0);
+  const inInclusivePlan = planBreakdown.reduce(
+    (sum, r) => sum + (MCP_INCLUSIVE_PLANS.includes(r.plan) ? r.count : 0),
+    0,
+  );
+  const withAddon = row<CountRow>(mcpAddonActive[0]).count;
+
+  return {
+    arr: mrr * 12,
+    mcp: {
+      total_paying: totalPaying,
+      with_mcp_addon: withAddon,
+      in_mcp_inclusive_plan: inInclusivePlan,
+    },
+    addons: typedRows<{ addon_key: string; active_count: number }>(addonsByKey),
+  };
+}
