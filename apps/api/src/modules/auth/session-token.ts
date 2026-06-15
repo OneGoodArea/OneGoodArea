@@ -1,4 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
+import { getConfig } from "../../infrastructure/config";
 
 /* ===========================================================================
    JWT SESSION BRIDGE  (ADR — review with Marcos before the apps/web cutover)
@@ -39,7 +40,8 @@ const DEFAULT_TTL = "5m";
 /** The shared signing key, or null when AUTH_SECRET is unset (so verification
     fails closed rather than throwing on every request). */
 function secretKey(): Uint8Array | null {
-  const secret = process.env.AUTH_SECRET;
+  const config = getConfig();
+  const secret = config.authSecret;
   if (!secret) return null;
   return new TextEncoder().encode(secret);
 }
