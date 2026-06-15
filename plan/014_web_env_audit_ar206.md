@@ -47,6 +47,7 @@ Audit and fix the environment variable definitions for `apps/web` across all env
 | `OGA_AI_PROVIDER` | `src/lib/runtime/env/index.ts` | ❌ Missing from web examples |
 | `OGA_EMAIL_PROVIDER` | `src/lib/runtime/env/index.ts` | ❌ Missing from web examples |
 | `OGA_LOCAL_RUNTIME_ENABLED` | `src/lib/runtime/env/index.ts` | ❌ Missing from local web example only |
+| `POSTCODES_API_BASE_URL` | `src/lib/runtime/env/index.ts` | ❌ Missing from all web examples (has fallback `https://api.postcodes.io`) |
 
 ### 3.2 Dead vars to remove from all env examples
 
@@ -54,6 +55,10 @@ Audit and fix the environment variable definitions for `apps/web` across all env
 |---|---|
 | `STRIPE_PUBLISHABLE_KEY` | Never referenced in any source file |
 | `NEXT_PUBLIC_APP_URL` | Never referenced in any source file (code uses `NEXTAUTH_URL`) |
+
+### 3.3 Vars to investigate before implementation
+
+`env/dev/web.env.example` and `env/prod/web.env.example` carry `ANTHROPIC_API_KEY` and `RESEND_API_KEY`. The web app has moved to a BFF pattern (web calls the API service, which owns AI and email). Verify whether these vars are still read anywhere in `apps/web/src` before the implementation commits — if not, they should be removed as zombie vars.
 
 ---
 
@@ -65,7 +70,7 @@ Audit and fix the environment variable definitions for `apps/web` across all env
 | `NEXT_PUBLIC_APP_URL` | **Remove** from all env examples |
 | `STRIPE_PUBLISHABLE_KEY` | **Remove** from all env examples |
 | All Stripe price IDs | **Add** all ~15 to all env examples with test/prod labels |
-| OGA runtime vars | **Add** to all web env examples |
+| OGA runtime vars (incl. `POSTCODES_API_BASE_URL`) | **Add** to all web env examples |
 | `NEXTAUTH_SECRET` fallback in test auth route | **Leave as-is** |
 | `CRON_SECRET` | **Add** to all environments |
 | OAuth providers | **Both** Google + GitHub in all envs |
