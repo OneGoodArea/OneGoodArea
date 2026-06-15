@@ -3,33 +3,39 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { callApi } from "@/lib/server/api-client";
 import AdminClient from "./client";
-import type { Analytics, TrafficData } from "./client";
+import type { Analytics, TrafficData, AudienceStats } from "./client";
 
 export const metadata: Metadata = {
   title: "Admin | OneGoodArea (Design V2)",
   robots: { index: false, follow: false },
 };
 
-const ADMIN_EMAILS = ["ptengelmann@gmail.com"];
-
+/* AR-313 Phase 0 + Phase 1: kept in sync with /admin/page.tsx so the
+   design-v2 preview surface renders the same shape. Gate is DB-backed
+   via users.is_superuser (AR-312); the previous hardcoded ADMIN_EMAILS
+   list is gone. */
 export default async function DesignV2AdminPage() {
   const session = await auth();
-  const email = session?.user?.email;
-  if (!email || !ADMIN_EMAILS.includes(email)) {
-    redirect("/dashboard");
-  }
+  const userId = session?.user?.id;
+  if (!userId) redirect("/sign-in?callbackUrl=/design-v2/admin");
 
-  const userId = session!.user!.id as string;
+  const { data: gate } = await callApi<{ is_superuser: boolean }>(
+    "/me/is-superuser",
+    { userId },
+  );
+  if (!gate?.is_superuser) redirect("/dashboard");
 
-  const [analyticsRes, trafficRes] = await Promise.all([
+  const [analyticsRes, trafficRes, audienceRes] = await Promise.all([
     callApi("/admin/analytics", { userId }),
     callApi("/admin/traffic-analytics", { userId }),
+    callApi("/admin/audience", { userId }),
   ]);
 
   return (
     <AdminClient
-      analytics={analyticsRes.data as Analytics | null}
-      traffic={trafficRes.data as TrafficData | null}
+      analytics={analyticsRes.ok ? (analyticsRes.data as Analytics) : null}
+      traffic={trafficRes.ok ? (trafficRes.data as TrafficData) : null}
+      audience={audienceRes.ok ? (audienceRes.data as AudienceStats) : null}
     />
   );
 }

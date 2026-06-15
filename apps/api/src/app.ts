@@ -136,7 +136,7 @@ import {
   validateWebhookUrl,
   validateEventTypes,
 } from "./modules/webhooks";
-import { getAnalytics, getTrafficAnalytics } from "./modules/admin";
+import { getAnalytics, getTrafficAnalytics, getAudienceStats } from "./modules/admin";
 
 import { handleStripeWebhook } from "./modules/billing/webhook-handler";
 import { isAppError } from "./infrastructure/errors/custom-errors";
@@ -4704,6 +4704,32 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       return reply.code(500).send({ error: "Failed to fetch traffic analytics" });
     }
   });
+
+  /* AR-313 Phase 1: composite "who's using us" stats for the admin
+     Audience tab. Session-authed + superuser-gated like the other
+     admin endpoints. Returns users / orgs / geo in one round-trip. */
+  app.get("/admin/audience",
+    {
+      schema: {
+        tags: ["Admin"],
+        summary: "Audience stats (superuser only)",
+        description: "Composite stats for the Audience tab: total/active users, signup curve, orgs by size + activity, top countries, churn signal.",
+      },
+    },
+    async (request, reply) => {
+      try {
+        const userId = await authenticateSession(request, reply);
+        if (!userId) return reply;
+        if (!(await isSuperuser(userId))) {
+          return reply.code(403).send({ error: "Forbidden" });
+        }
+        const data = await getAudienceStats();
+        return reply.send(data);
+      } catch (error) {
+        logger.error("Admin audience stats error:", error);
+        return reply.code(500).send({ error: "Failed to fetch audience stats" });
+      }
+    });
 
   app.get("/cron/rescore", async (request, reply) => {
     const expected = process.env.CRON_SECRET;
