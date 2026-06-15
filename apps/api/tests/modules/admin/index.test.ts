@@ -11,26 +11,29 @@ beforeEach(() => mockSql.mockReset());
 
 describe("getAnalytics", () => {
   it("aggregates counts and computes MRR from the plan breakdown", async () => {
-    // Queue results in the exact Promise.all order the function issues them.
+    /* AR-313 Phase 1: "reports" nomenclature retired. Counts read from
+       activity_events WHERE event LIKE 'api.%' now; intent distribution
+       dropped (lived on report rows only); topAreas reads from
+       metadata->>'area'. Mock queue order matches the new Promise.all. */
     mockSql
       .mockResolvedValueOnce([{ count: 12 }] as never)   // totalUsers
-      .mockResolvedValueOnce([{ count: 240 }] as never)  // totalReports
-      .mockResolvedValueOnce([{ count: 30 }] as never)   // reportsThisMonth
-      .mockResolvedValueOnce([{ day: "2026-05-01", count: 5 }] as never) // reportsPerDay
+      .mockResolvedValueOnce([{ count: 240 }] as never)  // totalApiCalls
+      .mockResolvedValueOnce([{ count: 30 }] as never)   // apiCallsThisMonth
+      .mockResolvedValueOnce([{ day: "2026-05-01", count: 5 }] as never) // apiCallsPerDay
       .mockResolvedValueOnce([{ area: "Manchester", count: 9 }] as never) // topAreas
-      .mockResolvedValueOnce([{ intent: "research", count: 20 }] as never) // intentDistribution
-      .mockResolvedValueOnce([{ event: "report.created", user_id: "u1", metadata: {}, created_at: "2026-05-01", name: "A", email: "a@b.com" }] as never) // recentActivity
+      .mockResolvedValueOnce([{ event: "api.score.scored", user_id: "u1", metadata: {}, created_at: "2026-05-01", name: "A", email: "a@b.com" }] as never) // recentActivity
       .mockResolvedValueOnce([{ day: "2026-05-01", count: 2 }] as never) // userGrowth
       .mockResolvedValueOnce([{ count: 8 }] as never)    // activeUsersThisMonth
-      .mockResolvedValueOnce([{ count: 11 }] as never)   // usersWithReports
+      .mockResolvedValueOnce([{ count: 11 }] as never)   // usersWithApiCalls
       .mockResolvedValueOnce([{ count: 3 }] as never)    // paidUsers
       .mockResolvedValueOnce([{ plan: "business", count: 2 }, { plan: "growth", count: 1 }] as never); // subscriptionsByPlan
 
     const a = await getAnalytics();
     expect(a.totalUsers).toBe(12);
-    expect(a.totalReports).toBe(240);
-    expect(a.reportsThisMonth).toBe(30);
+    expect(a.totalApiCalls).toBe(240);
+    expect(a.apiCallsThisMonth).toBe(30);
     expect(a.activeUsersThisMonth).toBe(8);
+    expect(a.usersWithApiCalls).toBe(11);
     expect(a.topAreas).toEqual([{ area: "Manchester", count: 9 }]);
     expect(a.paidUsers).toBe(3);
     expect(a.subscriptionsByPlan).toEqual([{ plan: "business", count: 2 }, { plan: "growth", count: 1 }]);

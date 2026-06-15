@@ -59,9 +59,11 @@ Only consumers of this surface for the foreseeable future: ptengelmann + Marcos.
 
 ### Phase 3 — What we're earning
 
-- Reuse + extend existing MRR/funnel queries.
+- **Retire "reports" nomenclature.** Current `getAnalytics()` counts `FROM reports` — "reports" is a legacy concept that doesn't exist in signal-first OneGoodArea. Replace every `reports` count with `activity_events WHERE event LIKE 'api.%'`. Drop the `Total reports / Reports this month / Reports per day` KPIs in favour of `Total API calls / Calls this month / Calls per day`. (Pedro flagged 2026-06-15: "reports DO NOT EXIST ANYMORE".)
+- **Rework the conversion funnel** to use signal-first events: `Signed up → First api.* call → Subscribed → Power user (50+ calls/mo)` instead of `Signed up → Generated report → Subscribed`.
+- Reuse + extend MRR/plan-distribution queries (those don't reference reports).
 - New endpoint group: `GET /admin/revenue/mrr`, `GET /admin/revenue/funnel`, `GET /admin/revenue/addons`.
-- Migrate the existing RevenuePanel + ConversionPanel into the new layout.
+- Migrate the existing RevenuePanel + ConversionPanel layouts into the new IA.
 - Thin BFF proxies.
 
 ### Phase 4 — System health
@@ -154,3 +156,79 @@ Per [[feedback-operations-loop]]:
 ---
 
 **Status: Phase 0 ready to implement. Branch: `feat/AR-313/p0-auth-gate-and-shell`.**
+
+---
+
+## Phase 1 — Detail (locked 2026-06-15)
+
+### Goal
+
+Replace the Audience tab placeholder with a real panel that answers **"who's using OneGoodArea?"** End-to-end: new apps/api composite endpoint, thin BFF, Brand-v3 panel with KPI row + charts + top-N lists.
+
+### Decisions
+
+- **Composite endpoint** `GET /admin/audience` returns all sub-stats in one round-trip. Stripe/Linear pattern: a single fetch per tab, not 4 endpoints fanned out from the BFF.
+- **Geography source**: `pageviews` table (already capturing `country` via `x-vercel-ip-country`). Not adding country to `activity_events` in this phase — phase scope is what's already collected.
+- **Churn signal definition**: users created >14 days ago with no `activity_events` in the last 14 days. A simple count + the top-10 list of stale users (id + email + days inactive).
+- **Top orgs by activity**: rank orgs by COUNT of `activity_events` joined via `users → org_members → orgs` in the last 30 days. Top 10.
+- **Org size distribution**: buckets `1`, `2-5`, `6-20`, `20+` member orgs.
+- **Active windows**: 7d + 30d distinct user_id from `activity_events` (api.* events).
+
+### Files touched
+
+| File | Change | Lines |
+|---|---|---|
+| `apps/api/src/modules/admin/index.ts` | New `getAudienceStats()` function — composite query | ~120 |
+| `apps/api/src/app.ts` | New `GET /admin/audience` handler (session-authed + superuser-gated) | ~15 |
+| `apps/web/src/app/api/admin/audience/route.ts` | New BFF — thin `proxySession(req, "/admin/audience")` | ~5 |
+| `apps/web/src/app/admin/page.tsx` | Fetch audience data alongside the others, pass to AdminClient | ~5 |
+| `apps/web/src/app/design-v2/admin/client.tsx` | New `AudiencePanel` component; render in Audience tab instead of placeholder | ~120 |
+| `apps/web/src/app/design-v2/admin/admin.css` | Audience-specific layout helpers (KPI row + charts + lists) | ~30 |
+
+### Response shape
+
+```ts
+type AudienceStats = {
+  users: {
+    total: number;
+    active_7d: number;
+    active_30d: number;
+    signups_per_day: { day: string; count: number }[]; // last 30 days
+    churn_signal_count: number;
+    stale_users: { user_id: string; email: string; days_inactive: number }[]; // top 10
+  };
+  orgs: {
+    total: number;
+    size_distribution: { bucket: "1" | "2-5" | "6-20" | "20+"; count: number }[];
+    top_by_activity: { org_id: string; org_name: string; events_30d: number }[]; // top 10
+  };
+  geo: {
+    top_countries: { country: string; count: number }[]; // top 10, last 30d
+    top_cities: { city: string; count: number }[]; // top 10, last 30d
+    unique_countries_30d: number;
+  };
+};
+```
+
+### Panel layout
+
+```
+[ KPI row: Total users | Active 7d | Active 30d | Total orgs | Unique countries 30d ]
+
+[ Signups (30d) chart        ] [ Org size distribution bar  ]
+
+[ Top countries list         ] [ Top cities list            ]
+
+[ Top orgs by activity (30d) ] [ Churn signal: stale users  ]
+```
+
+All sub-panels reuse existing patterns: `KpiRow` style for the top StatCell row, `BarChart` for signups + size distribution, list patterns from `ActivityAndAreas` for top-N rows.
+
+### Acceptance
+
+1. `curl -i https://onegoodarea.com/api/admin/audience` (no cookie) → 401
+2. As ptengelmann: `GET /api/admin/audience` returns the typed shape above, all numbers match `SELECT count(*)` ad-hoc queries.
+3. Audience tab on `/admin` renders KPI row + 6 sub-panels — no `ComingSoon` card any more.
+4. Switching between Audience/Revenue is fast (no full re-fetch — both data already on the page).
+5. apps/api + apps/web tsc clean, tests pass (new test for `getAudienceStats` ideally).
+6. Pedro confirms localhost.
