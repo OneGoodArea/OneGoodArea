@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { parseArgs } from "node:util";
+import { getConfig } from "../infrastructure/config";
 import { hashPassword } from "../modules/auth/crypto";
 import { createApiKey } from "../modules/api-keys";
 import { createPersonalOrgForUser } from "../modules/orgs";
@@ -97,7 +98,8 @@ async function ensureSandboxPlan(userId: string, plan: PlanId): Promise<void> {
 }
 
 async function main() {
-  if (process.env.NODE_ENV === "production") {
+  const config = getConfig();
+  if (config.nodeEnv === "production") {
     throw new Error("Refusing to bootstrap a test key in production.");
   }
 
