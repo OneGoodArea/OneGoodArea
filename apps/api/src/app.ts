@@ -3502,7 +3502,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       logger.error("Usage check error:", error);
       return reply.code(500).send({ error: "Failed to check usage" });
     }
-
+  });
 
   // Composite dashboard data — plan, usage, MCP status, primary API key,
   // email verification, and latest report call. Session-authed. Combines
@@ -3594,7 +3594,6 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       logger.error("Dashboard data error:", error);
       return reply.code(500).send({ error: "Failed to fetch dashboard data" });
     }
-  });
   });
 
   // The logged-in user's plan + whether a Stripe sub is scheduled to cancel.
