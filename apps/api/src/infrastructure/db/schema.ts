@@ -46,6 +46,20 @@ export const MIGRATIONS: Migration[] = [
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS intent TEXT`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS signup_source TEXT`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS role_preference TEXT`,
+      // AR-312: superuser status moves from a hardcoded SUPERUSER_EMAILS
+      // array in source to a DB column so a real customer can be toggled
+      // on/off without a deploy, and so Pedro can dogfood the product as
+      // a real Sandbox/Build/Scale customer in prod without bypass-by-code.
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_superuser BOOLEAN NOT NULL DEFAULT FALSE`,
+      // AR-312 self-healing backfill: ONLY runs if no superuser currently
+      // exists. After first deploy, ptengelmann@gmail.com gets the flag.
+      // Subsequent boots no-op. If admins later add more superusers this
+      // still no-ops (NOT EXISTS clause). The only path that re-promotes
+      // ptengelmann is "all superusers demoted" — useful safety net
+      // against an accidental UPDATE that strips superuser from everyone.
+      `UPDATE users SET is_superuser = TRUE
+         WHERE email = 'ptengelmann@gmail.com'
+           AND NOT EXISTS (SELECT 1 FROM users WHERE is_superuser = TRUE)`,
     ],
   },
   {

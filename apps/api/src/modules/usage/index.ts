@@ -12,10 +12,17 @@ import { SUPERUSER_EMAILS } from "../../infrastructure/config";
 /** Aggregate count returned by COUNT(*)::int queries. */
 interface CountRow { count: number; }
 
+/* AR-312: superuser is now a DB column (users.is_superuser), not a hardcoded
+   list. Toggling a real customer is a single UPDATE — no deploy. The
+   hardcoded SUPERUSER_EMAILS list is kept ONLY as a local-dev convenience
+   so Pedro doesn't need to seed the column to test admin paths locally; in
+   prod (NODE_ENV === "production") the DB is the sole source of truth. */
 export async function isSuperuser(userId: string): Promise<boolean> {
-  const rows = await sql`SELECT email FROM users WHERE id = ${userId}`;
+  const rows = await sql`SELECT email, is_superuser FROM users WHERE id = ${userId}`;
   if (rows.length === 0) return false;
-  const user = row<Pick<UserRow, "email">>(rows[0]);
+  const user = row<Pick<UserRow, "email" | "is_superuser">>(rows[0]);
+  if (user.is_superuser === true) return true;
+  if (process.env.NODE_ENV === "production") return false;
   return SUPERUSER_EMAILS.includes(user.email);
 }
 
