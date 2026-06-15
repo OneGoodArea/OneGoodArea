@@ -1,4 +1,5 @@
 import { neon, neonConfig, type NeonQueryFunction } from "@neondatabase/serverless";
+import { getConfig } from "./../../infrastructure/config";
 
 /* Backend DB client. Ported from the legacy src/lib/db.ts (behaviour-identical)
    plus a raw `exec()` for the standalone migrator.
@@ -19,7 +20,8 @@ let client: ReturnType<typeof neon> | null = null;
 
 function getClient() {
   if (client) return client;
-  const url = process.env.DATABASE_URL;
+  const config = getConfig();
+  const url = config.databaseUrl;
   if (!url) {
     throw new Error("DATABASE_URL is not set — cannot connect to Postgres.");
   }

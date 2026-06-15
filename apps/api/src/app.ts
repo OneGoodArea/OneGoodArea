@@ -4784,7 +4784,8 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
     });
 
   app.get("/cron/rescore", async (request, reply) => {
-    const expected = process.env.CRON_SECRET;
+    const config = getConfig();
+    const expected = config.cronSecret;
     if (!expected) {
       return reply.code(503).send({ error: "CRON_SECRET not configured on this deployment" });
     }
