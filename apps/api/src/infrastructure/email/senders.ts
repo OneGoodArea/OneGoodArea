@@ -221,8 +221,7 @@ export async function sendMagicLinkEmail(email: string, token: string) {
 export async function sendReportEmail(email: string, reportId: string, report: AreaReport) {
   logger.info(`[report-email] Sending report email to ${email} for report ${reportId}`);
 
-  const baseUrl = process.env.NEXTAUTH_URL || "https://www.onegoodarea.com";
-  const reportUrl = `${baseUrl}/report/${reportId}`;
+  const reportUrl = `${APP_URL}/report/${reportId}`;
 
   const score = report.areaiq_score ?? 0;
   const scoreColor = score >= 70 ? COLORS.ink : score >= 45 ? "#B8860B" : "#A01B00";
