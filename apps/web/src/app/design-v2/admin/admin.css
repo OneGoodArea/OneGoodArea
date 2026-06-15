@@ -640,3 +640,65 @@
   white-space: nowrap;
   letter-spacing: 0.01em;
 }
+
+/* AR-313 Phase 2 — Endpoint heatmap rows.
+   rank | event-name | usage-bar | count | last-seen */
+.oga-admin__endpoint-row {
+  padding: 10px 22px;
+  display: grid;
+  grid-template-columns: 28px minmax(180px, 1.6fr) minmax(120px, 1fr) auto auto;
+  gap: 14px;
+  align-items: center;
+}
+.oga-admin__endpoint-rank {
+  font-family: var(--oga-font-mono, "Geist Mono", monospace);
+  font-size: 11px;
+  color: var(--oga-fg-muted);
+  letter-spacing: 0.04em;
+}
+.oga-admin__endpoint-name {
+  font-family: var(--oga-font-mono, "Geist Mono", monospace);
+  font-size: 13px;
+  color: var(--oga-fg);
+  word-break: break-all;
+}
+.oga-admin__endpoint-track {
+  height: 6px;
+  background: var(--oga-rule);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.oga-admin__endpoint-fill {
+  height: 100%;
+  background: var(--oga-fg);
+  border-radius: 2px;
+}
+.oga-admin__endpoint-count {
+  font-family: var(--oga-font-mono, "Geist Mono", monospace);
+  font-size: 13px;
+  color: var(--oga-fg);
+  text-align: right;
+  min-width: 56px;
+}
+.oga-admin__endpoint-last {
+  font-family: var(--oga-font-mono, "Geist Mono", monospace);
+  font-size: 11px;
+  color: var(--oga-fg-muted);
+  white-space: nowrap;
+  text-align: right;
+  min-width: 64px;
+}
+@media (max-width: 880px) {
+  .oga-admin__endpoint-row {
+    grid-template-columns: 28px 1fr auto;
+    grid-template-areas:
+      "rank name count"
+      "rank track last";
+    row-gap: 6px;
+  }
+  .oga-admin__endpoint-rank { grid-area: rank; }
+  .oga-admin__endpoint-name { grid-area: name; }
+  .oga-admin__endpoint-track { grid-area: track; }
+  .oga-admin__endpoint-count { grid-area: count; }
+  .oga-admin__endpoint-last { grid-area: last; }
+}

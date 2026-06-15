@@ -376,3 +376,116 @@ export async function getAudienceStats(): Promise<AudienceStats> {
     },
   };
 }
+
+/* AR-313 Phase 2: composite "what they're using" stats for the admin
+   Usage tab. Per-product breakdown via event-name → product mapping
+   (kept here in apps/api so the mapping table stays adjacent to the
+   trackEvent call sites in app.ts), plus a top-20 endpoint heatmap.
+
+   Engine-version cohort deferred — the X-Engine-Version stamp lives on
+   response headers but not in activity_events.metadata. Adding it to
+   the metadata is its own enrichment ticket; surfacing nothing rather
+   than fake data here. */
+
+export type AdminProduct =
+  | "Signals"
+  | "Scores"
+  | "Monitor"
+  | "Intelligence"
+  | "Org & Levers";
+
+export interface UsageStats {
+  totals: {
+    calls_7d: number;
+    calls_30d: number;
+    top_product: AdminProduct | null;
+    top_endpoint: string | null;
+  };
+  per_product: { product: AdminProduct; calls_30d: number }[];
+  top_endpoints: { event: string; count: number; last_seen: string }[];
+}
+
+/* Server-side canonical mapping of api.* events to products. Order
+   matters: first matching prefix wins. Keep this aligned with the
+   trackEvent calls in apps/api/src/app.ts when new events are added. */
+const PRODUCT_PREFIXES: { product: AdminProduct; prefixes: string[] }[] = [
+  { product: "Signals", prefixes: ["api.signals.", "api.area.profiled"] },
+  { product: "Scores", prefixes: ["api.score.", "api.report.", "api.batch."] },
+  { product: "Monitor", prefixes: ["api.portfolio."] },
+  { product: "Intelligence", prefixes: ["api.query.", "api.insights.", "api.forecast.", "api.peers.", "api.areas.queried"] },
+  { product: "Org & Levers", prefixes: ["api.org.", "api.bundle.", "api.cohort.", "api.preset.", "api.methodology."] },
+];
+
+function eventToProduct(event: string): AdminProduct | null {
+  for (const { product, prefixes } of PRODUCT_PREFIXES) {
+    for (const prefix of prefixes) {
+      if (event.startsWith(prefix) || event === prefix) return product;
+    }
+  }
+  return null;
+}
+
+interface EventCountRow { event: string; count: number; last_seen: string; }
+
+export async function getUsageStats(): Promise<UsageStats> {
+  const [calls7d, calls30d, endpointsRaw] = await Promise.all([
+    sql`
+      SELECT COUNT(*)::int as count
+        FROM activity_events
+       WHERE event LIKE 'api.%'
+         AND created_at >= NOW() - INTERVAL '7 days'
+    `,
+    sql`
+      SELECT COUNT(*)::int as count
+        FROM activity_events
+       WHERE event LIKE 'api.%'
+         AND created_at >= NOW() - INTERVAL '30 days'
+    `,
+    sql`
+      SELECT event, COUNT(*)::int as count, MAX(created_at) as last_seen
+        FROM activity_events
+       WHERE event LIKE 'api.%'
+         AND created_at >= NOW() - INTERVAL '30 days'
+       GROUP BY event
+       ORDER BY count DESC
+    `,
+  ]);
+
+  const allEndpoints = typedRows<EventCountRow>(endpointsRaw);
+
+  // Aggregate per-product totals (every product appears even at 0 so
+  // the bar chart shows the full 4+1 set, not just the populated ones).
+  const productTotals = new Map<AdminProduct, number>();
+  for (const { product } of PRODUCT_PREFIXES) productTotals.set(product, 0);
+  for (const e of allEndpoints) {
+    const product = eventToProduct(e.event);
+    if (product) productTotals.set(product, (productTotals.get(product) ?? 0) + e.count);
+  }
+  const per_product: { product: AdminProduct; calls_30d: number }[] = [];
+  for (const { product } of PRODUCT_PREFIXES) {
+    per_product.push({ product, calls_30d: productTotals.get(product) ?? 0 });
+  }
+
+  const top_endpoints = allEndpoints.slice(0, 20).map((e) => ({
+    event: e.event,
+    count: e.count,
+    last_seen: String(e.last_seen),
+  }));
+
+  const sortedByCalls = [...per_product].sort((a, b) => b.calls_30d - a.calls_30d);
+  const top_product = sortedByCalls[0] && sortedByCalls[0].calls_30d > 0
+    ? sortedByCalls[0].product
+    : null;
+  const top_endpoint = allEndpoints[0]?.event ?? null;
+
+  return {
+    totals: {
+      calls_7d: row<CountRow>(calls7d[0]).count,
+      calls_30d: row<CountRow>(calls30d[0]).count,
+      top_product,
+      top_endpoint,
+    },
+    per_product,
+    top_endpoints,
+  };
+}

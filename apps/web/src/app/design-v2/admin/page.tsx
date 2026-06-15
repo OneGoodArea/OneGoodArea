@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { callApi } from "@/lib/server/api-client";
 import AdminClient from "./client";
-import type { Analytics, TrafficData, AudienceStats } from "./client";
+import type { Analytics, TrafficData, AudienceStats, UsageStats } from "./client";
 
 export const metadata: Metadata = {
   title: "Admin | OneGoodArea (Design V2)",
@@ -25,10 +25,11 @@ export default async function DesignV2AdminPage() {
   );
   if (!gate?.is_superuser) redirect("/dashboard");
 
-  const [analyticsRes, trafficRes, audienceRes] = await Promise.all([
+  const [analyticsRes, trafficRes, audienceRes, usageRes] = await Promise.all([
     callApi("/admin/analytics", { userId }),
     callApi("/admin/traffic-analytics", { userId }),
     callApi("/admin/audience", { userId }),
+    callApi("/admin/usage", { userId }),
   ]);
 
   return (
@@ -36,6 +37,7 @@ export default async function DesignV2AdminPage() {
       analytics={analyticsRes.ok ? (analyticsRes.data as Analytics) : null}
       traffic={trafficRes.ok ? (trafficRes.data as TrafficData) : null}
       audience={audienceRes.ok ? (audienceRes.data as AudienceStats) : null}
+      usage={usageRes.ok ? (usageRes.data as UsageStats) : null}
     />
   );
 }
