@@ -13,13 +13,18 @@ import { logger } from "./structured-logger";
 export async function trackEvent(
   event: string,
   userId?: string | null,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
+  /* AR-289: org context for per-org /api-usage scoping. Optional so
+     non-API call sites (auth flows, public pageviews) keep passing
+     nothing — those events stay org-less by design. API call sites
+     should pass the api key's org_id, which validateApiKey returns. */
+  orgId?: string | null,
 ) {
   try {
     const id = generateId("evt");
     await sql`
-      INSERT INTO activity_events (id, user_id, event, metadata)
-      VALUES (${id}, ${userId || null}, ${event}, ${JSON.stringify(metadata || {})})
+      INSERT INTO activity_events (id, user_id, event, metadata, org_id)
+      VALUES (${id}, ${userId || null}, ${event}, ${JSON.stringify(metadata || {})}, ${orgId || null})
     `;
   } catch (error) {
     // Activity tracking should never break the main request
