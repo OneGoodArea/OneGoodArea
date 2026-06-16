@@ -102,7 +102,8 @@ describe("POST /v1/report", () => {
     expect(trackEvent).toHaveBeenCalledWith(
       "api.report.generated",
       "user_1",
-      expect.objectContaining({ reportId: "rpt_1", source: "api" })
+      expect.objectContaining({ reportId: "rpt_1", source: "api" }),
+      null, // AR-289: orgId; mock returns null
     );
     expect(res.headers["x-engine-version"]).toBeDefined();
     expect(res.headers["x-idempotency-replayed"]).toBe("false");

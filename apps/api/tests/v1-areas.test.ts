@@ -79,7 +79,7 @@ describe("GET /v1/areas", () => {
     expect(mockQuery).toHaveBeenCalledWith(
       expect.objectContaining({ signal: "deprivation.imd_decile", country: "England", maxPercentile: 10, limit: 5 }),
     );
-    expect(trackEvent).toHaveBeenCalledWith("api.areas.queried", "user_1", expect.objectContaining({ signal: "deprivation.imd_decile", results: 1 }));
+    expect(trackEvent).toHaveBeenCalledWith("api.areas.queried", "user_1", expect.objectContaining({ signal: "deprivation.imd_decile", results: 1 }), null); // AR-289: 4th arg = orgId
     expect(res.headers["x-engine-version"]).toBeDefined();
   });
 });

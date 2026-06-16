@@ -98,6 +98,7 @@ describe("GET /v1/signals/:category", () => {
       "api.signals.category",
       "user_1",
       expect.objectContaining({ category: "crime", signals: 2 }),
+      null, // AR-289: orgId; mock returns null
     );
   });
 

@@ -106,6 +106,7 @@ describe("GET /v1/area", () => {
       "api.area.profiled",
       "user_1",
       expect.objectContaining({ area: "M1 1AE", signals: 1, sources: 1 }),
+      null, // AR-289: 4th arg = orgId; mock returns null
     );
     expect(res.headers["x-engine-version"]).toBe("2.0.2");
   });
