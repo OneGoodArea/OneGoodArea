@@ -86,6 +86,23 @@ export const MIGRATIONS: Migration[] = [
         metadata JSONB DEFAULT '{}',
         created_at TIMESTAMPTZ DEFAULT NOW()
       )`,
+      // AR-289: org-scoping for /api-usage. Nullable so legacy events
+      // (where no api_key org was resolvable) stay representable. The
+      // composite index matches the four queries /keys/usage runs
+      // (totalRequests, requestsThisMonth, requestsByDay, lastRequest)
+      // when an ?org filter is in play.
+      `ALTER TABLE activity_events ADD COLUMN IF NOT EXISTS org_id TEXT`,
+      `CREATE INDEX IF NOT EXISTS idx_activity_events_user_org_event_created
+         ON activity_events (user_id, org_id, event, created_at)`,
+      // AR-289 backfill: copy org_id from api_keys for legacy rows.
+      // WHERE ae.org_id IS NULL makes this a no-op on subsequent runs
+      // (idempotent — matches the migrator's contract).
+      `UPDATE activity_events ae
+          SET org_id = ak.org_id
+         FROM api_keys ak
+        WHERE ae.org_id IS NULL
+          AND ae.user_id = ak.user_id
+          AND ak.org_id IS NOT NULL`,
     ],
   },
   {
