@@ -60,10 +60,28 @@ export default function ApiUsageClient() {
   const [revokingInFlight, setRevokingInFlight] = useState(false);
   const [revokeError, setRevokeError] = useState<string | null>(null);
 
+  /* AR-289: per-org scoping. Read the active org from the same
+     localStorage key the OrgSwitcher writes (oga-active-org-id). When
+     set, pass ?org=<id> so the chart + stats restrict to that org.
+     null / undefined → no param → lifetime user-wide totals (the
+     previous behaviour, what solo users still see). */
+  const [activeOrgId, setActiveOrgId] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return window.localStorage.getItem("oga-active-org-id");
+  });
+
   const fetchUsage = useCallback(async () => {
     try {
-      const res = await fetch("/api/keys/usage");
+      const url = activeOrgId
+        ? `/api/keys/usage?org=${encodeURIComponent(activeOrgId)}`
+        : "/api/keys/usage";
+      const res = await fetch(url);
       if (res.status === 403) {
+        // 403 from membership gate too — fall back to user-wide (drop the org param).
+        if (activeOrgId) {
+          setActiveOrgId(null);
+          return; // useEffect will refetch
+        }
         router.push("/pricing");
         return;
       }
@@ -78,7 +96,22 @@ export default function ApiUsageClient() {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [router, activeOrgId]);
+
+  /* AR-289: keep activeOrgId in sync if the user switches org in
+     another tab (storage event fires cross-tab) OR via a window-level
+     custom event we'll emit from the OrgSwitcher on same-tab switch
+     (a follow-up; for now storage-event handles cross-tab + the
+     useState lazy initializer handles initial mount). */
+  useEffect(() => {
+    function onStorage(e: StorageEvent) {
+      if (e.key === "oga-active-org-id") {
+        setActiveOrgId(e.newValue);
+      }
+    }
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   const openCreateModal = useCallback(() => {
     setCreateName("Default");
