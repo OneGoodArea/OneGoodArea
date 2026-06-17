@@ -3696,42 +3696,97 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
 
     const plan = await getUserPlan(userId);
 
+    /* AR-289: optional ?org=<id> filter. When set, the four stat queries
+       restrict to activity_events tagged with that org. Validate the
+       caller is a member of that org first — 403 on cross-org attempts.
+       The api_keys list stays user-scoped (keys belong to a user). */
+    const queryOrg = (request.query as { org?: unknown })?.org;
+    const orgFilter = typeof queryOrg === "string" && queryOrg.length > 0 ? queryOrg : null;
+    if (orgFilter) {
+      const membership = await sql`
+        SELECT 1 FROM org_members
+         WHERE org_id = ${orgFilter} AND user_id = ${userId}
+         LIMIT 1
+      `;
+      if (membership.length === 0) {
+        return reply.code(403).send({ error: "You are not a member of that organisation." });
+      }
+    }
+
     try {
       /* AR-306: count ALL api.* events (api.report.generated, api.me.read,
          api.score.scored, api.batch.processed, api.query.executed, etc.)
          not just /v1/report. Without this the dashboard chart undercounts
          by a wide margin once a user touches anything but /v1/report.
          Re-applies the AR-287 fix that was lost when web's /api/keys/usage
-         BFF became a thin proxy in PR #197 (Plan 010). */
+         BFF became a thin proxy in PR #197 (Plan 010).
+
+         AR-289: when orgFilter is set, AND org_id = ${orgFilter} is
+         appended to the four stat queries. orgFilter null → no extra
+         predicate → existing (user-wide) behaviour. */
       const [totalRequests, requestsThisMonth, requestsByDay, lastRequest, apiKeys] = await Promise.all([
-        sql`
-          SELECT COUNT(*)::int as count
-          FROM activity_events
-          WHERE user_id = ${userId} AND event LIKE 'api.%'
-        `,
-        sql`
-          SELECT COUNT(*)::int as count
-          FROM activity_events
-          WHERE user_id = ${userId}
-            AND event LIKE 'api.%'
-            AND created_at >= date_trunc('month', NOW())
-        `,
-        sql`
-          SELECT date_trunc('day', created_at)::date as day, COUNT(*)::int as count
-          FROM activity_events
-          WHERE user_id = ${userId}
-            AND event LIKE 'api.%'
-            AND created_at >= NOW() - INTERVAL '30 days'
-          GROUP BY day
-          ORDER BY day
-        `,
-        sql`
-          SELECT created_at
-          FROM activity_events
-          WHERE user_id = ${userId} AND event LIKE 'api.%'
-          ORDER BY created_at DESC
-          LIMIT 1
-        `,
+        orgFilter
+          ? sql`
+              SELECT COUNT(*)::int as count
+              FROM activity_events
+              WHERE user_id = ${userId} AND event LIKE 'api.%' AND org_id = ${orgFilter}
+            `
+          : sql`
+              SELECT COUNT(*)::int as count
+              FROM activity_events
+              WHERE user_id = ${userId} AND event LIKE 'api.%'
+            `,
+        orgFilter
+          ? sql`
+              SELECT COUNT(*)::int as count
+              FROM activity_events
+              WHERE user_id = ${userId}
+                AND event LIKE 'api.%'
+                AND org_id = ${orgFilter}
+                AND created_at >= date_trunc('month', NOW())
+            `
+          : sql`
+              SELECT COUNT(*)::int as count
+              FROM activity_events
+              WHERE user_id = ${userId}
+                AND event LIKE 'api.%'
+                AND created_at >= date_trunc('month', NOW())
+            `,
+        orgFilter
+          ? sql`
+              SELECT date_trunc('day', created_at)::date as day, COUNT(*)::int as count
+              FROM activity_events
+              WHERE user_id = ${userId}
+                AND event LIKE 'api.%'
+                AND org_id = ${orgFilter}
+                AND created_at >= NOW() - INTERVAL '30 days'
+              GROUP BY day
+              ORDER BY day
+            `
+          : sql`
+              SELECT date_trunc('day', created_at)::date as day, COUNT(*)::int as count
+              FROM activity_events
+              WHERE user_id = ${userId}
+                AND event LIKE 'api.%'
+                AND created_at >= NOW() - INTERVAL '30 days'
+              GROUP BY day
+              ORDER BY day
+            `,
+        orgFilter
+          ? sql`
+              SELECT created_at
+              FROM activity_events
+              WHERE user_id = ${userId} AND event LIKE 'api.%' AND org_id = ${orgFilter}
+              ORDER BY created_at DESC
+              LIMIT 1
+            `
+          : sql`
+              SELECT created_at
+              FROM activity_events
+              WHERE user_id = ${userId} AND event LIKE 'api.%'
+              ORDER BY created_at DESC
+              LIMIT 1
+            `,
         sql`
           SELECT
             ak.id,
