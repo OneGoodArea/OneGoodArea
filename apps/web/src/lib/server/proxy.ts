@@ -22,6 +22,10 @@ export interface ProxyOptions {
   forwardBody?: boolean;
   /** Names of incoming headers to pass through (e.g. Idempotency-Key, X-Engine-Version). */
   forwardHeaders?: string[];
+  /** AR-289: append the incoming request's query string (e.g. ?org=) to the
+   *  apps/api path. Off by default — opt-in per route so BFFs that don't
+   *  intentionally forward query state don't leak it. */
+  forwardQuery?: boolean;
 }
 
 /** Proxy a session-authenticated Next route to apps/api. 401 (no apps/api call)
@@ -45,7 +49,14 @@ export async function proxySession(
     if (value !== null) headers[name] = value;
   }
 
-  const res = await callApi(apiPath, {
+  /* AR-289: when opt-in, append the incoming query string so the
+     filtered apps/api endpoint sees the same params the browser sent
+     (?org=, ?from=, etc.). Off by default. ?. on nextUrl defends
+     against test stubs that don't construct the full NextRequest. */
+  const incomingQuery = opts.forwardQuery ? req.nextUrl?.search ?? "" : "";
+  const finalPath = incomingQuery ? `${apiPath}${incomingQuery}` : apiPath;
+
+  const res = await callApi(finalPath, {
     userId,
     method: opts.method ?? req.method,
     body,

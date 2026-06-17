@@ -60,10 +60,28 @@ export default function ApiUsageClient() {
   const [revokingInFlight, setRevokingInFlight] = useState(false);
   const [revokeError, setRevokeError] = useState<string | null>(null);
 
+  /* AR-289: per-org scoping. Read the active org from the same
+     localStorage key the OrgSwitcher writes (oga-active-org-id). When
+     set, pass ?org=<id> so the chart + stats restrict to that org.
+     null / undefined → no param → lifetime user-wide totals (the
+     previous behaviour, what solo users still see). */
+  const [activeOrgId, setActiveOrgId] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return window.localStorage.getItem("oga-active-org-id");
+  });
+
   const fetchUsage = useCallback(async () => {
     try {
-      const res = await fetch("/api/keys/usage");
+      const url = activeOrgId
+        ? `/api/keys/usage?org=${encodeURIComponent(activeOrgId)}`
+        : "/api/keys/usage";
+      const res = await fetch(url);
       if (res.status === 403) {
+        // 403 from membership gate too — fall back to user-wide (drop the org param).
+        if (activeOrgId) {
+          setActiveOrgId(null);
+          return; // useEffect will refetch
+        }
         router.push("/pricing");
         return;
       }
@@ -78,7 +96,31 @@ export default function ApiUsageClient() {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [router, activeOrgId]);
+
+  /* AR-289: keep activeOrgId in sync when the user switches org.
+     Two paths:
+       - `storage` event fires from OTHER tabs (cross-tab sync).
+       - `oga:active-org-changed` custom event fires from the
+         OrgSwitcher on SAME-tab switch — dispatched alongside the
+         localStorage.setItem in switchTo / onCreated. */
+  useEffect(() => {
+    function onStorage(e: StorageEvent) {
+      if (e.key === "oga-active-org-id") {
+        setActiveOrgId(e.newValue);
+      }
+    }
+    function onSameTabSwitch(e: Event) {
+      const detail = (e as CustomEvent<{ orgId?: string }>).detail;
+      setActiveOrgId(detail?.orgId ?? null);
+    }
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("oga:active-org-changed", onSameTabSwitch);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("oga:active-org-changed", onSameTabSwitch);
+    };
+  }, []);
 
   const openCreateModal = useCallback(() => {
     setCreateName("Default");

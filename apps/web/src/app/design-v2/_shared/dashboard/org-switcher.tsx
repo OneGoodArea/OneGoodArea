@@ -103,6 +103,12 @@ export function OrgSwitcher({ userEmail }: OrgSwitcherProps) {
     setActiveId(orgId);
     try {
       window.localStorage.setItem(ACTIVE_ORG_KEY, orgId);
+      /* AR-289: same-tab listeners (e.g. /api-usage's per-org filter)
+         need to know the active org changed. The `storage` event only
+         fires cross-tab, so dispatch a custom event for in-tab consumers.
+         Detail carries the new orgId so listeners don't need to re-read
+         localStorage. */
+      window.dispatchEvent(new CustomEvent("oga:active-org-changed", { detail: { orgId } }));
     } catch {
       /* private mode / disabled storage */
     }
@@ -121,6 +127,8 @@ export function OrgSwitcher({ userEmail }: OrgSwitcherProps) {
       setActiveId(newId);
       try {
         window.localStorage.setItem(ACTIVE_ORG_KEY, newId);
+        // AR-289: same-tab notification (same as switchTo).
+        window.dispatchEvent(new CustomEvent("oga:active-org-changed", { detail: { orgId: newId } }));
       } catch {
         /* private mode / disabled storage */
       }

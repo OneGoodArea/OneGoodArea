@@ -91,7 +91,7 @@ describe("POST /v1/score", () => {
     expect(body.dimensions[0].key).toBe("safety_crime");
     expect(body.weights_source).toBe("preset");
     expect(mockScore).toHaveBeenCalledWith(expect.objectContaining({ area: "M1 1AE", preset: "research" }));
-    expect(trackEvent).toHaveBeenCalledWith("api.score.computed", "user_1", expect.objectContaining({ preset: "research", score: 62 }));
+    expect(trackEvent).toHaveBeenCalledWith("api.score.computed", "user_1", expect.objectContaining({ preset: "research", score: 62 }), null); // AR-289: orgId
     expect(res.headers["x-engine-version"]).toBe("2.0.2");
   });
 });
@@ -119,6 +119,7 @@ describe("POST /v1/score — Levers preset_id (AR-196)", () => {
       "api.score.computed",
       "user_1",
       expect.objectContaining({ preset_id: "spr_x", weights: "custom" }),
+      "org_acme", // AR-289: this mock returns orgId: "org_acme"
     );
   });
 

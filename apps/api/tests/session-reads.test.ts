@@ -124,4 +124,59 @@ describe("GET /keys/usage", () => {
       { id: "key_1", key_preview: "oga_abcd", name: "Default", created_at: "2026-01-01", last_used_at: null },
     ]);
   });
+
+  /* AR-289 — per-org scoping via ?org=<id>. Three cases:
+     1. non-member → 403 (membership SELECT 1 returns empty)
+     2. member → 200, queries get the org_id filter
+     3. no param → no membership check, no extra predicate */
+  describe("?org=<id> filter (AR-289)", () => {
+    it("403s when the caller is not a member of the requested org", async () => {
+      // Membership check fires FIRST (before the 5 stat queries).
+      // Empty result → 403, no further queries.
+      vi.mocked(sql).mockResolvedValueOnce([] as never);
+
+      const res = await app.inject({
+        method: "GET",
+        url: "/keys/usage?org=org_someone_else",
+        headers: AUTH,
+      });
+      expect(res.statusCode).toBe(403);
+      expect(res.json()).toMatchObject({ error: expect.stringMatching(/member/i) });
+    });
+
+    it("200s and runs the filtered queries when the caller IS a member", async () => {
+      // Membership passes (any row), then the 5 stat queries.
+      vi.mocked(sql)
+        .mockResolvedValueOnce([{ "?column?": 1 }] as never) // membership SELECT 1
+        .mockResolvedValueOnce([{ count: 12 }] as never)     // totalRequests (filtered)
+        .mockResolvedValueOnce([{ count: 4 }] as never)      // requestsThisMonth (filtered)
+        .mockResolvedValueOnce([] as never)                  // requestsByDay
+        .mockResolvedValueOnce([] as never)                  // lastRequest
+        .mockResolvedValueOnce([] as never);                 // keys
+
+      const res = await app.inject({
+        method: "GET",
+        url: "/keys/usage?org=org_mine",
+        headers: AUTH,
+      });
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toMatchObject({ totalRequests: 12, requestsThisMonth: 4 });
+    });
+
+    it("no ?org param → no membership check, original 5-query path", async () => {
+      // Without the param the route skips the membership SELECT and
+      // queues straight into the 5 dashboard queries. If membership had
+      // fired we'd be off-by-one and totalRequests would read 0/wrong.
+      vi.mocked(sql)
+        .mockResolvedValueOnce([{ count: 99 }] as never)
+        .mockResolvedValueOnce([{ count: 11 }] as never)
+        .mockResolvedValueOnce([] as never)
+        .mockResolvedValueOnce([] as never)
+        .mockResolvedValueOnce([] as never);
+
+      const res = await app.inject({ method: "GET", url: "/keys/usage", headers: AUTH });
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toMatchObject({ totalRequests: 99, requestsThisMonth: 11 });
+    });
+  });
 });
