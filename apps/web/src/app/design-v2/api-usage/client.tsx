@@ -98,19 +98,28 @@ export default function ApiUsageClient() {
     }
   }, [router, activeOrgId]);
 
-  /* AR-289: keep activeOrgId in sync if the user switches org in
-     another tab (storage event fires cross-tab) OR via a window-level
-     custom event we'll emit from the OrgSwitcher on same-tab switch
-     (a follow-up; for now storage-event handles cross-tab + the
-     useState lazy initializer handles initial mount). */
+  /* AR-289: keep activeOrgId in sync when the user switches org.
+     Two paths:
+       - `storage` event fires from OTHER tabs (cross-tab sync).
+       - `oga:active-org-changed` custom event fires from the
+         OrgSwitcher on SAME-tab switch — dispatched alongside the
+         localStorage.setItem in switchTo / onCreated. */
   useEffect(() => {
     function onStorage(e: StorageEvent) {
       if (e.key === "oga-active-org-id") {
         setActiveOrgId(e.newValue);
       }
     }
+    function onSameTabSwitch(e: Event) {
+      const detail = (e as CustomEvent<{ orgId?: string }>).detail;
+      setActiveOrgId(detail?.orgId ?? null);
+    }
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    window.addEventListener("oga:active-org-changed", onSameTabSwitch);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("oga:active-org-changed", onSameTabSwitch);
+    };
   }, []);
 
   const openCreateModal = useCallback(() => {
