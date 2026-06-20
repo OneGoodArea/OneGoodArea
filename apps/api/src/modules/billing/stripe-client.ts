@@ -24,7 +24,10 @@ function getStripeClient() {
     throw new Error("Neither apiKey nor config.authenticator provided");
   }
 
-  stripeClient = new Stripe(secretKey, { typescript: true });
+  stripeClient = new Stripe(secretKey, {
+    typescript: true,
+    ...(config.stripeApiBaseUrl ? { apiBase: config.stripeApiBaseUrl } : {}),
+  });
   return stripeClient;
 }
 
