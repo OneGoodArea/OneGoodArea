@@ -20,11 +20,12 @@ Marcos flagged 2026-06-12 that `apps/api/src/app.ts` is too large and should be 
 
 | Metric | Value |
 |---|---|
-| `app.ts` total lines | **4,811** |
-| Route registrations | **94** |
+| `app.ts` total lines | **4,893** (verified 2026-06-20) |
+| Route registrations | **94** (37 GET, 37 POST, 5 PATCH, 14 DELETE, 1 PUT — incl. typed-generic routes `app.delete<{...}>(...)`) |
 | Unique route paths | **~60** |
-| Top-level helper functions | **11** (auth, CORS, ip extraction, bundle resolution, etc.) |
+| Top-level helper functions | **12** (auth ×4 incl. `authenticateEither`, CORS, ip extraction, bundle resolution, etc.) |
 | Module-level imports | **~50** (from `./modules/*` + infrastructure + contracts) |
+| Middleware added since plan | `@fastify/swagger` + `@fastify/swagger-ui` registered in `buildApp` (`/docs`, `/openapi.json`) — stays inline |
 
 The business logic already lives in `apps/api/src/modules/{orgs,signals,scoring,intelligence,monitor,api-keys,...}`. What sits in `app.ts` is mostly:
 
@@ -61,6 +62,7 @@ apps/api/src/
 ├── shared/
 │   ├── auth-api.ts             # authenticate, requireApiAccess, requireApiAccessWithOrg (API-key callers)
 │   ├── auth-session.ts         # authenticateSession (NextAuth bridge callers)
+│   ├── auth-either.ts          # authenticateEither (dual-auth for /v1/orgs/*; imports auth-api + auth-session)
 │   ├── bundles.ts              # resolveBundleForCaller, effectiveEngineVersionForCaller
 │   ├── http.ts                 # widgetCorsHeaders, clientIpOf, headerString, isFromMcpServer
 │   └── errors.ts               # isAppError narrowing helper (re-exported from infrastructure/errors if it lives there)
@@ -92,26 +94,28 @@ apps/api/src/
 
 ## 5. Per-file route inventory
 
+_Line numbers verified 2026-06-20 against `app.ts` @ 4,893 LOC. Routes use both plain (`app.get("...")`) and typed-generic (`app.delete<{ Params }>("...")`) forms — the split lifts both verbatim._
+
 | File | Routes (lines in current `app.ts`) | Approx LOC |
 |---|---|---|
-| `routes/system.ts` | `/health` (536), `/v1/meta` (548), `/cron/rescore` (4786) | ~60 |
-| `routes/auth.ts` | `/auth/register` (4030), `/auth/resend-verification` (4111), `/auth/forgot-password` (4158), `/auth/reset-password` (4206), `/auth/login` (4251), `/auth/magic-link/request` (4307), `/auth/check-email` GET (4357), `/auth/check-email` POST (4396), `/auth/oauth-callback` (4437), `/settings/password` (4483), `/settings/delete-account` (3880) | ~430 |
-| `routes/me.ts` | `/v1/me` (651), `/me/reports` (564), `/me/activity` (600), `/me/is-superuser` (633), `/usage` (3513), `/dashboard` (3529), `/settings/subscription` (3620), `/watchlist` GET (4593), `/watchlist` POST (4614), `/watchlist/:id` DELETE (4648), `/track` (3910) | ~380 |
-| `routes/api-keys.ts` | `/keys` GET (3827), `/keys` POST (3841), `/keys/:id` DELETE (3860), `/keys/usage` (3661) | ~150 |
-| `routes/reports.ts` | `/v1/report` (774), `/report` POST (4531), `/report/:id` GET (3767), `/report/:id` DELETE (3801) | ~280 |
-| `routes/stripe.ts` | `/stripe/webhook` (3187), `/stripe/portal` (3198), `/stripe/cancel` (3222), `/stripe/checkout` (3275), `/stripe/addon-checkout` (3405) | ~320 |
-| `routes/signals.ts` | `/v1/area` (883), `/v1/signals/:category` (960), `/v1/areas` (1022), `/widget` (3966) | ~220 |
-| `routes/scoring.ts` | `/v1/score` (1083), `/v1/batch` (2951) | ~210 |
-| `routes/portfolios.ts` | `/v1/portfolios` POST (1205), GET (1232), `/v1/portfolios/:id` GET (1253), DELETE (1277), `/v1/portfolios/:id/areas` (1301), `/v1/portfolios/:id/enrich` (1341), `/v1/portfolios/:id/changes` (1374) | ~270 |
-| `routes/orgs.ts` | `/v1/orgs` POST (1436), GET (1473), `/v1/orgs/:id` GET (1495), PATCH (1519) | ~90 |
-| `routes/org-members.ts` | members GET (1557), POST (1582), PATCH (1633), DELETE (1702), invitations POST (1771), GET (1818), DELETE (1843), accept (1873) | ~300 |
-| `routes/org-bundles.ts` | POST (1943), GET (1992), GET `/:bundleId` (2019), PATCH (2045), DELETE (2096) | ~200 |
-| `routes/org-presets.ts` | POST (2133), GET (2183), GET `/:presetId` (2209), PATCH (2235), DELETE (2293) | ~190 |
-| `routes/org-cohorts.ts` | POST (2405), GET (2447), GET `/:cohortId` (2473), PATCH (2499), DELETE (2541) | ~170 |
-| `routes/org-methodology.ts` | GET (2332), PUT (2357), DELETE (2571) | ~60 |
-| `routes/intelligence.ts` | `/v1/query` (2608), `/v1/peers` (2688), `/v1/insights` (2801), `/v1/forecast` (2863) | ~360 |
-| `routes/webhooks.ts` | `/v1/webhooks` POST (3060), GET (3106), `/v1/webhooks/:id` DELETE (3134), `/v1/webhooks/:id/rotate-secret` POST (3160) | ~130 |
-| `routes/admin.ts` | `/admin/analytics` (4676), `/admin/traffic-analytics` (4692), `/admin/audience` (4711), `/admin/usage` (4737), `/admin/revenue` (4763) | ~90 |
+| `routes/system.ts` | `/health` (536), `/v1/meta` (548), `/cron/rescore` (4868) | ~60 |
+| `routes/auth.ts` | `/auth/register` (4112), `/auth/resend-verification` (4193), `/auth/forgot-password` (4240), `/auth/reset-password` (4288), `/auth/login` (4333), `/auth/magic-link/request` (4389), `/auth/check-email` GET (4439), `/auth/check-email` POST (4478), `/auth/oauth-callback` (4519), `/settings/password` (4565), `/settings/delete-account` (3962) | ~430 |
+| `routes/me.ts` | `/v1/me` (651), `/me/reports` (564), `/me/activity` (600), `/me/is-superuser` (633), `/usage` (3540), `/dashboard` (3556), `/settings/subscription` (3647), `/watchlist` GET (4675), `/watchlist` POST (4696), `/watchlist/:id` DELETE (4730), `/track` (3992) | ~380 |
+| `routes/api-keys.ts` | `/keys` GET (3909), `/keys` POST (3923), `/keys/:id` DELETE (3942), `/keys/usage` (3688) | ~150 |
+| `routes/reports.ts` | `/v1/report` (774), `/report` POST (4613), `/report/:id` GET (3849), `/report/:id` DELETE (3883) | ~280 |
+| `routes/stripe.ts` | `/stripe/webhook` (3214), `/stripe/portal` (3225), `/stripe/cancel` (3249), `/stripe/checkout` (3302), `/stripe/addon-checkout` (3432) | ~320 |
+| `routes/signals.ts` | `/v1/area` (887), `/v1/signals/:category` (964), `/v1/areas` (1027), `/widget` (4048) | ~220 |
+| `routes/scoring.ts` | `/v1/score` (1088), `/v1/batch` (2974) | ~210 |
+| `routes/portfolios.ts` | `/v1/portfolios` POST (1222), GET (1250), `/v1/portfolios/:id` GET (1271), DELETE (1295), `/v1/portfolios/:id/areas` (1319), `/v1/portfolios/:id/enrich` (1360), `/v1/portfolios/:id/changes` (1394) | ~270 |
+| `routes/orgs.ts` | `/v1/orgs` POST (1457), GET (1494), `/v1/orgs/:id` GET (1516), PATCH (1540) — all use `authenticateEither` (dual-auth) | ~90 |
+| `routes/org-members.ts` | members GET (1578), POST (1603), PATCH (1654), DELETE (1723), invitations POST (1792), GET (1839), DELETE (1864), accept (1894) — dual-auth | ~300 |
+| `routes/org-bundles.ts` | POST (1964), GET (2013), GET `/:bundleId` (2040), PATCH (2066), DELETE (2117) | ~200 |
+| `routes/org-presets.ts` | POST (2154), GET (2204), GET `/:presetId` (2230), PATCH (2256), DELETE (2314) | ~190 |
+| `routes/org-cohorts.ts` | POST (2426), GET (2468), GET `/:cohortId` (2494), PATCH (2520), DELETE (2562) | ~170 |
+| `routes/org-methodology.ts` | GET (2353), PUT (2378), DELETE (2592) | ~60 |
+| `routes/intelligence.ts` | `/v1/query` (2629), `/v1/peers` (2709), `/v1/insights` (2822), `/v1/forecast` (2885) | ~360 |
+| `routes/webhooks.ts` | `/v1/webhooks` POST (3087), GET (3133), `/v1/webhooks/:id` DELETE (3161), `/v1/webhooks/:id/rotate-secret` POST (3187) | ~130 |
+| `routes/admin.ts` | `/admin/analytics` (4758), `/admin/traffic-analytics` (4774), `/admin/audience` (4793), `/admin/usage` (4819), `/admin/revenue` (4845) | ~90 |
 | **Total** | **94 routes** | **~3,710 LOC** (distributed) |
 | `app.ts` after split | wiring only | **~150 LOC** |
 
@@ -179,7 +183,8 @@ export function buildApp(opts: { logger?: boolean } = {}): FastifyInstance {
     bodyLimit: 1 * 1024 * 1024,
   });
 
-  // CORS, hooks, error handler, etc. (whatever was inline before)
+  // CORS, hooks, error handler, @fastify/swagger + swagger-ui (/docs, /openapi.json),
+  // and all other middleware stay inline here exactly as before.
 
   registerSystemRoutes(app);
   registerAuthRoutes(app);
@@ -211,12 +216,17 @@ Target: **~150 LOC**. Everything else is import lines.
 
 These currently live as top-level functions in `app.ts`. They are USED by multiple route files, so they must lift — but Marcos's rule is clear: each `shared/*.ts` file is a single-purpose module, NOT a utility class.
 
+_Helper line numbers verified 2026-06-20._
+
 | Current location | New location | Used by |
 |---|---|---|
-| `authenticate`, `requireApiAccess`, `requireApiAccessWithOrg` | `shared/auth-api.ts` | every route file (API-key callers) |
-| `authenticateSession` | `shared/auth-session.ts` | `routes/auth.ts`, `routes/me.ts`, and any session-gated routes |
-| `resolveOrgPinForCaller` (308), `effectiveEngineVersionForCaller` (333), `resolveBundleForCaller` (349) | `shared/bundles.ts` | `routes/scoring.ts`, `routes/signals.ts`, `routes/intelligence.ts` |
-| `isFromMcpServer` (146), `headerString` (152), `clientIpOf` (161), `widgetCorsHeaders` (171) | `shared/http.ts` | `routes/me.ts` (track), `routes/signals.ts` (widget), several others |
+| `authenticate` (205), `requireApiAccess` (231), `requireApiAccessWithOrg` (263) | `shared/auth-api.ts` | every route file (API-key callers) |
+| `authenticateSession` (342) | `shared/auth-session.ts` | `routes/auth.ts`, `routes/me.ts`, and any session-gated routes |
+| `authenticateEither` (290) | `shared/auth-either.ts` | `routes/orgs.ts`, `routes/org-members.ts` (all `/v1/orgs/*` + `/v1/invitations/*` dual-auth callers) |
+| `resolveOrgPinForCaller` (370), `effectiveEngineVersionForCaller` (395), `resolveBundleForCaller` (411) | `shared/bundles.ts` | `routes/scoring.ts`, `routes/signals.ts`, `routes/intelligence.ts` |
+| `isFromMcpServer` (154), `headerString` (160), `clientIpOf` (169), `widgetCorsHeaders` (179) | `shared/http.ts` | `routes/me.ts` (track), `routes/signals.ts` (widget), several others |
+
+**`authenticateEither`** (added since plan, commit `87b58c6`) bridges API-key + NextAuth-session auth for org CRUD. It depends on both `auth-api` and `auth-session`, so it lives in its own `shared/auth-either.ts` that imports from those two — it is NOT a utility grab-bag; it is a single-purpose dual-auth gate, same cohesion rule as the others.
 
 **`isAppError`** narrowing helper — already lives in `infrastructure/errors/*` and is imported, so no move; just keep the existing import path.
 
@@ -295,7 +305,7 @@ Verifies: same total pass count as before relocation. No orphaned tests.
 - ❌ NOT fixing any of the bugs surfaced by the 06-12 sweep (place-name 500s, member FK validation, methodology mutation, Render stale deploy). Those get their own tickets. The split is purely structural so a structural review is uncontaminated by behavioural fixes.
 - ❌ NOT refactoring the handler bodies. We are MOVING code, not rewriting it.
 - ❌ NOT introducing Fastify plugins / route plugins. The `register<X>Routes(app)` function pattern is intentional — Fastify plugins would add framework complexity for no readability win. Marcos's mandate is cohesive modules, not framework features.
-- ❌ NOT extracting middleware into per-route hooks. Existing hook wiring on `app` stays inline in `buildApp`.
+- ❌ NOT extracting middleware into per-route hooks. Existing hook wiring on `app` stays inline in `buildApp`. This includes the `@fastify/swagger` + `@fastify/swagger-ui` registration (`/docs`, `/openapi.json`) added since the original plan — it stays in `buildApp`, untouched.
 - ❌ NOT creating a `RouteUtils` class. Per Marcos's exact words.
 
 ---
@@ -321,3 +331,5 @@ After sign-off:
 ---
 
 _Plan author: Claude Code, 2026-06-12. Updated 2026-06-15: inventory refreshed (94 routes, 4,811 LOC), admin domain added, auth split into auth-api/auth-session, verification updated to container builds, PR 4 (test relocation) added, open questions resolved._
+
+_Re-validated 2026-06-20: split has NOT started (no `shared/` or `routes/` dirs; modules structure intact). Strategy, target shape, sequencing, `make build-api-image`/`build-web-image` targets, and the `2026-06-12` testing doc all still hold. Route count still 94 (37 GET / 37 POST / 5 PATCH / 14 DELETE / 1 PUT). Drift corrected: `app.ts` 4,811 → 4,893 LOC; all section-5 and section-8 line numbers refreshed; new `authenticateEither` dual-auth helper (commit `87b58c6`) added to `shared/` as `auth-either.ts`; `@fastify/swagger` + swagger-ui middleware noted as staying inline in `buildApp`._
