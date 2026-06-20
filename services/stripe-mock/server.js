@@ -9,8 +9,12 @@ let expectations = [];
 let calls = [];
 
 const json = (res, status, body) => {
-  res.writeHead(status, { "content-type": "application/json" });
-  res.end(JSON.stringify(body));
+  const payload = Buffer.from(JSON.stringify(body), "utf-8");
+  res.writeHead(status, {
+    "content-type": "application/json",
+    "content-length": payload.length,
+  });
+  res.end(payload);
 };
 
 /** Read the request body as a UTF-8 string. */
@@ -22,6 +26,52 @@ function readBody(req) {
     });
     req.on("end", () => resolve(raw));
   });
+}
+
+/**
+ * Parse application/x-www-form-urlencoded into a nested object.
+ * Converts "items[0][id]=si_1&items[0][price]=p_1" into
+ * { items: [{ id: "si_1", price: "p_1" }] }.
+ */
+function parseFormBody(raw) {
+  const params = new URLSearchParams(raw);
+  const result = {};
+
+  // Stripe form-encodes every value as a string. Coerce booleans back so test
+  // assertions can use the original JS types (e.g. cancel_at_period_end: true).
+  // Numbers are deliberately left as strings — many Stripe IDs are
+  // numeric-looking and must not be silently converted.
+  const coerce = (v) => (v === "true" ? true : v === "false" ? false : v);
+
+  for (const [key, value] of params) {
+    // Handle nested keys like metadata[user_id], items[0][id], etc.
+    const segments = key.split(/[\[\]]+/).filter(Boolean);
+
+    if (segments.length === 1) {
+      result[segments[0]] = coerce(value);
+      continue;
+    }
+
+    let current = result;
+    for (let i = 0; i < segments.length; i++) {
+      const seg = segments[i];
+      const isLast = i === segments.length - 1;
+
+      if (isLast) {
+        current[seg] = coerce(value);
+      } else if (segments[i + 1] && /^\d+$/.test(segments[i + 1])) {
+        // Next segment is numeric — this one is an array
+        if (!current[seg]) current[seg] = [];
+        current = current[seg];
+      } else {
+        // Next segment is a string key
+        if (!current[seg]) current[seg] = {};
+        current = current[seg];
+      }
+    }
+  }
+
+  return result;
 }
 
 const server = http.createServer(async (req, res) => {
@@ -67,7 +117,9 @@ const server = http.createServer(async (req, res) => {
     try {
       parsedBody = JSON.parse(raw);
     } catch (_e) {
-      parsedBody = raw;
+      // Stripe SDK sends application/x-www-form-urlencoded by default.
+      // Parse into an object so test assertions can use toMatchObject.
+      parsedBody = parseFormBody(raw);
     }
   }
 
