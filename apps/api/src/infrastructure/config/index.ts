@@ -29,6 +29,7 @@ export interface ApiConfig {
 
   // Stripe
   stripeSecretKey: string | undefined;
+  stripeApiBaseUrl: string | undefined;
   stripeWebhookSecret: string | undefined;
   stripePriceIds: {
     starter: string;
@@ -94,6 +95,7 @@ export function getConfig(): ApiConfig {
 
     // Stripe
     stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+    stripeApiBaseUrl: process.env.STRIPE_API_BASE_URL || undefined,
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
     stripePriceIds: {
       starter: process.env.STRIPE_STARTER_PRICE_ID || "",

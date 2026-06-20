@@ -1,4 +1,4 @@
-.PHONY: compose-down api-test-container api-test-coverage-container web-test-container web-test-coverage-container build-api-test-image build-web-test-image build-test-images
+.PHONY: compose-down api-test-container api-test-coverage-container web-test-container web-test-coverage-container build-api-test-image build-web-test-image build-stripe-mock-test-image build-test-images
 
 COMPOSE_TEST_FILE ?= compose/compose.test.yml
 CTR_COMPOSE_TEST_CMD = $(CTR_COMPOSE) -f $(COMPOSE_TEST_FILE) --project-name oga-test
@@ -27,5 +27,8 @@ build-api-test-image: ## Build the api-test Docker image from current branch sou
 build-web-test-image: ## Build the web-test Docker image from current branch sources
 	$(CTR_COMPOSE_TEST_CMD) build web-test
 
-build-test-images: ## Build both api-test and web-test Docker images
-	$(CTR_COMPOSE_TEST_CMD) build api-test web-test
+build-stripe-mock-test-image: ## Build the stripe-mock-test Docker image
+	$(CTR_COMPOSE_TEST_CMD) build stripe-mock-test
+
+build-test-images: ## Build all test Docker images
+	$(CTR_COMPOSE_TEST_CMD) build stripe-mock-test api-test web-test

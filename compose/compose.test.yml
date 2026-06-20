@@ -49,6 +49,18 @@ services:
       retries: 20
       start_period: 5s
 
+  stripe-mock-test:
+    build:
+      context: ../services/stripe-mock
+      dockerfile: Dockerfile
+    image: onegoodarea/stripe-mock:local
+    healthcheck:
+      test: ["CMD", "node", "healthcheck.js"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
   api-test:
     build:
       context: ..
@@ -67,7 +79,11 @@ services:
       OGA_SIGNALS_API: "true"
       OGA_SIGNALS_STORE_READ: "true"
       CRON_SECRET: test-secret-do-not-use-in-prod
+      STRIPE_API_BASE_URL: http://stripe-mock-test:12111
+      STRIPE_SECRET_KEY: sk_test_mock
     depends_on:
+      stripe-mock-test:
+        condition: service_healthy
       neon-proxy-test:
         condition: service_healthy
       postgres-test:

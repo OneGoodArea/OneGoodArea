@@ -1,5 +1,11 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { getConfig } from "@/infrastructure/config/index";
+
+// Hermetic: the container test env (compose.test.yml) sets OGA_AI_PROVIDER=mock,
+// so clear it before each test — the default-value test must not see ambient env.
+beforeEach(() => {
+  delete process.env.OGA_AI_PROVIDER;
+});
 
 afterEach(() => {
   delete process.env.OGA_AI_PROVIDER;

@@ -24,7 +24,18 @@ function getStripeClient() {
     throw new Error("Neither apiKey nor config.authenticator provided");
   }
 
-  stripeClient = new Stripe(secretKey, { typescript: true });
+  const stripeOpts: Record<string, unknown> = { typescript: true };
+  if (config.stripeApiBaseUrl) {
+    // Point the SDK at the local stripe-mock service (tests / local stacks).
+    const u = new URL(config.stripeApiBaseUrl);
+    stripeOpts.host = u.hostname;
+    stripeOpts.port = u.port || (u.protocol === "https:" ? "443" : "80");
+    stripeOpts.protocol = u.protocol.replace(":", "") as "http" | "https";
+    // No retries against the mock: an unmatched expectation should fail the
+    // test immediately instead of burning the SDK's exponential backoff.
+    stripeOpts.maxNetworkRetries = 0;
+  }
+  stripeClient = new Stripe(secretKey, stripeOpts as Stripe.StripeConfig);
   return stripeClient;
 }
 
