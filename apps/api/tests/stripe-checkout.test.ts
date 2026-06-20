@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import http from "http";
 
 vi.mock("@/modules/auth/session-token", () => ({ verifySessionToken: vi.fn() }));
 vi.mock("@/modules/usage", () => ({
@@ -28,24 +29,52 @@ const mockSql = vi.mocked(sql);
 
 const AUTH = { authorization: "Bearer session.jwt", "content-type": "application/json" };
 
-/** Base URL of the stripe-mock service for control API calls. */
+/** Base URL of the stripe-mock service for control API calls.
+ *  Uses Node http module (not fetch) to bypass MSW's fetch interceptor. */
 const MOCK_URL = process.env.STRIPE_API_BASE_URL || "http://localhost:12111";
+const MOCK_HOST = new URL(MOCK_URL).hostname;
+const MOCK_PORT = Number(new URL(MOCK_URL).port);
 
-async function mockReset() {
-  await fetch(`${MOCK_URL}/__test/reset`, { method: "POST" });
-}
-
-async function mockExpect(method: string, path: string, status = 200, body: unknown = {}) {
-  await fetch(`${MOCK_URL}/__test/expect`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ method, path, status, body }),
+function mockRequest(method: string, path: string, body?: unknown): Promise<{ status: number; data: unknown }> {
+  return new Promise((resolve, reject) => {
+    const payload = body ? JSON.stringify(body) : undefined;
+    const req = http.request(
+      {
+        hostname: MOCK_HOST,
+        port: MOCK_PORT,
+        path,
+        method,
+        headers: body ? { "content-type": "application/json" } : undefined,
+        timeout: 5000,
+      },
+      (res) => {
+        let raw = "";
+        res.on("data", (chunk) => { raw += chunk; });
+        res.on("end", () => {
+          let data: unknown = raw;
+          try { data = JSON.parse(raw); } catch { /* keep as string */ }
+          resolve({ status: res.statusCode || 0, data });
+        });
+      },
+    );
+    req.on("error", reject);
+    req.on("timeout", () => { req.destroy(); reject(new Error("timeout")); });
+    if (payload) req.write(payload);
+    req.end();
   });
 }
 
+async function mockReset() {
+  await mockRequest("POST", "/__test/reset");
+}
+
+async function mockExpect(method: string, path: string, status = 200, body: unknown = {}) {
+  await mockRequest("POST", "/__test/expect", { method, path, status, body });
+}
+
 async function getCalls() {
-  const res = await fetch(`${MOCK_URL}/__test/calls`);
-  return res.json() as Promise<Array<{ method: string; path: string; body: unknown }>>;
+  const res = await mockRequest("GET", "/__test/calls");
+  return (res.data as Array<{ method: string; path: string; body: unknown }>) || [];
 }
 
 beforeEach(async () => {

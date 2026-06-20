@@ -1,12 +1,14 @@
 # Plan 024: Stripe Mock Integration — Config, Compose, and Test Migration (AR-318 Phase 2)
 
+## Status: IMPLEMENTED ✅ — pending container verification
+
 ## 1. JIRA Integration
 
 - **Jira Issue:** AR-322
 - **Previous Phase Jira:** AR-321 (Done — standalone mock service)
 - **Plan File:** `plan/024_stripe_mock_integration_AR318.md`
 - **Previous Plan:** `plan/023_stripe_mock_service_AR318.md`
-- **Branch:** `feat/AR-318-stripe-mock-service`
+- **Branch:** `feat/AR-322-stripe-mock-integration`
 
 ---
 
@@ -123,12 +125,12 @@ build-test-images: ## Build all test Docker images
 
 ## 7. Verification Checklist
 
-- [ ] `STRIPE_API_BASE_URL` env var is picked up by `stripe-client.ts` and passed to Stripe constructor
+- [x] `STRIPE_API_BASE_URL` env var is picked up by `stripe-client.ts` and passed to Stripe constructor
 - [ ] `make build-test-images` builds the stripe-mock service
 - [ ] `make api-test-container` passes all stripe checkout tests
 - [ ] `make api-test-container` passes all stripe session route tests
 - [ ] `npm run test -w @onegoodarea/api` still passes locally (no regressions)
-- [ ] `npm run typecheck` passes
+- [x] `npm run typecheck` passes
 
 ---
 

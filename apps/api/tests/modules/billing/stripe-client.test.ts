@@ -27,10 +27,12 @@ beforeEach(() => {
   instanceCount = 0;
   lastArgs = [];
   delete process.env.STRIPE_SECRET_KEY;
+  delete process.env.STRIPE_API_BASE_URL;
 });
 
 afterAll(() => {
   delete process.env.STRIPE_SECRET_KEY;
+  delete process.env.STRIPE_API_BASE_URL;
 });
 
 describe("stripe client proxy", () => {
