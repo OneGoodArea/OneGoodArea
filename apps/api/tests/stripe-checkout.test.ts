@@ -6,23 +6,17 @@ vi.mock("@/modules/usage", () => ({
   hasAddon: vi.fn(),
   getUserPlan: vi.fn(),
 }));
-vi.mock("@/modules/billing/stripe-client", () => ({
-  stripe: {
-    customers: { retrieve: vi.fn(), create: vi.fn() },
-    subscriptions: { retrieve: vi.fn(), update: vi.fn() },
-    checkout: { sessions: { create: vi.fn() } },
-  },
-}));
 vi.mock("@/modules/tracking/activity", () => ({ trackEvent: vi.fn() }));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
 // billing/plans kept REAL so PLANS / ADDONS / V2_PAID_PLANS reflect production.
+// stripe-client also kept REAL — it connects to the stripe-mock Docker service.
 
 import { buildApp } from "@/app";
 import { verifySessionToken } from "@/modules/auth/session-token";
 import { getUserEmail, hasAddon, getUserPlan } from "@/modules/usage";
-import { stripe } from "@/modules/billing/stripe-client";
 import { trackEvent } from "@/modules/tracking/activity";
 import { sql } from "@/infrastructure/db/client";
+import { APP_URL } from "@/infrastructure/config";
 
 const app = await buildApp();
 
@@ -30,21 +24,36 @@ const mockVerify = vi.mocked(verifySessionToken);
 const mockEmail = vi.mocked(getUserEmail);
 const mockHasAddon = vi.mocked(hasAddon);
 const mockGetPlan = vi.mocked(getUserPlan);
-const mockCustomerCreate = vi.mocked(stripe.customers.create);
-const mockSubRetrieve = vi.mocked(stripe.subscriptions.retrieve);
-const mockSubUpdate = vi.mocked(stripe.subscriptions.update);
-const mockCheckoutCreate = vi.mocked(stripe.checkout.sessions.create);
 const mockSql = vi.mocked(sql);
 
 const AUTH = { authorization: "Bearer session.jwt", "content-type": "application/json" };
 
-beforeEach(() => {
+/** Base URL of the stripe-mock service for control API calls. */
+const MOCK_URL = process.env.STRIPE_API_BASE_URL || "http://localhost:12111";
+
+async function mockReset() {
+  await fetch(`${MOCK_URL}/__test/reset`, { method: "POST" });
+}
+
+async function mockExpect(method: string, path: string, status = 200, body: unknown = {}) {
+  await fetch(`${MOCK_URL}/__test/expect`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ method, path, status, body }),
+  });
+}
+
+async function getCalls() {
+  const res = await fetch(`${MOCK_URL}/__test/calls`);
+  return res.json() as Promise<Array<{ method: string; path: string; body: unknown }>>;
+}
+
+beforeEach(async () => {
   vi.clearAllMocks();
+  await mockReset();
   mockVerify.mockResolvedValue({ userId: "user_1" });
   mockEmail.mockResolvedValue("user@example.com");
   mockSql.mockResolvedValue([] as never);
-  mockCustomerCreate.mockResolvedValue({ id: "cus_new" } as never);
-  mockCheckoutCreate.mockResolvedValue({ url: "https://checkout.stripe.com/c/sess_1" } as never);
 });
 
 describe("POST /stripe/checkout", () => {
@@ -64,34 +73,55 @@ describe("POST /stripe/checkout", () => {
   });
 
   it("new customer: creates customer + checkout session pointing at the frontend", async () => {
+    await mockExpect("POST", "/v1/customers", 200, { id: "cus_new" });
+    await mockExpect("POST", "/v1/checkout/sessions", 200, { url: "https://checkout.stripe.com/c/sess_1" });
+
     const res = await post({ plan: "build" });
     expect(res.statusCode).toBe(200);
     expect(res.json().url).toBe("https://checkout.stripe.com/c/sess_1");
-    expect(mockCustomerCreate).toHaveBeenCalledWith({
+
+    const calls = await getCalls();
+    const customerCall = calls.find((c) => c.method === "POST" && c.path === "/v1/customers");
+    expect(customerCall).toBeDefined();
+    expect(customerCall!.body).toMatchObject({
       email: "user@example.com",
       metadata: { user_id: "user_1" },
     });
-    expect(mockCheckoutCreate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        success_url: "https://www.onegoodarea.com/dashboard?upgraded=true",
-        cancel_url: "https://www.onegoodarea.com/pricing",
-        metadata: { user_id: "user_1", plan: "build" },
-      }),
-    );
+
+    const checkoutCall = calls.find((c) => c.method === "POST" && c.path === "/v1/checkout/sessions");
+    expect(checkoutCall).toBeDefined();
+    expect(checkoutCall!.body).toMatchObject({
+      success_url: `${APP_URL}/dashboard?upgraded=true`,
+      cancel_url: `${APP_URL}/pricing`,
+      metadata: { user_id: "user_1", plan: "build" },
+    });
+
     expect(trackEvent).toHaveBeenCalledWith("plan.upgrade.started", "user_1", { plan: "build" });
   });
 
   it("existing active subscription: swaps the plan in place (proration), no new checkout", async () => {
     mockSql.mockResolvedValueOnce([{ stripe_customer_id: "cus_1", stripe_subscription_id: "sub_1" }] as never);
-    mockSubRetrieve.mockResolvedValue({ status: "active", items: { data: [{ id: "si_1" }] } } as never);
+    await mockExpect("GET", "/v1/subscriptions/sub_1", 200, { status: "active", items: { data: [{ id: "si_1" }] } });
+    await mockExpect("POST", "/v1/subscriptions/sub_1", 200, {});
+
     const res = await post({ plan: "scale" });
     expect(res.statusCode).toBe(200);
     expect(res.json().url).toBe("/dashboard?upgraded=true");
-    expect(mockSubUpdate).toHaveBeenCalledWith("sub_1", {
+
+    const calls = await getCalls();
+    const subRetrieveCall = calls.find((c) => c.method === "GET" && c.path === "/v1/subscriptions/sub_1");
+    expect(subRetrieveCall).toBeDefined();
+
+    const subUpdateCall = calls.find((c) => c.method === "POST" && c.path === "/v1/subscriptions/sub_1");
+    expect(subUpdateCall).toBeDefined();
+    expect(subUpdateCall!.body).toMatchObject({
       items: [{ id: "si_1", price: expect.any(String) }],
       proration_behavior: "create_prorations",
     });
-    expect(mockCheckoutCreate).not.toHaveBeenCalled();
+
+    const checkoutCall = calls.find((c) => c.path === "/v1/checkout/sessions");
+    expect(checkoutCall).toBeUndefined();
+
     expect(trackEvent).toHaveBeenCalledWith("plan.changed", "user_1", { plan: "scale" });
   });
 });
@@ -120,7 +150,10 @@ describe("POST /stripe/addon-checkout", () => {
     const res = await post({ addon: "mcp" });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ already_owned: true });
-    expect(mockCheckoutCreate).not.toHaveBeenCalled();
+
+    const calls = await getCalls();
+    const checkoutCall = calls.find((c) => c.path === "/v1/checkout/sessions");
+    expect(checkoutCall).toBeUndefined();
   });
 
   it("short-circuits (200) when the plan already includes the entitlement", async () => {
@@ -128,20 +161,28 @@ describe("POST /stripe/addon-checkout", () => {
     const res = await post({ addon: "mcp" });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ plan_includes: true });
-    expect(mockCheckoutCreate).not.toHaveBeenCalled();
+
+    const calls = await getCalls();
+    const checkoutCall = calls.find((c) => c.path === "/v1/checkout/sessions");
+    expect(checkoutCall).toBeUndefined();
   });
 
   it("creates an isolated add-on subscription checkout with addon metadata", async () => {
+    await mockExpect("POST", "/v1/checkout/sessions", 200, { url: "https://checkout.stripe.com/c/sess_1" });
+
     const res = await post({ addon: "mcp" });
     expect(res.statusCode).toBe(200);
     expect(res.json().url).toBe("https://checkout.stripe.com/c/sess_1");
-    expect(mockCheckoutCreate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        metadata: { user_id: "user_1", addon: "mcp" },
-        subscription_data: { metadata: { user_id: "user_1", addon: "mcp" } },
-        success_url: "https://www.onegoodarea.com/dashboard?addon=mcp&purchased=1",
-      }),
-    );
+
+    const calls = await getCalls();
+    const checkoutCall = calls.find((c) => c.method === "POST" && c.path === "/v1/checkout/sessions");
+    expect(checkoutCall).toBeDefined();
+    expect(checkoutCall!.body).toMatchObject({
+      metadata: { user_id: "user_1", addon: "mcp" },
+      subscription_data: { metadata: { user_id: "user_1", addon: "mcp" } },
+      success_url: `${APP_URL}/dashboard?addon=mcp&purchased=1`,
+    });
+
     expect(trackEvent).toHaveBeenCalledWith("addon.purchase.started", "user_1", { addon: "mcp" });
   });
 });
