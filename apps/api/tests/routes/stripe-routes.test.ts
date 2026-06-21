@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from "vitest";
-import { mockReset, mockExpect, getCalls } from "./stripe-mock-control";
-import { server } from "./msw-server";
+import { mockReset, mockExpect, getCalls } from "../stripe-mock-control";
+import { server } from "../msw-server";
 
 /* Stripe route tests (checkout / addon-checkout / portal / cancel).
  *
