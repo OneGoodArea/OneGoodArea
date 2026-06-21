@@ -28,7 +28,7 @@ curl -X POST "https://onegoodarea.onrender.com/v1/score" \
 With custom weights over the chosen preset's dimensions:
 
 ```bash
-curl -X POST "https://onegoodarea.onrender.com/v1/score" \
+curl -X POST "https://onegoodarea.com/v1/score" \
   -H "Authorization: Bearer $OGA_KEY" \
   -H "Content-Type: application/json" \
   -d '{"area":"M1 1AE","preset":"moving","weights":{"safety_crime":0.5,"schools_education":0.3}}'

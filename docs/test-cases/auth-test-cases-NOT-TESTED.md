@@ -1,0 +1,204 @@
+# Authentication — Test Cases
+
+> **Source:** https://www.onegoodarea.com/ (Engine v2.0.2)
+> **Auth pages:** `/sign-in`, `/sign-up`, `/forgot-password`, `/reset-password`, `/verify`
+> **Last updated:** 2026-06-19
+
+## Scope
+
+Covers the full authentication lifecycle on OneGoodArea: sign-up (email + OAuth), email verification, sign-in (credentials + OAuth), session management, forgot/reset password, and error/edge cases. Does **not** cover post-authentication dashboard behaviour (see `dashboard-test-cases.md`).
+
+### Source files validated against
+
+| Layer | File |
+|-------|------|
+| Sign-in UI | `apps/web/src/app/design-v2/sign-in/client.tsx` |
+| Sign-up UI | `apps/web/src/app/design-v2/sign-up/client.tsx` |
+| Forgot password UI | `apps/web/src/app/design-v2/forgot-password/client.tsx` |
+| Reset password UI | `apps/web/src/app/design-v2/reset-password/client.tsx` |
+| Verify UI | `apps/web/src/app/design-v2/verify/client.tsx` |
+| Shared auth shell | `apps/web/src/app/design-v2/_shared/auth-shell.tsx` |
+| Auth config (NextAuth) | `apps/web/src/lib/auth.ts` |
+| Register API | `apps/web/src/app/api/auth/register/route.ts` |
+| Forgot password API | `apps/web/src/app/api/auth/forgot-password/route.ts` |
+| Reset password API | `apps/web/src/app/api/auth/reset-password/route.ts` |
+| Resend verification API | `apps/web/src/app/api/auth/resend-verification/route.ts` |
+
+### Auth providers
+
+- **Google OAuth** — automatic account creation, email verified = `TRUE`
+- **GitHub OAuth** — automatic account creation, email verified = `TRUE`
+- **Email + Password (Credentials)** — requires email verification before sign-in
+
+---
+
+## 1. Sign-Up — Email + Password
+
+| ID | Test Case | Steps | Expected Result | Status |
+|---|---|---|---|---|
+| **REG-10** | Email linked to GitHub account | 1. Register with an email already linked via GitHub OAuth<br>2. Observe error | Error: "This email is linked to a GitHub account. Try signing in with GitHub instead." (error code: `email_oauth`, status 409). |NOT TESTED
+| **REG-16** | Registration rate-limited by IP | 1. Submit `/api/auth/register` repeatedly from same IP<br>2. Observe after hitting limit | API returns 429 "Too many attempts. Please try again later." |NOT TESTED
+| **REG-17** | User name auto-derived from email | 1. Register with `john.smith@example.com`<br>2. Check database | `name` field = `john.smith` (everything before `@`). |NOT TESTED
+| **REG-18** | Password is hashed (not stored in plain text) | 1. Register a new account<br>2. Inspect `password_hash` in users table | Value is a PBKDF2 hash, not the plain-text password. |NOT TESTED
+
+---
+
+## 2. Sign-Up — OAuth (Google & GitHub)
+
+| ID | Test Case | Steps | Expected Result | Status |
+|---|---|---|---|---|
+| **OAUTH-04** | OAuth sign-up stores name and image | 1. Sign up via Google/GitHub<br>2. Check database | `name` and `image` fields populated from the OAuth provider profile. |NOT TESTED
+| **OAUTH-05** | OAuth re-sign-in updates name/image | 1. Sign in via Google with account that has changed display name<br>2. Check database | `name` and `image` fields updated to match current provider profile. |NOT TESTED
+| **OAUTH-06** | OAuth sign-up skips email verification | 1. Sign up via Google/GitHub<br>2. Check `email_verified` | `email_verified = TRUE`. No verification email sent. |NOT TESTED
+| **OAUTH-07** | OAuth email conflict — same email already registered via credentials | 1. Register via email (`alice@example.com`)<br>2. Sign up via Google with same `alice@example.com`<br>3. Observe | NextAuth links the OAuth identity to the existing account rather than creating a duplicate. |NOT TESTED
+| **OAUTH-08** | OAuth sign-up redirects to `/dashboard` | 1. Complete Google or GitHub sign-up<br>2. Observe redirect | `callbackUrl = "/dashboard"`. User lands on dashboard. |NOT TESTED
+
+---
+
+## 3. Email Verification
+
+| ID | Test Case | Steps | Expected Result | Status |
+|---|---|---|---|---|
+| **VER-01** | Verification email is sent on registration | 1. Register a new email account<br>2. Check inbox | Email from OneGoodArea with verification link arrives. Contains a unique token. |NOT TESTED
+| **VER-02** | Successful email verification | 1. Click verification link from email<br>2. Observe verify page | `/verify?token=...` page renders. Success state: "Email verified." with "Sign in" and "Explore first" buttons. |NOT TESTED
+| **VER-03** | Verification link with invalid/missing token | 1. Navigate to `/verify?token=invalid` or `/verify`<br>2. Observe | Failure state: "Verification failed." with message about invalid/expired/used link. Links: "Sign up again", "Contact support". |NOT TESTED
+| **VER-04** | Verification link expired (>24 hours) | 1. Wait 24+ hours after registration<br>2. Click the verification link | Token expires at `created_at + 24 hours`. Failure state shown. |NOT TESTED
+| **VER-05** | Verification link already used | 1. Verify email successfully<br>2. Click the same verification link again | Failure state shown. Token marked `used = TRUE` on first use. |NOT TESTED
+| **VER-06** | Verification token marked as used after success | 1. Verify email<br>2. Check `email_verification_tokens` table | `used` column = `TRUE` for the consumed token. |NOT TESTED
+| **VER-07** | Old unused tokens invalidated on resend | 1. Register, get verification email<br>2. Click "Didn't receive it? Resend"<br>3. Try the original verification link | Original link is invalid (all unused tokens for that user set `used = TRUE` on resend). |NOT TESTED
+| **VER-08** | Verification success has "Explore first" link | 1. Verify email successfully<br>2. Observe options | Two buttons: "Sign in" and "Explore first" (ghost style). "Explore first" links to `/`. |NOT TESTED
+| **VER-09** | Unverified user cannot sign in | 1. Register but don't verify email<br>2. Attempt sign-in with credentials | NextAuth `authorize()` returns `null`. Sign-in fails. (Behaviour depends on whether a check for `email_verified` is active in the authorize flow.) |NOT TESTED
+
+---
+
+## 4. Sign-In — Email + Password
+
+| ID | Test Case | Steps | Expected Result | Status |
+|---|---|---|---|---|
+| **SIGNIN-07** | Sign-in preserves callback URL | 1. Navigate to `/dashboard` while logged out (gets redirected to `/sign-in?callbackUrl=%2Fdashboard`)<br>2. Sign in with valid credentials | After sign-in, redirected to `/dashboard`. |NOT TESTED
+| **SIGNIN-08** | Loading state during sign-in | 1. Enter valid credentials<br>2. Click "Sign in" | Button shows spinner while request is in flight. Button is disabled. |NOT TESTED
+| **SIGNIN-10** | Network error during sign-in | 1. Simulate network failure during `signIn()` call<br>2. Observe | Error: "Something went wrong. Please try again." |NOT TESTED
+| **SIGNIN-12** | Legacy SHA-256 password transparently rehashed | 1. Have a user with legacy SHA-256 `password_hash`<br>2. Sign in successfully | Password transparently rehashed to PBKDF2 (`needsRehash` = true). Background update runs asynchronously. |NOT TESTED
+
+---
+
+## 5. Sign-In — OAuth (Google & GitHub)
+
+| ID | Test Case | Steps | Expected Result | Status |
+|---|---|---|---|---|
+| **SIGNIN-OAUTH-04** | OAuth sign-in with callback URL preserved | 1. Navigate to protected page while logged out<br>2. Click OAuth button from sign-in page<br>3. Complete OAuth flow | `callbackUrl` from search params is passed to `signIn(provider, { callbackUrl })`. User lands on the originally requested page. |NOT TESTED
+| **SIGNIN-OAUTH-05** | OAuth error handling | 1. Simulate OAuth provider error<br>2. Observe | Error: "OAuth error. Please try again." |NOT TESTED
+| **SIGNIN-OAUTH-06** | `auth.signin` tracking event fired | 1. Sign in via any provider<br>2. Check activity log | `trackEvent("auth.signin", userId, { provider })` called. |NOT TESTED
+
+---
+
+## 6. Forgot Password
+
+| ID | Test Case | Steps | Expected Result | Status |
+|---|---|---|---|---|
+| **FW-04** | Always returns success to prevent email enumeration | 1. Enter an email that does **not** exist<br>2. Click "Send reset link" | Same success response (`{ ok: true }`). No indication whether email exists. No email is actually sent. |NOT TESTED
+| **FW-05** | Forgot password for OAuth-only account | 1. Enter email of a Google/GitHub-only user (no `password_hash`)<br>2. Click "Send reset link" | API returns `{ ok: true }` (success response) but no reset email is sent because the user has no password to reset. |NOT TESTED
+| **FW-06** | Reset token rate-limited (max 3/hour) | 1. Request password reset 3 times within 1 hour for same email<br>2. Attempt 4th request | API returns `{ ok: true }` (success, no enumeration) but 4th token is not created. |NOT TESTED
+| **FW-07** | Old unused tokens invalidated on new request | 1. Request password reset<br>2. Request another password reset before using the first link<br>3. Try the first reset link | First link is invalid (all unused tokens set `used = TRUE`). |NOT TESTED
+
+---
+
+## 7. Reset Password
+
+| ID | Test Case | Steps | Expected Result | Status |
+|---|---|---|---|---|
+| **RESET-01** | Reset password page — missing token | 1. Navigate to `/reset-password` (no token param) | Error state: "Invalid reset link." with message "This password reset link is missing a token, has expired, or has already been used." Button: "Request a new link →". |NOT TESTED
+| **RESET-02** | Reset password page — valid token | 1. Navigate to `/reset-password?token=valid_token` | Title: "Choose a new password." Subtitle: "Minimum 8 characters." Two fields: "New password" + "Confirm password". Button: "Reset password". |NOT TESTED
+| **RESET-03** | Successful password reset | 1. Navigate to `/reset-password?token=valid_token`<br>2. Enter new password (≥8 chars)<br>3. Enter matching confirm password<br>4. Click "Reset password" | POST `/api/auth/reset-password`. Success state: "Password updated." with check icon. "Sign in" link. Token marked `used = TRUE`. |NOT TESTED
+| **RESET-04** | Password too short (<8 chars) | 1. Enter password of 7 characters<br>2. Click "Reset password" | Client-side check: "Password must be at least 8 characters." API also returns 400 if bypassed. |NOT TESTED
+| **RESET-05** | Passwords do not match | 1. Enter "Password123" in New password<br>2. Enter "Password456" in Confirm password<br>3. Click "Reset password" | Client-side check: "Passwords don't match." |NOT TESTED
+| **RESET-06** | Expired token (>1 hour) | 1. Use a reset link older than 1 hour<br>2. Submit new password | API returns 400: "This reset link has expired. Please request a new one." |NOT TESTED
+| **RESET-07** | Already-used token | 1. Reset password successfully<br>2. Use the same link again | API returns 400: "This reset link has already been used." |NOT TESTED
+| **RESET-08** | Invalid/malformed token | 1. Navigate to `/reset-password?token=fake_or_invalid`<br>2. Submit new password | API returns 400: "Invalid or expired reset link." |NOT TESTED
+| **RESET-09** | Successful reset → "Sign in" link | 1. Complete password reset<br>2. Click "Sign in" | Navigates to `/sign-in`. User can now sign in with new password. |NOT TESTED
+| **RESET-10** | Missing token → "Request a new link" | 1. On "Invalid reset link" screen<br>2. Click "Request a new link" | Navigates to `/forgot-password`. |NOT TESTED
+| **RESET-11** | Same password as old password | 1. Reset password to the same value as current<br>2. Observe | Password is updated (no same-as-old check exists). Hash is computed and stored. |NOT TESTED
+
+---
+
+## 8. Session Management
+
+| ID | Test Case | Steps | Expected Result | Status |
+|---|---|---|---|---|
+| **SESS-01** | JWT session strategy used | 1. Sign in<br>2. Inspect auth behaviour | Session strategy = `"jwt"`. No database session table used. |NOT TESTED
+| **SESS-03** | Session contains user ID | 1. Sign in<br>2. Inspect `session.user.id` | `token.userId` mapped to `session.user.id` via JWT callback. |NOT TESTED
+| **SESS-04** | Protected routes redirect unauthenticated users | 1. Without signing in, navigate to `/dashboard`, `/report`, `/compare`, `/admin`, or `/settings` | Redirected to `/sign-in?callbackUrl=<requested_path>`. |NOT TESTED
+| **SESS-05** | Public pages accessible without auth | 1. Without signing in, navigate to `/`, `/pricing`, `/methodology`, `/sign-in`, `/sign-up`, `/forgot-password` | Pages render normally. No redirect. |NOT TESTED
+| **SESS-06** | Session expiry — JWT maxAge | 1. Sign in<br>2. Wait for JWT to expire (NextAuth default: 30 days)<br>3. Navigate to protected route | Redirected to `/sign-in`. |NOT TESTED
+| **SESS-07** | Sign out clears session | 1. Sign in<br>2. Click "Sign out" (from sidebar user chip or settings)<br>3. Observe | `signOut({ callbackUrl: "/" })` called. Session destroyed. Redirected to `/`. Subsequent navigation to `/dashboard` redirects to `/sign-in`. |NOT TESTED
+| **SESS-08** | `newUser` redirects to `/report` | 1. Create brand-new account via credentials (first sign-in after verification)<br>2. Observe redirect | NextAuth `pages.newUser = "/report"`. User redirected to `/report` on first sign-in after account creation. |NOT TESTED
+
+---
+
+## 9. Auth Shell / Layout
+
+| ID | Test Case | Steps | Expected Result | Status |
+|---|---|---|---|---|
+| **SHELL-06** | Responsive — mobile stacks vertically | 1. Resize viewport to ≤720px<br>2. Observe auth page layout | Brand panel collapses or stacks above the form. Form takes full width. |NOT TESTED
+| **SHELL-07** | Form column is scrollable on overflow | 1. Fill form with long content or use small viewport<br>2. Observe | Form column has internal scroll (`overflow-y: auto`). Brand panel remains fixed. |NOT TESTED
+
+---
+
+## 10. Auth Pages — SEO & Indexing
+
+| ID | Test Case | Steps | Expected Result | Status |
+|---|---|---|---|---|
+| **SEO-01** | Sign-in page excluded from search engines | 1. Check `/robots.txt` | `/sign-in` is **not** explicitly disallowed — only `/dashboard`, `/admin`, `/settings`, `/compare`, `/verify`, `/forgot-password`, `/reset-password`, `/api-usage` are. (Notably, `/sign-in` and `/sign-up` are public and crawlable.) |NOT TESTED
+| **SEO-02** | Canonical URLs set | 1. Inspect `<head>` of `/sign-in` and `/sign-up` | `canonical: "https://www.onegoodarea.com/sign-in"` and `"https://www.onegoodarea.com/sign-up"`. |NOT TESTED
+| **SEO-03** | Page titles set | 1. Inspect `<title>` tag | `/sign-in`: "Sign in \| OneGoodArea". `/sign-up`: "Sign up \| OneGoodArea". |NOT TESTED
+
+---
+
+## 11. Security
+
+| ID | Test Case | Steps | Expected Result | Status |
+|---|---|---|---|---|
+| **SEC-01** | Forgot password prevents email enumeration | 1. Request password reset for registered email<br>2. Request password reset for unregistered email<br>3. Compare responses | Both return identical `{ ok: true }` response. No timing difference in UI/API. |NOT TESTED
+| **SEC-02** | Resend verification prevents email enumeration | 1. Resend verification for registered email<br>2. Resend verification for unregistered email<br>3. Compare responses | Both return `{ ok: true }`. No indication of user existence. |NOT TESTED
+| **SEC-03** | Registration rate-limited by IP | 1. Submit many registration attempts from same IP<br>2. Observe | After hitting `RATE_LIMITS.authRegister` limit, API returns 429. |NOT TESTED
+| **SEC-04** | Password reset rate-limited per email | 1. Request password reset 4 times in 1 hour for the same email<br>2. Observe | 4th request is silently dropped (returns `{ ok: true }` but no token created). |NOT TESTED
+| **SEC-05** | Verification resend rate-limited per email | 1. Resend verification 4 times in 1 hour<br>2. Observe | 4th request returns 429 "Too many requests." |NOT TESTED
+| **SEC-06** | Passwords required to be ≥8 characters | 1. Attempt to register / reset with password <8 chars<br>2. Observe | Registration: 400. Reset: 400. Both client-side and server-side enforced. |NOT TESTED
+| **SEC-07** | Password reset token single-use | 1. Reset password with a valid token<br>2. Attempt to reuse the same token | Second attempt returns 400 "This reset link has already been used." |NOT TESTED
+| **SEC-08** | Password reset token expires in 1 hour | 1. Wait >1 hour after requesting reset<br>2. Use the reset link | API returns 400 "This reset link has expired. Please request a new one." |NOT TESTED
+| **SEC-09** | Verification token expires in 24 hours | 1. Wait >24 hours after registration<br>2. Use the verification link | Failure state shown on `/verify`. |NOT TESTED
+| **SEC-10** | Old unused tokens invalidated on new request | 1. Request password reset<br>2. Request another reset without using first<br>3. Try first token | First token is invalid (marked `used = TRUE`). |NOT TESTED
+| **SEC-11** | No plain-text password storage | 1. Inspect `password_hash` column<br>2. Compare with input password | Never matches plain text. Hash function: PBKDF2 via `hashPassword()`. |NOT TESTED
+| **SEC-12** | Credentials sent via HTTPS only | 1. Inspect network requests during sign-in/sign-up<br>2. Observe protocol | All requests use HTTPS. No credentials sent over plain HTTP. |NOT TESTED
+
+---
+
+## 12. Error States & Edge Cases
+
+| ID | Test Case | Steps | Expected Result | Status |
+|---|---|---|---|---|
+| **EDGE-01** | Form submission with noValidate — client-side only | 1. Observe `<form noValidate>` attribute on sign-in/sign-up | Browser native validation is disabled; custom error messages are used (`AuthError` component). |NOT TESTED
+| **EDGE-02** | Double-submit prevention on sign-in | 1. Click "Sign in" rapidly multiple times<br>2. Observe | Button disabled (`loading` state) after first click. Spinner shown. Only one request sent. |NOT TESTED
+| **EDGE-03** | Double-submit prevention on sign-up | 1. Click "Create account" rapidly multiple times<br>2. Observe | Button disabled after first click. Only one `/api/auth/register` request sent. |NOT TESTED
+| **EDGE-04** | Double-submit prevention on forgot password | 1. Click "Send reset link" rapidly multiple times<br>2. Observe | Button disabled after first click. |NOT TESTED
+| **EDGE-05** | Server error (500) on register | 1. Simulate database failure during registration<br>2. Observe | Error: "Something went wrong. Please try again." |NOT TESTED
+| **EDGE-06** | Server error (500) on forgot password | 1. Simulate database failure during forgot password<br>2. Observe | API returns 500 "Something went wrong." |NOT TESTED
+| **EDGE-07** | Server error (500) on reset password | 1. Simulate database failure during reset<br>2. Observe | API returns 500 "Something went wrong." |NOT TESTED
+| **EDGE-08** | Network timeout during OAuth redirect | 1. Start OAuth flow<br>2. Simulate network loss before provider redirect completes | OAuth error or browser timeout. User can retry. |NOT TESTED
+
+---
+
+## Test Environment Notes
+
+- **Base URL:** https://www.onegoodarea.com/
+- **Auth library:** NextAuth.js v5 (App Router)
+- **Session strategy:** JWT (not database sessions)
+- **Password hashing:** PBKDF2 with transparent SHA-256 → PBKDF2 migration
+- **Rendering:** Client components wrapped in `<Suspense>` for `useSearchParams()`
+- **Browser targets:** Chromium (latest), Firefox (latest), Safari (latest)
+- **API endpoints:**
+  - `POST /api/auth/register` — email registration
+  - `POST /api/auth/forgot-password` — request password reset
+  - `POST /api/auth/reset-password` — execute password reset
+  - `POST /api/auth/resend-verification` — resend verification email
+  - `GET /api/auth/[...nextauth]` — NextAuth handler (sign-in/sign-out/callback)
