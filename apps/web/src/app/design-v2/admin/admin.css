@@ -502,3 +502,267 @@
   border-radius: 50%;
   background: var(--oga-fg);
 }
+
+/* AR-313 Phase 1 — admin is its own surface (not /dashboard).
+   Minimal top bar with brand + sign-out, no sidebar. */
+.oga-admin-shell {
+  min-height: 100vh;
+  background: var(--oga-canvas);
+  color: var(--oga-fg);
+}
+.oga-admin-shell__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 40px;
+  border-bottom: 1px solid var(--oga-rule);
+  background: var(--oga-ink);
+  color: var(--oga-canvas);
+}
+@media (max-width: 880px) {
+  .oga-admin-shell__header {
+    padding: 14px 20px;
+  }
+}
+.oga-admin-shell__brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.oga-admin-shell__eyebrow {
+  font-family: var(--oga-font-mono, "Geist Mono", monospace);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.6);
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  padding-left: 14px;
+  padding-top: 2px;
+}
+.oga-admin-shell__actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.oga-admin-shell__link {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  text-decoration: none;
+  letter-spacing: 0.01em;
+  transition: color 120ms ease;
+}
+.oga-admin-shell__link:hover {
+  color: var(--oga-canvas);
+}
+.oga-admin-shell__signout {
+  appearance: none;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--oga-canvas);
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.oga-admin-shell__signout:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* AR-313 Phase 0 — tab nav + placeholder panels. Inherits AppShell
+   tokens; no new design vocabulary. */
+.oga-admin__tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--oga-rule);
+  margin-bottom: 24px;
+}
+.oga-admin__tab {
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 12px 16px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--oga-fg-muted);
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: color 120ms ease, border-color 120ms ease;
+}
+.oga-admin__tab:hover {
+  color: var(--oga-fg);
+}
+.oga-admin__tab--active {
+  color: var(--oga-fg);
+  border-bottom-color: var(--oga-fg);
+}
+.oga-admin__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.oga-admin__coming {
+  color: var(--oga-fg);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 8px;
+}
+.oga-admin__coming-muted {
+  color: var(--oga-fg-muted);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* AR-313 Phase 1 — Churn signal rows. Email column wraps (don't truncate)
+   so long addresses stay readable. Days-inactive sits flush right. */
+.oga-admin__stale-row {
+  padding: 12px 22px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: baseline;
+}
+.oga-admin__stale-email {
+  font-family: var(--oga-font-mono, "Geist Mono", monospace);
+  font-size: 13px;
+  color: var(--oga-fg);
+  word-break: break-all;
+}
+.oga-admin__stale-days {
+  font-family: var(--oga-font-mono, "Geist Mono", monospace);
+  font-size: 12px;
+  color: var(--oga-fg-muted);
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+/* AR-313 Phase 2 — Endpoint heatmap rows.
+   rank | event-name | usage-bar | count | last-seen */
+.oga-admin__endpoint-row {
+  padding: 10px 22px;
+  display: grid;
+  grid-template-columns: 28px minmax(180px, 1.6fr) minmax(120px, 1fr) auto auto;
+  gap: 14px;
+  align-items: center;
+}
+.oga-admin__endpoint-rank {
+  font-family: var(--oga-font-mono, "Geist Mono", monospace);
+  font-size: 11px;
+  color: var(--oga-fg-muted);
+  letter-spacing: 0.04em;
+}
+.oga-admin__endpoint-name {
+  font-family: var(--oga-font-mono, "Geist Mono", monospace);
+  font-size: 13px;
+  color: var(--oga-fg);
+  word-break: break-all;
+}
+.oga-admin__endpoint-track {
+  height: 6px;
+  background: var(--oga-rule);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.oga-admin__endpoint-fill {
+  height: 100%;
+  background: var(--oga-fg);
+  border-radius: 2px;
+}
+.oga-admin__endpoint-count {
+  font-family: var(--oga-font-mono, "Geist Mono", monospace);
+  font-size: 13px;
+  color: var(--oga-fg);
+  text-align: right;
+  min-width: 56px;
+}
+.oga-admin__endpoint-last {
+  font-family: var(--oga-font-mono, "Geist Mono", monospace);
+  font-size: 11px;
+  color: var(--oga-fg-muted);
+  white-space: nowrap;
+  text-align: right;
+  min-width: 64px;
+}
+
+/* AR-313 Phase 3 — MCP uptake panel */
+.oga-admin__mcp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  border-top: 1px solid var(--oga-rule);
+  border-bottom: 1px solid var(--oga-rule);
+}
+@media (max-width: 720px) {
+  .oga-admin__mcp-grid { grid-template-columns: 1fr; }
+}
+.oga-admin__mcp-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 18px 22px;
+  border-right: 1px solid var(--oga-rule);
+}
+.oga-admin__mcp-cell:last-child { border-right: none; }
+@media (max-width: 720px) {
+  .oga-admin__mcp-cell {
+    border-right: none;
+    border-bottom: 1px solid var(--oga-rule);
+  }
+  .oga-admin__mcp-cell:last-child { border-bottom: none; }
+}
+.oga-admin__mcp-cell--total {
+  background: var(--oga-canvas-quiet, rgba(0, 0, 0, 0.02));
+}
+.oga-admin__mcp-value {
+  font-family: var(--oga-font-sans);
+  font-size: 32px;
+  font-weight: 500;
+  letter-spacing: -0.022em;
+  line-height: 1;
+  color: var(--oga-fg);
+}
+.oga-admin__mcp-label {
+  font-family: var(--oga-font-sans);
+  font-size: 12px;
+  color: var(--oga-fg-muted);
+  margin-top: 8px;
+  letter-spacing: 0.01em;
+}
+.oga-admin__addons {
+  border-top: none;
+}
+.oga-admin__addon-row {
+  padding: 10px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.oga-admin__addon-key {
+  font-family: var(--oga-font-mono, "Geist Mono", monospace);
+  font-size: 12px;
+  color: var(--oga-fg);
+}
+.oga-admin__addon-count {
+  font-family: var(--oga-font-mono, "Geist Mono", monospace);
+  font-size: 12px;
+  color: var(--oga-fg-muted);
+}
+@media (max-width: 880px) {
+  .oga-admin__endpoint-row {
+    grid-template-columns: 28px 1fr auto;
+    grid-template-areas:
+      "rank name count"
+      "rank track last";
+    row-gap: 6px;
+  }
+  .oga-admin__endpoint-rank { grid-area: rank; }
+  .oga-admin__endpoint-name { grid-area: name; }
+  .oga-admin__endpoint-track { grid-area: track; }
+  .oga-admin__endpoint-count { grid-area: count; }
+  .oga-admin__endpoint-last { grid-area: last; }
+}

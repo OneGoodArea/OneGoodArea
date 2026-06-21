@@ -1,0 +1,273 @@
+/* ============================================================
+   AR-222 — <Toast> + ToastProvider + useToast()
+   Corner-anchored notification stack. Bottom-right viewport, newest
+   on top. Each card uses Brand v3 .oga-status-* palette + the
+   soft-warm edge-lit material recipe matching .oga-btn + .oga-dropdown.
+   ============================================================ */
+
+.oga-toast-viewport {
+  position: fixed;
+  bottom: var(--oga-5);
+  right: var(--oga-5);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-2);
+  pointer-events: none; /* viewport itself is non-interactive */
+  max-width: min(420px, calc(100vw - var(--oga-5) * 2));
+}
+
+/* ---------- Card ---------- */
+
+.oga-toast {
+  pointer-events: auto; /* re-enable on the actual cards */
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: start;
+  gap: var(--oga-3);
+  padding: var(--oga-3) var(--oga-3) var(--oga-3) var(--oga-4);
+  background: var(--oga-white);
+  border: 1px solid var(--oga-ink-10);
+  border-left: 3px solid var(--oga-ink);
+  border-radius: 4px;
+  overflow: hidden; /* clip the dot-field motif at the card edge */
+  /* Edge-lit material — same shadow recipe as .oga-btn + .oga-dropdown */
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 0 0 1px rgba(26, 28, 31, 0.02),
+    0 16px 40px rgba(26, 28, 31, 0.10),
+    0 4px 10px rgba(26, 28, 31, 0.06);
+  animation: oga-toast-in var(--oga-dur) var(--oga-ease);
+  transform-origin: bottom right;
+  font-family: var(--oga-font-sans);
+  color: var(--oga-ink);
+}
+
+/* Dot-field motif — same recipe as .oga-hero-dark__field. Sits on the
+   right half of the card and fades to transparent toward the title, so
+   it never competes with the message. Pointer-events:none so it doesn't
+   block clicks on the close + action buttons. */
+.oga-toast::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(26, 28, 31, 0.10) 1.2px, transparent 1.4px);
+  background-size: 14px 14px;
+  -webkit-mask-image: linear-gradient(to left, black 0%, transparent 55%);
+          mask-image: linear-gradient(to left, black 0%, transparent 55%);
+  opacity: 0.6;
+}
+
+.oga-toast:focus-visible {
+  outline: 1.5px solid var(--oga-ink);
+  outline-offset: 2px;
+}
+
+@keyframes oga-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oga-toast {
+    animation: none;
+  }
+}
+
+/* ---------- Variant accents ----------
+   The left border + icon take the status color; the rest of the card
+   stays warm-white-on-ink-text for editorial consistency. */
+
+.oga-toast[data-variant="success"] {
+  border-left-color: var(--oga-status-green);
+}
+.oga-toast[data-variant="success"] .oga-toast__icon {
+  color: var(--oga-status-green);
+}
+
+.oga-toast[data-variant="info"] {
+  border-left-color: var(--oga-ink);
+}
+.oga-toast[data-variant="info"] .oga-toast__icon {
+  color: var(--oga-fg-muted);
+}
+
+.oga-toast[data-variant="warning"] {
+  border-left-color: var(--oga-status-amber);
+}
+.oga-toast[data-variant="warning"] .oga-toast__icon {
+  color: var(--oga-status-amber);
+}
+
+.oga-toast[data-variant="error"] {
+  border-left-color: var(--oga-status-red);
+}
+.oga-toast[data-variant="error"] .oga-toast__icon {
+  color: var(--oga-status-red);
+}
+
+/* ---------- Icon ---------- */
+
+.oga-toast__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px; /* optical alignment with first line of title */
+  position: relative;
+  z-index: 1; /* sit above the dot-field motif */
+}
+
+/* Lift all card content above the dot-field motif (which uses absolute
+   positioning at z-auto). Content stays crisp; the dots live in the
+   background layer behind everything. */
+.oga-toast__body,
+.oga-toast__action,
+.oga-toast__close {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- Body ---------- */
+
+.oga-toast__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.oga-toast__title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.005em;
+  color: var(--oga-ink);
+  margin: 0;
+}
+
+.oga-toast__text {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+/* ---------- Action button ---------- */
+
+.oga-toast__action {
+  appearance: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--oga-ink);
+  background: transparent;
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 2px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition:
+    background var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease);
+  align-self: center;
+}
+
+.oga-toast__action:hover {
+  background: rgba(26, 28, 31, 0.04);
+  border-color: rgba(26, 28, 31, 0.18);
+}
+
+.oga-toast__action:focus-visible {
+  outline: 1.5px solid var(--oga-ink);
+  outline-offset: 1px;
+}
+
+/* ---------- Close button ---------- */
+
+.oga-toast__close {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  color: var(--oga-fg-muted);
+  cursor: pointer;
+  align-self: flex-start;
+  margin-top: -2px;
+  transition:
+    color var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-toast__close:hover {
+  color: var(--oga-ink);
+  background: var(--oga-canvas);
+  border-color: var(--oga-ink-10);
+}
+
+.oga-toast__close:focus-visible {
+  outline: 1.5px solid var(--oga-ink);
+  outline-offset: 1px;
+}
+
+/* ---------- Dark surface variant ----------
+   When a consumer wraps content in data-oga-surface="dark", toasts
+   surface above with a dark card. Status colors are lifted in
+   saturation for legibility on ink. */
+
+[data-oga-surface="dark"] .oga-toast {
+  background: var(--oga-ink);
+  border-color: rgba(250, 248, 244, 0.12);
+  color: var(--oga-white);
+  box-shadow:
+    0 1px 0 rgba(250, 248, 244, 0.06) inset,
+    0 16px 40px rgba(0, 0, 0, 0.5),
+    0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+[data-oga-surface="dark"] .oga-toast__title {
+  color: var(--oga-white);
+}
+
+[data-oga-surface="dark"] .oga-toast__text {
+  color: rgba(250, 248, 244, 0.65);
+}
+
+[data-oga-surface="dark"] .oga-toast__action {
+  color: var(--oga-white);
+  border-color: rgba(250, 248, 244, 0.18);
+}
+
+[data-oga-surface="dark"] .oga-toast__action:hover {
+  background: rgba(250, 248, 244, 0.06);
+  border-color: rgba(250, 248, 244, 0.28);
+}
+
+[data-oga-surface="dark"] .oga-toast__close {
+  color: rgba(250, 248, 244, 0.6);
+}
+
+[data-oga-surface="dark"] .oga-toast__close:hover {
+  color: var(--oga-white);
+  background: rgba(250, 248, 244, 0.06);
+  border-color: rgba(250, 248, 244, 0.18);
+}
+
+/* Dark dot-field — warm-white dots instead of ink dots. */
+[data-oga-surface="dark"] .oga-toast::after {
+  background-image: radial-gradient(circle, rgba(250, 248, 244, 0.10) 1.2px, transparent 1.4px);
+}

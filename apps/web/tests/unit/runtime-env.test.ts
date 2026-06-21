@@ -43,7 +43,7 @@ describe("runtime env", () => {
 
     expect(diagnostics.hasDatabaseUrl).toBe(true);
     expect(diagnostics.postcodesApiBaseUrl).toBe("https://api.postcodes.io");
-    expect(diagnostics.debug.composeFile).toBe("container-compose.yml");
+    expect(diagnostics.debug.composeFile).toBe("compose/compose.yml");
     expect(diagnostics.debug.serviceUrls.app).toContain("http://localhost:");
   });
 });

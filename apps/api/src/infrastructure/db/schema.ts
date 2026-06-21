@@ -33,6 +33,33 @@ export const MIGRATIONS: Migration[] = [
         created_at TIMESTAMPTZ DEFAULT NOW()
       )`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE`,
+      // AR-218 (Dashboard redesign Epic AR-217): /welcome flow needs to persist
+      // three onboarding signals. All nullable + expand-only; existing rows
+      // unaffected. Values validated at the application layer (Zod in
+      // @onegoodarea/contracts) rather than via CHECK constraints so the
+      // taxonomies can evolve without schema changes.
+      //   - intent: which of the 5 ICPs the user is here for (/welcome Step 1)
+      //   - signup_source: marketing surface that referred them via ?from= (/sign-up)
+      //   - role_preference: how they'll use the product (/welcome Step 3) —
+      //     determines arrival page (engineer → /api-usage, analyst →
+      //     /dashboard/intelligence, explorer → /dashboard)
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS intent TEXT`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS signup_source TEXT`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS role_preference TEXT`,
+      // AR-312: superuser status moves from a hardcoded SUPERUSER_EMAILS
+      // array in source to a DB column so a real customer can be toggled
+      // on/off without a deploy, and so Pedro can dogfood the product as
+      // a real Sandbox/Build/Scale customer in prod without bypass-by-code.
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_superuser BOOLEAN NOT NULL DEFAULT FALSE`,
+      // AR-312 self-healing backfill: ONLY runs if no superuser currently
+      // exists. After first deploy, ptengelmann@gmail.com gets the flag.
+      // Subsequent boots no-op. If admins later add more superusers this
+      // still no-ops (NOT EXISTS clause). The only path that re-promotes
+      // ptengelmann is "all superusers demoted" — useful safety net
+      // against an accidental UPDATE that strips superuser from everyone.
+      `UPDATE users SET is_superuser = TRUE
+         WHERE email = 'ptengelmann@gmail.com'
+           AND NOT EXISTS (SELECT 1 FROM users WHERE is_superuser = TRUE)`,
     ],
   },
   {
@@ -59,6 +86,23 @@ export const MIGRATIONS: Migration[] = [
         metadata JSONB DEFAULT '{}',
         created_at TIMESTAMPTZ DEFAULT NOW()
       )`,
+      // AR-289: org-scoping for /api-usage. Nullable so legacy events
+      // (where no api_key org was resolvable) stay representable. The
+      // composite index matches the four queries /keys/usage runs
+      // (totalRequests, requestsThisMonth, requestsByDay, lastRequest)
+      // when an ?org filter is in play.
+      `ALTER TABLE activity_events ADD COLUMN IF NOT EXISTS org_id TEXT`,
+      `CREATE INDEX IF NOT EXISTS idx_activity_events_user_org_event_created
+         ON activity_events (user_id, org_id, event, created_at)`,
+      // AR-289 backfill: copy org_id from api_keys for legacy rows.
+      // WHERE ae.org_id IS NULL makes this a no-op on subsequent runs
+      // (idempotent — matches the migrator's contract).
+      `UPDATE activity_events ae
+          SET org_id = ak.org_id
+         FROM api_keys ak
+        WHERE ae.org_id IS NULL
+          AND ae.user_id = ak.user_id
+          AND ak.org_id IS NOT NULL`,
     ],
   },
   {
@@ -113,6 +157,10 @@ export const MIGRATIONS: Migration[] = [
       // org's public homepage for "Powered by X" links. See ADR 0034.
       `ALTER TABLE orgs ADD COLUMN IF NOT EXISTS display_name TEXT`,
       `ALTER TABLE orgs ADD COLUMN IF NOT EXISTS brand_url TEXT`,
+      // AR-284: org logo URL (paste-URL for v1; Vercel Blob upload
+      // pipeline is a follow-up). Nullable; falls back to initials
+      // in the dashboard chrome when null.
+      `ALTER TABLE orgs ADD COLUMN IF NOT EXISTS logo_url TEXT`,
       `CREATE INDEX IF NOT EXISTS orgs_slug_idx ON orgs (slug)`,
     ],
   },
@@ -752,6 +800,40 @@ export const MIGRATIONS: Migration[] = [
         UNIQUE (portfolio_id, area)
       )`,
       `CREATE INDEX IF NOT EXISTS idx_portfolio_areas_portfolio ON portfolio_areas (portfolio_id)`,
+    ],
+  },
+  // AR-272 (Phase 3 / Levers UI backend): org invitation flow. The
+  // existing POST /v1/orgs/:id/members only adds an existing user_id,
+  // so this table backs the email-driven invite path. Token is stored
+  // as a SHA-256 hash (token_hash); the plaintext exists only in the
+  // outbound email. role is CHECK-constrained to (member, admin) —
+  // owner cannot be granted via invite by design.
+  //
+  // Partial unique index uq_org_invitations_pending prevents two
+  // concurrent open invites for the same (org, email) pair —
+  // simpler than a "resend" endpoint and cheaper than a soft retry.
+  // Revoked or accepted invites drop out of the predicate so an
+  // admin can re-invite after revoking.
+  {
+    name: "org_invitations",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS org_invitations (
+        id TEXT PRIMARY KEY,
+        org_id TEXT NOT NULL,
+        email TEXT NOT NULL,
+        role TEXT NOT NULL CHECK (role IN ('member', 'admin')),
+        token_hash TEXT NOT NULL UNIQUE,
+        invited_by_user_id TEXT NOT NULL,
+        expires_at TIMESTAMPTZ NOT NULL,
+        accepted_at TIMESTAMPTZ,
+        accepted_by_user_id TEXT,
+        revoked_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_org_invitations_org ON org_invitations (org_id, created_at DESC)`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS uq_org_invitations_pending
+         ON org_invitations (org_id, email)
+         WHERE accepted_at IS NULL AND revoked_at IS NULL`,
     ],
   },
 ];

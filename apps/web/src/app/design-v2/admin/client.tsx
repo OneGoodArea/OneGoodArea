@@ -1,7 +1,10 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { AppShell, AppCard, StatCell } from "../_shared/app-shell";
+import { useState, type ReactNode } from "react";
+import Link from "next/link";
+import { signOut } from "next-auth/react";
+import { AppCard, StatCell } from "../_shared/app-shell";
+import { Wordmark } from "../_shared/wordmark";
 import "./admin.css";
 
 /* /admin — Brand v3 rewrite (AR-204 close-out 9/15).
@@ -15,14 +18,18 @@ import "./admin.css";
    developer / business / growth) because pre-April-2026 subscribers
    can still be on them. Keep until those subscribers age out. */
 
+/* AR-313 Phase 1: "reports" nomenclature retired. The reports table is
+   legacy; every counter that used to read FROM reports now reads FROM
+   activity_events WHERE event LIKE 'api.%' (matches the 33-event taxonomy
+   signal-first cutover introduced). Intent distribution dropped — that
+   field lived on report rows only. */
 type Analytics = {
   totalUsers: number;
-  totalReports: number;
-  reportsThisMonth: number;
+  totalApiCalls: number;
+  apiCallsThisMonth: number;
   activeUsersThisMonth: number;
-  reportsPerDay: { day: string; count: number }[];
+  apiCallsPerDay: { day: string; count: number }[];
   topAreas: { area: string; count: number }[];
-  intentDistribution: { intent: string; count: number }[];
   recentActivity: {
     event: string;
     user_id: string | null;
@@ -32,7 +39,7 @@ type Analytics = {
     email: string | null;
   }[];
   userGrowth: { day: string; count: number }[];
-  usersWithReports: number;
+  usersWithApiCalls: number;
   paidUsers: number;
   subscriptionsByPlan: { plan: string; count: number }[];
   mrr: number;
@@ -49,6 +56,66 @@ type TrafficData = {
   deviceBreakdown: { device: string; count: number }[];
   topCountries: { country: string; count: number }[];
 };
+
+/* AR-313 Phase 1: composite "who's using us" shape returned by
+   GET /admin/audience. Matches AudienceStats in apps/api modules/admin
+   (typed boundary, no shared import — apps/web can't import from
+   apps/api per the no-backend-in-frontend rule). */
+type AudienceStats = {
+  users: {
+    total: number;
+    active_7d: number;
+    active_30d: number;
+    signups_per_day: { day: string; count: number }[];
+    churn_signal_count: number;
+    stale_users: { user_id: string; email: string; days_inactive: number }[];
+  };
+  orgs: {
+    total: number;
+    size_distribution: { bucket: "1" | "2-5" | "6-20" | "20+"; count: number }[];
+    top_by_activity: { org_id: string; org_name: string; events_30d: number }[];
+  };
+  geo: {
+    top_countries: { country: string; count: number }[];
+    unique_countries_30d: number;
+  };
+};
+
+/* AR-313 Phase 2: "what they're using" shape returned by GET /admin/usage.
+   Per-product breakdown groups events by their api.* prefix server-side
+   (Signals / Scores / Monitor / Intelligence / Org & Levers). */
+type AdminProduct =
+  | "Signals"
+  | "Scores"
+  | "Monitor"
+  | "Intelligence"
+  | "Org & Levers";
+
+type UsageStats = {
+  totals: {
+    calls_7d: number;
+    calls_30d: number;
+    top_product: AdminProduct | null;
+    top_endpoint: string | null;
+  };
+  per_product: { product: AdminProduct; calls_30d: number }[];
+  top_endpoints: { event: string; count: number; last_seen: string }[];
+};
+
+/* AR-313 Phase 3: revenue extras for the Revenue tab. ARR is computed
+   server-side (MRR × 12) so the client doesn't recalc. ARR trend chart
+   deferred — see AR-316. */
+type RevenueExtras = {
+  arr: number;
+  mcp: {
+    total_paying: number;
+    with_mcp_addon: number;
+    in_mcp_inclusive_plan: number;
+  };
+  addons: { addon_key: string; active_count: number }[];
+};
+
+export type { Analytics, TrafficData, AudienceStats, UsageStats, RevenueExtras };
 
 const PLAN_PRICES: Record<string, number> = {
   starter: 29,
@@ -68,40 +135,380 @@ const EVENT_LABELS: Record<string, string> = {
   "password.changed": "Changed password",
 };
 
+/* AR-313 Phase 0: four tabs grouped by business question
+   (Audience / Usage / Revenue / Health). Audience + Usage + Health
+   are placeholders for now; Revenue holds the existing MRR + funnel +
+   activity + traffic panels so nothing visible regresses. Phases 1-4
+   migrate each panel to its proper tab + add the missing stats. */
+type AdminTab = "audience" | "usage" | "revenue" | "health";
+
+const TABS: { id: AdminTab; label: string; phase: number; question: string }[] = [
+  { id: "audience", label: "Audience", phase: 1, question: "Who's using us — users, orgs, geography, churn signals." },
+  { id: "usage", label: "Usage", phase: 2, question: "What they're using — 4 products, endpoint heatmap, engine-version cohorts." },
+  { id: "revenue", label: "Revenue", phase: 3, question: "What we're earning — MRR, plans, conversion funnel, add-ons." },
+  { id: "health", label: "Health", phase: 4, question: "System health — latency, errors, cron jobs, signal-store freshness." },
+];
+
 export default function AdminClient({
   analytics,
   traffic,
+  audience,
+  usage,
+  revenue,
 }: {
-  analytics: Analytics;
+  analytics: Analytics | null;
   traffic: TrafficData | null;
+  audience: AudienceStats | null;
+  usage: UsageStats | null;
+  revenue: RevenueExtras | null;
+}) {
+  const [tab, setTab] = useState<AdminTab>("revenue");
+
+  /* AR-313 Phase 1 (Pedro 2026-06-15): admin is its own surface, not
+     a /dashboard sub-page. No left sidebar, no product nav. Just a
+     minimal top bar with brand + back-to-dashboard + sign-out. */
+  return (
+    <div className="oga-admin-shell">
+      <header className="oga-admin-shell__header">
+        <div className="oga-admin-shell__brand">
+          <Wordmark size={18} tone="dark" href="/" />
+          <span className="oga-admin-shell__eyebrow">Admin</span>
+        </div>
+        <div className="oga-admin-shell__actions">
+          <Link href="/dashboard" className="oga-admin-shell__link">
+            Back to dashboard
+          </Link>
+          <button
+            type="button"
+            className="oga-admin-shell__signout"
+            onClick={() => { signOut({ callbackUrl: "/" }); }}
+          >
+            Sign out
+          </button>
+        </div>
+      </header>
+      <div className="oga-admin">
+        <nav className="oga-admin__tabs" role="tablist" aria-label="Admin sections">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              role="tab"
+              type="button"
+              aria-selected={tab === t.id}
+              className={`oga-admin__tab${tab === t.id ? " oga-admin__tab--active" : ""}`}
+              onClick={() => setTab(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="oga-admin__panel" role="tabpanel">
+          {tab === "revenue" ? (
+            analytics ? (
+              <>
+                <KpiRow analytics={analytics} revenue={revenue} />
+                <RevenueAndFunnel analytics={analytics} />
+                {revenue && <McpUptakePanel revenue={revenue} />}
+                <ChartsRow analytics={analytics} />
+                <ActivityAndAreas analytics={analytics} />
+                {traffic && <TrafficSection traffic={traffic} />}
+              </>
+            ) : (
+              <div className="oga-admin__empty">No analytics data available</div>
+            )
+          ) : tab === "audience" ? (
+            audience ? (
+              <AudiencePanel audience={audience} />
+            ) : (
+              <div className="oga-admin__empty">No audience data available</div>
+            )
+          ) : tab === "usage" ? (
+            usage ? (
+              <UsagePanel usage={usage} />
+            ) : (
+              <div className="oga-admin__empty">No usage data available</div>
+            )
+          ) : (
+            <ComingSoon tab={TABS.find((t) => t.id === tab)!} />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   AR-313 Phase 1 — Audience panel
+   ============================================================ */
+function AudiencePanel({ audience }: { audience: AudienceStats }) {
+  return (
+    <>
+      <div className="oga-admin__kpi">
+        <StatCell label="Total users" value={audience.users.total} />
+        <StatCell label="Active (7d)" value={audience.users.active_7d} accent="strong" />
+        <StatCell label="Active (30d)" value={audience.users.active_30d} />
+        <StatCell label="Total orgs" value={audience.orgs.total} />
+        <StatCell label="Countries (30d)" value={audience.geo.unique_countries_30d} />
+      </div>
+
+      <div className="oga-admin__2col">
+        <AppCard title="Signups" note="Last 30 days · daily">
+          {audience.users.signups_per_day.length === 0 ? (
+            <EmptyNote>No signups in the last 30 days.</EmptyNote>
+          ) : (
+            <BarChart data={audience.users.signups_per_day} />
+          )}
+        </AppCard>
+        <AppCard title="Org size distribution" note="Members per org">
+          {audience.orgs.size_distribution.length === 0 ? (
+            <EmptyNote>No orgs yet.</EmptyNote>
+          ) : (
+            <BucketBars buckets={audience.orgs.size_distribution} />
+          )}
+        </AppCard>
+      </div>
+
+      <div className="oga-admin__2col">
+        <AppCard title="Top countries" note="Last 30 days · pageviews">
+          {audience.geo.top_countries.length === 0 ? (
+            <EmptyNote>No pageview geography yet.</EmptyNote>
+          ) : (
+            <CountryList countries={audience.geo.top_countries} />
+          )}
+        </AppCard>
+        <AppCard title="Top orgs by activity" note="Last 30 days · api.* events">
+          {audience.orgs.top_by_activity.length === 0 ? (
+            <EmptyNote>No org activity yet.</EmptyNote>
+          ) : (
+            <TopOrgsList orgs={audience.orgs.top_by_activity} />
+          )}
+        </AppCard>
+      </div>
+
+      <AppCard
+        title="Churn signal"
+        note={`${audience.users.churn_signal_count} users · no api.* activity in 14d`}
+      >
+        {audience.users.stale_users.length === 0 ? (
+          <EmptyNote>No stale users. Everyone signed-up is active.</EmptyNote>
+        ) : (
+          <StaleUsersList users={audience.users.stale_users} />
+        )}
+      </AppCard>
+    </>
+  );
+}
+
+function BucketBars({
+  buckets,
+}: {
+  buckets: { bucket: string; count: number }[];
+}) {
+  const max = Math.max(...buckets.map((b) => b.count), 1);
+  return (
+    <ul className="oga-admin__intents">
+      {buckets.map((b) => (
+        <li key={b.bucket} className="oga-admin__intent-row">
+          <span className="oga-admin__intent-label">{b.bucket} {b.bucket === "1" ? "member" : "members"}</span>
+          <div className="oga-admin__intent-track">
+            <div
+              className="oga-admin__intent-fill"
+              style={{ width: `${(b.count / max) * 100}%` }}
+            />
+          </div>
+          <span className="oga-admin__intent-count">{b.count}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function CountryList({
+  countries,
+}: {
+  countries: { country: string; count: number }[];
+}) {
+  const total = countries.reduce((s, c) => s + c.count, 0) || 1;
+  return (
+    <ul className="oga-admin__list">
+      {countries.map((c, i) => (
+        <li key={c.country} className="oga-admin__area-row">
+          <span className="oga-admin__area-rank">{String(i + 1).padStart(2, "0")}</span>
+          <span className="oga-admin__area-name">{c.country}</span>
+          <span className="oga-admin__area-count">
+            {c.count.toLocaleString()} · {Math.round((c.count / total) * 100)}%
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function TopOrgsList({
+  orgs,
+}: {
+  orgs: { org_id: string; org_name: string; events_30d: number }[];
 }) {
   return (
-    <AppShell title="Admin" subtitle="Live platform analytics · Pedro only">
-      <div className="oga-admin">
-        <KpiRow analytics={analytics} />
-        <RevenueAndFunnel analytics={analytics} />
-        <ChartsRow analytics={analytics} />
-        <ActivityAndAreas analytics={analytics} />
-        {traffic && <TrafficSection traffic={traffic} />}
+    <ul className="oga-admin__list">
+      {orgs.map((o, i) => (
+        <li key={o.org_id} className="oga-admin__area-row">
+          <span className="oga-admin__area-rank">{String(i + 1).padStart(2, "0")}</span>
+          <span className="oga-admin__area-name">{o.org_name}</span>
+          <span className="oga-admin__area-count">{o.events_30d.toLocaleString()} calls</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function StaleUsersList({
+  users,
+}: {
+  users: { user_id: string; email: string; days_inactive: number }[];
+}) {
+  return (
+    <ul className="oga-admin__list">
+      {users.map((u) => (
+        <li key={u.user_id} className="oga-admin__stale-row">
+          <span className="oga-admin__stale-email">{u.email}</span>
+          <span className="oga-admin__stale-days">{u.days_inactive}d inactive</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/* ============================================================
+   AR-313 Phase 2 — Usage panel
+   ============================================================ */
+function UsagePanel({ usage }: { usage: UsageStats }) {
+  return (
+    <>
+      <div className="oga-admin__kpi">
+        <StatCell label="API calls (7d)" value={usage.totals.calls_7d} accent="strong" />
+        <StatCell label="API calls (30d)" value={usage.totals.calls_30d} />
+        <StatCell label="Top product (30d)" value={usage.totals.top_product ?? "—"} />
+        <StatCell label="Top endpoint (30d)" value={usage.totals.top_endpoint ?? "—"} />
       </div>
-    </AppShell>
+
+      <AppCard title="By product" note="Last 30 days · api.* events">
+        {usage.per_product.every((p) => p.calls_30d === 0) ? (
+          <EmptyNote>No api.* calls in the last 30 days.</EmptyNote>
+        ) : (
+          <ProductBars data={usage.per_product} />
+        )}
+      </AppCard>
+
+      <AppCard
+        title="Top endpoints"
+        note={`Last 30 days · ${usage.top_endpoints.length} of ${usage.top_endpoints.length} shown`}
+      >
+        {usage.top_endpoints.length === 0 ? (
+          <EmptyNote>No endpoints called in the last 30 days.</EmptyNote>
+        ) : (
+          <EndpointHeatmap endpoints={usage.top_endpoints} />
+        )}
+      </AppCard>
+    </>
+  );
+}
+
+function ProductBars({
+  data,
+}: {
+  data: { product: string; calls_30d: number }[];
+}) {
+  const max = Math.max(...data.map((d) => d.calls_30d), 1);
+  const total = data.reduce((s, d) => s + d.calls_30d, 0);
+  return (
+    <ul className="oga-admin__intents">
+      {data.map((d) => {
+        const pct = total > 0 ? Math.round((d.calls_30d / total) * 100) : 0;
+        return (
+          <li key={d.product} className="oga-admin__intent-row">
+            <span className="oga-admin__intent-label">{d.product}</span>
+            <div className="oga-admin__intent-track">
+              <div
+                className="oga-admin__intent-fill"
+                style={{ width: `${(d.calls_30d / max) * 100}%` }}
+              />
+            </div>
+            <span className="oga-admin__intent-count">{d.calls_30d.toLocaleString()}</span>
+            <span className="oga-admin__intent-pct">{pct}%</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function EndpointHeatmap({
+  endpoints,
+}: {
+  endpoints: { event: string; count: number; last_seen: string }[];
+}) {
+  const max = Math.max(...endpoints.map((e) => e.count), 1);
+  return (
+    <ul className="oga-admin__list">
+      {endpoints.map((e, i) => (
+        <li key={e.event} className="oga-admin__endpoint-row">
+          <span className="oga-admin__endpoint-rank">{String(i + 1).padStart(2, "0")}</span>
+          <span className="oga-admin__endpoint-name">{e.event}</span>
+          <div className="oga-admin__endpoint-track">
+            <div
+              className="oga-admin__endpoint-fill"
+              style={{ width: `${(e.count / max) * 100}%` }}
+            />
+          </div>
+          <span className="oga-admin__endpoint-count">{e.count.toLocaleString()}</span>
+          <span
+            className="oga-admin__endpoint-last"
+            suppressHydrationWarning
+          >
+            {relativeTime(e.last_seen)}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function ComingSoon({ tab }: { tab: { label: string; phase: number; question: string } }) {
+  return (
+    <AppCard title={tab.label} note={`Phase ${tab.phase} of the admin redesign (AR-313).`}>
+      <p className="oga-admin__coming">{tab.question}</p>
+      <p className="oga-admin__coming-muted">
+        This tab is a placeholder. Real metrics arrive in Phase {tab.phase}. Revenue tab holds the current view in the meantime.
+      </p>
+    </AppCard>
   );
 }
 
 /* ============================================================
    KPI row
    ============================================================ */
-function KpiRow({ analytics }: { analytics: Analytics }) {
+function KpiRow({
+  analytics,
+  revenue,
+}: {
+  analytics: Analytics;
+  revenue: RevenueExtras | null;
+}) {
   return (
     <div className="oga-admin__kpi">
       <StatCell label="Total users" value={analytics.totalUsers} />
-      <StatCell label="Total reports" value={analytics.totalReports} />
+      <StatCell label="Total API calls" value={analytics.totalApiCalls} />
       <StatCell
-        label="Reports this month"
-        value={analytics.reportsThisMonth}
+        label="API calls this month"
+        value={analytics.apiCallsThisMonth}
         accent="strong"
       />
       <StatCell label="Active (30d)" value={analytics.activeUsersThisMonth} />
+      {revenue && (
+        <StatCell label="ARR" value={`£${revenue.arr.toLocaleString()}`} />
+      )}
     </div>
   );
 }
@@ -118,7 +525,7 @@ function RevenueAndFunnel({ analytics }: { analytics: Analytics }) {
       />
       <ConversionPanel
         totalUsers={analytics.totalUsers}
-        usersWithReports={analytics.usersWithReports}
+        usersWithApiCalls={analytics.usersWithApiCalls}
         paidUsers={analytics.paidUsers}
       />
     </div>
@@ -206,17 +613,17 @@ function RevenuePanel({
 
 function ConversionPanel({
   totalUsers,
-  usersWithReports,
+  usersWithApiCalls,
   paidUsers,
 }: {
   totalUsers: number;
-  usersWithReports: number;
+  usersWithApiCalls: number;
   paidUsers: number;
 }) {
   const maxVal = Math.max(totalUsers, 1);
   const steps: { label: string; value: number; tone: "ink" | "amber" }[] = [
     { label: "Signed up", value: totalUsers, tone: "ink" },
-    { label: "Generated report", value: usersWithReports, tone: "ink" },
+    { label: "First API call", value: usersWithApiCalls, tone: "ink" },
     { label: "Paid plan", value: paidUsers, tone: "amber" },
   ];
 
@@ -261,22 +668,64 @@ function ConversionPanel({
 }
 
 /* ============================================================
-   Charts row (2-col): reports/day + intent distribution
+   AR-313 Phase 3 — MCP uptake panel
+   Shows how many paying customers use MCP (via add-on OR via an
+   inclusive plan like Growth+). Useful for tracking MCP adoption
+   as a separate revenue/usage motion from base plans.
+   ============================================================ */
+function McpUptakePanel({ revenue }: { revenue: RevenueExtras }) {
+  const { mcp, addons } = revenue;
+  const totalMcp = mcp.with_mcp_addon + mcp.in_mcp_inclusive_plan;
+  const pctOfPaying = mcp.total_paying > 0
+    ? Math.round((totalMcp / mcp.total_paying) * 100)
+    : 0;
+  return (
+    <AppCard
+      title="MCP uptake"
+      note={`${totalMcp} of ${mcp.total_paying} paying customers · ${pctOfPaying}%`}
+    >
+      <div className="oga-admin__mcp-grid">
+        <div className="oga-admin__mcp-cell">
+          <span className="oga-admin__mcp-value">{mcp.with_mcp_addon}</span>
+          <span className="oga-admin__mcp-label">via add-on (£29/mo)</span>
+        </div>
+        <div className="oga-admin__mcp-cell">
+          <span className="oga-admin__mcp-value">{mcp.in_mcp_inclusive_plan}</span>
+          <span className="oga-admin__mcp-label">via inclusive plan (Growth+ / Enterprise)</span>
+        </div>
+        <div className="oga-admin__mcp-cell oga-admin__mcp-cell--total">
+          <span className="oga-admin__mcp-value">{totalMcp}</span>
+          <span className="oga-admin__mcp-label">total MCP users</span>
+        </div>
+      </div>
+
+      {addons.length > 1 && (
+        <ul className="oga-admin__list oga-admin__addons">
+          {addons.map((a) => (
+            <li key={a.addon_key} className="oga-admin__addon-row">
+              <span className="oga-admin__addon-key">{a.addon_key}</span>
+              <span className="oga-admin__addon-count">{a.active_count} active</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </AppCard>
+  );
+}
+
+/* ============================================================
+   Charts row: API calls / day (last 30d). Intent distribution
+   dropped (lived on reports rows only — AR-313 Phase 1).
    ============================================================ */
 function ChartsRow({ analytics }: { analytics: Analytics }) {
-  const reportsTotal = analytics.reportsPerDay.reduce(
+  const callsTotal = analytics.apiCallsPerDay.reduce(
     (s, d) => s + d.count,
     0,
   );
   return (
-    <div className="oga-admin__2col">
-      <AppCard title="Reports / day · 30d" note={`${reportsTotal} total`}>
-        <BarChart data={analytics.reportsPerDay} />
-      </AppCard>
-      <AppCard title="Intent distribution" note="All reports">
-        <IntentBars data={analytics.intentDistribution} />
-      </AppCard>
-    </div>
+    <AppCard title="API calls / day · 30d" note={`${callsTotal} total`}>
+      <BarChart data={analytics.apiCallsPerDay} />
+    </AppCard>
   );
 }
 
@@ -315,38 +764,6 @@ function BarChart({
         <span>today</span>
       </div>
     </>
-  );
-}
-
-function IntentBars({
-  data,
-}: {
-  data: { intent: string; count: number }[];
-}) {
-  const total = data.reduce((s, d) => s + d.count, 0);
-  if (total === 0) return <EmptyNote>No data yet</EmptyNote>;
-  const max = Math.max(...data.map((d) => d.count), 1);
-
-  return (
-    <ul className="oga-admin__intents">
-      {data.map((d) => {
-        const widthPct = Math.max((d.count / max) * 100, 4);
-        const pctOfTotal = Math.round((d.count / total) * 100);
-        return (
-          <li key={d.intent} className="oga-admin__intent-row">
-            <span className="oga-admin__intent-label">{d.intent}</span>
-            <div className="oga-admin__intent-track">
-              <div
-                className="oga-admin__intent-fill"
-                style={{ width: `${widthPct}%` }}
-              />
-            </div>
-            <span className="oga-admin__intent-count">{d.count}</span>
-            <span className="oga-admin__intent-pct">{pctOfTotal}%</span>
-          </li>
-        );
-      })}
-    </ul>
   );
 }
 
@@ -400,7 +817,15 @@ function ActivityAndAreas({ analytics }: { analytics: Analytics }) {
                     {ev.name || ev.email || "Anonymous"}
                   </div>
                 </div>
-                <span className="oga-admin__activity-time">
+                {/* AR-313: relativeTime() depends on Date.now() which
+                    drifts between SSR (server time) and hydration (client
+                    time). suppressHydrationWarning tells React this
+                    timestamp is allowed to differ — the client value wins
+                    after hydration, which is what we want anyway. */}
+                <span
+                  className="oga-admin__activity-time"
+                  suppressHydrationWarning
+                >
                   {relativeTime(ev.created_at)}
                 </span>
               </li>

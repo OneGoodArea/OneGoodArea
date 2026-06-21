@@ -1,0 +1,708 @@
+/* AR-264 /dashboard/intelligence catalogue.
+
+   Layout shape is purposefully NOT a card-grid clone of Signals.
+   Intelligence is a developer surface — an API browser. Structure:
+
+   1) Product header (shared brand vocabulary)
+   2) "Query plane shape" stripe — three terse code blocks in a row,
+      separated by arrow connectors
+   3) Two-pane browser:
+        - Left rail: 7 ops as a navigation list
+        - Right pane: selected op detail in one direct view
+   4) Typed errors panel at the bottom
+
+   Brand v3 vocabulary stays consistent (cream / warm-white, hairline
+   borders, mono caps eyebrows, serif titles) but the page composition
+   reads as its own thing. */
+
+.oga-int {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 8px 40px 40px;
+}
+
+@media (max-width: 700px) {
+  .oga-int {
+    padding: 8px 20px 32px;
+  }
+}
+
+/* ============================================================
+   Product header (shared brand vocabulary)
+   ============================================================ */
+
+.oga-int__product {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  align-items: start;
+  padding: 8px 0 24px;
+  border-bottom: 1px solid var(--oga-ink-10);
+}
+
+.oga-int__product-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: rgba(26, 28, 31, 0.04);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 6px;
+  color: var(--oga-ink);
+  flex-shrink: 0;
+}
+
+.oga-int__product-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.oga-int__product-eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-int__product-title {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: clamp(28px, 3vw, 36px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--oga-ink);
+  margin: 0;
+}
+
+.oga-int__product-tagline {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--oga-ink-50);
+  margin: 4px 0 0;
+  max-width: 760px;
+}
+
+@media (max-width: 600px) {
+  .oga-int__product-mark {
+    width: 52px;
+    height: 52px;
+  }
+}
+
+/* ============================================================
+   Query plane shape — dark editorial frame with 3 internal sections
+   ============================================================
+
+   Single dark editorial container, not 3 white cards. Sets the
+   semantic for the page: dark = code/contract you SEND or RECEIVE,
+   cream = reference about what to send. The stripe and the curl
+   example at the bottom of each op share the same dark vocabulary. */
+
+.oga-int-shape {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  gap: 0;
+  align-items: stretch;
+  background: linear-gradient(180deg, #1F2125 0%, #1A1C1F 100%);
+  border: 1px solid rgba(250, 248, 244, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .oga-int-shape {
+    grid-template-columns: 1fr;
+  }
+}
+
+.oga-int-shape__block {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .oga-int-shape__block {
+    border-bottom: 1px solid rgba(250, 248, 244, 0.06);
+  }
+  .oga-int-shape__block:last-child {
+    border-bottom: none;
+  }
+}
+
+.oga-int-shape__block header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.oga-int-shape__eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.45);
+}
+
+.oga-int-shape__tag {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.85);
+  background: rgba(250, 248, 244, 0.08);
+  padding: 2px 7px;
+  border-radius: 2px;
+}
+
+.oga-int-shape__title {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-white, #FAF8F4);
+  margin: 0;
+}
+
+.oga-int-shape__code {
+  margin: 0;
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: rgba(250, 248, 244, 0.92);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(250, 248, 244, 0.06);
+  padding: 10px 12px;
+  border-radius: 2px;
+  overflow-x: auto;
+}
+
+.oga-int-shape__note {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: rgba(250, 248, 244, 0.50);
+  margin: 0;
+}
+
+.oga-int-shape__connector {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(250, 248, 244, 0.45);
+  padding: 0 4px;
+}
+
+@media (max-width: 900px) {
+  .oga-int-shape__connector {
+    display: none;
+  }
+}
+
+/* ============================================================
+   Two-pane browser
+   ============================================================ */
+
+.oga-int__browser {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .oga-int__browser {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Left rail ---------- */
+
+.oga-int-rail {
+  position: sticky;
+  top: 24px;
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+  padding: 14px 12px;
+}
+
+@media (max-width: 900px) {
+  .oga-int-rail {
+    position: static;
+  }
+}
+
+.oga-int-rail__eyebrow {
+  display: block;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+  padding: 4px 8px 10px;
+  border-bottom: 1px solid var(--oga-ink-10);
+  margin-bottom: 6px;
+}
+
+.oga-int-rail__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.oga-int-rail__item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-left: 2px solid transparent;
+  padding: 9px 10px;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+  text-align: left;
+  border-radius: 2px;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.oga-int-rail__item:hover {
+  background: rgba(26, 28, 31, 0.04);
+}
+
+.oga-int-rail__item--active {
+  background: rgba(26, 28, 31, 0.06);
+  border-left-color: var(--oga-ink);
+}
+
+.oga-int-rail__glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--oga-ink-50);
+  flex-shrink: 0;
+}
+
+.oga-int-rail__item--active .oga-int-rail__glyph {
+  color: var(--oga-ink);
+}
+
+.oga-int-rail__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.oga-int-rail__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--oga-ink);
+  line-height: 1.2;
+}
+
+.oga-int-rail__returns {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--oga-ink-50);
+}
+
+/* ---------- Right pane: op detail ---------- */
+
+.oga-int-detail {
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+  padding: 24px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-width: 0;
+}
+
+@media (max-width: 700px) {
+  .oga-int-detail {
+    padding: 20px 18px 22px;
+  }
+}
+
+.oga-int-detail__head {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: start;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--oga-ink-10);
+}
+
+.oga-int-detail__glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--oga-ink);
+  color: var(--oga-white, #FAF8F4);
+  border-radius: 4px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.oga-int-detail__head-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.oga-int-detail__eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-int-detail__eyebrow code {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 1px 6px;
+  border-radius: 2px;
+  margin-left: 4px;
+}
+
+.oga-int-detail__title {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--oga-ink);
+  margin: 2px 0 0;
+}
+
+.oga-int-detail__blurb {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--oga-ink-50);
+  margin: 4px 0 0;
+  max-width: 720px;
+}
+
+.oga-int-detail__section-eyebrow {
+  display: block;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+  margin-bottom: 10px;
+}
+
+/* ---------- Params ---------- */
+
+.oga-int-detail__params ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.oga-int-detail__params li {
+  display: grid;
+  grid-template-columns: minmax(160px, auto) minmax(180px, auto) 1fr;
+  gap: 14px;
+  align-items: baseline;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--oga-ink-10);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.oga-int-detail__params li:last-child {
+  border-bottom: none;
+}
+
+@media (max-width: 700px) {
+  .oga-int-detail__params li {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
+.oga-int-detail__param-name {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 3px 8px;
+  border-radius: 2px;
+  word-break: break-word;
+  align-self: center;
+  justify-self: start;
+}
+
+.oga-int-detail__param-type {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--oga-ink-50);
+  word-break: break-word;
+}
+
+.oga-int-detail__param-desc {
+  color: var(--oga-ink-50);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+}
+
+.oga-int-detail__param-default {
+  font-size: 11.5px;
+  color: var(--oga-ink-50);
+}
+
+.oga-int-detail__param-default code {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.04);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+.oga-int-detail__param-required {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: #B4361C;
+  background: rgba(180, 54, 28, 0.08);
+  padding: 2px 7px;
+  border-radius: 2px;
+}
+
+/* ---------- Worked example: two side-by-side code blocks ---------- */
+
+.oga-int-detail__example-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 700px) {
+  .oga-int-detail__example-pair {
+    grid-template-columns: 1fr;
+  }
+}
+
+.oga-int-detail__example-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.oga-int-detail__example-eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-int-detail__example-col pre {
+  margin: 0;
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--oga-ink);
+  background: #fff;
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 3px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ---------- Call: dark editorial curl ---------- */
+
+.oga-int-detail__call {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.oga-int-detail__call header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.oga-int-detail__copy {
+  appearance: none;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-ink);
+  background: transparent;
+  border: 1px solid var(--oga-ink);
+  border-radius: 2px;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.oga-int-detail__copy:hover {
+  background: var(--oga-ink);
+  color: var(--oga-white, #FAF8F4);
+}
+
+.oga-int-detail__curl {
+  margin: 0;
+  background: linear-gradient(180deg, #1F2125 0%, #1A1C1F 100%);
+  border: 1px solid rgba(250, 248, 244, 0.08);
+  border-radius: 3px;
+  padding: 16px 18px;
+  font-family: var(--oga-font-mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: rgba(250, 248, 244, 0.92);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* ============================================================
+   Typed errors panel
+   ============================================================ */
+
+.oga-int-errs {
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.oga-int-errs__head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.oga-int-errs__eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-int-errs__hint {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-ink-50);
+  margin: 0;
+  max-width: 760px;
+}
+
+.oga-int-errs__hint code {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+.oga-int-errs__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.oga-int-errs__rows li {
+  display: grid;
+  grid-template-columns: minmax(220px, auto) minmax(110px, auto) 1fr;
+  gap: 14px;
+  align-items: baseline;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--oga-ink-10);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.oga-int-errs__rows li:last-child {
+  border-bottom: none;
+}
+
+@media (max-width: 700px) {
+  .oga-int-errs__rows li {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
+.oga-int-errs__code {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 3px 8px;
+  border-radius: 2px;
+  justify-self: start;
+  word-break: break-word;
+}
+
+.oga-int-errs__status {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--oga-ink-50);
+}
+
+.oga-int-errs__desc {
+  color: var(--oga-ink-50);
+}

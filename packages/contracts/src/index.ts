@@ -16,10 +16,13 @@ export * from "./scores";
 export * from "./portfolios";
 export * from "./intelligence";
 export * from "./orgs";
+export * from "./invitations";
 export * from "./bundles";
 export * from "./presets";
 export * from "./methodology";
 export * from "./cohorts";
+export * from "./users";
+export * from "./activity";
 import type { AreaType } from "./signals";
 
 /** The four scoring intents the engine supports. Canonical source of truth. */

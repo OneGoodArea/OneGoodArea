@@ -1,8 +1,8 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { getUserPlan, getMonthlyReportCount, hasMcpAccess, hasAddon, getMcpUsageThisMonth } from "@/lib/usage";
-import { PLANS } from "@/lib/stripe";
+import { callApi } from "@/lib/server/api-client";
 import BillingClient from "@/app/design-v2/billing/client";
+import { type PlanId } from "@/lib/stripe";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -16,33 +16,39 @@ export const metadata: Metadata = {
    firing Stripe Checkout (no auto-fire — protects users from surprise
    redirects after sign-up). */
 
+interface McpStatus {
+  access: boolean;
+  addonOwned: boolean;
+  includedFreeViaPlan: boolean;
+  callsThisMonth: number;
+}
+
+interface DashboardData {
+  plan: string;
+  planName: string;
+  used: number;
+  limit: number;
+  mcp: McpStatus;
+}
+
 export default async function BillingPage() {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) redirect("/sign-in?callbackUrl=/dashboard/billing");
 
-  const [plan, used, mcpAccess, mcpAddonOwned, mcpUsage] = await Promise.all([
-    getUserPlan(userId),
-    getMonthlyReportCount(userId),
-    hasMcpAccess(userId),
-    hasAddon(userId, "mcp"),
-    getMcpUsageThisMonth(userId),
-  ]);
-
-  const planConfig = PLANS[plan];
-  const planIncludesMcp = planConfig?.mcpAccess === true;
+  const { data } = await callApi<DashboardData>("/dashboard", { userId });
 
   return (
     <BillingClient
-      plan={plan}
-      planName={planConfig.name}
-      used={used}
-      limit={planConfig.reportsPerMonth}
+      plan={data?.plan as PlanId ?? "sandbox"}
+      planName={data?.planName ?? "Sandbox"}
+      used={data?.used ?? 0}
+      limit={data?.limit ?? 35}
       mcp={{
-        access: mcpAccess,
-        addonOwned: mcpAddonOwned,
-        includedFreeViaPlan: planIncludesMcp,
-        callsThisMonth: mcpUsage,
+        access: data?.mcp?.access ?? false,
+        addonOwned: data?.mcp?.addonOwned ?? false,
+        includedFreeViaPlan: data?.mcp?.includedFreeViaPlan ?? false,
+        callsThisMonth: data?.mcp?.callsThisMonth ?? 0,
       }}
     />
   );

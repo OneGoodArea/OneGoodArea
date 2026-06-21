@@ -5,6 +5,8 @@
  * In local runtime (OGA_LOCAL_RUNTIME_ENABLED=true), enables debug output and JSON formatting.
  */
 
+import { getConfig } from "../../infrastructure/config";
+
 type LogLevel = 'trace' | 'debug' | 'verbose' | 'info' | 'warn' | 'error';
 
 const LogLevelRank: Record<LogLevel, number> = {
@@ -16,15 +18,15 @@ const LogLevelRank: Record<LogLevel, number> = {
   error: 5,
 };
 
-// Inline env parsing to avoid circular dependency on getRuntimeConfig()
 function getLogLevel(): LogLevel {
-  const envLogLevel = process.env.OGA_LOG_LEVEL;
-  if (envLogLevel && envLogLevel in LogLevelRank) {
-    return envLogLevel as LogLevel;
+  const config = getConfig();
+  const logLevel = config.logLevel;
+  // Validate against known levels
+  if (logLevel && logLevel in LogLevelRank) {
+    return logLevel as LogLevel;
   }
-  // Default to debug if local runtime enabled, otherwise info
-  const isLocalRuntime = process.env.OGA_LOCAL_RUNTIME_ENABLED === 'true';
-  return isLocalRuntime ? 'debug' : 'info';
+  // Fallback: use info, or debug if local runtime is enabled
+  return config.localRuntimeEnabled ? 'debug' : 'info';
 }
 
 function shouldLog(level: LogLevel): boolean {
@@ -67,6 +69,19 @@ function normalizeContext(context?: LogContext): LogContext | undefined {
   return Object.fromEntries(normalizedEntries);
 }
 
+/* AR-308: mask URI passwords before any log line is emitted. Catches
+   connection strings (postgres://user:pw@host, redis://...:pw@host,
+   https://user:token@api) that leak when a driver's error message or
+   stack trace inlines the full URI. Runs on the final JSON string so
+   it covers message, stack, context, and any nested error chain in
+   one pass. Anchored on `://user:`...`@` so plain user@host or
+   user:port forms aren't touched. */
+const URI_PASSWORD_PATTERN = /(\b\w+:\/\/[^:\s@"]+:)[^@\s"]+(@)/g;
+
+export function redactSecrets(s: string): string {
+  return s.replace(URI_PASSWORD_PATTERN, "$1***$2");
+}
+
 function formatStructured(level: LogLevel, message: string, context?: LogContext): string {
   const normalizedContext = normalizeContext(context);
   const correlationId = typeof normalizedContext?.correlationId === "string"
@@ -81,7 +96,7 @@ function formatStructured(level: LogLevel, message: string, context?: LogContext
     message,
     ...(normalizedContext && Object.keys(normalizedContext).length > 0 ? { context: normalizedContext } : {}),
   };
-  return JSON.stringify(log);
+  return redactSecrets(JSON.stringify(log));
 }
 
 function normalizeArgs(args: unknown[]): { message: string; context?: LogContext } {

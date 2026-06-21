@@ -15,6 +15,7 @@ import {
   OAuthButtons,
   AuthFooterLink,
 } from "../_shared/auth-shell";
+import { safeCallbackUrl } from "@/lib/safe-callback-url";
 
 export default function SignInClient() {
   return (
@@ -27,7 +28,7 @@ export default function SignInClient() {
 function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"));
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

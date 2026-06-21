@@ -1,0 +1,631 @@
+/* AR-262 /dashboard/scores. Preset management + usage stats.
+   Brand v3 vocabulary mirroring /dashboard/signals + /monitor. */
+
+.oga-scoresp {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 8px 40px 40px;
+}
+
+@media (max-width: 700px) {
+  .oga-scoresp {
+    padding: 8px 20px 32px;
+  }
+}
+
+/* ============================================================
+   Product header
+   ============================================================ */
+
+.oga-scoresp__product {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  align-items: start;
+  padding: 8px 0 24px;
+  border-bottom: 1px solid var(--oga-ink-10);
+}
+
+.oga-scoresp__product-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: rgba(26, 28, 31, 0.04);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 6px;
+  color: var(--oga-ink);
+  flex-shrink: 0;
+}
+
+.oga-scoresp__product-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.oga-scoresp__product-eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-scoresp__product-title {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: clamp(28px, 3vw, 36px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--oga-ink);
+  margin: 0;
+}
+
+.oga-scoresp__product-tagline {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--oga-ink-50);
+  margin: 4px 0 0;
+  max-width: 720px;
+}
+
+.oga-scoresp__product-tagline code {
+  font-family: var(--oga-font-mono);
+  font-size: 12.5px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+/* ============================================================
+   Usage strip
+   ============================================================ */
+
+.oga-scoresp-usage {
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.oga-scoresp-usage__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.oga-scoresp-usage__eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-scoresp-usage__total {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.015em;
+  color: var(--oga-ink);
+}
+
+.oga-scoresp-usage__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+}
+
+.oga-scoresp-usage__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  background: rgba(26, 28, 31, 0.03);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 3px;
+}
+
+.oga-scoresp-usage__cell--saved {
+  background: rgba(176, 125, 58, 0.06);
+  border-color: rgba(176, 125, 58, 0.25);
+}
+
+.oga-scoresp-usage__cell-label {
+  font-size: 12.5px;
+  color: var(--oga-ink);
+  line-height: 1.3;
+}
+
+.oga-scoresp-usage__cell-value {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--oga-ink);
+  line-height: 1;
+}
+
+.oga-scoresp-usage__cell-slug {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+/* ============================================================
+   Section primitive
+   ============================================================ */
+
+.oga-scoresp-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.oga-scoresp-section__head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.oga-scoresp-section__title {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--oga-ink);
+  margin: 0;
+}
+
+.oga-scoresp-section__hint {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--oga-ink-50);
+  margin: 0;
+  max-width: 720px;
+}
+
+.oga-scoresp-section__hint code {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+/* ============================================================
+   Built-in profiles list
+   ============================================================ */
+
+.oga-scoresp-profiles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.oga-scoresp-profile {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 18px;
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 3px;
+}
+
+.oga-scoresp-profile__glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  color: var(--oga-ink);
+}
+
+.oga-scoresp-profile__glyph svg {
+  width: 36px;
+  height: 36px;
+}
+
+.oga-scoresp-profile__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.oga-scoresp-profile__name {
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--oga-ink);
+  line-height: 1.2;
+}
+
+.oga-scoresp-profile__use {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--oga-ink-50);
+}
+
+.oga-scoresp-profile__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.oga-scoresp-profile__slug {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 2px 7px;
+  border-radius: 2px;
+}
+
+.oga-scoresp-profile__count {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+@media (max-width: 600px) {
+  .oga-scoresp-profile {
+    grid-template-columns: auto 1fr;
+  }
+  .oga-scoresp-profile__meta {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+}
+
+/* ============================================================
+   Saved presets
+   ============================================================ */
+
+.oga-scoresp-saved {
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+}
+
+.oga-scoresp-saved--empty {
+  padding: 24px 24px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.oga-scoresp-saved__empty-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--oga-ink);
+  margin: 0;
+}
+
+.oga-scoresp-saved__empty-body {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--oga-ink-50);
+  margin: 0;
+  max-width: 620px;
+}
+
+.oga-scoresp-saved__empty-body code {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+.oga-scoresp-saved__empty-link {
+  margin-top: 6px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--oga-ink-30);
+  padding-bottom: 1px;
+}
+
+.oga-scoresp-saved__empty-link:hover {
+  border-color: var(--oga-ink);
+}
+
+.oga-scoresp-saved--loading {
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.oga-scoresp-skeleton {
+  display: block;
+  height: 14px;
+  background: rgba(26, 28, 31, 0.08);
+  border-radius: 2px;
+}
+
+.oga-scoresp-skeleton--name {
+  width: 30%;
+  height: 18px;
+}
+
+.oga-scoresp-skeleton--row {
+  width: 100%;
+}
+
+.oga-scoresp-saved__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.oga-scoresp-saved-row {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--oga-ink-10);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.oga-scoresp-saved-row:last-child {
+  border-bottom: none;
+}
+
+.oga-scoresp-saved-row__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.oga-scoresp-saved-row__name {
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--oga-ink);
+}
+
+.oga-scoresp-saved-row__slug {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-ink-50);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 2px 7px;
+  border-radius: 2px;
+}
+
+.oga-scoresp-saved-row__meta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--oga-ink-50);
+}
+
+.oga-scoresp-saved-row__base {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 1px 6px;
+  border-radius: 2px;
+}
+
+/* ============================================================
+   Bottom split: code + schema
+   ============================================================ */
+
+.oga-scoresp__split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .oga-scoresp__split {
+    grid-template-columns: 1fr;
+  }
+}
+
+.oga-scoresp-code {
+  background: linear-gradient(180deg, #1F2125 0%, #1A1C1F 100%);
+  border: 1px solid rgba(250, 248, 244, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+  color: var(--oga-white);
+  display: flex;
+  flex-direction: column;
+}
+
+.oga-scoresp-code__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(250, 248, 244, 0.08);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.oga-scoresp-code__path {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-scoresp-code__path strong {
+  color: var(--oga-white);
+  font-weight: 500;
+}
+
+.oga-scoresp-code__copy {
+  appearance: none;
+  background: rgba(250, 248, 244, 0.06);
+  border: 1px solid rgba(250, 248, 244, 0.10);
+  border-radius: 2px;
+  padding: 4px 10px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.75);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.oga-scoresp-code__copy:hover {
+  background: rgba(250, 248, 244, 0.12);
+  color: var(--oga-white);
+}
+
+.oga-scoresp-code__pre {
+  margin: 0;
+  padding: 16px 18px;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(250, 248, 244, 0.92);
+  overflow-x: auto;
+  white-space: pre;
+  flex: 1;
+}
+
+.oga-scoresp-code__hint {
+  margin: 0;
+  padding: 12px 18px 14px;
+  background: rgba(0, 0, 0, 0.10);
+  border-top: 1px solid rgba(250, 248, 244, 0.06);
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(250, 248, 244, 0.60);
+}
+
+.oga-scoresp-code__hint code {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: rgba(250, 248, 244, 0.85);
+  background: rgba(250, 248, 244, 0.06);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+.oga-scoresp-schema {
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.oga-scoresp-schema__head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.oga-scoresp-schema__eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-scoresp-schema__hint {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-ink-50);
+  margin: 0;
+}
+
+.oga-scoresp-schema__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.oga-scoresp-schema__rows li {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) minmax(180px, auto) 1fr;
+  gap: 12px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--oga-ink-10);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.oga-scoresp-schema__rows li:last-child {
+  border-bottom: none;
+}
+
+.oga-scoresp-schema__field {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 2px 6px;
+  border-radius: 2px;
+  justify-self: start;
+  white-space: pre;
+}
+
+.oga-scoresp-schema__type {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: var(--oga-ink-50);
+  background: transparent;
+  padding: 0;
+}
+
+.oga-scoresp-schema__desc {
+  color: var(--oga-ink-50);
+}
+
+@media (max-width: 600px) {
+  .oga-scoresp-schema__rows li {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}

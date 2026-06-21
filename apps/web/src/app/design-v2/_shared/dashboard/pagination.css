@@ -1,0 +1,192 @@
+/* ============================================================
+   AR-242 — <Pagination>
+   Mono caps controls. Soft-warm hover signature shared with
+   .oga-dropdown__item + DataTable row + .oga-tabs__tab. Active
+   page (page mode only) inverts to ink-filled with warm-white
+   text — same recipe as Sidebar's active nav link. Light + dark
+   surface variants via data-surface.
+   ============================================================ */
+
+.oga-pagination {
+  display: flex;
+  align-items: center;
+  gap: var(--oga-2);
+  flex-wrap: wrap;
+  font-family: var(--oga-font-mono);
+}
+
+/* ---------- Generic button (Prev / Next / arrow controls) ---------- */
+
+.oga-pagination__btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid rgba(26, 28, 31, 0.10);
+  border-radius: 3px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  cursor: pointer;
+  transition:
+    color var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-pagination__btn:hover:not(:disabled) {
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.04);
+  border-color: rgba(26, 28, 31, 0.18);
+}
+
+.oga-pagination__btn:focus-visible {
+  outline: 1.5px solid var(--oga-ink);
+  outline-offset: 2px;
+}
+
+.oga-pagination__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.oga-pagination__arrow {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* ---------- Page-mode numbered controls ---------- */
+
+.oga-pagination__pages {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.oga-pagination__page {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--oga-fg-muted);
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition:
+    color var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-pagination__page:hover:not([data-active="true"]) {
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.04);
+  border-color: rgba(26, 28, 31, 0.08);
+}
+
+.oga-pagination__page:focus-visible {
+  outline: 1.5px solid var(--oga-ink);
+  outline-offset: 2px;
+}
+
+.oga-pagination__page[data-active="true"] {
+  background: var(--oga-ink);
+  color: var(--oga-white);
+  border-color: var(--oga-ink);
+  /* Same edge-lit material as Sidebar active nav link */
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.10) inset;
+  cursor: default;
+}
+
+.oga-pagination__ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-fg-muted);
+  user-select: none;
+}
+
+/* ---------- Cursor-mode indicator slot ---------- */
+
+.oga-pagination__indicator {
+  flex: 1;
+  text-align: center;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  min-width: 0;
+  padding: 0 var(--oga-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   Dark surface variant
+   ============================================================ */
+
+.oga-pagination[data-surface="dark"] .oga-pagination__btn {
+  border-color: rgba(250, 248, 244, 0.12);
+  color: rgba(250, 248, 244, 0.65);
+}
+
+.oga-pagination[data-surface="dark"] .oga-pagination__btn:hover:not(:disabled) {
+  color: var(--oga-white);
+  background: rgba(250, 248, 244, 0.06);
+  border-color: rgba(250, 248, 244, 0.22);
+}
+
+.oga-pagination[data-surface="dark"] .oga-pagination__btn:focus-visible {
+  outline-color: var(--oga-white);
+}
+
+.oga-pagination[data-surface="dark"] .oga-pagination__page {
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-pagination[data-surface="dark"] .oga-pagination__page:hover:not([data-active="true"]) {
+  color: var(--oga-white);
+  background: rgba(250, 248, 244, 0.06);
+  border-color: rgba(250, 248, 244, 0.10);
+}
+
+.oga-pagination[data-surface="dark"] .oga-pagination__page:focus-visible {
+  outline-color: var(--oga-white);
+}
+
+.oga-pagination[data-surface="dark"] .oga-pagination__page[data-active="true"] {
+  background: var(--oga-white);
+  color: var(--oga-ink);
+  border-color: var(--oga-white);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06) inset;
+}
+
+.oga-pagination[data-surface="dark"] .oga-pagination__ellipsis {
+  color: rgba(250, 248, 244, 0.45);
+}
+
+.oga-pagination[data-surface="dark"] .oga-pagination__indicator {
+  color: rgba(250, 248, 244, 0.55);
+}

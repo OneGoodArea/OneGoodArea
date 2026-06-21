@@ -40,6 +40,46 @@ export interface ScoreQuery {
   area: string;
   preset: Intent;
   weights?: Record<string, number>;
+  /** AR-274 follow-on: optional whitelist of signal keys the call is
+      gated to. When set, scoreArea NULLs out the underlying sources
+      whose category prefixes have NO signal_key in the whitelist
+      before handing to v2's frozen computeScores. The engine's
+      existing graceful-null handling then collapses those dimensions
+      to 0-confidence, which the weighted composite picks up
+      automatically. Categories whose source has ANY signal in the
+      bundle are passed through untouched. */
+  bundle_allowed_keys?: readonly string[];
+}
+
+/* Map a signal key (e.g. "crime.total_12m", "transport.stations")
+   to the underlying source it feeds. Transport lives inside the
+   amenities source (AmenitiesData.transport_stations etc.) so it
+   maps to "amenities". Keys whose prefix doesn't match any known
+   source category are ignored — same conservative behaviour as the
+   apps/api bundle validator. */
+const SIGNAL_PREFIX_TO_SOURCE: Record<string, ScoreSourceName> = {
+  crime: "crime",
+  deprivation: "deprivation",
+  property: "property",
+  schools: "ofsted",
+  amenities: "amenities",
+  transport: "amenities",
+  environment: "flood",
+};
+
+type ScoreSourceName = "crime" | "deprivation" | "property" | "ofsted" | "amenities" | "flood";
+
+/** PURE. From the bundle's allowed signal keys, derive the set of
+    sources that retain at least one signal. Sources NOT in this set
+    must be nulled before scoring so v2 produces a partial composite. */
+export function sourcesAllowedByBundle(allowedKeys: readonly string[]): Set<ScoreSourceName> {
+  const sources = new Set<ScoreSourceName>();
+  for (const key of allowedKeys) {
+    const prefix = key.split(".", 1)[0];
+    const source = SIGNAL_PREFIX_TO_SOURCE[prefix];
+    if (source) sources.add(source);
+  }
+  return sources;
 }
 
 /** PURE: validate/coerce the request body into a ScoreQuery, or return an error. */
@@ -100,8 +140,24 @@ export async function scoreArea(query: ScoreQuery): Promise<ScoreResult | null> 
   if (!fetched) return null;
   const { geo, sources } = fetched;
 
+  /* AR-274 follow-on: when a bundle is set, null out sources whose
+     categories aren't represented in the bundle. v2's computeScores
+     handles null inputs by collapsing that dimension to 0-confidence;
+     applyWeights then composes the partial score over the surviving
+     dimensions. v2's math is unchanged. */
+  let { crime, deprivation, amenities, flood, property, ofsted } = sources;
+  if (query.bundle_allowed_keys) {
+    const allowed = sourcesAllowedByBundle(query.bundle_allowed_keys);
+    if (!allowed.has("crime"))       crime = null;
+    if (!allowed.has("deprivation")) deprivation = null;
+    if (!allowed.has("amenities"))   amenities = null;
+    if (!allowed.has("flood"))       flood = null;
+    if (!allowed.has("property"))    property = null;
+    if (!allowed.has("ofsted"))      ofsted = null;
+  }
+
   const base = computeScores(
-    query.preset, sources.crime, sources.deprivation, sources.amenities, sources.flood, geo.area_type, sources.property, sources.ofsted,
+    query.preset, crime, deprivation, amenities, flood, geo.area_type, property, ofsted,
   );
   const agg = applyWeights(base, query.weights);
 

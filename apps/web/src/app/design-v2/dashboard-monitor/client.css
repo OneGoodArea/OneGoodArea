@@ -1,0 +1,975 @@
+/* AR-261 /dashboard/monitor. Same brand v3 vocabulary as the other
+   product pages: cream column, warm-white cards with hairline borders,
+   mono caps eyebrows, serif titles, dark editorial codeblock and
+   schema panel. */
+
+.oga-mon {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 8px 40px 40px;
+}
+
+@media (max-width: 700px) {
+  .oga-mon {
+    padding: 8px 20px 32px;
+  }
+}
+
+/* ============================================================
+   Product header
+   ============================================================ */
+
+.oga-mon__product {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  align-items: start;
+  padding: 8px 0 24px;
+  border-bottom: 1px solid var(--oga-ink-10);
+}
+
+.oga-mon__product-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: rgba(26, 28, 31, 0.04);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 6px;
+  color: var(--oga-ink);
+  flex-shrink: 0;
+}
+
+.oga-mon__product-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.oga-mon__product-eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-mon__product-title {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: clamp(28px, 3vw, 36px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--oga-ink);
+  margin: 0;
+}
+
+.oga-mon__product-tagline {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--oga-ink-50);
+  margin: 4px 0 0;
+  max-width: 720px;
+}
+
+/* ============================================================
+   Sample-data notice
+   ============================================================ */
+
+.oga-mon__demo {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 14px;
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-left: 2px solid #b07d3a;
+  border-radius: 3px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-ink);
+  flex-wrap: wrap;
+}
+
+.oga-mon__demo-dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #b07d3a;
+  margin-top: 8px;
+}
+
+.oga-mon__demo-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink);
+  margin-top: 2px;
+}
+
+.oga-mon__demo-body {
+  color: var(--oga-ink-50);
+  flex: 1;
+  min-width: 220px;
+}
+
+/* ============================================================
+   Live portfolios: toolbar + compact rows + paginator
+   ============================================================ */
+
+.oga-mon__live {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.oga-mon__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.oga-mon__search {
+  position: relative;
+  flex: 1;
+  min-width: 240px;
+  max-width: 420px;
+}
+
+.oga-mon__search-icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  color: var(--oga-ink-50);
+}
+
+.oga-mon__search-input {
+  width: 100%;
+  padding: 10px 14px 10px 34px;
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+  background: var(--oga-bg-warm, #FAF8F4);
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  color: var(--oga-ink);
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.oga-mon__search-input::placeholder {
+  color: var(--oga-ink-50);
+}
+
+.oga-mon__search-input:focus {
+  outline: none;
+  border-color: var(--oga-ink);
+  background: var(--oga-white, #FFFFFF);
+}
+
+.oga-mon__count {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+  white-space: nowrap;
+}
+
+.oga-mon__no-match {
+  padding: 28px 24px;
+  margin: 0;
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--oga-ink-50);
+}
+
+.oga-mon__empty {
+  padding: 32px 28px;
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.oga-mon__empty-title {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--oga-ink);
+  margin: 0;
+}
+
+.oga-mon__empty-body {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--oga-ink-50);
+  margin: 0;
+  max-width: 620px;
+}
+
+.oga-mon__empty-body code {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+.oga-mon__empty-link {
+  margin-top: 6px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--oga-ink-30);
+  padding-bottom: 1px;
+}
+
+.oga-mon__empty-link:hover {
+  border-color: var(--oga-ink);
+}
+
+/* ---------- Compact row list (live portfolios) ----------
+   Each portfolio is a single horizontal row in the closed state:
+   avatar / name / id / area count / created / chevron. This is the
+   scale-friendly shape, 20-50 per page reads comfortably without
+   the multi-line head the example cards use. */
+
+.oga-mon__list-compact {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.oga-mon-row {
+  border-bottom: 1px solid var(--oga-ink-10);
+}
+
+.oga-mon-row:last-child {
+  border-bottom: none;
+}
+
+.oga-mon-row__head {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto auto auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 18px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+  transition: background 120ms ease;
+}
+
+.oga-mon-row__head:hover {
+  background: rgba(26, 28, 31, 0.03);
+}
+
+.oga-mon-row__avatar {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(26, 28, 31, 0.06);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--oga-ink);
+}
+
+.oga-mon-row__name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--oga-ink);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.oga-mon-row__id {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-ink-50);
+  background: rgba(26, 28, 31, 0.04);
+  padding: 2px 7px;
+  border-radius: 2px;
+}
+
+.oga-mon-row__areacount {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 3px 8px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.oga-mon-row__date {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--oga-ink-50);
+  white-space: nowrap;
+}
+
+.oga-mon-row__chev {
+  font-family: var(--oga-font-mono);
+  font-size: 18px;
+  color: var(--oga-ink-50);
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.oga-mon-row--open .oga-mon-row__chev {
+  color: var(--oga-ink);
+}
+
+@media (max-width: 720px) {
+  .oga-mon-row__head {
+    grid-template-columns: auto 1fr auto;
+    row-gap: 6px;
+  }
+  .oga-mon-row__id,
+  .oga-mon-row__areacount,
+  .oga-mon-row__date {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
+/* ---------- Paginator ---------- */
+
+.oga-mon__paginator {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding-top: 4px;
+  flex-wrap: wrap;
+}
+
+.oga-mon__page-counter {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-mon__page-btn {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--oga-ink-30);
+  border-radius: 3px;
+  padding: 6px 14px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-ink);
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+}
+
+.oga-mon__page-btn:hover:not(:disabled) {
+  background: rgba(26, 28, 31, 0.04);
+  border-color: var(--oga-ink);
+}
+
+.oga-mon__page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   Portfolios list (examples)
+   ============================================================ */
+
+.oga-mon__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.oga-mon-card {
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: border-color 120ms ease;
+}
+
+.oga-mon-card--open {
+  border-color: var(--oga-ink-30);
+}
+
+.oga-mon-card__head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 24px;
+  row-gap: 6px;
+  width: 100%;
+  padding: 18px 22px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+  transition: background 120ms ease;
+}
+
+.oga-mon-card__head:hover {
+  background: rgba(26, 28, 31, 0.03);
+}
+
+.oga-mon-card__head-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.oga-mon-card__eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-mon-card__eyebrow code {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  color: var(--oga-ink-50);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 1px 6px;
+  border-radius: 2px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.oga-mon-card__title {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--oga-ink);
+  margin: 2px 0 0;
+}
+
+.oga-mon-card__blurb {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--oga-ink-50);
+  margin: 4px 0 0;
+}
+
+.oga-mon-card__head-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 720px) {
+  .oga-mon-card__head {
+    grid-template-columns: 1fr;
+  }
+  .oga-mon-card__head-right {
+    flex-wrap: wrap;
+    gap: 14px;
+    padding-top: 4px;
+    border-top: 1px solid var(--oga-ink-10);
+    margin-top: 4px;
+  }
+}
+
+.oga-mon-card__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 60px;
+}
+
+@media (max-width: 720px) {
+  .oga-mon-card__stat {
+    align-items: flex-start;
+  }
+}
+
+.oga-mon-card__stat-value {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.015em;
+  color: var(--oga-ink);
+}
+
+.oga-mon-card__stat-value[data-flagged="true"] {
+  color: #b07d3a;
+}
+
+.oga-mon-card__stat-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-mon-card__meta {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  color: var(--oga-ink-50);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.oga-mon-card__chev {
+  font-family: var(--oga-font-mono);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--oga-ink-50);
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.oga-mon-card--open .oga-mon-card__chev {
+  color: var(--oga-ink);
+}
+
+/* ---------- Expanded body: tracked areas + changes ---------- */
+
+.oga-mon-card__body {
+  padding: 8px 22px 22px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 24px;
+  border-top: 1px solid var(--oga-ink-10);
+}
+
+@media (max-width: 900px) {
+  .oga-mon-card__body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.oga-mon-card__section-title {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+  margin: 12px 0 10px;
+}
+
+.oga-mon-card__empty {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-ink-50);
+  margin: 0;
+}
+
+.oga-mon-areas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.oga-mon-area {
+  display: grid;
+  grid-template-columns: minmax(86px, auto) 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--oga-ink-10);
+}
+
+.oga-mon-area:last-child {
+  border-bottom: none;
+}
+
+.oga-mon-area__pcode {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 2px 7px;
+  border-radius: 2px;
+  justify-self: start;
+}
+
+.oga-mon-area__label {
+  font-size: 13px;
+  color: var(--oga-ink-50);
+}
+
+/* ---------- Material changes ---------- */
+
+.oga-mon-changes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.oga-mon-change {
+  padding: 12px 14px;
+  background: rgba(26, 28, 31, 0.03);
+  border: 1px solid var(--oga-ink-10);
+  border-left: 2px solid var(--oga-ink-30);
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.oga-mon-change[data-direction="up"] {
+  border-left-color: #2E7548;
+}
+
+.oga-mon-change[data-direction="down"] {
+  border-left-color: #B4361C;
+}
+
+.oga-mon-change__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.oga-mon-change__arrow {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-ink-50);
+}
+
+.oga-mon-change[data-direction="up"] .oga-mon-change__arrow {
+  color: #2E7548;
+}
+
+.oga-mon-change[data-direction="down"] .oga-mon-change__arrow {
+  color: #B4361C;
+}
+
+.oga-mon-change__pcode {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.06);
+  padding: 2px 7px;
+  border-radius: 2px;
+}
+
+.oga-mon-change__pct {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--oga-ink);
+  line-height: 1;
+}
+
+.oga-mon-change[data-direction="up"] .oga-mon-change__pct {
+  color: #2E7548;
+}
+
+.oga-mon-change[data-direction="down"] .oga-mon-change__pct {
+  color: #B4361C;
+}
+
+.oga-mon-change__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12.5px;
+}
+
+.oga-mon-change__signal code {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 1px 6px;
+  border-radius: 2px;
+}
+
+.oga-mon-change__signal span {
+  color: var(--oga-ink-50);
+  margin-left: 4px;
+}
+
+.oga-mon-change__values {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-ink);
+}
+
+.oga-mon-change__values span {
+  color: var(--oga-ink-30);
+  margin: 0 4px;
+}
+
+.oga-mon-change__periods {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--oga-ink-50);
+}
+
+/* ============================================================
+   Bottom split: code + schema
+   ============================================================ */
+
+.oga-mon__split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .oga-mon__split {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Code block ---------- */
+
+.oga-mon-code {
+  background: linear-gradient(180deg, #1F2125 0%, #1A1C1F 100%);
+  border: 1px solid rgba(250, 248, 244, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+  color: var(--oga-white);
+  display: flex;
+  flex-direction: column;
+}
+
+.oga-mon-code__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(250, 248, 244, 0.08);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.oga-mon-code__path {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-mon-code__path strong {
+  color: var(--oga-white);
+  font-weight: 500;
+}
+
+.oga-mon-code__copy {
+  appearance: none;
+  background: rgba(250, 248, 244, 0.06);
+  border: 1px solid rgba(250, 248, 244, 0.10);
+  border-radius: 2px;
+  padding: 4px 10px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.75);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.oga-mon-code__copy:hover {
+  background: rgba(250, 248, 244, 0.12);
+  color: var(--oga-white);
+}
+
+.oga-mon-code__pre {
+  margin: 0;
+  padding: 16px 18px;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(250, 248, 244, 0.92);
+  overflow-x: auto;
+  white-space: pre;
+  flex: 1;
+}
+
+.oga-mon-code__hint {
+  margin: 0;
+  padding: 12px 18px 14px;
+  background: rgba(0, 0, 0, 0.10);
+  border-top: 1px solid rgba(250, 248, 244, 0.06);
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(250, 248, 244, 0.60);
+}
+
+.oga-mon-code__hint code {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: rgba(250, 248, 244, 0.85);
+  background: rgba(250, 248, 244, 0.06);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+/* ---------- Schema reference ---------- */
+
+.oga-mon-schema {
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.oga-mon-schema__head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.oga-mon-schema__eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-mon-schema__hint {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-ink-50);
+  margin: 0;
+}
+
+.oga-mon-schema__hint code {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+.oga-mon-schema__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.oga-mon-schema__rows li {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) minmax(140px, auto) 1fr;
+  gap: 12px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--oga-ink-10);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.oga-mon-schema__rows li:last-child {
+  border-bottom: none;
+}
+
+.oga-mon-schema__field {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 2px 6px;
+  border-radius: 2px;
+  justify-self: start;
+  white-space: pre;
+}
+
+.oga-mon-schema__type {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: var(--oga-ink-50);
+  background: transparent;
+  padding: 0;
+}
+
+.oga-mon-schema__desc {
+  color: var(--oga-ink-50);
+}
+
+@media (max-width: 600px) {
+  .oga-mon-schema__rows li {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}

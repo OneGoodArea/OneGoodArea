@@ -12,6 +12,16 @@ export interface UserRow {
   provider: string;
   email_verified: boolean;
   created_at: string;
+  // AR-218 (Dashboard redesign Epic AR-217): captured by the /welcome flow + sign-up
+  // form (Phase 1). All nullable: existing users have null until they complete
+  // /welcome or revisit it.
+  //   - intent: validated against 5 ICPs (@onegoodarea/contracts UserIntentSchema)
+  //   - signup_source: free-form marketing surface slug (?from=<slug>)
+  //   - role_preference: engineer / analyst / explorer — determines arrival page
+  //     (validated via UserRolePreferenceSchema)
+  intent: string | null;
+  signup_source: string | null;
+  role_preference: string | null;
 }
 
 export interface ReportRow {
@@ -149,6 +159,20 @@ export interface SavedAreaRow {
 }
 
 export interface VerificationTokenRow {
+  id: string;
+  user_id: string;
+  email: string;
+  token: string;
+  expires_at: string;
+  used: boolean;
+  created_at: string;
+}
+
+/* AR-250 [AR-248-B] magic-link sign-in tokens. Shape mirrors
+   VerificationTokenRow exactly; we keep the type separate so consumer
+   code can't accidentally cross-use a verification token where a
+   magic-link token is expected (semantics differ — see ensureMagicLinkTokensTable). */
+export interface MagicLinkTokenRow {
   id: string;
   user_id: string;
   email: string;

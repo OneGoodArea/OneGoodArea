@@ -1,0 +1,222 @@
+/* ============================================================
+   AR-240 — <CodeBlock>
+   Brand v3 altitude — matches the homepage .oga-code-panel
+   recipe (warm-white gradient + edge-lit material on light;
+   graphite gradient + dot-field motif on dark). Reuses the
+   canonical .oga-code-panel__key/__str/__num-val/__punct/
+   __comment/__fn token classes for syntax highlighting.
+
+   The container, line, body, header, num, and copy classes are
+   all dashboard-namespaced (.oga-code-block__*). The token classes
+   sit inside the body and pick up the existing colour vocabulary
+   from .oga-code-panel — single source of truth for syntax tones.
+   ============================================================ */
+
+.oga-code-block {
+  position: relative;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAF8F4 100%);
+  border: 1px solid rgba(26, 28, 31, 0.10);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 1px 1px rgba(26, 28, 31, 0.04),
+    0 28px 64px -22px rgba(26, 28, 31, 0.18);
+  isolation: isolate;
+}
+
+/* ---------- Header strip ----------
+   Optional. Same vocabulary as .oga-code-panel__header (mono caps,
+   broad letter-spacing, warm-white wash). Consumers compose richer
+   content (live dot + path + meta) by passing a ReactNode header. */
+
+.oga-code-block__header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 18px;
+  border-bottom: 1px solid rgba(26, 28, 31, 0.08);
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7) 0%, rgba(250, 248, 244, 0.4) 100%);
+}
+
+/* ---------- Copy button ----------
+   Top-right corner. Sits above the body via z-index, doesn't push
+   the layout. Soft-warm hover + .oga-btn material recipe. */
+
+.oga-code-block__copy {
+  appearance: none;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  padding: 4px 10px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(26, 28, 31, 0.10);
+  border-radius: 3px;
+  cursor: pointer;
+  transition:
+    color var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.oga-code-block__copy:hover {
+  color: var(--oga-ink);
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(26, 28, 31, 0.18);
+}
+
+.oga-code-block__copy:focus-visible {
+  outline: 1.5px solid var(--oga-ink);
+  outline-offset: 2px;
+}
+
+/* Hide the copy button while the header is rendered + the body has
+   little horizontal space — push it into the header. The header
+   variant of copy is handled by the consumer (they can position it
+   inside their custom header ReactNode if they want it inline). */
+
+.oga-code-block__header + .oga-code-block__copy {
+  top: 8px;
+}
+
+/* ---------- Body ----------
+   pre block with the same vocabulary as .oga-code-panel__body. */
+
+.oga-code-block__body {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 20px 0 22px;
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
+  line-height: 1.72;
+  color: var(--oga-fg);
+  overflow-x: auto;
+  /* Scrollbar matching the DataTable + Sidebar palette */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(26, 28, 31, 0.20) transparent;
+}
+
+.oga-code-block__body::-webkit-scrollbar {
+  height: 8px;
+}
+
+.oga-code-block__body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.oga-code-block__body::-webkit-scrollbar-thumb {
+  background: rgba(26, 28, 31, 0.18);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* ---------- Line ---------- */
+
+.oga-code-block__line {
+  display: flex;
+  align-items: flex-start;
+  padding: 0 18px;
+  white-space: pre;
+}
+
+.oga-code-block__num {
+  display: inline-block;
+  width: 28px;
+  flex-shrink: 0;
+  font-size: 10.5px;
+  color: var(--oga-fg-muted);
+  opacity: 0.55;
+  text-align: right;
+  padding-right: 14px;
+  user-select: none;
+}
+
+.oga-code-block__text {
+  flex: 1;
+  padding-right: 24px;
+}
+
+/* ============================================================
+   Dark surface variant — graphite gradient + dot-field motif
+   matching .oga-data-table dark + .oga-sidebar
+   ============================================================ */
+
+.oga-code-block[data-surface="dark"] {
+  background: linear-gradient(180deg, #1F2125 0%, #1A1C1F 100%);
+  border-color: rgba(250, 248, 244, 0.12);
+  color: var(--oga-white);
+  box-shadow:
+    inset 0 1px 0 rgba(250, 248, 244, 0.06),
+    0 1px 1px rgba(0, 0, 0, 0.18),
+    0 28px 64px -22px rgba(0, 0, 0, 0.45);
+}
+
+/* Dot-field motif — exact same recipe as .oga-section-dark, Sidebar,
+   EmptyState dark. 14px grid at warm-white 0.10 opacity, mask
+   radial-gradient ellipse anchored at top-right. */
+.oga-code-block[data-surface="dark"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(250, 248, 244, 0.10) 1.2px, transparent 1.4px);
+  background-size: 14px 14px;
+  -webkit-mask-image: radial-gradient(ellipse at top right, black 0%, transparent 70%);
+          mask-image: radial-gradient(ellipse at top right, black 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.oga-code-block[data-surface="dark"] .oga-code-block__header {
+  background: linear-gradient(180deg, rgba(250, 248, 244, 0.05) 0%, rgba(250, 248, 244, 0.02) 100%);
+  border-bottom-color: rgba(250, 248, 244, 0.10);
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-code-block[data-surface="dark"] .oga-code-block__body {
+  color: rgba(250, 248, 244, 0.92);
+  scrollbar-color: rgba(250, 248, 244, 0.22) transparent;
+}
+
+.oga-code-block[data-surface="dark"] .oga-code-block__body::-webkit-scrollbar-thumb {
+  background: rgba(250, 248, 244, 0.20);
+  background-clip: padding-box;
+}
+
+.oga-code-block[data-surface="dark"] .oga-code-block__num {
+  color: rgba(250, 248, 244, 0.45);
+}
+
+.oga-code-block[data-surface="dark"] .oga-code-block__copy {
+  color: rgba(250, 248, 244, 0.65);
+  background: rgba(26, 28, 31, 0.55);
+  border-color: rgba(250, 248, 244, 0.14);
+}
+
+.oga-code-block[data-surface="dark"] .oga-code-block__copy:hover {
+  color: var(--oga-white);
+  background: rgba(26, 28, 31, 0.75);
+  border-color: rgba(250, 248, 244, 0.26);
+}
+
+.oga-code-block[data-surface="dark"] .oga-code-block__copy:focus-visible {
+  outline-color: var(--oga-white);
+}

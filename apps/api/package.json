@@ -9,7 +9,7 @@
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
     "bootstrap:test-key": "tsx src/scripts/bootstrap-test-key.ts",
-    "build": "esbuild src/server.ts --bundle --platform=node --format=cjs --outfile=dist/server.cjs --target=node22",
+    "build": "esbuild src/server.ts --bundle --platform=node --format=cjs --outfile=dist/server.cjs --target=node22 && node -e \"const fs = require('fs'); const path = require('path'); const src = path.join(__dirname, '../..', 'node_modules/@fastify/swagger-ui/static'); const dst = path.join(__dirname, 'dist/static'); if (fs.existsSync(src)) { fs.cpSync(src, dst, { recursive: true, force: true }); }\"",
     "start:prod": "node dist/server.cjs",
     "migrate": "tsx src/infrastructure/db/migrate.ts",
     "refresh:deprivation": "tsx src/modules/signals/refresh/deprivation.ts",
@@ -27,18 +27,20 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "fastify": "^5.2.0",
-    "@neondatabase/serverless": "^1.1.0",
     "@anthropic-ai/sdk": "^0.95.2",
+    "@fastify/swagger": "^9.7.0",
+    "@fastify/swagger-ui": "^5.2.6",
+    "@neondatabase/serverless": "^1.1.0",
     "@onegoodarea/contracts": "*",
-    "esbuild": "^0.28.0",
+    "fastify": "^5.2.0",
     "jose": "^6.2.3",
     "resend": "^6.12.3",
-    "stripe": "^20.4.0",
-    "tsx": "^4.19.2"
+    "stripe": "^20.4.0"
   },
   "devDependencies": {
     "@types/node": "^25",
-    "msw": "^2.14.6"
+    "esbuild": "^0.28.0",
+    "msw": "^2.14.6",
+    "tsx": "^4.19.2"
   }
 }

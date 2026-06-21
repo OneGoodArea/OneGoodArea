@@ -184,7 +184,7 @@ function VizGrowth() {
   );
 }
 
-const PLAN_VIZ: Record<PlanId, () => ReactElement> = {
+export const PLAN_VIZ: Record<PlanId, () => ReactElement> = {
   // legacy v1 plans never render through this grid, but the type
   // requires we map every PlanId. They alias to the closest v2 viz.
   free:        VizSandbox,

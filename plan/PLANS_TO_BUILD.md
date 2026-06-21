@@ -1,8 +1,10 @@
 # Plans that we think we need to build
 
+## Containers
+* ~~Optimize Container Content. Web Container has Only WEB, API has ONLY APIS~~ → **Plan 017** (`plan/017_container_minimization.md`)
 
 ## CICD
-* build containers
+* build containers in github
 * deploy containers to oracle cloud
 * integrate render check to github
 * integrate OCI deploy check in GITHUB
@@ -13,10 +15,13 @@
 * Same for Oracle Cloud
 
 ## Observability
-* should activity events be on postgresql or should them be in some sort of observability log?
+* should activity events be on postgres or should them be in some sort of observability log?
 * what about performance observability?
 * what about business metrics
 
 ## API Secrects/Key
 * audit for security, consider the table definitions and content
 * same applies to site login and email verification during registration
+
+## Site
+* QR Code & Analytics for it

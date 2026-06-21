@@ -12,6 +12,10 @@ export interface UserRow {
   provider: string;
   email_verified: boolean;
   created_at: string;
+  /* AR-312: superuser flag. Optional in the type so existing callers
+     that SELECT a narrower set of columns still typecheck — only
+     isSuperuser actually reads this field. */
+  is_superuser?: boolean;
 }
 
 export interface ReportRow {
@@ -45,13 +49,16 @@ export interface ApiKeyRow {
 
 /** Levers (AR-193) — per-org tenancy primitives. White-label fields
     `display_name` + `brand_url` added by AR-200 (both nullable; reads
-    fall back to `name` when display_name is null). */
+    fall back to `name` when display_name is null). AR-284 adds
+    `logo_url` for the dashboard's org-mark surfaces (paste-URL for
+    v1; Vercel Blob upload is a follow-up). */
 export interface OrgRow {
   id: string;
   slug: string;
   name: string;
   display_name: string | null;
   brand_url: string | null;
+  logo_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -61,6 +68,29 @@ export interface OrgMemberRow {
   user_id: string;
   role: "owner" | "admin" | "member";
   joined_at: string;
+  /* AR-310: populated by listMembers via LEFT JOIN users — undefined on
+     paths that don't join. Nullable email handles the "user deleted but
+     FK stub remains" edge case. */
+  email?: string | null;
+  name?: string | null;
+}
+
+/** AR-272 — org_invitations row. Plaintext token NEVER lives here; we
+    keep only the SHA-256 hash. The email is stored lowercased so the
+    partial-unique pending index doesn't get bypassed by mixed-case
+    duplicates. */
+export interface OrgInvitationRow {
+  id: string;
+  org_id: string;
+  email: string;
+  role: "member" | "admin";
+  token_hash: string;
+  invited_by_user_id: string;
+  expires_at: string;
+  accepted_at: string | null;
+  accepted_by_user_id: string | null;
+  revoked_at: string | null;
+  created_at: string;
 }
 
 /** Levers (AR-195) — signal_bundles row. signal_keys is a Postgres TEXT[]

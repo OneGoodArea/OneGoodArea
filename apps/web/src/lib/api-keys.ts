@@ -66,7 +66,12 @@ async function migrateApiKeysToHash() {
 export async function createApiKey(userId: string, name: string = "Default"): Promise<{ id: string; key: string; name: string }> {
   await ensureTable();
   const id = generateId("key");
-  const key = `aiq_${crypto.randomBytes(24).toString("hex")}`;
+  /* AR-265: new keys carry the oga_ prefix. The web side had an
+     aiq_ literal here from the AreaIQ era that never got migrated
+     when apps/api flipped (see apps/api/src/modules/api-keys/index.ts
+     header comment). validateApiKey is a pure hash lookup, no prefix
+     gate, so existing aiq_ keys keep validating untouched. */
+  const key = `oga_${crypto.randomBytes(24).toString("hex")}`;
   const hash = hashApiKey(key);
   const preview = apiKeyPreview(key);
 

@@ -7,6 +7,7 @@ Runbooks for everyday tasks. If you're operating OneGoodArea (deploying, refresh
 | File | When to read |
 |---|---|
 | [`LOCAL-SETUP.md`](./LOCAL-SETUP.md) | First clone — get the apps running on your machine in <5 minutes |
+| [`CONTAINERS-SETUP.md`](./CONTAINERS-SETUP.md) | What the containers are prepared for |
 | [`DATABASE-MIGRATIONS.md`](./DATABASE-MIGRATIONS.md) | Adding/modifying a table; running migrations on prod Neon |
 | [`SIGNAL-REFRESH.md`](./SIGNAL-REFRESH.md) | Running the monthly cron jobs (deprivation, prices, crime, time-series) |
 | [`COVERAGE.md`](./COVERAGE.md) | Running code coverage, reading reports, understanding thresholds |

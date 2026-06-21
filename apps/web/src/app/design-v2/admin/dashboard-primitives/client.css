@@ -1,0 +1,549 @@
+/* AR-217 Phase 0 — Dashboard primitives showcase page.
+   Brand v3 altitude: surface rotation (hero → quiet → dark), editorial
+   hero, document-style variant rows (NOT card grid — auto-rejected per
+   feedback-design-bar). Layout only; the primitives themselves carry
+   their own CSS (form-group.css etc.). */
+
+.oga-prim-page {
+  min-height: 100vh;
+  background: var(--oga-bg);
+  color: var(--oga-fg);
+}
+
+/* ---------- Hero ---------- */
+
+.oga-prim-hero__inner {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 clamp(var(--oga-4), 5vw, var(--oga-7));
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+}
+
+.oga-prim-hero__title {
+  margin: 0;
+}
+
+.oga-prim-hero__lead {
+  margin: 0;
+  max-width: 56ch;
+}
+
+/* ---------- Sections ---------- */
+
+.oga-prim-section__inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 clamp(var(--oga-4), 5vw, var(--oga-7));
+}
+
+.oga-prim-section__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+  margin-bottom: var(--oga-7);
+  padding-bottom: var(--oga-5);
+  border-bottom: 1px solid var(--oga-ink-10);
+}
+
+[data-oga-surface="dark"] .oga-prim-section__header {
+  border-bottom-color: rgba(250, 248, 244, 0.12);
+}
+
+.oga-prim-section__title {
+  margin: 0;
+}
+
+.oga-prim-section__caption {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-lead);
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+  max-width: 64ch;
+  margin: 0;
+}
+
+[data-oga-surface="dark"] .oga-prim-section__caption {
+  color: rgba(250, 248, 244, 0.65);
+}
+
+/* ---------- Document-style variant grid ----------
+   Two-column row: meta (label + caption) | demo. Stacks under 720px.
+   No cards. No borders around the control area. Restrained spacing,
+   subtle hairline between rows. */
+
+.oga-prim-doc {
+  display: flex;
+  flex-direction: column;
+}
+
+.oga-prim-doc__row {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  gap: clamp(var(--oga-5), 6vw, var(--oga-7));
+  padding: var(--oga-6) 0;
+  border-top: 1px solid var(--oga-ink-10);
+}
+
+.oga-prim-doc__row:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.oga-prim-doc__row:last-child {
+  padding-bottom: 0;
+}
+
+[data-oga-surface="dark"] .oga-prim-doc__row {
+  border-top-color: rgba(250, 248, 244, 0.10);
+}
+
+.oga-prim-doc__meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-2);
+}
+
+.oga-prim-doc__label {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--oga-fg);
+  margin: 0;
+}
+
+.oga-prim-doc__caption {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+[data-oga-surface="dark"] .oga-prim-doc__caption {
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-prim-doc__demo {
+  max-width: 480px;
+}
+
+@media (max-width: 720px) {
+  .oga-prim-doc__row {
+    grid-template-columns: 1fr;
+    gap: var(--oga-3);
+    padding: var(--oga-5) 0;
+  }
+}
+
+/* ---------- Inline code + pre blocks (showcase only) ---------- */
+
+.oga-prim-code {
+  font-family: var(--oga-font-mono);
+  font-size: 0.92em;
+  background: var(--oga-canvas);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 2px;
+  padding: 1px 6px;
+  color: var(--oga-ink);
+}
+
+[data-oga-surface="dark"] .oga-prim-code {
+  background: rgba(250, 248, 244, 0.06);
+  border-color: rgba(250, 248, 244, 0.14);
+  color: var(--oga-white);
+}
+
+.oga-prim-pre {
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
+  line-height: 1.5;
+  background: var(--oga-canvas);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+  padding: var(--oga-3);
+  overflow-x: auto;
+  margin: 0;
+  color: var(--oga-ink);
+}
+
+/* ---------- Form stack inside Modal demos ---------- */
+
+.oga-prim-form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-4);
+}
+
+/* ---------- Showcase-only utility helpers for AR-221 demos ---------- */
+
+.oga-prim-end-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Trigger label content — what sits inside the consumer's button. */
+.oga-prim-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: inherit;
+}
+
+.oga-prim-trigger--icon {
+  gap: 0;
+}
+
+.oga-prim-trigger--dark {
+  color: var(--oga-white);
+}
+
+.oga-prim-trigger__primary {
+  font-weight: 500;
+}
+
+.oga-prim-trigger__role {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(250, 248, 244, 0.55);
+  padding: 2px 6px;
+  border: 1px solid rgba(250, 248, 244, 0.18);
+  border-radius: 2px;
+}
+
+/* Icon-only button: used for "more" row action triggers. Square, no text. */
+.oga-prim-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 2px;
+  color: var(--oga-fg-muted);
+  cursor: pointer;
+  transition:
+    color var(--oga-dur-fast) var(--oga-ease),
+    background var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-prim-icon-button:hover {
+  color: var(--oga-ink);
+  background: var(--oga-canvas);
+  border-color: var(--oga-ink-30);
+}
+
+/* Sidebar-style trigger: matches what the real sidebar consumes will
+   use. Transparent background, soft-warm hover on dark, hairline border. */
+.oga-prim-sidebar-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-3);
+  padding: var(--oga-2) var(--oga-3);
+  background: rgba(250, 248, 244, 0.04);
+  border: 1px solid rgba(250, 248, 244, 0.12);
+  border-radius: 4px;
+  color: var(--oga-white);
+  cursor: pointer;
+  transition:
+    background var(--oga-dur) var(--oga-ease),
+    border-color var(--oga-dur) var(--oga-ease);
+  min-width: 200px;
+}
+
+.oga-prim-sidebar-trigger:hover {
+  background: rgba(250, 248, 244, 0.06);
+  border-color: rgba(250, 248, 244, 0.28);
+}
+
+/* AR-222 — button row for stack-test variant */
+.oga-prim-button-row {
+  display: flex;
+  gap: var(--oga-2);
+  flex-wrap: wrap;
+}
+
+/* ---------- AR-230 showcase helpers ----------
+   Role badge for the Members table cell. The real consumer page
+   will live elsewhere; these stay scoped to the showcase. */
+
+.oga-prim-role-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--oga-ink-10);
+  color: var(--oga-fg-muted);
+}
+
+.oga-prim-role-badge[data-role="owner"] {
+  background: rgba(26, 28, 31, 0.06);
+  border-color: rgba(26, 28, 31, 0.18);
+  color: var(--oga-ink);
+}
+
+.oga-prim-role-badge[data-role="admin"] {
+  background: transparent;
+  color: var(--oga-ink);
+}
+
+[data-oga-surface="dark"] .oga-prim-role-badge {
+  border-color: rgba(250, 248, 244, 0.18);
+  color: rgba(250, 248, 244, 0.65);
+}
+
+[data-oga-surface="dark"] .oga-prim-role-badge[data-role="owner"] {
+  background: rgba(250, 248, 244, 0.08);
+  border-color: rgba(250, 248, 244, 0.30);
+  color: var(--oga-white);
+}
+
+[data-oga-surface="dark"] .oga-prim-role-badge[data-role="admin"] {
+  color: var(--oga-white);
+}
+
+/* Status dot for webhook deliveries — green/amber convention.
+   Inner circle pulses on healthy status so live tables feel alive. */
+
+.oga-prim-status-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  color: var(--oga-fg-muted);
+}
+
+.oga-prim-status-dot__inner {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--oga-status-green, #6ea96a);
+}
+
+.oga-prim-status-dot[data-status="ok"] {
+  color: var(--oga-ink);
+}
+
+.oga-prim-status-dot[data-status="failing"] .oga-prim-status-dot__inner {
+  background: var(--oga-status-red, #b83232);
+}
+
+.oga-prim-status-dot[data-status="failing"] {
+  color: var(--oga-status-red, #b83232);
+}
+
+/* Empty-state composition pattern used in the DataTable showcase. */
+
+.oga-prim-empty-state {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+  align-items: center;
+  padding: var(--oga-3) 0;
+}
+
+.oga-prim-empty-state__title {
+  margin: 0;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--oga-ink);
+}
+
+.oga-prim-empty-state__body {
+  margin: 0;
+  font-size: 13px;
+  color: var(--oga-fg-muted);
+  max-width: 42ch;
+  text-align: center;
+}
+
+/* ---------- AR-233 Sidebar showcase ----------
+   The Sidebar primitive is normally a 100vh sticky-positioned column.
+   Inside the showcase doc rows, we render it inside a contained
+   preview frame so its positioning + height read without busting the
+   row layout. Width fixed at 260px (the desktop width); height capped
+   so the spacer + bottom slot still anchor visibly. */
+
+.oga-prim-sidebar-frame {
+  position: relative;
+  width: 260px;
+  height: 460px;
+  border-radius: 6px;
+  overflow: hidden;
+  /* Sidebar inside expects to be its own positioning context */
+  isolation: isolate;
+}
+
+.oga-prim-sidebar-frame--tall {
+  height: 560px;
+}
+
+/* Reset the sidebar's sticky/100vh inside the preview frame so it
+   sizes to the frame instead of the page. */
+.oga-prim-sidebar-frame .oga-sidebar {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  border-right: none;
+}
+
+/* Hide the mobile-drawer transform inside the preview frame on
+   desktop showings — the frame is the simulated viewport, not the
+   real one, so the breakpoint shouldn't transform the preview. */
+@media (max-width: 880px) {
+  .oga-prim-sidebar-frame .oga-sidebar {
+    position: absolute;
+    transform: none;
+    width: 100%;
+    box-shadow: none;
+  }
+}
+
+/* Stub bits the showcase composes into the sidebar's top + bottom
+   slots. AppShell uses Wordmark + close button + ThemeRow + UserChip;
+   here we use simplified placeholders so the demo is self-contained. */
+
+.oga-prim-sidebar-userchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(250, 248, 244, 0.04);
+  border: 1px solid rgba(250, 248, 244, 0.10);
+  border-radius: 4px;
+  color: var(--oga-white);
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.oga-prim-sidebar-userchip__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: rgba(250, 248, 244, 0.10);
+  color: var(--oga-white);
+  border-radius: 50%;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.oga-prim-sidebar-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: rgba(250, 248, 244, 0.05);
+  border: 1px solid rgba(250, 248, 244, 0.18);
+  color: var(--oga-white);
+  border-radius: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ---------- AR-239 Tooltip showcase ---------- */
+
+.oga-prim-tooltip-label-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.oga-prim-tooltip-label-row--dark {
+  color: var(--oga-white);
+}
+
+.oga-prim-tooltip-eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-prim-tooltip-eyebrow--dark {
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-prim-tooltip-info-wrap {
+  display: inline-flex;
+  color: var(--oga-fg-muted);
+  cursor: help;
+}
+
+.oga-prim-tooltip-cursor-default {
+  cursor: default;
+}
+
+.oga-prim-tooltip-sentence {
+  font-size: 14px;
+  color: var(--oga-fg);
+}
+
+.oga-prim-tooltip-underline {
+  border-bottom: 1px dashed var(--oga-ink-30);
+  cursor: help;
+}
+
+/* ---------- AR-241 StatsCard showcase ----------
+   3-card top strip pattern — CSS Grid row, equal columns, gap
+   between tiles. Stacks to 1 column below 720px. Matches what
+   /dashboard Home will render via the AR-217-B5 ticket. */
+
+.oga-prim-stats-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--oga-3);
+  width: 100%;
+}
+
+@media (max-width: 720px) {
+  .oga-prim-stats-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Narrow wrapper for the sparkline showcase variant — sparklines
+   are meant for inline composition (StatsCard top strip) so the
+   demo renders at a realistic narrow width rather than stretching
+   to fill the doc-row. */
+.oga-prim-spark-wrap {
+  width: 220px;
+  max-width: 100%;
+}
+
+/* Showcase opt-out: some variants (3-card strip, anything that
+   needs the full doc-row width to read realistically) override the
+   default 480px demo max-width. Only used inside specific Variant
+   blocks where the realistic surface width matters. */
+.oga-prim-doc__row:has(.oga-prim-doc__demo--wide) {
+  /* When a row contains a wide demo, the demo column gets the
+     remaining grid space (no max cap). */
+}
+
+.oga-prim-doc__demo--wide {
+  max-width: none;
+  width: 100%;
+}

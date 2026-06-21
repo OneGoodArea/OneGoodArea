@@ -76,9 +76,11 @@ describe("validateWebhookUrl", () => {
 
 describe("validateEventTypes", () => {
   it("keeps supported types and dedups", () => {
-    expect(validateEventTypes(["report.created", "report.created", "score.changed"])).toEqual([
+    /* AR-283: score.changed was removed (never fired). Use signal.changed
+       which is the other real event in the current taxonomy. */
+    expect(validateEventTypes(["report.created", "report.created", "signal.changed"])).toEqual([
       "report.created",
-      "score.changed",
+      "signal.changed",
     ]);
   });
 

@@ -23,7 +23,7 @@ export const PLANS = {
     name: "Starter (legacy)",
     price: 2900, // £29
     reportsPerMonth: 20,
-    priceId: process.env.STRIPE_STARTER_PRICE_ID!,
+    priceId: process.env.STRIPE_STARTER_PRICE_ID || "",
     apiAccess: false,
     mcpAccess: false,
     generation: "v1",
@@ -33,7 +33,7 @@ export const PLANS = {
     name: "Pro (legacy)",
     price: 7900, // £79
     reportsPerMonth: 75,
-    priceId: process.env.STRIPE_PRO_PRICE_ID!,
+    priceId: process.env.STRIPE_PRO_PRICE_ID || "",
     apiAccess: false,
     mcpAccess: false,
     generation: "v1",

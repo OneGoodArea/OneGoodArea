@@ -1,118 +1,124 @@
-/**
- * Bootstrap a test API key for local development.
- * 
- * Creates or updates a test user, logs in, and generates an API key.
- * Prints the plaintext key once (never recoverable after this).
- * 
- * Usage:
- *   npm run bootstrap:test-key -- --email api-test@test.com --plan sandbox
- * 
- * Requires:
- *   - Database connectivity (via DATABASE_URL)
- *   - AUTH_SECRET for session token signing
- */
-
-import { sql } from "../infrastructure/db/client";
-import { generateId } from "../infrastructure/utils/id";
+import { randomBytes } from "node:crypto";
+import { parseArgs } from "node:util";
+import { getConfig } from "../infrastructure/config";
 import { hashPassword } from "../modules/auth/crypto";
 import { createApiKey } from "../modules/api-keys";
 import { createPersonalOrgForUser } from "../modules/orgs";
+import { generateId } from "../infrastructure/utils/id";
+import { sql } from "../infrastructure/db/client";
+import { row, type UserRow } from "../infrastructure/db/types";
+import { PLANS, type PlanId } from "../modules/billing/plans";
 
-/**
- * Parse command-line arguments: --email USER --plan PLAN
- */
-function parseArgs() {
-  const args = process.argv.slice(2);
-  let email = "api-test@onegoodarea.local";
-  let plan = "sandbox";
+type Options = {
+  email: string;
+  name: string;
+  password: string;
+  plan: PlanId;
+};
 
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--email" && args[i + 1]) {
-      email = args[i + 1];
-      i++;
-    }
-    if (args[i] === "--plan" && args[i + 1]) {
-      plan = args[i + 1];
-      i++;
-    }
-  }
-
-  return { email, plan };
+function usage(): string {
+  return [
+    "Usage:",
+    "  npm run bootstrap:test-key -w @onegoodarea/api -- [--email test@example.local] [--name 'Local test key'] [--password 'temp-pass'] [--plan sandbox]",
+    "",
+    "Defaults:",
+    "  --email     api-test@onegoodarea.local",
+    "  --name      Local test key",
+    "  --password  generated automatically",
+    "  --plan      sandbox",
+  ].join("\n");
 }
 
-/**
- * Ensure test user exists with the given email and plan.
- * Returns the user ID.
- */
-async function ensureTestUser(email: string, plan: string): Promise<string> {
-  const sanitized = email.trim().toLowerCase();
-  
-  // Check if user exists
-  const existing = await sql`SELECT id FROM users WHERE email = ${sanitized}`;
-  if (existing.length > 0) {
-    const userId = (existing[0] as Record<string, unknown>).id as string;
-    console.log(`✓ User already exists: ${sanitized}`);
-    return userId;
+function parseOptions(): Options {
+  const parsed = parseArgs({
+    options: {
+      email: { type: "string" },
+      name: { type: "string" },
+      password: { type: "string" },
+      plan: { type: "string" },
+      help: { type: "boolean", short: "h" },
+    },
+  });
+
+  if (parsed.values.help) {
+    console.log(usage());
+    process.exit(0);
   }
 
-  // Create new user
-  const id = generateId("user");
-  const name = sanitized.split("@")[0];
-  const password = "TestPass1234"; // Test-only password
-  const hash = await hashPassword(password);
+  const email = (parsed.values.email ?? "api-test@onegoodarea.local").trim().toLowerCase();
+  const name = (parsed.values.name ?? "Local test key").trim() || "Local test key";
+  const password = parsed.values.password ?? randomBytes(18).toString("base64url");
+  const plan = (parsed.values.plan ?? "sandbox") as PlanId;
 
+  if (!(plan in PLANS)) {
+    throw new Error(`Unknown plan "${plan}".`);
+  }
+  if (!PLANS[plan].apiAccess) {
+    throw new Error(`Plan "${plan}" does not grant API access. Use sandbox or another API-enabled plan.`);
+  }
+
+  return { email, name, password, plan };
+}
+
+async function upsertTestUser(email: string, password: string): Promise<string> {
+  const existing = await sql`SELECT id FROM users WHERE email = ${email} LIMIT 1`;
+  const passwordHash = await hashPassword(password);
+  const userName = email.split("@")[0] || "api-test";
+
+  if (existing.length > 0) {
+    const current = row<Pick<UserRow, "id">>(existing[0]);
+    await sql`
+      UPDATE users
+         SET name = ${userName},
+             provider = 'credentials',
+             password_hash = ${passwordHash},
+             email_verified = TRUE
+       WHERE id = ${current.id}
+    `;
+    return current.id;
+  }
+
+  const userId = generateId("user");
   await sql`
     INSERT INTO users (id, email, name, password_hash, provider, email_verified)
-    VALUES (${id}, ${sanitized}, ${name}, ${hash}, 'credentials', TRUE)
+    VALUES (${userId}, ${email}, ${userName}, ${passwordHash}, 'credentials', TRUE)
   `;
+  return userId;
+}
 
-  // Set plan via subscription
-  if (plan && plan !== "sandbox") {
-    await sql`
-      INSERT INTO subscriptions (id, user_id, status, plan)
-      VALUES (${generateId("sub")}, ${id}, 'active', ${plan})
-      ON CONFLICT (user_id) DO UPDATE SET plan = ${plan}
-    `;
-  }
-
-  // Create personal org
-  try {
-    await createPersonalOrgForUser(id, sanitized);
-    console.log(`✓ Created personal org for ${sanitized}`);
-  } catch (e) {
-    console.log(`⚠ Personal org creation failed (non-fatal):`, (e as Error).message);
-  }
-
-  console.log(`✓ Created new user: ${sanitized}`);
-  return id;
+async function ensureSandboxPlan(userId: string, plan: PlanId): Promise<void> {
+  await sql`
+    INSERT INTO subscriptions (id, user_id, plan, status)
+    VALUES (${generateId("sub")}, ${userId}, ${plan}, 'active')
+    ON CONFLICT (user_id) DO UPDATE SET
+      plan = EXCLUDED.plan,
+      status = EXCLUDED.status,
+      updated_at = NOW()
+  `;
 }
 
 async function main() {
-  try {
-    const { email, plan } = parseArgs();
-    console.log(`Bootstrapping test API key...`);
-    console.log(`  Email: ${email}`);
-    console.log(`  Plan: ${plan}`);
-    console.log();
-
-    // 1. Ensure user exists
-    const userId = await ensureTestUser(email, plan);
-
-    // 2. Create API key
-    const { key, name } = await createApiKey(userId, "bootstrap-test");
-    console.log();
-    console.log(`✓ API key created!`);
-    console.log();
-    console.log(`API_KEY=${key}`);
-    console.log();
-    console.log(`⚠ This is the ONLY time this key will be displayed.`);
-    console.log(`  Save it now or generate a new one.`);
-    
-    process.exit(0);
-  } catch (error) {
-    console.error("❌ Bootstrap failed:", error);
-    process.exit(1);
+  const config = getConfig();
+  if (config.nodeEnv === "production") {
+    throw new Error("Refusing to bootstrap a test key in production.");
   }
+
+  const { email, name, password, plan } = parseOptions();
+  const userId = await upsertTestUser(email, password);
+  await createPersonalOrgForUser(userId, email);
+  await ensureSandboxPlan(userId, plan);
+  const key = await createApiKey(userId, name);
+
+  console.log(`User:  ${email}`);
+  console.log(`Plan:  ${plan}`);
+  console.log(`Pass:  ${password}`);
+  console.log(`Key:   ${key.key}`);
+  console.log("");
+  console.log("Use it as:");
+  console.log(`Authorization: Bearer ${key.key}`);
 }
 
-main();
+main().catch((error) => {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
+});

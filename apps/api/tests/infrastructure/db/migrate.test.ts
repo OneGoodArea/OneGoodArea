@@ -28,7 +28,8 @@ describe("db migrate", () => {
           s.includes("IF NOT EXISTS") || // CREATE TABLE / CREATE INDEX / ADD COLUMN
           s.includes("DROP NOT NULL") || // ALTER COLUMN ... DROP NOT NULL is a no-op when already nullable
           /ON CONFLICT[\s\S]*DO NOTHING/.test(s) || // backfill INSERTs (target-free OR target-keyed e.g. ON CONFLICT (a,b) DO NOTHING)
-          s.includes("WHERE ORG_ID IS NULL"); // backfill UPDATEs guarded by a "not already done" predicate
+          /WHERE [A-Z_.]*ORG_ID IS NULL/.test(s) || // backfill UPDATEs guarded by "not already done" predicate (alias-tolerant: WHERE org_id / WHERE ae.org_id)
+          /AND NOT EXISTS \(SELECT/.test(s); // AR-312: self-healing backfills guarded by NOT EXISTS — no-op once the post-condition holds
         expect(idempotent, `non-idempotent statement: ${statement.slice(0, 70)}`).toBe(true);
       }
     }
@@ -88,5 +89,17 @@ describe("db migrate", () => {
   it("has no duplicate table names", () => {
     const names = MIGRATIONS.map((m) => m.name);
     expect(new Set(names).size).toBe(names.length);
+  });
+
+  it("users migration includes intent + signup_source + role_preference ADD COLUMN statements (AR-218)", () => {
+    // AR-218 (Dashboard redesign Epic AR-217): /welcome flow needs three onboarding
+    // columns nullable on the users table. Idempotent ADD COLUMN IF NOT EXISTS so
+    // existing rows are unaffected.
+    const users = MIGRATIONS.find((m) => m.name === "users");
+    expect(users, "users migration must exist").toBeDefined();
+    const ddl = users!.statements.join("\n");
+    expect(ddl).toMatch(/ADD COLUMN IF NOT EXISTS intent TEXT/i);
+    expect(ddl).toMatch(/ADD COLUMN IF NOT EXISTS signup_source TEXT/i);
+    expect(ddl).toMatch(/ADD COLUMN IF NOT EXISTS role_preference TEXT/i);
   });
 });

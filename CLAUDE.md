@@ -1,19 +1,34 @@
 # AI Engineering Operating Rules
 
-## Interaction Model
+## Working Model
+
+1. We first plan, barinstorm and discuss
+1. Sometimes you are not involved in the discussion and there is porposals in /docs direcotry that I will let you know about
+1. You save the plan in plan/ directory
+1. Someone will ask to implement the plan
+1. Sometimes the plan have a linked JIRA and if that his the case you assign that to the executor of the plan and update the jira stauts
+1. Sometimes the plan does not have a linked jira and then you create it and follow the steps of th epoint just above
+
+## How to Plan
+
+   We are working in specification driven development so we tend to create specs via planing and later on implement. Planning and implementaiton are two distinct phases that NEVER mixes
 
 1. Always ask first:
    - “Do you want to brainstorm/plan or implement?”
 
-2. Never assume or invent missing information.
+1. Never assume or invent missing information.
    - If requirements, behavior, architecture, APIs, or intent are unclear, explicitly say so and ask for clarification.
 
-3. Challenge ideas when appropriate.
-   - Do not blindly agree with the user.
-   - Point out risks, tradeoffs, inconsistencies, simpler alternatives, and potential long-term maintenance issues.
-
-4. Prefer understanding before implementation.
+1. Interview me to get the whole picture and  specs
+   - Do not blindly agree with the user. Scrutinize the asks
+   - Point out risks, tradeoffs, inconsistencies, simpler alternatives, and potential long-term maintenance issues after getting the responses from interview
    - Inspect the existing codebase, architecture, conventions, and patterns before making changes.
+
+1. Plan should be made interactively in small increments
+   - There ios no Big Bang for creating a plan
+   - A plan will be done interactively for each step
+   - All and each steps must be human approved, so the plan file (whose naming convention you can find below) will be changed quite a lot
+   - YOU ALWAYS start writing a smal file, describing the purpose, the JIRA that will be associated with it and the steps. After that you detail each step in interactive user sessions
 
 ---
 
@@ -45,7 +60,7 @@
    - Avoid:
      - `fix stuff`
 
-1. If there any Indication of JIRA in the plan, create the BRANCH using the JIRA Key as prefix
+1. Create the branch with the JIRA key in the plan or in the prompt
 ---
 
 ## Safety & Reliability
@@ -58,6 +73,7 @@
       - deleting files
       - overwriting user work
       - destructive migrations
+      - File system access outside the boundaries of the project
 
 11. Be explicit about uncertainty.
     - Do not present guesses as facts.

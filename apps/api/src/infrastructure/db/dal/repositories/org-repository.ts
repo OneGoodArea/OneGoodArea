@@ -8,7 +8,7 @@ export class OrgRepository {
 
   async listForUser(userId: string): Promise<(OrgRow & { role: OrgRole })[]> {
     return rows<OrgRow & { role: OrgRole }>(await sql`
-      SELECT o.id, o.slug, o.name, o.display_name, o.brand_url, o.created_at, o.updated_at, m.role
+      SELECT o.id, o.slug, o.name, o.display_name, o.brand_url, o.logo_url, o.created_at, o.updated_at, m.role
         FROM orgs o
         JOIN org_members m ON m.org_id = o.id
        WHERE m.user_id = ${userId}
@@ -18,7 +18,7 @@ export class OrgRepository {
 
   async findForMember(orgId: string, userId: string): Promise<OrgRow | null> {
     const result = rows<OrgRow>(await sql`
-      SELECT o.id, o.slug, o.name, o.display_name, o.brand_url, o.created_at, o.updated_at
+      SELECT o.id, o.slug, o.name, o.display_name, o.brand_url, o.logo_url, o.created_at, o.updated_at
         FROM orgs o
         JOIN org_members m ON m.org_id = o.id
        WHERE o.id = ${orgId} AND m.user_id = ${userId}
@@ -35,17 +35,22 @@ export class OrgRepository {
   }
 
   async listMembers(orgId: string): Promise<OrgMemberRow[]> {
+    /* AR-310: LEFT JOIN users so the dashboard members page can render
+       name + email without an N+1. LEFT (not INNER) keeps the row visible
+       if the user record was deleted but the org_members FK stub remains. */
     return rows<OrgMemberRow>(await sql`
-      SELECT org_id, user_id, role, joined_at
-        FROM org_members
-       WHERE org_id = ${orgId}
-       ORDER BY joined_at ASC
+      SELECT om.org_id, om.user_id, om.role, om.joined_at,
+             u.email, u.name
+        FROM org_members om
+   LEFT JOIN users u ON u.id = om.user_id
+       WHERE om.org_id = ${orgId}
+       ORDER BY om.joined_at ASC
     `);
   }
 
   async findById(orgId: string): Promise<OrgRow | null> {
     const result = rows<OrgRow>(await sql`
-      SELECT id, slug, name, display_name, brand_url, created_at, updated_at
+      SELECT id, slug, name, display_name, brand_url, logo_url, created_at, updated_at
         FROM orgs
        WHERE id = ${orgId}
        LIMIT 1
@@ -59,7 +64,7 @@ export class OrgRepository {
     const result = rows<OrgRow>(await sql`
       INSERT INTO orgs (id, slug, name)
       VALUES (${id}, ${slug}, ${name})
-      RETURNING id, slug, name, display_name, brand_url, created_at, updated_at
+      RETURNING id, slug, name, display_name, brand_url, logo_url, created_at, updated_at
     `);
     if (result.length === 0) throw new Error("orgs insert returned no row");
     return result[0];
@@ -95,7 +100,13 @@ export class OrgRepository {
 
   async update(
     orgId: string,
-    fields: { name: string; slug: string; display_name: string | null; brand_url: string | null },
+    fields: {
+      name: string;
+      slug: string;
+      display_name: string | null;
+      brand_url: string | null;
+      logo_url: string | null;
+    },
   ): Promise<OrgRow | null> {
     const result = rows<OrgRow>(await sql`
       UPDATE orgs
@@ -103,9 +114,10 @@ export class OrgRepository {
              slug = ${fields.slug},
              display_name = ${fields.display_name},
              brand_url = ${fields.brand_url},
+             logo_url = ${fields.logo_url},
              updated_at = NOW()
        WHERE id = ${orgId}
-       RETURNING id, slug, name, display_name, brand_url, created_at, updated_at
+       RETURNING id, slug, name, display_name, brand_url, logo_url, created_at, updated_at
     `);
     return result[0] ?? null;
   }
@@ -125,5 +137,18 @@ export class OrgRepository {
        WHERE org_id = ${orgId} AND role = 'owner'
     `);
     return result[0]?.n ?? 0;
+  }
+
+  /** AR-273: change a member's role. RETURNING tells the module whether
+      a row actually matched — used by the endpoint to differentiate 200
+      vs 404. */
+  async updateMemberRole(orgId: string, userId: string, role: OrgRole): Promise<boolean> {
+    const result = await sql`
+      UPDATE org_members
+         SET role = ${role}
+       WHERE org_id = ${orgId} AND user_id = ${userId}
+       RETURNING user_id
+    `;
+    return result.length > 0;
   }
 }

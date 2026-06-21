@@ -6,7 +6,10 @@ vi.mock("@/modules/scoring", () => ({ scoreArea: vi.fn() }));
 vi.mock("@/modules/signals/peers", () => ({ findPeers: vi.fn(), parsePeersInput: vi.fn() }));
 vi.mock("@/modules/signals/insights", () => ({ findInsights: vi.fn(), parseInsightsInput: vi.fn() }));
 vi.mock("@/modules/signals/forecast", () => ({ runForecast: vi.fn(), parseForecastInput: vi.fn() }));
-vi.mock("@/modules/signals/data-sources/postcodes", () => ({ geocodeArea: vi.fn() }));
+vi.mock("@/modules/signals/data-sources/postcodes", () => ({
+  geocodeArea: vi.fn(),
+  geocodeAreaStrict: vi.fn(),
+}));
 
 import { executePlan } from "@/modules/intelligence/executor";
 import { queryAreas, queryAreasCompound } from "@/modules/signals/query";
@@ -15,7 +18,8 @@ import { scoreArea } from "@/modules/scoring";
 import { findPeers, parsePeersInput } from "@/modules/signals/peers";
 import { findInsights, parseInsightsInput } from "@/modules/signals/insights";
 import { runForecast, parseForecastInput } from "@/modules/signals/forecast";
-import { geocodeArea } from "@/modules/signals/data-sources/postcodes";
+import { geocodeAreaStrict } from "@/modules/signals/data-sources/postcodes";
+import { AmbiguousLocationError } from "@/modules/intelligence/executor";
 // QueryResponseSchema is a plain z.union (not discriminatedUnion), so TS
 // can't narrow `res.results` from `res.plan.op` automatically. The tests
 // know which op they invoked; cast at the assertion site.
@@ -31,7 +35,7 @@ const mockFindInsights = vi.mocked(findInsights);
 const mockParseInsightsInput = vi.mocked(parseInsightsInput);
 const mockRunForecast = vi.mocked(runForecast);
 const mockParseForecastInput = vi.mocked(parseForecastInput);
-const mockGeocodeArea = vi.mocked(geocodeArea);
+const mockGeocodeAreaStrict = vi.mocked(geocodeAreaStrict);
 
 beforeEach(() => { vi.clearAllMocks(); });
 
@@ -123,6 +127,10 @@ describe("executePlan — rank_areas COMPOUND (Increment 2)", () => {
 
 describe("executePlan — get_area", () => {
   it("dispatches to getAreaProfile and surfaces null on a miss", async () => {
+    /* AR-267: "Nowhere" is not a postcode, so resolveAreaInputStrict
+       consults the strict resolver. A not_found result means the input
+       passes through unchanged — the downstream handler then 404s. */
+    mockGeocodeAreaStrict.mockResolvedValue({ kind: "not_found" });
     mockGetAreaProfile.mockResolvedValue(null);
     const res = await executePlan(
       { op: "get_area", params: { area: "Nowhere" } },
@@ -131,6 +139,138 @@ describe("executePlan — get_area", () => {
     expect(mockGetAreaProfile).toHaveBeenCalledWith("Nowhere");
     expect(res.results).toBeNull();
     if (res.plan.op === "get_area") expect(res.plan.params.area).toBe("Nowhere");
+  });
+
+  it("skips the strict resolver entirely for a postcode input (AR-267)", async () => {
+    mockGetAreaProfile.mockResolvedValue(null);
+    await executePlan({ op: "get_area", params: { area: "M1 1AE" } }, { planSource: "nl" });
+    expect(mockGeocodeAreaStrict).not.toHaveBeenCalled();
+    expect(mockGetAreaProfile).toHaveBeenCalledWith("M1 1AE");
+  });
+
+  it("throws AmbiguousLocationError when the place name is ambiguous (AR-267)", async () => {
+    mockGeocodeAreaStrict.mockResolvedValue({
+      kind: "ambiguous",
+      candidates: [
+        { label: "Brixton, Lambeth, London", postcode: "SW2 1AA", district: "Lambeth", country: "England" },
+        { label: "Brixton, South Hams, Devon", postcode: "PL8 2AQ", district: "South Hams", country: "England" },
+      ],
+    });
+    await expect(
+      executePlan({ op: "get_area", params: { area: "Brixton" } }, { planSource: "nl" }),
+    ).rejects.toBeInstanceOf(AmbiguousLocationError);
+    expect(mockGetAreaProfile).not.toHaveBeenCalled();
+  });
+});
+
+describe("executePlan — compare_areas (AR-266)", () => {
+  /* Smoke fixture: only the fields the executor + schema actually touch.
+     getAreaProfile is mocked to round-robin so each slot gets a distinct
+     profile and we can assert order is preserved. */
+  function mkProfile(postcode: string) {
+    return {
+      geo: { query: postcode, postcode, latitude: 0, longitude: 0, lsoa: `lsoa_${postcode}`, msoa: "x", admin_district: "x", region: "x", country: "England", area_type: "urban" },
+      signals: [],
+      meta: { engine_version: "2.0.2", generated_at: "2026-06-12T00:00:00.000Z", sources: [], fetch_mode: "live" },
+    } as never;
+  }
+
+  it("fans out getAreaProfile per slot and returns areas in plan order", async () => {
+    mockGetAreaProfile
+      .mockResolvedValueOnce(mkProfile("M1 1AE"))
+      .mockResolvedValueOnce(mkProfile("EC1A 1BB"));
+    const res = await executePlan(
+      { op: "compare_areas", params: { areas: ["M1 1AE", "EC1A 1BB"] } },
+      { planSource: "nl" },
+    );
+    expect(mockGetAreaProfile).toHaveBeenCalledTimes(2);
+    expect(mockGetAreaProfile).toHaveBeenNthCalledWith(1, "M1 1AE");
+    expect(mockGetAreaProfile).toHaveBeenNthCalledWith(2, "EC1A 1BB");
+    expect(res.results).not.toBeNull();
+    if (res.results) {
+      const r = res.results as { areas: Array<{ query: string; profile: { geo: { postcode: string } } | null }>; meta: { scope: string } };
+      expect(r.areas).toHaveLength(2);
+      expect(r.areas[0].query).toBe("M1 1AE");
+      expect(r.areas[1].query).toBe("EC1A 1BB");
+      expect(r.areas[0].profile?.geo.postcode).toBe("M1 1AE");
+      expect(r.areas[1].profile?.geo.postcode).toBe("EC1A 1BB");
+      expect(r.meta.scope).toBe("areas=2");
+    }
+  });
+
+  it("preserves not-found slots as null instead of dropping them (predictable shape)", async () => {
+    // AR-266 follow-up: "NowhereCity" isn't a postcode, so resolveAreaInputStrict
+    // consults the strict resolver. not_found passes through unchanged and the
+    // downstream handler returns null for that slot.
+    mockGeocodeAreaStrict.mockResolvedValue({ kind: "not_found" });
+    mockGetAreaProfile
+      .mockResolvedValueOnce(mkProfile("M1 1AE"))
+      .mockResolvedValueOnce(null) // middle slot missed
+      .mockResolvedValueOnce(mkProfile("LS6 4DP"));
+    const res = await executePlan(
+      { op: "compare_areas", params: { areas: ["M1 1AE", "NowhereCity", "LS6 4DP"] } },
+      { planSource: "nl" },
+    );
+    if (res.results) {
+      const r = res.results as { areas: Array<{ query: string; profile: unknown }> };
+      expect(r.areas).toHaveLength(3);
+      expect(r.areas[0].profile).not.toBeNull();
+      expect(r.areas[1].profile).toBeNull();   // explicit, not silently dropped
+      expect(r.areas[1].query).toBe("NowhereCity");
+      expect(r.areas[2].profile).not.toBeNull();
+    }
+  });
+
+  it("handles the max-allowed 5-area case", async () => {
+    // Non-postcode slots take the strict-resolver path; default to not_found
+    // so each input passes through unchanged.
+    mockGeocodeAreaStrict.mockResolvedValue({ kind: "not_found" });
+    mockGetAreaProfile.mockResolvedValue(mkProfile("X"));
+    const res = await executePlan(
+      { op: "compare_areas", params: { areas: ["A", "B", "C", "D", "E"] } },
+      { planSource: "client" },
+    );
+    expect(mockGetAreaProfile).toHaveBeenCalledTimes(5);
+    if (res.results) {
+      const r = res.results as { areas: unknown[]; meta: { scope: string } };
+      expect(r.areas).toHaveLength(5);
+      expect(r.meta.scope).toBe("areas=5");
+    }
+  });
+
+  it("throws AmbiguousLocationError when ANY slot is an ambiguous place name (AR-266 follow-up)", async () => {
+    /* The compare_areas op is a 3-slot question:
+       [postcode, ambiguous place, postcode]. Partial-pick (resolving 2 of 3
+       slots correctly + silently picking the wrong Brixton for slot 2)
+       would be the same silent-drop bug AR-267 fixes for single-area ops.
+       So one ambiguous slot fails the whole call — caller re-asks with a
+       specific postcode for that slot. */
+    mockGeocodeAreaStrict.mockResolvedValueOnce({
+      kind: "ambiguous",
+      candidates: [
+        { label: "Brixton, Lambeth, London", postcode: "SW2 1AA", district: "Lambeth", country: "England" },
+        { label: "Brixton, South Hams, Devon", postcode: "PL8 2AQ", district: "South Hams", country: "England" },
+      ],
+    });
+    await expect(
+      executePlan(
+        { op: "compare_areas", params: { areas: ["M1 1AE", "Brixton", "EC1A 1BB"] } },
+        { planSource: "nl" },
+      ),
+    ).rejects.toBeInstanceOf(AmbiguousLocationError);
+    expect(mockGetAreaProfile).not.toHaveBeenCalled();
+  });
+
+  it("skips the strict resolver entirely when every slot is a postcode (AR-266 follow-up)", async () => {
+    mockGetAreaProfile
+      .mockResolvedValueOnce(mkProfile("M1 1AE"))
+      .mockResolvedValueOnce(mkProfile("EC1A 1BB"));
+    await executePlan(
+      { op: "compare_areas", params: { areas: ["M1 1AE", "EC1A 1BB"] } },
+      { planSource: "client" },
+    );
+    expect(mockGeocodeAreaStrict).not.toHaveBeenCalled();
+    expect(mockGetAreaProfile).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -142,6 +282,23 @@ describe("executePlan — score_area", () => {
       { planSource: "client" },
     );
     expect(mockScoreArea).toHaveBeenCalledWith({ area: "M1 1AE", preset: "research", weights: undefined });
+  });
+
+  it("throws AmbiguousLocationError when the area is an ambiguous place name (AR-267)", async () => {
+    mockGeocodeAreaStrict.mockResolvedValue({
+      kind: "ambiguous",
+      candidates: [
+        { label: "Brixton, Lambeth, London", postcode: "SW2 1AA", district: "Lambeth", country: "England" },
+        { label: "Brixton, South Hams, Devon", postcode: "PL8 2AQ", district: "South Hams", country: "England" },
+      ],
+    });
+    await expect(
+      executePlan(
+        { op: "score_area", params: { area: "Brixton", preset: "investing" } },
+        { planSource: "nl" },
+      ),
+    ).rejects.toBeInstanceOf(AmbiguousLocationError);
+    expect(mockScoreArea).not.toHaveBeenCalled();
   });
 
   it("passes through explicit preset + custom weights", async () => {
@@ -167,7 +324,7 @@ describe("executePlan — find_peers (AR-188 / ADR 0023)", () => {
       { op: "find_peers", params: { target: { geo_code: "E01034129" }, k: 20 } },
       { planSource: "client" },
     );
-    expect(mockGeocodeArea).not.toHaveBeenCalled();
+    expect(mockGeocodeAreaStrict).not.toHaveBeenCalled();
     expect(mockFindPeers).toHaveBeenCalledOnce();
     if (res.plan.op === "find_peers" && res.results) {
       const results = res.results as PeersResponse;
@@ -179,8 +336,11 @@ describe("executePlan — find_peers (AR-188 / ADR 0023)", () => {
     }
   });
 
-  it("resolves a postcode target via geocodeArea before calling findPeers", async () => {
-    mockGeocodeArea.mockResolvedValue({ lsoa: "E01034129" } as never);
+  it("resolves a postcode target via geocodeAreaStrict before calling findPeers", async () => {
+    mockGeocodeAreaStrict.mockResolvedValue({
+      kind: "ok",
+      area: { lsoa: "E01034129" } as never,
+    });
     mockParsePeersInput.mockReturnValue({ ok: true, input: { targetGeoCode: "E01034129", k: 5, minSignals: 3 } });
     mockFindPeers.mockResolvedValue({
       signalsUsed: ["crime.total_12m"],
@@ -190,17 +350,31 @@ describe("executePlan — find_peers (AR-188 / ADR 0023)", () => {
       { op: "find_peers", params: { target: { postcode: "M1 1AE" }, k: 5 } },
       { planSource: "nl" },
     );
-    expect(mockGeocodeArea).toHaveBeenCalledWith("M1 1AE");
+    expect(mockGeocodeAreaStrict).toHaveBeenCalledWith("M1 1AE");
     expect(mockFindPeers).toHaveBeenCalledOnce();
   });
 
   it("returns null results when the target cannot be geocoded", async () => {
-    mockGeocodeArea.mockResolvedValue(null);
+    mockGeocodeAreaStrict.mockResolvedValue({ kind: "not_found" });
     const res = await executePlan(
       { op: "find_peers", params: { target: { area: "Nowhere-on-Sea" } } },
       { planSource: "nl" },
     );
     expect(res.results).toBeNull();
+    expect(mockFindPeers).not.toHaveBeenCalled();
+  });
+
+  it("throws AmbiguousLocationError when the target place name is ambiguous (AR-267)", async () => {
+    mockGeocodeAreaStrict.mockResolvedValue({
+      kind: "ambiguous",
+      candidates: [
+        { label: "Brixton, Lambeth, London", postcode: "SW2 1AA", district: "Lambeth", country: "England" },
+        { label: "Brixton, South Hams, Devon", postcode: "PL8 2AQ", district: "South Hams", country: "England" },
+      ],
+    });
+    await expect(
+      executePlan({ op: "find_peers", params: { target: { area: "Brixton" } } }, { planSource: "nl" }),
+    ).rejects.toBeInstanceOf(AmbiguousLocationError);
     expect(mockFindPeers).not.toHaveBeenCalled();
   });
 
@@ -278,7 +452,7 @@ describe("executePlan — find_forecast (AR-190 / ADR 0025)", () => {
       { op: "find_forecast", params: { target: { geo_code: "E01034129" }, signal_key: "property.median_price", horizon_months: 12 } },
       { planSource: "client" },
     );
-    expect(mockGeocodeArea).not.toHaveBeenCalled();
+    expect(mockGeocodeAreaStrict).not.toHaveBeenCalled();
     expect(mockRunForecast).toHaveBeenCalledOnce();
     if (res.plan.op === "find_forecast" && res.results) {
       const results = res.results as ForecastResponse;
@@ -293,8 +467,11 @@ describe("executePlan — find_forecast (AR-190 / ADR 0025)", () => {
     }
   });
 
-  it("resolves postcode target via geocodeArea before runForecast", async () => {
-    mockGeocodeArea.mockResolvedValue({ lsoa: "E01034129" } as never);
+  it("resolves postcode target via geocodeAreaStrict before runForecast", async () => {
+    mockGeocodeAreaStrict.mockResolvedValue({
+      kind: "ok",
+      area: { lsoa: "E01034129" } as never,
+    });
     mockParseForecastInput.mockReturnValue({
       ok: true, input: { targetGeoCode: "E01034129", signalKey: "crime.monthly_count", windowMonths: 24, horizonMonths: 6 },
     });
@@ -307,17 +484,34 @@ describe("executePlan — find_forecast (AR-190 / ADR 0025)", () => {
       { op: "find_forecast", params: { target: { postcode: "M1 1AE" }, signal_key: "crime.monthly_count", horizon_months: 6 } },
       { planSource: "nl" },
     );
-    expect(mockGeocodeArea).toHaveBeenCalledWith("M1 1AE");
+    expect(mockGeocodeAreaStrict).toHaveBeenCalledWith("M1 1AE");
     expect(mockRunForecast).toHaveBeenCalledOnce();
   });
 
   it("returns null results when the target cannot be geocoded", async () => {
-    mockGeocodeArea.mockResolvedValue(null);
+    mockGeocodeAreaStrict.mockResolvedValue({ kind: "not_found" });
     const res = await executePlan(
       { op: "find_forecast", params: { target: { area: "Nowhere" }, signal_key: "x" } },
       { planSource: "nl" },
     );
     expect(res.results).toBeNull();
+    expect(mockRunForecast).not.toHaveBeenCalled();
+  });
+
+  it("throws AmbiguousLocationError when the target place name is ambiguous (AR-267)", async () => {
+    mockGeocodeAreaStrict.mockResolvedValue({
+      kind: "ambiguous",
+      candidates: [
+        { label: "Brixton, Lambeth, London", postcode: "SW2 1AA", district: "Lambeth", country: "England" },
+        { label: "Brixton, South Hams, Devon", postcode: "PL8 2AQ", district: "South Hams", country: "England" },
+      ],
+    });
+    await expect(
+      executePlan(
+        { op: "find_forecast", params: { target: { area: "Brixton" }, signal_key: "crime.monthly_count" } },
+        { planSource: "nl" },
+      ),
+    ).rejects.toBeInstanceOf(AmbiguousLocationError);
     expect(mockRunForecast).not.toHaveBeenCalled();
   });
 
@@ -336,6 +530,7 @@ describe("executePlan — find_forecast (AR-190 / ADR 0025)", () => {
 
 describe("executePlan — meta + plan echo", () => {
   it("stamps generated_at + echoes the plan + plan_source on every response", async () => {
+    mockGeocodeAreaStrict.mockResolvedValue({ kind: "not_found" });
     mockGetAreaProfile.mockResolvedValue(null);
     const res = await executePlan({ op: "get_area", params: { area: "X" } }, { planSource: "nl" });
     expect(res.meta.generated_at).toMatch(/^\d{4}-\d{2}-\d{2}T/);

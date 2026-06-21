@@ -3,48 +3,102 @@
 import { useEffect, useState, type ReactNode, type SVGProps } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { Wordmark } from "./wordmark";
+import { Mark } from "./mark";
+import { OrgSwitcher } from "./dashboard/org-switcher";
 import { type IconName } from "./icons";
+import { Sidebar, type SidebarSection } from "./dashboard/sidebar";
+import {
+  SignalsIcon,
+  ScoresIcon,
+  MonitorIcon,
+  IntelligenceIcon,
+} from "./product-icons";
+import {
+  MembersIcon,
+  BundlesIcon,
+  PresetsIcon,
+  CohortsIcon,
+  WebhookIcon,
+  OrgIcon,
+} from "./dashboard/nav-icons";
 import "./app-shell.css";
 
-/* AppShell — authenticated-surface chrome (AR-204 close-out 5/15).
+/* AppShell — authenticated-surface chrome.
 
-   Brand v3 rewrite. Replaces the legacy .aiq + Fraunces +
-   chartreuse-glow + JS-driven hover spaghetti.
+   Sidebar reorganised AR-252 to the four-section sitemap per
+   docs/DESIGN/dashboard-proposal.md §Sitemap:
 
-   Surface plan:
-     Sidebar (left)        DARK    sidebar nav + user chip + theme row
-     Main (right)          cream   page header + content slot
+     Dashboard        — Home / Recent activity
+     Products         — Signals / Scores / Monitor / Intelligence
+     Org & Levers     — Members / Signal bundles / Scoring presets /
+                        Peer cohorts (admin+ conceptually; gate not yet
+                        wired — no /v1/me-equivalent in session)
+     Account          — API keys & usage / Webhooks / Billing / Settings
 
-   IMPORTANT: the 8 wrapped pages (/dashboard, /billing, /api-usage,
-   /settings, /admin, /report, /report/[id], /compare) still carry
-   legacy inline styles + tokens internally. The wrapping aiq
-   className lets those .aiq tokens cascade until each page is
-   individually migrated in the next sweep steps (or wiped by the
-   dashboard restructure per docs/DESIGN/dashboard-proposal.md).
+   Methodology pin / White-label / IP allowlist (Phase 4 Levers) are
+   intentionally omitted here — they land with the Phase 4 build.
 
-   Public API preserved: AppShell, AppCard, StatCell, PrimaryCta,
-   GhostCta, appRag. Same prop signatures so all 8 callers compile
-   without modification. */
+   Removed from the previous structure: /report ("New report") and
+   /compare. Both pages still exist for direct navigation but no
+   longer appear in the sidebar — the dashboard restructure treats
+   them as superseded by the four-product API surface (Scores,
+   Intelligence) called from the customer's own code, not via manual
+   one-off reports through our UI.
 
-type NavItem = {
+   Surface plan (unchanged):
+     Sidebar (left)   DARK    nav + user chip + theme row
+     Main (right)     cream   page header + content slot
+
+   IMPORTANT: the existing wrapped pages still carry legacy inline
+   styles + .aiq tokens cascading from the root className. Public
+   API (AppShell, AppCard, StatCell, PrimaryCta, GhostCta, appRag)
+   preserved — same prop signatures so all callers compile without
+   modification. */
+
+type DashboardIconName = "dash" | "read" | "api" | "key" | "billing";
+
+interface NavItem {
   href: string;
   label: string;
-  icon: IconName;
+  /** Inline glyph element — we pass the React node directly so each
+      section can mix NavIconDark (Dashboard + Account), product-
+      icons (Products), and the bespoke Tabs-set from nav-icons
+      (Org & Levers + Webhooks) without forcing one icon registry. */
+  icon: ReactNode;
   exact?: boolean;
-};
+}
 
-const PRIMARY: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard",  icon: "dash",    exact: true },
-  { href: "/report",    label: "New report", icon: "map" },
-  { href: "/compare",   label: "Compare",    icon: "compare" },
+/* Section-level configuration. Each section knows its own label and
+   items; the AppShell composes them into SidebarSection[] with active
+   state derived from the current pathname. */
+
+const DASHBOARD_SECTION: NavItem[] = [
+  { href: "/dashboard",          label: "Home",            icon: <NavIconDark name="dash" />, exact: true },
+  { href: "/dashboard/activity", label: "Recent activity", icon: <NavIconDark name="read" /> },
 ];
 
-const SECONDARY: NavItem[] = [
-  { href: "/api-usage",         label: "API + usage", icon: "api" },
-  { href: "/dashboard/billing", label: "Billing",     icon: "billing" },
-  { href: "/settings",          label: "Settings",    icon: "key" },
+const PRODUCTS_SECTION: NavItem[] = [
+  { href: "/dashboard/signals",      label: "Signals",      icon: <SignalsIcon width={16} height={16} /> },
+  { href: "/dashboard/scores",       label: "Scores",       icon: <ScoresIcon width={16} height={16} /> },
+  { href: "/dashboard/monitor",      label: "Monitor",      icon: <MonitorIcon width={16} height={16} /> },
+  { href: "/dashboard/intelligence", label: "Intelligence", icon: <IntelligenceIcon width={16} height={16} /> },
+];
+
+const ORG_SECTION: NavItem[] = [
+  { href: "/dashboard/org",         label: "Organisation",    icon: <OrgIcon />, exact: true },
+  { href: "/dashboard/org/members", label: "Members",         icon: <MembersIcon /> },
+  { href: "/dashboard/org/bundles", label: "Signal bundles",  icon: <BundlesIcon /> },
+  { href: "/dashboard/org/presets", label: "Scoring presets", icon: <PresetsIcon /> },
+  { href: "/dashboard/org/cohorts", label: "Peer cohorts",    icon: <CohortsIcon /> },
+];
+
+const ACCOUNT_SECTION: NavItem[] = [
+  { href: "/api-usage",           label: "API keys & usage", icon: <NavIconDark name="api" /> },
+  { href: "/dashboard/webhooks",  label: "Webhooks",         icon: <WebhookIcon /> },
+  { href: "/dashboard/billing",   label: "Billing",          icon: <NavIconDark name="billing" /> },
+  { href: "/settings",            label: "Settings",         icon: <NavIconDark name="key" /> },
 ];
 
 /* ============================================================
@@ -63,31 +117,148 @@ export function AppShell({
   children: ReactNode;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  /* AR-252: desktop sidebar collapse. Persisted in localStorage so
+     the preference survives navigations + sessions. Read synchronously
+     in the useState lazy initializer (typeof window guard for SSR) so
+     the FIRST render after navigation already matches the persisted
+     state — no flash from default-false → useEffect-true on each page
+     change. The hydration mismatch from server (false) → client (true)
+     is suppressed on the root element only. */
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return localStorage.getItem("oga-sidebar-collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
+  function toggleCollapsed() {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("oga-sidebar-collapsed", String(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }
+  const { data: session } = useSession();
+  const pathname = usePathname();
 
-  useEffect(() => {
-    if (!drawerOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setDrawerOpen(false);
-    };
-    document.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [drawerOpen]);
+  /* Compose the four sections into the SidebarSection shape the
+     <Sidebar> primitive expects. Active state is derived here (the
+     primitive doesn't know about next/navigation). Section visibility
+     gates land later — for now all four are always rendered for
+     signed-in users; Org & Levers admin-gating waits on session-side
+     role context (no /v1/me equivalent on the session yet). */
+  const sections: SidebarSection[] = [
+    {
+      label: "Dashboard",
+      items: DASHBOARD_SECTION.map((item) => ({
+        label: item.label,
+        href: item.href,
+        icon: item.icon,
+        active: isItemActive(pathname, item),
+      })),
+    },
+    {
+      label: "Products",
+      items: PRODUCTS_SECTION.map((item) => ({
+        label: item.label,
+        href: item.href,
+        icon: item.icon,
+        active: isItemActive(pathname, item),
+      })),
+    },
+    {
+      label: "Org & Levers",
+      items: ORG_SECTION.map((item) => ({
+        label: item.label,
+        href: item.href,
+        icon: item.icon,
+        active: isItemActive(pathname, item),
+      })),
+    },
+    {
+      label: "Account",
+      items: ACCOUNT_SECTION.map((item) => ({
+        label: item.label,
+        href: item.href,
+        icon: item.icon,
+        active: isItemActive(pathname, item),
+      })),
+    },
+  ];
 
   return (
-    <div className="oga-root oga-app" data-drawer-open={drawerOpen ? "true" : undefined}>
-      <Sidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} />
-      {drawerOpen && (
-        <div
-          className="oga-app__backdrop"
-          onClick={() => setDrawerOpen(false)}
-          aria-hidden
-        />
-      )}
+    <div
+      className="oga-root oga-app"
+      data-drawer-open={drawerOpen ? "true" : undefined}
+      data-collapsed={collapsed ? "true" : undefined}
+      suppressHydrationWarning
+    >
+      <Sidebar
+        sections={sections}
+        collapsed={collapsed}
+        onToggleCollapsed={toggleCollapsed}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        top={
+          <>
+            {/* AR-234: top slot now stacks the brand row + the
+                OrgSwitcher. The brand row stays a horizontal flex
+                row (Mark/Wordmark on the left, mobile-close on the
+                right); OrgSwitcher sits below it as a full-width
+                row inside the same dark column.
+
+                AR-252 / AR-254: both Mark and Wordmark always live
+                in the DOM. CSS shows whichever matches .oga-app
+                [data-collapsed], so server (default expanded) and
+                client (persisted collapsed) render the SAME markup,
+                no hydration warning. */}
+            <div className="oga-app__sidebar-brand">
+              <Link
+                href="/dashboard"
+                aria-label="OneGoodArea, back to dashboard"
+                className="oga-app__sidebar-mark"
+              >
+                <Mark size={32} tone="dark" />
+              </Link>
+              <span className="oga-app__sidebar-wordmark">
+                <Wordmark href="/dashboard" size={20} tone="dark" />
+              </span>
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(false)}
+                aria-label="Close navigation"
+                className="oga-app__sidebar-close"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path
+                    d="M6 6l12 12M18 6L6 18"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            </div>
+            <OrgSwitcher userEmail={session?.user?.email ?? null} />
+          </>
+        }
+        bottom={
+          <>
+            {/* AR-234: UserChip removed. Account actions (email,
+                Settings, Help, Sign out) consolidated into the
+                OrgSwitcher dropdown in the top slot. Sidebar bottom
+                is now just the theme toggle, the Sidebar primitive
+                appends the collapse-toggle button below this slot
+                automatically. */}
+            <SidebarThemeRow />
+          </>
+        }
+      />
       <main className="oga-app__main">
         <MobileTopbar title={title} onMenu={() => setDrawerOpen(true)} />
         {(title || actions) && (
@@ -97,6 +268,11 @@ export function AppShell({
       </main>
     </div>
   );
+}
+
+function isItemActive(pathname: string, item: Pick<NavItem, "href" | "exact">): boolean {
+  if (item.exact) return pathname === item.href;
+  return pathname === item.href || pathname.startsWith(item.href + "/");
 }
 
 /* ============================================================
@@ -138,115 +314,14 @@ function MobileTopbar({
   );
 }
 
-/* ============================================================
-   Sidebar (DARK)
-   ============================================================ */
-
-function Sidebar({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
-  const { data: session } = useSession();
-  return (
-    <aside
-      className={open ? "oga-app__sidebar oga-app__sidebar--open" : "oga-app__sidebar"}
-      data-oga-surface="dark"
-    >
-      <div className="oga-app__sidebar-head">
-        <Wordmark href="/dashboard" size={20} tone="dark" />
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close navigation"
-          className="oga-app__sidebar-close"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <path
-              d="M6 6l12 12M18 6L6 18"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
-      </div>
-
-      <div className="oga-app__sidebar-body">
-        <NavGroup label="Main" items={PRIMARY} onItemClick={onClose} />
-        <div className="oga-app__sidebar-gap" />
-        <NavGroup label="Account" items={SECONDARY} onItemClick={onClose} />
-
-        <div className="oga-app__sidebar-spacer" />
-
-        <SidebarThemeRow />
-        <UserChip
-          name={session?.user?.name || null}
-          email={session?.user?.email || null}
-        />
-      </div>
-    </aside>
-  );
-}
-
-function NavGroup({
-  label,
-  items,
-  onItemClick,
-}: {
-  label: string;
-  items: NavItem[];
-  onItemClick?: () => void;
-}) {
-  const pathname = usePathname();
-  return (
-    <div>
-      <div className="oga-app__nav-group-label">{label}</div>
-      <ul className="oga-app__nav-list">
-        {items.map((item) => {
-          const active = item.exact
-            ? pathname === item.href
-            : pathname === item.href ||
-              pathname.startsWith(item.href + "/");
-          return (
-            <li key={item.label}>
-              <NavLink item={item} active={active} onClick={onItemClick} />
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-}
-
-function NavLink({
-  item,
-  active,
-  onClick,
-}: {
-  item: NavItem;
-  active: boolean;
-  onClick?: () => void;
-}) {
-  return (
-    <Link
-      href={item.href}
-      onClick={onClick}
-      className={active ? "oga-app__nav-link oga-app__nav-link--active" : "oga-app__nav-link"}
-    >
-      <span aria-hidden className="oga-app__nav-link-icon">
-        <NavIconDark name={item.icon} />
-      </span>
-      <span>{item.label}</span>
-    </Link>
-  );
-}
+/* Nav icons for the dark sidebar — also exported so the
+   dashboard-primitives showcase + future Phase 1 surfaces consume
+   the same canonical set instead of reinventing 16x16 glyphs. */
+export { NavIconDark };
 
 /* Nav icons for the dark sidebar. currentColor everywhere so the
    active / hover states drive the colour from CSS. */
-function NavIconDark({ name }: { name: IconName }) {
+function NavIconDark({ name }: { name: DashboardIconName | IconName }) {
   const common: SVGProps<SVGSVGElement> = {
     width: 16,
     height: 16,
@@ -396,70 +471,6 @@ function SidebarThemeRow() {
         <span aria-hidden>→</span>
       </span>
     </button>
-  );
-}
-
-/* ============================================================
-   User chip + sign-out menu
-   ============================================================ */
-
-function UserChip({
-  name,
-  email,
-}: {
-  name: string | null;
-  email: string | null;
-}) {
-  const [open, setOpen] = useState(false);
-  const display = name || email || "Account";
-  const initial = (name || email || "?").slice(0, 1).toUpperCase();
-  return (
-    <div className="oga-app__user">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className={open ? "oga-app__user-btn oga-app__user-btn--open" : "oga-app__user-btn"}
-      >
-        <span aria-hidden className="oga-app__user-avatar">
-          {initial}
-        </span>
-        <span className="oga-app__user-name">{display}</span>
-        <span aria-hidden className="oga-app__user-chevron">▼</span>
-      </button>
-
-      {open && (
-        <div className="oga-app__user-menu">
-          {email && <div className="oga-app__user-email">{email}</div>}
-          <MenuLink href="/settings" label="Settings" onClick={() => setOpen(false)} />
-          <MenuLink href="/help" label="Help" onClick={() => setOpen(false)} />
-          <button
-            type="button"
-            onClick={() => {
-              signOut({ callbackUrl: "/" });
-            }}
-            className="oga-app__user-signout"
-          >
-            Sign out
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function MenuLink({
-  href,
-  label,
-  onClick,
-}: {
-  href: string;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <Link href={href} onClick={onClick} className="oga-app__user-menu-link">
-      {label}
-    </Link>
   );
 }
 

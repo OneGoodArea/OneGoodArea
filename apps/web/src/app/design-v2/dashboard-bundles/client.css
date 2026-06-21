@@ -1,0 +1,709 @@
+/* ============================================================
+   AR-274 /dashboard/org/bundles styles.
+   Same brand v3 vocabulary as the other org surfaces: product
+   header (Monitor pattern), cream column with 40px gutters,
+   warm-white card with hairline borders, brand modals.
+   ============================================================ */
+
+.oga-bndl {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 8px 40px 40px;
+}
+
+@media (max-width: 700px) {
+  .oga-bndl {
+    padding: 8px 20px 32px;
+  }
+}
+
+.oga-bndl__placeholder {
+  min-height: 240px;
+}
+
+/* ── Product-style header (verbatim from dashboard-monitor) ──────── */
+
+.oga-bndl__product {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  align-items: start;
+  padding: 8px 0 24px;
+  border-bottom: 1px solid var(--oga-ink-10);
+}
+
+.oga-bndl__product-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: rgba(26, 28, 31, 0.04);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 6px;
+  color: var(--oga-ink);
+  flex-shrink: 0;
+}
+
+.oga-bndl__product-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.oga-bndl__product-eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-bndl__product-title {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: clamp(28px, 3vw, 36px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--oga-ink);
+  margin: 0;
+}
+
+.oga-bndl__product-tagline {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--oga-ink-50);
+  margin: 4px 0 0;
+  max-width: 720px;
+}
+
+.oga-bndl__product-tagline code {
+  font-family: var(--oga-font-mono);
+  font-size: 12.5px;
+  background: rgba(26, 28, 31, 0.05);
+  padding: 1px 5px;
+  border-radius: 2px;
+  color: var(--oga-ink);
+}
+
+/* ── How it works panel ──────────────────────────────────────────── */
+
+.oga-bndl__how {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 24px;
+  align-items: stretch;
+  padding: 22px 24px;
+  background: var(--oga-bg-warm, #FAF8F4);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+}
+
+@media (max-width: 820px) {
+  .oga-bndl__how {
+    grid-template-columns: 1fr;
+  }
+}
+
+.oga-bndl__how-title {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+  margin: 0 0 12px;
+}
+
+.oga-bndl__how-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.oga-bndl__how-list li {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 12px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--oga-ink-50);
+}
+
+.oga-bndl__how-list strong {
+  color: var(--oga-ink);
+  font-weight: 500;
+}
+
+.oga-bndl__how-list code {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  background: rgba(26, 28, 31, 0.06);
+  padding: 1px 5px;
+  border-radius: 2px;
+  color: var(--oga-ink);
+}
+
+.oga-bndl__how-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--oga-ink);
+  color: var(--oga-white);
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* "Note" entry rendered as an aside under the numbered steps. Same row
+   shape, but the marker is an "i" on a transparent disc with a hairline
+   border so it reads as informational rather than another step. */
+.oga-bndl__how-aside .oga-bndl__how-step {
+  background: transparent;
+  color: var(--oga-ink-50);
+  border: 1px solid var(--oga-ink-10);
+  font-style: italic;
+}
+
+.oga-bndl__how-code {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.oga-bndl__how-code-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-bndl__how-code-block {
+  margin: 0;
+  padding: 14px 16px;
+  background: #1A1C1F;
+  color: rgba(250, 248, 244, 0.92);
+  border-radius: 4px;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* ── Toolbar ──────────────────────────────────────────────────────── */
+
+.oga-bndl__toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.oga-bndl__primary-btn {
+  appearance: none;
+  background: var(--oga-ink);
+  border: 1px solid var(--oga-ink);
+  border-radius: 3px;
+  padding: 9px 16px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-white);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.oga-bndl__primary-btn:hover {
+  background: #2A2C30;
+  border-color: #2A2C30;
+}
+
+/* ── Loading + error ─────────────────────────────────────────────── */
+
+.oga-bndl__loading,
+.oga-bndl__error {
+  padding: 28px 20px;
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--oga-ink-50);
+}
+
+.oga-bndl__error { color: var(--oga-status-red); }
+
+.oga-bndl__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.oga-bndl__loading-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--oga-ink-10);
+  border-top-color: var(--oga-ink);
+  border-radius: 50%;
+  animation: oga-bndl-spin 0.9s linear infinite;
+}
+
+@keyframes oga-bndl-spin { to { transform: rotate(360deg); } }
+
+/* ── List rows ───────────────────────────────────────────────────── */
+
+.oga-bndl__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.oga-bndl__row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--oga-ink-10);
+  transition: background 120ms ease;
+}
+
+.oga-bndl__row:last-child { border-bottom: none; }
+
+.oga-bndl__row:hover { background: rgba(26, 28, 31, 0.02); }
+
+.oga-bndl__row-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.oga-bndl__row-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--oga-ink);
+}
+
+.oga-bndl__row-slug {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: var(--oga-ink-50);
+}
+
+.oga-bndl__row-count {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 3px 8px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.oga-bndl__row-updated {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+  white-space: nowrap;
+}
+
+.oga-bndl__row-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.oga-bndl__ghost-btn,
+.oga-bndl__danger-btn {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 2px;
+  padding: 5px 10px;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+  white-space: nowrap;
+}
+
+.oga-bndl__ghost-btn { color: var(--oga-ink); }
+
+.oga-bndl__ghost-btn:hover {
+  background: rgba(26, 28, 31, 0.04);
+  border-color: rgba(26, 28, 31, 0.45);
+}
+
+.oga-bndl__danger-btn { color: #a01b00; }
+
+.oga-bndl__danger-btn:hover {
+  background: rgba(180, 54, 28, 0.06);
+  border-color: rgba(180, 54, 28, 0.45);
+}
+
+/* ── Empty state ─────────────────────────────────────────────────── */
+
+.oga-bndl__empty {
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.oga-bndl__empty-title {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--oga-ink);
+  margin: 0 0 6px;
+}
+
+.oga-bndl__empty-body {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--oga-ink-50);
+  margin: 0;
+  max-width: 460px;
+  margin: 0 auto;
+}
+
+/* ── Modal pieces (same vocabulary as Members) ───────────────────── */
+
+.oga-bndl__modal-body {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--oga-ink-50);
+  margin: 0 0 16px;
+}
+
+.oga-bndl__modal-body--on-dark { color: rgba(250, 248, 244, 0.72); }
+.oga-bndl__modal-body strong { color: var(--oga-ink); font-weight: 500; }
+.oga-bndl__modal-body--on-dark strong { color: var(--oga-white); }
+
+.oga-bndl__modal-code {
+  font-family: var(--oga-font-mono);
+  font-size: 12.5px;
+  color: var(--oga-white);
+  background: rgba(0, 0, 0, 0.40);
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.oga-bndl__modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 16px;
+}
+
+.oga-bndl__modal-field-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-bndl__modal-input {
+  padding: 10px 12px;
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 3px;
+  background: var(--oga-white);
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  color: var(--oga-ink);
+  transition: border-color 120ms ease;
+}
+
+.oga-bndl__modal-input::placeholder { color: var(--oga-ink-50); }
+.oga-bndl__modal-input:focus { outline: none; border-color: var(--oga-ink); }
+
+.oga-bndl__modal-error {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--oga-status-red);
+}
+
+.oga-bndl__modal-intro {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--oga-ink-50);
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  background: rgba(26, 28, 31, 0.03);
+  border-left: 2px solid var(--oga-ink-30, rgba(26, 28, 31, 0.45));
+  border-radius: 2px;
+}
+
+.oga-bndl__modal-field-helper {
+  font-size: 12px;
+  color: var(--oga-ink-50);
+  line-height: 1.5;
+}
+
+.oga-bndl__inline-code {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.06);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+.oga-bndl__modal-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 16px 0 0;
+}
+
+.oga-bndl__modal-preview-code {
+  margin: 0;
+  padding: 12px 14px;
+  background: #1A1C1F;
+  color: rgba(250, 248, 244, 0.92);
+  border-radius: 3px;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* Footer row with hint on the left, buttons on the right. Tells the
+   user what's preventing submit instead of leaving the button greyed
+   out without explanation. */
+.oga-bndl__modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.oga-bndl__modal-hint {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--oga-ink-50);
+  flex: 1;
+  min-width: 0;
+}
+
+.oga-bndl__modal-footer-buttons {
+  display: inline-flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ── Signal picker (modal-internal) ─────────────────────────────── */
+
+.oga-bndl__picker {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 56vh;
+  overflow-y: auto;
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 3px;
+  padding: 14px;
+  background: rgba(26, 28, 31, 0.02);
+}
+
+.oga-bndl__picker-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.oga-bndl__picker-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--oga-ink-10);
+}
+
+.oga-bndl__picker-category {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oga-ink);
+}
+
+.oga-bndl__picker-toggle {
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+  cursor: pointer;
+}
+
+.oga-bndl__picker-toggle:hover {
+  color: var(--oga-ink);
+  text-decoration: underline;
+}
+
+.oga-bndl__picker-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.oga-bndl__picker-item { margin: 0; }
+
+.oga-bndl__picker-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.oga-bndl__picker-label:hover { background: rgba(26, 28, 31, 0.03); }
+
+.oga-bndl__picker-label[data-checked="true"] {
+  background: rgba(26, 28, 31, 0.04);
+  border-color: var(--oga-ink-10);
+}
+
+.oga-bndl__picker-checkbox {
+  margin-top: 2px;
+  accent-color: var(--oga-ink);
+}
+
+.oga-bndl__picker-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.oga-bndl__picker-name {
+  font-size: 13.5px;
+  color: var(--oga-ink);
+}
+
+.oga-bndl__picker-key {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-ink-50);
+}
+
+/* ── Footer buttons ──────────────────────────────────────────────── */
+
+.oga-bndl__modal-primary,
+.oga-bndl__modal-secondary,
+.oga-bndl__modal-danger {
+  appearance: none;
+  border-radius: 3px;
+  padding: 8px 16px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+  white-space: nowrap;
+}
+
+.oga-bndl__modal-primary {
+  background: var(--oga-ink);
+  border: 1px solid var(--oga-ink);
+  color: var(--oga-white);
+}
+
+.oga-bndl__modal-primary:hover:not(:disabled) {
+  background: #2A2C30;
+  border-color: #2A2C30;
+}
+
+.oga-bndl__modal-secondary {
+  background: transparent;
+  border: 1px solid var(--oga-ink-10);
+  color: var(--oga-ink);
+}
+
+.oga-bndl__modal-secondary:hover:not(:disabled) {
+  background: rgba(26, 28, 31, 0.04);
+  border-color: rgba(26, 28, 31, 0.45);
+}
+
+.oga-bndl__modal-secondary--on-dark {
+  border-color: rgba(250, 248, 244, 0.18);
+  color: var(--oga-white);
+}
+
+.oga-bndl__modal-secondary--on-dark:hover:not(:disabled) {
+  background: rgba(250, 248, 244, 0.08);
+  border-color: rgba(250, 248, 244, 0.40);
+}
+
+.oga-bndl__modal-danger {
+  background: var(--oga-status-red);
+  border: 1px solid var(--oga-status-red);
+  color: var(--oga-white);
+}
+
+.oga-bndl__modal-danger:hover:not(:disabled) {
+  background: #9A2E18;
+  border-color: #9A2E18;
+}
+
+.oga-bndl__modal-primary:disabled,
+.oga-bndl__modal-secondary:disabled,
+.oga-bndl__modal-danger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+
+@media (max-width: 720px) {
+  .oga-bndl__row {
+    grid-template-columns: 1fr auto;
+    row-gap: 6px;
+  }
+  .oga-bndl__row-count,
+  .oga-bndl__row-updated {
+    grid-column: 1 / -1;
+  }
+  .oga-bndl__row-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+}

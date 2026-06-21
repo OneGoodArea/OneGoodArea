@@ -1,0 +1,210 @@
+/* ============================================================
+   AR-220 — <Modal>
+   Built on native <dialog>. Reset browser defaults, then layer
+   Brand v3 visual treatment on top.
+   ============================================================ */
+
+/* ---------- Reset + viewport positioning ----------
+   Native <dialog> has implicit margin:auto + position:fixed when
+   opened via showModal(), which is what centers it. Setting margin:0
+   here used to kill that, leaving the inner card pinned top-left.
+   Fix: make the dialog itself the centering container — full
+   viewport box, flex-centered children. Works the same on every
+   browser since we're not relying on the native auto-centering. */
+
+.oga-modal {
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+  overflow: visible;
+}
+
+.oga-modal[open] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.oga-modal:not([open]) {
+  display: none;
+}
+
+/* ---------- Backdrop ----------
+   Brand v3: graphite-ink at 60% with a 2px blur. Animates in via
+   @starting-style + overlay/display discrete transitions where supported;
+   gracefully degrades to instant where not. */
+
+.oga-modal::backdrop {
+  background: rgba(26, 28, 31, 0.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 1;
+  transition: opacity var(--oga-dur) var(--oga-ease);
+}
+
+/* ---------- Card ----------
+   Cream panel, hairline border, soft elevation. Sizes pin a max-width;
+   everything shrinks to viewport on small screens. */
+
+.oga-modal__inner {
+  background: var(--oga-white);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: var(--oga-radius-lg);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 24px 60px rgba(26, 28, 31, 0.18),
+    0 8px 16px rgba(26, 28, 31, 0.10);
+  margin: var(--oga-5) auto;
+  max-height: calc(100vh - var(--oga-5) * 2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.oga-modal[data-size="sm"] .oga-modal__inner {
+  width: min(400px, calc(100vw - var(--oga-5) * 2));
+}
+
+.oga-modal[data-size="md"] .oga-modal__inner {
+  width: min(560px, calc(100vw - var(--oga-5) * 2));
+}
+
+.oga-modal[data-size="lg"] .oga-modal__inner {
+  width: min(720px, calc(100vw - var(--oga-5) * 2));
+}
+
+/* ---------- Header ----------
+   Title + close button. Title size derived from --oga-fs-h3 for visual
+   weight without being shouty. */
+
+.oga-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--oga-3);
+  padding: var(--oga-5) var(--oga-5) var(--oga-3);
+}
+
+.oga-modal__title {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-h3);
+  font-weight: 500;
+  line-height: var(--oga-lh-snug);
+  letter-spacing: -0.015em;
+  margin: 0;
+  color: var(--oga-ink);
+  text-wrap: balance;
+}
+
+.oga-modal__close {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: -4px; /* optical alignment to title */
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  color: var(--oga-fg-muted);
+  transition:
+    color var(--oga-dur) var(--oga-ease),
+    background var(--oga-dur) var(--oga-ease),
+    border-color var(--oga-dur) var(--oga-ease);
+}
+
+.oga-modal__close:hover {
+  color: var(--oga-ink);
+  background: var(--oga-canvas);
+  border-color: var(--oga-ink-10);
+}
+
+.oga-modal__close:focus-visible {
+  outline: 1.5px solid var(--oga-ink);
+  outline-offset: 1px;
+}
+
+.oga-modal__close svg {
+  display: block;
+}
+
+/* ---------- Body ----------
+   Scrolls independently if content exceeds max-height. Generous reading
+   measure preserved by the size-bound width. */
+
+.oga-modal__body {
+  padding: 0 var(--oga-5) var(--oga-5);
+  overflow-y: auto;
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-body);
+  line-height: 1.55;
+  color: var(--oga-fg);
+}
+
+.oga-modal__body > p:first-child {
+  margin-top: 0;
+}
+
+.oga-modal__body > p:last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- Footer ----------
+   Action row, right-aligned by default. Hairline above to separate from
+   body. Buttons live here (consumer wires their own primary/secondary). */
+
+.oga-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--oga-2);
+  padding: var(--oga-3) var(--oga-5) var(--oga-5);
+  border-top: 1px solid var(--oga-ink-10);
+}
+
+/* ---------- Dark surface variant ----------
+   When the consumer marks the modal with data-oga-surface="dark", the
+   inner card flips to ink with white text. Used by destructive-action
+   confirms (e.g. "delete portfolio") to visually escalate the moment. */
+
+.oga-modal[data-oga-surface="dark"] .oga-modal__inner {
+  background: var(--oga-ink);
+  color: var(--oga-white);
+  border-color: rgba(250, 248, 244, 0.12);
+}
+
+.oga-modal[data-oga-surface="dark"] .oga-modal__title {
+  color: var(--oga-white);
+}
+
+.oga-modal[data-oga-surface="dark"] .oga-modal__close {
+  color: rgba(250, 248, 244, 0.6);
+}
+
+.oga-modal[data-oga-surface="dark"] .oga-modal__close:hover {
+  color: var(--oga-white);
+  background: rgba(250, 248, 244, 0.08);
+  border-color: rgba(250, 248, 244, 0.18);
+}
+
+.oga-modal[data-oga-surface="dark"] .oga-modal__footer {
+  border-top-color: rgba(250, 248, 244, 0.12);
+}
+
+/* ---------- Reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .oga-modal,
+  .oga-modal::backdrop,
+  .oga-modal__close {
+    transition: none;
+  }
+}

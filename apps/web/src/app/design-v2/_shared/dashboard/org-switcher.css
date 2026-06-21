@@ -1,0 +1,298 @@
+/* AR-234 OrgSwitcher styles. Dark sidebar context. */
+
+.oga-org-switcher__trigger {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  background: transparent;
+  border: 1px solid rgba(250, 248, 244, 0.08);
+  border-radius: 4px;
+  color: var(--oga-white);
+  font-family: var(--oga-font-sans);
+  cursor: pointer;
+  transition:
+    background var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-org-switcher__trigger:hover {
+  background: rgba(250, 248, 244, 0.04);
+  border-color: rgba(250, 248, 244, 0.16);
+}
+
+.oga-org-switcher__trigger:focus-visible {
+  outline: 1.5px solid rgba(250, 248, 244, 0.4);
+  outline-offset: 2px;
+}
+
+.oga-org-switcher__trigger-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.oga-org-switcher__avatar {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(250, 248, 244, 0.12);
+  color: var(--oga-white);
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.oga-org-switcher__labels {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.oga-org-switcher__name {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--oga-white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.oga-org-switcher__role {
+  font-family: var(--oga-font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.5);
+}
+
+.oga-org-switcher__chevron {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(250, 248, 244, 0.5);
+  width: 14px;
+  height: 14px;
+}
+
+/* Loading placeholder so first paint doesn't hop when /api/orgs
+   resolves. Same footprint as the live trigger. */
+
+.oga-org-switcher--loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid rgba(250, 248, 244, 0.06);
+  border-radius: 4px;
+}
+
+.oga-org-switcher--loading .oga-org-switcher__avatar {
+  background: rgba(250, 248, 244, 0.06);
+}
+
+.oga-org-switcher__skeleton {
+  flex: 1;
+  height: 12px;
+  background: rgba(250, 248, 244, 0.06);
+  border-radius: 2px;
+}
+
+/* Dropdown item avatar (inside the DropdownMenu panel). The panel
+   itself lives in the cream surface family (it's portalled out of the
+   dark sidebar), so this avatar uses ink not warm-white. */
+
+.oga-org-switcher__item-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(26, 28, 31, 0.08);
+  color: var(--oga-ink);
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* AR-285: "+ New organisation" entry — hairline-outlined circle with
+   a centred plus glyph, distinguishing it from the filled real-org
+   avatars in the same dropdown column. */
+.oga-org-switcher__item-avatar--add {
+  background: transparent;
+  border: 1px dashed var(--oga-ink-30, rgba(26, 28, 31, 0.25));
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--oga-ink);
+}
+
+/* AR-285: create-org modal form. Pinned to small Modal size so the
+   moment is focused — name + slug only, no other clutter. */
+
+.oga-org-create {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.oga-org-create__intro {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--oga-ink-50);
+  margin: 0;
+}
+
+.oga-org-create__inline {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 1px 6px;
+  border-radius: 2px;
+}
+
+.oga-org-create__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.oga-org-create__label {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-org-create__input {
+  width: 100%;
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--oga-ink);
+  background: #fff;
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+  padding: 9px 12px;
+  outline: none;
+  transition: border-color 120ms ease;
+}
+
+.oga-org-create__input:focus {
+  border-color: var(--oga-ink-50);
+}
+
+.oga-org-create__input--mono {
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
+}
+
+.oga-org-create__hint {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--oga-ink-50);
+}
+
+.oga-org-create__hint code {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+.oga-org-create__hint--err {
+  color: #B4361C;
+}
+
+.oga-org-create__error {
+  font-size: 12.5px;
+  color: #B4361C;
+  margin: 0;
+}
+
+.oga-org-create__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.oga-org-create__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 16px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  border: 1px solid var(--oga-ink);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.oga-org-create__btn--ink {
+  background: var(--oga-ink);
+  color: var(--oga-white, #FAF8F4);
+}
+.oga-org-create__btn--ink:hover { background: #000; }
+.oga-org-create__btn--ink:disabled {
+  background: rgba(26, 28, 31, 0.10);
+  border-color: rgba(26, 28, 31, 0.10);
+  color: var(--oga-ink-50);
+  cursor: not-allowed;
+}
+
+.oga-org-create__btn--ghost {
+  background: transparent;
+  color: var(--oga-ink);
+}
+.oga-org-create__btn--ghost:hover {
+  background: var(--oga-ink);
+  color: var(--oga-white, #FAF8F4);
+}
+.oga-org-create__btn--ghost:disabled {
+  color: var(--oga-ink-50);
+  border-color: var(--oga-ink-10);
+  cursor: not-allowed;
+}
+
+/* Collapsed-sidebar variant: the parent .oga-sidebar--collapsed hides
+   the labels + chevron and centers the avatar. The trigger button
+   keeps its border so it still reads as an interactive surface. */
+
+@media (min-width: 881px) {
+  .oga-sidebar--collapsed .oga-org-switcher__trigger {
+    padding: 6px;
+    justify-content: center;
+  }
+  .oga-sidebar--collapsed .oga-org-switcher__labels,
+  .oga-sidebar--collapsed .oga-org-switcher__chevron {
+    display: none;
+  }
+  .oga-sidebar--collapsed .oga-org-switcher__trigger-row {
+    width: auto;
+    gap: 0;
+  }
+}

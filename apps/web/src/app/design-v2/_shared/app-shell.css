@@ -18,25 +18,66 @@
 .oga-app {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 240px 1fr;
+  /* AR-252: grid column width comes from --oga-sidebar-width so the
+     desktop collapse can swap 240px ↔ 64px without rewriting layout
+     rules. AppShell sets the variable based on `collapsed` state. */
+  grid-template-columns: var(--oga-sidebar-width, 240px) 1fr;
   background: var(--oga-canvas);
+  transition: grid-template-columns 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.oga-app[data-collapsed="true"] {
+  --oga-sidebar-width: 84px;
+}
+
+/* AR-234: brand row inside the sidebar top slot. Keeps the
+   horizontal flex layout (mark/wordmark on the left, mobile-close
+   button on the right) while the parent .oga-sidebar__top is now a
+   vertical column hosting the brand row + the OrgSwitcher beneath. */
+.oga-app__sidebar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.oga-app[data-collapsed="true"] .oga-app__sidebar-brand {
+  justify-content: center;
+}
+
+/* AR-252 / AR-254: brand-mark + wordmark variants both always
+   present in the DOM (server can't know the localStorage-persisted
+   collapsed state until the client hydrates, and we render the
+   same markup on both sides to avoid a structural hydration mismatch).
+   CSS hides whichever doesn't match the current collapsed state.
+   Default: Mark hidden, Wordmark shown. data-collapsed="true" flips. */
+.oga-app__sidebar-mark {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: transform var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-app__sidebar-mark:hover {
+  transform: rotate(6deg);
+}
+.oga-app__sidebar-mark:focus-visible {
+  outline: 1.5px solid rgba(250, 248, 244, 0.4);
+  outline-offset: 4px;
+  border-radius: 50%;
+}
+.oga-app__sidebar-wordmark {
+  display: inline-flex;
+}
+.oga-app[data-collapsed="true"] .oga-app__sidebar-mark {
+  display: inline-flex;
+}
+.oga-app[data-collapsed="true"] .oga-app__sidebar-wordmark {
+  display: none;
 }
 @media (max-width: 880px) {
   .oga-app {
     grid-template-columns: 1fr;
-  }
-}
-
-.oga-app__backdrop {
-  display: none;
-}
-@media (max-width: 880px) {
-  .oga-app[data-drawer-open="true"] .oga-app__backdrop {
-    display: block;
-    position: fixed;
-    inset: 0;
-    background: rgba(26, 28, 31, 0.45);
-    z-index: 40;
   }
 }
 
@@ -104,44 +145,13 @@
 }
 
 /* ============================================================
-   Sidebar (DARK)
+   Sidebar close button (mobile)
+   The sidebar primitive (oga-sidebar*) lives in
+   _shared/dashboard/sidebar.css. This single rule stays here
+   because AppShell composes the close button into the sidebar's
+   `top` slot — it's an AppShell-owned affordance, not part of
+   the primitive.
    ============================================================ */
-.oga-app__sidebar {
-  background: var(--oga-ink);
-  border-right: 1px solid var(--oga-ink);
-  padding: 26px 20px 22px;
-  display: flex;
-  flex-direction: column;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  color: var(--oga-white);
-  overflow: hidden;
-}
-@media (max-width: 880px) {
-  .oga-app__sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 280px;
-    transform: translateX(-100%);
-    transition: transform 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
-    z-index: 50;
-    box-shadow: 24px 0 48px -20px rgba(0, 0, 0, 0.5);
-  }
-  .oga-app__sidebar--open {
-    transform: translateX(0);
-  }
-}
-
-.oga-app__sidebar-head {
-  margin-bottom: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
 .oga-app__sidebar-close {
   display: none;
   width: 34px;
@@ -160,74 +170,6 @@
   .oga-app__sidebar-close {
     display: inline-flex;
   }
-}
-
-.oga-app__sidebar-body {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow-y: auto;
-}
-.oga-app__sidebar-gap {
-  height: 22px;
-}
-.oga-app__sidebar-spacer {
-  flex: 1;
-}
-
-/* Nav groups */
-.oga-app__nav-group-label {
-  font-family: var(--oga-font-mono);
-  font-size: 9.5px;
-  font-weight: 500;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
-  margin-bottom: 10px;
-  padding-left: 10px;
-}
-.oga-app__nav-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.oga-app__nav-link {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 9px 10px;
-  font-family: var(--oga-font-sans);
-  font-size: 13.5px;
-  font-weight: 500;
-  letter-spacing: -0.005em;
-  color: rgba(255, 255, 255, 0.72);
-  background: transparent;
-  border-radius: var(--oga-radius-sm);
-  text-decoration: none;
-  transition:
-    background var(--oga-dur-fast) var(--oga-ease),
-    color var(--oga-dur-fast) var(--oga-ease);
-}
-.oga-app__nav-link:hover {
-  color: var(--oga-white);
-  background: rgba(255, 255, 255, 0.06);
-}
-.oga-app__nav-link--active {
-  color: var(--oga-ink);
-  background: var(--oga-white);
-  font-weight: 600;
-}
-.oga-app__nav-link--active:hover {
-  color: var(--oga-ink);
-  background: var(--oga-white);
-}
-.oga-app__nav-link-icon {
-  flex-shrink: 0;
-  display: inline-flex;
 }
 
 /* ============================================================
@@ -292,122 +234,10 @@
   gap: 4px;
 }
 
-/* ============================================================
-   User chip + dropdown menu
-   ============================================================ */
-.oga-app__user {
-  position: relative;
-}
-.oga-app__user-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 9px 10px;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--oga-radius-sm);
-  cursor: pointer;
-  font-family: var(--oga-font-sans);
-  font-size: 13px;
-  color: var(--oga-white);
-  text-align: left;
-  transition:
-    background var(--oga-dur-fast) var(--oga-ease),
-    border-color var(--oga-dur-fast) var(--oga-ease);
-}
-.oga-app__user-btn:hover,
-.oga-app__user-btn--open {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.18);
-}
-.oga-app__user-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: var(--oga-white);
-  color: var(--oga-ink);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--oga-font-mono);
-  font-size: 12px;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-.oga-app__user-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: 500;
-}
-.oga-app__user-chevron {
-  font-family: var(--oga-font-mono);
-  font-size: 9px;
-  color: rgba(255, 255, 255, 0.5);
-  letter-spacing: 0.2em;
-  transition: transform 200ms ease;
-}
-.oga-app__user-btn--open .oga-app__user-chevron {
-  transform: rotate(180deg);
-}
-
-.oga-app__user-menu {
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  background: var(--oga-white);
-  border: 1px solid var(--oga-border);
-  border-radius: var(--oga-radius-sm);
-  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.28);
-  overflow: hidden;
-  z-index: 40;
-}
-.oga-app__user-email {
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--oga-border);
-  font-family: var(--oga-font-mono);
-  font-size: 10.5px;
-  color: var(--oga-fg-muted);
-  letter-spacing: 0.02em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.oga-app__user-menu-link {
-  display: block;
-  padding: 10px 14px;
-  font-family: var(--oga-font-sans);
-  font-size: 13px;
-  color: var(--oga-fg);
-  text-decoration: none;
-  transition: background var(--oga-dur-fast) var(--oga-ease);
-}
-.oga-app__user-menu-link:hover {
-  background: rgba(26, 28, 31, 0.04);
-}
-.oga-app__user-signout {
-  width: 100%;
-  text-align: left;
-  padding: 10px 14px;
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #a01b00;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  border-top: 1px solid var(--oga-border);
-  transition: background var(--oga-dur-fast) var(--oga-ease);
-}
-.oga-app__user-signout:hover {
-  background: rgba(239, 68, 68, 0.06);
-}
+/* AR-258: UserChip + dropdown styles deleted. AR-234 removed the
+   bottom-of-sidebar UserChip TSX (account actions consolidated into
+   the OrgSwitcher dropdown) and these styles were orphaned. Zero
+   consumers in src/ at delete time. */
 
 /* ============================================================
    Page header (top of main)

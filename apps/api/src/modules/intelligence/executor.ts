@@ -10,14 +10,55 @@
    exactly what ran). Throws only on genuinely exceptional DB / I/O errors —
    the endpoint catches and maps to 500. See ADR 0017. */
 
-import type { QueryPlan, QueryResponse } from "@onegoodarea/contracts";
+import type { QueryPlan, QueryResponse, AmbiguousLocationCandidate } from "@onegoodarea/contracts";
 import { queryAreas, queryAreasCompound, type AreasQuery, type CompoundAreasQuery } from "../signals/query";
 import { getAreaProfile } from "../signals";
 import { scoreArea } from "../scoring";
 import { findPeers, parsePeersInput } from "../signals/peers";
 import { findInsights, parseInsightsInput } from "../signals/insights";
 import { runForecast, parseForecastInput } from "../signals/forecast";
-import { geocodeArea } from "../signals/data-sources/postcodes";
+import { geocodeAreaStrict } from "../signals/data-sources/postcodes";
+
+/* AR-267: thrown by every NL executor branch when a non-postcode place
+   name resolves to multiple distinct postcodes (e.g. "Brixton" -> London
+   AND Devon). /v1/query catches this and returns 422 with the candidate
+   list so the caller can re-ask. Never instantiate from a postcode path
+   — postcodes are unambiguous by definition. */
+export class AmbiguousLocationError extends Error {
+  constructor(public readonly query: string, public readonly candidates: AmbiguousLocationCandidate[]) {
+    super(`Place name "${query}" is ambiguous — ${candidates.length} candidates.`);
+    this.name = "AmbiguousLocationError";
+  }
+}
+
+/* AR-267: a UK postcode (matched by the same regex postcodes.ts uses) is
+   unambiguous by definition, so we skip the strict resolver for those
+   inputs and let the downstream handler do its single fetch. */
+const POSTCODE_REGEX = /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i;
+
+/** Disambiguate a free-text area input before handing it to downstream
+    handlers that take a string ({getAreaProfile, scoreArea}). Throws
+    AmbiguousLocationError on name-collision so the endpoint can return
+    422; otherwise returns the original string (postcodes pass through
+    unchanged, place names pass through and re-geocode in the handler —
+    one extra postcodes.io call, but worth the simplicity). */
+async function resolveAreaInputStrict(query: string): Promise<string> {
+  if (POSTCODE_REGEX.test(query.trim())) return query;
+  const result = await geocodeAreaStrict(query);
+  if (result.kind === "ambiguous") throw new AmbiguousLocationError(query, result.candidates);
+  return query;
+}
+
+/** Disambiguate, then resolve to an LSOA — used by find_peers and
+    find_forecast which need the LSOA code, not a postcode. Throws on
+    ambiguous; returns null on not-found (matches existing null-results
+    contract). */
+async function resolveTargetAreaStrict(query: string): Promise<{ lsoa: string } | null> {
+  const result = await geocodeAreaStrict(query);
+  if (result.kind === "ambiguous") throw new AmbiguousLocationError(query, result.candidates);
+  if (result.kind === "not_found") return null;
+  return { lsoa: result.area.lsoa };
+}
 
 const AREAS_LIMIT_DEFAULT = 100;
 
@@ -75,16 +116,43 @@ export async function executePlan(plan: QueryPlan, opts: ExecuteOpts): Promise<Q
     return { plan, plan_source, results: rows, meta };
   }
   if (plan.op === "get_area") {
-    const profile = await getAreaProfile(plan.params.area);
+    // AR-267: disambiguate BEFORE handing off to getAreaProfile. Strict
+    // resolver throws AmbiguousLocationError; the endpoint maps to 422.
+    const resolved = await resolveAreaInputStrict(plan.params.area);
+    const profile = await getAreaProfile(resolved);
     return { plan, plan_source, results: profile, meta };
   }
   if (plan.op === "score_area") {
+    const resolved = await resolveAreaInputStrict(plan.params.area);
     const score = await scoreArea({
-      area: plan.params.area,
+      area: resolved,
       preset: plan.params.preset ?? "research",
       weights: plan.params.weights,
     });
     return { plan, plan_source, results: score, meta };
+  }
+  if (plan.op === "compare_areas") {
+    /* AR-266: fan out getAreaProfile per slot in parallel; preserve
+       not-founds as null slots (NOT dropped) so the caller can see
+       exactly which input failed. Order matches plan.params.areas.
+
+       Follow-up to AR-267: each slot is disambiguated FIRST. If any
+       slot's place name resolves to multiple distinct places, the
+       whole call throws AmbiguousLocationError — partial-pick across
+       3-area comparisons would be the same silent-drop bug AR-267 is
+       fixing for single-area ops. Postcode slots short-circuit the
+       strict resolver. */
+    const queries = plan.params.areas;
+    const resolved = await Promise.all(queries.map((a) => resolveAreaInputStrict(a)));
+    const profiles = await Promise.all(resolved.map((a) => getAreaProfile(a)));
+    return {
+      plan, plan_source,
+      results: {
+        areas: queries.map((query, i) => ({ query, profile: profiles[i] })),
+        meta: { generated_at: meta.generated_at, scope: `areas=${queries.length}` },
+      },
+      meta,
+    };
   }
   if (plan.op === "find_forecast") {
     // find_forecast — resolve target -> LSOA, fit linear regression on the
@@ -98,8 +166,11 @@ export async function executePlan(plan: QueryPlan, opts: ExecuteOpts): Promise<Q
     } else {
       const q = ("postcode" in tgt ? tgt.postcode : "area" in tgt ? tgt.area : "")!.trim();
       if (q) {
-        const geo = await geocodeArea(q);
-        if (geo) targetGeoCode = geo.lsoa;
+        // AR-267: disambiguate place names; postcode shape skips the strict
+        // path (resolveTargetAreaStrict is no-op cost for postcodes via
+        // geocodeAreaStrict's POSTCODE_REGEX branch above).
+        const resolved = await resolveTargetAreaStrict(q);
+        if (resolved) targetGeoCode = resolved.lsoa;
       }
     }
     if (!targetGeoCode) return { plan, plan_source, results: null, meta };
@@ -177,8 +248,9 @@ export async function executePlan(plan: QueryPlan, opts: ExecuteOpts): Promise<Q
   } else {
     const q = ("postcode" in tgt ? tgt.postcode : "area" in tgt ? tgt.area : "")!.trim();
     if (q) {
-      const geo = await geocodeArea(q);
-      if (geo) targetGeoCode = geo.lsoa;
+      // AR-267: same disambiguation as find_forecast — never silently pick.
+      const resolved = await resolveTargetAreaStrict(q);
+      if (resolved) targetGeoCode = resolved.lsoa;
     }
   }
   if (!targetGeoCode) return { plan, plan_source, results: null, meta };

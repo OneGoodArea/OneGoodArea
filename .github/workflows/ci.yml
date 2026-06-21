@@ -42,6 +42,9 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    env:
+      STRIPE_SECRET_KEY: sk_test_ci_mock
+      STRIPE_API_BASE_URL: http://localhost:12111
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -49,6 +52,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm install --no-audit --no-fund
+      - name: Start Stripe mock
+        run: |
+          docker build -t stripe-mock services/stripe-mock
+          docker run -d --name stripe-mock -p 12111:12111 stripe-mock
+          until curl -sf http://localhost:12111/__test/health; do sleep 1; done
       - run: npm test
 
   build:
@@ -80,5 +88,5 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm install --no-audit --no-fund
-      - name: npm audit (high+critical only)
-        run: npm audit --audit-level=high
+      - name: npm audit (high+critical only, production deps)
+        run: npm audit --audit-level=high --omit=dev

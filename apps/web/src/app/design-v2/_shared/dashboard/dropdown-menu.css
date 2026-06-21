@@ -1,0 +1,309 @@
+/* ============================================================
+   AR-221 — <DropdownMenu>
+   Trigger + floating panel. Positioned absolutely relative to
+   the wrapper. Soft-warm hover signature matches the /about
+   page cards (0.04 → 0.06 bg progression on hover).
+   ============================================================ */
+
+.oga-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+/* ---------- Trigger ----------
+   Unstyled by default — the consumer wires the visible button styling
+   via triggerClassName (e.g. .oga-btn-secondary, a sidebar nav button,
+   a table-row action button). We only attach behaviour + aria. */
+
+.oga-dropdown__trigger {
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+}
+
+.oga-dropdown__trigger:focus-visible {
+  outline: 1.5px solid var(--oga-ink);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ---------- Panel ----------
+   Floats below the trigger by default. Position uses absolute placement
+   so the panel doesn't push surrounding content. min-width matches the
+   trigger; max-width caps wide menus. */
+
+.oga-dropdown__panel {
+  position: absolute;
+  top: calc(100% + var(--oga-2));
+  min-width: 220px;
+  max-width: 320px;
+  padding: var(--oga-2);
+  background: var(--oga-white);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+  /* Edge-lit material: inset highlight catches the top edge, soft layered
+     ambient shadow underneath. Same recipe as .oga-btn (Brand v3). */
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 0 0 1px rgba(26, 28, 31, 0.02),
+    0 16px 40px rgba(26, 28, 31, 0.10),
+    0 4px 10px rgba(26, 28, 31, 0.06);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  animation: oga-dropdown-in var(--oga-dur) var(--oga-ease);
+  transform-origin: top left;
+}
+
+.oga-dropdown__panel[data-align="start"] {
+  left: 0;
+}
+
+.oga-dropdown__panel[data-align="end"] {
+  right: 0;
+  transform-origin: top right;
+}
+
+/* Portal variant — panel renders into document.body via createPortal
+   and is positioned with viewport coordinates from the trigger's
+   bounding rect. Escapes all parent stacking contexts (isolation:
+   isolate, transforms, etc.) so the panel always floats above
+   surrounding content. AR-246 polish (FilterBuilder dropdown
+   was being click-blocked by the next section). */
+.oga-dropdown__panel--portal {
+  position: fixed;
+  /* The top + left + minWidth come through inline `style` from the
+     component (dynamic values flowing into CSS, the accepted
+     pattern). Reset any positional rules that the [data-align]
+     selectors set on the non-portal version. */
+  right: auto;
+  bottom: auto;
+  /* Very high z-index so the panel beats any z-index value set on
+     unrelated page chrome. document.body is the panel's parent so
+     this z-index applies in the root stacking context. */
+  z-index: 9999;
+}
+
+@keyframes oga-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oga-dropdown__panel {
+    animation: none;
+  }
+}
+
+/* ---------- Header ----------
+   Optional editorial eyebrow at the top of the panel: mono, uppercase,
+   muted. Gives the menu identity ("Switch organisation", "Account")
+   instead of presenting a naked list. */
+
+.oga-dropdown__header {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin: var(--oga-2) var(--oga-3) var(--oga-2);
+  padding-bottom: var(--oga-2);
+  border-bottom: 1px solid var(--oga-ink-10);
+}
+
+/* ---------- Divider ----------
+   Hairline rule between item groups. Optional mono label inset for
+   "Recent / Actions" group framing. */
+
+.oga-dropdown__divider {
+  position: relative;
+  height: 1px;
+  background: var(--oga-ink-10);
+  margin: var(--oga-2) var(--oga-2);
+  display: flex;
+  align-items: center;
+}
+
+.oga-dropdown__divider:has(.oga-dropdown__divider-label) {
+  height: auto;
+  background: transparent;
+  border-top: 1px solid var(--oga-ink-10);
+  margin: var(--oga-3) 0 var(--oga-2);
+  padding-top: var(--oga-2);
+}
+
+.oga-dropdown__divider-label {
+  display: inline-block;
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  padding: 0 var(--oga-3);
+}
+
+/* ---------- Item ----------
+   Soft-warm hover signature matching the /about page card recipe:
+   transparent default, hover lifts background + adds hairline inset for
+   the "edge-lit material" feel. Editorial padding (10/12) for breathing
+   room — restrained but not cramped. */
+
+.oga-dropdown__item {
+  appearance: none;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--oga-3);
+  width: 100%;
+  padding: 10px var(--oga-3);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 450;
+  color: var(--oga-ink);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease),
+    color var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-dropdown__item:hover:not(:disabled),
+.oga-dropdown__item:focus-visible:not(:disabled) {
+  background: rgba(26, 28, 31, 0.04);
+  border-color: rgba(26, 28, 31, 0.08);
+  outline: none;
+}
+
+.oga-dropdown__item:disabled {
+  color: var(--oga-fg-muted);
+  cursor: not-allowed;
+}
+
+/* Danger items render the label + icon in status red. Hover bumps the
+   bg tint with a red wash so the action escalation is visible. */
+.oga-dropdown__item[data-danger="true"] {
+  color: var(--oga-status-red);
+}
+
+.oga-dropdown__item[data-danger="true"]:hover:not(:disabled),
+.oga-dropdown__item[data-danger="true"]:focus-visible:not(:disabled) {
+  background: var(--oga-status-red-bg);
+}
+
+.oga-dropdown__item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--oga-fg-muted);
+}
+
+.oga-dropdown__item[data-danger="true"] .oga-dropdown__item-icon {
+  color: var(--oga-status-red);
+}
+
+.oga-dropdown__item:hover:not(:disabled) .oga-dropdown__item-icon,
+.oga-dropdown__item:focus-visible:not(:disabled) .oga-dropdown__item-icon {
+  color: var(--oga-ink);
+}
+
+.oga-dropdown__item[data-danger="true"]:hover:not(:disabled) .oga-dropdown__item-icon,
+.oga-dropdown__item[data-danger="true"]:focus-visible:not(:disabled) .oga-dropdown__item-icon {
+  color: var(--oga-status-red);
+}
+
+.oga-dropdown__item-label {
+  flex: 1;
+}
+
+.oga-dropdown__item-shortcut {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--oga-fg-muted);
+  flex-shrink: 0;
+}
+
+/* ---------- Dark surface variant ----------
+   When the dropdown sits inside data-oga-surface="dark" (e.g. the
+   sidebar, the user menu, dark-modal action menus), invert the panel
+   to graphite-ink with the same soft-warm hover recipe as /about. */
+
+[data-oga-surface="dark"] .oga-dropdown__panel {
+  background: var(--oga-ink);
+  border-color: rgba(250, 248, 244, 0.12);
+  box-shadow:
+    0 1px 0 rgba(250, 248, 244, 0.06) inset,
+    0 16px 40px rgba(0, 0, 0, 0.5),
+    0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+[data-oga-surface="dark"] .oga-dropdown__header {
+  color: rgba(250, 248, 244, 0.5);
+  border-bottom-color: rgba(250, 248, 244, 0.10);
+}
+
+[data-oga-surface="dark"] .oga-dropdown__divider {
+  background: rgba(250, 248, 244, 0.10);
+}
+
+[data-oga-surface="dark"] .oga-dropdown__divider:has(.oga-dropdown__divider-label) {
+  border-top-color: rgba(250, 248, 244, 0.10);
+}
+
+[data-oga-surface="dark"] .oga-dropdown__divider-label {
+  color: rgba(250, 248, 244, 0.5);
+}
+
+[data-oga-surface="dark"] .oga-dropdown__item {
+  color: var(--oga-white);
+}
+
+[data-oga-surface="dark"] .oga-dropdown__item:hover:not(:disabled),
+[data-oga-surface="dark"] .oga-dropdown__item:focus-visible:not(:disabled) {
+  background: rgba(250, 248, 244, 0.06);
+  border-color: rgba(250, 248, 244, 0.10);
+}
+
+[data-oga-surface="dark"] .oga-dropdown__item:disabled {
+  color: rgba(250, 248, 244, 0.4);
+}
+
+[data-oga-surface="dark"] .oga-dropdown__item-icon {
+  color: rgba(250, 248, 244, 0.6);
+}
+
+[data-oga-surface="dark"] .oga-dropdown__item:hover:not(:disabled) .oga-dropdown__item-icon,
+[data-oga-surface="dark"] .oga-dropdown__item:focus-visible:not(:disabled) .oga-dropdown__item-icon {
+  color: var(--oga-white);
+}
+
+[data-oga-surface="dark"] .oga-dropdown__item-shortcut {
+  color: rgba(250, 248, 244, 0.4);
+}
+
+[data-oga-surface="dark"] .oga-dropdown__trigger:focus-visible {
+  outline-color: var(--oga-white);
+}

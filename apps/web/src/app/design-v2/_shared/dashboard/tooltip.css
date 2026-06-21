@@ -1,0 +1,157 @@
+/* ============================================================
+   AR-239 — <Tooltip>
+   Brand v3 altitude — editorial restraint at label scale.
+
+   v2 (after Pedro localhost feedback "too long, almost
+   unreadable, not on brand"):
+   - Mono typography at 11px (technical / editorial feel)
+   - Tight padding (5px 9px) — reads as a precise label, not a panel
+   - Narrow max-width (220px) — forces concise content
+   - FLAT solid background (--oga-ink), no gradient — gradients
+     read as muddy at this scale
+   - Hairline border + minimal shadow (no edge-lit material recipe;
+     that vocabulary is for big surfaces like DataTable / code panel)
+   - 6px triangle arrow pointing at the trigger (the single biggest
+     "finished tooltip" detail). Implemented as a rotated square
+     ::after so it picks up the panel's border + bg cleanly.
+   - Fast fade-in (120ms) — slide animations feel sluggish on hover
+   ============================================================ */
+
+.oga-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.oga-tooltip__trigger {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ---------- Panel ---------- */
+
+.oga-tooltip__panel {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 70;
+  pointer-events: none;
+  /* v3 (Pedro feedback "make it go to the side a bit more, more
+     modern"): bumped max-width 220 -> 420 and switched to nowrap so
+     short labels stay single-line. Long content can still wrap past
+     420px via word-wrap, but the default geometry now reads wide
+     horizontally instead of growing tall as a narrow column. */
+  max-width: 420px;
+  padding: 6px 11px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  border-radius: 5px;
+  white-space: nowrap;
+  word-wrap: break-word;
+  animation: oga-tooltip-in 120ms var(--oga-ease);
+}
+
+/* When content exceeds max-width, let it wrap. The :has() picks up
+   any panel whose inner text node is long enough to need wrapping;
+   browsers without :has() fall back to single-line truncation, which
+   is fine. */
+.oga-tooltip__panel[data-multiline="true"] {
+  white-space: normal;
+}
+
+@keyframes oga-tooltip-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oga-tooltip__panel {
+    animation: none;
+  }
+}
+
+/* ---------- Placement ---------- */
+
+.oga-tooltip__panel[data-placement="top"] {
+  bottom: 100%;
+  margin-bottom: 6px;
+}
+
+.oga-tooltip__panel[data-placement="bottom"] {
+  top: 100%;
+  margin-top: 6px;
+}
+
+/* ---------- Arrow ----------
+   6px rotated-square ::after sits at the trigger-facing edge of the
+   panel, half hidden behind the panel body so only the tip shows.
+   Inherits the panel's background + border so it reads as part of
+   the same surface (vs a separately-drawn triangle that would have
+   no border). */
+
+.oga-tooltip__panel::after {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: inherit;
+  border-style: solid;
+  border-width: 1px;
+  border-color: inherit;
+  left: 50%;
+  margin-left: -3px;
+}
+
+.oga-tooltip__panel[data-placement="top"]::after {
+  top: calc(100% - 4px);
+  /* Show bottom + right edges of the rotated square; the panel
+     itself covers the top + left edges, leaving a downward-pointing
+     triangle visible. */
+  border-top: 0;
+  border-left: 0;
+  transform: rotate(45deg);
+}
+
+.oga-tooltip__panel[data-placement="bottom"]::after {
+  bottom: calc(100% - 4px);
+  border-bottom: 0;
+  border-right: 0;
+  transform: rotate(45deg);
+}
+
+/* ---------- Dark variant (default) ----------
+   Flat ink solid + hairline border + layered shadow + backdrop blur
+   for the slight frosted-glass modern feel. NO gradient — gradients
+   on a small tooltip surface read as muddy noise. */
+
+.oga-tooltip__panel[data-surface="dark"] {
+  background: rgba(26, 28, 31, 0.96);
+  color: var(--oga-white);
+  border-color: rgba(250, 248, 244, 0.16);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow:
+    0 1px 0 rgba(250, 248, 244, 0.05) inset,
+    0 4px 12px rgba(0, 0, 0, 0.32),
+    0 8px 24px -4px rgba(0, 0, 0, 0.22);
+}
+
+/* ---------- Light variant ----------
+   For use on dark scaffolding pages — warm-white solid + ink hairline
+   + layered shadow + backdrop blur. Same modern weight as the dark
+   variant, inverted palette. */
+
+.oga-tooltip__panel[data-surface="light"] {
+  background: rgba(255, 255, 255, 0.97);
+  color: var(--oga-ink);
+  border-color: rgba(26, 28, 31, 0.14);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85) inset,
+    0 4px 12px rgba(26, 28, 31, 0.14),
+    0 8px 24px -4px rgba(26, 28, 31, 0.10);
+}

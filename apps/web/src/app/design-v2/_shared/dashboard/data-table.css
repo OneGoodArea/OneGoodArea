@@ -1,0 +1,460 @@
+/* ============================================================
+   AR-230 — <DataTable>
+   Brand v3 altitude — warm-white gradient surface, deeper material
+   shadow recipe shared with .oga-code-panel, broader mono letter-
+   spacing on header labels (0.14em). NO zebra striping — hairline
+   row separators only with editorial breathing room. Sticky header
+   stays put on scroll. Custom scrollbar in the same ink palette.
+
+   Dark surface variant inverts to graphite-ink with warm-white
+   text and the same material recipe.
+   ============================================================ */
+
+.oga-data-table {
+  position: relative;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAF8F4 100%);
+  border: 1px solid rgba(26, 28, 31, 0.10);
+  border-radius: 10px;
+  overflow: hidden;
+  /* Deeper material recipe matching .oga-code-panel — same vocabulary
+     as the homepage code surfaces. Inset highlight catches the top
+     edge, ambient shadow drops below. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 1px 1px rgba(26, 28, 31, 0.04),
+    0 28px 64px -22px rgba(26, 28, 31, 0.18);
+}
+
+/* ---------- Scroll region + scrollbar ----------
+   The native <table> sits inside a scroll container so we can hide
+   overflow during horizontal scroll. Scrollbar styled to match the
+   ink palette — thin track, ink-tinted thumb that picks up the
+   hover treatment used elsewhere. */
+
+.oga-data-table__scroll {
+  overflow: auto;
+  outline: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(26, 28, 31, 0.20) transparent;
+}
+
+.oga-data-table__scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.oga-data-table__scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.oga-data-table__scroll::-webkit-scrollbar-thumb {
+  background: rgba(26, 28, 31, 0.18);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-data-table__scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(26, 28, 31, 0.30);
+  background-clip: padding-box;
+}
+
+.oga-data-table__scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.oga-data-table__scroll:focus-visible {
+  outline: 1.5px solid var(--oga-ink);
+  outline-offset: -2px;
+}
+
+/* ---------- Table layout ----------
+   Native <table> for semantics. CSS Grid on each tr gives us
+   per-column tracks set via --oga-dt-cols on the table element. */
+
+.oga-data-table__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  color: var(--oga-fg);
+  /* tabular-nums so numeric columns align in mono-quality without
+     having to render every digit in monospace */
+  font-variant-numeric: tabular-nums;
+}
+
+.oga-data-table__caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Header ----------
+   Editorial. Mono caps, wide letter-spacing (0.14em — same family
+   as .oga-code-panel__header), warm-white wash underneath. Sticky
+   so it stays put during long scrolls. */
+
+.oga-data-table__thead {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7) 0%, rgba(250, 248, 244, 0.4) 100%);
+  border-bottom: 1px solid rgba(26, 28, 31, 0.08);
+  backdrop-filter: blur(8px);
+}
+
+.oga-data-table__tbody {
+  display: block;
+}
+
+.oga-data-table__tr {
+  display: grid;
+  grid-template-columns: var(--oga-dt-cols);
+  align-items: center;
+  min-height: 52px;
+  border-bottom: 1px solid rgba(26, 28, 31, 0.06);
+}
+
+.oga-data-table__tbody .oga-data-table__tr:last-child {
+  border-bottom: none;
+}
+
+/* Hover state — soft-warm signature shared with .oga-dropdown__item
+   + /about page card recipe. NO striping; row separation is the
+   single hairline only. Editorial restraint. */
+.oga-data-table__tbody .oga-data-table__tr:hover:not(.oga-data-table__tr--empty):not(.oga-data-table__tr--message) {
+  background: rgba(26, 28, 31, 0.03);
+}
+
+.oga-data-table__tbody .oga-data-table__tr[data-interactive="true"] {
+  cursor: pointer;
+  transition: background var(--oga-dur-fast) var(--oga-ease);
+}
+
+/* ---------- Cells ----------
+   Generous editorial padding — restrained but breathing. Mono caps
+   on headers, sans on body cells. */
+
+.oga-data-table__th,
+.oga-data-table__td {
+  padding: 14px 20px;
+  text-align: left;
+  min-width: 0;
+}
+
+.oga-data-table__th {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  background: transparent;
+}
+
+.oga-data-table__th[data-align="end"],
+.oga-data-table__td[data-align="end"] {
+  justify-self: end;
+  text-align: right;
+}
+
+.oga-data-table__th[data-align="center"],
+.oga-data-table__td[data-align="center"] {
+  justify-self: center;
+  text-align: center;
+}
+
+/* Compact density — tighter row + cell padding for high-count
+   surfaces (activity feed, large query results) */
+.oga-data-table[data-density="compact"] .oga-data-table__tr {
+  min-height: 40px;
+}
+
+.oga-data-table[data-density="compact"] .oga-data-table__th,
+.oga-data-table[data-density="compact"] .oga-data-table__td {
+  padding: 9px 20px;
+}
+
+/* ---------- Sort button + chevron pair ---------- */
+
+.oga-data-table__sort-button {
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: color var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-data-table__sort-button:hover {
+  color: var(--oga-ink);
+}
+
+.oga-data-table__sort-button:focus-visible {
+  outline: 1.5px solid var(--oga-ink);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.oga-data-table__th[aria-sort="ascending"] .oga-data-table__sort-button,
+.oga-data-table__th[aria-sort="descending"] .oga-data-table__sort-button {
+  color: var(--oga-ink);
+}
+
+.oga-data-table__sort-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 8px;
+  height: 10px;
+  color: rgba(26, 28, 31, 0.30);
+  flex-shrink: 0;
+}
+
+.oga-data-table__sort-up,
+.oga-data-table__sort-down {
+  opacity: 0.40;
+  transition: opacity var(--oga-dur-fast) var(--oga-ease);
+}
+
+.oga-data-table__sort-indicator[data-state="asc"] .oga-data-table__sort-up {
+  opacity: 1;
+  color: var(--oga-ink);
+}
+
+.oga-data-table__sort-indicator[data-state="desc"] .oga-data-table__sort-down {
+  opacity: 1;
+  color: var(--oga-ink);
+}
+
+/* ---------- Skeleton (loading) ----------
+   Shimmer at ink-tinted opacity; reduced-motion disables. */
+
+.oga-data-table__skeleton {
+  display: block;
+  height: 11px;
+  width: 70%;
+  border-radius: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(26, 28, 31, 0.05) 0%,
+    rgba(26, 28, 31, 0.10) 50%,
+    rgba(26, 28, 31, 0.05) 100%
+  );
+  background-size: 200% 100%;
+  animation: oga-dt-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes oga-dt-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oga-data-table__skeleton {
+    animation: none;
+  }
+}
+
+.oga-data-table__td:nth-child(2n) .oga-data-table__skeleton {
+  width: 50%;
+}
+
+.oga-data-table__td:nth-child(3n) .oga-data-table__skeleton {
+  width: 80%;
+}
+
+/* ---------- Empty + error message rows ---------- */
+
+.oga-data-table__tr--empty,
+.oga-data-table__tr--message {
+  display: block;
+  min-height: unset;
+}
+
+.oga-data-table__td-message {
+  display: block;
+  padding: 40px 32px;
+  text-align: center;
+  color: var(--oga-fg-muted);
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+}
+
+.oga-data-table__td-message[data-variant="error"] {
+  color: var(--oga-status-red);
+  background: var(--oga-status-red-bg);
+  text-align: left;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(184, 50, 50, 0.18);
+}
+
+.oga-data-table__empty-default {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.oga-data-table__empty-title {
+  margin: 0;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink);
+}
+
+.oga-data-table__empty-body {
+  margin: 0;
+  font-size: 13px;
+  color: var(--oga-fg-muted);
+}
+
+/* ---------- Responsive column hiding ---------- */
+
+@media (max-width: 640px) {
+  .oga-data-table__th[data-hide-below="sm"],
+  .oga-data-table__td[data-hide-below="sm"] {
+    display: none;
+  }
+}
+
+@media (max-width: 960px) {
+  .oga-data-table__th[data-hide-below="md"],
+  .oga-data-table__td[data-hide-below="md"] {
+    display: none;
+  }
+}
+
+/* ============================================================
+   Dark surface variant
+   Inverts to graphite-ink + same edge-lit + corner-tick recipe.
+   Applies via surface="dark" on the table OR being inside a
+   [data-oga-surface="dark"] ancestor.
+   ============================================================ */
+
+.oga-data-table[data-surface="dark"],
+[data-oga-surface="dark"] .oga-data-table {
+  background: linear-gradient(180deg, #1F2125 0%, #1A1C1F 100%);
+  border-color: rgba(250, 248, 244, 0.12);
+  color: var(--oga-white);
+  box-shadow:
+    inset 0 1px 0 rgba(250, 248, 244, 0.06),
+    0 1px 1px rgba(0, 0, 0, 0.18),
+    0 28px 64px -22px rgba(0, 0, 0, 0.55);
+}
+
+.oga-data-table[data-surface="dark"] .oga-data-table__thead,
+[data-oga-surface="dark"] .oga-data-table .oga-data-table__thead {
+  background: linear-gradient(180deg, rgba(250, 248, 244, 0.05) 0%, rgba(250, 248, 244, 0.02) 100%);
+  border-bottom-color: rgba(250, 248, 244, 0.10);
+}
+
+.oga-data-table[data-surface="dark"] .oga-data-table__tr,
+[data-oga-surface="dark"] .oga-data-table .oga-data-table__tr {
+  border-bottom-color: rgba(250, 248, 244, 0.06);
+}
+
+.oga-data-table[data-surface="dark"] .oga-data-table__tbody .oga-data-table__tr:hover:not(.oga-data-table__tr--empty):not(.oga-data-table__tr--message),
+[data-oga-surface="dark"] .oga-data-table .oga-data-table__tbody .oga-data-table__tr:hover:not(.oga-data-table__tr--empty):not(.oga-data-table__tr--message) {
+  background: rgba(250, 248, 244, 0.05);
+}
+
+.oga-data-table[data-surface="dark"] .oga-data-table__th,
+[data-oga-surface="dark"] .oga-data-table .oga-data-table__th {
+  color: rgba(250, 248, 244, 0.50);
+}
+
+.oga-data-table[data-surface="dark"] .oga-data-table__td,
+[data-oga-surface="dark"] .oga-data-table .oga-data-table__td {
+  color: var(--oga-white);
+}
+
+.oga-data-table[data-surface="dark"] .oga-data-table__sort-button:hover,
+[data-oga-surface="dark"] .oga-data-table .oga-data-table__sort-button:hover {
+  color: var(--oga-white);
+}
+
+.oga-data-table[data-surface="dark"] .oga-data-table__th[aria-sort="ascending"] .oga-data-table__sort-button,
+.oga-data-table[data-surface="dark"] .oga-data-table__th[aria-sort="descending"] .oga-data-table__sort-button,
+[data-oga-surface="dark"] .oga-data-table .oga-data-table__th[aria-sort="ascending"] .oga-data-table__sort-button,
+[data-oga-surface="dark"] .oga-data-table .oga-data-table__th[aria-sort="descending"] .oga-data-table__sort-button {
+  color: var(--oga-white);
+}
+
+.oga-data-table[data-surface="dark"] .oga-data-table__sort-indicator,
+[data-oga-surface="dark"] .oga-data-table .oga-data-table__sort-indicator {
+  color: rgba(250, 248, 244, 0.30);
+}
+
+.oga-data-table[data-surface="dark"] .oga-data-table__sort-indicator[data-state="asc"] .oga-data-table__sort-up,
+.oga-data-table[data-surface="dark"] .oga-data-table__sort-indicator[data-state="desc"] .oga-data-table__sort-down,
+[data-oga-surface="dark"] .oga-data-table .oga-data-table__sort-indicator[data-state="asc"] .oga-data-table__sort-up,
+[data-oga-surface="dark"] .oga-data-table .oga-data-table__sort-indicator[data-state="desc"] .oga-data-table__sort-down {
+  color: var(--oga-white);
+}
+
+.oga-data-table[data-surface="dark"] .oga-data-table__skeleton,
+[data-oga-surface="dark"] .oga-data-table .oga-data-table__skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(250, 248, 244, 0.06) 0%,
+    rgba(250, 248, 244, 0.13) 50%,
+    rgba(250, 248, 244, 0.06) 100%
+  );
+  background-size: 200% 100%;
+}
+
+.oga-data-table[data-surface="dark"] .oga-data-table__td-message,
+[data-oga-surface="dark"] .oga-data-table .oga-data-table__td-message {
+  color: rgba(250, 248, 244, 0.55);
+}
+
+.oga-data-table[data-surface="dark"] .oga-data-table__empty-title,
+[data-oga-surface="dark"] .oga-data-table .oga-data-table__empty-title {
+  color: var(--oga-white);
+}
+
+.oga-data-table[data-surface="dark"] .oga-data-table__empty-body,
+[data-oga-surface="dark"] .oga-data-table .oga-data-table__empty-body {
+  color: rgba(250, 248, 244, 0.45);
+}
+
+.oga-data-table[data-surface="dark"] .oga-data-table__scroll:focus-visible,
+[data-oga-surface="dark"] .oga-data-table .oga-data-table__scroll:focus-visible {
+  outline-color: var(--oga-white);
+}
+
+.oga-data-table[data-surface="dark"] .oga-data-table__scroll,
+[data-oga-surface="dark"] .oga-data-table .oga-data-table__scroll {
+  scrollbar-color: rgba(250, 248, 244, 0.22) transparent;
+}
+
+.oga-data-table[data-surface="dark"] .oga-data-table__scroll::-webkit-scrollbar-thumb,
+[data-oga-surface="dark"] .oga-data-table .oga-data-table__scroll::-webkit-scrollbar-thumb {
+  background: rgba(250, 248, 244, 0.20);
+  background-clip: padding-box;
+}
+
+.oga-data-table[data-surface="dark"] .oga-data-table__scroll::-webkit-scrollbar-thumb:hover,
+[data-oga-surface="dark"] .oga-data-table .oga-data-table__scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(250, 248, 244, 0.32);
+  background-clip: padding-box;
+}

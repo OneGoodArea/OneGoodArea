@@ -128,6 +128,21 @@ export const ScoreAreaPlanSchema = z.object({
 }).strict();
 export type ScoreAreaPlan = z.infer<typeof ScoreAreaPlanSchema>;
 
+/* ── /v1/query compare_areas plan (AR-266) ─────────────────────────────
+   Multi-area side-by-side. Replaces the silent "drop all postcodes except
+   the first" behaviour the planner had when a question named >1 area.
+   2..5 areas (free text — each either a postcode or place name; resolved
+   downstream like get_area). Response carries one full AreaProfile per
+   input slot; resolution misses surface as a null slot rather than
+   dropping the entry — predictable shape, missing entries are visible. */
+export const CompareAreasPlanSchema = z.object({
+  op: z.literal("compare_areas"),
+  params: z.object({
+    areas: z.array(z.string().min(1)).min(2).max(5),
+  }).strict(),
+}).strict();
+export type CompareAreasPlan = z.infer<typeof CompareAreasPlanSchema>;
+
 /* ── /v1/peers params (AR-188, Increment 6) ────────────────────────────
    k-NN over normalized signals. Target is identified by exactly ONE of:
      - geo_code   (LSOA code, e.g. E01034129)
@@ -215,6 +230,7 @@ export const QueryPlanSchema = z.discriminatedUnion("op", [
   RankAreasPlanSchema,
   GetAreaPlanSchema,
   ScoreAreaPlanSchema,
+  CompareAreasPlanSchema,
   FindPeersPlanSchema,
   FindInsightsPlanSchema,
   FindForecastPlanSchema,
@@ -351,6 +367,25 @@ export const QueryResponseScoreArea = z.object({
   results: ScoreResultSchema.nullable(),
   meta: z.object({ generated_at: z.string() }),
 }).strict();
+/* AR-266: compare_areas results — one slot per requested area, in the
+   SAME order as plan.params.areas. Null slot means we couldn't resolve
+   that area (postcode not found, place name didn't match anything).
+   Preserved (not dropped) so the caller can see exactly which input
+   failed — same predictability story as get_area's nullable result. */
+export const CompareAreaSlotSchema = z.object({
+  query: z.string(),
+  profile: AreaProfileSchema.nullable(),
+}).strict();
+export type CompareAreaSlot = z.infer<typeof CompareAreaSlotSchema>;
+export const QueryResponseCompareAreas = z.object({
+  plan: CompareAreasPlanSchema,
+  plan_source: z.enum(["client", "nl"]),
+  results: z.object({
+    areas: z.array(CompareAreaSlotSchema),
+    meta: z.object({ generated_at: z.string(), scope: z.string() }).strict(),
+  }).strict().nullable(),
+  meta: z.object({ generated_at: z.string() }),
+}).strict();
 /** find_peers wraps the standalone PeersResponse shape so it composes
     through /v1/query identically. */
 export const QueryResponseFindPeers = z.object({
@@ -380,14 +415,32 @@ export const QueryResponseSchema = z.union([
   QueryResponseRankAreas,
   QueryResponseGetArea,
   QueryResponseScoreArea,
+  QueryResponseCompareAreas,
   QueryResponseFindPeers,
   QueryResponseFindInsights,
   QueryResponseFindForecast,
 ]);
 export type QueryResponse = z.infer<typeof QueryResponseSchema>;
 
-/** A typed planner failure — exposed so the endpoint can translate to 422. */
-export interface PlannerError { code: "invalid_plan" | "no_json" | "llm_error"; message: string; raw?: string }
+/** A typed planner failure — exposed so the endpoint can translate to 422.
+
+    AR-267: "ambiguous_location" carries up to 5 candidate areas when a
+    non-postcode place name resolves to multiple distinct places (e.g.
+    "Brixton" -> London SW2 OR Devon PL8). The endpoint surfaces these so
+    the caller can re-ask with a specific postcode. NEVER 200 with an
+    arbitrarily-picked candidate. */
+export interface AmbiguousLocationCandidate {
+  label: string;        // human-readable e.g. "Brixton, Lambeth, London"
+  postcode: string;     // a representative postcode in the candidate area
+  district: string;     // admin district (LAD name) for disambiguation
+  country: string;      // England / Wales / Scotland
+}
+export interface PlannerError {
+  code: "invalid_plan" | "no_json" | "llm_error" | "ambiguous_location";
+  message: string;
+  raw?: string;
+  candidates?: AmbiguousLocationCandidate[];
+}
 
 /* Silence "unused" — SignalSchema may be needed when Signal-level result shapes
    land (e.g. a future plan op that returns signals directly). */

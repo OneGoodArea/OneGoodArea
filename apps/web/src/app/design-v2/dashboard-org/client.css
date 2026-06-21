@@ -1,0 +1,354 @@
+/* AR-284 /dashboard/org settings.
+
+   Brand v3 vocabulary matching the other dashboard pages: cream
+   column, warm-white cards via AppCard (no overrides), hairline
+   borders, mono caps eyebrows, serif page title. The form inputs
+   match the dashboard's existing text-input style with hairline
+   borders and a mono-caps save button. */
+
+.oga-org {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 8px 40px 40px;
+}
+
+@media (max-width: 700px) {
+  .oga-org {
+    padding: 8px 20px 32px;
+  }
+}
+
+/* ── product header ───────────────────────────────────────────── */
+
+.oga-org__product {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  align-items: start;
+  padding: 8px 0 24px;
+  border-bottom: 1px solid var(--oga-ink-10);
+}
+
+.oga-org__product-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: rgba(26, 28, 31, 0.04);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 6px;
+  color: var(--oga-ink);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.oga-org__product-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.oga-org__product-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.oga-org__product-eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-org__product-title {
+  font-family: var(--oga-font-serif, var(--oga-font-sans));
+  font-size: clamp(28px, 3vw, 36px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--oga-ink);
+  margin: 0;
+}
+
+.oga-org__product-tagline {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--oga-ink-50);
+  margin: 4px 0 0;
+  max-width: 720px;
+}
+
+.oga-org__product-roleline {
+  font-size: 12.5px;
+  color: var(--oga-ink-50);
+  margin: 6px 0 0;
+  font-family: var(--oga-font-mono);
+  letter-spacing: 0.02em;
+}
+
+.oga-org__product-roleline code {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: var(--oga-ink);
+  background: rgba(26, 28, 31, 0.05);
+  padding: 1px 6px;
+  border-radius: 2px;
+}
+
+@media (max-width: 600px) {
+  .oga-org__product-mark {
+    width: 52px;
+    height: 52px;
+  }
+}
+
+/* ── form layout ──────────────────────────────────────────────── */
+
+.oga-org__form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── field primitive ──────────────────────────────────────────── */
+
+.oga-org-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--oga-ink-10);
+}
+
+.oga-org-field:last-child {
+  border-bottom: none;
+  padding-bottom: 4px;
+}
+
+.oga-org-field:first-child {
+  padding-top: 4px;
+}
+
+.oga-org-field--disabled {
+  opacity: 0.7;
+}
+
+.oga-org-field__label {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-org-field__hint {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--oga-ink-50);
+  margin: 0;
+  max-width: 720px;
+}
+
+.oga-org-field__error {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #B4361C;
+  margin: 0;
+  max-width: 720px;
+}
+
+.oga-org-input {
+  width: 100%;
+  max-width: 520px;
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--oga-ink);
+  background: #fff;
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+  padding: 10px 12px;
+  outline: none;
+  transition: border-color 120ms ease;
+}
+
+.oga-org-input:focus {
+  border-color: var(--oga-ink-50);
+}
+
+.oga-org-input:disabled {
+  background: rgba(26, 28, 31, 0.02);
+  color: var(--oga-ink);
+  cursor: not-allowed;
+}
+
+.oga-org-input--mono {
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
+}
+
+/* ── logo preview ─────────────────────────────────────────────── */
+
+.oga-org-preview {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 4px;
+  background: rgba(26, 28, 31, 0.02);
+  width: fit-content;
+}
+
+.oga-org-preview__label {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink-50);
+}
+
+.oga-org-preview__img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #fff;
+  border: 1px solid var(--oga-ink-10);
+}
+
+/* ── actions ──────────────────────────────────────────────────── */
+
+.oga-org__actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  justify-content: flex-end;
+  padding: 4px 0;
+}
+
+.oga-org__save-error {
+  font-size: 12.5px;
+  color: #B4361C;
+  flex: 1;
+  text-align: right;
+}
+
+.oga-org__save-ok {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  color: #2E7548;
+}
+
+/* ── brand mono-caps buttons ──────────────────────────────────── */
+
+.oga-org-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  padding: 0 18px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  border: 1px solid var(--oga-ink);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.oga-org-btn--ink {
+  background: var(--oga-ink);
+  color: var(--oga-white, #FAF8F4);
+}
+.oga-org-btn--ink:hover { background: #000; }
+.oga-org-btn--ink:disabled {
+  background: rgba(26, 28, 31, 0.10);
+  border-color: rgba(26, 28, 31, 0.10);
+  color: var(--oga-ink-50);
+  cursor: not-allowed;
+}
+
+.oga-org-btn--ghost {
+  background: transparent;
+  color: var(--oga-ink);
+}
+.oga-org-btn--ghost:hover {
+  background: var(--oga-ink);
+  color: var(--oga-white, #FAF8F4);
+}
+
+/* ── audit footer ─────────────────────────────────────────────── */
+
+.oga-org__audit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--oga-ink-50);
+  padding: 14px 0 0;
+  border-top: 1px solid var(--oga-ink-10);
+}
+
+.oga-org__audit code {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  color: var(--oga-ink-50);
+  background: rgba(26, 28, 31, 0.04);
+  padding: 1px 6px;
+  border-radius: 2px;
+}
+
+/* ── loading + error shells ───────────────────────────────────── */
+
+.oga-org--loading,
+.oga-org--error {
+  align-items: center;
+  text-align: center;
+  padding: 80px 40px;
+}
+
+.oga-org--loading p,
+.oga-org--error p {
+  font-size: 14px;
+  color: var(--oga-ink-50);
+  margin: 16px 0;
+  max-width: 480px;
+}
+
+.oga-org__loading-bar {
+  width: 200px;
+  height: 3px;
+  background: var(--oga-ink-10);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.oga-org__loading-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: var(--oga-ink);
+  animation: oga-org-loading 1.2s ease-in-out infinite;
+}
+
+@keyframes oga-org-loading {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(280%); }
+}

@@ -1,0 +1,200 @@
+/* ============================================================
+   AR-219 — <FormGroup> + <Input> / <Textarea> / <Select>
+   Co-located CSS for the foundational dashboard form primitive.
+   All values pull from Brand v3 tokens in styles/brand/tokens.css.
+   ============================================================ */
+
+.oga-fg {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-2); /* 8px between label / control / help-or-error */
+}
+
+.oga-fg__label {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-label); /* 13px */
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--oga-ink);
+  letter-spacing: -0.005em;
+}
+
+.oga-fg__required {
+  color: var(--oga-status-red);
+  font-weight: 500;
+}
+
+/* ---------- Inputs (text / textarea / select) ---------- */
+
+.oga-fg__input,
+.oga-fg__textarea,
+.oga-fg__select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-body); /* 16px to avoid mobile zoom on iOS */
+  line-height: 1.4;
+  color: var(--oga-ink);
+  background: var(--oga-white);
+  border: 1px solid var(--oga-ink-10);
+  border-radius: 2px;
+  padding: 0 var(--oga-3); /* 12px horizontal */
+  height: 32px;
+  outline: none;
+  transition: border-color var(--oga-dur) var(--oga-ease);
+}
+
+.oga-fg__textarea {
+  height: auto;
+  min-height: 80px;
+  padding: var(--oga-2) var(--oga-3); /* 8px vertical, 12px horizontal */
+  resize: vertical;
+}
+
+.oga-fg__input::placeholder,
+.oga-fg__textarea::placeholder {
+  color: var(--oga-fg-muted);
+}
+
+/* Hover: subtle border darkening */
+.oga-fg__input:not(:disabled):hover,
+.oga-fg__textarea:not(:disabled):hover,
+.oga-fg__select:not(:disabled):hover {
+  border-color: var(--oga-ink-30);
+}
+
+/* Focus: ink border + tight outline (Brand v3 ring) */
+.oga-fg__input:focus-visible,
+.oga-fg__textarea:focus-visible,
+.oga-fg__select:focus-visible {
+  border-color: var(--oga-ink);
+  outline: 1.5px solid var(--oga-ink);
+  outline-offset: 1px;
+}
+
+/* Disabled: muted bg, muted text, not-allowed cursor */
+.oga-fg__input:disabled,
+.oga-fg__textarea:disabled,
+.oga-fg__select:disabled {
+  background: var(--oga-canvas);
+  color: var(--oga-fg-muted);
+  border-color: var(--oga-ink-10);
+  cursor: not-allowed;
+}
+
+/* Select: chevron via inline SVG background (no extra DOM, no JS) */
+.oga-fg__select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%231A1C1F' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right var(--oga-3) center;
+  padding-right: 32px;
+}
+
+.oga-fg__select:disabled {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%2374757A' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+}
+
+/* ---------- Error state ---------- */
+
+.oga-fg[data-oga-fg-error="true"] .oga-fg__input,
+.oga-fg[data-oga-fg-error="true"] .oga-fg__textarea,
+.oga-fg[data-oga-fg-error="true"] .oga-fg__select {
+  border-color: var(--oga-status-red);
+}
+
+.oga-fg[data-oga-fg-error="true"] .oga-fg__input:focus-visible,
+.oga-fg[data-oga-fg-error="true"] .oga-fg__textarea:focus-visible,
+.oga-fg[data-oga-fg-error="true"] .oga-fg__select:focus-visible {
+  outline-color: var(--oga-status-red);
+  border-color: var(--oga-status-red);
+}
+
+/* ---------- Help + error messages ---------- */
+
+.oga-fg__help,
+.oga-fg__error {
+  margin: 0;
+  font-family: var(--oga-font-sans);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.oga-fg__help {
+  color: var(--oga-fg-muted);
+}
+
+.oga-fg__error {
+  color: var(--oga-status-red);
+}
+
+/* ---------- Dark surface variant ----------
+   When the form lives on data-oga-surface="dark" (e.g. a modal over a dark
+   background, or the sidebar org-create form), invert label + input colors. */
+
+[data-oga-surface="dark"] .oga-fg__label {
+  color: var(--oga-white);
+}
+
+[data-oga-surface="dark"] .oga-fg__input,
+[data-oga-surface="dark"] .oga-fg__textarea,
+[data-oga-surface="dark"] .oga-fg__select {
+  color: var(--oga-white);
+  /* MUST use background-color (NOT the `background` shorthand) so
+     the chevron's background-repeat: no-repeat + background-position
+     declared above on .oga-fg__select are preserved. The shorthand
+     resets all sub-properties to defaults — background-repeat would
+     fall back to "repeat" and the chevron SVG would tile across the
+     entire field as a wavy/zigzag pattern. AR-245 localhost feedback. */
+  background-color: rgba(250, 248, 244, 0.06);
+  border-color: rgba(250, 248, 244, 0.18);
+}
+
+[data-oga-surface="dark"] .oga-fg__input::placeholder,
+[data-oga-surface="dark"] .oga-fg__textarea::placeholder {
+  color: rgba(250, 248, 244, 0.48);
+}
+
+[data-oga-surface="dark"] .oga-fg__input:not(:disabled):hover,
+[data-oga-surface="dark"] .oga-fg__textarea:not(:disabled):hover,
+[data-oga-surface="dark"] .oga-fg__select:not(:disabled):hover {
+  border-color: rgba(250, 248, 244, 0.36);
+}
+
+[data-oga-surface="dark"] .oga-fg__input:focus-visible,
+[data-oga-surface="dark"] .oga-fg__textarea:focus-visible,
+[data-oga-surface="dark"] .oga-fg__select:focus-visible {
+  border-color: var(--oga-white);
+  outline-color: var(--oga-white);
+}
+
+[data-oga-surface="dark"] .oga-fg__select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23FAF8F4' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  /* color-scheme tells the OS to render the native <select> popup
+     panel in dark mode. Without this, the browser's default popup
+     palette overrides the select's text colour, leaving white text
+     on a white popup background — unreadable. AR-244 localhost
+     feedback ("the dropdown is white on white"). */
+  color-scheme: dark;
+}
+
+/* Native <option> elements render inside the OS popup, which our
+   .oga-fg__select container styling doesn't reach. Style them
+   explicitly so the popup palette inverts: dark background, warm-
+   white text. <optgroup> labels get a muted warm-white for the
+   category header treatment. Required for Select-on-dark to be
+   actually usable. */
+[data-oga-surface="dark"] .oga-fg__select option {
+  background-color: #1F2125;
+  color: var(--oga-white);
+}
+
+[data-oga-surface="dark"] .oga-fg__select optgroup {
+  background-color: #1F2125;
+  color: rgba(250, 248, 244, 0.55);
+  font-style: normal;
+}
+
+[data-oga-surface="dark"] .oga-fg__help {
+  color: rgba(250, 248, 244, 0.55);
+}
