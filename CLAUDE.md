@@ -3,10 +3,10 @@
 ## Working Model
 
 1. We first plan, barinstorm and discuss
-1. Sonetimes you are not involved in the discussion and there is porposals in /docs direcotry that I will let you know about
+1. Sometimes you are not involved in the discussion and there is porposals in /docs direcotry that I will let you know about
 1. You save the plan in plan/ directory
 1. Someone will ask to implement the plan
-1. Sometimes the plan have a linked JIRA and if tha this the case you assign that to the executor of the plan and update the jira stauts
+1. Sometimes the plan have a linked JIRA and if that his the case you assign that to the executor of the plan and update the jira stauts
 1. Sometimes the plan does not have a linked jira and then you create it and follow the steps of th epoint just above
 
 ## How to Plan
@@ -60,7 +60,7 @@
    - Avoid:
      - `fix stuff`
 
-1. Create the branch with the JIRTA key in th eplan
+1. Create the branch with the JIRA key in the plan or in the prompt
 ---
 
 ## Safety & Reliability
@@ -73,6 +73,7 @@
       - deleting files
       - overwriting user work
       - destructive migrations
+      - File system access outside the boundaries of the project
 
 11. Be explicit about uncertainty.
     - Do not present guesses as facts.
