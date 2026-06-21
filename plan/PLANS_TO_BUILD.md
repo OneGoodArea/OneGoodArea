@@ -1,4 +1,4 @@
-# PLans that we think we need to build
+# Plans that we think we need to build
 
 
 ## CICD
@@ -7,12 +7,13 @@
 * integrate render check to github
 * integrate OCI deploy check in GITHUB
 
-## WEB APP Container
-* We want to locally build the WEB AOPO in a Container and test it, add to make with a compose up all the enfironment including DB
-* Same for Oraccle Cloud
+## Containers
+* We want to have a container only with the needed code. Today the api is shipping both the web and api, we should separate them
+* We want to locally build the WEB APP in a Container and test it, add to make with a compose up all the enfironment including DB
+* Same for Oracle Cloud
 
 ## Observability
-* should activity events be on psotgresql or should them be in some sort of observability log?
+* should activity events be on postgresql or should them be in some sort of observability log?
 * what about performance observability?
 * what about business metrics
 
