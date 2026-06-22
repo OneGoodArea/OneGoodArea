@@ -28,7 +28,7 @@ import { getCachedReport, setCachedReport } from "@/modules/reports/report-cache
 import { trackEvent } from "@/modules/tracking/activity";
 import { fireWebhookEvent } from "@/modules/webhooks";
 import { sql } from "@/infrastructure/db/client";
-import { computeScores } from "@/modules/reports/scoring-engine";
+import { computeScores } from "@/modules/engine/scoring-engine";
 import { METHODOLOGY_VERSION } from "@/modules/reports/methodology";
 import type { GeocodedArea } from "@/modules/signals/data-sources/postcodes";
 import type { CrimeSummary, PropertyPriceData, OfstedData } from "@/modules/signals/inputs";

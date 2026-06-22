@@ -14,7 +14,7 @@ import type {
   PropertyPriceData,
   OfstedData,
 } from "../signals/inputs";
-import { computeScores, type ComputedScores } from "./scoring-engine";
+import { computeScores, type ComputedScores } from "../engine/scoring-engine";
 import { METHODOLOGY_VERSION } from "./methodology";
 import type { AreaReport, Intent, DataFreshness } from "@onegoodarea/contracts";
 import { getCachedReport, setCachedReport } from "./report-cache";

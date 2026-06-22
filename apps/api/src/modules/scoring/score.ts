@@ -8,13 +8,10 @@
    deterministic. See ADR 0008.
 
    Each preset uses a DIFFERENT set of five dimensions, so "custom weights" means
-   "override the weights of the chosen preset's dimensions", not "redefine them".
-
-   Transitional imports: the fetchers live in modules/signals, the engine in
-   modules/reports/scoring-engine (frozen). */
+   "override the weights of the chosen preset's dimensions", not "redefine them". */
 
 import { fetchAreaSources } from "../signals";
-import { computeScores, type ComputedScores } from "../reports/scoring-engine";
+import { computeScores, type ComputedScores } from "../engine/scoring-engine";
 import { METHODOLOGY_VERSION } from "../reports/methodology";
 import { logger } from "../tracking/structured-logger";
 import { isIntent, type Intent, type ScoreResult, type ScoreDimension } from "@onegoodarea/contracts";

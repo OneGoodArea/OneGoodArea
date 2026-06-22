@@ -9,7 +9,7 @@ import { getNearbyAmenities } from "../signals/data-sources/openstreetmap";
 import { getFloodRisk } from "../signals/data-sources/flood";
 import { getPropertyPrices } from "../signals/data-sources/land-registry";
 import { getOfstedSchools } from "../signals/data-sources/ofsted";
-import { computeScores } from "./scoring-engine";
+import { computeScores } from "../engine/scoring-engine";
 import { METHODOLOGY_VERSION } from "./methodology";
 import { TOP_POSTCODES } from "./top-postcodes";
 
