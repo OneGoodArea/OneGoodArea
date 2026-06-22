@@ -18,11 +18,10 @@ import type {
    label, reasoning string, and confidence value — for a representative matrix
    of inputs. Any change that shifts a number or string fails CI loudly.
 
-   WHY IT EXISTS: this is the regression net for the apps/api decoupling
-   (separation doc, metric #4: "0 main-branch runtime regressions, branch-by-
-   branch TDD"). When scoring-engine.ts moves to
-   apps/api/src/modules/reports/, these snapshots MUST stay byte-identical —
-   that is the proof the move changed nothing.
+   WHY IT EXISTS: this is the regression net for any move of the frozen v2
+   engine. Snapshots are the proof that file relocation changed nothing
+   about the math. (First proved through the src/lib -> apps/api decoupling,
+   re-proved through the modules/reports -> modules/engine relocation in AR-325.)
 
    The engine is deterministic (no Date/Math.random), so snapshots are stable.
    To intentionally re-baseline after an APPROVED engine change, run:
