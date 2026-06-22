@@ -39,7 +39,7 @@ export function normaliseCacheKey(area: string, intent: string): string {
 
 /* ── Read from cache ── */
 
-export async function getCachedReport(
+export async function getCachedAreaResult(
   area: string,
   intent: string,
   ttlHours: number = 24
@@ -81,7 +81,7 @@ export async function getCachedReport(
 
 /* ── Write to cache ── */
 
-export async function setCachedReport(
+export async function setCachedAreaResult(
   area: string,
   intent: string,
   report: AreaReport,

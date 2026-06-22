@@ -5,7 +5,7 @@ vi.mock("@/infrastructure/rate-limit", () => ({ rateLimit: vi.fn(), rateLimitHea
 vi.mock("@/modules/usage", () => ({ hasApiAccess: vi.fn() }));
 vi.mock("@/modules/tracking/activity", () => ({ trackEvent: vi.fn() }));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn(), query: vi.fn() }));
-vi.mock("@/modules/reports/report-cache", () => ({ getCachedReport: vi.fn() }));
+vi.mock("@/modules/cache/area-cache", () => ({ getCachedAreaResult: vi.fn() }));
 // Partial mock: keep real exports (e.g. parseAreasQuery) but stub DB-touching functions.
 vi.mock("@/modules/signals", async (orig) => {
   const actual = await orig() as object;
@@ -19,7 +19,7 @@ import { hasApiAccess } from "@/modules/usage";
 import { getAreaProfile, queryAreas } from "@/modules/signals";
 import { trackEvent } from "@/modules/tracking/activity";
 import { sql } from "@/infrastructure/db/client";
-import { getCachedReport } from "@/modules/reports/report-cache";
+import { getCachedAreaResult } from "@/modules/cache/area-cache";
 
 const app = await buildApp();
 afterAll(() => {
@@ -32,7 +32,7 @@ const mockRate = vi.mocked(rateLimit);
 const mockApiAccess = vi.mocked(hasApiAccess);
 const mockProfile = vi.mocked(getAreaProfile);
 const mockQuery = vi.mocked(queryAreas);
-const mockCache = vi.mocked(getCachedReport);
+const mockCache = vi.mocked(getCachedAreaResult);
 
 // ── v1-area + v1-signals shared profile ────────────────────────────
 

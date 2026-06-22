@@ -17,7 +17,7 @@ import type {
 import { computeScores, type ComputedScores } from "../engine/scoring-engine";
 import { METHODOLOGY_VERSION } from "../engine/methodology";
 import type { AreaReport, Intent, DataFreshness } from "@onegoodarea/contracts";
-import { getCachedReport, setCachedReport } from "./report-cache";
+import { getCachedAreaResult, setCachedAreaResult } from "../cache/area-cache";
 import { fireWebhookEvent } from "../webhooks";
 import { trackEvent } from "../tracking/activity";
 import { generateId } from "../../infrastructure/utils/id";
@@ -238,7 +238,7 @@ export async function generateReport(
   userId: string
 ): Promise<{ id: string; report: AreaReport }> {
   /* ── 0. Check cache ── */
-  const cached = await getCachedReport(area, intent);
+  const cached = await getCachedAreaResult(area, intent);
   if (cached) {
     logger.info(`[OneGoodArea] Cache HIT for ${area} (${intent})`);
     trackEvent("report.cache_hit", userId, { area, intent });
@@ -352,7 +352,7 @@ export async function generateReport(
   `;
 
   /* ── 6. Cache the result for future requests ── */
-  setCachedReport(area, intent, report, report.areaiq_score).catch((err) =>
+  setCachedAreaResult(area, intent, report, report.areaiq_score).catch((err) =>
     logger.error("[OneGoodArea] Failed to cache report:", err)
   );
 

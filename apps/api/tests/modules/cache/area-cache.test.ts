@@ -14,11 +14,11 @@ vi.mock("@/modules/tracking/structured-logger", () => ({
 import { sql } from "@/infrastructure/db/client";
 import {
   normaliseCacheKey,
-  getCachedReport,
-  setCachedReport,
+  getCachedAreaResult,
+  setCachedAreaResult,
   getCacheStats,
   cleanupExpiredCache,
-} from "@/modules/reports/report-cache";
+} from "@/modules/cache/area-cache";
 
 const mockSql = vi.mocked(sql);
 
@@ -53,10 +53,10 @@ describe("normaliseCacheKey", () => {
   });
 });
 
-describe("getCachedReport", () => {
+describe("getCachedAreaResult", () => {
   it("returns null on a cache miss", async () => {
     mockSql.mockResolvedValue([] as never);
-    const result = await getCachedReport("London", "moving");
+    const result = await getCachedAreaResult("London", "moving");
     expect(result).toBeNull();
     expect(mockSql).toHaveBeenCalledTimes(1); // SELECT only, no hit_count update
   });
@@ -67,7 +67,7 @@ describe("getCachedReport", () => {
       { report, area: "London", score: 72, created_at: "2026-01-01" },
     ] as never);
 
-    const result = await getCachedReport("London", "moving");
+    const result = await getCachedAreaResult("London", "moving");
     expect(result).not.toBeNull();
     expect(result!.report.area).toBe("London");
     expect(result!.score).toBe(72);
@@ -81,18 +81,18 @@ describe("getCachedReport", () => {
       { report: JSON.stringify(report), area: "Leeds", score: 60, created_at: "2026-01-02" },
     ] as never);
 
-    const result = await getCachedReport("Leeds", "moving");
+    const result = await getCachedAreaResult("Leeds", "moving");
     expect(result!.report.area).toBe("Leeds");
     expect(result!.report.areaiq_score).toBe(72);
   });
 });
 
-describe("setCachedReport", () => {
+describe("setCachedAreaResult", () => {
   it("binds key, serialized report, area and score into the upsert", async () => {
     mockSql.mockResolvedValue([] as never);
     const report = sampleReport("Bristol");
 
-    await setCachedReport("Bristol", "moving", report, 81);
+    await setCachedAreaResult("Bristol", "moving", report, 81);
 
     expect(mockSql).toHaveBeenCalledTimes(1);
     const call = mockSql.mock.calls[0] as unknown[];
