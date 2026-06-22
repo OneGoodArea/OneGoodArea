@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { INTENTS } from "@onegoodarea/contracts";
 import { getConfig } from "../infrastructure/config";
-import { runRescoreCron } from "../modules/reports/rescore";
+import { runRescoreCron } from "../modules/engine/rescore";
 import { logger } from "../modules/tracking/structured-logger";
 
 /** system route handlers — extracted from app.ts per AR-286. */

@@ -9,7 +9,7 @@ import {
   processSingleItem,
   processBatchItems,
   type BatchResult,
-} from "@/modules/reports/batch";
+} from "@/modules/engine/batch";
 
 const mockGenerate = vi.mocked(generateReport);
 

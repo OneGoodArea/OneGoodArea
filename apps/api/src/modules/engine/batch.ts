@@ -1,4 +1,4 @@
-import { generateReport } from "./report-generator";
+import { generateReport } from "../reports/report-generator";
 import type { Intent, AreaReport } from "@onegoodarea/contracts";
 import { validateLocationInput, validateIntent } from "../../infrastructure/validation/validator";
 import { BATCH_CONCURRENCY } from "../../infrastructure/config";

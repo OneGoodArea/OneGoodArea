@@ -11,7 +11,7 @@ import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
 import { RATE_LIMITS, getConfig, BATCH_MAX_ITEMS } from "../infrastructure/config";
 import { scoreArea, parseScoreBody } from "../modules/scoring";
 import { getPreset } from "../modules/orgs/presets";
-import { isSuccess, processBatchItems, type BatchItem, isBatchItemArray } from "../modules/reports/batch";
+import { isSuccess, processBatchItems, type BatchItem, isBatchItemArray } from "../modules/engine/batch";
 import { trackEvent } from "../modules/tracking/activity";
 
 import { validateApiKey } from "../modules/api-keys";

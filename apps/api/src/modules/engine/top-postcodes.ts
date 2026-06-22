@@ -1,6 +1,6 @@
 /* Seed list of top UK postcodes for time-series re-scoring.
  *
- * Used by scripts/cron/rescore-top-postcodes.ts to compound a UK area
+ * Used by modules/engine/rescore.ts to compound a UK area
  * trend dataset over time. Every month, every postcode in this list is
  * scored against all four intents and the result is persisted to
  * report_history.

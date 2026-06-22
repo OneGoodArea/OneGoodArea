@@ -13,7 +13,7 @@ vi.mock("@/modules/tracking/structured-logger", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
-import { runRescoreCron } from "@/modules/reports/rescore";
+import { runRescoreCron } from "@/modules/engine/rescore";
 import { sql } from "@/infrastructure/db/client";
 import { geocodeArea } from "@/modules/signals/data-sources/postcodes";
 import { computeScores } from "@/modules/engine/scoring-engine";
