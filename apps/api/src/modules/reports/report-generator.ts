@@ -22,7 +22,7 @@ import { fireWebhookEvent } from "../webhooks";
 import { trackEvent } from "../tracking/activity";
 import { generateId } from "../../infrastructure/utils/id";
 import { logger } from "../tracking/structured-logger";
-import { getAiProvider } from "./ai";
+import { getAiProvider } from "../engine/ai";
 
 /* Migrated from legacy src/lib/generate-report.ts. Changes: imports repointed
    to the apps/api modules; the legacy `await ensureReportCacheTable()` is

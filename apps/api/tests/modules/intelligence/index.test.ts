@@ -7,7 +7,7 @@ vi.mock("@/modules/scoring", () => ({ scoreArea: vi.fn() }));
 import { runQuery, parseQueryRequest } from "@/modules/intelligence/index";
 import { queryAreas } from "@/modules/signals/query";
 import { getAreaProfile } from "@/modules/signals";
-import type { AiProvider } from "@/modules/reports/ai";
+import type { AiProvider } from "@/modules/engine/ai";
 
 const mockQueryAreas = vi.mocked(queryAreas);
 const mockGetAreaProfile = vi.mocked(getAreaProfile);

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { getAiProvider } from "@/modules/reports/ai/index";
-import { MockAiProvider } from "@/modules/reports/ai/mock-provider";
+import { getAiProvider } from "@/modules/engine/ai/index";
+import { MockAiProvider } from "@/modules/engine/ai/mock-provider";
 
 /* getAiProvider caches at module scope; this file makes a single selection so
    the cache is deterministic. The anthropic branch is covered by
