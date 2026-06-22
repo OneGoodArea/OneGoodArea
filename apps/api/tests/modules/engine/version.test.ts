@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { resolveEngineVersion, getSupportedEngineVersions } from "@/modules/reports/engine-version";
+import { resolveEngineVersion, getSupportedEngineVersions } from "@/modules/engine/version";
 import { METHODOLOGY_VERSION } from "@/modules/engine/methodology";
 
 describe("resolveEngineVersion", () => {

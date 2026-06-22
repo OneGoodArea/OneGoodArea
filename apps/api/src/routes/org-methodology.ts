@@ -5,7 +5,7 @@ import { isAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { getOrgIfMember, hasAtLeastRole } from "../modules/orgs";
 import { getMethodologyPin, setMethodologyPin, clearMethodologyPin } from "../modules/orgs/methodology";
-import { getSupportedEngineVersions } from "../modules/reports/engine-version";
+import { getSupportedEngineVersions } from "../modules/engine/version";
 import { trackEvent } from "../modules/tracking/activity";
 
 import { getRoleInOrg } from "../modules/orgs";

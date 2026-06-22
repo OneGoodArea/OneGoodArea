@@ -9,7 +9,7 @@
 
    Today there is only v2, so the current engine === v2. Callers that want "the
    current engine" import from "./scoring-engine" (this index); the version-pin
-   guard (engine-version.ts) decides which version a request resolves to and, once
+   guard (../version.ts) decides which version a request resolves to and, once
    v3 exists, this file will dispatch accordingly. The signal-first restructure
    keeps scoring as a *feature* on top of signals — this module stays pure
    (data structs in → {score, reasoning, confidence} out), never the primitive. */

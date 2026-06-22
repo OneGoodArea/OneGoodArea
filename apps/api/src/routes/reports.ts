@@ -10,7 +10,7 @@ import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
 import { RATE_LIMITS, getConfig } from "../infrastructure/config";
 import { validateApiKey } from "../modules/api-keys";
 import { hasApiAccess, hasMcpAccess, canGenerateReport, trackMcpCall } from "../modules/usage";
-import { resolveEngineVersion } from "../modules/reports/engine-version";
+import { resolveEngineVersion } from "../modules/engine/version";
 import { generateReport } from "../modules/reports/report-generator";
 import { validateLocationInput, validateIntent } from "../infrastructure/validation/validator";
 import { parseIdempotencyKey, withIdempotency } from "../infrastructure/idempotency";
