@@ -27,7 +27,7 @@ import {
   getMcpUsageThisMonth,
 } from "@/modules/usage";
 import { sql } from "@/infrastructure/db/client";
-import { METHODOLOGY_VERSION } from "@/modules/reports/methodology";
+import { METHODOLOGY_VERSION } from "@/modules/engine/methodology";
 
 const app = await buildApp();
 

@@ -11,7 +11,7 @@ import { RATE_LIMITS } from "../infrastructure/config";
 import { validateApiKey } from "../modules/api-keys";
 import { getUserPlan, hasApiAccess, hasMcpAccess, canGenerateReport, listAddons, getMcpUsageThisMonth, isSuperuser } from "../modules/usage";
 import { PLANS } from "../modules/billing/plans";
-import { METHODOLOGY_VERSION } from "../modules/reports/methodology";
+import { METHODOLOGY_VERSION } from "../modules/engine/methodology";
 import { listForUser as listActivityForUser } from "../modules/activity";
 import { trackEvent } from "../modules/tracking/activity";
 import { generateId } from "../infrastructure/utils/id";

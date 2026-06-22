@@ -29,7 +29,7 @@ import { trackEvent } from "@/modules/tracking/activity";
 import { fireWebhookEvent } from "@/modules/webhooks";
 import { sql } from "@/infrastructure/db/client";
 import { computeScores } from "@/modules/engine/scoring-engine";
-import { METHODOLOGY_VERSION } from "@/modules/reports/methodology";
+import { METHODOLOGY_VERSION } from "@/modules/engine/methodology";
 import type { GeocodedArea } from "@/modules/signals/data-sources/postcodes";
 import type { CrimeSummary, PropertyPriceData, OfstedData } from "@/modules/signals/inputs";
 import type { AreaReport } from "@onegoodarea/contracts";

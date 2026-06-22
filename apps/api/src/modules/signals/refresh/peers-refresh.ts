@@ -23,7 +23,7 @@
    See ADR 0024. */
 
 import { query as defaultQuery } from "../../../infrastructure/db/client";
-import { METHODOLOGY_VERSION } from "../../reports/methodology";
+import { METHODOLOGY_VERSION } from "../../engine/methodology";
 import { logger } from "../../tracking/structured-logger";
 import type { QueryRunner } from "./store-writer";
 

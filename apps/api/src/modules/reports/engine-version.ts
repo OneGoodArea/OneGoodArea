@@ -1,4 +1,4 @@
-import { METHODOLOGY_VERSION, METHODOLOGY_VERSIONS } from "./methodology";
+import { METHODOLOGY_VERSION, METHODOLOGY_VERSIONS } from "../engine/methodology";
 
 /* AR-131: engine version pinning via X-Engine-Version request header.
 

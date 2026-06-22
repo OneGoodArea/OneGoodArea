@@ -18,7 +18,7 @@
    so the derived signal_value never leaks into the monthly time-series. */
 
 import { query as defaultQuery } from "../../../infrastructure/db/client";
-import { METHODOLOGY_VERSION } from "../../reports/methodology";
+import { METHODOLOGY_VERSION } from "../../engine/methodology";
 import { logger } from "../../tracking/structured-logger";
 import {
   upsertSignalCatalog,

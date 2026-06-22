@@ -4,7 +4,7 @@ import { rows } from "../infrastructure/db/types";
 import { getBundle } from "../modules/orgs/bundles";
 import { getMethodologyPin } from "../modules/orgs/methodology";
 import { resolveEngineVersion } from "../modules/reports/engine-version";
-import { METHODOLOGY_VERSION } from "../modules/reports/methodology";
+import { METHODOLOGY_VERSION } from "../modules/engine/methodology";
 import { logger } from "../modules/tracking/structured-logger";
 
 /** Levers (AR-197): resolve the caller's effective org pin. Same lazy

@@ -21,7 +21,7 @@ import { createReadStream } from "node:fs";
 import { readdir, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
-import { METHODOLOGY_VERSION } from "../../reports/methodology";
+import { METHODOLOGY_VERSION } from "../../engine/methodology";
 import { generateId } from "../../../infrastructure/utils/id";
 import { logger } from "../../tracking/structured-logger";
 import { parseCsvLine } from "./geo-spine";

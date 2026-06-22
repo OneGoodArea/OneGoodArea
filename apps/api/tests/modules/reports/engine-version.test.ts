@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { resolveEngineVersion, getSupportedEngineVersions } from "@/modules/reports/engine-version";
-import { METHODOLOGY_VERSION } from "@/modules/reports/methodology";
+import { METHODOLOGY_VERSION } from "@/modules/engine/methodology";
 
 describe("resolveEngineVersion", () => {
   describe("absent / empty header", () => {

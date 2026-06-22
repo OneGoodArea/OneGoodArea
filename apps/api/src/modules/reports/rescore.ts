@@ -10,7 +10,7 @@ import { getFloodRisk } from "../signals/data-sources/flood";
 import { getPropertyPrices } from "../signals/data-sources/land-registry";
 import { getOfstedSchools } from "../signals/data-sources/ofsted";
 import { computeScores } from "../engine/scoring-engine";
-import { METHODOLOGY_VERSION } from "./methodology";
+import { METHODOLOGY_VERSION } from "../engine/methodology";
 import { TOP_POSTCODES } from "./top-postcodes";
 
 /* Re-score top UK postcodes, persist to report_history (the time-series moat).

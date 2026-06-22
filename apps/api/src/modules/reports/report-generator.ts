@@ -15,7 +15,7 @@ import type {
   OfstedData,
 } from "../signals/inputs";
 import { computeScores, type ComputedScores } from "../engine/scoring-engine";
-import { METHODOLOGY_VERSION } from "./methodology";
+import { METHODOLOGY_VERSION } from "../engine/methodology";
 import type { AreaReport, Intent, DataFreshness } from "@onegoodarea/contracts";
 import { getCachedReport, setCachedReport } from "./report-cache";
 import { fireWebhookEvent } from "../webhooks";

@@ -36,7 +36,7 @@ import type {
   OfstedData,
 } from "./inputs";
 import type { GeocodedArea } from "./data-sources/postcodes";
-import { METHODOLOGY_VERSION } from "../reports/methodology";
+import { METHODOLOGY_VERSION } from "../engine/methodology";
 
 /** Full UK postcode shape — used to decide whether the resolved query is itself
     a postcode (so AreaGeo.postcode is honest rather than echoing a place name). */

@@ -12,7 +12,7 @@
 
 import { fetchAreaSources } from "../signals";
 import { computeScores, type ComputedScores } from "../engine/scoring-engine";
-import { METHODOLOGY_VERSION } from "../reports/methodology";
+import { METHODOLOGY_VERSION } from "../engine/methodology";
 import { logger } from "../tracking/structured-logger";
 import { isIntent, type Intent, type ScoreResult, type ScoreDimension } from "@onegoodarea/contracts";
 
