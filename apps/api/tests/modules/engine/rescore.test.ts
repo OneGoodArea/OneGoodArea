@@ -8,15 +8,15 @@ vi.mock("@/modules/signals/data-sources/openstreetmap", () => ({ getNearbyAmenit
 vi.mock("@/modules/signals/data-sources/flood", () => ({ getFloodRisk: vi.fn() }));
 vi.mock("@/modules/signals/data-sources/land-registry", () => ({ getPropertyPrices: vi.fn() }));
 vi.mock("@/modules/signals/data-sources/ofsted", () => ({ getOfstedSchools: vi.fn() }));
-vi.mock("@/modules/reports/scoring-engine", () => ({ computeScores: vi.fn() }));
+vi.mock("@/modules/engine/scoring-engine", () => ({ computeScores: vi.fn() }));
 vi.mock("@/modules/tracking/structured-logger", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
-import { runRescoreCron } from "@/modules/reports/rescore";
+import { runRescoreCron } from "@/modules/engine/rescore";
 import { sql } from "@/infrastructure/db/client";
 import { geocodeArea } from "@/modules/signals/data-sources/postcodes";
-import { computeScores } from "@/modules/reports/scoring-engine";
+import { computeScores } from "@/modules/engine/scoring-engine";
 
 const mockSql = vi.mocked(sql);
 const mockGeocode = vi.mocked(geocodeArea);

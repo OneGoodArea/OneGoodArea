@@ -16,7 +16,7 @@
    programmatic path skips this file entirely. See ADR 0017. */
 
 import { QueryPlanSchema, type QueryPlan, type PlannerError } from "@onegoodarea/contracts";
-import type { AiProvider } from "../reports/ai";
+import type { AiProvider } from "../engine/ai";
 
 /** The set of signal keys the moat currently serves. Embedded in the prompt so
     the model can only pick from real, indexed signals. Add new keys here when a

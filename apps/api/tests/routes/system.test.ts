@@ -2,10 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
 import { buildApp } from "@/app";
 import { INTENTS } from "@onegoodarea/contracts";
 
-vi.mock("@/modules/reports/rescore", () => ({ runRescoreCron: vi.fn() }));
+vi.mock("@/modules/engine/rescore", () => ({ runRescoreCron: vi.fn() }));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
 
-import { runRescoreCron } from "@/modules/reports/rescore";
+import { runRescoreCron } from "@/modules/engine/rescore";
 
 const app = await buildApp();
 const mockRun = vi.mocked(runRescoreCron);

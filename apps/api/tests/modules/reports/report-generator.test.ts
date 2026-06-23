@@ -12,7 +12,7 @@ vi.mock("@/modules/signals/data-sources/openstreetmap", () => ({ getNearbyAmenit
 vi.mock("@/modules/signals/data-sources/flood", () => ({ getFloodRisk: vi.fn(), formatFloodRiskForPrompt: () => "FLOOD" }));
 vi.mock("@/modules/signals/data-sources/land-registry", () => ({ getPropertyPrices: vi.fn(), formatPropertyDataForPrompt: () => "PROP" }));
 vi.mock("@/modules/signals/data-sources/ofsted", () => ({ getOfstedSchools: vi.fn(), formatOfstedForPrompt: () => "OFSTED" }));
-vi.mock("@/modules/reports/report-cache", () => ({ getCachedReport: vi.fn(), setCachedReport: vi.fn() }));
+vi.mock("@/modules/cache/area-cache", () => ({ getCachedAreaResult: vi.fn(), setCachedAreaResult: vi.fn() }));
 vi.mock("@/modules/tracking/activity", () => ({ trackEvent: vi.fn() }));
 vi.mock("@/modules/webhooks", () => ({ fireWebhookEvent: vi.fn().mockResolvedValue(undefined) }));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
@@ -24,12 +24,12 @@ import { getNearbyAmenities } from "@/modules/signals/data-sources/openstreetmap
 import { getFloodRisk } from "@/modules/signals/data-sources/flood";
 import { getPropertyPrices } from "@/modules/signals/data-sources/land-registry";
 import { getOfstedSchools } from "@/modules/signals/data-sources/ofsted";
-import { getCachedReport, setCachedReport } from "@/modules/reports/report-cache";
+import { getCachedAreaResult, setCachedAreaResult } from "@/modules/cache/area-cache";
 import { trackEvent } from "@/modules/tracking/activity";
 import { fireWebhookEvent } from "@/modules/webhooks";
 import { sql } from "@/infrastructure/db/client";
-import { computeScores } from "@/modules/reports/scoring-engine";
-import { METHODOLOGY_VERSION } from "@/modules/reports/methodology";
+import { computeScores } from "@/modules/engine/scoring-engine";
+import { METHODOLOGY_VERSION } from "@/modules/engine/methodology";
 import type { GeocodedArea } from "@/modules/signals/data-sources/postcodes";
 import type { CrimeSummary, PropertyPriceData, OfstedData } from "@/modules/signals/inputs";
 import type { AreaReport } from "@onegoodarea/contracts";
@@ -92,12 +92,12 @@ beforeEach(() => {
   // so lift the limit to avoid truncating the JSON the orchestrator parses.
   process.env.OGA_MOCK_AI_TOKEN_LIMIT = "1000000";
   vi.mocked(sql).mockResolvedValue([] as never);
-  vi.mocked(setCachedReport).mockResolvedValue(undefined);
+  vi.mocked(setCachedAreaResult).mockResolvedValue(undefined);
 });
 
 describe("generateReport (cache miss)", () => {
   beforeEach(() => {
-    vi.mocked(getCachedReport).mockResolvedValue(null);
+    vi.mocked(getCachedAreaResult).mockResolvedValue(null);
     vi.mocked(geocodeArea).mockResolvedValue(GEO);
     vi.mocked(getCrimeData).mockResolvedValue(CRIME);
     vi.mocked(getDeprivationData).mockResolvedValue(null);
@@ -131,7 +131,7 @@ describe("generateReport (cache miss)", () => {
     // side effects
     expect(trackEvent).toHaveBeenCalledWith("report.cache_miss", "user_1", { area: "Manchester", intent: "research" });
     expect(sql).toHaveBeenCalledTimes(1); // reports INSERT
-    expect(setCachedReport).toHaveBeenCalledOnce();
+    expect(setCachedAreaResult).toHaveBeenCalledOnce();
     expect(fireWebhookEvent).toHaveBeenCalledWith(
       "user_1",
       "report.created",
@@ -152,7 +152,7 @@ describe("generateReport (cache hit)", () => {
       recommendations: [],
       generated_at: "2026-01-01T00:00:00.000Z",
     } as AreaReport;
-    vi.mocked(getCachedReport).mockResolvedValue({
+    vi.mocked(getCachedAreaResult).mockResolvedValue({
       report: cachedReport,
       area: "Manchester",
       score: 71,

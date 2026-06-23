@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { dimensionKey, PRESET_DIMENSION_KEYS, parseScoreBody, applyWeights } from "@/modules/scoring/score";
-import { computeScores, type ComputedScores } from "@/modules/reports/scoring-engine";
+import { computeScores, type ComputedScores } from "@/modules/engine/scoring-engine";
 import { INTENTS, type Intent } from "@onegoodarea/contracts";
 
 describe("dimensionKey", () => {

@@ -11,14 +11,14 @@ import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
 import { RATE_LIMITS, getConfig, BATCH_MAX_ITEMS } from "../infrastructure/config";
 import { scoreArea, parseScoreBody } from "../modules/scoring";
 import { getPreset } from "../modules/orgs/presets";
-import { isSuccess, processBatchItems, type BatchItem, isBatchItemArray } from "../modules/reports/batch";
+import { isSuccess, processBatchItems, type BatchItem, isBatchItemArray } from "../modules/engine/batch";
 import { trackEvent } from "../modules/tracking/activity";
 
 import { validateApiKey } from "../modules/api-keys";
 import { clientIpOf } from "../shared/http";
 import { parseIdempotencyKey, withIdempotency } from "../infrastructure/idempotency";
 import { canGenerateReport, hasApiAccess } from "../modules/usage";
-import { resolveEngineVersion } from "../modules/reports/engine-version";
+import { resolveEngineVersion } from "../modules/engine/version";
 import type { Intent } from "@onegoodarea/contracts";
 /** scoring route handlers — extracted from app.ts per AR-286. */
 export function registerScoringRoutes(app: FastifyInstance): void {

@@ -10,7 +10,7 @@ import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
 import { validateLocationInput, validateIntent } from "../infrastructure/validation/validator";
 import { getAreaProfile, queryAreas, parseAreasQuery } from "../modules/signals";
 import { filterSignalsByBundle } from "../modules/orgs/bundles";
-import { getCachedReport } from "../modules/reports/report-cache";
+import { getCachedAreaResult } from "../modules/cache/area-cache";
 import { trackEvent } from "../modules/tracking/activity";
 
 import type { Intent } from "@onegoodarea/contracts";
@@ -243,7 +243,7 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
         }
 
         // Cache only: widgets serve cached data to prevent unauthenticated AI spend.
-        const cached = await getCachedReport(locationCheck.sanitized, intent);
+        const cached = await getCachedAreaResult(locationCheck.sanitized, intent);
         if (cached) {
           const report = cached.report;
           return reply.send({

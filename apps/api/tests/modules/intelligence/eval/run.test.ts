@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { runEval } from "@/modules/intelligence/eval/run";
-import type { AiProvider } from "@/modules/reports/ai";
+import type { AiProvider } from "@/modules/engine/ai";
 import type { EvalCase } from "@/modules/intelligence/eval/cases";
 
 const stubAlways = (raw: string): AiProvider => ({ generateNarrative: async () => raw });

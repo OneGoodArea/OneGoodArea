@@ -17,7 +17,7 @@
 
 import { getConfig } from "../../../infrastructure/config";
 import { plan as planFromNl } from "../planner";
-import { getAiProvider, type AiProvider } from "../../reports/ai";
+import { getAiProvider, type AiProvider } from "../../engine/ai";
 import { EVAL_CASES, type EvalCase } from "./cases";
 import { comparePlans } from "./compare";
 import { type CaseResult, summarize, renderReport, type ReportSummary } from "./report";

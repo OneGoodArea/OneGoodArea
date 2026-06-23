@@ -18,7 +18,7 @@ import { geocodeArea } from "../modules/signals/data-sources/postcodes";
 import { rows } from "../infrastructure/db/types";
 import { sql } from "../infrastructure/db/client";
 import { getCohort } from "../modules/orgs/cohorts";
-import { METHODOLOGY_VERSION } from "../modules/reports/methodology";
+import { METHODOLOGY_VERSION } from "../modules/engine/methodology";
 import type { Country } from "../modules/signals/peers";
 /** intelligence route handlers — extracted from app.ts per AR-286. */
 export function registerIntelligenceRoutes(app: FastifyInstance): void {

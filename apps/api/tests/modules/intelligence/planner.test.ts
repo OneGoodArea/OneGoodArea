@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildPlannerPrompt, extractJson, parsePlanText, plan, SUPPORTED_SIGNALS } from "@/modules/intelligence/planner";
-import type { AiProvider } from "@/modules/reports/ai";
+import type { AiProvider } from "@/modules/engine/ai";
 
 describe("buildPlannerPrompt", () => {
   it("embeds every supported signal so the model can only pick real keys", () => {

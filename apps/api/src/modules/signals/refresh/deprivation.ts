@@ -17,7 +17,7 @@
 
    Network + DB are injectable so the job is unit-testable without either. */
 
-import { METHODOLOGY_VERSION } from "../../reports/methodology";
+import { METHODOLOGY_VERSION } from "../../engine/methodology";
 import { generateId } from "../../../infrastructure/utils/id";
 import { logger } from "../../tracking/structured-logger";
 import {

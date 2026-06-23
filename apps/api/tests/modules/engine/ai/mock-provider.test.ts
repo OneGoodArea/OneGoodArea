@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { MockAiProvider } from "@/modules/reports/ai/mock-provider";
+import { MockAiProvider } from "@/modules/engine/ai/mock-provider";
 
 /* The mock provider is the deterministic AI test double for the orchestrator,
    so its contract is worth locking: parseable JSON echoing the prompt's AREA/
