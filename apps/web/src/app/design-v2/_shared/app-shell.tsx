@@ -41,11 +41,12 @@ import "./app-shell.css";
    intentionally omitted here — they land with the Phase 4 build.
 
    Removed from the previous structure: /report ("New report") and
-   /compare. Both pages still exist for direct navigation but no
-   longer appear in the sidebar — the dashboard restructure treats
-   them as superseded by the four-product API surface (Scores,
-   Intelligence) called from the customer's own code, not via manual
-   one-off reports through our UI.
+   /compare. The dashboard restructure treats them as superseded by
+   the four-product API surface (Signals, Scores, Monitor, Intelligence)
+   called from the customer's own code, not via manual one-off reports
+   through our UI. /compare is deleted by AR-326; /report is deleted
+   by AR-327. The /report page is still alive until then, just absent
+   from the sidebar.
 
    Surface plan (unchanged):
      Sidebar (left)   DARK    nav + user chip + theme row
@@ -354,13 +355,6 @@ function NavIconDark({ name }: { name: DashboardIconName | IconName }) {
         <svg {...common}>
           <path d="M14 4 C9.5 4 6 7 6 11.5 C6 17.5 14 24 14 24 S22 17.5 22 11.5 C22 7 18.5 4 14 4 Z" />
           <circle cx="14" cy="11.5" r="2.2" fill="currentColor" />
-        </svg>
-      );
-    case "compare":
-      return (
-        <svg {...common}>
-          <rect x="4" y="7" width="9" height="14" />
-          <rect x="15" y="7" width="9" height="14" />
         </svg>
       );
     case "api":
