@@ -57,7 +57,7 @@ function CenteredPulse({ label }: { label: string }) {
 }
 
 /* Skeleton bar — animated placeholder for rows in tables / cards.
-   Used by dashboard/compare loaders. Prop-driven dimensions + delay
+   Used by various dashboard loaders. Prop-driven dimensions + delay
    pass through as CSS custom properties so the TSX stays free of
    design declarations (only runtime values cross the boundary). */
 export function SkeletonBar({

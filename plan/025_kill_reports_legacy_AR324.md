@@ -146,9 +146,54 @@ Each commit lands the moves + rewrites for ONE category of files. `npm run typec
 - No marketing copy change.
 - No DB migration.
 
-### Phase 2 — Auth redirect + dashboard home
+### Phase 2 — Auth redirect + compare page removal
 
-*(to be detailed when we start)*
+**Goal:** stop new signups landing on `/report`; delete the orphaned `/compare` page (already off the sidebar, retired per its own header comment, violates no-db-in-web). After this PR, `/dashboard` is the post-signup landing page and `/compare` returns 404.
+
+**Story:** [AR-326](https://podnex.atlassian.net/browse/AR-326)
+**Branch:** `feat/AR-326-auth-redirect-compare-delete`
+
+#### Why /compare comes out in this phase (not Phase 3)
+
+I expanded the original Phase 2 scope by one surface because three independent signals all said "kill /compare now":
+1. The page's own header comment says it retires (absorbed into `/dashboard/intelligence` rank_areas)
+2. The AppShell sidebar comment at line 43-48 says `/compare` is already off the sidebar; the page exists only for legacy direct URL hits
+3. `compare/page.tsx` runs `SELECT ... FROM reports` directly from a `apps/web` server component — a [[feedback-no-db-in-web]] violation that goes away for free
+
+The compare page's data model is `Report[]` — when Reports as a surface dies, the page stops being meaningful. Phase 3 (frontend pages delete) was going to take it out anyway; doing it in Phase 2 means one less PR + cleaner intermediate state.
+
+#### Changes
+
+| File | Change |
+|---|---|
+| `apps/web/src/lib/auth.ts:141` | `newUser: "/report"` → `newUser: "/dashboard"` |
+| `apps/web/src/lib/auth.ts:148` | Drop `startsWith("/compare")` from the protected-routes middleware. KEEP the `/report` line — that page survives until Phase 3 |
+| `apps/web/src/app/robots.ts:9` | Remove `/compare` from the disallow list |
+| `apps/web/src/app/design-v2/_shared/app-shell.tsx:43-48` | Update the stale comment that says `/compare` "still exists for direct navigation" (it won't after this PR) |
+| `apps/web/src/app/design-v2/_shared/app-shell.tsx:359-365` | Remove dead `case "compare":` from the NavIconDark switch — no sidebar nav item references it. The general `icons.tsx` "compare" icon stays untouched (used by admin/dashboard-primitives) |
+| `apps/web/src/app/design-v2/compare/` | **Delete entire directory** (page.tsx, client.tsx, compare.css, loading.tsx) |
+
+#### Commit boundaries
+
+1. **Commit 1 — docs(plan):** Phase 2 detail in plan/025
+2. **Commit 2 — feat(auth):** newUser → /dashboard + drop /compare from protected-routes middleware
+3. **Commit 3 — feat(web):** delete compare/ directory + robots.ts + app-shell comment + dead icon case
+
+#### Test plan
+
+- After each commit: `npm run typecheck -w @onegoodarea/web` clean
+- After Commit 3: `npm run test -w @onegoodarea/web` green
+- Visit `/compare` locally before merge: must 404
+- Sign up a fresh test user: must land on `/dashboard`, not `/report`
+
+#### Out of scope for Phase 2
+
+- The `/report` page itself (Phase 3 / AR-327)
+- The `/v1/report` backend endpoint (Phase 6)
+- The `report.created` webhook event (Phase 4)
+- Plan field rename (Phase 5)
+- DB tables (Phase 7)
+- Marketing copy sweep (Phase 8)
 
 ### Phase 3 — Frontend pages
 

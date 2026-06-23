@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/", "/admin", "/dashboard", "/settings", "/compare", "/verify", "/forgot-password", "/reset-password", "/api-usage"],
+        disallow: ["/api/", "/admin", "/dashboard", "/settings", "/verify", "/forgot-password", "/reset-password", "/api-usage"],
       },
     ],
     sitemap: "https://www.onegoodarea.com/sitemap.xml",
