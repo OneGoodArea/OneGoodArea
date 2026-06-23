@@ -195,9 +195,43 @@ The compare page's data model is `Report[]` — when Reports as a surface dies, 
 - DB tables (Phase 7)
 - Marketing copy sweep (Phase 8)
 
-### Phase 3 — Frontend pages
+### Phase 3 — Delete /report frontend page
 
-*(to be detailed when we start)*
+**Goal:** delete the legacy report generator UI (`/report` and `/report/[id]`) end-to-end on the frontend. Add 301 redirects so legacy bookmarks, marketing-page links (still alive until Phase 8), and the schema.org searchAction all resolve to `/dashboard` instead of 404.
+
+**Story:** [AR-327](https://podnex.atlassian.net/browse/AR-327)
+**Branch:** `feat/AR-327-delete-report-page`
+
+#### Changes
+
+| File / dir | Change |
+|---|---|
+| `apps/web/src/app/report/` | DELETE (page.tsx + [id]/loading.tsx + [id]/page.tsx) |
+| `apps/web/src/app/design-v2/report/` | DELETE (page.tsx + [id]/* + client.tsx + report.css) |
+| `apps/web/next.config.ts` | Add `async redirects()` with two 301 entries: `/report` → `/dashboard`, `/report/:id` → `/dashboard` |
+| `apps/web/src/lib/auth.ts:146` | Drop `startsWith("/report")` from the protected-routes middleware (dead code after page delete) |
+| `apps/web/src/app/design-v2/_shared/app-shell.tsx` | Refresh the comment that says `/report` "is still alive" — now it isn't |
+
+#### Why 301 redirects in this phase
+
+Without redirects, the brief window between Phase 3 (this PR) and Phase 8 (marketing sweep) leaves marketing-page links pointing at 404. Two affected surfaces in particular:
+1. Schema.org searchAction in `page.tsx:34` (`/report?q={search_term_string}`) — indexed by Google
+2. Blog posts ("Three free reports per month at onegoodarea.com") — high-traffic if any blog content ranks
+
+301 redirects are SEO-clean (permanent), preserve any inbound traffic, and the marketing sweep in Phase 8 still rewrites the underlying text. No double-work.
+
+#### Out of scope
+
+- BFF routes at `apps/web/src/app/api/report/` + `apps/web/src/app/api/v1/report/` (these are the API surface — Phase 6 kills them alongside the apps/api endpoints)
+- Marketing copy rewrites (Phase 8)
+- DB tables (Phase 7)
+- Tests that use `/report/x` as a generic API path in BFF/proxy unit tests (benign; the BFF still exists)
+- The sidebar test fixture mentioning "Reports" (benign primitive test data)
+
+#### Commit boundaries
+
+1. `docs(plan)`: Phase 3 detail
+2. `feat(web)`: delete /report directories + add 301 redirects + drop /report from auth middleware + refresh app-shell comment
 
 ### Phase 4 — Webhook taxonomy
 
