@@ -38,6 +38,17 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // AR-327: legacy /report surface retired in favour of the four-product
+  // dashboard (Signals / Scores / Monitor / Intelligence). Permanent
+  // redirects keep any inbound traffic from blog posts, search-action
+  // results, or bookmarks landing on something useful instead of 404
+  // during the marketing-sweep gap (Phase 8 of epic AR-324).
+  async redirects() {
+    return [
+      { source: "/report", destination: "/dashboard", permanent: true },
+      { source: "/report/:id", destination: "/dashboard", permanent: true },
+    ];
+  },
 };
 
 export default withSentryConfig(nextConfig, {

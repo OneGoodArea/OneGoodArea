@@ -44,9 +44,8 @@ import "./app-shell.css";
    /compare. The dashboard restructure treats them as superseded by
    the four-product API surface (Signals, Scores, Monitor, Intelligence)
    called from the customer's own code, not via manual one-off reports
-   through our UI. /compare is deleted by AR-326; /report is deleted
-   by AR-327. The /report page is still alive until then, just absent
-   from the sidebar.
+   through our UI. Both URLs are deleted and 301-redirected to /dashboard
+   (see next.config.ts).
 
    Surface plan (unchanged):
      Sidebar (left)   DARK    nav + user chip + theme row
