@@ -24,8 +24,8 @@ describe("PLANS object integrity", () => {
       expect(plan.name.length, `${id}.name length`).toBeGreaterThan(0);
       expect(plan.price, `${id}.price`).toBeTypeOf("number");
       expect(plan.price, `${id}.price >=0`).toBeGreaterThanOrEqual(0);
-      expect(plan.reportsPerMonth, `${id}.reportsPerMonth`).toBeTypeOf("number");
-      expect(plan.reportsPerMonth, `${id}.reportsPerMonth >0`).toBeGreaterThan(0);
+      expect(plan.apiCallsPerMonth, `${id}.apiCallsPerMonth`).toBeTypeOf("number");
+      expect(plan.apiCallsPerMonth, `${id}.apiCallsPerMonth >0`).toBeGreaterThan(0);
       expect(plan.apiAccess, `${id}.apiAccess`).toBeTypeOf("boolean");
       expect(plan.generation, `${id}.generation`).toMatch(/^v[12]$/);
     }
@@ -50,12 +50,12 @@ describe("PLANS object integrity", () => {
   });
 
   it("v2 active plans match the AR-143 approved monthly call quotas", () => {
-    expect(PLANS.sandbox.reportsPerMonth).toBe(35);
-    expect(PLANS.starter_v2.reportsPerMonth).toBe(1500);
-    expect(PLANS.build.reportsPerMonth).toBe(6000);
-    expect(PLANS.scale.reportsPerMonth).toBe(25000);
-    expect(PLANS.growth_v2.reportsPerMonth).toBe(100000);
-    expect(PLANS.enterprise.reportsPerMonth).toBe(250000);
+    expect(PLANS.sandbox.apiCallsPerMonth).toBe(35);
+    expect(PLANS.starter_v2.apiCallsPerMonth).toBe(1500);
+    expect(PLANS.build.apiCallsPerMonth).toBe(6000);
+    expect(PLANS.scale.apiCallsPerMonth).toBe(25000);
+    expect(PLANS.growth_v2.apiCallsPerMonth).toBe(100000);
+    expect(PLANS.enterprise.apiCallsPerMonth).toBe(250000);
   });
 
   it("v1 consumer plans deny API access (legacy contract)", () => {
@@ -197,7 +197,7 @@ describe("Margin sanity (project_pricing_v2.md COGS check)", () => {
   const MIN_MARGIN_PCT = 50;
 
   function effectivePerCallPence(planId: PlanId): number {
-    return PLANS[planId].price / PLANS[planId].reportsPerMonth;
+    return PLANS[planId].price / PLANS[planId].apiCallsPerMonth;
   }
   function marginPct(planId: PlanId): number {
     const perCallPence = effectivePerCallPence(planId);

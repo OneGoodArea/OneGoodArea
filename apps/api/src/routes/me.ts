@@ -9,7 +9,7 @@ import { rows, row, type ReportRow, type SubscriptionRow, type ApiKeyRow, type A
 import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
 import { RATE_LIMITS } from "../infrastructure/config";
 import { validateApiKey } from "../modules/api-keys";
-import { getUserPlan, hasApiAccess, hasMcpAccess, canGenerateReport, listAddons, getMcpUsageThisMonth, isSuperuser } from "../modules/usage";
+import { getUserPlan, hasApiAccess, hasMcpAccess, canMakeApiCall, listAddons, getMcpUsageThisMonth, isSuperuser } from "../modules/usage";
 import { PLANS } from "../modules/billing/plans";
 import { METHODOLOGY_VERSION } from "../modules/engine/methodology";
 import { listForUser as listActivityForUser } from "../modules/activity";
@@ -141,7 +141,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
         getUserPlan(userId),
         hasApiAccess(userId),
         hasMcpAccess(userId),
-        canGenerateReport(userId),
+        canMakeApiCall(userId),
         listAddons(userId),
         getMcpUsageThisMonth(userId),
       ]);
@@ -205,7 +205,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
         generation: planConfig?.generation ?? "v1",
         api_access: apiAllowed,
         mcp_access: mcpAllowed,
-        reports_per_month: planConfig?.reportsPerMonth ?? 0,
+        api_calls_per_month: planConfig?.apiCallsPerMonth ?? 0,
         used_this_month: usage.used,
         limit_this_month: usage.limit === Infinity ? null : usage.limit,
         // Canonical engine version (the legacy route hardcoded a now-stale "2.0.0").
@@ -223,7 +223,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
         const userId = await authenticateSession(request, reply);
         if (!userId) return reply; // 401 already sent
 
-        const usage = await canGenerateReport(userId);
+        const usage = await canMakeApiCall(userId);
         return reply.send(usage);
       } catch (error) {
         logger.error("Usage check error:", error);
@@ -303,7 +303,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           plan,
           planName: planConfig.name,
           used,
-          limit: planConfig.reportsPerMonth,
+          limit: planConfig.apiCallsPerMonth,
           mcp: {
             access: mcpAccess,
             addonOwned: mcpAddonOwned,

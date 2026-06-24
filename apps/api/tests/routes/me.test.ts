@@ -7,7 +7,7 @@ vi.mock("@/modules/usage", () => ({
   getUserPlan: vi.fn(),
   hasApiAccess: vi.fn(),
   hasMcpAccess: vi.fn(),
-  canGenerateReport: vi.fn(),
+  canMakeApiCall: vi.fn(),
   listAddons: vi.fn(),
   getMcpUsageThisMonth: vi.fn(),
   trackMcpCall: vi.fn(),
@@ -22,7 +22,7 @@ import {
   getUserPlan,
   hasApiAccess,
   hasMcpAccess,
-  canGenerateReport,
+  canMakeApiCall,
   listAddons,
   getMcpUsageThisMonth,
 } from "@/modules/usage";
@@ -37,7 +37,7 @@ const mockRate = vi.mocked(rateLimit);
 const mockGetPlan = vi.mocked(getUserPlan);
 const mockApiAccess = vi.mocked(hasApiAccess);
 const mockMcpAccess = vi.mocked(hasMcpAccess);
-const mockQuota = vi.mocked(canGenerateReport);
+const mockQuota = vi.mocked(canMakeApiCall);
 const mockAddons = vi.mocked(listAddons);
 const mockMcpUsage = vi.mocked(getMcpUsageThisMonth);
 const mockSql = vi.mocked(sql);
@@ -326,7 +326,7 @@ describe("GET /v1/me", () => {
     expect(body.plan_name).toBe("Sandbox");
     expect(body.api_access).toBe(true);
     expect(body.mcp_access).toBe(false);
-    expect(body.reports_per_month).toBe(35);
+    expect(body.api_calls_per_month).toBe(35);
     expect(body.used_this_month).toBe(3);
     expect(body.limit_this_month).toBe(35);
     expect(body.engine_version).toBe(METHODOLOGY_VERSION);

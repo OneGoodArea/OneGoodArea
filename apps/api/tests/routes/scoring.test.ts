@@ -4,7 +4,7 @@ vi.mock("@/modules/api-keys", () => ({ validateApiKey: vi.fn() }));
 vi.mock("@/infrastructure/rate-limit", () => ({ rateLimit: vi.fn(), rateLimitHeaders: () => ({}) }));
 vi.mock("@/modules/usage", () => ({
   hasApiAccess: vi.fn(),
-  canGenerateReport: vi.fn(),
+  canMakeApiCall: vi.fn(),
   getUserPlan: vi.fn(),
   hasMcpAccess: vi.fn(),
   trackMcpCall: vi.fn(),
@@ -23,7 +23,7 @@ vi.mock("@/modules/scoring", async (orig) => {
 import { buildApp } from "@/app";
 import { validateApiKey } from "@/modules/api-keys";
 import { rateLimit } from "@/infrastructure/rate-limit";
-import { hasApiAccess, canGenerateReport } from "@/modules/usage";
+import { hasApiAccess, canMakeApiCall } from "@/modules/usage";
 import { generateReport } from "@/modules/reports/report-generator";
 import { scoreArea } from "@/modules/scoring";
 import { trackEvent } from "@/modules/tracking/activity";
@@ -35,7 +35,7 @@ afterAll(() => { app.close(); delete process.env.OGA_SIGNALS_API; });
 const mockValidate = vi.mocked(validateApiKey);
 const mockRate = vi.mocked(rateLimit);
 const mockApiAccess = vi.mocked(hasApiAccess);
-const mockQuota = vi.mocked(canGenerateReport);
+const mockQuota = vi.mocked(canMakeApiCall);
 const mockGenerate = vi.mocked(generateReport);
 const mockScore = vi.mocked(scoreArea);
 

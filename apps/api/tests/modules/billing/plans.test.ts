@@ -5,7 +5,7 @@ import { PLANS, API_PLANS, V2_PUBLIC_PLANS, ADDONS } from "@/modules/billing/pla
 
 describe("plan catalog", () => {
   it("sandbox is a free 35-report API tier (the homepage claim)", () => {
-    expect(PLANS.sandbox.reportsPerMonth).toBe(35);
+    expect(PLANS.sandbox.apiCallsPerMonth).toBe(35);
     expect(PLANS.sandbox.price).toBe(0);
     expect(PLANS.sandbox.apiAccess).toBe(true);
     expect(PLANS.sandbox.mcpAccess).toBe(false);

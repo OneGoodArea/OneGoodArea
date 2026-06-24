@@ -17,7 +17,7 @@ import { trackEvent } from "../modules/tracking/activity";
 import { validateApiKey } from "../modules/api-keys";
 import { clientIpOf } from "../shared/http";
 import { parseIdempotencyKey, withIdempotency } from "../infrastructure/idempotency";
-import { canGenerateReport, hasApiAccess } from "../modules/usage";
+import { canMakeApiCall, hasApiAccess } from "../modules/usage";
 import { resolveEngineVersion } from "../modules/engine/version";
 import type { Intent } from "@onegoodarea/contracts";
 /** scoring route handlers — extracted from app.ts per AR-286. */
@@ -203,9 +203,9 @@ export function registerScoringRoutes(app: FastifyInstance): void {
         }
 
         // Pre-check whole-batch quota; fail fast to avoid partial consumption.
-        const usage = await canGenerateReport(userId);
+        const usage = await canMakeApiCall(userId);
         if (!usage.allowed) {
-          return reply.code(429).send({ error: "Monthly report limit reached", used: usage.used, limit: usage.limit, plan: usage.plan });
+          return reply.code(429).send({ error: "Monthly API call limit reached", used: usage.used, limit: usage.limit, plan: usage.plan });
         }
         const remaining = usage.limit === Infinity ? Infinity : usage.limit - usage.used;
         if (items.length > remaining) {

@@ -4,7 +4,7 @@ vi.mock("@/modules/auth/session-token", () => ({ verifySessionToken: vi.fn() }))
 vi.mock("@/modules/api-keys", () => ({ validateApiKey: vi.fn() }));
 vi.mock("@/infrastructure/rate-limit", () => ({ rateLimit: vi.fn(), rateLimitHeaders: () => ({}) }));
 vi.mock("@/modules/usage", () => ({
-  canGenerateReport: vi.fn(),
+  canMakeApiCall: vi.fn(),
   getUserEmail: vi.fn(),
   hasApiAccess: vi.fn(),
   hasMcpAccess: vi.fn(),
@@ -19,7 +19,7 @@ import { buildApp } from "@/app";
 import { verifySessionToken } from "@/modules/auth/session-token";
 import { validateApiKey } from "@/modules/api-keys";
 import { rateLimit } from "@/infrastructure/rate-limit";
-import { canGenerateReport, getUserEmail, hasApiAccess } from "@/modules/usage";
+import { canMakeApiCall, getUserEmail, hasApiAccess } from "@/modules/usage";
 import { generateReport } from "@/modules/reports/report-generator";
 import { trackEvent } from "@/modules/tracking/activity";
 import { sendReportEmail } from "@/infrastructure/email/senders";
@@ -30,7 +30,7 @@ const app = await buildApp();
 const mockSessionVerify = vi.mocked(verifySessionToken);
 const mockValidate = vi.mocked(validateApiKey);
 const mockRate = vi.mocked(rateLimit);
-const mockQuota = vi.mocked(canGenerateReport);
+const mockQuota = vi.mocked(canMakeApiCall);
 const mockEmail = vi.mocked(getUserEmail);
 const mockApiAccess = vi.mocked(hasApiAccess);
 const mockGenerate = vi.mocked(generateReport);

@@ -155,7 +155,7 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
       return reply.send({
         totalRequests: totalCount.count || 0,
         requestsThisMonth: monthCount.count || 0,
-        monthlyLimit: PLANS[plan as PlanId]?.reportsPerMonth ?? 100,
+        monthlyLimit: PLANS[plan as PlanId]?.apiCallsPerMonth ?? 100,
         dailyData,
         lastRequestAt: lastRow?.created_at || null,
         keys: keys.map((k) => ({
