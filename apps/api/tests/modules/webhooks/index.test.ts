@@ -76,10 +76,10 @@ describe("validateWebhookUrl", () => {
 
 describe("validateEventTypes", () => {
   it("keeps supported types and dedups", () => {
-    /* AR-283: score.changed was removed (never fired). Use signal.changed
-       which is the other real event in the current taxonomy. */
-    expect(validateEventTypes(["report.created", "report.created", "signal.changed"])).toEqual([
-      "report.created",
+    /* AR-328: signal.changed is the only supported event type post-AR-324
+       (report.created was removed alongside the legacy /v1/report kill).
+       Dedup behaviour still exercised — the helper collapses repeats. */
+    expect(validateEventTypes(["signal.changed", "signal.changed", "signal.changed"])).toEqual([
       "signal.changed",
     ]);
   });
@@ -87,7 +87,7 @@ describe("validateEventTypes", () => {
   it("returns null for empty or all-unknown lists", () => {
     expect(validateEventTypes([])).toBeNull();
     expect(validateEventTypes(["nope"])).toBeNull();
-    expect(validateEventTypes("report.created")).toBeNull();
+    expect(validateEventTypes("signal.changed")).toBeNull();
   });
 });
 
@@ -98,7 +98,7 @@ const SUB: WebhookSubscriptionRow = {
   user_id: "u1",
   url: "https://customer.example.com/hook",
   secret: "whsec_test",
-  events: ["report.created"],
+  events: ["signal.changed"],
   status: "active",
   created_at: "2026-01-01",
   last_success_at: null,
@@ -112,7 +112,7 @@ function flatArgs(): unknown[] {
 describe("fireWebhookEvent", () => {
   it("does nothing when there are no matching subscriptions", async () => {
     mockSql.mockResolvedValueOnce([] as never);
-    await fireWebhookEvent("u1", "report.created", { report_id: "rpt_1" });
+    await fireWebhookEvent("u1", "signal.changed", { report_id: "rpt_1" });
     expect(mockSql).toHaveBeenCalledTimes(1); // SELECT only
   });
 
@@ -126,7 +126,7 @@ describe("fireWebhookEvent", () => {
     );
     mockSql.mockResolvedValueOnce([SUB] as never).mockResolvedValue([] as never);
 
-    await fireWebhookEvent("u1", "report.created", { report_id: "rpt_1" });
+    await fireWebhookEvent("u1", "signal.changed", { report_id: "rpt_1" });
 
     expect(signature).toMatch(/^t=\d+,v1=[0-9a-f]{64}$/);
     expect(mockSql).toHaveBeenCalledTimes(3); // SELECT + INSERT delivery + UPDATE last_success
@@ -137,7 +137,7 @@ describe("fireWebhookEvent", () => {
     server.use(http.post(SUB.url, () => new HttpResponse(null, { status: 500 })));
     mockSql.mockResolvedValueOnce([SUB] as never).mockResolvedValue([] as never);
 
-    await fireWebhookEvent("u1", "report.created", { report_id: "rpt_1" });
+    await fireWebhookEvent("u1", "signal.changed", { report_id: "rpt_1" });
 
     expect(flatArgs()).toContain("failed");
     expect(mockLogger.warn).toHaveBeenCalledOnce();

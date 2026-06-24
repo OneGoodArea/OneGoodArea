@@ -47,7 +47,7 @@ beforeEach(() => {
   mockCreate.mockResolvedValue({
     id: "whsub_1",
     url: "https://example.com/hook",
-    events: ["report.created"],
+    events: ["signal.changed"],
     secret: "whsec_abc123",
     created_at: "2026-05-24T00:00:00.000Z",
   });
@@ -78,21 +78,21 @@ describe("POST /v1/webhooks", () => {
 
   it("401s on an invalid key", async () => {
     mockValidate.mockResolvedValue(null);
-    const res = await postWebhook({ url: "https://example.com/hook", events: ["report.created"] });
+    const res = await postWebhook({ url: "https://example.com/hook", events: ["signal.changed"] });
     expect(res.statusCode).toBe(401);
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
   it("429s when rate limited", async () => {
     mockRate.mockResolvedValue({ success: false, remaining: 0, reset: 0 });
-    const res = await postWebhook({ url: "https://example.com/hook", events: ["report.created"] });
+    const res = await postWebhook({ url: "https://example.com/hook", events: ["signal.changed"] });
     expect(res.statusCode).toBe(429);
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
   it("403s when the plan has no API access", async () => {
     mockApiAccess.mockResolvedValue(false);
-    const res = await postWebhook({ url: "https://example.com/hook", events: ["report.created"] });
+    const res = await postWebhook({ url: "https://example.com/hook", events: ["signal.changed"] });
     expect(res.statusCode).toBe(403);
     expect(mockCreate).not.toHaveBeenCalled();
   });
@@ -104,7 +104,7 @@ describe("POST /v1/webhooks", () => {
   });
 
   it("400s on a non-HTTPS / private URL", async () => {
-    const res = await postWebhook({ url: "http://localhost/hook", events: ["report.created"] });
+    const res = await postWebhook({ url: "http://localhost/hook", events: ["signal.changed"] });
     expect(res.statusCode).toBe(400);
     expect(mockCreate).not.toHaveBeenCalled();
   });
@@ -116,24 +116,24 @@ describe("POST /v1/webhooks", () => {
   });
 
   it("201s on the happy path and returns the secret once", async () => {
-    const res = await postWebhook({ url: "https://example.com/hook", events: ["report.created"] });
+    const res = await postWebhook({ url: "https://example.com/hook", events: ["signal.changed"] });
     expect(res.statusCode).toBe(201);
     const body = res.json();
     expect(body.id).toBe("whsub_1");
     expect(body.secret).toBe("whsec_abc123");
-    expect(body.events).toEqual(["report.created"]);
-    expect(mockCreate).toHaveBeenCalledWith("user_1", "https://example.com/hook", ["report.created"]);
+    expect(body.events).toEqual(["signal.changed"]);
+    expect(mockCreate).toHaveBeenCalledWith("user_1", "https://example.com/hook", ["signal.changed"]);
   });
 
   it("dedupes and filters the events list before persisting", async () => {
-    /* AR-283: score.changed was removed (never fired). Replaced with
-       signal.changed which is the real other event in the taxonomy. */
+    /* AR-328: signal.changed is the only supported event type post-AR-324.
+       Test still exercises both filter (drops bogus.event) and dedup
+       (collapses signal.changed repeats). */
     await postWebhook({
       url: "https://example.com/hook",
-      events: ["report.created", "report.created", "bogus.event", "signal.changed"],
+      events: ["signal.changed", "signal.changed", "bogus.event", "signal.changed"],
     });
     expect(mockCreate).toHaveBeenCalledWith("user_1", "https://example.com/hook", [
-      "report.created",
       "signal.changed",
     ]);
   });
@@ -150,7 +150,7 @@ describe("GET /v1/webhooks", () => {
       {
         id: "whsub_1",
         url: "https://example.com/hook",
-        events: ["report.created"],
+        events: ["signal.changed"],
         status: "active",
         created_at: "2026-05-24T00:00:00.000Z",
         last_success_at: null,

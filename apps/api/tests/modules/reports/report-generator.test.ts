@@ -14,7 +14,6 @@ vi.mock("@/modules/signals/data-sources/land-registry", () => ({ getPropertyPric
 vi.mock("@/modules/signals/data-sources/ofsted", () => ({ getOfstedSchools: vi.fn(), formatOfstedForPrompt: () => "OFSTED" }));
 vi.mock("@/modules/cache/area-cache", () => ({ getCachedAreaResult: vi.fn(), setCachedAreaResult: vi.fn() }));
 vi.mock("@/modules/tracking/activity", () => ({ trackEvent: vi.fn() }));
-vi.mock("@/modules/webhooks", () => ({ fireWebhookEvent: vi.fn().mockResolvedValue(undefined) }));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
 
 import { geocodeArea } from "@/modules/signals/data-sources/postcodes";
@@ -26,7 +25,6 @@ import { getPropertyPrices } from "@/modules/signals/data-sources/land-registry"
 import { getOfstedSchools } from "@/modules/signals/data-sources/ofsted";
 import { getCachedAreaResult, setCachedAreaResult } from "@/modules/cache/area-cache";
 import { trackEvent } from "@/modules/tracking/activity";
-import { fireWebhookEvent } from "@/modules/webhooks";
 import { sql } from "@/infrastructure/db/client";
 import { computeScores } from "@/modules/engine/scoring-engine";
 import { METHODOLOGY_VERSION } from "@/modules/engine/methodology";
@@ -132,11 +130,6 @@ describe("generateReport (cache miss)", () => {
     expect(trackEvent).toHaveBeenCalledWith("report.cache_miss", "user_1", { area: "Manchester", intent: "research" });
     expect(sql).toHaveBeenCalledTimes(1); // reports INSERT
     expect(setCachedAreaResult).toHaveBeenCalledOnce();
-    expect(fireWebhookEvent).toHaveBeenCalledWith(
-      "user_1",
-      "report.created",
-      expect.objectContaining({ report_id: id, area: "Manchester" })
-    );
   });
 });
 
@@ -166,6 +159,5 @@ describe("generateReport (cache hit)", () => {
     expect(trackEvent).toHaveBeenCalledWith("report.cache_hit", "user_1", { area: "Manchester", intent: "research" });
     expect(sql).toHaveBeenCalledTimes(1); // saved to the user's reports table for the dashboard
     expect(geocodeArea).not.toHaveBeenCalled();
-    expect(fireWebhookEvent).not.toHaveBeenCalled();
   });
 });

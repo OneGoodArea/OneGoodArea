@@ -15,7 +15,7 @@ export function registerWebhooksRoutes(app: FastifyInstance): void {
             ],
             "summary": "Create webhook",
             "description": "Register a webhook endpoint for event notifications.",
-            "body": { "type": "object", "properties": { "url": { "type": "string" }, "events": { "type": "array", "items": { "type": "string" } } }, "example": { "url": "https://example.com/hooks", "events": ["report.created"] } }
+            "body": { "type": "object", "properties": { "url": { "type": "string" }, "events": { "type": "array", "items": { "type": "string" } } }, "example": { "url": "https://example.com/hooks", "events": ["signal.changed"] } }
         },
       }, async (request, reply) => {
       try {
@@ -36,7 +36,7 @@ export function registerWebhooksRoutes(app: FastifyInstance): void {
         const eventList = validateEventTypes(events);
         if (!eventList) {
           return reply.code(400).send({
-            error: "events must be a non-empty array of supported types: 'report.created' or 'signal.changed'",
+            error: "events must be a non-empty array of supported types: 'signal.changed'",
           });
         }
 

@@ -13,8 +13,8 @@ import { logger } from "../tracking/structured-logger";
    otherwise verbatim.
 
    Customer registers a URL + event list. When a matching event fires (today:
-   `report.created`; once AR-132 cron is scheduled: `score.changed`), we POST
-   the signed payload to the customer's URL.
+   `signal.changed` from portfolio change detection), we POST the signed
+   payload to the customer's URL.
 
    Stripe-style HMAC-SHA256 signing on `t=<timestamp>.<json-body>`, sent as
    `X-OneGoodArea-Signature: t=<ts>,v1=<hex>`. Customer verifies on their end
@@ -25,12 +25,14 @@ const SECRET_PREFIX = "whsec_";
 
 /* AR-283: dropped score.changed -- it lived in this list since AR-129
    but was NEVER fired anywhere in the codebase. Customers subscribing
-   to it silently got nothing. signal.changed fires from
-   modules/monitor/change-detection.ts (real). report.created fires
-   from modules/reports/report-generator.ts (real). When proper score
-   threshold tracking ships, add score.threshold_crossed here (new
-   semantic) rather than reviving the empty score.changed slot. */
-export const SUPPORTED_EVENT_TYPES = ["report.created", "signal.changed"] as const;
+   to it silently got nothing.
+   AR-328: dropped report.created alongside the legacy /v1/report kill
+   (epic AR-324). signal.changed remains as the live event, fired from
+   modules/monitor/change-detection.ts when portfolio change detection
+   crosses a threshold. When proper score threshold tracking ships, add
+   score.threshold_crossed (new semantic) rather than reviving any of
+   the retired slots. */
+export const SUPPORTED_EVENT_TYPES = ["signal.changed"] as const;
 export type WebhookEventType = (typeof SUPPORTED_EVENT_TYPES)[number];
 
 export interface WebhookSubscriptionRow {

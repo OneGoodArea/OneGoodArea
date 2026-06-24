@@ -233,9 +233,26 @@ Without redirects, the brief window between Phase 3 (this PR) and Phase 8 (marke
 1. `docs(plan)`: Phase 3 detail
 2. `feat(web)`: delete /report directories + add 301 redirects + drop /report from auth middleware + refresh app-shell comment
 
-### Phase 4 — Webhook taxonomy
+### Phase 4 — Drop report.created from webhook taxonomy
 
-*(to be detailed when we start)*
+**Goal:** narrow `SUPPORTED_EVENT_TYPES` from `["report.created", "signal.changed"]` to `["signal.changed"]`. The dead event was only fired by `report-generator.ts` (Phase 6 kill target). Killing the type ahead of the file delete keeps the type system consistent.
+
+**Story:** [AR-328](https://podnex.atlassian.net/browse/AR-328)
+**Branch:** `feat/AR-328-drop-report-created-webhook`
+
+#### Changes
+
+1. `apps/api/src/modules/webhooks/index.ts` — `SUPPORTED_EVENT_TYPES = ["signal.changed"]` + comment refresh
+2. `apps/api/src/routes/webhooks.ts` — OpenAPI example + error message updated
+3. `apps/api/src/modules/reports/report-generator.ts` — delete the `fireWebhookEvent(..., "report.created", ...)` block + unused import
+4. Test fixtures swept `"report.created"` → `"signal.changed"`; dedup tests's expected arrays collapsed to single entry (only one event type left)
+5. `report-generator.test.ts` — drop the webhook-fired assertion + mock + import (call no longer exists in production)
+
+#### Acceptance
+
+- `git grep "report.created"` in apps/api/src returns only the explanatory comment in webhooks/index.ts
+- `WebhookEventType` narrows to `"signal.changed"` only
+- tsc clean, 33 webhook + report-generator tests pass
 
 ### Phase 5 — Rename canGenerateReport / reportsPerMonth
 
