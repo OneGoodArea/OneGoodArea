@@ -175,20 +175,6 @@ export async function ensureMcpUsageTable() {
   `;
 }
 
-export async function ensureReportCacheTable() {
-  await sql`
-    CREATE TABLE IF NOT EXISTS report_cache (
-      id SERIAL PRIMARY KEY,
-      cache_key TEXT UNIQUE NOT NULL,
-      report JSONB NOT NULL,
-      area TEXT NOT NULL,
-      score INTEGER NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT NOW(),
-      hit_count INTEGER DEFAULT 0
-    )
-  `;
-}
-
 export async function ensurePasswordResetTable() {
   await sql`
     CREATE TABLE IF NOT EXISTS password_reset_tokens (
@@ -340,48 +326,6 @@ export async function ensurePageviewTable() {
 }
 
 /**
- * report_history — time-series record of deterministic scores for the
- * top UK postcodes, written by the monthly re-scoring cron.
- *
- * Pure scoring data: no AI narrative, no user binding. Each row is a
- * deterministic score for (postcode, intent) at a point in time, stamped
- * with the engine_version that produced it. Compounds into a saleable
- * UK area trend dataset that no UK competitor has.
- *
- * The unique key (run_id, postcode, intent) lets the cron be safely re-run
- * within a single batch without producing duplicates.
- */
-export async function ensureReportHistoryTable() {
-  await sql`
-    CREATE TABLE IF NOT EXISTS report_history (
-      id BIGSERIAL PRIMARY KEY,
-      run_id TEXT NOT NULL,
-      postcode TEXT NOT NULL,
-      intent TEXT NOT NULL,
-      area_type TEXT,
-      overall_score INTEGER NOT NULL,
-      confidence NUMERIC(3,2) NOT NULL,
-      dimensions JSONB NOT NULL,
-      engine_version TEXT NOT NULL,
-      generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      UNIQUE (run_id, postcode, intent)
-    )
-  `;
-  await sql`
-    CREATE INDEX IF NOT EXISTS idx_report_history_postcode_intent
-      ON report_history (postcode, intent, generated_at DESC)
-  `;
-  await sql`
-    CREATE INDEX IF NOT EXISTS idx_report_history_run
-      ON report_history (run_id)
-  `;
-  await sql`
-    CREATE INDEX IF NOT EXISTS idx_report_history_engine_version
-      ON report_history (engine_version)
-  `;
-}
-
-/**
  * Ensure all tables exist. Call once on app startup or first request.
  * Safe to call multiple times due to IF NOT EXISTS and the guard flag.
  */
@@ -392,12 +336,10 @@ export async function ensureAllTables() {
     ensureVerificationTable(),
     ensureActivityTable(),
     ensureApiKeysTable(),
-    ensureReportCacheTable(),
     ensurePasswordResetTable(),
     ensureWatchlistTable(),
     ensureWebhookEventsTable(),
     ensurePageviewTable(),
-    ensureReportHistoryTable(),
   ]);
   allTablesReady = true;
 }
