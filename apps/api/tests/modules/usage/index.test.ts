@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
 
 import { sql } from "@/infrastructure/db/client";
-import { getUserPlan, hasApiAccess, canGenerateReport, hasMcpAccess } from "@/modules/usage/index";
+import { getUserPlan, hasApiAccess, canMakeApiCall, hasMcpAccess } from "@/modules/usage/index";
 
 const mockSql = vi.mocked(sql);
 
@@ -67,10 +67,10 @@ describe("hasApiAccess", () => {
   });
 });
 
-describe("canGenerateReport", () => {
+describe("canMakeApiCall", () => {
   it("allows when usage is under the plan limit", async () => {
     db.reportCount = 5; // sandbox limit is 35
-    const r = await canGenerateReport("u1");
+    const r = await canMakeApiCall("u1");
     expect(r.allowed).toBe(true);
     expect(r.plan).toBe("sandbox");
     expect(r.limit).toBe(35);
@@ -78,7 +78,7 @@ describe("canGenerateReport", () => {
 
   it("blocks when usage hits the limit", async () => {
     db.reportCount = 35;
-    const r = await canGenerateReport("u1");
+    const r = await canMakeApiCall("u1");
     expect(r.allowed).toBe(false);
   });
 
@@ -86,7 +86,7 @@ describe("canGenerateReport", () => {
     /* AR-312: superuser via DB column, not email. */
     db.isSuperuser = true;
     db.reportCount = 999999;
-    const r = await canGenerateReport("u1");
+    const r = await canMakeApiCall("u1");
     expect(r.allowed).toBe(true);
     expect(r.limit).toBe(Infinity);
   });

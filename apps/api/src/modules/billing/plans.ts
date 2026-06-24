@@ -12,7 +12,7 @@ export const PLANS = {
   free: {
     name: "Free",
     price: 0,
-    reportsPerMonth: 3,
+    apiCallsPerMonth: 3,
     priceId: null,
     apiAccess: false,
     mcpAccess: false,
@@ -22,7 +22,7 @@ export const PLANS = {
   starter: {
     name: "Starter (legacy)",
     price: 2900, // £29
-    reportsPerMonth: 20,
+    apiCallsPerMonth: 20,
     priceId: process.env.STRIPE_STARTER_PRICE_ID || "",
     apiAccess: false,
     mcpAccess: false,
@@ -32,7 +32,7 @@ export const PLANS = {
   pro: {
     name: "Pro (legacy)",
     price: 7900, // £79
-    reportsPerMonth: 75,
+    apiCallsPerMonth: 75,
     priceId: process.env.STRIPE_PRO_PRICE_ID || "",
     apiAccess: false,
     mcpAccess: false,
@@ -42,7 +42,7 @@ export const PLANS = {
   developer: {
     name: "Developer (legacy)",
     price: 9900, // £99 (April 2026 reprice)
-    reportsPerMonth: 10000,
+    apiCallsPerMonth: 10000,
     priceId: process.env.STRIPE_DEVELOPER_PRICE_ID || "price_1TQrWc0oI5PvXSlpqAlXQaG8",
     apiAccess: true,
     mcpAccess: false,
@@ -52,7 +52,7 @@ export const PLANS = {
   business: {
     name: "Business (legacy)",
     price: 49900, // £499 (April 2026 reprice)
-    reportsPerMonth: 50000,
+    apiCallsPerMonth: 50000,
     priceId: process.env.STRIPE_BUSINESS_PRICE_ID || "price_1TQrWd0oI5PvXSlpFeLRBkAt",
     apiAccess: true,
     mcpAccess: false,
@@ -62,7 +62,7 @@ export const PLANS = {
   growth: {
     name: "Growth (legacy)",
     price: 149900, // £1,499 (April 2026 reprice)
-    reportsPerMonth: 250000,
+    apiCallsPerMonth: 250000,
     priceId: process.env.STRIPE_GROWTH_PRICE_ID || "price_1TQrWd0oI5PvXSlpZASdLVI4",
     apiAccess: true,
     mcpAccess: false,
@@ -80,7 +80,7 @@ export const PLANS = {
   sandbox: {
     name: "Sandbox",
     price: 0,
-    reportsPerMonth: 35,
+    apiCallsPerMonth: 35,
     priceId: null,
     apiAccess: true,
     mcpAccess: false,
@@ -92,7 +92,7 @@ export const PLANS = {
   starter_v2: {
     name: "Starter",
     price: 4900, // £49
-    reportsPerMonth: 1500,
+    apiCallsPerMonth: 1500,
     priceId: process.env.STRIPE_STARTER_V2_PRICE_ID || "price_1TTgK20oI5PvXSlph3zeFq7u",
     apiAccess: true,
     mcpAccess: false,
@@ -104,7 +104,7 @@ export const PLANS = {
   build: {
     name: "Build",
     price: 14900, // £149
-    reportsPerMonth: 6000,
+    apiCallsPerMonth: 6000,
     priceId: process.env.STRIPE_BUILD_PRICE_ID || "price_1TTgK30oI5PvXSlp4UqqilQY",
     annualPriceId: process.env.STRIPE_BUILD_ANNUAL_PRICE_ID || "price_1TTgK30oI5PvXSlpW3g2yR19",
     apiAccess: true,
@@ -117,7 +117,7 @@ export const PLANS = {
   scale: {
     name: "Scale",
     price: 49900, // £499
-    reportsPerMonth: 25000,
+    apiCallsPerMonth: 25000,
     priceId: process.env.STRIPE_SCALE_PRICE_ID || "price_1TTgK40oI5PvXSlpHa2gnWvP",
     annualPriceId: process.env.STRIPE_SCALE_ANNUAL_PRICE_ID || "price_1TTgK40oI5PvXSlpxodxVkUj",
     apiAccess: true,
@@ -130,7 +130,7 @@ export const PLANS = {
   growth_v2: {
     name: "Growth",
     price: 149900, // £1,499
-    reportsPerMonth: 100000,
+    apiCallsPerMonth: 100000,
     priceId: process.env.STRIPE_GROWTH_V2_PRICE_ID || "price_1TTgK50oI5PvXSlpnbzX6QRE",
     annualPriceId: process.env.STRIPE_GROWTH_V2_ANNUAL_PRICE_ID || "price_1TTgK50oI5PvXSlpPsX0QA3n",
     apiAccess: true,
@@ -143,7 +143,7 @@ export const PLANS = {
   enterprise: {
     name: "Enterprise",
     price: 499900, // £4,999/mo public floor; real ACVs negotiated £60-250k/yr
-    reportsPerMonth: 250000, // floor; negotiated up
+    apiCallsPerMonth: 250000, // floor; negotiated up
     priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID || "price_1TTgK60oI5PvXSlp1kWCkxth",
     apiAccess: true,
     mcpAccess: true, // included free on Enterprise

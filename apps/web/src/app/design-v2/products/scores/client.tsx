@@ -669,7 +669,7 @@ const EPS: Endpoint[] = [
       { name: "X-Engine-Version", type: "header", required: false, desc: "Pin to a supported engine version. Stamped on response." },
     ],
     response:
-      "{ id, report: { score, dimensions, narrative, engine_version, … } }. Consumes 1 unit of the monthly report quota via canGenerateReport.",
+      "{ id, report: { score, dimensions, narrative, engine_version, … } }. Consumes 1 unit of the monthly report quota via canMakeApiCall.",
     codes: [
       { code: "200", meaning: "Report generated (or replayed from idempotency cache)." },
       { code: "400", meaning: "Invalid area / intent / engine_version." },

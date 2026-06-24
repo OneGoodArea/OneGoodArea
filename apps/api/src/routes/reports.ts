@@ -9,7 +9,7 @@ import { rows, type ReportRow } from "../infrastructure/db/types";
 import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
 import { RATE_LIMITS, getConfig } from "../infrastructure/config";
 import { validateApiKey } from "../modules/api-keys";
-import { hasApiAccess, hasMcpAccess, canGenerateReport, trackMcpCall } from "../modules/usage";
+import { hasApiAccess, hasMcpAccess, canMakeApiCall, trackMcpCall } from "../modules/usage";
 import { resolveEngineVersion } from "../modules/engine/version";
 import { generateReport } from "../modules/reports/report-generator";
 import { validateLocationInput, validateIntent } from "../infrastructure/validation/validator";
@@ -67,10 +67,10 @@ export function registerReportsRoutes(app: FastifyInstance): void {
           return reply.code(403).send({ error: "API access not available on your current plan. Upgrade at /pricing." });
         }
 
-        // Monthly report quota.
-        const usage = await canGenerateReport(userId);
+        // Monthly API call quota.
+        const usage = await canMakeApiCall(userId);
         if (!usage.allowed) {
-          return reply.code(429).send({ error: "Monthly report limit reached", used: usage.used, limit: usage.limit, plan: usage.plan });
+          return reply.code(429).send({ error: "Monthly API call limit reached", used: usage.used, limit: usage.limit, plan: usage.plan });
         }
 
         // Validate inputs.
@@ -196,7 +196,7 @@ export function registerReportsRoutes(app: FastifyInstance): void {
           return reply.code(429).send({ error: "Too many requests. Please wait before generating another report." });
         }
 
-        const usage = await canGenerateReport(userId);
+        const usage = await canMakeApiCall(userId);
         if (!usage.allowed) {
           return reply.code(403).send({ error: "limit_reached", used: usage.used, limit: usage.limit, plan: usage.plan });
         }

@@ -74,7 +74,7 @@ describe("PLANS config", () => {
   it("all paid plans have positive report limits", () => {
     const paidPlans = ["starter", "pro", "developer", "business", "growth"] as const;
     for (const plan of paidPlans) {
-      expect(PLANS[plan].reportsPerMonth, `${plan} reports`).toBeGreaterThan(0);
+      expect(PLANS[plan].apiCallsPerMonth, `${plan} reports`).toBeGreaterThan(0);
     }
   });
 

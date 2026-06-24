@@ -132,7 +132,7 @@ export async function getMonthlyReportCount(userId: string): Promise<number> {
   return row<CountRow>(rows[0]).count;
 }
 
-export async function canGenerateReport(userId: string): Promise<{
+export async function canMakeApiCall(userId: string): Promise<{
   allowed: boolean;
   plan: PlanId;
   used: number;
@@ -140,7 +140,7 @@ export async function canGenerateReport(userId: string): Promise<{
 }> {
   const plan = await getUserPlan(userId);
   const used = await getMonthlyReportCount(userId);
-  const limit = PLANS[plan].reportsPerMonth;
+  const limit = PLANS[plan].apiCallsPerMonth;
 
   const superuser = await isSuperuser(userId);
 

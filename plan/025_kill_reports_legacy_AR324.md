@@ -254,9 +254,29 @@ Without redirects, the brief window between Phase 3 (this PR) and Phase 8 (marke
 - `WebhookEventType` narrows to `"signal.changed"` only
 - tsc clean, 33 webhook + report-generator tests pass
 
-### Phase 5 — Rename canGenerateReport / reportsPerMonth
+### Phase 5 — Rename quota concept (reports → API calls)
 
-*(to be detailed when we start)*
+**Goal:** the quota that gates `/v1/score` (Scores product) and `/v1/report` was internally called `canGenerateReport` + `reportsPerMonth` + `reports_per_month`, with a 429 message saying "Monthly report limit reached". The name lied — Scores is a product, not a report. Phase 5 renames the concept to match what it actually gates.
+
+**Story:** [AR-329](https://podnex.atlassian.net/browse/AR-329)
+**Branch:** `feat/AR-329-rename-quota-to-api-calls`
+
+#### Renames
+
+| Old | New | Touched |
+|---|---|---|
+| `canGenerateReport` | `canMakeApiCall` | 6 apps/api files + 5 apps/api tests + 1 apps/web lib + comments in 2 apps/web BFFs |
+| `reportsPerMonth` | `apiCallsPerMonth` | 12 plan rows in apps/api + 12 rows in apps/web/lib/stripe.ts + 3 reads + 3 tests |
+| `reports_per_month` | `api_calls_per_month` | /v1/me response field + 1 test assertion |
+| `"Monthly report limit reached"` | `"Monthly API call limit reached"` | 2 × 429 responses (reports.ts + scoring.ts) |
+| `// Monthly report quota.` | `// Monthly API call quota.` | 1 comment |
+
+#### Acceptance
+
+- tsc clean across all workspaces
+- 139 targeted apps/api tests + 36 targeted apps/web tests pass
+- Plan numeric values unchanged (35 / 1500 / 6000 / 25000 / 100000 / 250000 etc.)
+- `git grep "canGenerateReport"` and `git grep "Monthly report limit"` return zero matches
 
 ### Phase 6 — Backend delete
 

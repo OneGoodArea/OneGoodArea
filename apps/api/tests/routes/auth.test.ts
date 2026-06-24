@@ -12,7 +12,7 @@ vi.mock("@/modules/auth/crypto", () => ({
 }));
 vi.mock("@/modules/auth/session-token", () => ({ verifySessionToken: vi.fn() }));
 vi.mock("@/modules/usage", () => ({
-  canGenerateReport: vi.fn(),
+  canMakeApiCall: vi.fn(),
   getUserPlan: vi.fn(),
   hasApiAccess: vi.fn(),
 }));
@@ -26,7 +26,7 @@ import { rateLimit } from "@/infrastructure/rate-limit";
 import { sendVerificationEmail, sendPasswordResetEmail } from "@/infrastructure/email/senders";
 import { verifySessionToken } from "@/modules/auth/session-token";
 import { verifyPassword } from "@/modules/auth/crypto";
-import { canGenerateReport, getUserPlan, hasApiAccess } from "@/modules/usage";
+import { canMakeApiCall, getUserPlan, hasApiAccess } from "@/modules/usage";
 import { stripe } from "@/modules/billing/stripe-client";
 import { sql } from "@/infrastructure/db/client";
 
@@ -37,7 +37,7 @@ const mockVerifyEmail = vi.mocked(sendVerificationEmail);
 const mockResetEmail = vi.mocked(sendPasswordResetEmail);
 const mockSessionVerify = vi.mocked(verifySessionToken);
 const mockVerifyPw = vi.mocked(verifyPassword);
-const mockQuota = vi.mocked(canGenerateReport);
+const mockQuota = vi.mocked(canMakeApiCall);
 const mockGetPlan = vi.mocked(getUserPlan);
 const mockApiAccess = vi.mocked(hasApiAccess);
 const mockSubRetrieve = vi.mocked(stripe.subscriptions.retrieve);
