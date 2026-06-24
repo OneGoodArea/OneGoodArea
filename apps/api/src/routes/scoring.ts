@@ -1,25 +1,14 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import { isIntent } from "@onegoodarea/contracts";
-import { requireApiAccessWithOrg, requireApiAccess } from "../shared/auth-api";
-import { headerString } from "../shared/http";
+import type { FastifyInstance } from "fastify";
+import { requireApiAccessWithOrg } from "../shared/auth-api";
 import { resolveBundleForCaller, effectiveEngineVersionForCaller } from "../shared/bundles";
 import { isAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { sql } from "../infrastructure/db/client";
 import { rows } from "../infrastructure/db/types";
-import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
-import { RATE_LIMITS, getConfig, BATCH_MAX_ITEMS } from "../infrastructure/config";
+import { getConfig } from "../infrastructure/config";
 import { scoreArea, parseScoreBody } from "../modules/scoring";
 import { getPreset } from "../modules/orgs/presets";
-import { isSuccess, processBatchItems, type BatchItem, isBatchItemArray } from "../modules/engine/batch";
 import { trackEvent } from "../modules/tracking/activity";
-
-import { validateApiKey } from "../modules/api-keys";
-import { clientIpOf } from "../shared/http";
-import { parseIdempotencyKey, withIdempotency } from "../infrastructure/idempotency";
-import { canMakeApiCall, hasApiAccess } from "../modules/usage";
-import { resolveEngineVersion } from "../modules/engine/version";
-import type { Intent } from "@onegoodarea/contracts";
 /** scoring route handlers — extracted from app.ts per AR-286. */
 export function registerScoringRoutes(app: FastifyInstance): void {
     app.post("/v1/score",
@@ -131,116 +120,6 @@ export function registerScoringRoutes(app: FastifyInstance): void {
           return reply.code(error.statusCode).send({ error: error.message, code: error.code });
         }
         logger.error("[v1/score] error:", error);
-        return reply.code(500).send({ error: "Internal server error" });
-      }
-    });
-
-    app.post("/v1/batch",
-      {
-      schema: {
-            "tags": [
-                "Webhooks"
-            ],
-            "summary": "Batch report",
-            "description": "Generate reports for multiple areas in a single request.",
-            "body": { "type": "object", "properties": { "items": { "type": "array" } }, "example": { "items": [{ "area": "SW1A 1AA", "intent": "moving" }] } }
-        },
-      }, async (request, reply) => {
-      try {
-        const authHeader = headerString(request.headers.authorization);
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-          return reply.code(401).send({ error: "Missing API key. Use: Authorization: Bearer oga_..." });
-        }
-        const apiKey = authHeader.slice(7);
-        const result = await validateApiKey(apiKey, clientIpOf(request));
-        if (!result) return reply.code(401).send({ error: "Invalid or revoked API key" });
-        if ("blocked" in result) {
-          return reply.code(403).send({
-            error: "Request IP is not in the key's allowlist.",
-            code: result.blocked,
-          });
-        }
-        const userId = result.userId;
-        /* AR-289: stash the api key's org for the api.batch.processed
-           trackEvent below, which fires inside withIdempotency where `result`
-           shadows this one. */
-        const apiKeyOrgId = result.orgId ?? null;
-
-        // Batch-specific rate limit: 5 batches/min per key.
-        const rl = await rateLimit(`api-batch:${apiKey}`, {
-          max: RATE_LIMITS.apiBatch.max,
-          windowSeconds: RATE_LIMITS.apiBatch.windowSeconds,
-        });
-        reply.headers(rateLimitHeaders(RATE_LIMITS.apiBatch.max, rl));
-        if (!rl.success) {
-          return reply.code(429).send({ error: "Too many batch requests. Rate limit: 5 batches per minute." });
-        }
-
-        if (!(await hasApiAccess(userId))) {
-          return reply.code(403).send({ error: "API access not available on your current plan. Upgrade at /pricing." });
-        }
-
-        // Resolve engine pin before parsing the (potentially large) items array.
-        const engine = resolveEngineVersion(headerString(request.headers["x-engine-version"]));
-        if (!engine.ok) {
-          return reply.code(engine.statusCode).send({ error: engine.error, code: engine.code, supported_versions: engine.supportedVersions });
-        }
-
-        // Validate body shape.
-        const body = request.body;
-        if (typeof body !== "object" || body === null || !("items" in body)) {
-          return reply.code(400).send({ error: "Request body must be { items: [...] }" });
-        }
-        if (!isBatchItemArray((body as { items: unknown }).items)) {
-          return reply.code(400).send({ error: "Each item must be { area: string, intent: string }" });
-        }
-        const items = (body as { items: BatchItem[] }).items;
-        if (items.length === 0) {
-          return reply.code(400).send({ error: "items array cannot be empty" });
-        }
-        if (items.length > BATCH_MAX_ITEMS) {
-          return reply.code(400).send({ error: `Batch size ${items.length} exceeds max ${BATCH_MAX_ITEMS}. Split into smaller batches.` });
-        }
-
-        // Pre-check whole-batch quota; fail fast to avoid partial consumption.
-        const usage = await canMakeApiCall(userId);
-        if (!usage.allowed) {
-          return reply.code(429).send({ error: "Monthly API call limit reached", used: usage.used, limit: usage.limit, plan: usage.plan });
-        }
-        const remaining = usage.limit === Infinity ? Infinity : usage.limit - usage.used;
-        if (items.length > remaining) {
-          return reply.code(429).send({
-            error: `Batch requires ${items.length} reports but you have ${remaining} remaining this period`,
-            used: usage.used,
-            limit: usage.limit,
-            plan: usage.plan,
-            batch_size: items.length,
-            remaining,
-          });
-        }
-
-        const idempotencyKey = parseIdempotencyKey(headerString(request.headers["idempotency-key"]));
-        const idem = await withIdempotency(
-          userId,
-          idempotencyKey,
-          { items },
-          async () => {
-            const results = await processBatchItems(items, userId);
-            const succeeded = results.filter(isSuccess).length;
-            const failed = results.length - succeeded;
-            trackEvent("api.batch.processed", userId, { batch_size: items.length, succeeded, failed }, apiKeyOrgId);
-            return { status: 200, body: { results, summary: { total: items.length, succeeded, failed } } };
-          },
-        );
-
-        reply.header("X-Idempotency-Replayed", String(idem.replayed));
-        reply.header("X-Engine-Version", engine.resolvedVersion);
-        return reply.code(idem.status).send(idem.body);
-      } catch (error) {
-        if (isAppError(error)) {
-          return reply.code(error.statusCode).send({ error: error.message, code: error.code });
-        }
-        logger.error("[v1/batch] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
     });

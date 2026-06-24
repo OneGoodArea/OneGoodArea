@@ -278,9 +278,40 @@ Without redirects, the brief window between Phase 3 (this PR) and Phase 8 (marke
 - Plan numeric values unchanged (35 / 1500 / 6000 / 25000 / 100000 / 250000 etc.)
 - `git grep "canGenerateReport"` and `git grep "Monthly report limit"` return zero matches
 
-### Phase 6 — Backend delete
+### Phase 6 — Backend delete (reports routes, generator, batch, BFFs)
 
-*(to be detailed when we start)*
+**Goal:** hard delete the legacy Reports backend surface end-to-end. After this phase the only remaining "reports" anywhere are DB tables (Phase 7) and marketing copy (Phase 8).
+
+**Story:** [AR-330](https://podnex.atlassian.net/browse/AR-330)
+**Branch:** `feat/AR-330-backend-delete-reports`
+
+#### Deletes
+
+| Path | What |
+|---|---|
+| `apps/api/src/routes/reports.ts` | `/v1/report`, `/v1/batch`, `/report` endpoints |
+| `apps/api/src/modules/reports/report-generator.ts` | the Anthropic narrator |
+| `apps/api/src/modules/reports/` | directory becomes empty, removed |
+| `apps/api/src/modules/engine/batch.ts` | only consumer was generateReport; moved to engine/ in Phase 1 on a wrong assumption |
+| `apps/api/tests/modules/engine/batch.test.ts` | tests the deleted code |
+| `apps/api/tests/modules/reports/report-generator.test.ts` | tests the deleted code |
+| `apps/api/tests/routes/reports.test.ts` | tests the deleted route |
+| `apps/web/src/app/api/report/` | POST BFF + dynamic `[id]` BFF |
+| `apps/web/src/app/api/v1/report/` | v1 POST BFF |
+
+#### Modifies
+
+- `apps/api/src/app.ts` — remove `import { registerReportsRoutes }` + the `registerReportsRoutes(app)` call (one each)
+- `apps/api/src/routes/me.ts` — remove the `app.get("/me/reports", ...)` block (lines 26-56)
+- `apps/api/tests/routes/me.test.ts` — remove the `describe("GET /me/reports", ...)` block
+
+#### Acceptance
+
+- `apps/api/src/modules/reports/` does not exist
+- `apps/api/src/routes/reports.ts` does not exist
+- `apps/api/src/modules/engine/batch.ts` does not exist
+- tsc clean across all workspaces
+- Tests green (modulo the 17 pre-existing stripe-mock fails identical on main)
 
 ### Phase 7 — DB tables
 
