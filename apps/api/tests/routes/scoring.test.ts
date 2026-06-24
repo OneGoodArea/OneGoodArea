@@ -13,7 +13,6 @@ vi.mock("@/modules/usage", () => ({
 }));
 vi.mock("@/modules/tracking/activity", () => ({ trackEvent: vi.fn() }));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn(), query: vi.fn() }));
-vi.mock("@/modules/reports/report-generator", () => ({ generateReport: vi.fn() }));
 // Partial mock: keep real parseScoreBody etc, stub scoreArea.
 vi.mock("@/modules/scoring", async (orig) => {
   const actual = await orig() as object;
@@ -24,7 +23,6 @@ import { buildApp } from "@/app";
 import { validateApiKey } from "@/modules/api-keys";
 import { rateLimit } from "@/infrastructure/rate-limit";
 import { hasApiAccess, canMakeApiCall } from "@/modules/usage";
-import { generateReport } from "@/modules/reports/report-generator";
 import { scoreArea } from "@/modules/scoring";
 import { trackEvent } from "@/modules/tracking/activity";
 import { sql } from "@/infrastructure/db/client";
@@ -36,7 +34,6 @@ const mockValidate = vi.mocked(validateApiKey);
 const mockRate = vi.mocked(rateLimit);
 const mockApiAccess = vi.mocked(hasApiAccess);
 const mockQuota = vi.mocked(canMakeApiCall);
-const mockGenerate = vi.mocked(generateReport);
 const mockScore = vi.mocked(scoreArea);
 
 const SCORE_RESULT = {
@@ -52,7 +49,6 @@ beforeEach(() => {
   mockRate.mockResolvedValue({ success: true, remaining: 29, reset: 0 });
   mockApiAccess.mockResolvedValue(true);
   mockQuota.mockResolvedValue({ allowed: true, plan: "sandbox", used: 0, limit: 35 } as never);
-  mockGenerate.mockImplementation(async (area: string) => ({ id: `rpt_${area}`, report: { area } as never }));
   mockScore.mockResolvedValue(SCORE_RESULT);
 });
 
@@ -200,63 +196,3 @@ describe("POST /v1/score — Levers methodology pin (AR-197)", () => {
   });
 });
 
-// ── v1-batch.test.ts ────────────────────────────────────────────────
-
-describe("POST /v1/batch", () => {
-  function postBatch(body: unknown, headers: Record<string, string> = {}) {
-    return app.inject({
-      method: "POST",
-      url: "/v1/batch",
-      headers: { "content-type": "application/json", authorization: "Bearer oga_good", ...headers },
-      payload: JSON.stringify(body),
-    });
-  }
-
-  it("401s without a bearer token", async () => {
-    const res = await app.inject({ method: "POST", url: "/v1/batch", headers: { "content-type": "application/json" }, payload: "{}" });
-    expect(res.statusCode).toBe(401);
-  });
-
-  it("429s when batch-rate-limited", async () => {
-    mockRate.mockResolvedValue({ success: false, remaining: 0, reset: 0 });
-    expect((await postBatch({ items: [{ area: "M1", intent: "research" }] })).statusCode).toBe(429);
-  });
-
-  it("403s without API access", async () => {
-    mockApiAccess.mockResolvedValue(false);
-    expect((await postBatch({ items: [{ area: "M1", intent: "research" }] })).statusCode).toBe(403);
-  });
-
-  it("400s on a malformed body / item", async () => {
-    expect((await postBatch({})).statusCode).toBe(400);
-    expect((await postBatch({ items: [{ area: "M1" }] })).statusCode).toBe(400);
-    expect((await postBatch({ items: [] })).statusCode).toBe(400);
-  });
-
-  it("400s when the batch exceeds the max size", async () => {
-    const items = Array.from({ length: 101 }, () => ({ area: "M1", intent: "research" }));
-    expect((await postBatch({ items })).statusCode).toBe(400);
-  });
-
-  it("429s when the batch exceeds remaining quota", async () => {
-    mockQuota.mockResolvedValue({ allowed: true, plan: "sandbox", used: 34, limit: 35 } as never);
-    const res = await postBatch({ items: [{ area: "M1", intent: "research" }, { area: "M2", intent: "research" }] });
-    expect(res.statusCode).toBe(429);
-    expect(res.json().remaining).toBe(1);
-  });
-
-  it("200s and returns per-item results + summary on the happy path", async () => {
-    const res = await postBatch({
-      items: [
-        { area: "Manchester", intent: "research" },
-        { area: "Leeds", intent: "bad" },
-        { area: "Bristol", intent: "investing" },
-      ],
-    });
-    expect(res.statusCode).toBe(200);
-    const body = res.json();
-    expect(body.summary).toEqual({ total: 3, succeeded: 2, failed: 1 });
-    expect(body.results).toHaveLength(3);
-    expect(res.headers["x-engine-version"]).toBeDefined();
-  });
-});

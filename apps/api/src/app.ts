@@ -6,7 +6,6 @@ import { registerSystemRoutes } from "./routes/system";
 import { registerAuthRoutes } from "./routes/auth";
 import { registerMeRoutes } from "./routes/me";
 import { registerApiKeysRoutes } from "./routes/api-keys";
-import { registerReportsRoutes } from "./routes/reports";
 import { registerStripeRoutes } from "./routes/stripe";
 import { registerWebhooksRoutes } from "./routes/webhooks";
 import { registerAdminRoutes } from "./routes/admin";
@@ -117,7 +116,6 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
   registerAuthRoutes(app);
   registerMeRoutes(app);
   registerApiKeysRoutes(app);
-  registerReportsRoutes(app);
   registerStripeRoutes(app);
   registerWebhooksRoutes(app);
   registerAdminRoutes(app);
