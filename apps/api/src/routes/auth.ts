@@ -23,7 +23,6 @@ export function registerAuthRoutes(app: FastifyInstance): void {
 
         await sql`
           BEGIN;
-          DELETE FROM reports WHERE user_id = ${userId};
           DELETE FROM api_keys WHERE user_id = ${userId};
           DELETE FROM activity_events WHERE user_id = ${userId};
           DELETE FROM email_verification_tokens WHERE user_id = ${userId};

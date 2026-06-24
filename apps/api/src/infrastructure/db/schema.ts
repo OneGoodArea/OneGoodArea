@@ -354,9 +354,14 @@ export const MIGRATIONS: Migration[] = [
     ],
   },
   {
-    name: "report_cache",
+    /* AR-331 (epic AR-324): renamed from report_cache. The cache holds area
+       data keyed by (postcode, intent) and is consumed by the Signals route
+       (Scores product), not reports. The ALTER renames an existing prod
+       table; the CREATE handles fresh databases. Both are idempotent. */
+    name: "area_cache",
     statements: [
-      `CREATE TABLE IF NOT EXISTS report_cache (
+      `ALTER TABLE IF EXISTS report_cache RENAME TO area_cache`,
+      `CREATE TABLE IF NOT EXISTS area_cache (
         id SERIAL PRIMARY KEY,
         cache_key TEXT UNIQUE NOT NULL,
         report JSONB NOT NULL,
@@ -491,9 +496,17 @@ export const MIGRATIONS: Migration[] = [
     ],
   },
   {
-    name: "report_history",
+    /* AR-331 (epic AR-324): renamed from report_history. The content is
+       score time-series — the rescore cron writes one row per (postcode,
+       intent) per monthly run. The name "report_history" was misleading
+       from day one; the table was always score data. */
+    name: "score_history",
     statements: [
-      `CREATE TABLE IF NOT EXISTS report_history (
+      `ALTER TABLE IF EXISTS report_history RENAME TO score_history`,
+      `ALTER INDEX IF EXISTS idx_report_history_postcode_intent RENAME TO idx_score_history_postcode_intent`,
+      `ALTER INDEX IF EXISTS idx_report_history_run RENAME TO idx_score_history_run`,
+      `ALTER INDEX IF EXISTS idx_report_history_engine_version RENAME TO idx_score_history_engine_version`,
+      `CREATE TABLE IF NOT EXISTS score_history (
         id BIGSERIAL PRIMARY KEY,
         run_id TEXT NOT NULL,
         postcode TEXT NOT NULL,
@@ -506,12 +519,12 @@ export const MIGRATIONS: Migration[] = [
         generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         UNIQUE (run_id, postcode, intent)
       )`,
-      `CREATE INDEX IF NOT EXISTS idx_report_history_postcode_intent
-        ON report_history (postcode, intent, generated_at DESC)`,
-      `CREATE INDEX IF NOT EXISTS idx_report_history_run
-        ON report_history (run_id)`,
-      `CREATE INDEX IF NOT EXISTS idx_report_history_engine_version
-        ON report_history (engine_version)`,
+      `CREATE INDEX IF NOT EXISTS idx_score_history_postcode_intent
+        ON score_history (postcode, intent, generated_at DESC)`,
+      `CREATE INDEX IF NOT EXISTS idx_score_history_run
+        ON score_history (run_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_score_history_engine_version
+        ON score_history (engine_version)`,
     ],
   },
   {
@@ -528,25 +541,14 @@ export const MIGRATIONS: Migration[] = [
     ],
   },
   {
-    // The user-facing reports table the generator writes to and the dashboard
-    // reads. It was ORPHANED in the legacy codebase: no ensure*Table() helper
-    // and no migration created it (it exists only in the production DB, so a
-    // fresh database could never run the app). Reconstructed here from the
-    // generate-report INSERT + the ReportRow type. CREATE IF NOT EXISTS is a
-    // no-op against prod where the table already exists.
+    /* AR-331 (epic AR-324): the legacy reports table. After Phase 6 deleted
+       report-generator.ts (the only writer) and the /v1/report + /me/reports
+       routes (the only readers), the table is unreferenced. DROP CASCADE
+       to clean up any leftover constraints. Migration is idempotent on
+       both prod (table exists, gets dropped) and fresh DBs (no-op). */
     name: "reports",
     statements: [
-      `CREATE TABLE IF NOT EXISTS reports (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        area TEXT NOT NULL,
-        intent TEXT NOT NULL,
-        report JSONB NOT NULL,
-        score INTEGER NOT NULL,
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      )`,
-      `CREATE INDEX IF NOT EXISTS idx_reports_user_created
-        ON reports (user_id, created_at DESC)`,
+      `DROP TABLE IF EXISTS reports CASCADE`,
     ],
   },
   {

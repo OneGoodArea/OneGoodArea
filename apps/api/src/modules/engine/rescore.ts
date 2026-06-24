@@ -13,11 +13,11 @@ import { computeScores } from "./scoring-engine";
 import { METHODOLOGY_VERSION } from "./methodology";
 import { TOP_POSTCODES } from "./top-postcodes";
 
-/* Re-score top UK postcodes, persist to report_history (the time-series moat).
+/* Re-score top UK postcodes, persist to score_history (the time-series moat).
 
    Migrated from legacy scripts/cron/rescore-top-postcodes.ts. Changes: imports
    repointed to apps/api; the ensureReportHistoryTable() self-create is dropped
-   (the migrator owns report_history); console.log -> the structured logger; the
+   (the migrator owns score_history); console.log -> the structured logger; the
    tsx CLI entrypoint is dropped (apps/api invokes runRescoreCron via the
    CRON_SECRET-gated GET /cron/rescore route, run by the container scheduler).
    The scoring is deterministic — no AI narration, no cache — so it is cheap to
@@ -98,7 +98,7 @@ export async function runRescoreCron(opts: RescoreOptions): Promise<RescoreSumma
           logger.info(`[rescore] ${postcode} ${r.intent} score=${r.score} conf=${r.confidence}`);
         } else {
           await sql`
-            INSERT INTO report_history
+            INSERT INTO score_history
               (run_id, postcode, intent, area_type, overall_score, confidence, dimensions, engine_version, generated_at)
             VALUES
               (${run_id}, ${postcode}, ${r.intent}, ${r.area_type}, ${r.score}, ${r.confidence}, ${JSON.stringify(r.dimensions)}::jsonb, ${METHODOLOGY_VERSION}, ${new Date().toISOString()})

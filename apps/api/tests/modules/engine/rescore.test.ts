@@ -42,14 +42,14 @@ describe("runRescoreCron", () => {
     expect(summary.postcodes_attempted).toBe(1);
     expect(summary.rows_written).toBe(4); // 4 intents
     expect(summary.failed).toEqual([]);
-    expect(sqlCalls("INSERT INTO report_history")).toHaveLength(0);
+    expect(sqlCalls("INSERT INTO score_history")).toHaveLength(0);
     expect(summary.run_id).toMatch(/^run_/);
   });
 
-  it("real run: inserts one report_history row per intent", async () => {
+  it("real run: inserts one score_history row per intent", async () => {
     const summary = await runRescoreCron({ dryRun: false, postcodes: ["M1 1AE"] });
     expect(summary.rows_written).toBe(4);
-    expect(sqlCalls("INSERT INTO report_history")).toHaveLength(4);
+    expect(sqlCalls("INSERT INTO score_history")).toHaveLength(4);
   });
 
   it("records geocode failures and writes nothing for them", async () => {
@@ -57,7 +57,7 @@ describe("runRescoreCron", () => {
     const summary = await runRescoreCron({ dryRun: false, postcodes: ["BAD"] });
     expect(summary.rows_written).toBe(0);
     expect(summary.failed).toEqual([{ postcode: "BAD", reason: "geocode failed" }]);
-    expect(sqlCalls("INSERT INTO report_history")).toHaveLength(0);
+    expect(sqlCalls("INSERT INTO score_history")).toHaveLength(0);
   });
 
   it("respects the limit", async () => {

@@ -26,6 +26,7 @@ describe("db migrate", () => {
         const s = statement.toUpperCase();
         const idempotent =
           s.includes("IF NOT EXISTS") || // CREATE TABLE / CREATE INDEX / ADD COLUMN
+          s.includes("IF EXISTS") || // AR-331: DROP TABLE IF EXISTS / ALTER TABLE IF EXISTS / ALTER INDEX IF EXISTS
           s.includes("DROP NOT NULL") || // ALTER COLUMN ... DROP NOT NULL is a no-op when already nullable
           /ON CONFLICT[\s\S]*DO NOTHING/.test(s) || // backfill INSERTs (target-free OR target-keyed e.g. ON CONFLICT (a,b) DO NOTHING)
           /WHERE [A-Z_.]*ORG_ID IS NULL/.test(s) || // backfill UPDATEs guarded by "not already done" predicate (alias-tolerant: WHERE org_id / WHERE ae.org_id)
@@ -41,8 +42,8 @@ describe("db migrate", () => {
       "users",
       "api_keys",
       "reports",
-      "report_cache",
-      "report_history",
+      "area_cache",
+      "score_history",
       "webhook_subscriptions",
       "webhook_deliveries",
       "idempotency_records",
