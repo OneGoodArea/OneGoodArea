@@ -13,7 +13,7 @@ import { logger } from "../tracking/structured-logger";
 /* Read/write cache for generated reports. Migrated from the legacy
    src/lib/report-cache.ts. Behaviour-identical EXCEPT the legacy
    `ensureReportCacheTable()` self-create is dropped: in the monorepo the
-   `report_cache` table (and its index) are owned by the migrator
+   `area_cache` table (and its index) are owned by the migrator
    (infrastructure/db/schema.ts), so modules never issue DDL. The table DDL
    there is byte-identical to the legacy CREATE TABLE, so the data layer is
    unchanged. */
@@ -55,7 +55,7 @@ export async function getCachedAreaResult(
 
   const cacheRows = await sql`
     SELECT report, area, score, created_at
-    FROM report_cache
+    FROM area_cache
     WHERE cache_key = ${key}
       AND created_at > NOW() - MAKE_INTERVAL(hours => ${ttlHours})
     LIMIT 1
@@ -65,7 +65,7 @@ export async function getCachedAreaResult(
 
   // Increment hit count (fire-and-forget)
   sql`
-    UPDATE report_cache SET hit_count = hit_count + 1 WHERE cache_key = ${key}
+    UPDATE area_cache SET hit_count = hit_count + 1 WHERE cache_key = ${key}
   `.catch((err) =>
     logger.error("[OneGoodArea] Cache hit_count update error:", err)
   );
@@ -90,7 +90,7 @@ export async function setCachedAreaResult(
   const key = normaliseCacheKey(area, intent);
 
   await sql`
-    INSERT INTO report_cache (cache_key, report, area, score)
+    INSERT INTO area_cache (cache_key, report, area, score)
     VALUES (${key}, ${JSON.stringify(report)}, ${area}, ${score})
     ON CONFLICT (cache_key) DO UPDATE SET
       report = EXCLUDED.report,
@@ -109,11 +109,11 @@ export async function getCacheStats(): Promise<{
   topCached: Array<{ area: string; hits: number }>;
 }> {
   const [countResult, hitsResult, topResult] = await Promise.all([
-    sql`SELECT COUNT(*)::int AS count FROM report_cache`,
-    sql`SELECT COALESCE(SUM(hit_count), 0)::int AS total FROM report_cache`,
+    sql`SELECT COUNT(*)::int AS count FROM area_cache`,
+    sql`SELECT COALESCE(SUM(hit_count), 0)::int AS total FROM area_cache`,
     sql`
       SELECT area, hit_count::int AS hits
-      FROM report_cache
+      FROM area_cache
       ORDER BY hit_count DESC
       LIMIT 10
     `,
@@ -132,7 +132,7 @@ export async function cleanupExpiredCache(
   ttlHours: number = 48
 ): Promise<number> {
   const result = await sql`
-    DELETE FROM report_cache
+    DELETE FROM area_cache
     WHERE created_at < NOW() - MAKE_INTERVAL(hours => ${ttlHours})
     RETURNING id
   `;

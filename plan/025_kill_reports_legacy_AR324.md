@@ -313,9 +313,46 @@ Without redirects, the brief window between Phase 3 (this PR) and Phase 8 (marke
 - tsc clean across all workspaces
 - Tests green (modulo the 17 pre-existing stripe-mock fails identical on main)
 
-### Phase 7 — DB tables
+### Phase 7 — DB tables (drop reports, rename caches)
 
-*(to be detailed when we start)*
+**Goal:** clean up the DB layer to match the post-Phase-6 reality. After this phase the only "reports" anywhere is marketing copy (Phase 8).
+
+**Story:** [AR-331](https://podnex.atlassian.net/browse/AR-331)
+**Branch:** `feat/AR-331-db-tables-drop-rename`
+
+#### Migration (apps/api/src/infrastructure/db/schema.ts)
+
+| Table | Action | Why |
+|---|---|---|
+| `reports` | `DROP TABLE IF EXISTS reports CASCADE` | No writer or reader after Phase 6 |
+| `report_cache` | `ALTER TABLE IF EXISTS report_cache RENAME TO area_cache` + `CREATE TABLE IF NOT EXISTS area_cache (...)` | Code already renamed in Phase 1; only the table name lagged |
+| `report_history` | Same shape: ALTER table + 3 ALTER INDEX + CREATE TABLE + 3 CREATE INDEX | The content is score time-series; the name was misleading from day one |
+
+ALTER first then CREATE: existing prod gets renamed (CREATE is no-op), fresh DBs get created (ALTER is no-op).
+
+#### Code changes alongside
+
+| File | Change |
+|---|---|
+| `modules/cache/area-cache.ts` | 7 raw SQL refs: `report_cache` → `area_cache` |
+| `modules/engine/rescore.ts` | `INSERT INTO report_history` → `INSERT INTO score_history` |
+| `modules/engine/top-postcodes.ts` | Comment refresh |
+| `modules/usage/index.ts` | `getMonthlyReportCount` (`FROM reports`) → `getMonthlyApiCallCount` (`FROM activity_events WHERE event LIKE 'api.%'`). Caller updated |
+| `routes/me.ts` | Drop the `/dashboard` endpoint's "Latest report call" block; rename `getMonthlyReportCount` import |
+| `routes/auth.ts` | Drop `DELETE FROM reports` from account-deletion cascade |
+| Tests: `usage/index.test.ts`, `migrate.test.ts`, `rescore.test.ts` — sweep references |
+
+#### Why getMonthlyApiCallCount changes behavior (deliberately)
+
+After Phase 6 deleted `report-generator.ts`, the legacy `getMonthlyReportCount` was always returning 0 — the quota gate was a no-op. This story replaces the count source with `activity_events WHERE event LIKE 'api.%'`, so `/v1/score`, `/v1/signals`, `/v1/intelligence/query`, etc. are now actually metered against the per-plan limit. Plan numbers unchanged.
+
+#### Acceptance
+
+- tsc clean
+- 868 apps/api tests pass (the 17 stripe-mock fails are identical to main, environmental)
+- 95 targeted tests pass (cache, rescore, usage, migrate, /v1/me, auth)
+- `git grep "FROM reports\\b"` returns zero matches in `apps/api/src`
+- `git grep "report_cache\\|report_history"` returns only intentional schema.ts ALTER lines + historical comments
 
 ### Phase 8 — Marketing sweep
 

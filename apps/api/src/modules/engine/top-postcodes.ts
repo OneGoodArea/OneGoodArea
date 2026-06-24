@@ -3,7 +3,7 @@
  * Used by modules/engine/rescore.ts to compound a UK area
  * trend dataset over time. Every month, every postcode in this list is
  * scored against all four intents and the result is persisted to
- * report_history.
+ * score_history.
  *
  * Starting list: ~100 entries covering major English, Welsh, and Scottish
  * urban centres plus a few rural and coastal samples. Pedro can expand

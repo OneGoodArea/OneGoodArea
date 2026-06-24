@@ -30,7 +30,13 @@ function routeQuery(strings: TemplateStringsArray): Promise<unknown[]> {
   if (q.includes("FROM subscriptions")) {
     return Promise.resolve(db.subscriptionPlan ? [{ plan: db.subscriptionPlan }] : []);
   }
-  if (q.includes("FROM reports")) return Promise.resolve([{ count: db.reportCount }]);
+  /* AR-331: canMakeApiCall now counts api.* events instead of rows
+     in the dropped reports table. Field name `reportCount` is kept
+     in the local test fixture for diff clarity; semantically it is
+     the api-call count this month. */
+  if (q.includes("FROM activity_events") && q.includes("event LIKE")) {
+    return Promise.resolve([{ count: db.reportCount }]);
+  }
   if (q.includes("FROM subscription_addons")) {
     return Promise.resolve(db.addons.map((addon_key) => ({ addon_key, status: "active" })));
   }

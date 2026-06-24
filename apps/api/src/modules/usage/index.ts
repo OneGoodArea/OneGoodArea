@@ -110,10 +110,17 @@ export async function getMcpUsageThisMonth(userId: string): Promise<number> {
   return row<{ call_count: number }>(rows[0]).call_count;
 }
 
-export async function getMonthlyReportCount(userId: string): Promise<number> {
+/* AR-331 (epic AR-324): replaces the legacy getMonthlyReportCount which
+   counted rows in the now-deleted `reports` table. The quota concept was
+   renamed to "API calls" in AR-329 and now the impl matches: count the
+   activity_events rows tagged with an `api.*` event for the user this
+   calendar month. Every public-API endpoint emits one such event
+   (api.score.computed, api.signals.queried, api.query.executed, etc.). */
+export async function getMonthlyApiCallCount(userId: string): Promise<number> {
   const rows = await sql`
-    SELECT COUNT(*)::int as count FROM reports
+    SELECT COUNT(*)::int as count FROM activity_events
     WHERE user_id = ${userId}
+    AND event LIKE 'api.%'
     AND created_at >= date_trunc('month', NOW())
   `;
   return row<CountRow>(rows[0]).count;
@@ -126,7 +133,7 @@ export async function canMakeApiCall(userId: string): Promise<{
   limit: number;
 }> {
   const plan = await getUserPlan(userId);
-  const used = await getMonthlyReportCount(userId);
+  const used = await getMonthlyApiCallCount(userId);
   const limit = PLANS[plan].apiCallsPerMonth;
 
   const superuser = await isSuperuser(userId);

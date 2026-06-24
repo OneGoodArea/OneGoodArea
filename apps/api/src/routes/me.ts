@@ -16,7 +16,7 @@ import { listForUser as listActivityForUser } from "../modules/activity";
 import { trackEvent } from "../modules/tracking/activity";
 import { generateId } from "../infrastructure/utils/id";
 
-import { getMonthlyReportCount, hasAddon } from "../modules/usage";
+import { getMonthlyApiCallCount, hasAddon } from "../modules/usage";
 import { asSubscription } from "../modules/billing/stripe-types";
 import { stripe } from "../modules/billing/stripe-client";
 import type { Country } from "../modules/signals/peers";
@@ -212,7 +212,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           mcpUsage,
         ] = await Promise.all([
           getUserPlan(userId),
-          getMonthlyReportCount(userId),
+          getMonthlyApiCallCount(userId),
           hasMcpAccess(userId),
           hasAddon(userId, "mcp"),
           getMcpUsageThisMonth(userId),
@@ -250,22 +250,12 @@ export function registerMeRoutes(app: FastifyInstance): void {
           emailVerified = true;
         }
 
-        // Latest report call (area + score + preset).
-        let latestCall: { preset: string; area: string; score: number; created_at: string } | null = null;
-        try {
-          const reportRows = await sql`
-            SELECT intent AS preset, area, score, created_at
-            FROM reports
-            WHERE user_id = ${userId}
-            ORDER BY created_at DESC
-            LIMIT 1
-          `;
-          if (reportRows.length > 0) {
-            latestCall = reportRows[0] as { preset: string; area: string; score: number; created_at: string };
-          }
-        } catch {
-          // Soft-fail: latest call is nice-to-have.
-        }
+        // AR-331 (epic AR-324): the legacy "Latest report call" widget read
+        // from the now-dropped reports table. The dashboard restructure
+        // (queued epic) replaces this with product-aware widgets. Until
+        // then the field stays null; the consuming <LatestCallStrip>
+        // renders nothing when null.
+        const latestCall: { preset: string; area: string; score: number; created_at: string } | null = null;
 
         return reply.send({
           plan,
