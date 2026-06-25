@@ -373,7 +373,7 @@ These survive even when pricing changes or design taste shifts.
 2. **No invented quotas in copy.** Marketing-grade copy ("35 free calls a month") only appears on the billing surface, only after pricing is locked, and only sourced from `/v1/me`. Empty states say "the free tier" abstractly.
 3. **Audit-replayable Intelligence is visible in the UI.** Every NL query MUST show the resolved plan before the result. Every result MUST have a "Show the curl" button. This is the deterministic-AI story; it cannot leak into "chatbot output, trust me."
 4. **Levers RBAC enforced client-side AND server-side.** UI gates the wrong-role user from the affordance; the API gates them on the request. Never client-side-only.
-5. **No marketing claims that outrun what is built.** The Hard Rules in `docs/pricing.md §6` apply to dashboard copy too: no "predictive confidence" until the calibrated model ships, no "regional benchmark" until regional percentile scopes exist, no "Monitor 10,000+ areas" until async enrichment ships, no "AI explains this area" until `/v1/analyze` ships (it remains deferred by design per ADR 0017).
+5. **No marketing claims that outrun what is built.** The Hard Rules in `docs/pricing.md section 6` apply to dashboard copy too: no "predictive confidence" until the calibrated model ships, no "regional benchmark" until regional percentile scopes exist, no "Monitor 10,000+ areas" until async enrichment ships, no "AI explains this area" until `/v1/analyze` ships (it remains deferred by design per ADR 0017).
 6. **The plan grammar is visible.** The Intelligence section must show users that NL queries are translated to typed plans. The plan IS the API; surface it.
 7. **Brand v3 throughout.** No mixing of AIQ-namespace legacy styles into new dashboard pages. The `.oga-root` wrapper and the Plotted tokens are the only design system.
 
@@ -399,7 +399,7 @@ These need Pedro's call before Phase 1 starts in earnest:
 
 - Pre-sales / contact-sales / Enterprise-handshake flow (separate proposal)
 - Visual design beyond Brand v3 tokens (typography weights, spacing, color usage)
-- Page-level copywriting (handled in implementation; subject to the Hard Rules in `docs/pricing.md §6`)
+- Page-level copywriting (handled in implementation; subject to the Hard Rules in `docs/pricing.md section 6`)
 - Mobile experience details beyond Brand v3 responsive defaults
 - Internationalization (OGA is UK-only)
 - The actual database migrations for `users.intent` and `users.signup_source` columns (engineering work for Phase 1)

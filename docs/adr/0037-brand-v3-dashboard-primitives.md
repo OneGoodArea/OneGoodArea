@@ -92,7 +92,7 @@ Each primitive is:
   Sidebar `aria-current="page"`, Toast `aria-live` polite/assertive by
   variant, DropdownMenu focus return on close).
 - **Dark surface variant** where the consumer surface needs one. The
-  dark vocabulary is consistent across primitives (see §4).
+  dark vocabulary is consistent across primitives (see section 4).
 
 ### 2. Defer 8 primitives via "extract-on-second-use" (AR-211 convention)
 
@@ -247,14 +247,14 @@ The pattern carries forward into Phase 1+.
   `/admin/dashboard-primitives` showcase visible in dev.
 - **Two competing icon vocabularies today.** Tabs-bespoke (inlined in
   showcase) + NavIconDark (exported from app-shell). Follow-up to
-  canonicalize before Phase 1 ships sidebar consumers (see §3).
+  canonicalize before Phase 1 ships sidebar consumers (see section 3).
 - **Dark-surface upgrade rippled to existing pages.** AR-233 deliberately
   upgraded the real `/dashboard` sidebar from flat `var(--oga-ink)` to
   graphite gradient + dot-field per Pedro's explicit ask. The Jira spec's
   "no visual regression" rule was overridden. Flagged in AR-233's PR
   description + work log; not unwound.
 - **Discipline required around invented assets.** The icon + wordmark
-  rule (§3) needs to be enforced by reviewers + by the iterating-with-
+  rule (section 3) needs to be enforced by reviewers + by the iterating-with-
   Pedro loop. Memory pillar (`feedback_icons_and_canonical_assets.md`)
   + showcase comments help; but the rule will be tested on every new
   consumer page.
@@ -266,7 +266,7 @@ This ADR is superseded when:
 - A primitive's API shape changes in a backward-incompatible way (a new
   ADR with the new shape, this one marked Superseded but kept for trail)
 - The `_shared/dashboard/` location moves (e.g. extracted to a package)
-- The dark-surface vocabulary (§4) is redesigned wholesale
+- The dark-surface vocabulary (section 4) is redesigned wholesale
 
 Adding a new primitive does NOT supersede this ADR. New primitives are
 documented in their own work log + AR sub-ticket. This ADR documents the
@@ -281,7 +281,7 @@ Rejected. The Brand v3 altitude is specific:
 - Warm-white gradient + corner specimen ticks on light surfaces
   (`.oga-code-panel` recipe)
 - Graphite gradient + edge-lit material + dot-field motif on dark
-  surfaces (this ADR §4)
+  surfaces (this ADR section 4)
 - Geist sans / mono at specific weights + letter-spacings (e.g. mono caps
   at 0.14em for DataTable headers, 0.24em for sidebar group labels)
 - Soft-warm hover signature (`rgba(26, 28, 31, 0.04)`) shared across
@@ -329,7 +329,7 @@ paid once per primitive in Phase 0; reused forever).
 ### C. Inline primitives per page + extract later
 
 The pattern AR-211 set: build inline first, extract on second use. The
-8 deferred primitives (§2) take this path. Why not all 16?
+8 deferred primitives (section 2) take this path. Why not all 16?
 
 Rejected for the 7 foundation primitives because they each unblock
 multiple Phase 1 surfaces immediately:
@@ -381,7 +381,7 @@ Phase 0 work shipped under AR-217 as 8 sub-tickets:
 | [AR-233](https://podnex.atlassian.net/browse/AR-233) | A16 — Sidebar | #138 | `2aa67ed` | 2026-06-06 |
 | [AR-237](https://podnex.atlassian.net/browse/AR-237) | A20 — this ADR | — | — | 2026-06-06 |
 
-Deferred (8 tickets closed as deferred per §2):
+Deferred (8 tickets closed as deferred per section 2):
 
 - [AR-223](https://podnex.atlassian.net/browse/AR-223) Tooltip
 - [AR-224](https://podnex.atlassian.net/browse/AR-224) Breadcrumb

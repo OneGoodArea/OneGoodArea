@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-26
-- **Context refs:** ADR 0006 (geo spine), 0011 (prices), 0013 (change detection); MASTER §3.
+- **Context refs:** ADR 0006 (geo spine), 0011 (prices), 0013 (change detection); MASTER section 3.
 
 ## Context
 

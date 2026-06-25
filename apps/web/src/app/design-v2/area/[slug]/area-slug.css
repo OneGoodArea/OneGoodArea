@@ -8,11 +8,11 @@
 
    Section flow:
      Hero             -- cream (.oga-area-hero)
-     § 01 Overall score -- cream-quiet (.oga-section-quiet)
-     § 02 Dimensions   -- DARK (.oga-section-dark)
-     § 03 Intents     -- cream
-     § 04 Locked teaser -- cream-quiet (.oga-section-quiet)
-     § 05 Closing CTA -- DARK (.oga-section-dark)
+     01 Overall score -- cream-quiet (.oga-section-quiet)
+     02 Dimensions   -- DARK (.oga-section-dark)
+     03 Intents     -- cream
+     04 Locked teaser -- cream-quiet (.oga-section-quiet)
+     05 Closing CTA -- DARK (.oga-section-dark)
      Related          -- cream
 */
 
@@ -141,7 +141,7 @@
 }
 
 /* ============================================================
-   § 02 — Dimensions (DARK, 3-col card grid)
+   02 — Dimensions (DARK, 3-col card grid)
    Mirrors /about-believe__grid exactly.
    ============================================================ */
 .oga-area-dims {
@@ -282,7 +282,7 @@
 }
 
 /* ============================================================
-   § 03 — Score by intent (cream, prose + 4-up stat strip)
+   03 — Score by intent (cream, prose + 4-up stat strip)
    Mirrors /about-built __stats pattern.
    ============================================================ */
 .oga-area-intents {
@@ -364,7 +364,7 @@
 }
 
 /* ============================================================
-   § 04 — Inside the full report (cream-quiet, editorial teaser card)
+   04 — Inside the full report (cream-quiet, editorial teaser card)
    ============================================================ */
 .oga-area-locked {
   padding: clamp(56px, 8vw, 112px) 24px;
@@ -487,7 +487,7 @@
 }
 
 /* ============================================================
-   § 05 — Closing CTA (DARK, mirrors /about-contact)
+   05 — Closing CTA (DARK, mirrors /about-contact)
    ============================================================ */
 .oga-area-cta {
   padding: clamp(64px, 9vw, 120px) 24px;

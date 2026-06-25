@@ -17,7 +17,7 @@ import "./api-reference.css";
    apology to nobody; the hero pill "API reference, being
    regenerated" already conveys the rebuild without dwelling.
 
-   While here, flipped § 01 Surface map to .oga-section-dark to
+   While here, flipped 01 Surface map to .oga-section-dark to
    address the related "no mid-page dark anchor" issue Pedro
    flagged on /docs/mcp. Surface cards get translucent-on-dark
    styling per the data-oga-surface override block in

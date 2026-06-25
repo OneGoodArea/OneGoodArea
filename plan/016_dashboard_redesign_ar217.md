@@ -52,7 +52,7 @@ All product endpoints dark-flagged behind `signalsApiEnabled` config — **confi
 
 ### 3.2 ADRs — 17 dashboard-relevant ADRs
 
-Encoded constraints (full list in §11):
+Encoded constraints (full list in section 11):
 
 - **ADR 0017** (Intelligence v1): dashboard query interface uses typed plan grammar; NL inputs translate to plans via AiProvider, validated with Zod, executed deterministically. Plans echo `plan_source` for auditability.
 - **ADR 0019** (compound rank_areas): UI must validate `sort_by` signal appears in signals list; AND semantics across rows.
@@ -428,7 +428,7 @@ RBAC pages in Phase 4 get tests for member / admin / owner role gates.
 After each phase merges:
 - Update `project_dashboard_redesign_pending.md` → rename to `project_AR-217_dashboard_redesign.md` and track phase state.
 - Update `MEMORY.md` active-workstreams table.
-- Update `ARCHITECTURE.md` §9 phase status table.
+- Update `ARCHITECTURE.md` section 9 phase status table.
 
 ## 16. Risks
 
@@ -443,7 +443,7 @@ After each phase merges:
 
 ## 17. Open questions for Pedro
 
-1. **D1-D5** in §4 — please lock.
+1. **D1-D5** in section 4 — please lock.
 2. **Sub-ticket creation:** I'll create all Phase 0 sub-tickets (AR-217-A1 through A5) when you give the green light on D1-D4. Phases 1-5 sub-tickets get created at the start of each phase, not all up front.
 3. **Activity events endpoint:** the proposal references `users.recent_activity` but recon found `activity_events` table populated by `trackEvent` calls. AR-217-A4 confirms / adds the read endpoint. OK?
 4. **Public playground service account:** do we want a separate service-account API key for `/playground` traffic so it's quota-trackable, or should it use a special un-metered key with internal rate-limit only?

@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-26
-- **Context refs:** MASTER §2 (Monitor product), §8 Phase 5; ADR 0008 (scoring).
+- **Context refs:** MASTER section 2 (Monitor product), section 8 Phase 5; ADR 0008 (scoring).
 
 ## Context
 

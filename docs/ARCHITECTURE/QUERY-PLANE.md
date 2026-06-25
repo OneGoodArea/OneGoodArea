@@ -52,7 +52,7 @@ OGA_EVAL_PLAN=true ANTHROPIC_API_KEY=… \
 
 ## See also
 
-- [`SYSTEM-OVERVIEW.md`](./SYSTEM-OVERVIEW.md) §10.9 — eval harness deep dive
+- [`SYSTEM-OVERVIEW.md`](./SYSTEM-OVERVIEW.md) section 10.9 — eval harness deep dive
 - [`PRODUCTS.md`](./PRODUCTS.md) — where Intelligence sits in the 4-product map
 - ADR 0017 — the original query plane decision
 - ADR 0026 — the eval harness baseline

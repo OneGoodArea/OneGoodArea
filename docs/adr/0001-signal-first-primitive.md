@@ -2,8 +2,8 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-25
-- **Context refs:** `MASTER-PROPOSAL.md` §2–4, §9; `PRODUCT-POSITIONING.md` §2;
-  `EXECUTION-PLAYBOOK.md` §0, §8. Builds on the engine-v2 freeze (`1bb2edd`).
+- **Context refs:** `MASTER-PROPOSAL.md` section 2–4, section 9; `PRODUCT-POSITIONING.md` section 2;
+  `EXECUTION-PLAYBOOK.md` section 0, section 8. Builds on the engine-v2 freeze (`1bb2edd`).
 
 ## Context
 
@@ -85,9 +85,9 @@ from scoring — exposing it is a refactor, not a rewrite.
 
 - **Go straight to the persisted signal store first.** Rejected for the *first*
   slice: it is XL and delays the proof. The store is the next phase, not the first
-  move (MASTER §8 "recommended near-term").
+  move (MASTER section 8 "recommended near-term").
 - **Keep the report as the primitive and bolt signals on later.** Rejected: that
   hardens exactly the consumer shape the strategy is inverting.
 - **Plain TypeScript types instead of Zod.** Rejected: the contract is a trust
   boundary (it validates third-party API input and prevents web↔api drift); Zod is
-  the playbook standard for DTOs (§2).
+  the playbook standard for DTOs (section 2).

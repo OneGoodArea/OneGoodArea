@@ -211,7 +211,7 @@ function Hero({ total, months, latestDate }: { total: number; months: number; la
   );
 }
 
-/* ─────── § 01 — This month (DARK, collapsible, open by default) ─────── */
+/* ─────── 01 — This month (DARK, collapsible, open by default) ─────── */
 
 function SectionLatest({ month }: { month: Month }) {
   return (
@@ -238,7 +238,7 @@ function SectionLatest({ month }: { month: Month }) {
   );
 }
 
-/* ─────── § 02 — Earlier (cream timeline, all collapsed by default) ─────── */
+/* ─────── 02 — Earlier (cream timeline, all collapsed by default) ─────── */
 
 function SectionArchive({ months }: { months: Month[] }) {
   return (

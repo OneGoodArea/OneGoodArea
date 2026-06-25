@@ -16,7 +16,7 @@ import "./monitor.css";
 
    Pattern parity w/ /products/{signals,scores}, Monitor-specific
    bespoke illustrations + content. Source of truth:
-   docs/DESIGN/AR-204-product-pages-spec-pack.md §3.
+   docs/DESIGN/AR-204-product-pages-spec-pack.md section 3.
 
    Hard rules: no em dashes in user-facing copy; no `aiq_`; no fake
    links; prebaked specimen is illustrative not live (see foot note +
@@ -204,7 +204,7 @@ export default function ProductMonitorClient() {
 }
 
 /* ============================================================
-   § 01 — Live specimen (DARK) — ChangeReport for a demo portfolio
+   01 — Live specimen (DARK) — ChangeReport for a demo portfolio
    ============================================================ */
 
 function SectionSpecimen() {
@@ -538,7 +538,7 @@ function JsonReport({
 }
 
 /* ============================================================
-   § 02 — What gets watched (cream) — signals Monitor diffs
+   02 — What gets watched (cream) — signals Monitor diffs
    ============================================================ */
 
 type WatchCard = {
@@ -697,7 +697,7 @@ function VizDerivedYoy() {
 }
 
 /* ============================================================
-   § 03 — Pipeline (DARK)
+   03 — Pipeline (DARK)
    ============================================================ */
 
 function SectionPipeline() {
@@ -837,7 +837,7 @@ function MonitorPipelineSvg() {
 }
 
 /* ============================================================
-   § 04 — Endpoints (cream) — tabbed panel
+   04 — Endpoints (cream) — tabbed panel
    ============================================================ */
 
 type Param = { name: string; type: string; required: boolean; desc: string };
@@ -938,7 +938,7 @@ const EPS: Endpoint[] = [
    Per-product variation = title + sub + EPS data. */
 
 /* ============================================================
-   § 05 — Built for (cream) — 5 ICPs, InsureTech leads
+   05 — Built for (cream) — 5 ICPs, InsureTech leads
    ============================================================ */
 
 type Icp = {

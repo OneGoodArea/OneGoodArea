@@ -8,7 +8,7 @@
    - If existing account -> password-only sign-in form (NextAuth credentials)
    - If new account -> password + GDPR consent -> register -> auto-
      signin -> /welcome (AR-253: dropped the "check your email" verify
-     gate per proposal §2 "verification REQUIRED to write data but NOT
+     gate per proposal section 2 "verification REQUIRED to write data but NOT
      required to enter the dashboard". Verification email still sends
      in background; the reminder + resend live on /welcome.)
    - NO OAuth buttons (proposal lock — email + password only for v1)
@@ -219,12 +219,12 @@ function GetStartedForm() {
       }
 
       /* AR-253: auto-signin immediately after register so the user
-         lands in /welcome with a session. Proposal §2 explicitly
+         lands in /welcome with a session. Proposal section 2 explicitly
          drops the email-verify gate at this step — verification is
          only required to write data, not to enter the dashboard. The
          verification email still sends in background; the reminder
          + resend live on /welcome. The credentials provider doesn't
-         gate on email_verified (apps/web/src/lib/auth.ts §authorize),
+         gate on email_verified (apps/web/src/lib/auth.ts authorize),
          so this signIn succeeds for a freshly-registered user.
 
          If signIn fails (shouldn't happen — we just wrote the row

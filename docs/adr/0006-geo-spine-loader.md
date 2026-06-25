@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-25
-- **Context refs:** ADR 0002 (schema), ADR 0003 (store-writer); MASTER §3 (ONS verdict); AR-171.
+- **Context refs:** ADR 0002 (schema), ADR 0003 (store-writer); MASTER section 3 (ONS verdict); AR-171.
 
 ## Context
 

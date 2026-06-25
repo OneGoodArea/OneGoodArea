@@ -72,7 +72,7 @@ function Hero() {
 }
 
 /* ============================================================
-   § 01 — The problem
+   01 — The problem
    ============================================================ */
 
 function SectionProblem() {
@@ -125,7 +125,7 @@ function SectionProblem() {
 }
 
 /* ============================================================
-   § 02 — How it fits (DARK)
+   02 — How it fits (DARK)
    ============================================================ */
 
 type FlowStep = {
@@ -242,7 +242,7 @@ function SectionFlow() {
 }
 
 /* ============================================================
-   § 03 — Products you reach for (cream)
+   03 — Products you reach for (cream)
    ============================================================ */
 
 type ProductUse = {
@@ -321,7 +321,7 @@ function SectionProducts() {
             <article key={p.slug} className="oga-icp-product">
               <div>
                 <header className="oga-icp-product__head">
-                  <span className="oga-icp-product__num">§ {p.num}</span>
+                  <span className="oga-icp-product__num">{p.num}</span>
                   <h3 className="oga-icp-product__name">{p.name}</h3>
                   <Link
                     href={`/products/${p.slug}`}
@@ -342,7 +342,7 @@ function SectionProducts() {
 }
 
 /* ============================================================
-   § 04 — What you can defend (cream-quiet)
+   04 — What you can defend (cream-quiet)
    ============================================================ */
 
 type DefendCard = {
@@ -406,7 +406,7 @@ function SectionDefend() {
         <div className="oga-icp-defend__grid">
           {DEFEND.map((d) => (
             <article key={d.num} className="oga-icp-defend-card">
-              <span className="oga-icp-defend-card__num">§ {d.num}</span>
+              <span className="oga-icp-defend-card__num">{d.num}</span>
               <h3 className="oga-icp-defend-card__title">{d.title}</h3>
               <p className="oga-icp-defend-card__body">{d.body}</p>
             </article>
@@ -418,7 +418,7 @@ function SectionDefend() {
 }
 
 /* ============================================================
-   § 05 — FAQs (DARK)
+   05 — FAQs (DARK)
    ============================================================ */
 
 type Faq = { q: string; a: string };

@@ -18,11 +18,11 @@ import "./area-slug.css";
 
    Section flow (matches /about altitude):
      Hero                  -- cream, text-only, 2-CTA row
-     § 01 Overall score    -- cream-quiet, editorial split (H2 + prose | ring)
-     § 02 By the dimensions -- DARK, 3-col card grid (mirrors /about's principles)
-     § 03 Score by intent   -- cream, prose + 4-up stat strip (mirrors /about's STATS)
-     § 04 Inside the report -- cream-quiet, single editorial teaser card
-     § 05 Get the report    -- DARK CTA (mirrors /about's "Talk to us")
+     01 Overall score    -- cream-quiet, editorial split (H2 + prose | ring)
+     02 By the dimensions -- DARK, 3-col card grid (mirrors /about's principles)
+     03 Score by intent   -- cream, prose + 4-up stat strip (mirrors /about's STATS)
+     04 Inside the report -- cream-quiet, single editorial teaser card
+     05 Get the report    -- DARK CTA (mirrors /about's "Talk to us")
      Related                -- cream, restrained grid
 */
 
@@ -91,16 +91,16 @@ export default function AreaClient({ slug, area, related }: {
         </div>
       </section>
 
-      {/* § 01 — BY THE DIMENSIONS (DARK) -------------------------- */}
+      {/* 01 — BY THE DIMENSIONS (DARK) -------------------------- */}
       <Dimensions area={area} />
 
-      {/* § 02 — SCORE BY INTENT (cream) --------------------------- */}
+      {/* 02 — SCORE BY INTENT (cream) --------------------------- */}
       <Intents area={area} />
 
-      {/* § 03 — INSIDE THE FULL REPORT (cream-quiet) -------------- */}
+      {/* 03 — INSIDE THE FULL REPORT (cream-quiet) -------------- */}
       <LockedTeaser area={area} />
 
-      {/* § 04 — CLOSING CTA (DARK) -------------------------------- */}
+      {/* 04 — CLOSING CTA (DARK) -------------------------------- */}
       <ClosingCta area={area} signupHref={signupHref} />
 
       {/* Related -------------------------------------------------- */}
@@ -175,7 +175,7 @@ function HeroScoreRing({ score }: { score: number }) {
 }
 
 /* ============================================================
-   § 01 — By the dimensions (DARK, 3-col card grid)
+   01 — By the dimensions (DARK, 3-col card grid)
    ============================================================ */
 function Dimensions({ area }: { area: AreaData }) {
   return (
@@ -263,7 +263,7 @@ function DimensionViz({ score }: { score: number }) {
 }
 
 /* ============================================================
-   § 03 — Score by intent (cream, prose + 4-up stat strip)
+   03 — Score by intent (cream, prose + 4-up stat strip)
    ============================================================ */
 function Intents({ area }: { area: AreaData }) {
   return (
@@ -308,7 +308,7 @@ function Intents({ area }: { area: AreaData }) {
 }
 
 /* ============================================================
-   § 04 — Inside the full report (cream-quiet, single teaser card)
+   04 — Inside the full report (cream-quiet, single teaser card)
    ============================================================ */
 function LockedTeaser({ area }: { area: AreaData }) {
   return (
@@ -383,7 +383,7 @@ function LockIcon() {
 }
 
 /* ============================================================
-   § 05 — Closing CTA (DARK)
+   05 — Closing CTA (DARK)
    ============================================================ */
 function ClosingCta({ area, signupHref }: { area: AreaData; signupHref: string }) {
   return (

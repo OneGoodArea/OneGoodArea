@@ -11,7 +11,7 @@ Phrase-search map. Find your question on the left; the doc on the right has the 
 | How do I run the gates (test/typecheck/lint)? | [`OPERATIONS/LOCAL-SETUP.md`](../OPERATIONS/LOCAL-SETUP.md) |
 | How do I run a migration? | [`OPERATIONS/DATABASE-MIGRATIONS.md`](../OPERATIONS/DATABASE-MIGRATIONS.md) |
 | How do I refresh signal data? | [`OPERATIONS/SIGNAL-REFRESH.md`](../OPERATIONS/SIGNAL-REFRESH.md) |
-| How do I run the AI eval harness? | [`ARCHITECTURE/QUERY-PLANE.md`](../ARCHITECTURE/QUERY-PLANE.md) §AI eval harness |
+| How do I run the AI eval harness? | [`ARCHITECTURE/QUERY-PLANE.md`](../ARCHITECTURE/QUERY-PLANE.md) AI eval harness |
 
 ## Architecture + understanding the system
 
@@ -77,7 +77,7 @@ Phrase-search map. Find your question on the left; the doc on the right has the 
 | Question | Doc |
 |---|---|
 | What's the active design brief? | [`DESIGN/AR-204-app-redesign.md`](../DESIGN/AR-204-app-redesign.md) |
-| Where are AR-204 locked decisions? | [`DESIGN/AR-204-app-redesign.md`](../DESIGN/AR-204-app-redesign.md) §6-§11 |
+| Where are AR-204 locked decisions? | [`DESIGN/AR-204-app-redesign.md`](../DESIGN/AR-204-app-redesign.md) section 6-section 11 |
 | What's the methodology / docs reskin context? | [`DESIGN/AR-204-methodology-docs-delta.md`](../DESIGN/AR-204-methodology-docs-delta.md) |
 | What's the product-pages spec pack? | [`DESIGN/AR-204-product-pages-spec-pack.md`](../DESIGN/AR-204-product-pages-spec-pack.md) |
 

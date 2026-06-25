@@ -11,7 +11,7 @@
    This is the highest-leverage move in the whole restructure: the time-series
    corpus is un-backfillable and is the fuel for change detection (Monitor),
    anomaly + calibration + forecasting (trainable models), and the moat itself
-   (MASTER §3/§6). Every month not appended is a month that can't be recovered.
+   (MASTER section 3/section 6). Every month not appended is a month that can't be recovered.
    See ADR 0010. */
 
 import { query as defaultQuery } from "../../../infrastructure/db/client";

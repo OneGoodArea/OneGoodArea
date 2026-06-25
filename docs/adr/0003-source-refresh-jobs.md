@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-25
-- **Context refs:** ADR 0002 (the store schema); `MASTER-PROPOSAL.md` §3; Jira AR-171.
+- **Context refs:** ADR 0002 (the store schema); `MASTER-PROPOSAL.md` section 3; Jira AR-171.
 
 ## Context
 

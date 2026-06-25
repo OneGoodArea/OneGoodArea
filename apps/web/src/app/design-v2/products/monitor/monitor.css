@@ -23,7 +23,7 @@
    _shared/product-hero.{tsx,css} in AR-211. */
 
 /* ============================================================
-   § 01 — Live specimen (DARK) — portfolio + change detection
+   01 — Live specimen (DARK) — portfolio + change detection
    ============================================================ */
 
 .oga-mon-spec {
@@ -548,7 +548,7 @@
 }
 
 /* ============================================================
-   § 02 — What gets watched (cream) — signals Monitor diffs
+   02 — What gets watched (cream) — signals Monitor diffs
    ============================================================ */
 
 .oga-mon-watch {
@@ -646,7 +646,7 @@
 }
 
 /* ============================================================
-   § 03 — Pipeline (DARK)
+   03 — Pipeline (DARK)
    ============================================================ */
 
 .oga-mon-pipe {

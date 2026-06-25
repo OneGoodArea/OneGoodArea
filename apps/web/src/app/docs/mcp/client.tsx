@@ -109,7 +109,7 @@ function Hero() {
   );
 }
 
-/* ─────── § 01 — Install ─────── */
+/* ─────── 01 — Install ─────── */
 
 function SectionInstall() {
   return (
@@ -202,7 +202,7 @@ function McpCodePanel({ tag, code }: { tag: string; code: string }) {
   );
 }
 
-/* ─────── § 02 — Tools ─────── */
+/* ─────── 02 — Tools ─────── */
 
 function SectionTools() {
   return (
@@ -241,7 +241,7 @@ function SectionTools() {
   );
 }
 
-/* ─────── § 03 — Local development ─────── */
+/* ─────── 03 — Local development ─────── */
 
 function SectionDev() {
   return (
@@ -288,7 +288,7 @@ function SectionDev() {
   );
 }
 
-/* ─────── § 04 — Plans pointer ─────── */
+/* ─────── 04 — Plans pointer ─────── */
 
 function SectionPlans() {
   return (

@@ -20,7 +20,7 @@ import "./scores.css";
 
    Pattern parity with /products/signals but Scores-specific visual
    treatment per section. Source of truth:
-   docs/DESIGN/AR-204-product-pages-spec-pack.md §2.
+   docs/DESIGN/AR-204-product-pages-spec-pack.md section 2.
 
    Every claim traces to ADR 0008 (Scores v3) / 0030 (custom presets) /
    0031 (methodology pinning) or apps/api code. Pre-baked specimen w/
@@ -157,7 +157,7 @@ export default function ProductScoresClient() {
 }
 
 /* ============================================================
-   § 01 — Live specimen (DARK) — postcode × preset → score
+   01 — Live specimen (DARK) — postcode × preset → score
    ============================================================ */
 
 function SectionSpecimen() {
@@ -410,7 +410,7 @@ function JsonScore({
 }
 
 /* ============================================================
-   § 02 — The four presets (cream) — 4 columns × 5 dims
+   02 — The four presets (cream) — 4 columns × 5 dims
    ============================================================ */
 
 /* The four preset cards are now sourced from lib/scoring-profiles —
@@ -468,7 +468,7 @@ function SectionPresets() {
    shared with the /welcome onboarding intent picker. AR-251. */
 
 /* ============================================================
-   § 03 — Anatomy / pipeline (DARK)
+   03 — Anatomy / pipeline (DARK)
    ============================================================ */
 
 function SectionAnatomy() {
@@ -619,7 +619,7 @@ function PipelineSvg() {
 }
 
 /* ============================================================
-   § 04 — Endpoints (cream) — POST /v1/score · /presets
+   04 — Endpoints (cream) — POST /v1/score · /presets
    ============================================================ */
 
 type Param = { name: string; type: string; required: boolean; desc: string };
@@ -685,7 +685,7 @@ const EPS: Endpoint[] = [
    Per-product variation = title + sub + EPS data. */
 
 /* ============================================================
-   § 05 — Built for (cream) — 5 ICPs, Lender leads
+   05 — Built for (cream) — 5 ICPs, Lender leads
    ============================================================ */
 
 type Icp = {

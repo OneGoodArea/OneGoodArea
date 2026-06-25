@@ -28,7 +28,7 @@ import "./app-shell.css";
 /* AppShell — authenticated-surface chrome.
 
    Sidebar reorganised AR-252 to the four-section sitemap per
-   docs/DESIGN/dashboard-proposal.md §Sitemap:
+   docs/DESIGN/dashboard-proposal.md Sitemap:
 
      Dashboard        — Home / Recent activity
      Products         — Signals / Scores / Monitor / Intelligence

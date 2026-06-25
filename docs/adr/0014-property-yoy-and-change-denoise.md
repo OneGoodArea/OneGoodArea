@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-26
-- **Context refs:** ADR 0011 (prices), 0012 (property store-read), 0013 (change detection); MASTER §4, §7.
+- **Context refs:** ADR 0011 (prices), 0012 (property store-read), 0013 (change detection); MASTER section 4, section 7.
 
 ## Context
 

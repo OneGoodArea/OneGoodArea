@@ -6,11 +6,11 @@
    families in components.css.
 
    Page IA is 5 numbered sections + hero + CTA:
-     § 01 The 4 products            DARK
-     § 02 Levers control plane      cream
-     § 03 Reference + spec          white
-     § 04 Quickstart                DARK
-     § 05 Code examples             cream
+     01 The 4 products            DARK
+     02 Levers control plane      cream
+     03 Reference + spec          white
+     04 Quickstart                DARK
+     05 Code examples             cream
      CTA                            DARK
 
    Pattern matches the merged /methodology + /docs/api-reference +
@@ -231,7 +231,7 @@
 }
 
 /* ============================================================
-   § 01 — The 4 products (DARK)
+   01 — The 4 products (DARK)
    ============================================================ */
 
 .oga-docs-products__grid {
@@ -388,7 +388,7 @@
 }
 
 /* ============================================================
-   § 02 — Levers control plane (cream)
+   02 — Levers control plane (cream)
    ============================================================ */
 
 .oga-docs-levers__intro {
@@ -474,7 +474,7 @@
 }
 
 /* ============================================================
-   § 03 — Reference + spec (white)
+   03 — Reference + spec (white)
    ============================================================ */
 
 .oga-docs-ref__grid {
@@ -587,7 +587,7 @@
 }
 
 /* ============================================================
-   § 04 — Quickstart (DARK)
+   04 — Quickstart (DARK)
    ============================================================ */
 
 .oga-docs-qs__steps {
@@ -636,7 +636,7 @@
   margin: 0;
 }
 
-/* Code panel dark-surface override — § 04 sits on graphite. The
+/* Code panel dark-surface override — 04 sits on graphite. The
    global .oga-code-panel chrome is cream-tuned; we override the
    shell colours here so the panel reads on dark without losing
    the corner-tick + line-number aesthetic. */
@@ -660,7 +660,7 @@
 }
 
 /* ============================================================
-   § 05 — Code examples (cream, tabbed)
+   05 — Code examples (cream, tabbed)
    ============================================================ */
 
 .oga-docs-ex__tabs {

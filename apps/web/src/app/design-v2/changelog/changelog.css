@@ -177,7 +177,7 @@
 }
 
 /* ============================================================
-   § 01 — Timeline (all months collapsible)
+   01 — Timeline (all months collapsible)
    ============================================================ */
 
 .oga-changelog-archive__list {
@@ -373,7 +373,7 @@
 }
 .oga-changelog-badge--improvement::before { background: var(--oga-status-amber); }
 
-/* Dark-surface badge variants — § 01 "This month" punctuates with
+/* Dark-surface badge variants — 01 "This month" punctuates with
    .oga-section-dark. Token overrides on [data-oga-surface="dark"]
    handle most colours; badges need explicit overrides because
    .oga-ink-06 etc are literal-color rules. */
@@ -395,7 +395,7 @@
 }
 [data-oga-surface="dark"] .oga-changelog-badge--improvement::before { background: #F0B270; }
 
-/* MonthBlock on dark surface — § 01 "This month".
+/* MonthBlock on dark surface — 01 "This month".
    The node dot's outer ring uses var(--oga-canvas) which is the
    light cream — wrong on dark. Toggle border and glyph use named
    borders that adapt via --oga-border, but the node-dot needs an

@@ -7,7 +7,7 @@
    these fetchers too; signals just exposes their output as the primitive.
 
    v1 is live-fetch per request (meta.fetch_mode = "live"). When the persisted
-   signal store lands (MASTER §3, Phase 1) this function reads the store instead
+   signal store lands (MASTER section 3, Phase 1) this function reads the store instead
    and flips fetch_mode to "store" — the response shape is unchanged, so callers
    never break.
 

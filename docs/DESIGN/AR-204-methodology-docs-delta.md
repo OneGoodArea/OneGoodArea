@@ -80,71 +80,71 @@ Proposed new IA:
 Hero: "How OneGoodArea computes a UK area's signals, scores, and trends."
        (Eyebrow: Methodology · v2.0.2)
 
-§ 1  What we mean by "Signal"
+1  What we mean by "Signal"
        — the public primitive, value | normalized_value | percentile | confidence,
          lineage stamps (source_snapshot_id + engine_version), null-with-reason
 
-§ 2  Where the data comes from   [the "7 sources" section — only here, never on marketing]
+2  Where the data comes from   [the "7 sources" section — only here, never on marketing]
        — IMD 2025 (England), WIMD 2019 (Wales), SIMD 2020 (Scotland), Land Registry PPD (E&W),
          Police.uk bulk archive, Postcodes.io for geocoding, Ofsted (England),
          Environment Agency (live), OpenStreetMap (live amenity counts via Overpass)
        — per source: cadence, grain, coverage, refresh job, last refresh
 
-§ 3  How we store it
+3  How we store it
        — the signal store (geo_entities, geo_lookup, source_snapshots, signals,
          signal_values, signal_percentiles, signal_timeseries)
        — read-through, hybrid fetch_mode, live fallback
        — refresh jobs are deploy/cron, never request-path
 
-§ 4  Normalization
+4  Normalization
        — PERCENT_RANK() per scope (today: national-within-country)
        — direction-agnostic normalized_value 0-1; percentile 0-100
        — IMD/WIMD/SIMD never compared across the border
 
-§ 5  Time-series — the moat
+5  Time-series — the moat
        — append-only, immutable per observed_period
        — 24 months of prices × 35,606 LSOAs; 12+ months of crime
        — corrections surface as the next period's value, never overwrite history
 
-§ 6  Derived signals
+6  Derived signals
        — YoY (count-weighted calendar year), rolling-12 YoY, 6m momentum,
          24m trend slope, peer-relative z
        — each: methodology, window, minObservations, what it's null on
 
-§ 7  Scoring (the four presets)
+7  Scoring (the four presets)
        — moving / business / investing / research
        — 5 dimensions per preset, deterministic, weights re-aggregated outside the frozen v2 engine
        — preset + custom weights + preset_id (saved org preset)
        — confidence per dimension + aggregate
 
-§ 8  Peers, insights, forecasts
+8  Peers, insights, forecasts
        — peers: k-NN, Euclidean over normalized, default k=20, min 3 overlapping dims
        — insights: rank LSOAs by |peer-relative z|
        — forecast: linear regression over signal_timeseries window; NOT a learned model
 
-§ 9  The Intelligence query plane
+9  The Intelligence query plane
        — 6 plan ops, typed JSON grammar
        — programmatic {plan} skips the LLM; NL {question} routes through the planner
        — measured: 92.9% on a 14-case curated corpus
 
-§ 10 Confidence
+10 Confidence
        — per-signal confidence rubric (HIGH/MEDIUM/LOW/NONE) for /v1/report
        — sample-size gating on monitor change detection (default min 8 transactions)
        — eval-measured for the planner
 
-§ 11 Reproducibility + methodology versioning
+11 Reproducibility + methodology versioning
        — engine_version stamped on every response (body + X-Engine-Version header)
        — METHODOLOGY_VERSIONS registry + supported set
        — Levers: per-org methodology pinning (owner-only)
        — semver convention (MAJOR/MINOR/PATCH)
 
-§ 12 Scope + limitations
+12 Scope + limitations
        — NOT an AVM, NOT credit decisioning, NOT individual-property
        — LSOA/postcode grain today; address-level (UPRN) on roadmap (AR-134)
        — MAUP + ecological fallacy disclosures
        — fair-lending caveat (FCA/CONC/SS1-23)
 
-§ 13 What we publish for audit
+13 What we publish for audit
        — public methodology page (this), public changelog, OpenAPI spec, ADR repo, eval harness
 ```
 
@@ -175,26 +175,26 @@ The page treats /v1/report as the API. It needs to be re-positioned as the **lan
 ```
 Hero: "Build on UK area intelligence."
 
-§ 1 — Pick your surface
+1 — Pick your surface
    Signals     — typed catalog of area signals      → /docs/signals
    Scores      — deterministic composite scoring    → /docs/scores
    Monitor     — portfolios + change detection      → /docs/monitor
    Intelligence — typed query plane + NL planner    → /docs/intelligence
 
-§ 2 — Levers (multi-tenant admin)
+2 — Levers (multi-tenant admin)
    orgs, bundles, presets, methodology pinning, cohorts, RBAC, white-label → /docs/levers
 
-§ 3 — Reference
+3 — Reference
    OpenAPI 3.0 interactive reference                → /docs/api-reference
    MCP server (Claude Desktop, Cursor, …)            → /docs/mcp
    Webhooks                                          → /docs/webhooks
    Authentication + key management                   → /docs/auth
    Changelog                                         → /changelog
 
-§ 4 — Quickstart
+4 — Quickstart
    "Sign up → get an oga_ key → call /v1/area" (3 steps)
 
-§ 5 — Code examples
+5 — Code examples
    cURL, Node, Python, Go (pinned to /v1/area as the simplest example)
 ```
 
@@ -366,7 +366,7 @@ These are blocking — different answers produce very different work:
 The Levers epic (orgs, bundles, presets, methodology pinning, cohorts, RBAC, white-label, IP allowlist) is fully shipped on main. Two questions:
 - (a) Is there a public `/docs/levers` page? Or is Levers exposed only to org admins via dashboard + sales conversations?
 - (b) Methodology pinning specifically is a regulator-facing audit feature — buyers will want to read about it. Where does that live: on `/methodology` (under the versioning section) or on `/docs/levers`?
-- **Recommendation:** methodology pinning gets a section on `/methodology` (§11 Reproducibility). The rest of Levers gets a single `/docs/levers` page in this workstream. RBAC + IP allowlist + white-label go on the same page.
+- **Recommendation:** methodology pinning gets a section on `/methodology` (section 11 Reproducibility). The rest of Levers gets a single `/docs/levers` page in this workstream. RBAC + IP allowlist + white-label go on the same page.
 
 ### D5 — `/docs/mcp` pricing table: verify or remove?
 

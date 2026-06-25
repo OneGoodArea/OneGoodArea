@@ -4,10 +4,10 @@
 
    Section flow:
      Hero               -- cream
-     § 01 Why we exist   -- cream-quiet
-     § 02 What we believe -- DARK (uses .oga-section-dark from backgrounds.css)
-     § 03 How it got built -- cream
-     § 04 Talk to us      -- DARK
+     01 Why we exist   -- cream-quiet
+     02 What we believe -- DARK (uses .oga-section-dark from backgrounds.css)
+     03 How it got built -- cream
+     04 Talk to us      -- DARK
 */
 
 /* ============================================================
@@ -78,7 +78,7 @@
 }
 
 /* ============================================================
-   § 01 — WHY WE EXIST (cream-quiet)
+   01 — WHY WE EXIST (cream-quiet)
    ============================================================ */
 .oga-about-why {
   padding: clamp(56px, 8vw, 112px) 24px;
@@ -117,7 +117,7 @@
 }
 
 /* ============================================================
-   § 02 — WHAT WE BELIEVE (DARK)
+   02 — WHAT WE BELIEVE (DARK)
    ============================================================ */
 .oga-about-believe {
   padding: clamp(64px, 9vw, 120px) 24px;
@@ -244,7 +244,7 @@
 }
 
 /* ============================================================
-   § 03 — HOW IT GOT BUILT (cream)
+   03 — HOW IT GOT BUILT (cream)
    ============================================================ */
 .oga-about-built {
   background: var(--oga-canvas);
@@ -326,7 +326,7 @@
 }
 
 /* ============================================================
-   § 04 — TALK TO US (DARK CTA)
+   04 — TALK TO US (DARK CTA)
    ============================================================ */
 .oga-about-contact {
   padding: clamp(64px, 9vw, 120px) 24px;

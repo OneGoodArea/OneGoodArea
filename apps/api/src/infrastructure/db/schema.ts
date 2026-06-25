@@ -581,7 +581,7 @@ export const MIGRATIONS: Migration[] = [
      are populated by the Phase 1 refresh jobs, and getAreaProfile flips to
      read them (fetch_mode: "store") in a later sub-task. Nothing here
      touches an existing table (expand-contract). The shape mirrors
-     MASTER-PROPOSAL §3 and the @onegoodarea/contracts Signal/AreaProfile
+     MASTER-PROPOSAL section 3 and the @onegoodarea/contracts Signal/AreaProfile
      primitive. Natural keys + app-level integrity, matching this codebase's
      convention (no FK constraints anywhere above). Mixed-type signal values
      (the contract allows number | string | null) are split into raw_value

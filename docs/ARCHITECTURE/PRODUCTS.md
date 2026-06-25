@@ -50,4 +50,4 @@ Per-org tenancy + configurability that layers across the four products: custom s
 
 - [`DATA-LAYER.md`](./DATA-LAYER.md) — what each product reads underneath
 - [`QUERY-PLANE.md`](./QUERY-PLANE.md) — how the Intelligence layer's typed grammar works
-- [`SYSTEM-OVERVIEW.md`](./SYSTEM-OVERVIEW.md) §3 — the deeper product breakdown with rationale
+- [`SYSTEM-OVERVIEW.md`](./SYSTEM-OVERVIEW.md) section 3 — the deeper product breakdown with rationale

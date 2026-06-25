@@ -1,7 +1,7 @@
 /* Levers (AR-194): unit tests for the orgs module pure helpers.
    Integration tests for the SQL paths are covered by the migration
    verification (ADR 0027) + the live prod proof in this commit's
-   acceptance step (see ADR 0028 §Proven on prod). */
+   acceptance step (see ADR 0028 Proven on prod). */
 
 import { describe, it, expect } from "vitest";
 import { slugify, personalOrgSlug, personalOrgId, hasAtLeastRole, ROLE_RANK } from "@/modules/orgs/index";

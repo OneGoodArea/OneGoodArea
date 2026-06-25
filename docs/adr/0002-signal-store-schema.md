@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-25
-- **Context refs:** `MASTER-PROPOSAL.md` §3; ADR 0001; Jira AR-169 / AR-171.
+- **Context refs:** `MASTER-PROPOSAL.md` section 3; ADR 0001; Jira AR-169 / AR-171.
   Builds on the signal-first contract (`packages/contracts`).
 
 ## Context

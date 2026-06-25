@@ -15,7 +15,7 @@ import "./intelligence.css";
 /* /products/intelligence — AR-204 product page #4 (flagship).
 
    Pattern parity w/ Signals / Scores / Monitor, Intelligence-specific
-   bespoke illustrations + content per spec pack §4.
+   bespoke illustrations + content per spec pack section 4.
 
    The flagship demo: NL question → typed plan emitted → results rendered.
    Drives home the "AI as interface, deterministic SQL as answer" pitch.
@@ -210,7 +210,7 @@ export default function ProductIntelligenceClient() {
 }
 
 /* ============================================================
-   § 01 — Live specimen (DARK) — NL → plan → results
+   01 — Live specimen (DARK) — NL → plan → results
    ============================================================ */
 
 function SectionSpecimen() {
@@ -379,7 +379,7 @@ function SectionSpecimen() {
 }
 
 /* ============================================================
-   § 02 — Six plan ops (cream)
+   02 — Six plan ops (cream)
    ============================================================ */
 
 type Op = {
@@ -587,7 +587,7 @@ function GlyphForecast() {
 }
 
 /* ============================================================
-   § 03 — Pipeline (DARK)
+   03 — Pipeline (DARK)
    ============================================================ */
 
 function SectionPipeline() {
@@ -752,7 +752,7 @@ function IntelligencePipelineSvg() {
 }
 
 /* ============================================================
-   § 04 — Measured accuracy (cream) — 92.9% baseline
+   04 — Measured accuracy (cream) — 92.9% baseline
    ============================================================ */
 
 function SectionEval() {
@@ -823,7 +823,7 @@ function SectionEval() {
 }
 
 /* ============================================================
-   § 05 — Endpoints (cream)
+   05 — Endpoints (cream)
    ============================================================ */
 
 type Param = { name: string; type: string; required: boolean; desc: string };
@@ -923,7 +923,7 @@ const EPS: Endpoint[] = [
    Per-product variation = title + sub + EPS data. */
 
 /* ============================================================
-   § 06 — Built for (cream) — 5 ICPs, CRE leads
+   06 — Built for (cream) — 5 ICPs, CRE leads
    ============================================================ */
 
 type Icp = {

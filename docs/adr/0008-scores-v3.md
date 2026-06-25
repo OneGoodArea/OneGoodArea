@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-26
-- **Context refs:** engine-v2 freeze (`1bb2edd`), ADR 0001; MASTER §2 (Scores product), §8 Phase 3.
+- **Context refs:** engine-v2 freeze (`1bb2edd`), ADR 0001; MASTER section 2 (Scores product), section 8 Phase 3.
 
 ## Context
 

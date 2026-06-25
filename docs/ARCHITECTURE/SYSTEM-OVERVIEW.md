@@ -33,7 +33,7 @@ The old framing — "structured, scored, source-backed area intelligence" — wa
 - **Time-series is real.** Crime: 1.2M monthly rows over 36 months. Property: 35,652 LSOAs × 24 months from HM Land Registry. The **monthly `timeseries:append` cron is the moat clock** — every month un-snapshotted is moat that can never be recovered.
 - **9 derived signals** computed in-DB from the time-series: 3 YoY (price, transaction volume, crime), 2 trend slopes (crime, volume), 2 6m short-horizon momentum signals (price, crime), and 2 peer-relative z-scores (price, crime). Each is queryable through the same `/v1/query` grammar as any raw signal.
 - **Intelligence is a typed query plane**, not a chatbot. The LLM emits a JSON plan that validates against a Zod-strict grammar; the deterministic executor runs it against the DB. The AI never sets numbers — it picks which query to run. Measured accuracy: 92.9%.
-- **4 composable products** rather than one report endpoint. See §3.
+- **4 composable products** rather than one report endpoint. See section 3.
 
 ### What didn't change at the merge
 - The consumer-facing site at `www.onegoodarea.com` still uses `apps/web`'s own DB access path (`src/lib/*`). All the new `apps/api` infrastructure is **behind a `OGA_SIGNALS_API` dark flag** (404 when off) so consumer users see no behaviour change today. The "BFF cutover" — pointing `apps/web` at `apps/api` over HTTP — is a separate, future workstream.
@@ -336,7 +336,7 @@ No new endpoints — both features add columns to existing tables and surface th
 #### Full RBAC (AR-199, ADR 0033)
 
 Cross-cutting refactor (no new endpoints). Promoted `admin` from "exists but ignored" to a real mutator role:
-- **member+**: all GET endpoints in §6.6.
+- **member+**: all GET endpoints in section 6.6.
 - **admin+**: PATCH org, member CRUD (non-owner targets only), bundles, presets, cohorts.
 - **owner-only**: methodology pin PUT/DELETE, granting the `owner` role, removing an `owner` member, last-owner-guard.
 

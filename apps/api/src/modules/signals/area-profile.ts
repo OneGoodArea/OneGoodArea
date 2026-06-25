@@ -15,7 +15,7 @@
    v1 confidence is AVAILABILITY + SAMPLE based and is documented as such on the
    wire: it answers "did we get data, and was the sample adequate", not yet "is
    the value calibrated against outcomes" (the calibrated confidence model lands
-   with the persisted signal store, MASTER §6 Phase 7).
+   with the persisted signal store, MASTER section 6 Phase 7).
 
    Ingestion (the source structs in ./inputs and the fetchers in ./data-sources)
    lives in this module: signals OWNS the data layer. The reports surface imports

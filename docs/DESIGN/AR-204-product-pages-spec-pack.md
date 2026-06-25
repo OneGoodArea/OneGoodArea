@@ -60,7 +60,7 @@ Memory + this spec pack are NOT the source of truth. The code is.
 
 ---
 
-# § 1 — Signals
+# 1 — Signals
 
 ## 1.1 Thesis
 
@@ -243,17 +243,17 @@ Single-signal grammar only on `/v1/areas`. Filters compose as AND across `countr
 
 ## 1.8 Methodology proof
 
-- `/methodology §3` (the persisted signal store) — store-backed percentiles vs live-fetched (ADRs 0002, 0004).
-- `/methodology §5` (Normalisation) — country-scoped percentile rule (ADR 0005). No cross-GB deprivation comparison.
-- `/methodology §6` (ONS geo spine) — LSOA addressability + postcode → LSOA/LAD/region (ADR 0006).
-- `/methodology §10` (time-series + moat clock) — `signal_timeseries` monthly history (ADR 0010), powers derived signals like `property.price_change_pct_yoy` (ADR 0018).
-- `/methodology §11-12` (property store flip) + `§15-16` (crime store flip) — explain hybrid `fetch_mode` (ADRs 0011/0012/0015/0016).
+- `/methodology section 3` (the persisted signal store) — store-backed percentiles vs live-fetched (ADRs 0002, 0004).
+- `/methodology section 5` (Normalisation) — country-scoped percentile rule (ADR 0005). No cross-GB deprivation comparison.
+- `/methodology section 6` (ONS geo spine) — LSOA addressability + postcode → LSOA/LAD/region (ADR 0006).
+- `/methodology section 10` (time-series + moat clock) — `signal_timeseries` monthly history (ADR 0010), powers derived signals like `property.price_change_pct_yoy` (ADR 0018).
+- `/methodology section 11-12` (property store flip) + `section 15-16` (crime store flip) — explain hybrid `fetch_mode` (ADRs 0011/0012/0015/0016).
 
 ## 1.9 Gotchas
 
 1. Do NOT claim every response is served from the store. `fetch_mode` is `live`, `store` or `hybrid` per response.
 2. Do NOT claim postcode-grain addressability. Canonical grain is LSOA (~42k UK areas).
-3. Do NOT enumerate source names on marketing copy (AR-204 §5 rule). Seven categories are public; specific attributions live on `/methodology` and on the `source` field at runtime.
+3. Do NOT enumerate source names on marketing copy (AR-204 section 5 rule). Seven categories are public; specific attributions live on `/methodology` and on the `source` field at runtime.
 4. Do NOT claim live-API-per-request universally — that was v1; three sources are store-backed when LSOA coverage exists.
 5. Do NOT claim Scotland prices. HM Land Registry is E&W only; Scotland LSOAs fall back to live (may have no value).
 6. Do NOT claim Wales/Scotland deprivation store-read parity with England. England IMD 2025 uses 2021 LSOA codes; WIMD 2019 / SIMD 2020 use 2011 codes that store-miss and fall back to live.
@@ -266,7 +266,7 @@ Single-signal grammar only on `/v1/areas`. Filters compose as AND across `countr
 
 ---
 
-# § 2 — Scores
+# 2 — Scores
 
 ## 2.1 Thesis
 
@@ -461,9 +461,9 @@ Levers AR-196 saved scoring presets. 5 endpoints. Validates weight keys against 
 
 ## 2.8 Methodology proof
 
-- `/methodology §7` (Scoring) — 4 preset × 5 dim matrix mirrored from `PRESET_DIMENSION_KEYS`, frozen v2 engine + applyWeights re-aggregation outside engine (ADR 0008).
-- `/methodology §11` (Versioning) — semver, METHODOLOGY_VERSIONS registry, `SUPPORTED_ENGINE_VERSIONS` pin window, header vs body engine_version split (AR-131, ADR 0008).
-- `/methodology §12` (Levers — per-org methodology) — org methodology pin (ADR 0031, AR-197), saved scoring presets (ADR 0030, AR-196), precedence rule.
+- `/methodology section 7` (Scoring) — 4 preset × 5 dim matrix mirrored from `PRESET_DIMENSION_KEYS`, frozen v2 engine + applyWeights re-aggregation outside engine (ADR 0008).
+- `/methodology section 11` (Versioning) — semver, METHODOLOGY_VERSIONS registry, `SUPPORTED_ENGINE_VERSIONS` pin window, header vs body engine_version split (AR-131, ADR 0008).
+- `/methodology section 12` (Levers — per-org methodology) — org methodology pin (ADR 0031, AR-197), saved scoring presets (ADR 0030, AR-196), precedence rule.
 - **ADR 0008** (Scores v3) — canonical primary source.
 - **ADR 0030** (Levers — custom scoring presets) — 5 endpoints + `preset_id` resolution + error codes.
 - **ADR 0031** (Levers — per-org methodology pinning) — GET/PUT/DELETE, precedence, defense-in-depth fallback.
@@ -483,7 +483,7 @@ Levers AR-196 saved scoring presets. 5 endpoints. Validates weight keys against 
 
 ---
 
-# § 3 — Monitor
+# 3 — Monitor
 
 ## 3.1 Thesis
 
@@ -687,7 +687,7 @@ Server-side caps: `CHANGE_AREA_MAX = 100` areas resolved per call. Sample series
 
 ---
 
-# § 4 — Intelligence
+# 4 — Intelligence
 
 ## 4.1 Thesis
 
@@ -881,8 +881,8 @@ Linear time-series projection for ONE signal at ONE LSOA. Linear regression (Pos
 
 ## 4.8 Methodology proof
 
-- `/methodology §9` (Intelligence query plane — 6 plan ops + dual input mode).
-- `/methodology §10` (Confidence — n_observations, r2, residual_stderr, abs_z, n_dims_used surfaced per response).
+- `/methodology section 9` (Intelligence query plane — 6 plan ops + dual input mode).
+- `/methodology section 10` (Confidence — n_observations, r2, residual_stderr, abs_z, n_dims_used surfaced per response).
 - **ADR 0017** — Intelligence v1: typed query plane. Plan grammar IS the API; planner vs executor separation; AiProvider seam; 422 with raw LLM output on invalid plan.
 - **ADR 0019** — Multi-signal compound `rank_areas`. signals[] 1..8, filter operators, AND semantics via INNER JOIN, sort_by refinement. ~70-80% of ICP screening questions unlocked with no new endpoint.
 - **ADR 0023** — `POST /v1/peers` (k-NN over normalised signals). Euclidean dimension-mean-squared, symmetric, bounded `[0,1]`, min_signals HAVING guard.
@@ -910,7 +910,7 @@ Linear time-series projection for ONE signal at ONE LSOA. Linear regression (Pos
 
 ---
 
-# § 5 — Build order
+# 5 — Build order
 
 The 4 product pages depend on shared infrastructure. PR order:
 
@@ -926,7 +926,7 @@ The 4 product pages depend on shared infrastructure. PR order:
 After PR 6 ships:
 - Nav Products mega-menu: 4 disabled "Coming soon" pills flip to real links
 - Footer Products column: same
-- Homepage § 03 product cards: same
-- `/docs` § 01 product cards: optionally add secondary "See product" link
+- Homepage 03 product cards: same
+- `/docs` 01 product cards: optionally add secondary "See product" link
 
 Each PR follows the iteration loop: build → `npm run dev` → Pedro localhost approval → commit → PR + CI → squash-merge.
