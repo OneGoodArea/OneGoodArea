@@ -612,3 +612,189 @@ describe("POST /me/webhooks/:id/rotate-secret", () => {
     expect(mockRotateWebhook).toHaveBeenCalledWith("user_1", "wh_1");
   });
 });
+
+// ── me-score-usage / me-portfolios / me-profile ─────────────────────
+// AR-353 (follow-up to AR-351): cover the three lower-risk endpoints
+// added in AR-343 that were skipped in the first test pass. Read-only
+// or single-field-update, no RBAC gates — but enough behaviour worth
+// pinning (preset bucketing, pagination clamps, intent allowlist).
+
+describe("GET /me/score-usage", () => {
+  it("401s without a session token", async () => {
+    const res = await app.inject({ method: "GET", url: "/me/score-usage" });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("returns the preset breakdown and a total summed from rows", async () => {
+    mockSql.mockResolvedValueOnce([
+      { preset: "core", count: 12 },
+      { preset: "deep", count: 4 },
+      { preset: "unknown", count: 1 },
+    ] as never);
+    const res = await app.inject({ method: "GET", url: "/me/score-usage", headers: SESSION_AUTH });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.window_days).toBe(30);
+    expect(body.total).toBe(17);
+    expect(body.by_preset).toEqual([
+      { preset: "core", count: 12 },
+      { preset: "deep", count: 4 },
+      { preset: "unknown", count: 1 },
+    ]);
+  });
+
+  it("returns zero totals when the caller has no score activity", async () => {
+    mockSql.mockResolvedValueOnce([] as never);
+    const res = await app.inject({ method: "GET", url: "/me/score-usage", headers: SESSION_AUTH });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ window_days: 30, total: 0, by_preset: [] });
+  });
+
+  it("degrades to an empty result (not 500) when the underlying query throws", async () => {
+    mockSql.mockRejectedValueOnce(new Error("db down"));
+    const res = await app.inject({ method: "GET", url: "/me/score-usage", headers: SESSION_AUTH });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ window_days: 30, total: 0, by_preset: [] });
+  });
+});
+
+describe("GET /me/portfolios", () => {
+  it("401s without a session token", async () => {
+    const res = await app.inject({ method: "GET", url: "/me/portfolios" });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("returns an empty page when the caller has no portfolios", async () => {
+    mockSql
+      .mockResolvedValueOnce([{ total: 0 }] as never) // count
+      .mockResolvedValueOnce([] as never);             // portfolios page
+    const res = await app.inject({ method: "GET", url: "/me/portfolios", headers: SESSION_AUTH });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ portfolios: [], total: 0, page: 1, page_size: 20 });
+  });
+
+  it("inline-joins areas and rolls up area_count per portfolio", async () => {
+    mockSql
+      .mockResolvedValueOnce([{ total: 2 }] as never)
+      .mockResolvedValueOnce([
+        { id: "p_1", name: "London", created_at: "2026-01-01", updated_at: "2026-01-02" },
+        { id: "p_2", name: "Manchester", created_at: "2026-01-03", updated_at: "2026-01-03" },
+      ] as never)
+      .mockResolvedValueOnce([
+        { id: "pa_1", portfolio_id: "p_1", area: "SW1A 1AA", label: "Westminster", created_at: "2026-01-01" },
+        { id: "pa_2", portfolio_id: "p_1", area: "EC1A 1BB", label: null, created_at: "2026-01-02" },
+        { id: "pa_3", portfolio_id: "p_2", area: "M1 1AA", label: "City", created_at: "2026-01-03" },
+      ] as never);
+    const res = await app.inject({ method: "GET", url: "/me/portfolios", headers: SESSION_AUTH });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.total).toBe(2);
+    expect(body.portfolios).toHaveLength(2);
+    expect(body.portfolios[0]).toMatchObject({ id: "p_1", area_count: 2 });
+    expect(body.portfolios[0].areas).toHaveLength(2);
+    expect(body.portfolios[1]).toMatchObject({ id: "p_2", area_count: 1 });
+  });
+
+  it("clamps page_size to 100 max and 1 min, and accepts ?q for search", async () => {
+    mockSql
+      .mockResolvedValueOnce([{ total: 0 }] as never)
+      .mockResolvedValueOnce([] as never);
+    const res = await app.inject({ method: "GET", url: "/me/portfolios?page=2&page_size=500&q=lon", headers: SESSION_AUTH });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().page_size).toBe(100);
+    expect(res.json().page).toBe(2);
+  });
+
+  it("falls back to page=1 / page_size=20 on garbage query params", async () => {
+    mockSql
+      .mockResolvedValueOnce([{ total: 0 }] as never)
+      .mockResolvedValueOnce([] as never);
+    const res = await app.inject({ method: "GET", url: "/me/portfolios?page=oops&page_size=-5", headers: SESSION_AUTH });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.page).toBe(1);
+    expect(body.page_size).toBe(1); // -5 clamped to min 1, matching the route's Math.max(1, ...) guard
+  });
+
+  it("degrades to an empty page (not 500) when the count query throws", async () => {
+    mockSql.mockRejectedValueOnce(new Error("db down"));
+    const res = await app.inject({ method: "GET", url: "/me/portfolios", headers: SESSION_AUTH });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ portfolios: [], total: 0, page: 1, page_size: 20 });
+  });
+});
+
+describe("PATCH /me/profile", () => {
+  function patchProfile(body: unknown) {
+    return app.inject({
+      method: "PATCH",
+      url: "/me/profile",
+      headers: { ...SESSION_AUTH, ...JSON_HEADERS },
+      payload: JSON.stringify(body),
+    });
+  }
+
+  it("401s without a session token", async () => {
+    const res = await app.inject({
+      method: "PATCH",
+      url: "/me/profile",
+      headers: JSON_HEADERS,
+      payload: "{}",
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("200s and no-ops on an empty body", async () => {
+    const res = await patchProfile({});
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ ok: true });
+    expect(mockSql).not.toHaveBeenCalled();
+  });
+
+  it("200s and no-ops on intents=null (the welcome-flow skippable case)", async () => {
+    const res = await patchProfile({ intents: null });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ ok: true });
+    expect(mockSql).not.toHaveBeenCalled();
+  });
+
+  it("400s when intents is not an array", async () => {
+    const res = await patchProfile({ intents: "moving" });
+    expect(res.statusCode).toBe(400);
+    expect(mockSql).not.toHaveBeenCalled();
+  });
+
+  it("400s on an unknown intent slug", async () => {
+    const res = await patchProfile({ intents: ["moving", "vibing"] });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error).toContain("vibing");
+    expect(mockSql).not.toHaveBeenCalled();
+  });
+
+  it("400s when an intents entry is not a string", async () => {
+    const res = await patchProfile({ intents: ["moving", 42] });
+    expect(res.statusCode).toBe(400);
+    expect(mockSql).not.toHaveBeenCalled();
+  });
+
+  it("writes the dedup'd CSV on the happy path", async () => {
+    mockSql.mockResolvedValueOnce([] as never);
+    const res = await patchProfile({ intents: ["moving", "investing", "moving"] });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ ok: true });
+    expect(mockSql).toHaveBeenCalledTimes(1);
+    /* The route uses a tagged template — assert on the parameter array
+       that follows the strings array. The CSV preserves order of first
+       appearance and drops the duplicate. */
+    const callArgs = mockSql.mock.calls[0] as unknown[];
+    expect(callArgs[1]).toBe("moving,investing");
+    expect(callArgs[2]).toBe("user_1");
+  });
+
+  it("accepts an empty intents array and skips the UPDATE", async () => {
+    const res = await patchProfile({ intents: [] });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ ok: true });
+    expect(mockSql).not.toHaveBeenCalled();
+  });
+});
