@@ -53,6 +53,7 @@ export default function McpDocsClient() {
     <div className="oga-root oga-mcp">
       <Nav />
 
+      <RebuildBanner />
       <Hero />
       <SectionInstall />
       <SectionTools />
@@ -61,6 +62,27 @@ export default function McpDocsClient() {
 
       <FinalCta />
       <Footer />
+    </div>
+  );
+}
+
+/* Rebuild banner — top-of-page disclosure.
+   Honest signal that this page describes the live server today, and
+   that a rebuild is in flight that will change shape. Commits to a
+   channel (this page) for migration notes, not to a date.
+   AR-357 (epic AR-354). */
+function RebuildBanner() {
+  return (
+    <div className="oga-mcp-banner" role="note" aria-label="MCP rebuild notice">
+      <div className="oga-mcp-banner__inner">
+        <span className="oga-mcp-banner__dot" aria-hidden />
+        <span className="oga-mcp-banner__label">Heads up</span>
+        <span className="oga-mcp-banner__sep" aria-hidden />
+        <p className="oga-mcp-banner__text">
+          The MCP server is being rebuilt. The install steps and tools below describe the server we
+          ship today. When the rebuild lands, migration notes will land here.
+        </p>
+      </div>
     </div>
   );
 }

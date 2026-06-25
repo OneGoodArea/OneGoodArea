@@ -524,3 +524,56 @@
   justify-content: center;
   gap: var(--oga-3);
 }
+
+/* ============================================================
+   Rebuild banner — top-of-page disclosure (AR-357)
+   ============================================================ */
+
+.oga-mcp-banner {
+  background: var(--oga-ink-04);
+  border-bottom: 1px solid var(--oga-ink-08, var(--oga-ink-06));
+  padding: var(--oga-4) clamp(20px, 4vw, var(--oga-7));
+}
+
+.oga-mcp-banner__inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--oga-3);
+  flex-wrap: wrap;
+}
+
+.oga-mcp-banner__dot {
+  width: 6px; height: 6px;
+  background: var(--oga-fg);
+  border-radius: 50%;
+  flex-shrink: 0;
+  opacity: 0.65;
+}
+
+.oga-mcp-banner__label {
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg);
+  flex-shrink: 0;
+}
+
+.oga-mcp-banner__sep {
+  width: 4px; height: 4px;
+  background: var(--oga-fg-muted);
+  border-radius: 50%;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.oga-mcp-banner__text {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+  margin: 0;
+  flex: 1 1 240px;
+}
