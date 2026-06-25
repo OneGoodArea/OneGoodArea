@@ -1,31 +1,24 @@
 /* AR-251 [AR-248-D / -E] POST /api/onboarding/complete
-   --------------------------------------------
+
    Called at the end of the /welcome flow (Finish button on Step 3).
-   Persists the accumulated state in one atomic request:
-   - intent: writes users.intent (column shipped AR-218)
-   - workspace_name: provisions an org with that name via the existing
-     /v1/orgs POST endpoint (BFF forwards as the signed-in user)
+   Coordinates two apps/api calls in one request:
+   - PATCH /me/profile with intents (writes users.intent)
+   - POST  /v1/orgs with workspace_name (provisions an org owned by the caller)
 
    Both fields are optional. Skipping a step leaves the corresponding
-   field null/absent in the request, and the endpoint just doesn't
-   write that piece. Tolerant by design so the user can hit Finish
-   from any partial state and still land in /dashboard cleanly.
+   action skipped. Tolerant by design — partial Finish from any state
+   still lands the user in /dashboard cleanly.
 
-   Returns 200 with {ok: true} on success; user is then redirected
-   client-side to /dashboard. */
+   AR-346 (epic AR-343): the inline UPDATE users SET intent ... was
+   replaced with a apps/api PATCH /me/profile call. Validation (allowed
+   slugs, dedup, csv assembly) now lives on apps/api as the single
+   source of truth. This BFF only forwards the array; apps/api rejects
+   unknown slugs with 400. */
 
 import { NextRequest, NextResponse } from "next/server";
-import { sql } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { callApi } from "@/lib/server/api-client";
 import { logger } from "@/lib/logger";
-
-const ALLOWED_INTENTS = new Set([
-  "moving",
-  "business",
-  "investing",
-  "research",
-]);
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -45,58 +38,26 @@ export async function POST(req: NextRequest) {
     workspace_name?: unknown;
   };
 
-  /* Validate intents — accept an array of canonical slugs. Each must
-     be one of the four allowed values. Empty array = no intent
-     persisted (skippable). Stored as comma-separated TEXT in
-     users.intent (column shape from AR-218) — schema migration to
-     TEXT[] is a follow-up. */
-  let intentCsv: string | null = null;
+  /* Step 1: persist intents via apps/api. Forward the array as-is;
+     apps/api validates each slug and rejects with 400 on bad input. */
   if (body.intents !== undefined && body.intents !== null) {
-    if (!Array.isArray(body.intents)) {
-      return NextResponse.json(
-        { error: "intents must be an array." },
-        { status: 400 },
-      );
-    }
-    const validated: string[] = [];
-    for (const slug of body.intents) {
-      if (typeof slug !== "string" || !ALLOWED_INTENTS.has(slug)) {
-        return NextResponse.json(
-          { error: `Invalid intent slug: ${String(slug)}` },
-          { status: 400 },
-        );
-      }
-      if (!validated.includes(slug)) validated.push(slug);
-    }
-    if (validated.length > 0) {
-      intentCsv = validated.join(",");
-    }
-  }
-
-  /* Validate workspace name — optional but if present must be non-
-     empty + length-capped to keep DB rows sane. */
-  let workspaceName: string | null = null;
-  if (body.workspace_name !== undefined && body.workspace_name !== null) {
-    if (typeof body.workspace_name !== "string") {
-      return NextResponse.json(
-        { error: "Invalid workspace name." },
-        { status: 400 },
-      );
-    }
-    const trimmed = body.workspace_name.trim();
-    if (trimmed.length > 0 && trimmed.length <= 80) {
-      workspaceName = trimmed;
-    }
-  }
-
-  /* Step 1: persist intent (comma-separated multi-select). */
-  if (intentCsv !== null) {
     try {
-      await sql`
-        UPDATE users SET intent = ${intentCsv} WHERE id = ${session.user.id}
-      `;
+      const profileRes = await callApi<{ ok: true } | { error: string }>(
+        "/me/profile",
+        {
+          userId: session.user.id,
+          method: "PATCH",
+          body: { intents: body.intents },
+        },
+      );
+      if (!profileRes.ok) {
+        /* 400 from apps/api = invalid intent slug. Surface to the UI
+           with the same message so the welcome step can correct it. */
+        const error = (profileRes.data as { error?: string })?.error ?? "Couldn't save your intent. Try again.";
+        return NextResponse.json({ error }, { status: profileRes.status });
+      }
     } catch (e) {
-      logger.error("Failed to persist users.intent during onboarding:", e);
+      logger.error("Failed to PATCH /me/profile during onboarding:", e);
       return NextResponse.json(
         { error: "Couldn't save your intent. Try again." },
         { status: 500 },
@@ -104,10 +65,20 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  /* Step 2: provision org via BFF. The /v1/orgs POST endpoint owns
-     org creation + assigning the caller as owner. If the user already
-     has an org with this name we just continue — the BFF returns the
-     existing row. */
+  /* Step 2: provision org via apps/api POST /v1/orgs. Tolerance: 409 (already
+     exists) is treated as success; other 4xx logged but not surfaced (intent
+     already persisted, user proceeds and can rename their org later). */
+  let workspaceName: string | null = null;
+  if (body.workspace_name !== undefined && body.workspace_name !== null) {
+    if (typeof body.workspace_name !== "string") {
+      return NextResponse.json({ error: "Invalid workspace name." }, { status: 400 });
+    }
+    const trimmed = body.workspace_name.trim();
+    if (trimmed.length > 0 && trimmed.length <= 80) {
+      workspaceName = trimmed;
+    }
+  }
+
   if (workspaceName) {
     try {
       const orgRes = await callApi<{ id: string }>("/v1/orgs", {
@@ -115,17 +86,11 @@ export async function POST(req: NextRequest) {
         method: "POST",
         body: { name: workspaceName },
       });
-      /* 200, 201, 409 (already exists) all considered acceptable
-         outcomes — the user proceeds either way. 4xx other than 409
-         signals an input bug we want to surface. */
       if (!orgRes.ok && orgRes.status !== 409) {
         logger.error("Onboarding org creation returned non-ok:", orgRes.status);
-        /* Don't fail the whole flow — intent already persisted. The
-           user can rename / create their org later. */
       }
     } catch (e) {
       logger.error("Failed to provision org during onboarding:", e);
-      /* Same tolerance: log + continue. */
     }
   }
 
