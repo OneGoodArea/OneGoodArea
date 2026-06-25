@@ -110,19 +110,6 @@ const SURFACES: Surface[] = [
     docsHref: "/docs/levers",
     docsReady: false,
   },
-  {
-    num: "06",
-    name: "Reports",
-    count: "3 endpoints",
-    body: "AI-narrated report for one area, bulk batch, list-mine.",
-    endpoints: [
-      { verb: "POST", path: "/v1/report" },
-      { verb: "POST", path: "/v1/batch" },
-      { verb: "GET",  path: "/me/reports" },
-    ],
-    docsHref: "/docs/reports",
-    docsReady: false,
-  },
 ];
 
 /* ───────────────────────────── what you can use today */

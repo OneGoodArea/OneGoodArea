@@ -27,7 +27,6 @@ import "./client.css";
    portfolio summary workers ship; advertising them here before they
    fire would silently leave customers with broken subscriptions. */
 const SUPPORTED_EVENTS = [
-  { id: "report.created",  label: "Report created",  blurb: "A generated area report finished. Fires once per POST /v1/report success." },
   { id: "signal.changed",  label: "Signal changed",  blurb: "A signal in a monitored portfolio crossed a material-change threshold. Fired by Monitor's change detection." },
 ] as const;
 type WebhookEventType = (typeof SUPPORTED_EVENTS)[number]["id"];

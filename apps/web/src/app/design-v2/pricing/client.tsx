@@ -54,7 +54,7 @@ const API_FEATURES: Row[] = [
 const FAQS: { q: string; a: string }[] = [
   {
     q: "What counts as an API call?",
-    a: "One billable hit on a metered endpoint (/v1/score, /v1/area, /v1/query, /v1/peers, /v1/insights, /v1/forecast, /v1/portfolios, /v1/batch). Repeat calls inside the 24-hour idempotency window come from the cache and don't count.",
+    a: "One billable hit on a metered endpoint (/v1/score, /v1/area, /v1/query, /v1/peers, /v1/insights, /v1/forecast, /v1/portfolios). Repeat calls inside the 24-hour idempotency window come from the cache and don't count.",
   },
   {
     q: "What is a soft cap, and what does the overage cost?",
