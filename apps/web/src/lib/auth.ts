@@ -3,25 +3,14 @@ import Google from "next-auth/providers/google";
 import GitHub from "next-auth/providers/github";
 import Credentials from "next-auth/providers/credentials";
 import { sql } from "@/lib/db";
-import {
-  ensureUsersTable,
-  ensureVerificationTable,
-  ensureMagicLinkTokensTable,
-} from "@/lib/db-schema";
 import { row, UserRow, MagicLinkTokenRow } from "@/lib/db-types";
 import { apiBaseUrl } from "@/lib/server/api-client";
 
-let _authTablesReady = false;
-async function ensureAuthTables() {
-  if (_authTablesReady) return;
-  await Promise.all([
-    ensureUsersTable(),
-    ensureVerificationTable(),
-    ensureMagicLinkTokensTable(),
-  ]);
-  _authTablesReady = true;
-}
-
+/* AR-339 (epic AR-335): the per-request ensureAuthTables() bootstrap
+   was removed. The apps/api migrator owns DDL for users / verification
+   / magic_link_tokens, so tables are guaranteed to exist at deploy
+   time. No need to wastefully CREATE TABLE IF NOT EXISTS on every
+   cold request. */
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -85,7 +74,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
-        await ensureAuthTables();
         const token = credentials.token;
 
         const tokenRows = await sql`

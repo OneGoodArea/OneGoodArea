@@ -18,7 +18,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { callApi } from "@/lib/server/api-client";
-import { ensureUsersTable } from "@/lib/db-schema";
 import { logger } from "@/lib/logger";
 
 const ALLOWED_INTENTS = new Set([
@@ -27,13 +26,6 @@ const ALLOWED_INTENTS = new Set([
   "investing",
   "research",
 ]);
-
-let _userTableReady = false;
-async function ensureUsers() {
-  if (_userTableReady) return;
-  await ensureUsersTable();
-  _userTableReady = true;
-}
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -100,7 +92,6 @@ export async function POST(req: NextRequest) {
   /* Step 1: persist intent (comma-separated multi-select). */
   if (intentCsv !== null) {
     try {
-      await ensureUsers();
       await sql`
         UPDATE users SET intent = ${intentCsv} WHERE id = ${session.user.id}
       `;

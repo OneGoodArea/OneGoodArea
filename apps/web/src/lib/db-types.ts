@@ -171,7 +171,8 @@ export interface VerificationTokenRow {
 /* AR-250 [AR-248-B] magic-link sign-in tokens. Shape mirrors
    VerificationTokenRow exactly; we keep the type separate so consumer
    code can't accidentally cross-use a verification token where a
-   magic-link token is expected (semantics differ — see ensureMagicLinkTokensTable). */
+   magic-link token is expected (semantics differ — the apps/api migrator
+   owns the magic_link_tokens table; see infrastructure/db/schema.ts). */
 export interface MagicLinkTokenRow {
   id: string;
   user_id: string;
