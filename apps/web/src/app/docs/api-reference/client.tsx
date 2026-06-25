@@ -1,72 +1,74 @@
 "use client";
 
+import type { ComponentType, SVGProps } from "react";
 import Link from "next/link";
 import { Nav } from "../../design-v2/_shared/nav";
 import { Footer } from "../../design-v2/_shared/footer";
+import {
+  SignalsIcon,
+  ScoresIcon,
+  MonitorIcon,
+  IntelligenceIcon,
+} from "../../design-v2/_shared/product-icons";
 import "./api-reference.css";
 
-/* /docs/api-reference — Brand v3 (Plotted) — AR-204 PR B + cleanup.
+/* /docs/api-reference — Brand v3 (Plotted) — rewritten in AR-358.
 
-   The interactive reference is being regenerated from live Fastify
-   schemas (each route file under apps/api/src/modules). While that
-   ships, this page presents a surface map of every product endpoint
-   and pointers to what works today: /methodology, ADR repo, source.
+   Four products, one control plane, one spec. Reframed away from the
+   previous "honest interim while we rebuild" theatre, which was
+   pre-customer dress-up for a regeneration story that's already
+   shipped (@fastify/swagger is wired in apps/api/src/app.ts:35 and
+   the live Scalar reference at /openapi consumes it).
 
-   Per Pedro 2026-05-30: dropped the previous "what the previous
-   spec got wrong" callout. Pre-launch, that section read as
-   apology to nobody; the hero pill "API reference, being
-   regenerated" already conveys the rebuild without dwelling.
+   Page layout:
+     - Hero: direct framing, no "interim" language
+     - Products: 4-up grid with bespoke product icons (same set as
+       the marketing /products pages)
+     - Levers: visually subordinate single card on a quiet surface,
+       because Levers is the control plane, not a 5th product
+     - Resources: pointer to /methodology + /openapi (the live
+       interactive reference)
+     - No roadmap section. The work it described is done. */
 
-   While here, flipped 01 Surface map to .oga-section-dark to
-   address the related "no mid-page dark anchor" issue Pedro
-   flagged on /docs/mcp. Surface cards get translucent-on-dark
-   styling per the data-oga-surface override block in
-   api-reference.css. */
-
-/* ───────────────────────────── surface map */
-
-type Surface = {
+type Product = {
   num: string;
   name: string;
   count: string;
   body: string;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   endpoints: { verb: "GET" | "POST" | "PUT" | "DELETE" | "PATCH"; path: string }[];
-  more?: string;
-  docsHref: string;
-  docsReady: boolean;
 };
 
-const SURFACES: Surface[] = [
+const PRODUCTS: Product[] = [
   {
     num: "01",
     name: "Signals",
     count: "4 endpoints",
-    body: "Raw normalized signal catalog per area. The primitive — every other surface composes from this.",
+    body: "Raw normalised signal catalog per area. The primitive — every other product composes from this.",
+    icon: SignalsIcon,
     endpoints: [
       { verb: "GET", path: "/v1/area" },
       { verb: "GET", path: "/v1/signals/:category" },
       { verb: "GET", path: "/v1/areas" },
       { verb: "GET", path: "/v1/meta" },
     ],
-    docsHref: "/docs/signals",
-    docsReady: false,
   },
   {
     num: "02",
     name: "Scores",
     count: "1 endpoint",
     body: "Deterministic composite score per area. Four presets, custom weights, or saved organisation preset_id.",
+    icon: ScoresIcon,
     endpoints: [
       { verb: "POST", path: "/v1/score" },
     ],
-    docsHref: "/docs/scores",
-    docsReady: false,
   },
   {
     num: "03",
     name: "Monitor",
     count: "7 endpoints",
     body: "Portfolios of tracked areas. Bulk enrich, detect monthly change, fire signal.changed webhooks.",
+    icon: MonitorIcon,
     endpoints: [
       { verb: "POST",   path: "/v1/portfolios" },
       { verb: "GET",    path: "/v1/portfolios" },
@@ -76,68 +78,31 @@ const SURFACES: Surface[] = [
       { verb: "POST",   path: "/v1/portfolios/:id/enrich" },
       { verb: "POST",   path: "/v1/portfolios/:id/changes" },
     ],
-    docsHref: "/docs/monitor",
-    docsReady: false,
   },
   {
     num: "04",
     name: "Intelligence",
     count: "4 endpoints",
     body: "Typed query plane. AI emits the plan; the database answers. 6 plan ops, 92.9% planner accuracy.",
+    icon: IntelligenceIcon,
     endpoints: [
       { verb: "POST", path: "/v1/query" },
       { verb: "POST", path: "/v1/peers" },
       { verb: "POST", path: "/v1/insights" },
       { verb: "POST", path: "/v1/forecast" },
     ],
-    docsHref: "/docs/intelligence",
-    docsReady: false,
-  },
-  {
-    num: "05",
-    name: "Levers (organisation)",
-    count: "~25 endpoints",
-    body: "Per-organisation methodology + admin. Custom signal bundles, scoring presets, methodology pinning, peer cohorts, members, RBAC, white-label, IP allowlist.",
-    endpoints: [
-      { verb: "POST",   path: "/v1/orgs" },
-      { verb: "PATCH",  path: "/v1/orgs/:id" },
-      { verb: "POST",   path: "/v1/orgs/:id/bundles" },
-      { verb: "POST",   path: "/v1/orgs/:id/presets" },
-      { verb: "PUT",    path: "/v1/orgs/:id/methodology" },
-      { verb: "POST",   path: "/v1/orgs/:id/cohorts" },
-    ],
-    more: "+ 19 more (CRUD per resource, members CRUD)",
-    docsHref: "/docs/levers",
-    docsReady: false,
   },
 ];
 
-/* ───────────────────────────── what you can use today */
-
-type ResourceTile = {
-  num: string;
-  name: string;
-  desc: string;
-  href: string;
-  external?: boolean;
-  cta: string;
-};
-
-const RESOURCES: ResourceTile[] = [
-  {
-    num: "03.1",
-    name: "Methodology",
-    desc: "Live page. 14 sections covering signals, store, time-series, scoring, Intelligence, Levers, versioning.",
-    href: "/methodology",
-    cta: "Read methodology",
-  },
-  {
-    num: "03.2",
-    name: "Current spec snapshot",
-    desc: "OpenAPI 3.0 v2.0.0. Documents the existing surface; kept available for buyers integrated against it while the interactive reference is regenerated.",
-    href: "/openapi.json",
-    cta: "Download JSON",
-  },
+const LEVERS_ENDPOINTS = [
+  "/v1/orgs (+ CRUD)",
+  "/v1/orgs/:id/bundles (+ CRUD)",
+  "/v1/orgs/:id/presets (+ CRUD)",
+  "/v1/orgs/:id/methodology (pin/unpin)",
+  "/v1/orgs/:id/cohorts (+ CRUD)",
+  "/v1/orgs/:id/members (+ CRUD, RBAC)",
+  "/v1/orgs/:id/invitations",
+  "/v1/webhooks",
 ];
 
 /* ============================================================
@@ -150,9 +115,9 @@ export default function ApiReferenceClient() {
       <Nav />
 
       <Hero />
-      <SectionSurfaces />
-      <SectionToday />
-      <SectionRoadmap />
+      <SectionProducts />
+      <SectionLevers />
+      <SectionResources />
 
       <FinalCta />
       <Footer />
@@ -167,17 +132,16 @@ function Hero() {
         <div className="oga-apiref-hero__eyebrow">
           <span className="oga-apiref-hero__status-dot" aria-hidden />
           <span>API reference</span>
-          <span className="oga-apiref-hero__eyebrow-sep" aria-hidden />
-          <span>Being regenerated</span>
         </div>
 
         <h1 className="oga-apiref-hero__title">
-          An honest interim while we rebuild the interactive reference.
+          Four products. One control plane. One spec.
         </h1>
 
         <p className="oga-apiref-hero__lead">
-          We&rsquo;re regenerating the interactive reference from the live Fastify backend. While that
-          ships, here&rsquo;s a surface map of every product endpoint, with a pointer to the methodology.
+          The OneGoodArea API exposes four composable products on one signal-first engine, plus a
+          per-organisation control plane. Read the methodology to understand how the engine works.
+          Open the interactive reference to query it.
         </p>
 
         <div className="oga-apiref-hero__actions">
@@ -185,9 +149,9 @@ function Hero() {
             Read the methodology
             <span aria-hidden>→</span>
           </Link>
-          <Link href="/docs" className="oga-btn oga-btn-secondary">
-            Back to docs
-            <span aria-hidden>←</span>
+          <Link href="/openapi" className="oga-btn oga-btn-secondary">
+            Open the reference
+            <span aria-hidden>→</span>
           </Link>
         </div>
       </div>
@@ -195,108 +159,51 @@ function Hero() {
   );
 }
 
-function SectionSurfaces() {
+function SectionProducts() {
   return (
-    <section id="surfaces" className="oga-section-dark" data-oga-surface="dark">
+    <section id="products" className="oga-section-dark" data-oga-surface="dark">
       <div className="oga-apiref__container">
         <header className="oga-apiref__header">
           <div className="oga-apiref__eyebrow">
             <span className="oga-apiref__eyebrow-num">01</span>
             <span className="oga-apiref__eyebrow-line" aria-hidden />
-            <span>Surface map</span>
+            <span>Products</span>
           </div>
-          <h2 className="oga-apiref__h2">Six product surfaces, ~70 live endpoints.</h2>
+          <h2 className="oga-apiref__h2">Four composable products.</h2>
           <p className="oga-apiref__lead">
-            One card per product surface with a representative endpoint list. Detailed per-surface docs
-            are the next wave of work; until they ship, the methodology page covers the engine.
+            Same vocabulary as the marketing surfaces. Each tile lists its live endpoints. The
+            engine details live on the methodology page; the interactive request runner lives on
+            the reference.
           </p>
         </header>
 
-        <div className="oga-apiref-surfaces__grid">
-          {SURFACES.map((s) => (
-            <article key={s.num} className="oga-apiref-surfaces__card">
-              <div className="oga-apiref-surfaces__card-head">
-                <span className="oga-apiref-surfaces__card-num">{s.num}</span>
-                <span className="oga-apiref-surfaces__card-count">{s.count}</span>
-              </div>
-              <h3 className="oga-apiref-surfaces__card-name">{s.name}</h3>
-              <p className="oga-apiref-surfaces__card-body">{s.body}</p>
-
-              <ul className="oga-apiref-surfaces__endpoints">
-                {s.endpoints.map((e) => (
-                  <li key={`${e.verb}-${e.path}`} className="oga-apiref-surfaces__endpoint">
-                    <span className={`oga-apiref-surfaces__endpoint-verb oga-verb oga-verb--${e.verb.toLowerCase()}`}>
-                      {e.verb}
-                    </span>
-                    <span className="oga-apiref-surfaces__endpoint-path">{e.path}</span>
-                  </li>
-                ))}
-                {s.more && (
-                  <li className="oga-apiref-surfaces__more">{s.more}</li>
-                )}
-              </ul>
-
-              <span className="oga-apiref-surfaces__card-cta">
-                <span>{s.docsHref}</span>
-                <span className="oga-apiref-surfaces__card-cta-pill">Coming soon</span>
-              </span>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function SectionToday() {
-  return (
-    <section id="today" className="oga-section-hero">
-      <div className="oga-apiref__container">
-        <header className="oga-apiref__header">
-          <div className="oga-apiref__eyebrow">
-            <span className="oga-apiref__eyebrow-num">02</span>
-            <span className="oga-apiref__eyebrow-line" aria-hidden />
-            <span>What you can use today</span>
-          </div>
-          <h2 className="oga-apiref__h2">Two resources that work right now.</h2>
-          <p className="oga-apiref__lead">
-            Methodology page for the engine, and the current OpenAPI spec snapshot for buyers who
-            already integrated.
-          </p>
-        </header>
-
-        <div className="oga-apiref-today__grid">
-          {RESOURCES.map((r) => {
-            const inner = (
-              <>
-                <span className="oga-apiref-today__item-num">{r.num}</span>
-                <h3 className="oga-apiref-today__item-name">{r.name}</h3>
-                <p className="oga-apiref-today__item-desc">{r.desc}</p>
-                <span className="oga-apiref-today__item-cta">
-                  {r.cta}
-                  <span aria-hidden>→</span>
-                </span>
-              </>
-            );
-
-            if (r.external) {
-              return (
-                <a
-                  key={r.num}
-                  className="oga-apiref-today__item"
-                  href={r.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {inner}
-                </a>
-              );
-            }
-
+        <div className="oga-apiref-products__grid">
+          {PRODUCTS.map((p) => {
+            const Icon = p.icon;
             return (
-              <Link key={r.num} className="oga-apiref-today__item" href={r.href}>
-                {inner}
-              </Link>
+              <article key={p.num} className="oga-apiref-products__card">
+                <div className="oga-apiref-products__card-head">
+                  <span className="oga-apiref-products__card-icon"><Icon /></span>
+                  <div className="oga-apiref-products__card-head-text">
+                    <span className="oga-apiref-products__card-num">{p.num}</span>
+                    <h3 className="oga-apiref-products__card-name">{p.name}</h3>
+                  </div>
+                  <span className="oga-apiref-products__card-count">{p.count}</span>
+                </div>
+
+                <p className="oga-apiref-products__card-body">{p.body}</p>
+
+                <ul className="oga-apiref-products__endpoints">
+                  {p.endpoints.map((e) => (
+                    <li key={`${e.verb}-${e.path}`} className="oga-apiref-products__endpoint">
+                      <span className={`oga-apiref-products__endpoint-verb oga-verb oga-verb--${e.verb.toLowerCase()}`}>
+                        {e.verb}
+                      </span>
+                      <span className="oga-apiref-products__endpoint-path">{e.path}</span>
+                    </li>
+                  ))}
+                </ul>
+              </article>
             );
           })}
         </div>
@@ -305,43 +212,98 @@ function SectionToday() {
   );
 }
 
-function SectionRoadmap() {
+function SectionLevers() {
   return (
-    <section id="roadmap" className="oga-section-quiet">
+    <section id="levers" className="oga-section-quiet">
+      <div className="oga-apiref__container">
+        <header className="oga-apiref__header">
+          <div className="oga-apiref__eyebrow">
+            <span className="oga-apiref__eyebrow-num">02</span>
+            <span className="oga-apiref__eyebrow-line" aria-hidden />
+            <span>Control plane</span>
+          </div>
+          <h2 className="oga-apiref__h2">Levers — per-organisation methodology and admin.</h2>
+          <p className="oga-apiref__lead">
+            Different audience to the four products. Admins configure how the engine behaves for
+            their organisation: custom signal bundles, saved scoring presets, methodology pinning,
+            peer cohorts, members and RBAC, white-label, IP allowlist.
+          </p>
+        </header>
+
+        <article className="oga-apiref-levers__card">
+          <div className="oga-apiref-levers__head">
+            <span className="oga-apiref-levers__count">~32 endpoints</span>
+            <span className="oga-apiref-levers__divider" aria-hidden />
+            <span className="oga-apiref-levers__scope">Admin / owner only</span>
+          </div>
+          <ul className="oga-apiref-levers__endpoints">
+            {LEVERS_ENDPOINTS.map((path) => (
+              <li key={path} className="oga-apiref-levers__endpoint">
+                <span className="oga-apiref-levers__endpoint-bullet" aria-hidden />
+                <span className="oga-apiref-levers__endpoint-path">{path}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="oga-apiref-levers__foot">
+            Full request shapes on the{" "}
+            <Link href="/openapi" className="oga-apiref-levers__foot-link">
+              interactive reference <span aria-hidden>→</span>
+            </Link>
+            . Methodology rationale on the{" "}
+            <Link href="/methodology#levers" className="oga-apiref-levers__foot-link">
+              Levers section of /methodology <span aria-hidden>→</span>
+            </Link>.
+          </p>
+        </article>
+      </div>
+    </section>
+  );
+}
+
+function SectionResources() {
+  return (
+    <section id="resources" className="oga-section-hero">
       <div className="oga-apiref__container">
         <header className="oga-apiref__header">
           <div className="oga-apiref__eyebrow">
             <span className="oga-apiref__eyebrow-num">03</span>
             <span className="oga-apiref__eyebrow-line" aria-hidden />
-            <span>Track to the new spec</span>
+            <span>Reference</span>
           </div>
-          <h2 className="oga-apiref__h2">Regenerate from the live backend, not by hand.</h2>
+          <h2 className="oga-apiref__h2">Methodology and live spec.</h2>
           <p className="oga-apiref__lead">
-            The new spec will be derived from Fastify route schemas already defined in
-            <code> apps/api/src/modules/**/routes.ts</code>. Same source of truth as the live API.
-            Auto-regenerated on every release.
+            The engine details and the request runner. Both are live, both stay in step with the
+            backend.
           </p>
         </header>
 
-        <article className="oga-apiref-roadmap__card">
-          <div className="oga-apiref-roadmap__label">
-            Track A &middot; Separate ticket
-          </div>
-          <div className="oga-apiref-roadmap__body">
-            <h3>OpenAPI regeneration from Fastify schemas</h3>
-            <p>
-              Wire <code>@fastify/swagger</code> + <code>@fastify/swagger-ui</code> into apps/api;
-              publish at <code>apps/api/.../openapi.json</code>; have apps/web fetch and embed at build
-              time. Auth surfaced consistently with the <code>oga_</code> prefix. Engine-version enum
-              read from <code>getSupportedEngineVersions()</code> rather than hardcoded. Dark-flagged
-              endpoints noted with an <code>x-availability</code> extension.
+        <div className="oga-apiref-resources__grid">
+          <Link href="/methodology" className="oga-apiref-resources__item">
+            <span className="oga-apiref-resources__item-num">03.1</span>
+            <h3 className="oga-apiref-resources__item-name">Methodology</h3>
+            <p className="oga-apiref-resources__item-desc">
+              14 sections covering signals, store, time-series, scoring, Intelligence, Levers,
+              versioning. The why behind every endpoint.
             </p>
-            <p>
-              When that lands, this page returns to an interactive reference (Scalar or equivalent),
-              themed to Brand v3. Until then, this honest map.
+            <span className="oga-apiref-resources__item-cta">
+              Read methodology
+              <span aria-hidden>→</span>
+            </span>
+          </Link>
+
+          <Link href="/openapi" className="oga-apiref-resources__item">
+            <span className="oga-apiref-resources__item-num">03.2</span>
+            <h3 className="oga-apiref-resources__item-name">Interactive reference</h3>
+            <p className="oga-apiref-resources__item-desc">
+              OpenAPI 3.0 spec auto-generated from the live Fastify schemas. Request shapes,
+              response shapes, try-it-in-browser. Stays in step with the backend on every deploy.
             </p>
-          </div>
-        </article>
+            <span className="oga-apiref-resources__item-cta">
+              Open reference
+              <span aria-hidden>→</span>
+            </span>
+          </Link>
+        </div>
       </div>
     </section>
   );
@@ -352,11 +314,10 @@ function FinalCta() {
     <section className="oga-section-dark" data-oga-surface="dark">
       <div className="oga-apiref__container--narrow oga-apiref-cta__inner">
         <h2 className="oga-apiref-cta__title">
-          The engine ships today, even while the spec catches up.
+          The engine ships today.
         </h2>
         <p className="oga-apiref-cta__lead">
-          Get an API key and read the methodology. The surface is real; the documentation rebuild is in
-          flight.
+          Get an API key and start scoring areas. The methodology and the reference are both live.
         </p>
         <div className="oga-apiref-cta__buttons">
           <Link href="/sign-up" className="oga-btn oga-btn-primary">

@@ -1,13 +1,13 @@
-/* /docs/api-reference — Brand v3 (Plotted) — AR-204 PR B.
+/* /docs/api-reference — Brand v3 (Plotted) — rewritten in AR-358.
 
-   Honest interim page. The previous Scalar embed of /openapi.json
-   documented 5 of ~70 endpoints, with stale path prefixes
-   (`/api/v1/...` vs Fastify's `/v1/...`) and stale auth prefix
-   (`aiq_` vs `oga_`). Track B per docs/AR-204-methodology-docs-
-   delta.md: reskin the wrapper, replace the body with an honest
-   placeholder + surface map + pointers to what works today.
-   Track A (regenerate the spec from live Fastify schemas) lands
-   as a separate ticket. */
+   Four products + control plane + resources, dropping the prior
+   "honest interim while we rebuild" framing. The OpenAPI regen
+   work that wrapper was holding the space for has shipped:
+   @fastify/swagger is wired in apps/api/src/app.ts and the live
+   Scalar reference at /openapi consumes it. So we lead with what's
+   real: four bespoke product tiles with their canonical icons,
+   Levers as a subordinate control-plane card, and pointers to
+   /methodology + /openapi. No customer migration theatre. */
 
 /* ============================================================
    Page container
@@ -107,8 +107,9 @@
 
 .oga-apiref-hero__status-dot {
   width: 6px; height: 6px;
-  background: var(--oga-status-amber);
+  background: var(--oga-fg-muted);
   border-radius: 50%;
+  opacity: 0.6;
 }
 
 .oga-apiref-hero__title {
@@ -138,33 +139,56 @@
 }
 
 /* ============================================================
-   1 — Surface map (6 cards, dark surface)
+   01 — Products (4 cards with bespoke product icons, DARK)
    ============================================================ */
 
-.oga-apiref-surfaces__grid {
+.oga-apiref-products__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--oga-4);
 }
 
-.oga-apiref-surfaces__card {
+@media (max-width: 880px) {
+  .oga-apiref-products__grid { grid-template-columns: 1fr; }
+}
+
+.oga-apiref-products__card {
   border: 1px solid var(--oga-border);
   border-radius: var(--oga-radius-md);
   background: var(--oga-white);
-  padding: var(--oga-5);
+  padding: var(--oga-6);
   display: flex;
   flex-direction: column;
-  gap: var(--oga-3);
+  gap: var(--oga-4);
+  transition: border-color var(--oga-dur) var(--oga-ease), transform var(--oga-dur) var(--oga-ease);
 }
 
-.oga-apiref-surfaces__card-head {
-  display: flex;
+.oga-apiref-products__card:hover { border-color: var(--oga-ink); transform: translateY(-1px); }
+
+.oga-apiref-products__card-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--oga-3);
+  gap: var(--oga-4);
 }
 
-.oga-apiref-surfaces__card-num {
+.oga-apiref-products__card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px; height: 44px;
+  color: var(--oga-fg);
+}
+
+.oga-apiref-products__card-icon svg { width: 36px; height: 36px; }
+
+.oga-apiref-products__card-head-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.oga-apiref-products__card-num {
   font-family: var(--oga-font-mono);
   font-size: 11px;
   letter-spacing: 0.14em;
@@ -172,24 +196,26 @@
   color: var(--oga-fg-muted);
 }
 
-.oga-apiref-surfaces__card-count {
+.oga-apiref-products__card-name {
+  font-family: var(--oga-font-sans);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.oga-apiref-products__card-count {
   font-family: var(--oga-font-mono);
   font-size: 11px;
   color: var(--oga-fg);
   background: var(--oga-ink-06);
   padding: 2px 8px;
   border-radius: 3px;
+  white-space: nowrap;
 }
 
-.oga-apiref-surfaces__card-name {
-  font-family: var(--oga-font-sans);
-  font-size: 20px;
-  font-weight: 500;
-  color: var(--oga-fg);
-  margin: 0;
-}
-
-.oga-apiref-surfaces__card-body {
+.oga-apiref-products__card-body {
   font-family: var(--oga-font-sans);
   font-size: 14px;
   line-height: 1.55;
@@ -197,15 +223,16 @@
   margin: 0;
 }
 
-.oga-apiref-surfaces__endpoints {
+.oga-apiref-products__endpoints {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: var(--oga-3) 0 0;
+  border-top: 1px solid var(--oga-border);
   display: grid;
   gap: var(--oga-1);
 }
 
-.oga-apiref-surfaces__endpoint {
+.oga-apiref-products__endpoint {
   font-family: var(--oga-font-mono);
   font-size: 11.5px;
   color: var(--oga-fg);
@@ -213,224 +240,222 @@
   align-items: baseline;
   gap: var(--oga-2);
   padding: 4px 0;
-  border-top: 1px dashed var(--oga-border);
 }
 
-.oga-apiref-surfaces__endpoint:first-child { border-top: 0; padding-top: 0; }
-
-.oga-apiref-surfaces__endpoint-verb {
-  /* Colour from shared .oga-verb--{verb} (applied in TSX). The
+.oga-apiref-products__endpoint-verb {
+  /* Colour comes from the shared .oga-verb--{verb} utility. The
      min-width keeps verbs aligned in the endpoint list. */
   min-width: 48px;
 }
 
-.oga-apiref-surfaces__endpoint-path { color: var(--oga-fg); }
+.oga-apiref-products__endpoint-path { color: var(--oga-fg); }
 
-.oga-apiref-surfaces__more {
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  color: var(--oga-fg-muted);
-  padding-top: var(--oga-2);
-  border-top: 1px dashed var(--oga-border);
-}
+/* Dark-surface variant — products section sits on a dark
+   anchor to mirror the homepage products-on-dark moment. Cards
+   drop the cream fill, lean on hairline borders + a faint
+   translucent panel. Token overrides on
+   [data-oga-surface="dark"] flip --oga-fg + --oga-fg-muted (see
+   tokens.css), so card name + body colors adapt automatically;
+   we only need overrides for the literal-color rules. */
 
-.oga-apiref-surfaces__card-cta {
-  margin-top: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--oga-2);
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--oga-fg-muted);
-  padding-top: var(--oga-3);
-  border-top: 1px solid var(--oga-border);
-}
-
-.oga-apiref-surfaces__card-cta-pill {
-  font-family: var(--oga-font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  padding: 2px 6px;
-  border-radius: 3px;
-  background: var(--oga-status-amber-bg);
-  color: var(--oga-status-amber);
-}
-
-/* Dark-surface variant — 01 punctuates with .oga-section-dark
-   to mirror the homepage products-on-dark moment. Cards drop the
-   cream fill, lean on hairline borders + a faint translucent
-   panel. Token overrides on [data-oga-surface="dark"] flip
-   --oga-fg + --oga-fg-muted (see tokens.css), so card name +
-   body colors adapt automatically; we only need overrides for
-   the literal-color rules. */
-
-[data-oga-surface="dark"] .oga-apiref-surfaces__card {
+[data-oga-surface="dark"] .oga-apiref-products__card {
   background: rgba(250, 248, 244, 0.03);
   border-color: rgba(250, 248, 244, 0.16);
 }
 
-[data-oga-surface="dark"] .oga-apiref-surfaces__card-name {
-  color: var(--oga-white);
+[data-oga-surface="dark"] .oga-apiref-products__card:hover {
+  border-color: rgba(250, 248, 244, 0.42);
+  background: rgba(250, 248, 244, 0.05);
 }
 
-[data-oga-surface="dark"] .oga-apiref-surfaces__card-body {
+[data-oga-surface="dark"] .oga-apiref-products__card-icon { color: var(--oga-white); }
+
+[data-oga-surface="dark"] .oga-apiref-products__card-name { color: var(--oga-white); }
+
+[data-oga-surface="dark"] .oga-apiref-products__card-body {
   color: rgba(250, 248, 244, 0.72);
 }
 
-[data-oga-surface="dark"] .oga-apiref-surfaces__card-count {
+[data-oga-surface="dark"] .oga-apiref-products__card-count {
   background: rgba(250, 248, 244, 0.10);
   color: var(--oga-white);
 }
 
-[data-oga-surface="dark"] .oga-apiref-surfaces__endpoint {
-  border-top-color: rgba(250, 248, 244, 0.12);
+[data-oga-surface="dark"] .oga-apiref-products__endpoints {
+  border-top-color: rgba(250, 248, 244, 0.16);
 }
 
-[data-oga-surface="dark"] .oga-apiref-surfaces__endpoint-path {
+[data-oga-surface="dark"] .oga-apiref-products__endpoint-path {
   color: rgba(250, 248, 244, 0.92);
 }
 
-[data-oga-surface="dark"] .oga-apiref-surfaces__card-cta {
-  border-top-color: rgba(250, 248, 244, 0.16);
-  color: rgba(250, 248, 244, 0.65);
-}
-
-[data-oga-surface="dark"] .oga-apiref-surfaces__more {
-  border-top-color: rgba(250, 248, 244, 0.12);
-  color: rgba(250, 248, 244, 0.55);
-}
-
-/* HTTP-verb DARK-surface colour brightening lives on the shared
-   .oga-verb--{verb} utility in styles/brand/components.css. The
-   Surface map section carries data-oga-surface="dark" so the
-   shared overrides fire automatically. */
-
 /* ============================================================
-   3 — What you can use today (4 cards)
+   02 — Levers (single subordinate card, cream-quiet surface)
    ============================================================ */
 
-.oga-apiref-today__grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+.oga-apiref-levers__card {
+  border: 1px solid var(--oga-border);
+  border-left: 3px solid var(--oga-fg-muted);
+  border-radius: var(--oga-radius-md);
+  background: var(--oga-white);
+  padding: var(--oga-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-4);
+}
+
+.oga-apiref-levers__head {
+  display: flex;
+  align-items: center;
   gap: var(--oga-3);
+  flex-wrap: wrap;
 }
 
-@media (max-width: 960px) {
-  .oga-apiref-today__grid { grid-template-columns: repeat(2, 1fr); }
+.oga-apiref-levers__count {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-fg);
+  background: var(--oga-ink-06);
+  padding: 3px 10px;
+  border-radius: 3px;
 }
 
-@media (max-width: 580px) {
-  .oga-apiref-today__grid { grid-template-columns: 1fr; }
+.oga-apiref-levers__divider {
+  width: 4px; height: 4px;
+  background: var(--oga-fg-muted);
+  border-radius: 50%;
+  opacity: 0.5;
 }
 
-.oga-apiref-today__item {
+.oga-apiref-levers__scope {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-apiref-levers__endpoints {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--oga-1) var(--oga-5);
+}
+
+@media (max-width: 760px) {
+  .oga-apiref-levers__endpoints { grid-template-columns: 1fr; }
+}
+
+.oga-apiref-levers__endpoint {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-fg);
+  display: flex;
+  align-items: center;
+  gap: var(--oga-2);
+  padding: 4px 0;
+}
+
+.oga-apiref-levers__endpoint-bullet {
+  width: 4px; height: 4px;
+  background: var(--oga-fg-muted);
+  border-radius: 50%;
+  opacity: 0.55;
+  flex-shrink: 0;
+}
+
+.oga-apiref-levers__endpoint-path { color: var(--oga-fg); }
+
+.oga-apiref-levers__foot {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0;
+  padding-top: var(--oga-3);
+  border-top: 1px solid var(--oga-border);
+}
+
+.oga-apiref-levers__foot-link {
+  color: var(--oga-fg);
+  text-decoration: none;
+  border-bottom: 1px solid var(--oga-fg-muted);
+  padding-bottom: 1px;
+}
+
+.oga-apiref-levers__foot-link:hover { background: var(--oga-ink-06); }
+
+/* ============================================================
+   03 — Resources (2 tiles: methodology + interactive reference)
+   ============================================================ */
+
+.oga-apiref-resources__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--oga-4);
+}
+
+@media (max-width: 760px) {
+  .oga-apiref-resources__grid { grid-template-columns: 1fr; }
+}
+
+.oga-apiref-resources__item {
   border: 1px solid var(--oga-border);
   border-radius: var(--oga-radius-md);
   background: var(--oga-white);
-  padding: var(--oga-5) var(--oga-4);
+  padding: var(--oga-6);
   text-decoration: none;
   color: inherit;
   transition: border-color var(--oga-dur) var(--oga-ease), transform var(--oga-dur) var(--oga-ease);
   display: flex;
   flex-direction: column;
-  gap: var(--oga-2);
+  gap: var(--oga-3);
 }
 
-.oga-apiref-today__item:hover {
+.oga-apiref-resources__item:hover {
   border-color: var(--oga-ink);
   transform: translateY(-1px);
 }
 
-.oga-apiref-today__item-num {
+.oga-apiref-resources__item-num {
   font-family: var(--oga-font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--oga-fg-muted);
 }
 
-.oga-apiref-today__item-name {
+.oga-apiref-resources__item-name {
   font-family: var(--oga-font-sans);
-  font-size: 14px;
+  font-size: 22px;
   font-weight: 500;
   color: var(--oga-fg);
   margin: 0;
+  line-height: 1.2;
 }
 
-.oga-apiref-today__item-desc {
+.oga-apiref-resources__item-desc {
   font-family: var(--oga-font-sans);
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: 14px;
+  line-height: 1.55;
   color: var(--oga-fg-muted);
   margin: 0;
 }
 
-.oga-apiref-today__item-cta {
+.oga-apiref-resources__item-cta {
   margin-top: auto;
   font-family: var(--oga-font-mono);
   font-size: 11px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--oga-fg);
   display: inline-flex;
   align-items: center;
   gap: var(--oga-2);
-}
-
-/* ============================================================
-   4 — Roadmap card
-   ============================================================ */
-
-.oga-apiref-roadmap__card {
-  border: 1px solid var(--oga-border);
-  border-left: 3px solid var(--oga-ink);
-  border-radius: var(--oga-radius-md);
-  background: var(--oga-white);
-  padding: var(--oga-6);
-  display: grid;
-  grid-template-columns: 200px 1fr;
-  gap: var(--oga-6);
-  align-items: start;
-}
-
-@media (max-width: 760px) {
-  .oga-apiref-roadmap__card { grid-template-columns: 1fr; gap: var(--oga-4); }
-}
-
-.oga-apiref-roadmap__label {
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--oga-fg-muted);
-}
-
-.oga-apiref-roadmap__body h3 {
-  font-family: var(--oga-font-sans);
-  font-size: 20px;
-  font-weight: 500;
-  margin: 0 0 var(--oga-3);
-  color: var(--oga-fg);
-  line-height: 1.25;
-}
-
-.oga-apiref-roadmap__body p {
-  font-family: var(--oga-font-sans);
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--oga-fg);
-  margin: 0 0 var(--oga-3);
-}
-
-.oga-apiref-roadmap__body code {
-  font-family: var(--oga-font-mono);
-  font-size: 12px;
-  background: var(--oga-ink-06);
-  padding: 1px 5px;
-  border-radius: 3px;
+  padding-top: var(--oga-3);
+  border-top: 1px solid var(--oga-border);
 }
 
 /* ============================================================
