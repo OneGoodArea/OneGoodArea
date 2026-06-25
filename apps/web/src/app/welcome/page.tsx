@@ -25,6 +25,10 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+/* AR-342 (epic AR-340): direct SELECT against `users` is
+   auth-flow-adjacent — same documented exception as lib/auth.ts (see
+   feedback_no_db_in_web). The /welcome flow needs to read the
+   verification status before NextAuth's session gets revalidated. */
 async function readEmailVerified(userId: string): Promise<boolean> {
   const url = process.env.DATABASE_URL;
   if (!url) return true;
