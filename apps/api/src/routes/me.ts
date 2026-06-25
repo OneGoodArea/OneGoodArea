@@ -21,6 +21,8 @@ import { asSubscription } from "../modules/billing/stripe-types";
 import { stripe } from "../modules/billing/stripe-client";
 import type { Country } from "../modules/signals/peers";
 import type { PlanId } from "../modules/billing/plans";
+import { getOrgIfMember, getRoleInOrg, updateOrg, hasAtLeastRole } from "../modules/orgs";
+import { UpdateOrgRequestSchema, type OrgRole } from "@onegoodarea/contracts";
 /** me route handlers — extracted from app.ts per AR-286. */
 export function registerMeRoutes(app: FastifyInstance): void {
     app.get("/me/activity",
@@ -104,6 +106,97 @@ export function registerMeRoutes(app: FastifyInstance): void {
         } catch (err) {
           logger.error("[me/score-usage] error:", err);
           return reply.code(200).send({ window_days: 30, total: 0, by_preset: [] });
+        }
+      });
+
+    /* AR-348 (epic AR-343): convenience accessor for the caller's
+       primary org + their role in it. Session-authed. The "primary"
+       org is owner-first, then oldest membership.
+
+       Distinct from /v1/orgs/:id (which is api-key authed and requires
+       the caller to know the org id). The /dashboard/org page needs
+       BOTH the org and the caller's role; this endpoint returns both
+       in one round trip rather than the dashboard having to compose
+       /v1/orgs and a separate role lookup.
+
+       Replaces the apps/web /api/me/org direct SQL. */
+    app.get("/me/org",
+      {
+        schema: {
+          tags: ["Me"],
+          summary: "Get my primary org + role",
+          description: "Returns { org, caller_role } for the caller's primary org (owner-first, then oldest membership), or { org: null, caller_role: null } if the caller has no org.",
+        },
+      },
+      async (request, reply) => {
+        const userId = await authenticateSession(request, reply);
+        if (!userId) return reply;
+
+        const memberships = (await sql`
+          SELECT org_id, role
+            FROM org_members
+           WHERE user_id = ${userId}
+           ORDER BY (role = 'owner') DESC, joined_at ASC
+           LIMIT 1
+        `) as Array<{ org_id: string; role: OrgRole }>;
+        const primary = memberships[0];
+        if (!primary) {
+          return reply.code(200).send({ org: null, caller_role: null });
+        }
+        const org = await getOrgIfMember(primary.org_id, userId);
+        if (!org) {
+          /* org_members row points at a missing orgs row — invariant violation
+             but handle cleanly rather than 500. */
+          return reply.code(200).send({ org: null, caller_role: null });
+        }
+        return reply.code(200).send({ org, caller_role: primary.role });
+      });
+
+    app.patch("/me/org",
+      {
+        schema: {
+          tags: ["Me"],
+          summary: "Update my primary org",
+          description: "Partial update of the caller's primary org. Owner or admin only. Returns the updated org + caller_role.",
+        },
+      },
+      async (request, reply) => {
+        const userId = await authenticateSession(request, reply);
+        if (!userId) return reply;
+
+        const memberships = (await sql`
+          SELECT org_id, role
+            FROM org_members
+           WHERE user_id = ${userId}
+           ORDER BY (role = 'owner') DESC, joined_at ASC
+           LIMIT 1
+        `) as Array<{ org_id: string; role: OrgRole }>;
+        const primary = memberships[0];
+        if (!primary) {
+          return reply.code(404).send({ error: "No org" });
+        }
+        /* Re-check role via the same module helper /v1/orgs/:id uses, so
+           the gate is identical across surfaces. */
+        const role = await getRoleInOrg(primary.org_id, userId);
+        if (!role || !hasAtLeastRole(role, "admin")) {
+          return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
+        }
+
+        const parsed = UpdateOrgRequestSchema.safeParse(request.body ?? {});
+        if (!parsed.success) {
+          return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
+        }
+
+        try {
+          const updated = await updateOrg(primary.org_id, parsed.data);
+          if (!updated) return reply.code(404).send({ error: "Org not found" });
+          return reply.code(200).send({ org: updated, caller_role: role });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "";
+          if (/duplicate key|unique constraint/i.test(msg)) {
+            return reply.code(409).send({ error: "Slug already in use. Pick a different slug.", code: "slug_in_use" });
+          }
+          throw err;
         }
       });
 
