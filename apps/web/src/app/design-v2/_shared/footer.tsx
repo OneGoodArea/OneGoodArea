@@ -48,7 +48,6 @@ const COMPANY: Array<{ label: string; href: string }> = [
   { label: "Business", href: "/business" },
   { label: "Pricing",  href: "/pricing" },
   { label: "Help",     href: "/help" },
-  { label: "Blog",     href: "/blog" },
   { label: "Contact",  href: "mailto:operation@onegoodarea.co.uk" },
 ];
 
