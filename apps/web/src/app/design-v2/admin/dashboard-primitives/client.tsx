@@ -653,7 +653,7 @@ function ToastSection() {
                 type="button"
                 className="oga-btn oga-btn-secondary"
                 onClick={() => {
-                  toast({ variant: "success", title: "Webhook delivered", body: "report.created → https://hooks.acme.dev/oga" });
+                  toast({ variant: "success", title: "Webhook delivered", body: "signal.changed → https://hooks.acme.dev/oga" });
                   toast({ variant: "info", title: "Cron run completed", body: "Re-scored 1,283 postcodes. Run id run_2026_06_05." });
                   toast({ variant: "success", title: "Bundle updated", body: "Lender-only bundle now includes 12 signals." });
                   toast({ variant: "warning", title: "Methodology pin will affect 4 future calls", body: "Your org pinned to v2.0.1." });
@@ -1312,15 +1312,15 @@ const PORTFOLIO_ROWS: PortfolioRow[] = [
 interface WebhookRow {
   id: string;
   url: string;
-  topic: "report.created" | "score.changed";
+  topic: "signal.changed";
   lastDelivery: string;
   status: "ok" | "failing";
 }
 
 const WEBHOOK_ROWS: WebhookRow[] = [
-  { id: "wh_1", url: "https://hooks.acme.dev/oga", topic: "report.created", lastDelivery: "2m ago", status: "ok" },
-  { id: "wh_2", url: "https://api.brightstar.com/ingest/oga", topic: "score.changed", lastDelivery: "8m ago", status: "ok" },
-  { id: "wh_3", url: "https://internal.northern.io/wh", topic: "score.changed", lastDelivery: "1h ago", status: "failing" },
+  { id: "wh_1", url: "https://hooks.acme.dev/oga", topic: "signal.changed", lastDelivery: "2m ago", status: "ok" },
+  { id: "wh_2", url: "https://api.brightstar.com/ingest/oga", topic: "signal.changed", lastDelivery: "8m ago", status: "ok" },
+  { id: "wh_3", url: "https://internal.northern.io/wh", topic: "signal.changed", lastDelivery: "1h ago", status: "failing" },
 ];
 
 interface ActivityRow {
@@ -1337,7 +1337,7 @@ const ACTIVITY_ROWS: ActivityRow[] = [
   { id: "ev_3", when: "00:14", actor: "marcos", action: "Updated bundle", target: "lender-only" },
   { id: "ev_4", when: "23:58", actor: "ptengelmann", action: "Pinned methodology", target: "v2.0.2" },
   { id: "ev_5", when: "23:42", actor: "ops@acmeunderwriting.com", action: "Added IP to allowlist", target: "192.168.1.42/32" },
-  { id: "ev_6", when: "23:11", actor: "system", action: "Delivered webhook", target: "score.changed -> hooks.acme.dev" },
+  { id: "ev_6", when: "23:11", actor: "system", action: "Delivered webhook", target: "signal.changed -> hooks.acme.dev" },
 ];
 
 function RoleBadge({ role }: { role: MemberRow["role"] }) {

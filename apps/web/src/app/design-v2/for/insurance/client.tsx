@@ -153,7 +153,7 @@ const FLOW: FlowStep[] = [
   {
     num: "Step 02",
     title: "Score at quote time",
-    text: "POST /v1/score with preset_id replaces the weights map on every call. The deterministic engine returns the per-dimension breakdown, weights, and per-dimension confidence so the actuary sees the components. NOT metered against the monthly report quota.",
+    text: "POST /v1/score with preset_id replaces the weights map on every call. The deterministic engine returns the per-dimension breakdown, weights, and per-dimension confidence so the actuary sees the components. NOT metered against the monthly API call quota.",
     code: `POST /v1/score
 { "area": "M1 1AE", "preset_id": "spr_..." }
 -> { "score": 62,

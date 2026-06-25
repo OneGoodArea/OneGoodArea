@@ -131,8 +131,8 @@ export default function ProductScoresClient() {
       <SectionAnatomy />
       <ProductEndpointPanel
         titleId="scr-ep-title"
-        title="The primary scoring endpoint, the legacy narrated report, plus Levers preset CRUD."
-        sub="Plain JSON over HTTPS, Bearer-token auth with the oga_ prefix, all paths under /v1/. Score endpoint is free of the monthly report quota; the legacy /v1/report endpoint still consumes it."
+        title="The primary scoring endpoint plus Levers preset CRUD."
+        sub="Plain JSON over HTTPS, Bearer-token auth with the oga_ prefix, all paths under /v1/. Score endpoint is not metered against the monthly API call quota."
         endpoints={EPS}
       />
       <ProductIcpGrid
@@ -619,7 +619,7 @@ function PipelineSvg() {
 }
 
 /* ============================================================
-   § 04 — Endpoints (cream) — POST /v1/score · /v1/report · /presets
+   § 04 — Endpoints (cream) — POST /v1/score · /presets
    ============================================================ */
 
 type Param = { name: string; type: string; required: boolean; desc: string };
@@ -637,7 +637,7 @@ const EPS: Endpoint[] = [
     method: "POST",
     path: "/v1/score",
     what:
-      "The primary scoring endpoint. Send an area and a preset; get a 0-100 composite, the five dimensions that produced it, the weight applied to each, per-dimension confidence, the aggregate confidence, weights_source and the engine_version that ran. Not metered against the monthly report quota. No report is generated.",
+      "The primary scoring endpoint. Send an area and a preset; get a 0-100 composite, the five dimensions that produced it, the weight applied to each, per-dimension confidence, the aggregate confidence, weights_source and the engine_version that ran. Not metered against the monthly API call quota.",
     params: [
       { name: "area", type: "string", required: true, desc: "UK postcode or place name. Geocoded server-side." },
       { name: "preset", type: "enum", required: false, desc: "moving · business · investing · research. Defaults to research. Each preset has its OWN 5 dimensions." },
@@ -655,27 +655,6 @@ const EPS: Endpoint[] = [
       { code: "404", meaning: "Area cannot be geocoded, or preset_id unknown in caller's org." },
       { code: "422", meaning: "preset_id_conflict (mutually exclusive) or no_org_context." },
       { code: "429", meaning: "Per-key rate-limited (30 req / min)." },
-    ],
-  },
-  {
-    method: "POST",
-    path: "/v1/report",
-    what:
-      "Legacy AI-narrated report. Runs the same deterministic engine, then layers an AI narrative on top. The AI cannot drift the numbers; the score is locked server-side. METERED against the monthly report quota. Honours Idempotency-Key + X-Engine-Version pin.",
-    params: [
-      { name: "area", type: "string", required: true, desc: "UK postcode or place name." },
-      { name: "intent", type: "enum", required: true, desc: "Same enum as preset. Historically these were called 'intents' and were demoted to named presets." },
-      { name: "Idempotency-Key", type: "header", required: false, desc: "Same key + same body replays the cached response. Header X-Idempotency-Replayed echoes true/false." },
-      { name: "X-Engine-Version", type: "header", required: false, desc: "Pin to a supported engine version. Stamped on response." },
-    ],
-    response:
-      "{ id, report: { score, dimensions, narrative, engine_version, … } }. Consumes 1 unit of the monthly report quota via canMakeApiCall.",
-    codes: [
-      { code: "200", meaning: "Report generated (or replayed from idempotency cache)." },
-      { code: "400", meaning: "Invalid area / intent / engine_version." },
-      { code: "401", meaning: "Missing or invalid API key." },
-      { code: "403", meaning: "Plan has no API access, IP blocked, or MCP gate failed." },
-      { code: "429", meaning: "Per-key rate limit, OR monthly report limit reached." },
     ],
   },
   {
@@ -763,7 +742,7 @@ const ICPS: Icp[] = [
     why:
       "POST /v1/score with the commercial site-selection profile returns exactly the five dimensions a site-selection analyst needs, with weights the team can override per portfolio class or save once via preset_id. Every response carries per-dimension confidence + the deterministic engine version, so the committee paper has a defensible methodology pointer.",
     value:
-      "Purpose-built commercial-workflow dimensions instead of a generic composite. Configurable weights per portfolio class. Defensible methodology cite. Free of the monthly report quota: score thousands of candidates at the per-key rate limit.",
+      "Purpose-built commercial-workflow dimensions instead of a generic composite. Configurable weights per portfolio class. Defensible methodology cite. Free of the monthly API call quota: score thousands of candidates at the per-key rate limit.",
     sales:
       "A purpose-built commercial site-selection score with per-portfolio weights and a methodology cite you can put in the committee paper.",
   },

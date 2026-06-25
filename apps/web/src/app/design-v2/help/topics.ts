@@ -69,10 +69,6 @@ export const TOPICS: Topic[] = [
         a: "Every Signal response carries fetch_mode so you know how the value was served. \"store\" returns from our monthly time-series store (warm path, fast). \"live\" goes to the source API at request time (cold path, used when the store is unavailable or stale). \"hybrid\" means part of the dimensions came from the store and part from live. The fetch_mode is honest, not a marketing label.",
       },
       {
-        q: "How do I batch fetch signals for many areas?",
-        a: "POST /v1/batch with up to 50 LSOA codes or postcodes per call. The endpoint runs the same per-signal pipeline with concurrency 5 under the hood and returns a per-area result array. Failed lookups return inline as { error } entries rather than failing the whole batch.",
-      },
-      {
         q: "What does a Signal's confidence value mean?",
         a: "Confidence is a 0-1 number that reflects how much we trust the value, with a plain-language confidence_reason. Today it is an availability + sample rubric (high if the source is fresh and the sample is wide; medium if data is older or thinner; low if a fallback was used). Statistical confidence intervals are on the roadmap as Phase 7.",
       },

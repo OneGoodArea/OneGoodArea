@@ -244,7 +244,7 @@ const PRODUCTS: ProductUse[] = [
     num: "01",
     name: "Scores",
     slug: "scores",
-    use: "Primary surface for underwriting. POST /v1/score returns a 0-to-100 composite with per-dimension components, per-dimension confidence, and engine_version. The engine is frozen v2, golden-tested; AI never touches it. NOT metered against the monthly report quota, so bulk-scoring a portfolio overnight does not consume report budget.",
+    use: "Primary surface for underwriting. POST /v1/score returns a 0-to-100 composite with per-dimension components, per-dimension confidence, and engine_version. The engine is frozen v2, golden-tested; AI never touches it. NOT metered against the monthly API call quota, so bulk-scoring a portfolio overnight does not consume report budget.",
     code: `POST /v1/score
 { "area": "M1 1AE", "preset": "research" }
 -> { "score": 62,
@@ -426,7 +426,7 @@ const FAQS: Faq[] = [
   },
   {
     q: "What is the latency profile for bulk scoring?",
-    a: "Per-key rate limit is 30 requests per minute on /v1/score, not metered against the monthly report quota. For overnight portfolio runs the typical pattern is concurrent scoring within the rate budget; Monitor's portfolio enrich endpoint runs synchronously with bounded concurrency 5 and a cap of 50 areas per call. A larger book is scored across multiple calls. Async batch (portfolio_runs) is on the roadmap.",
+    a: "Per-key rate limit is 30 requests per minute on /v1/score, not metered against the monthly API call quota. For overnight portfolio runs the typical pattern is concurrent scoring within the rate budget; Monitor's portfolio enrich endpoint runs synchronously with bounded concurrency 5 and a cap of 50 areas per call. A larger book is scored across multiple calls. Async batch (portfolio_runs) is on the roadmap.",
   },
   {
     q: "How do you handle FCA / PRA SS1/23 model risk requirements?",

@@ -886,7 +886,7 @@ const EPS: Endpoint[] = [
     method: "POST",
     path: "/v1/portfolios/:id/enrich",
     what:
-      "Bulk-score every tracked area through the deterministic engine. Synchronous, cap 50 per call, in-flight concurrency 5. Per-area failures captured in the response, never fatal. NOT metered against the monthly report quota.",
+      "Bulk-score every tracked area through the deterministic engine. Synchronous, cap 50 per call, in-flight concurrency 5. Per-area failures captured in the response, never fatal. NOT metered against the monthly API call quota.",
     params: [
       { name: "preset", type: "enum", required: false, desc: "Scoring profile. Defaults to research baseline. Same four enum values as /v1/score." },
     ],
@@ -919,10 +919,10 @@ const EPS: Endpoint[] = [
     method: "POST",
     path: "/v1/webhooks",
     what:
-      "Register a webhook subscription for the event catalog. Returns the signing secret ONCE on creation. The catalog is exactly 3 events: report.created, score.changed, signal.changed. Today Monitor only fires signal.changed.",
+      "Register a webhook subscription for the event catalog. Returns the signing secret ONCE on creation. The catalog is exactly one event today: signal.changed, fired by Monitor's portfolio change detection.",
     params: [
       { name: "url", type: "string", required: true, desc: "Public HTTPS endpoint. Rejected: http, localhost, 127.0.0.1, RFC 1918 ranges, link-local." },
-      { name: "events", type: "string[]", required: true, desc: "Non-empty subset of ['report.created', 'score.changed', 'signal.changed']. Unknown event types are silently filtered." },
+      { name: "events", type: "string[]", required: true, desc: "Non-empty array. Currently only 'signal.changed' is accepted; unknown event types are silently filtered." },
     ],
     response: "201 WebhookSubscription: { id, url, events, secret: 'whsec_...', created_at }. Save the secret; it is never returned again.",
     codes: [

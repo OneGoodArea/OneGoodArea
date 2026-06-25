@@ -171,7 +171,7 @@ const PRODUCTS: Product[] = [
       "Portfolios as named collections of areas (CRUD, dedup)",
       "On-demand period-vs-period change detection",
       "Sample-size gated (default min 8 transactions on price moves)",
-      "Three webhook events: report.created, score.changed, signal.changed",
+      "Webhook event: signal.changed (signed delivery, HMAC verifiable)",
     ],
     endpoint: { verb: "POST", path: "/v1/portfolios" },
   },

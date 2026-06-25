@@ -252,8 +252,8 @@ export async function ensureWebhookEventsTable() {
  * AR-129: customer-facing webhook subscriptions.
  *
  * Lenders register a URL + event list; we POST signed payloads when matching
- * events fire (`report.created` today, `score.changed` once the time-series
- * cron is scheduled).
+ * events fire. Today the only supported event is `signal.changed`, fired by
+ * Monitor's portfolio change detection (AR-328 narrowed the taxonomy).
  *
  * - `secret` is the per-subscription HMAC-SHA256 signing key (whsec_<48-hex>).
  *   Returned to the customer ONCE on create; never visible in list responses.

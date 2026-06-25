@@ -29,11 +29,6 @@ function WebSiteJsonLd() {
           "@type": "WebSite",
           name: "OneGoodArea",
           url: "https://www.onegoodarea.com",
-          potentialAction: {
-            "@type": "SearchAction",
-            target: "https://www.onegoodarea.com/report?q={search_term_string}",
-            "query-input": "required name=search_term_string",
-          },
         }),
       }}
     />

@@ -68,7 +68,7 @@ const faqLd = {
       name: "What is the latency profile for bulk scoring?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Per-key rate limit is 30 requests per minute on /v1/score, not metered against the monthly report quota. For overnight portfolio runs, concurrent scoring within the rate budget is the typical pattern. Monitor's portfolio enrich endpoint runs synchronously with concurrency 5 and a 50-area cap per call; larger books are scored across multiple calls.",
+        text: "Per-key rate limit is 30 requests per minute on /v1/score, not metered against the monthly API call quota. For overnight portfolio runs, concurrent scoring within the rate budget is the typical pattern. Monitor's portfolio enrich endpoint runs synchronously with concurrency 5 and a 50-area cap per call; larger books are scored across multiple calls.",
       },
     },
     {
