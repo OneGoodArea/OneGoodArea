@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-26
-- **Context refs:** ADR 0002 (schema), 0003 (refresh), 0005 (normalization), 0006 (geo spine), 0010 (timeseries append); MASTER §3, §7.
+- **Context refs:** ADR 0002 (schema), 0003 (refresh), 0005 (normalization), 0006 (geo spine), 0010 (timeseries append); MASTER section 3, section 7.
 
 ## Context
 

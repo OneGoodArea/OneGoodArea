@@ -286,7 +286,7 @@ function Hero() {
 }
 
 /* ============================================================
-   § 01 — Two ways to integrate (DARK)
+   01 — Two ways to integrate (DARK)
    ============================================================ */
 
 function SectionModes() {
@@ -355,7 +355,7 @@ function SectionModes() {
 }
 
 /* ============================================================
-   § 02 — Per-ICP sections
+   02 — Per-ICP sections
    ============================================================ */
 
 function SectionIcp({ icp, altSurface }: { icp: Icp; altSurface: boolean }) {
@@ -370,7 +370,7 @@ function SectionIcp({ icp, altSurface }: { icp: Icp; altSurface: boolean }) {
         <div>
           <header className="oga-biz-icp__head">
             <div className="oga-biz-icp__eyebrow">
-              <span className="oga-biz-icp__eyebrow-num">§ {icp.num}</span>
+              <span className="oga-biz-icp__eyebrow-num">{icp.num}</span>
               <span aria-hidden className="oga-biz-icp__eyebrow-line" />
               <span>For {icp.shortName.toLowerCase()}</span>
             </div>
@@ -555,7 +555,7 @@ function VizPublic() {
 }
 
 /* ============================================================
-   § 03 — Common pillars (cream)
+   03 — Common pillars (cream)
    ============================================================ */
 
 const PILLARS = [
@@ -622,7 +622,7 @@ function SectionPillars() {
         <div className="oga-biz-pillars__grid">
           {PILLARS.map((p) => (
             <article key={p.num} className="oga-biz-pillar">
-              <span className="oga-biz-pillar__num">§ {p.num}</span>
+              <span className="oga-biz-pillar__num">{p.num}</span>
               <h3 className="oga-biz-pillar__title">{p.title}</h3>
               <p className="oga-biz-pillar__body">{p.body}</p>
             </article>
@@ -634,7 +634,7 @@ function SectionPillars() {
 }
 
 /* ============================================================
-   § 04 — Proof strip (DARK)
+   04 — Proof strip (DARK)
    ============================================================ */
 
 function SectionProof() {

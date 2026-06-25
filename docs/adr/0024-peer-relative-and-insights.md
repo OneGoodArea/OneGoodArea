@@ -7,7 +7,7 @@
   ADR 0023 (peers / k-NN — the similarity definition this consumes),
   [[product-architecture-mental-model]] (Intelligence surface #2; trainable
   models is a cross-cutting capability — this is its **first appearance**),
-  MASTER §5/§6.
+  MASTER section 5/section 6.
 
 ## Context
 

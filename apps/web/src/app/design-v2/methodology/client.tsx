@@ -239,7 +239,7 @@ const PLAN_OPS: { name: string; desc: string }[] = [
   { name: "find_forecast",  desc: "Linear-regression projection of one monthly signal at one LSOA (default 24m window, 12m horizon)" },
 ];
 
-/* ───────────────────────────── peers / insights / forecast (§ 8) */
+/* ───────────────────────────── peers / insights / forecast (8) */
 
 const DERIVED_THREE: { num: string; name: string; endpoint: string; body: string; honest: string }[] = [
   {
@@ -282,7 +282,7 @@ const SEMVER: { tag: string; desc: string }[] = [
   { tag: "PATCH", desc: "Formula tuning, threshold adjustment, confidence rubric refinement. Score values stay byte-identical." },
 ];
 
-/* ───────────────────────────── scope-not (§ 12) */
+/* ───────────────────────────── scope-not (12) */
 
 const SCOPE_NOT: { tag: string; title: string; body: string }[] = [
   {
@@ -312,7 +312,7 @@ const SCOPE_NOT: { tag: string; title: string; body: string }[] = [
   },
 ];
 
-/* ───────────────────────────── audit artefacts (§ 13) */
+/* ───────────────────────────── audit artefacts (13) */
 
 const AUDIT: { num: string; name: string; desc: string; href: string; external?: boolean; disabled?: boolean }[] = [
   {
@@ -442,7 +442,7 @@ function Hero() {
   );
 }
 
-/* ─────── § 1 — Signal ─────── */
+/* ─────── 1 — Signal ─────── */
 
 function SectionSignal() {
   return (
@@ -548,7 +548,7 @@ const SIGNAL_LINES: string[] = [
   '<span class="oga-code-panel__punct">}</span>',
 ];
 
-/* ─────── § 2 — Data sources ─────── */
+/* ─────── 2 — Data sources ─────── */
 
 function SectionDataSources() {
   return (
@@ -601,7 +601,7 @@ function SectionDataSources() {
   );
 }
 
-/* ─────── § 3 — Store + fetch modes ─────── */
+/* ─────── 3 — Store + fetch modes ─────── */
 
 function SectionStore() {
   return (
@@ -651,7 +651,7 @@ function SectionStore() {
   );
 }
 
-/* ─────── § 4 — Normalization ─────── */
+/* ─────── 4 — Normalization ─────── */
 
 function SectionNormalization() {
   return (
@@ -732,7 +732,7 @@ function SectionNormalization() {
   );
 }
 
-/* ─────── § 5 — Time-series moat (DARK) ─────── */
+/* ─────── 5 — Time-series moat (DARK) ─────── */
 
 function SectionMoat() {
   return (
@@ -804,7 +804,7 @@ function SectionMoat() {
   );
 }
 
-/* ─────── § 6 — Derived signals ─────── */
+/* ─────── 6 — Derived signals ─────── */
 
 function SectionDerived() {
   return (
@@ -847,7 +847,7 @@ function SectionDerived() {
   );
 }
 
-/* ─────── § 7 — Scoring presets ─────── */
+/* ─────── 7 — Scoring presets ─────── */
 
 function SectionScoring() {
   return (
@@ -892,7 +892,7 @@ function SectionScoring() {
   );
 }
 
-/* ─────── § 8 — Peers / insights / forecast ─────── */
+/* ─────── 8 — Peers / insights / forecast ─────── */
 
 function SectionPeersInsightsForecast() {
   return (
@@ -927,7 +927,7 @@ function SectionPeersInsightsForecast() {
   );
 }
 
-/* ─────── § 9 — Intelligence query plane (DARK) ─────── */
+/* ─────── 9 — Intelligence query plane (DARK) ─────── */
 
 function SectionIntelligence() {
   return (
@@ -1016,7 +1016,7 @@ function SectionIntelligence() {
   );
 }
 
-/* ─────── § 10 — Confidence ─────── */
+/* ─────── 10 — Confidence ─────── */
 
 function SectionConfidence() {
   return (
@@ -1063,7 +1063,7 @@ function SectionConfidence() {
   );
 }
 
-/* ─────── § 11 — Reproducibility + versioning ─────── */
+/* ─────── 11 — Reproducibility + versioning ─────── */
 
 function SectionVersioning() {
   return (
@@ -1126,7 +1126,7 @@ function SectionVersioning() {
   );
 }
 
-/* ─────── § 12 — Per-org methodology (Levers) ─────── */
+/* ─────── 12 — Per-org methodology (Levers) ─────── */
 
 type Lever = {
   num: string;
@@ -1220,7 +1220,7 @@ function SectionLevers() {
   );
 }
 
-/* ─────── § 13 — Scope and limitations ─────── */
+/* ─────── 13 — Scope and limitations ─────── */
 
 function SectionScope() {
   return (
@@ -1253,7 +1253,7 @@ function SectionScope() {
   );
 }
 
-/* ─────── § 14 — Audit artefacts ─────── */
+/* ─────── 14 — Audit artefacts ─────── */
 
 function SectionAudit() {
   return (

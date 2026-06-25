@@ -156,7 +156,7 @@ docs/
 ├── ARCHITECTURE/                      [NEW: System design, products, data layer, deployments]
 │   ├── README.md                      [Overview + TOC of all architecture docs]
 │   ├── SYSTEM-OVERVIEW.md             [EXISTING: Keep unchanged — mental model snapshot]
-│   ├── PRODUCTS.md                    [NEW: Extract §3 from SYSTEM-OVERVIEW]
+│   ├── PRODUCTS.md                    [NEW: Extract section 3 from SYSTEM-OVERVIEW]
 │   ├── DATA-LAYER.md                  [NEW: Signal store + time-series + schema]
 │   ├── QUERY-PLANE.md                 [NEW: Intelligence layer + typed grammar]
 │   └── DEPLOYMENTS.md                 [MOVE from DEPLOY.md: Render + Vercel architecture]

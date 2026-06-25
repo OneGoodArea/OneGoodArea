@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-26
-- **Context refs:** ADR 0012 (property store-read), 0013 (change detection), 0015 (crime ingest); MASTER §3.
+- **Context refs:** ADR 0012 (property store-read), 0013 (change detection), 0015 (crime ingest); MASTER section 3.
 
 ## Context
 

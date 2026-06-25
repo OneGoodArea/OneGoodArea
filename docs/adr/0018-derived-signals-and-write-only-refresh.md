@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-26
-- **Context refs:** ADR 0005 (normalization), 0011 (prices), 0015 (crime), 0017 (query plane); MASTER §3/§6.
+- **Context refs:** ADR 0005 (normalization), 0011 (prices), 0015 (crime), 0017 (query plane); MASTER section 3/section 6.
 
 ## Context
 

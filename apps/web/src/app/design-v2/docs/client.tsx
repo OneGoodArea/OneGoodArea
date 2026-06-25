@@ -31,7 +31,7 @@ import "./docs.css";
    Every fact below was verified against ADRs 0001-0035 + the
    apps/api Fastify routes (see workflow recon 2026-05-31).
    No source names enumerated here — that detail lives on
-   /methodology only (AR-204 §5, NO EXCEPTIONS). */
+   /methodology only (AR-204 section 5, NO EXCEPTIONS). */
 
 const current = getCurrentMethodology();
 
@@ -120,7 +120,7 @@ function Hero() {
 }
 
 /* ============================================================
-   § 01 — The 4 products (DARK)
+   01 — The 4 products (DARK)
    ============================================================ */
 
 type Product = {
@@ -225,7 +225,7 @@ function SectionProducts() {
                     <Icon width={48} height={48} />
                   </div>
                   <div className="oga-docs-product__title-block">
-                    <span className="oga-docs-product__num">§ {p.num}</span>
+                    <span className="oga-docs-product__num">{p.num}</span>
                     <h3 className="oga-docs-product__title">{p.name}</h3>
                   </div>
                 </header>
@@ -263,7 +263,7 @@ function SectionProducts() {
 }
 
 /* ============================================================
-   § 02 — Levers control plane (cream)
+   02 — Levers control plane (cream)
    ============================================================ */
 
 type Lever = {
@@ -359,7 +359,7 @@ function SectionLevers() {
         <div className="oga-docs-levers__grid">
           {LEVERS.map((l) => (
             <article key={l.title} className="oga-docs-lever">
-              <span className="oga-docs-lever__num">§ {l.num}</span>
+              <span className="oga-docs-lever__num">{l.num}</span>
               <h3 className="oga-docs-lever__title">{l.title}</h3>
               <p className="oga-docs-lever__body">{l.body}</p>
               <div className="oga-docs-lever__foot">
@@ -390,7 +390,7 @@ function SectionLevers() {
 }
 
 /* ============================================================
-   § 03 — Reference + spec (white)
+   03 — Reference + spec (white)
    ============================================================ */
 
 type RefTile = {
@@ -499,7 +499,7 @@ function SectionReference() {
             const inner = (
               <>
                 <header className="oga-docs-ref-tile__head">
-                  <span className="oga-docs-ref-tile__num">§ {r.num}</span>
+                  <span className="oga-docs-ref-tile__num">{r.num}</span>
                   <span
                     className={`oga-docs-ref-tile__status ${statusClass(r.status)}`}
                   >
@@ -544,7 +544,7 @@ function SectionReference() {
 }
 
 /* ============================================================
-   § 04 — Quickstart (DARK)
+   04 — Quickstart (DARK)
    ============================================================ */
 
 const QS_STEPS: { num: string; title: string; body: string }[] = [
@@ -639,7 +639,7 @@ function CodePanel({ lang, path, snippet }: { lang: string; path: string; snippe
 }
 
 /* ============================================================
-   § 05 — Code examples (cream)
+   05 — Code examples (cream)
    ============================================================ */
 
 type LangKey = "curl" | "node" | "python" | "go";

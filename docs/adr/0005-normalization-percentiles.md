@@ -2,12 +2,12 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-25
-- **Context refs:** ADR 0002 (schema), ADR 0003 (refresh); MASTER §3, §7; AR-171.
+- **Context refs:** ADR 0002 (schema), ADR 0003 (refresh); MASTER section 3, section 7; AR-171.
 
 ## Context
 
 The store holds raw values (deprivation first). Raw values aren't the product —
-**normalized, comparable values are** (MASTER §7: normalization across GB's
+**normalized, comparable values are** (MASTER section 7: normalization across GB's
 mismatched indices is "boring, hard, valuable" and the #1 defensible asset). A
 raw IMD rank is hard to use; a national percentile is instantly model-ready. We
 need to compute this over the stored data and persist it.

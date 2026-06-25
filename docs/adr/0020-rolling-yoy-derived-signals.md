@@ -5,7 +5,7 @@
 - **Context refs:** ADR 0011 (prices into store), ADR 0015 (crime into store),
   ADR 0018 (derived signals + write-only refresh), ADR 0019 (compound query
   grammar), [[product-architecture-mental-model]] (capability: trainable
-  models / corpus is moat), MASTER §6.
+  models / corpus is moat), MASTER section 6.
 
 ## Context
 

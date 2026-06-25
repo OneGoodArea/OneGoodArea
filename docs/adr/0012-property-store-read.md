@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-26
-- **Context refs:** ADR 0004 (deprivation store-read), 0011 (prices ingest); MASTER §3.
+- **Context refs:** ADR 0004 (deprivation store-read), 0011 (prices ingest); MASTER section 3.
 
 ## Context
 

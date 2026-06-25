@@ -6,7 +6,7 @@
   measure in), ADR 0007 (cross-area query — the same scope vocabulary),
   ADR 0017 (query plane v1), ADR 0019 (compound `rank_areas` grammar),
   [[product-architecture-mental-model]] (trainable models is a cross-cutting
-  capability; peers is the gateway), MASTER §6.
+  capability; peers is the gateway), MASTER section 6.
 
 ## Context
 

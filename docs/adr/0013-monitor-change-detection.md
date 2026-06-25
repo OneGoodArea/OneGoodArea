@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-26
-- **Context refs:** ADR 0009 (Monitor v1), 0010 (timeseries append), 0011 (prices); MASTER §4, §5.
+- **Context refs:** ADR 0009 (Monitor v1), 0010 (timeseries append), 0011 (prices); MASTER section 4, section 5.
 
 ## Context
 

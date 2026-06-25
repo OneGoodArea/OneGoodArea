@@ -1,6 +1,6 @@
 /* Normalization — raw stored values → comparable percentiles.
 
-   The defensible core of the product (MASTER §7): turn mismatched raw indices
+   The defensible core of the product (MASTER section 7): turn mismatched raw indices
    into model-ready, comparable numbers. This job computes, per signal, where
    each area sits in its distribution and writes:
      - signal_percentiles  (per-scope percentile rank, 0-100)

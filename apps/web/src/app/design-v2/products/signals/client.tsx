@@ -19,22 +19,22 @@ import "./signals.css";
 
    Rewrite after Pedro's "too templated" feedback. New shape:
      Hero               cream — centred, big icon, no side-card
-     § 01 Live specimen DARK  — prebaked AreaProfile visualised as
+     01 Live specimen DARK  — prebaked AreaProfile visualised as
                                 a real product surface (geo rail +
                                 signal rows w/ percentile bars +
                                 meta footer + JSON toggle)
-     § 02 Anatomy       cream — single bespoke SVG diagram, one
+     02 Anatomy       cream — single bespoke SVG diagram, one
                                 Signal exploded w/ hairlines
-     § 03 Categories    DARK  — 7-category constellation (SVG) +
+     03 Categories    DARK  — 7-category constellation (SVG) +
                                 annotated list below
-     § 04 Endpoints     cream — single tabbed specimen panel for
+     04 Endpoints     cream — single tabbed specimen panel for
                                 3 endpoints (not 3 stacked cards)
-     § 05 Built for     cream — 5 ICPs in EQUAL treatment, each
+     05 Built for     cream — 5 ICPs in EQUAL treatment, each
                                 with a bespoke dot-and-hairline
                                 micro-illustration
      CTA                DARK
 
-   Source of truth: docs/DESIGN/AR-204-product-pages-spec-pack.md §1.
+   Source of truth: docs/DESIGN/AR-204-product-pages-spec-pack.md section 1.
    No fake links; no aiq_; no em dashes; zero inline styles. */
 
 const current = getCurrentMethodology();
@@ -207,7 +207,7 @@ export default function ProductSignalsClient() {
 }
 
 /* ============================================================
-   § 01 — Live specimen (DARK) — prebaked AreaProfile per postcode
+   01 — Live specimen (DARK) — prebaked AreaProfile per postcode
    ============================================================ */
 
 function SectionSpecimen() {
@@ -447,7 +447,7 @@ function JsonSpecimen({ s }: { s: Specimen }) {
 }
 
 /* ============================================================
-   § 02 — Anatomy of a Signal (cream) — bespoke SVG diagram
+   02 — Anatomy of a Signal (cream) — bespoke SVG diagram
    ============================================================ */
 
 function SectionAnatomy() {
@@ -601,7 +601,7 @@ function SignalAnatomySvg() {
 }
 
 /* ============================================================
-   § 03 — The 7 categories (DARK) — constellation
+   03 — The 7 categories (DARK) — constellation
    ============================================================ */
 
 const CATEGORIES: { name: string; desc: string }[] = [
@@ -721,7 +721,7 @@ function CategoryConstellationSvg() {
 }
 
 /* ============================================================
-   § 04 — Endpoints (cream, compact tabbed panel)
+   04 — Endpoints (cream, compact tabbed panel)
    ============================================================ */
 
 type Param = { name: string; type: string; required: boolean; desc: string };
@@ -805,7 +805,7 @@ const EPS: Endpoint[] = [
    Per-product variation = title + sub + EPS data. */
 
 /* ============================================================
-   § 05 — Built for (cream, equal-weight ICPs w/ bespoke vizzes)
+   05 — Built for (cream, equal-weight ICPs w/ bespoke vizzes)
    ============================================================ */
 
 type Icp = {

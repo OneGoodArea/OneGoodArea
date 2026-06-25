@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-26
-- **Context refs:** ADR 0002 (schema), ADR 0003 (refresh); MASTER §3, §6.
+- **Context refs:** ADR 0002 (schema), ADR 0003 (refresh); MASTER section 3, section 6.
 
 ## Context
 

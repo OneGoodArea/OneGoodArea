@@ -13,15 +13,15 @@ import "./help.css";
 
    IA (10 sections + final CTA):
      Hero (cream, eyebrow + H1 + lead + search input)
-     § 01 Getting started        (cream-quiet)
-     § 02 Signals                (cream)
-     § 03 Scores                 (cream-quiet)
-     § 04 Monitor                (cream)
-     § 05 Intelligence           (cream-quiet)
-     § 06 Methodology and data   (cream)
-     § 07 API access             (cream-quiet)
-     § 08 Billing and plans      (cream)
-     § 09 Account                (cream-quiet)
+     01 Getting started        (cream-quiet)
+     02 Signals                (cream)
+     03 Scores                 (cream-quiet)
+     04 Monitor                (cream)
+     05 Intelligence           (cream-quiet)
+     06 Methodology and data   (cream)
+     07 API access             (cream-quiet)
+     08 Billing and plans      (cream)
+     09 Account                (cream-quiet)
      Talk to us                  (DARK, 3 contact cards)
 
    Behaviour:

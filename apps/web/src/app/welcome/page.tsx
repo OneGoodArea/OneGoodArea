@@ -13,7 +13,7 @@ import WelcomeClient from "@/app/design-v2/welcome/client";
 
    AR-253: also reads users.email_verified so the client can show a
    verification reminder banner. The verify gate was dropped from
-   onboarding (proposal §2: verification REQUIRED to write data but
+   onboarding (proposal section 2: verification REQUIRED to write data but
    NOT required to enter the dashboard) — the banner is the gentle
    nudge that replaces it. One extra SELECT per /welcome render; the
    row is the same one auth() just touched, so it's hot in cache. */

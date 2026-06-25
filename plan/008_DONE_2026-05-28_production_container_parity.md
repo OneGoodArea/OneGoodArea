@@ -113,7 +113,7 @@ The `container/postgres/Containerfile` exists for **test compatibility + cross-p
 1. **API image path:** `container/api/Containerfile`. `git mv` from the existing root `/Dockerfile`. Best practice for multi-service monorepos (centralised + symmetric + OCI-native naming that Docker + Podman both honour).
 2. **Web image runtime:** Next.js `output: 'standalone'` mode. Lean image (~40MB layer over node base) + fast cold start. Image exists for parity / test compatibility — `apps/web` continues to deploy on Vercel as primary.
 3. **Postgres image:** Thin wrapper around `postgres:16-alpine` at `container/postgres/Containerfile`. Config conventions only (env shape, healthcheck contract). For parity / test compatibility — Neon remains the production database. **Schema, DAL, migrations, seeds are all explicitly out of scope here** — they belong to plans 009 + 010.
-4. **Branching:** ONE branch (`feat/prod-container-parity`), multiple small reviewable commits per the per-commit-group split in §1.1. Never stacked branches.
+4. **Branching:** ONE branch (`feat/prod-container-parity`), multiple small reviewable commits per the per-commit-group split in section 1.1. Never stacked branches.
 
 ## Deliverable boundaries (this plan)
 

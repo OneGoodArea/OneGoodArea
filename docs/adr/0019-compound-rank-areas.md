@@ -3,7 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-05-26
 - **Context refs:** ADR 0007 (cross-area query), ADR 0017 (query plane v1),
-  ADR 0018 (derived signals), MASTER §6, [[product-architecture-mental-model]].
+  ADR 0018 (derived signals), MASTER section 6, [[product-architecture-mental-model]].
 
 ## Context
 

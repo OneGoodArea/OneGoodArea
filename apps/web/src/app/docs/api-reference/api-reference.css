@@ -138,7 +138,7 @@
 }
 
 /* ============================================================
-   § 1 — Surface map (6 cards, dark surface)
+   1 — Surface map (6 cards, dark surface)
    ============================================================ */
 
 .oga-apiref-surfaces__grid {
@@ -259,7 +259,7 @@
   color: var(--oga-status-amber);
 }
 
-/* Dark-surface variant — § 01 punctuates with .oga-section-dark
+/* Dark-surface variant — 01 punctuates with .oga-section-dark
    to mirror the homepage products-on-dark moment. Cards drop the
    cream fill, lean on hairline borders + a faint translucent
    panel. Token overrides on [data-oga-surface="dark"] flip
@@ -309,7 +309,7 @@
    shared overrides fire automatically. */
 
 /* ============================================================
-   § 3 — What you can use today (4 cards)
+   3 — What you can use today (4 cards)
    ============================================================ */
 
 .oga-apiref-today__grid {
@@ -381,7 +381,7 @@
 }
 
 /* ============================================================
-   § 4 — Roadmap card
+   4 — Roadmap card
    ============================================================ */
 
 .oga-apiref-roadmap__card {

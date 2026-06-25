@@ -11,10 +11,10 @@ import "./about.css";
 
    Locked IA (5 sections, no founder block, no roadmap):
      Hero (cream)
-     § 01  Why we exist            (cream-quiet)
-     § 02  What we believe         (DARK, 6 principle cards w/ ADR refs)
-     § 03  How it got built        (cream, origin + small-team framing + real stats strip)
-     § 04  Talk to us              (DARK CTA, 3 contact channels)
+     01  Why we exist            (cream-quiet)
+     02  What we believe         (DARK, 6 principle cards w/ ADR refs)
+     03  How it got built        (cream, origin + small-team framing + real stats strip)
+     04  Talk to us              (DARK CTA, 3 contact channels)
 
    Voice: company (we / our). No founder spotlight.
    Hard rules: zero inline styles, no aiq_, no em dashes, no fake links,
@@ -348,7 +348,7 @@ export default function AboutClient() {
         </div>
       </section>
 
-      {/* § 01 — WHY WE EXIST ------------------------------------- */}
+      {/* 01 — WHY WE EXIST ------------------------------------- */}
       <section className="oga-section-quiet oga-about-why" data-oga-surface="light">
         <div className="oga-about-why__inner">
           <div className="oga-about-why__eyebrow oga-eyebrow">
@@ -387,7 +387,7 @@ export default function AboutClient() {
         </div>
       </section>
 
-      {/* § 02 — WHAT WE BELIEVE (DARK) --------------------------- */}
+      {/* 02 — WHAT WE BELIEVE (DARK) --------------------------- */}
       <section className="oga-section-dark oga-about-believe" data-oga-surface="dark">
         <div className="oga-about-believe__inner">
           <div className="oga-about-believe__head">
@@ -423,7 +423,7 @@ export default function AboutClient() {
         </div>
       </section>
 
-      {/* § 03 — HOW IT GOT BUILT --------------------------------- */}
+      {/* 03 — HOW IT GOT BUILT --------------------------------- */}
       <section className="oga-about-built" data-oga-surface="light">
         <div className="oga-about-built__inner">
           <div className="oga-about-built__eyebrow oga-eyebrow">
@@ -465,7 +465,7 @@ export default function AboutClient() {
         </div>
       </section>
 
-      {/* § 04 — TALK TO US (DARK CTA) ---------------------------- */}
+      {/* 04 — TALK TO US (DARK CTA) ---------------------------- */}
       <section className="oga-section-dark oga-about-contact" data-oga-surface="dark">
         <div className="oga-about-contact__inner">
           <div className="oga-about-contact__eyebrow oga-eyebrow oga-eyebrow--inverse">

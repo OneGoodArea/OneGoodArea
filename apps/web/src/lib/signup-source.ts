@@ -1,6 +1,6 @@
 /* AR-249 [AR-248-A] signup_source attribution.
 
-   Per AR-248 proposal §1: the visitor's ?source=... URL param on
+   Per AR-248 proposal section 1: the visitor's ?source=... URL param on
    /get-started (or any landing surface) is captured to a cookie so it
    survives navigation through the journey, then written to
    users.signup_source at account creation. The column shipped in

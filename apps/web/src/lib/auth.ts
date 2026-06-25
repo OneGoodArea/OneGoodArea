@@ -98,7 +98,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         /* Clicking a magic link is strong proof of email ownership.
            Auto-verify the email if it wasn't already (saves the user
-           a separate verification step — AR-248 §2 says "verify gates
+           a separate verification step — AR-248 section 2 says "verify gates
            writes" so users still need verified email to write data,
            and this is the path that gets them there). */
         await sql`

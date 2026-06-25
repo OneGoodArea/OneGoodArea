@@ -1,6 +1,6 @@
 /* Scoring engine — versioned modules.
 
-   EXECUTION-PLAYBOOK §8 gate #2: freeze v2 before any v3 scoring work, so the
+   EXECUTION-PLAYBOOK section 8 gate #2: freeze v2 before any v3 scoring work, so the
    X-Engine-Version reproducibility promise (the auditable/version-pinned part of
    the moat) stays intact. v2.ts is the FROZEN engine — golden-master-tested
    byte-for-byte (scoring-engine.golden.test.ts imports ./v2 directly). Do NOT
