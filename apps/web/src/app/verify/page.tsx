@@ -14,20 +14,13 @@ interface Props {
   searchParams: Promise<{ token?: string; state?: string }>;
 }
 
+/* AR-342 (epic AR-340): the per-render CREATE TABLE IF NOT EXISTS for
+   email_verification_tokens was removed. The apps/api migrator owns
+   that table; bootstrapping it on every /verify render was a wasted
+   roundtrip. Direct SQL here is auth-flow-adjacent — same documented
+   exception as lib/auth.ts (see feedback_no_db_in_web). */
 async function verifyToken(token: string): Promise<{ success: boolean }> {
   try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS email_verification_tokens (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        email TEXT NOT NULL,
-        token TEXT UNIQUE NOT NULL,
-        expires_at TIMESTAMPTZ NOT NULL,
-        used BOOLEAN DEFAULT FALSE,
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `;
-
     const rows = await sql`
       SELECT user_id, email, expires_at, used FROM email_verification_tokens
       WHERE token = ${token}
