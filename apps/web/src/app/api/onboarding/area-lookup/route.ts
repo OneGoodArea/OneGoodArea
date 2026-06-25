@@ -11,15 +11,14 @@
    the user pre-auth previews via marketing-side links) while
    delivering real data once they're signed in.
 
-   Rate-limited 10/min per IP — this is an outbound API call, not just
-   a DB write. */
+   AR-336 (epic AR-335): the BFF-level IP rate limit was removed. The
+   authed path is rate-limited by apps/api's /v1/area; the unauthed
+   path returns a static demo with no DB write and no outbound call,
+   so there's nothing to throttle here. */
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { callApi } from "@/lib/server/api-client";
-import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
-
-const RATE_LIMIT = { max: 10, windowSeconds: 60 } as const;
 
 interface ApiAreaResponse {
   area_name?: string;
@@ -38,15 +37,6 @@ interface NormalizedAreaResult {
 }
 
 export async function GET(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  const rl = await rateLimit(`onboarding-area:${ip}`, RATE_LIMIT);
-  if (!rl.success) {
-    return NextResponse.json(
-      { error: "Too many attempts. Please wait a moment." },
-      { status: 429, headers: rateLimitHeaders(RATE_LIMIT.max, rl) },
-    );
-  }
-
   const rawPostcode = req.nextUrl.searchParams.get("postcode") ?? "";
   const postcode = rawPostcode.trim().toUpperCase();
   if (!postcode || postcode.length < 2) {
