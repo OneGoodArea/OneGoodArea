@@ -23,6 +23,14 @@ import type { Country } from "../modules/signals/peers";
 import type { PlanId } from "../modules/billing/plans";
 import { getOrgIfMember, getRoleInOrg, updateOrg, hasAtLeastRole } from "../modules/orgs";
 import { UpdateOrgRequestSchema, type OrgRole } from "@onegoodarea/contracts";
+import {
+  createWebhookSubscription,
+  listWebhookSubscriptions,
+  revokeWebhookSubscription,
+  rotateWebhookSecret,
+  validateWebhookUrl,
+  validateEventTypes,
+} from "../modules/webhooks";
 /** me route handlers — extracted from app.ts per AR-286. */
 export function registerMeRoutes(app: FastifyInstance): void {
     app.get("/me/activity",
@@ -67,6 +75,72 @@ export function registerMeRoutes(app: FastifyInstance): void {
         if (!userId) return reply;
         const is_superuser = await isSuperuser(userId);
         return reply.code(200).send({ is_superuser });
+      });
+
+    /* AR-350 (epic AR-343): session-authed webhook subscription CRUD
+       for the dashboard. Mirrors /v1/webhooks (api-key + rate-limit +
+       plan-gated) but session-authed for /dashboard/webhooks users.
+       All four handlers wrap the same module helpers as /v1/webhooks
+       so the underlying CRUD + signing logic is single-source.
+       Replaces the apps/web /api/me/webhooks family direct SQL. */
+    app.get("/me/webhooks",
+      {
+        schema: { tags: ["Me"], summary: "List my webhook subscriptions", description: "Returns the caller's webhook subscriptions (no secret)." },
+      },
+      async (request, reply) => {
+        const userId = await authenticateSession(request, reply);
+        if (!userId) return reply;
+        const subscriptions = await listWebhookSubscriptions(userId);
+        return reply.code(200).send({ subscriptions });
+      });
+
+    app.post("/me/webhooks",
+      {
+        schema: { tags: ["Me"], summary: "Create a webhook subscription", description: "Register a new webhook URL. Returns the signing secret ONCE." },
+      },
+      async (request, reply) => {
+        const userId = await authenticateSession(request, reply);
+        if (!userId) return reply;
+
+        const body = request.body;
+        if (typeof body !== "object" || body === null) {
+          return reply.code(400).send({ error: "Request body must be { url, events: [...] }" });
+        }
+        const { url, events } = body as { url?: unknown; events?: unknown };
+        const urlCheck = validateWebhookUrl(url);
+        if (!urlCheck.valid) {
+          return reply.code(400).send({ error: urlCheck.error });
+        }
+        const eventList = validateEventTypes(events);
+        if (!eventList) {
+          return reply.code(400).send({ error: "events must be a non-empty array of supported types: 'signal.changed'" });
+        }
+        const created = await createWebhookSubscription(userId, urlCheck.sanitized, eventList);
+        return reply.code(201).send(created);
+      });
+
+    app.delete<{ Params: { id: string } }>("/me/webhooks/:id",
+      {
+        schema: { tags: ["Me"], summary: "Delete a webhook subscription", description: "Revoke a webhook subscription owned by the caller." },
+      },
+      async (request, reply) => {
+        const userId = await authenticateSession(request, reply);
+        if (!userId) return reply;
+        const ok = await revokeWebhookSubscription(userId, request.params.id);
+        if (!ok) return reply.code(404).send({ error: "Webhook not found" });
+        return reply.code(200).send({ ok: true });
+      });
+
+    app.post<{ Params: { id: string } }>("/me/webhooks/:id/rotate-secret",
+      {
+        schema: { tags: ["Me"], summary: "Rotate webhook signing secret", description: "Generate a new HMAC signing secret. Returns it ONCE; the old secret is invalidated immediately." },
+      },
+      async (request, reply) => {
+        const userId = await authenticateSession(request, reply);
+        if (!userId) return reply;
+        const secret = await rotateWebhookSecret(userId, request.params.id);
+        if (!secret) return reply.code(404).send({ error: "Webhook not found" });
+        return reply.code(200).send({ secret });
       });
 
     /* AR-349 (epic AR-343): dashboard-paginated portfolios for the
