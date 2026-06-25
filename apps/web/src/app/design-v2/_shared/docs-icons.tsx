@@ -1,7 +1,10 @@
-/* Docs icons — 3 bespoke dot-and-hairline diagrams in the Plotted
+/* Docs icons — 4 bespoke dot-and-hairline diagrams in the Plotted
    vocabulary, same approach as product-icons.tsx. Each icon is a
    miniature illustration of the doc's value prop:
 
+   - DocsHomeIcon: stacked index — 4 leading dots paired with
+     horizontal hairlines of varying widths. Reads "table of
+     contents / index of docs." Added AR-355.
    - ApiReferenceIcon: paired braces ({ }) of dots with content dots
      between — the SPEC. Reads "structured contract."
    - McpServerIcon: client cluster on the left, OGA endpoint on the
@@ -13,7 +16,7 @@
 
    24x24 viewBox; nav docs dropdown sizes them at 18-20px.
    currentColor everywhere — inverts on dark surfaces.
-   AR-204 PR 2. */
+   AR-204 PR 2, extended in AR-355. */
 
 import type { SVGProps } from "react";
 
@@ -26,6 +29,29 @@ const baseProps: IconProps = {
   fill: "none",
   "aria-hidden": true,
 };
+
+/* ---------- Docs home — stacked index ----------
+   Four entry rows. Each row is a leading dot + a horizontal
+   hairline of varying width. Reads as a table of contents.
+   No vertical timeline (that's ChangelogIcon's vocabulary). */
+export function DocsHomeIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <g fill="currentColor">
+        <circle cx="4" cy="5"  r="1.0" />
+        <circle cx="4" cy="10" r="1.0" />
+        <circle cx="4" cy="15" r="1.0" />
+        <circle cx="4" cy="20" r="1.0" />
+      </g>
+      <g stroke="currentColor" strokeWidth="0.9" strokeLinecap="round">
+        <line x1="8" y1="5"  x2="20" y2="5"  />
+        <line x1="8" y1="10" x2="18" y2="10" strokeOpacity="0.75" />
+        <line x1="8" y1="15" x2="19" y2="15" strokeOpacity="0.75" />
+        <line x1="8" y1="20" x2="16" y2="20" strokeOpacity="0.55" />
+      </g>
+    </svg>
+  );
+}
 
 /* ---------- API reference — { content } ----------
    Left + right braces composed of dots that curve in toward the
@@ -115,6 +141,7 @@ export function ChangelogIcon(props: IconProps) {
 }
 
 export const DOCS_ICONS = {
+  "docs-home": DocsHomeIcon,
   "api-reference": ApiReferenceIcon,
   "mcp": McpServerIcon,
   "changelog": ChangelogIcon,

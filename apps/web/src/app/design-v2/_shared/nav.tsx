@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Wordmark } from "./wordmark";
 import { SignalsIcon, ScoresIcon, MonitorIcon, IntelligenceIcon } from "./product-icons";
-import { ApiReferenceIcon, McpServerIcon, ChangelogIcon } from "./docs-icons";
+import { DocsHomeIcon, ApiReferenceIcon, McpServerIcon, ChangelogIcon } from "./docs-icons";
 import "./nav.css";
 
 /* Marketing nav — Brand v3 Plotted (AR-204 PR 1).
@@ -58,6 +58,7 @@ interface DocsLink {
 }
 
 const DOCS: DocsLink[] = [
+  { label: "Docs home",     href: "/docs",                              icon: DocsHomeIcon },
   { label: "API reference", href: "/docs/api-reference",                icon: ApiReferenceIcon },
   { label: "MCP server",    href: "/docs/mcp",          badge: "NEW",   icon: McpServerIcon },
   { label: "Changelog",     href: "/changelog",                         icon: ChangelogIcon },
