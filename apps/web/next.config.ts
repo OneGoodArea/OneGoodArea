@@ -47,6 +47,11 @@ const nextConfig: NextConfig = {
     return [
       { source: "/report", destination: "/dashboard", permanent: true },
       { source: "/report/:id", destination: "/dashboard", permanent: true },
+      // AR-334: the legacy B2C blog retired. Existing indexed blog URLs
+      // (5 posts + the index) redirect home until a dedicated research-
+      // notes surface ships under a future epic.
+      { source: "/blog", destination: "/", permanent: true },
+      { source: "/blog/:slug", destination: "/", permanent: true },
     ];
   },
 };
