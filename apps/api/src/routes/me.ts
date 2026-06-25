@@ -69,6 +69,95 @@ export function registerMeRoutes(app: FastifyInstance): void {
         return reply.code(200).send({ is_superuser });
       });
 
+    /* AR-349 (epic AR-343): dashboard-paginated portfolios for the
+       caller. Session-authed. Different from /v1/portfolios (api-key
+       authed, no pagination): this endpoint backs /dashboard with
+       page + page_size + ?q search and inline-joins areas for the
+       page rows. Replaces the apps/web /api/me/portfolios direct SQL. */
+    app.get("/me/portfolios",
+      {
+        schema: {
+          tags: ["Me"],
+          summary: "List my portfolios (paginated, searchable)",
+          description: "Paginated portfolios for the caller. Query: ?page=1&page_size=20&q=<substring>. Inline-joins areas for the page rows.",
+        },
+      },
+      async (request, reply) => {
+        const userId = await authenticateSession(request, reply);
+        if (!userId) return reply;
+
+        const query = (request.query ?? {}) as { page?: string; page_size?: string; q?: string };
+        const DEFAULT_PAGE_SIZE = 20;
+        const MAX_PAGE_SIZE = 100;
+
+        const rawPage = Number.parseInt(query.page ?? "1", 10);
+        const page = Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
+        const rawSize = Number.parseInt(query.page_size ?? String(DEFAULT_PAGE_SIZE), 10);
+        const pageSize = Number.isFinite(rawSize)
+          ? Math.min(MAX_PAGE_SIZE, Math.max(1, rawSize))
+          : DEFAULT_PAGE_SIZE;
+        const q = (query.q ?? "").trim();
+        const qLike = q ? `%${q}%` : null;
+        const offset = (page - 1) * pageSize;
+
+        try {
+          const countRows = qLike
+            ? await sql`SELECT COUNT(*)::int AS total FROM portfolios WHERE user_id = ${userId} AND name ILIKE ${qLike}`
+            : await sql`SELECT COUNT(*)::int AS total FROM portfolios WHERE user_id = ${userId}`;
+          const total = (countRows[0] as { total: number } | undefined)?.total ?? 0;
+
+          const portfolios = qLike
+            ? await sql`
+                SELECT id, name, created_at, updated_at
+                  FROM portfolios
+                 WHERE user_id = ${userId}
+                   AND name ILIKE ${qLike}
+                 ORDER BY created_at DESC
+                 LIMIT ${pageSize}
+                OFFSET ${offset}
+              `
+            : await sql`
+                SELECT id, name, created_at, updated_at
+                  FROM portfolios
+                 WHERE user_id = ${userId}
+                 ORDER BY created_at DESC
+                 LIMIT ${pageSize}
+                OFFSET ${offset}
+              `;
+
+          if (portfolios.length === 0) {
+            return reply.code(200).send({ portfolios: [], total, page, page_size: pageSize });
+          }
+
+          const portfolioIds = (portfolios as Array<{ id: string }>).map((p) => p.id);
+          const areas = (await sql`
+            SELECT id, portfolio_id, area, label, created_at
+              FROM portfolio_areas
+             WHERE portfolio_id = ANY(${portfolioIds})
+             ORDER BY created_at ASC
+          `) as Array<{ id: string; portfolio_id: string; area: string; label: string | null; created_at: string }>;
+
+          const areasByPortfolio: Record<string, typeof areas> = {};
+          for (const a of areas) {
+            (areasByPortfolio[a.portfolio_id] ||= []).push(a);
+          }
+
+          const out = (portfolios as Array<{ id: string; name: string; created_at: string; updated_at: string }>).map((p) => ({
+            id: p.id,
+            name: p.name,
+            created_at: p.created_at,
+            updated_at: p.updated_at,
+            area_count: (areasByPortfolio[p.id] ?? []).length,
+            areas: (areasByPortfolio[p.id] ?? []).map((a) => ({ id: a.id, area: a.area, label: a.label })),
+          }));
+
+          return reply.code(200).send({ portfolios: out, total, page, page_size: pageSize });
+        } catch (err) {
+          logger.error("[me/portfolios] error:", err);
+          return reply.code(200).send({ portfolios: [], total: 0, page, page_size: pageSize });
+        }
+      });
+
     /* AR-347 (epic AR-343): 30-day score-call breakdown for the
        caller, grouped by preset. Session-authed. Used by /dashboard/scores
        to show per-preset call counts. Replaces the apps/web
