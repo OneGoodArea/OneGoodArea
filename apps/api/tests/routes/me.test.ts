@@ -13,6 +13,25 @@ vi.mock("@/modules/usage", () => ({
   trackMcpCall: vi.fn(),
 }));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
+vi.mock("@/modules/orgs", async (orig) => {
+  const actual = await orig() as object;
+  return {
+    ...actual,
+    getOrgIfMember: vi.fn(),
+    getRoleInOrg: vi.fn(),
+    updateOrg: vi.fn(),
+  };
+});
+vi.mock("@/modules/webhooks", async (orig) => {
+  const actual = await orig() as object;
+  return {
+    ...actual,
+    createWebhookSubscription: vi.fn(),
+    listWebhookSubscriptions: vi.fn(),
+    revokeWebhookSubscription: vi.fn(),
+    rotateWebhookSecret: vi.fn(),
+  };
+});
 
 import { buildApp } from "@/app";
 import { validateApiKey } from "@/modules/api-keys";
@@ -28,6 +47,13 @@ import {
 } from "@/modules/usage";
 import { sql } from "@/infrastructure/db/client";
 import { METHODOLOGY_VERSION } from "@/modules/engine/methodology";
+import { getOrgIfMember, getRoleInOrg, updateOrg } from "@/modules/orgs";
+import {
+  createWebhookSubscription,
+  listWebhookSubscriptions,
+  revokeWebhookSubscription,
+  rotateWebhookSecret,
+} from "@/modules/webhooks";
 
 const app = await buildApp();
 
@@ -41,6 +67,13 @@ const mockQuota = vi.mocked(canMakeApiCall);
 const mockAddons = vi.mocked(listAddons);
 const mockMcpUsage = vi.mocked(getMcpUsageThisMonth);
 const mockSql = vi.mocked(sql);
+const mockGetOrgIfMember = vi.mocked(getOrgIfMember);
+const mockGetRoleInOrg = vi.mocked(getRoleInOrg);
+const mockUpdateOrg = vi.mocked(updateOrg);
+const mockCreateWebhook = vi.mocked(createWebhookSubscription);
+const mockListWebhooks = vi.mocked(listWebhookSubscriptions);
+const mockRevokeWebhook = vi.mocked(revokeWebhookSubscription);
+const mockRotateWebhook = vi.mocked(rotateWebhookSecret);
 
 const JSON_HEADERS = { "content-type": "application/json" };
 const SESSION_AUTH = { authorization: "Bearer session.jwt" };
@@ -367,5 +400,215 @@ describe("DELETE /watchlist/:id", () => {
     const res = await app.inject({ method: "DELETE", url: "/watchlist/sa_1", headers: { ...SESSION_AUTH, "content-type": "application/json" } });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ ok: true });
+  });
+});
+
+// ── me-org.test.ts ──────────────────────────────────────────────────
+// AR-348 (epic AR-343): session-authed /me/org GET + PATCH.
+
+describe("GET /me/org", () => {
+  it("401s without a session token", async () => {
+    const res = await app.inject({ method: "GET", url: "/me/org" });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("returns { org: null, caller_role: null } when the user has no memberships", async () => {
+    mockSql.mockResolvedValueOnce([] as never);
+    const res = await app.inject({ method: "GET", url: "/me/org", headers: SESSION_AUTH });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ org: null, caller_role: null });
+  });
+
+  it("returns the primary org + role for a member", async () => {
+    mockSql.mockResolvedValueOnce([{ org_id: "org_acme", role: "admin" }] as never);
+    mockGetOrgIfMember.mockResolvedValue({
+      id: "org_acme", slug: "acme", name: "Acme",
+      display_name: null, brand_url: null, logo_url: null,
+      created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z",
+    } as never);
+    const res = await app.inject({ method: "GET", url: "/me/org", headers: SESSION_AUTH });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.caller_role).toBe("admin");
+    expect(body.org.id).toBe("org_acme");
+  });
+
+  it("returns { org: null } if org_members points at a missing org row", async () => {
+    mockSql.mockResolvedValueOnce([{ org_id: "org_dangling", role: "owner" }] as never);
+    mockGetOrgIfMember.mockResolvedValue(null);
+    const res = await app.inject({ method: "GET", url: "/me/org", headers: SESSION_AUTH });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ org: null, caller_role: null });
+  });
+});
+
+describe("PATCH /me/org", () => {
+  function patchOrg(body: unknown) {
+    return app.inject({
+      method: "PATCH",
+      url: "/me/org",
+      headers: { ...SESSION_AUTH, ...JSON_HEADERS },
+      payload: JSON.stringify(body),
+    });
+  }
+
+  it("401s without a session token", async () => {
+    const res = await app.inject({ method: "PATCH", url: "/me/org", headers: JSON_HEADERS, payload: "{}" });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("404s when the user has no membership", async () => {
+    mockSql.mockResolvedValueOnce([] as never);
+    const res = await patchOrg({ name: "New Name" });
+    expect(res.statusCode).toBe(404);
+  });
+
+  it("403s when the caller is a plain member (admin or owner required)", async () => {
+    mockSql.mockResolvedValueOnce([{ org_id: "org_acme", role: "member" }] as never);
+    mockGetRoleInOrg.mockResolvedValue("member");
+    const res = await patchOrg({ name: "Renamed" });
+    expect(res.statusCode).toBe(403);
+    expect(res.json().code).toBe("admin_required");
+    expect(mockUpdateOrg).not.toHaveBeenCalled();
+  });
+
+  it("200s on the happy path for an admin", async () => {
+    mockSql.mockResolvedValueOnce([{ org_id: "org_acme", role: "admin" }] as never);
+    mockGetRoleInOrg.mockResolvedValue("admin");
+    mockUpdateOrg.mockResolvedValue({
+      id: "org_acme", slug: "acme", name: "Acme Renamed",
+      display_name: null, brand_url: null, logo_url: null,
+      created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-02T00:00:00Z",
+    } as never);
+    const res = await patchOrg({ name: "Acme Renamed" });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.org.name).toBe("Acme Renamed");
+    expect(body.caller_role).toBe("admin");
+    expect(mockUpdateOrg).toHaveBeenCalledWith("org_acme", { name: "Acme Renamed" });
+  });
+
+  it("relays a unique-slug conflict as 409 with code slug_in_use", async () => {
+    mockSql.mockResolvedValueOnce([{ org_id: "org_acme", role: "owner" }] as never);
+    mockGetRoleInOrg.mockResolvedValue("owner");
+    mockUpdateOrg.mockRejectedValue(new Error("duplicate key value violates unique constraint orgs_slug_key"));
+    const res = await patchOrg({ slug: "taken" });
+    expect(res.statusCode).toBe(409);
+    expect(res.json().code).toBe("slug_in_use");
+  });
+});
+
+// ── me-webhooks.test.ts ─────────────────────────────────────────────
+// AR-350 (epic AR-343): session-authed /me/webhooks family. Wraps the
+// same module helpers as /v1/webhooks so the underlying CRUD is single-
+// source; these tests verify the auth + thin wiring only.
+
+describe("GET /me/webhooks", () => {
+  it("401s without a session token", async () => {
+    const res = await app.inject({ method: "GET", url: "/me/webhooks" });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("returns the caller's subscriptions", async () => {
+    mockListWebhooks.mockResolvedValue([
+      { id: "wh_1", url: "https://example.com/hook", events: ["signal.changed"], status: "active", created_at: "2026-01-01T00:00:00Z", last_success_at: null, last_failure_at: null },
+    ] as never);
+    const res = await app.inject({ method: "GET", url: "/me/webhooks", headers: SESSION_AUTH });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().subscriptions).toHaveLength(1);
+    expect(mockListWebhooks).toHaveBeenCalledWith("user_1");
+  });
+});
+
+describe("POST /me/webhooks", () => {
+  function postWebhook(body: unknown) {
+    return app.inject({
+      method: "POST",
+      url: "/me/webhooks",
+      headers: { ...SESSION_AUTH, ...JSON_HEADERS },
+      payload: JSON.stringify(body),
+    });
+  }
+
+  it("401s without a session token", async () => {
+    const res = await app.inject({ method: "POST", url: "/me/webhooks", headers: JSON_HEADERS, payload: "{}" });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("400s on a non-object body", async () => {
+    const res = await app.inject({ method: "POST", url: "/me/webhooks", headers: { ...SESSION_AUTH, ...JSON_HEADERS }, payload: '"hello"' });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it("400s on an invalid URL", async () => {
+    const res = await postWebhook({ url: "ftp://nope", events: ["signal.changed"] });
+    expect(res.statusCode).toBe(400);
+    expect(mockCreateWebhook).not.toHaveBeenCalled();
+  });
+
+  it("400s when events is empty or all unknown", async () => {
+    const res = await postWebhook({ url: "https://example.com/hook", events: [] });
+    expect(res.statusCode).toBe(400);
+    const res2 = await postWebhook({ url: "https://example.com/hook", events: ["bogus"] });
+    expect(res2.statusCode).toBe(400);
+    expect(mockCreateWebhook).not.toHaveBeenCalled();
+  });
+
+  it("201s and returns the new subscription with secret on happy path", async () => {
+    mockCreateWebhook.mockResolvedValue({
+      id: "wh_2",
+      url: "https://example.com/hook",
+      events: ["signal.changed"],
+      secret: "whsec_abcdef",
+      status: "active",
+      created_at: "2026-01-01T00:00:00Z",
+    } as never);
+    const res = await postWebhook({ url: "https://example.com/hook", events: ["signal.changed"] });
+    expect(res.statusCode).toBe(201);
+    const body = res.json();
+    expect(body.secret).toBe("whsec_abcdef");
+    expect(mockCreateWebhook).toHaveBeenCalledWith("user_1", "https://example.com/hook", ["signal.changed"]);
+  });
+});
+
+describe("DELETE /me/webhooks/:id", () => {
+  it("401s without a session token", async () => {
+    const res = await app.inject({ method: "DELETE", url: "/me/webhooks/wh_1" });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("404s when the subscription is not found for the caller", async () => {
+    mockRevokeWebhook.mockResolvedValue(false);
+    const res = await app.inject({ method: "DELETE", url: "/me/webhooks/wh_missing", headers: SESSION_AUTH });
+    expect(res.statusCode).toBe(404);
+    expect(mockRevokeWebhook).toHaveBeenCalledWith("user_1", "wh_missing");
+  });
+
+  it("200s on revoke", async () => {
+    mockRevokeWebhook.mockResolvedValue(true);
+    const res = await app.inject({ method: "DELETE", url: "/me/webhooks/wh_1", headers: SESSION_AUTH });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ ok: true });
+  });
+});
+
+describe("POST /me/webhooks/:id/rotate-secret", () => {
+  it("401s without a session token", async () => {
+    const res = await app.inject({ method: "POST", url: "/me/webhooks/wh_1/rotate-secret" });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("404s when the subscription is not found", async () => {
+    mockRotateWebhook.mockResolvedValue(null);
+    const res = await app.inject({ method: "POST", url: "/me/webhooks/wh_missing/rotate-secret", headers: SESSION_AUTH });
+    expect(res.statusCode).toBe(404);
+  });
+
+  it("returns the new secret on happy path", async () => {
+    mockRotateWebhook.mockResolvedValue("whsec_newsecret");
+    const res = await app.inject({ method: "POST", url: "/me/webhooks/wh_1/rotate-secret", headers: SESSION_AUTH });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ secret: "whsec_newsecret" });
+    expect(mockRotateWebhook).toHaveBeenCalledWith("user_1", "wh_1");
   });
 });
