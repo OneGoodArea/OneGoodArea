@@ -67,6 +67,46 @@ export function registerMeRoutes(app: FastifyInstance): void {
         return reply.code(200).send({ is_superuser });
       });
 
+    /* AR-347 (epic AR-343): 30-day score-call breakdown for the
+       caller, grouped by preset. Session-authed. Used by /dashboard/scores
+       to show per-preset call counts. Replaces the apps/web
+       /api/me/score-usage direct SQL. */
+    app.get("/me/score-usage",
+      {
+        schema: {
+          tags: ["Me"],
+          summary: "30-day score-call usage by preset",
+          description: "Counts api.score.computed events over the last 30 days, grouped by preset.",
+        },
+      },
+      async (request, reply) => {
+        const userId = await authenticateSession(request, reply);
+        if (!userId) return reply;
+
+        try {
+          const usageRows = await sql`
+            SELECT
+              COALESCE(metadata->>'preset', metadata->>'preset_id', 'unknown') AS preset,
+              COUNT(*)::int AS count
+            FROM activity_events
+            WHERE user_id = ${userId}
+              AND event = 'api.score.computed'
+              AND created_at >= NOW() - INTERVAL '30 days'
+            GROUP BY preset
+            ORDER BY count DESC
+          `;
+          const by_preset = (usageRows as Array<{ preset: string; count: number }>).map((r) => ({
+            preset: r.preset,
+            count: r.count,
+          }));
+          const total = by_preset.reduce((sum, r) => sum + r.count, 0);
+          return reply.code(200).send({ window_days: 30, total, by_preset });
+        } catch (err) {
+          logger.error("[me/score-usage] error:", err);
+          return reply.code(200).send({ window_days: 30, total: 0, by_preset: [] });
+        }
+      });
+
     /* AR-346 (epic AR-343): partial update of the caller's user profile.
        Session-authed. Today only `intent` is settable (the four-slug
        set from AR-218). Future profile fields slot in here.
