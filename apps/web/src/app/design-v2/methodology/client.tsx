@@ -1210,11 +1210,10 @@ function SectionLevers() {
         <p className="oga-meth-levers__foot">
           Three-tier RBAC (<code>member</code> / <code>admin</code> / <code>owner</code>),
           per-org white-label (<code>display_name</code> + <code>brand_url</code>), and
-          per-key IP allowlist (<code>allowed_ip_cidrs</code>) are documented in full on{" "}
-          <Link href="/docs/levers" className="oga-meth-levers__foot-link">
-            /docs/levers <span aria-hidden>→</span>
-          </Link>{" "}
-          <span className="oga-meth-levers__foot-note">(landing in this workstream)</span>.
+          per-key IP allowlist (<code>allowed_ip_cidrs</code>) are covered on{" "}
+          <Link href="/docs#levers" className="oga-meth-levers__foot-link">
+            the docs index <span aria-hidden>→</span>
+          </Link>.
         </p>
       </div>
     </section>

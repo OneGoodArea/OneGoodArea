@@ -335,6 +335,7 @@ const LEVERS: Lever[] = [
 function SectionLevers() {
   return (
     <section
+      id="levers"
       className="oga-section-hero"
       aria-labelledby="docs-levers-title"
     >

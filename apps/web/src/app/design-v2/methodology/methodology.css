@@ -1300,12 +1300,6 @@
 
 .oga-meth-levers__foot-link:hover { background: var(--oga-ink-06); }
 
-.oga-meth-levers__foot-note {
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  color: var(--oga-fg-muted);
-}
-
 /* ============================================================
    § 13 — Scope and limitations (5 cards)
    ============================================================ */
