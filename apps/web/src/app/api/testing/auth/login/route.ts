@@ -3,7 +3,6 @@ import { encode } from "next-auth/jwt";
 import { sql } from "@/lib/db";
 import { generateId } from "@/lib/id";
 import { row, type UserRow } from "@/lib/db-types";
-import { ensureUsersTable } from "@/lib/db-schema";
 import { requireTestingRouteAccess } from "@/lib/runtime/testing/guards";
 
 const SESSION_COOKIE = "authjs.session-token";
@@ -43,8 +42,6 @@ export async function POST(req: NextRequest) {
   if (!email) {
     return NextResponse.json({ error: "Email is required" }, { status: 400 });
   }
-
-  await ensureUsersTable();
 
   const existingRows = await sql`
     SELECT id, email, name, image, password_hash, provider, email_verified, created_at
