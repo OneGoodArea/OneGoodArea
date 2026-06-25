@@ -1,22 +1,9 @@
-import { NextResponse } from "next/server";
-import { sql } from "@/lib/db";
+import { type NextRequest } from "next/server";
+import { proxyPublic } from "@/lib/server/proxy";
 
-export async function GET() {
-  try {
-    await sql`SELECT 1`;
-    return NextResponse.json({
-      status: "ok",
-      timestamp: new Date().toISOString(),
-      database: "connected",
-    });
-  } catch {
-    return NextResponse.json(
-      {
-        status: "degraded",
-        timestamp: new Date().toISOString(),
-        database: "unreachable",
-      },
-      { status: 503 }
-    );
-  }
+/* GET /api/health — proxied to apps/api GET /health.
+   Public health check (no auth). AR-344 (epic AR-343): converted from
+   the legacy direct-SQL BFF (SELECT 1) to a thin proxy. */
+export async function GET(req: NextRequest) {
+  return proxyPublic(req, "/health");
 }
