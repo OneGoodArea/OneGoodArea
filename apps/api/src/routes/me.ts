@@ -67,6 +67,46 @@ export function registerMeRoutes(app: FastifyInstance): void {
         return reply.code(200).send({ is_superuser });
       });
 
+    /* AR-346 (epic AR-343): partial update of the caller's user profile.
+       Session-authed. Today only `intent` is settable (the four-slug
+       set from AR-218). Future profile fields slot in here.
+       Replaces the apps/web /api/onboarding/complete inline UPDATE. */
+    app.patch("/me/profile",
+      {
+        schema: {
+          tags: ["Me"],
+          summary: "Update my profile",
+          description: "Partial update of the caller's user profile. Today: `intent` only.",
+        },
+      },
+      async (request, reply) => {
+        const userId = await authenticateSession(request, reply);
+        if (!userId) return reply;
+
+        const body = (request.body ?? {}) as { intents?: unknown };
+        const ALLOWED_INTENTS = new Set(["moving", "business", "investing", "research"]);
+
+        if (body.intents !== undefined && body.intents !== null) {
+          if (!Array.isArray(body.intents)) {
+            return reply.code(400).send({ error: "intents must be an array." });
+          }
+          const validated: string[] = [];
+          for (const slug of body.intents) {
+            if (typeof slug !== "string" || !ALLOWED_INTENTS.has(slug)) {
+              return reply.code(400).send({ error: `Invalid intent slug: ${String(slug)}` });
+            }
+            if (!validated.includes(slug)) validated.push(slug);
+          }
+          /* Empty array = no-op (skippable per the /welcome flow). */
+          if (validated.length > 0) {
+            const intentCsv = validated.join(",");
+            await sql`UPDATE users SET intent = ${intentCsv} WHERE id = ${userId}`;
+          }
+        }
+
+        return reply.code(200).send({ ok: true });
+      });
+
     app.get("/v1/me",
       {
       schema: {
