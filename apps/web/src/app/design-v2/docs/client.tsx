@@ -15,20 +15,21 @@ import "./docs.css";
 
 /* /docs — Brand v3 (Plotted) — AR-204.
 
-   Index page for the documentation surface. Replaces the previous
-   single-endpoint /v1/report guide (1,260 LOC Fraunces, inline-
-   styled, `aiq_` prefix, "7 sources" block).
+   Index page for the documentation surface. Four-product TOC plus
+   the Levers control plane plus pointers at /methodology and the
+   live interactive reference at /openapi.
 
-   Per the delta doc + Pedro's locked D3 (option c): this page is
-   the four-product TOC; per-surface sub-pages (/docs/signals,
-   /docs/scores, /docs/monitor, /docs/intelligence, /docs/levers,
-   /docs/webhooks, /docs/auth) ship later as follow-up PRs and are
-   linked here as disabled "Coming soon" tiles per the wiring rule.
+   AR-361 (2026-06-26): killed the per-product "Docs / Soon" tiles,
+   the "Levers guide / Soon" button, and the "Webhooks reference"
+   soon-tile. The per-surface deep-dive pages they teased
+   (/docs/signals, /docs/scores, /docs/monitor, /docs/intelligence,
+   /docs/levers, /docs/webhooks) are not on a known timeline; the
+   existing Levers section above + /methodology + /docs/api-reference
+   cover the same ground today. Honesty over teases.
 
    Every fact below was verified against ADRs 0001-0035 + the
-   apps/api Fastify routes (see workflow recon 2026-05-31).
-   No source names enumerated here — that detail lives on
-   /methodology only (AR-204 section 5, NO EXCEPTIONS). */
+   apps/api Fastify routes. No source names enumerated here —
+   that detail lives on /methodology only. */
 
 export default function DocsClient() {
   return (
@@ -204,16 +205,6 @@ function SectionProducts() {
                     </span>
                     {p.endpoint.path}
                   </span>
-                  <button
-                    type="button"
-                    className="oga-docs-product__cta-disabled"
-                    disabled
-                    aria-disabled
-                    aria-label={`${p.name} docs coming soon`}
-                  >
-                    Docs
-                    <span className="oga-docs-product__cta-soon">Soon</span>
-                  </button>
                 </div>
               </article>
             );
@@ -332,16 +323,11 @@ function SectionLevers() {
         </div>
 
         <div className="oga-docs-levers__cta-row">
-          <button
-            type="button"
-            className="oga-btn oga-btn-secondary"
-            disabled
-            aria-disabled
-          >
-            Levers guide
-            <span className="oga-docs-product__cta-soon">Soon</span>
-          </button>
-          <Link href="/methodology#per-org-methodology" className="oga-btn oga-btn-ghost">
+          <Link href="/docs/api-reference#levers" className="oga-btn oga-btn-secondary">
+            All Levers endpoints
+            <span aria-hidden>→</span>
+          </Link>
+          <Link href="/methodology#levers" className="oga-btn oga-btn-ghost">
             Methodology pinning rationale
             <span aria-hidden>→</span>
           </Link>
@@ -409,15 +395,6 @@ const REFERENCES: RefTile[] = [
     status: "live",
     href: "/openapi",
     cta: "Open reference",
-  },
-  {
-    num: "06",
-    title: "Webhooks reference",
-    body:
-      "Stripe-style signed deliveries, HMAC-SHA256, the event catalogue, retry semantics, signing-secret rotation. Page coming soon.",
-    status: "soon",
-    href: null,
-    cta: "Webhooks docs",
   },
 ];
 

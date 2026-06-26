@@ -282,10 +282,10 @@ function SavedPresets({
             recipe for repeat use.
           </p>
           <Link
-            href="/docs/api-reference#presets"
+            href="/methodology#scoring"
             className="oga-scoresp-saved__empty-link"
           >
-            Read the presets docs →
+            Read the scoring rationale →
           </Link>
         </div>
       ) : (
