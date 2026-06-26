@@ -32,23 +32,6 @@ function GlyphRest(props: IconProps) {
   );
 }
 
-function GlyphBulk(props: IconProps) {
-  /* Volume — dense uniform field of areas scored at once. Soft
-     radial vignette so the field reads as deep rather than flat. */
-  const coords = [20, 35, 50, 65, 80];
-  return (
-    <svg {...glyphBase} {...props}>
-      {coords.map((y) =>
-        coords.map((x) => {
-          const d = Math.hypot(x - 50, y - 50);
-          const o = Math.max(0.32, 1 - d / 60);
-          return <circle key={`${x}-${y}`} cx={x} cy={y} r={3.1} fill="currentColor" opacity={o} />;
-        })
-      )}
-    </svg>
-  );
-}
-
 function GlyphQuery(props: IconProps) {
   /* Question → plan → structured answer. Scattered NL dots left,
      central plan node with halo, structured 2x3 result grid right.
@@ -102,7 +85,7 @@ function GlyphWebhooks(props: IconProps) {
    .oga-code-panel vocabulary (specimen-mount corner ticks, line
    numbers, token-coloured syntax — already in components.css).
 
-   The 4 surfaces are: REST · Bulk · Query plane · Webhooks.
+   The 3 surfaces are: REST · Query plane · Webhooks.
    MCP is intentionally NOT a tab — it has its own /docs/mcp page
    for buyers who care; the homepage doesn't promote it. */
 
@@ -131,8 +114,8 @@ const SURFACES: Surface[] = [
     tabName: "REST API",
     panelName: "REST API",
     panelBody: "One authenticated call returns a full area profile: every signal with source citation, normalized value, country-scoped percentile, and confidence. Versioned, documented, production-ready.",
-    ctaLabel: "Read the API reference",
-    ctaHref: "/docs/api-reference",
+    ctaLabel: "See it on the reference",
+    ctaHref: "/docs/api-reference#products",
     ready: true,
     codePanelHeader: "REQUEST · GET /v1/area",
     codeLines: [
@@ -161,8 +144,8 @@ const SURFACES: Surface[] = [
     tabName: "Query plane",
     panelName: "Query plane",
     panelBody: "Ask in JSON or natural language. The AI emits the query plan; the database executes. Every response echoes the plan that ran, so any answer is reproducible and auditable.",
-    ctaLabel: "Read the query plane docs",
-    ctaHref: "/docs/api-reference",
+    ctaLabel: "See it on the reference",
+    ctaHref: "/docs/api-reference#products",
     ready: true,
     codePanelHeader: "REQUEST · POST /v1/query",
     codeLines: [
@@ -191,8 +174,8 @@ const SURFACES: Surface[] = [
     tabName: "Webhooks",
     panelName: "Webhooks",
     panelBody: "Subscribe once and we push. The signal.changed event fires the month a monitored area's signal moves past your configured threshold.",
-    ctaLabel: "Read the webhook docs",
-    ctaHref: "/docs/api-reference",
+    ctaLabel: "See it on the reference",
+    ctaHref: "/docs/api-reference#levers",
     ready: true,
     codePanelHeader: "EVENT · signal.changed",
     codeLines: [
@@ -279,7 +262,7 @@ export function IntegrationSection() {
             <span className="oga-int__eyebrow-line" aria-hidden />
             <span>Integration</span>
           </div>
-          <h2 className="oga-int__title">Four ways into one engine.</h2>
+          <h2 className="oga-int__title">Three ways into one engine.</h2>
           <p className="oga-int__sub">
             Consume the engine however your stack works. Authenticated, versioned,
             documented. Every response stamped with the engine version that
