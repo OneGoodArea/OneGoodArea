@@ -234,6 +234,7 @@ const PLAN_OPS: { name: string; desc: string }[] = [
   { name: "rank_areas",     desc: "Filter + sort LSOAs across signals with AND semantics (eq, lt, lte, gt, gte, between, percentile_*)" },
   { name: "get_area",       desc: "Full signal catalog for an area (geo_code, postcode, or area name)" },
   { name: "score_area",     desc: "Composite score for an area; preset, custom weights, or saved preset_id" },
+  { name: "compare_areas",  desc: "Side-by-side score + signal comparison across 2 to 8 areas, same intent or custom weights" },
   { name: "find_peers",     desc: "k-NN similarity search over normalized signal vectors (default k=20)" },
   { name: "find_insights",  desc: "Rank LSOAs by |peer-relative z| for a derived signal (anomaly screening)" },
   { name: "find_forecast",  desc: "Linear-regression projection of one monthly signal at one LSOA (default 24m window, 12m horizon)" },
@@ -372,71 +373,46 @@ export default function MethodologyClient() {
 function Hero() {
   return (
     <section className="oga-meth-hero oga-section-hero">
-      <div className="oga-meth__container oga-meth-hero__row">
-        <div>
-          <div className="oga-meth-hero__eyebrow">
-            <span>Methodology</span>
-            <span className="oga-meth-hero__eyebrow-sep" aria-hidden />
-            <span>v{METHODOLOGY_VERSION}</span>
-            <span className="oga-meth-hero__eyebrow-sep" aria-hidden />
-            <span>Released {current.released_at}</span>
-          </div>
-
-          <h1 className="oga-meth-hero__title">
-            How OneGoodArea computes a UK area&rsquo;s signals, scores, and trends.
-          </h1>
-
-          <p className="oga-meth-hero__lead">
-            Signal-first infrastructure. Country-scoped percentiles. Monthly time-series snapshots that
-            cannot be backfilled. Deterministic engine, version stamped on every response.
-          </p>
-
-          <div className="oga-meth-hero__anchors">
-            <Link href="#signal" className="oga-meth-hero__anchor">
-              Signal primitive
-              <span className="oga-meth-hero__anchor-arrow" aria-hidden>↓</span>
-            </Link>
-            <Link href="#data-sources" className="oga-meth-hero__anchor">
-              Data sources
-              <span className="oga-meth-hero__anchor-arrow" aria-hidden>↓</span>
-            </Link>
-            <Link href="#intelligence" className="oga-meth-hero__anchor">
-              Query plane
-              <span className="oga-meth-hero__anchor-arrow" aria-hidden>↓</span>
-            </Link>
-            <Link href="#versioning" className="oga-meth-hero__anchor">
-              Versioning
-              <span className="oga-meth-hero__anchor-arrow" aria-hidden>↓</span>
-            </Link>
-            <Link href="#levers" className="oga-meth-hero__anchor">
-              Levers
-              <span className="oga-meth-hero__anchor-arrow" aria-hidden>↓</span>
-            </Link>
-          </div>
+      <div className="oga-meth__container">
+        <div className="oga-meth-hero__eyebrow">
+          <span>Methodology</span>
+          <span className="oga-meth-hero__eyebrow-sep" aria-hidden />
+          <span>v{METHODOLOGY_VERSION}</span>
+          <span className="oga-meth-hero__eyebrow-sep" aria-hidden />
+          <span>Released {current.released_at}</span>
         </div>
 
-        <aside className="oga-meth-hero__card" aria-label="Current engine state">
-          <div className="oga-meth-hero__card-label">
-            <span className="oga-meth-hero__card-dot" aria-hidden />
-            Engine in production
-          </div>
-          <div className="oga-meth-hero__card-row">
-            <span className="oga-meth-hero__card-key">engine_version</span>
-            <span className="oga-meth-hero__card-val">{METHODOLOGY_VERSION}</span>
-          </div>
-          <div className="oga-meth-hero__card-row">
-            <span className="oga-meth-hero__card-key">released</span>
-            <span className="oga-meth-hero__card-val">{current.released_at}</span>
-          </div>
-          <div className="oga-meth-hero__card-row">
-            <span className="oga-meth-hero__card-key">supported</span>
-            <span className="oga-meth-hero__card-val">{METHODOLOGY_VERSIONS.length} versions</span>
-          </div>
-          <div className="oga-meth-hero__card-row">
-            <span className="oga-meth-hero__card-key">pinning</span>
-            <span className="oga-meth-hero__card-val">X-Engine-Version</span>
-          </div>
-        </aside>
+        <h1 className="oga-meth-hero__title">
+          How OneGoodArea computes a UK area&rsquo;s signals, scores, and trends.
+        </h1>
+
+        <p className="oga-meth-hero__lead">
+          Signal-first infrastructure. Country-scoped percentiles. Monthly time-series snapshots that
+          cannot be backfilled. Deterministic engine, version stamped on every response.
+        </p>
+
+        <div className="oga-meth-hero__anchors">
+          <Link href="#signal" className="oga-meth-hero__anchor">
+            Signal primitive
+            <span className="oga-meth-hero__anchor-arrow" aria-hidden>↓</span>
+          </Link>
+          <Link href="#data-sources" className="oga-meth-hero__anchor">
+            Data sources
+            <span className="oga-meth-hero__anchor-arrow" aria-hidden>↓</span>
+          </Link>
+          <Link href="#intelligence" className="oga-meth-hero__anchor">
+            Query plane
+            <span className="oga-meth-hero__anchor-arrow" aria-hidden>↓</span>
+          </Link>
+          <Link href="#versioning" className="oga-meth-hero__anchor">
+            Versioning
+            <span className="oga-meth-hero__anchor-arrow" aria-hidden>↓</span>
+          </Link>
+          <Link href="#levers" className="oga-meth-hero__anchor">
+            Levers
+            <span className="oga-meth-hero__anchor-arrow" aria-hidden>↓</span>
+          </Link>
+        </div>
       </div>
     </section>
   );
@@ -941,7 +917,7 @@ function SectionIntelligence() {
           </div>
           <h2 className="oga-meth__h2">AI emits the plan. The database answers.</h2>
           <p className="oga-meth__lead">
-            <code>POST /v1/query</code> is a typed JSON grammar with six plan ops. Programmatic <code>{`{plan}`}</code>{" "}
+            <code>POST /v1/query</code> is a typed JSON grammar with seven plan ops. Programmatic <code>{`{plan}`}</code>{" "}
             never touches the LLM. Natural-language <code>{`{question}`}</code> routes through a planner that emits
             the same typed grammar. Every response echoes the executed plan and <code>plan_source</code> so
             every result is replayable.
@@ -997,8 +973,8 @@ function SectionIntelligence() {
           </div>
           <div className="oga-meth-stats__cell">
             <dt className="oga-meth-stats__label">Plan ops</dt>
-            <dd className="oga-meth-stats__val">6</dd>
-            <div className="oga-meth-stats__sub">rank · get · score · peers · insights · forecast</div>
+            <dd className="oga-meth-stats__val">7</dd>
+            <div className="oga-meth-stats__sub">rank · get · score · compare · peers · insights · forecast</div>
           </div>
           <div className="oga-meth-stats__cell">
             <dt className="oga-meth-stats__label">Filter ops</dt>
