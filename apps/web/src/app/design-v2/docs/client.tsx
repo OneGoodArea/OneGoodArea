@@ -10,10 +10,7 @@ import {
   MonitorIcon,
   IntelligenceIcon,
 } from "../_shared/product-icons";
-import {
-  METHODOLOGY_VERSION,
-  getCurrentMethodology,
-} from "@/lib/methodology-versions";
+import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 import "./docs.css";
 
 /* /docs — Brand v3 (Plotted) — AR-204.
@@ -32,8 +29,6 @@ import "./docs.css";
    apps/api Fastify routes (see workflow recon 2026-05-31).
    No source names enumerated here — that detail lives on
    /methodology only (AR-204 section 5, NO EXCEPTIONS). */
-
-const current = getCurrentMethodology();
 
 export default function DocsClient() {
   return (
@@ -59,60 +54,27 @@ function Hero() {
   return (
     <section className="oga-section-hero oga-docs-hero">
       <div className="oga-docs__container">
-        <div className="oga-docs-hero__grid">
-          <div>
-            <div className="oga-docs-hero__eyebrow">
-              <span aria-hidden className="oga-docs-hero__dot" />
-              <span>Docs · Engine v{METHODOLOGY_VERSION}</span>
-            </div>
-            <h1 className="oga-docs-hero__h1">
-              Build on UK area intelligence.
-            </h1>
-            <p className="oga-docs-hero__lead">
-              Four composable products on one signal-first data layer. Reach the API
-              directly from your stack, or use the dashboard to configure how the
-              API behaves per organisation. This index points to every reference
-              we publish today; per-surface guides are landing one by one.
-            </p>
-            <div className="oga-docs-hero__ctas">
-              <Link href="/sign-up" className="oga-btn oga-btn-primary">
-                Get an API key
-                <span aria-hidden>→</span>
-              </Link>
-              <Link href="/methodology" className="oga-btn oga-btn-secondary">
-                Read the methodology
-              </Link>
-            </div>
-          </div>
-
-          <aside className="oga-docs-hero__sidecard" aria-label="Current engine state">
-            <div className="oga-docs-hero__sidecard-eyebrow">
-              <span aria-hidden className="oga-docs-hero__dot" />
-              <span>Engine state</span>
-            </div>
-            <p className="oga-docs-hero__sidecard-version">v{METHODOLOGY_VERSION}</p>
-            <p className="oga-docs-hero__sidecard-released">
-              Released {current.released_at}
-            </p>
-            <div className="oga-docs-hero__sidecard-rows">
-              <div className="oga-docs-hero__sidecard-row">
-                <span className="oga-docs-hero__sidecard-row-k">Path prefix</span>
-                <span className="oga-docs-hero__sidecard-row-v">/v1/...</span>
-              </div>
-              <div className="oga-docs-hero__sidecard-row">
-                <span className="oga-docs-hero__sidecard-row-k">Auth</span>
-                <span className="oga-docs-hero__sidecard-row-v">oga_ bearer</span>
-              </div>
-              <div className="oga-docs-hero__sidecard-row">
-                <span className="oga-docs-hero__sidecard-row-k">Content</span>
-                <span className="oga-docs-hero__sidecard-row-v">application/json</span>
-              </div>
-              <div className="oga-docs-hero__sidecard-row">
-                <span className="oga-docs-hero__sidecard-row-k">Version header</span>
-                <span className="oga-docs-hero__sidecard-row-v">X-Engine-Version</span>
-              </div>
-            </div>
-          </aside>
+        <div className="oga-docs-hero__eyebrow">
+          <span>Docs</span>
+          <span className="oga-docs-hero__eyebrow-sep" aria-hidden />
+          <span>Engine v{METHODOLOGY_VERSION}</span>
+        </div>
+        <h1 className="oga-docs-hero__h1">
+          Build on UK area intelligence.
+        </h1>
+        <p className="oga-docs-hero__lead">
+          Four composable products on one signal-first data layer. Reach the API
+          directly from your stack, or use the dashboard to configure how the API
+          behaves per organisation.
+        </p>
+        <div className="oga-docs-hero__ctas">
+          <Link href="/sign-up" className="oga-btn oga-btn-primary">
+            Get an API key
+            <span aria-hidden>→</span>
+          </Link>
+          <Link href="/methodology" className="oga-btn oga-btn-secondary">
+            Read the methodology
+          </Link>
         </div>
       </div>
     </section>
@@ -180,7 +142,7 @@ const PRODUCTS: Product[] = [
     name: "Intelligence",
     Icon: IntelligenceIcon,
     body:
-      "A typed query plus insight plane over the moat. Six plan ops (rank_areas, get_area, score_area, find_peers, find_insights, find_forecast) reachable as a Zod-strict programmatic plan, or as natural language that the planner translates into the same plan.",
+      "A typed query plus insight plane over the moat. Seven plan ops (rank_areas, get_area, score_area, compare_areas, find_peers, find_insights, find_forecast) reachable as a Zod-strict programmatic plan, or as natural language that the planner translates into the same plan.",
     caps: [
       "POST /v1/query with {plan} (programmatic) or {question} (NL)",
       "k-NN peers with materialised ~840k-row peer graph",
@@ -285,7 +247,7 @@ const LEVERS: Lever[] = [
     num: "02",
     title: "Custom signal bundles",
     body:
-      "Named whitelists of signal keys. Pass ?bundle=<id> on /v1/area, /v1/areas, or /v1/query and only those signals come back. LLM-planned queries are governed by the same gate.",
+      "Named whitelists of signal keys. Pass ?bundle=<id> on /v1/area, /v1/areas, /v1/score, or /v1/query and only those signals come back. LLM-planned queries are governed by the same gate.",
     rbac: "Admin+",
   },
   {
@@ -441,12 +403,12 @@ const REFERENCES: RefTile[] = [
   },
   {
     num: "05",
-    title: "OpenAPI snapshot",
+    title: "Interactive reference",
     body:
-      "The current /openapi.json file. Structurally being rebuilt against the live Fastify schemas; use the API reference page for the regenerated version when it lands.",
-    status: "regen",
-    href: "/openapi.json",
-    cta: "Download .json",
+      "OpenAPI 3.0 spec auto-generated from the live Fastify schemas. Try requests in browser. Stays in step with the backend on every deploy.",
+    status: "live",
+    href: "/openapi",
+    cta: "Open reference",
   },
   {
     num: "06",

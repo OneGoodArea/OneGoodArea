@@ -104,17 +104,6 @@
   padding-bottom: var(--oga-9);
 }
 
-.oga-docs-hero__grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-  gap: var(--oga-8);
-  align-items: end;
-}
-
-@media (max-width: 880px) {
-  .oga-docs-hero__grid { grid-template-columns: 1fr; gap: var(--oga-6); }
-}
-
 .oga-docs-hero__eyebrow {
   display: inline-flex;
   align-items: center;
@@ -127,17 +116,11 @@
   margin-bottom: var(--oga-5);
 }
 
-.oga-docs-hero__dot {
-  width: 6px;
-  height: 6px;
+.oga-docs-hero__eyebrow-sep {
+  width: 4px; height: 4px;
+  background: var(--oga-fg-muted);
   border-radius: 50%;
-  background: var(--oga-fg);
-  animation: oga-docs-pulse 1.6s ease-in-out infinite;
-}
-
-@keyframes oga-docs-pulse {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.35; }
+  opacity: 0.5;
 }
 
 .oga-docs-hero__h1 {
@@ -164,70 +147,6 @@
   display: inline-flex;
   flex-wrap: wrap;
   gap: var(--oga-3);
-}
-
-.oga-docs-hero__sidecard {
-  border: 1px solid var(--oga-border);
-  background: var(--oga-white);
-  padding: var(--oga-6);
-  position: relative;
-}
-
-.oga-docs-hero__sidecard-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: var(--oga-2);
-  font-family: var(--oga-font-mono);
-  font-size: var(--oga-fs-eyebrow);
-  letter-spacing: var(--oga-tracking-eyebrow);
-  text-transform: uppercase;
-  color: var(--oga-fg-muted);
-  margin-bottom: var(--oga-4);
-}
-
-.oga-docs-hero__sidecard-version {
-  font-family: var(--oga-font-mono);
-  font-size: 28px;
-  font-weight: 500;
-  color: var(--oga-fg);
-  letter-spacing: -0.01em;
-  margin: 0;
-}
-
-.oga-docs-hero__sidecard-released {
-  font-family: var(--oga-font-sans);
-  font-size: 14px;
-  color: var(--oga-fg-muted);
-  margin: var(--oga-2) 0 var(--oga-5);
-}
-
-.oga-docs-hero__sidecard-rows {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--oga-3);
-  padding-top: var(--oga-4);
-  border-top: 1px solid var(--oga-border);
-}
-
-.oga-docs-hero__sidecard-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: var(--oga-3);
-  font-family: var(--oga-font-mono);
-  font-size: 12px;
-}
-
-.oga-docs-hero__sidecard-row-k {
-  color: var(--oga-fg-muted);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  font-size: 10.5px;
-}
-
-.oga-docs-hero__sidecard-row-v {
-  color: var(--oga-fg);
-  text-align: right;
 }
 
 /* ============================================================
