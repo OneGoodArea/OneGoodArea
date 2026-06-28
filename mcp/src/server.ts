@@ -57,7 +57,7 @@ import {
   executeEngineVersion,
 } from "./tools/engine-version.js";
 
-const SERVER_VERSION = "0.2.0";
+const SERVER_VERSION = "1.0.0";
 
 function readApiKey(): string {
   const key = process.env.OOGA_API_KEY;

@@ -9,7 +9,7 @@
  */
 
 const DEFAULT_BASE = "https://onegoodarea.onrender.com";
-const USER_AGENT = "onegoodarea-mcp-server/0.2.0";
+const USER_AGENT = "onegoodarea-mcp-server/1.0.0";
 
 export type Preset = "moving" | "business" | "investing" | "research";
 

@@ -1,8 +1,8 @@
 # `@onegoodarea/mcp-server`
 
-OneGoodArea MCP server — UK location intelligence inside Claude Desktop, Cursor, Windsurf, or any MCP-compatible client.
+OneGoodArea MCP server — UK area intelligence inside Claude Desktop, Cursor, Windsurf, or any MCP-compatible client.
 
-Score any UK postcode for residential mortgage origination, retail site selection, property investment, or as a neutral reference baseline. Driven by the same engine that powers https://www.onegoodarea.com — five weighted dimensions, confidence per signal, source attribution, public methodology.
+Score any UK postcode (or place name) for residential mortgage origination, retail site selection, property investment, or as a neutral reference baseline. Driven by the same engine that powers https://www.onegoodarea.com — five weighted dimensions per preset, confidence per dimension with engine-grounded reasoning, source attribution, public methodology.
 
 ---
 
@@ -21,14 +21,14 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
       "command": "npx",
       "args": ["-y", "@onegoodarea/mcp-server"],
       "env": {
-        "OOGA_API_KEY": "aiq_xxx"
+        "OOGA_API_KEY": "oga_xxx"
       }
     }
   }
 }
 ```
 
-Restart Claude Desktop. The `score_postcode` tool will appear when you start a conversation about a UK location.
+Restart Claude Desktop. The OneGoodArea tools appear when you start a conversation about a UK location.
 
 ### Cursor
 
@@ -40,7 +40,7 @@ Add to `.cursor/mcp.json` in your project (or global config):
     "onegoodarea": {
       "command": "npx",
       "args": ["-y", "@onegoodarea/mcp-server"],
-      "env": { "OOGA_API_KEY": "aiq_xxx" }
+      "env": { "OOGA_API_KEY": "oga_xxx" }
     }
   }
 }
@@ -50,10 +50,10 @@ Add to `.cursor/mcp.json` in your project (or global config):
 
 ## Get an API key
 
-1. Sign up at https://www.onegoodarea.com/sign-up (Sandbox tier is free, 35 calls/month for evaluation)
-2. Go to https://www.onegoodarea.com/dashboard
-3. Create an API key — it starts with `aiq_`
-4. Paste into the `OOGA_API_KEY` env var above
+1. Sign up at https://www.onegoodarea.com/sign-up (Sandbox tier is free, 35 calls/month for evaluation).
+2. Go to https://www.onegoodarea.com/dashboard.
+3. Create an API key — it starts with `oga_`.
+4. Paste into the `OOGA_API_KEY` env var above.
 
 For higher volume, upgrade at https://www.onegoodarea.com/pricing.
 
@@ -61,22 +61,41 @@ For higher volume, upgrade at https://www.onegoodarea.com/pricing.
 
 ## Tools
 
-### `score_postcode(postcode, intent)`
+Every tool's response is composed server-side from real engine state. No client-side text synthesis: the prose you see comes from the deterministic engine that produced the score.
 
-Scores a UK postcode (or place name) for one of four decision intents.
+### `score_postcode(area, preset)`
+
+Scores a UK postcode (or place name) for one of four decision presets.
 
 **Arguments:**
 
-- `postcode` (string, required): UK postcode like `"SW1A 1AA"` or place name like `"Manchester city centre"`. Max 100 characters.
-- `intent` (string, required): One of:
+- `area` (string, required): UK postcode like `"SW1A 1AA"` or place name like `"Manchester city centre"`. Max 100 characters.
+- `preset` (string, required): One of:
   - `moving` — origination scoring (residential mortgage suitability, demand-side risk)
   - `business` — site selection (footfall, competition, commercial viability)
   - `investing` — investment scoring (yield, growth, regeneration)
   - `research` — reference scoring (neutral baseline, equal weights)
 
-**Returns:** Markdown-formatted text with overall 0-100 score, five weighted dimensions with confidence and reasoning, plain-English summary, recommendations, and data sources.
+**Returns:** Markdown with the overall 0-100 score, five weighted dimensions with the engine's per-dimension reasoning and confidence reason, a server-composed one-paragraph summary, actionable recommendations from low-scoring or low-confidence dimensions, and the list of public datasets that contributed.
 
-**Caching:** Repeat calls for the same `(postcode, intent)` are served from cache for 24 hours and don't count against your quota.
+### `compare_postcodes(areas, preset)`
+
+Scores 2-8 UK areas side-by-side for the same preset.
+
+**Arguments:**
+
+- `areas` (string[], required): 2-8 UK postcodes or place names.
+- `preset` (string, required): Same preset values as `score_postcode`.
+
+**Returns:** A sorted comparison table (rank, area, score, area type, top dimension) plus per-area summaries from the engine. Partial failures are surfaced inline rather than failing the whole call.
+
+### `methodology_for(dimension)`
+
+Explains how a specific scoring dimension is computed. Static lookup — no network, no quota cost.
+
+### `engine_version()`
+
+Returns the current engine version + changelog. Static lookup. The live engine version is also echoed on every `score_postcode` response.
 
 ---
 
@@ -108,18 +127,8 @@ npm run build        # tsc to dist/
 Override the API base for local dev against the standalone API server:
 
 ```sh
-OOGA_API_BASE=http://localhost:8080 OOGA_API_KEY=aiq_dev npm run dev
+OOGA_API_BASE=http://localhost:4000 OOGA_API_KEY=oga_dev npm run dev
 ```
-
----
-
-## Roadmap
-
-Planned tools (subsequent releases):
-
-- `compare_postcodes(postcodes[], intent)` — score N postcodes in one call
-- `methodology_for(dimension)` — explain how a specific dimension is computed
-- `engine_version()` — return current engine version + changelog
 
 ---
 
