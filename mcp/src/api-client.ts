@@ -43,6 +43,41 @@ export interface OogaSignal {
   observed_period: string;
 }
 
+/** AR-367: the seven Intelligence plan ops. Mirrors @onegoodarea/contracts
+    QueryPlan.op discriminator. */
+export type OogaPlanOp =
+  | "rank_areas"
+  | "get_area"
+  | "score_area"
+  | "compare_areas"
+  | "find_peers"
+  | "find_insights"
+  | "find_forecast";
+
+/** AR-367: response from POST /v1/query — discriminated by plan.op. We
+    don't strict-decode the per-op results shapes here; the formatter
+    walks them defensively. Matches @onegoodarea/contracts QueryResponse. */
+export interface OogaQueryResponse {
+  plan: { op: OogaPlanOp; params: unknown };
+  plan_source: "client" | "nl";
+  results: unknown;
+  meta: { generated_at: string };
+}
+
+/** AR-367: typed peers response from POST /v1/peers. */
+export interface OogaPeersResponse {
+  target: {
+    geo_code: string;
+    signals_used: string[];
+  };
+  peers: Array<{
+    geo_code: string;
+    distance: number;
+    n_dims_used: number;
+  }>;
+  meta: { generated_at: string; scope: string };
+}
+
 /** AR-366: the AreaProfile response from /v1/area and /v1/signals/:category. */
 export interface OogaAreaProfile {
   geo: {
@@ -242,6 +277,63 @@ export class OogaApiClient {
    */
   async getSignalsByCategory(area: string, category: SignalCategory): Promise<OogaAreaProfile> {
     return this.getAreaProfile(`/v1/signals/${category}?area=${encodeURIComponent(area)}`);
+  }
+
+  /**
+   * POST /v1/query with `{question}` — natural-language interface to the
+   * Intelligence query plane. The planner emits a typed plan; the DB
+   * executes it; the response carries plan + plan_source + results so
+   * every answer is reproducible (AR-367).
+   */
+  async findAreas(question: string): Promise<OogaQueryResponse> {
+    return this.postIntelligence("/v1/query", { question });
+  }
+
+  /**
+   * POST /v1/peers with `{target: {area}, k?}` — k-NN over normalized
+   * signal values. Returns the target geo_code + signals_used + a
+   * ranked peers[] list (AR-367).
+   */
+  async findPeers(area: string, k?: number): Promise<OogaPeersResponse> {
+    const body: { target: { area: string }; k?: number } = { target: { area } };
+    if (k !== undefined) body.k = k;
+    return this.postIntelligence("/v1/peers", body);
+  }
+
+  /** Shared POST handler for the Intelligence endpoints. */
+  private async postIntelligence<T>(path: string, body: unknown): Promise<T> {
+    const url = `${this.baseUrl}${path}`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
+
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+          "User-Agent": USER_AGENT,
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+
+      const text = await res.text();
+      let parsed: unknown;
+      try { parsed = JSON.parse(text); } catch { parsed = text; }
+
+      if (!res.ok) {
+        const errMsg =
+          typeof parsed === "object" && parsed !== null && "error" in parsed
+            ? String((parsed as { error: unknown }).error)
+            : `HTTP ${res.status}`;
+        throw new OogaApiError(errMsg, res.status, parsed);
+      }
+
+      return parsed as T;
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   /** Shared GET handler for the two area-profile endpoints. */
