@@ -13,6 +13,59 @@ const USER_AGENT = "onegoodarea-mcp-server/1.0.0";
 
 export type Preset = "moving" | "business" | "investing" | "research";
 
+/** AR-366: the seven signal categories exposed by /v1/signals/:category.
+    Mirrors @onegoodarea/contracts SIGNAL_CATEGORIES. */
+export const SIGNAL_CATEGORIES = [
+  "crime",
+  "deprivation",
+  "property",
+  "schools",
+  "amenities",
+  "transport",
+  "environment",
+] as const;
+export type SignalCategory = typeof SIGNAL_CATEGORIES[number];
+
+/** AR-366: one addressable signal as returned by /v1/area + /v1/signals/:category.
+    Matches @onegoodarea/contracts Signal. */
+export interface OogaSignal {
+  key: string;
+  category: SignalCategory;
+  label: string;
+  value: number | string | null;
+  unit: string | null;
+  normalized_value?: number | null;
+  percentile?: number | null;
+  direction: "higher_is_better" | "lower_is_better" | "neutral";
+  confidence: number;
+  confidence_reason: string;
+  source: string;
+  observed_period: string;
+}
+
+/** AR-366: the AreaProfile response from /v1/area and /v1/signals/:category. */
+export interface OogaAreaProfile {
+  geo: {
+    query: string;
+    postcode: string | null;
+    latitude: number;
+    longitude: number;
+    lsoa: string | null;
+    msoa: string | null;
+    admin_district: string | null;
+    region: string | null;
+    country: string;
+    area_type: "urban" | "suburban" | "rural";
+  };
+  signals: OogaSignal[];
+  meta: {
+    engine_version: string;
+    generated_at: string;
+    sources: string[];
+    fetch_mode: "live" | "store" | "hybrid";
+  };
+}
+
 /** One weighted component of a composite score. Matches the
     @onegoodarea/contracts `ScoreDimension` shape; we redeclare it here
     so the MCP package can be published independently of the monorepo
@@ -166,6 +219,60 @@ export class OogaApiClient {
       }
 
       return body as OogaScoreResponse;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  /**
+   * GET /v1/area?area=<area> — full signal catalog for an area.
+   * Returns every signal with its raw value, normalized value + percentile
+   * (when store-backed), per-signal confidence + reason, source attribution,
+   * and observation period. The full Signals primitive (AR-366).
+   */
+  async getAreaSignals(area: string): Promise<OogaAreaProfile> {
+    return this.getAreaProfile(`/v1/area?area=${encodeURIComponent(area)}`);
+  }
+
+  /**
+   * GET /v1/signals/:category?area=<area> — signals filtered to one category
+   * (crime / deprivation / property / schools / amenities / transport /
+   * environment). Same Signal shape as /v1/area; just a narrower payload
+   * for when the LLM only needs one slice.
+   */
+  async getSignalsByCategory(area: string, category: SignalCategory): Promise<OogaAreaProfile> {
+    return this.getAreaProfile(`/v1/signals/${category}?area=${encodeURIComponent(area)}`);
+  }
+
+  /** Shared GET handler for the two area-profile endpoints. */
+  private async getAreaProfile(path: string): Promise<OogaAreaProfile> {
+    const url = `${this.baseUrl}${path}`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
+
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${this.apiKey}`,
+          "User-Agent": USER_AGENT,
+        },
+        signal: controller.signal,
+      });
+
+      const text = await res.text();
+      let body: unknown;
+      try { body = JSON.parse(text); } catch { body = text; }
+
+      if (!res.ok) {
+        const errMsg =
+          typeof body === "object" && body !== null && "error" in body
+            ? String((body as { error: unknown }).error)
+            : `HTTP ${res.status}`;
+        throw new OogaApiError(errMsg, res.status, body);
+      }
+
+      return body as OogaAreaProfile;
     } finally {
       clearTimeout(timeout);
     }
