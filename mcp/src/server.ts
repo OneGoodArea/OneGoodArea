@@ -3,13 +3,14 @@
  * OneGoodArea MCP server — entry point.
  *
  * Exposes the OneGoodArea engine as MCP tools so Claude Desktop / Cursor /
- * any MCP-compatible client can score UK postcodes inline.
+ * any MCP-compatible client can score UK areas inline.
  *
  * Auth: reads OOGA_API_KEY from env (the customer's API key from
- * https://www.onegoodarea.com/dashboard).
+ * https://www.onegoodarea.com/dashboard). Keys start with `oga_`.
  *
- * Base URL: defaults to https://www.onegoodarea.com. Override via
- * OOGA_API_BASE env (useful for local dev against npm run dev).
+ * Base URL: defaults to https://onegoodarea.onrender.com (the live API).
+ * Override via OOGA_API_BASE env (useful for local dev against
+ * `cd apps/api && npm run dev`).
  *
  * Run via npx: `npx @onegoodarea/mcp-server`
  *
@@ -19,7 +20,7 @@
  *       "onegoodarea": {
  *         "command": "npx",
  *         "args": ["-y", "@onegoodarea/mcp-server"],
- *         "env": { "OOGA_API_KEY": "aiq_..." }
+ *         "env": { "OOGA_API_KEY": "oga_..." }
  *       }
  *     }
  *   }
@@ -66,9 +67,9 @@ function readApiKey(): string {
     );
     process.exit(1);
   }
-  if (!key.startsWith("aiq_")) {
+  if (!key.startsWith("oga_")) {
     process.stderr.write(
-      `[onegoodarea-mcp] OOGA_API_KEY looks malformed (expected to start with 'aiq_'). Got prefix: ${key.slice(0, 4)}\n`,
+      `[onegoodarea-mcp] OOGA_API_KEY looks malformed (expected to start with 'oga_'). Got prefix: ${key.slice(0, 4)}\n`,
     );
     process.exit(1);
   }
@@ -77,19 +78,19 @@ function readApiKey(): string {
 
 async function checkMcpAccess(client: OogaApiClient): Promise<void> {
   // Skip the entitlement check if explicitly disabled (e.g. for local dev
-  // before the /api/v1/me endpoint is deployed). Production should never
+  // before the /v1/me endpoint is deployed). Production should never
   // set this — it's a developer escape hatch.
   if (process.env.OOGA_SKIP_ENTITLEMENT_CHECK === "1") {
     process.stderr.write("[onegoodarea-mcp] OOGA_SKIP_ENTITLEMENT_CHECK=1 — skipping /me check\n");
     return;
   }
 
-  let me;
+  let me: Awaited<ReturnType<typeof client.me>>;
   try {
     me = await client.me();
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    process.stderr.write(`[onegoodarea-mcp] Could not verify entitlement at /api/v1/me: ${msg}\n`);
+    process.stderr.write(`[onegoodarea-mcp] Could not verify entitlement at /v1/me: ${msg}\n`);
     process.stderr.write(`[onegoodarea-mcp] Check OOGA_API_KEY is valid and OOGA_API_BASE is reachable.\n`);
     process.exit(1);
   }
@@ -169,7 +170,7 @@ async function main(): Promise<void> {
   await server.connect(transport);
 
   process.stderr.write(
-    `[onegoodarea-mcp] v${SERVER_VERSION} listening on stdio (api: ${baseUrl ?? "https://www.onegoodarea.com"})\n`,
+    `[onegoodarea-mcp] v${SERVER_VERSION} listening on stdio (api: ${baseUrl ?? "https://onegoodarea.onrender.com"})\n`,
   );
 }
 

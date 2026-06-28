@@ -1,50 +1,52 @@
 /**
  * MCP tool: compare_postcodes
  *
- * Scores N postcodes (max 8) for a single intent in parallel and returns a
+ * Scores N areas (max 8) for a single preset in parallel and returns a
  * comparison table sorted by overall score. Uses the existing scoreArea
- * client method — Promise.all in parallel, individual failures are captured
- * inline rather than failing the whole call.
+ * client method — Promise.allSettled in parallel, individual failures are
+ * captured inline rather than failing the whole call. Each per-area
+ * summary uses the server-composed `summary` from /v1/score?explain=true;
+ * no client-side narrative synthesis.
  */
 
-import type { OogaApiClient, Intent, OogaScoreResponse } from "../api-client.js";
+import type { OogaApiClient, Preset, OogaScoreResponse } from "../api-client.js";
 import { OogaApiError } from "../api-client.js";
 
-const MAX_POSTCODES = 8;
+const MAX_AREAS = 8;
 
 export const comparePostcodesToolName = "compare_postcodes";
 
 export const comparePostcodesToolDef = {
   name: comparePostcodesToolName,
   description:
-    "Compare multiple UK postcodes (max 8) side-by-side for the same decision intent. " +
-    "Returns a sorted table showing each area's overall score, area type, top dimensions, and a one-line takeaway. " +
-    "Each postcode hits the cache independently — repeats are free for 24 hours per (postcode, intent).",
+    "Compare multiple UK postcodes (max 8) side-by-side for the same decision preset. " +
+    "Returns a sorted table showing each area's overall score, area type, top dimension, and the server-composed per-area summary. " +
+    "Each request hits POST /v1/score?explain=true independently — partial failures are inline, not fatal.",
   inputSchema: {
     type: "object",
     properties: {
-      postcodes: {
+      areas: {
         type: "array",
         items: { type: "string" },
         minItems: 2,
-        maxItems: MAX_POSTCODES,
-        description: `Array of UK postcodes or place names to compare. Between 2 and ${MAX_POSTCODES} entries.`,
+        maxItems: MAX_AREAS,
+        description: `Array of UK postcodes or place names to compare. Between 2 and ${MAX_AREAS} entries.`,
       },
-      intent: {
+      preset: {
         type: "string",
         enum: ["moving", "business", "investing", "research"],
         description:
-          "Same intent applied to every postcode. Use 'moving' for origination, 'business' for site selection, 'investing' for yield, 'research' for neutral baseline.",
+          "Same preset applied to every area. Use 'moving' for origination, 'business' for site selection, 'investing' for yield, 'research' for neutral baseline.",
       },
     },
-    required: ["postcodes", "intent"],
+    required: ["areas", "preset"],
     additionalProperties: false,
   },
 } as const;
 
 export interface ComparePostcodesArgs {
-  postcodes: string[];
-  intent: Intent;
+  areas: string[];
+  preset: Preset;
 }
 
 export function parseComparePostcodesArgs(raw: unknown): ComparePostcodesArgs {
@@ -52,45 +54,45 @@ export function parseComparePostcodesArgs(raw: unknown): ComparePostcodesArgs {
     throw new Error("compare_postcodes arguments must be an object");
   }
   const obj = raw as Record<string, unknown>;
-  const postcodes = obj.postcodes;
-  const intent = obj.intent;
+  const areas = obj.areas;
+  const preset = obj.preset;
 
-  if (!Array.isArray(postcodes)) {
-    throw new Error("postcodes must be an array");
+  if (!Array.isArray(areas)) {
+    throw new Error("areas must be an array");
   }
-  if (postcodes.length < 2) {
-    throw new Error("postcodes must contain at least 2 entries");
+  if (areas.length < 2) {
+    throw new Error("areas must contain at least 2 entries");
   }
-  if (postcodes.length > MAX_POSTCODES) {
-    throw new Error(`postcodes must contain at most ${MAX_POSTCODES} entries`);
+  if (areas.length > MAX_AREAS) {
+    throw new Error(`areas must contain at most ${MAX_AREAS} entries`);
   }
   const cleaned: string[] = [];
-  for (const p of postcodes) {
-    if (typeof p !== "string" || p.trim().length === 0) {
-      throw new Error("every postcode must be a non-empty string");
+  for (const a of areas) {
+    if (typeof a !== "string" || a.trim().length === 0) {
+      throw new Error("every area must be a non-empty string");
     }
-    if (p.length > 100) {
-      throw new Error("each postcode must be 100 characters or fewer");
+    if (a.length > 100) {
+      throw new Error("each area must be 100 characters or fewer");
     }
-    cleaned.push(p.trim());
+    cleaned.push(a.trim());
   }
 
-  const intents: Intent[] = ["moving", "business", "investing", "research"];
-  if (typeof intent !== "string" || !intents.includes(intent as Intent)) {
-    throw new Error(`intent must be one of: ${intents.join(", ")}`);
+  const presets: Preset[] = ["moving", "business", "investing", "research"];
+  if (typeof preset !== "string" || !presets.includes(preset as Preset)) {
+    throw new Error(`preset must be one of: ${presets.join(", ")}`);
   }
 
-  return { postcodes: cleaned, intent: intent as Intent };
+  return { areas: cleaned, preset: preset as Preset };
 }
 
 interface ComparisonRow {
-  postcode: string;
+  area: string;
   score: number | null;
   result: OogaScoreResponse | null;
   error: string | null;
 }
 
-export function formatComparisonAsText(rows: ComparisonRow[], intent: Intent): string {
+export function formatComparisonAsText(rows: ComparisonRow[], preset: Preset): string {
   // Sort: successful results by descending score, errors at the bottom
   const sorted = [...rows].sort((a, b) => {
     if (a.score === null && b.score === null) return 0;
@@ -100,36 +102,39 @@ export function formatComparisonAsText(rows: ComparisonRow[], intent: Intent): s
   });
 
   const lines: string[] = [];
-  lines.push(`# Comparison · ${rows.length} postcodes · intent: ${intent}`);
+  lines.push(`# Comparison · ${rows.length} areas · preset: ${preset}`);
   lines.push("");
 
-  // Headline table — score + area type per postcode
-  lines.push("| Rank | Postcode | Score | Area type | Top dimension |");
+  // Headline table — score + area type per area
+  lines.push("| Rank | Area | Score | Area type | Top dimension |");
   lines.push("|---|---|---|---|---|");
   let rank = 1;
   for (const r of sorted) {
     if (r.score === null) {
-      lines.push(`| — | ${r.postcode} | ERROR | — | ${r.error ?? "Unknown"} |`);
+      lines.push(`| — | ${r.area} | ERROR | — | ${r.error ?? "Unknown"} |`);
       continue;
     }
-    const top = r.result?.sub_scores?.length
-      ? r.result.sub_scores.reduce((a, b) => (a.score > b.score ? a : b))
+    const top = r.result?.dimensions?.length
+      ? r.result.dimensions.reduce((a, b) => (a.score > b.score ? a : b))
       : null;
     const topStr = top ? `${top.label} (${top.score}/100)` : "—";
     const areaType = r.result?.area_type ?? "—";
-    lines.push(`| ${rank} | ${r.postcode} | ${r.score}/100 | ${areaType} | ${topStr} |`);
+    lines.push(`| ${rank} | ${r.area} | ${r.score}/100 | ${areaType} | ${topStr} |`);
     rank++;
   }
   lines.push("");
 
-  // Per-postcode summary
+  // Per-area summary
   lines.push("## Summaries");
   for (const r of sorted) {
     if (r.score === null) {
-      lines.push(`- **${r.postcode}**: error — ${r.error ?? "unknown failure"}`);
+      lines.push(`- **${r.area}**: error — ${r.error ?? "unknown failure"}`);
       continue;
     }
-    lines.push(`- **${r.postcode}** (${r.score}/100): ${r.result?.summary ?? "(no summary)"}`);
+    /* Summary is server-composed from explain=true. Falls back to a
+       minimal score line only if explain mode somehow returned without it. */
+    const summary = r.result?.summary ?? `${r.score}/100`;
+    lines.push(`- **${r.area}**: ${summary}`);
   }
 
   // Footer with engine version if available
@@ -147,14 +152,14 @@ export async function executeComparePostcodes(
   args: ComparePostcodesArgs,
 ): Promise<{ content: Array<{ type: "text"; text: string }>; isError?: boolean }> {
   const settled = await Promise.allSettled(
-    args.postcodes.map((p) => client.scoreArea(p, args.intent)),
+    args.areas.map((a) => client.scoreArea(a, args.preset)),
   );
 
   const rows: ComparisonRow[] = settled.map((s, i) => {
     if (s.status === "fulfilled") {
       return {
-        postcode: args.postcodes[i],
-        score: s.value.areaiq_score,
+        area: args.areas[i]!,
+        score: s.value.score,
         result: s.value,
         error: null,
       };
@@ -164,14 +169,14 @@ export async function executeComparePostcodes(
       : s.reason instanceof Error
         ? s.reason.message
         : String(s.reason);
-    return { postcode: args.postcodes[i], score: null, result: null, error: reason };
+    return { area: args.areas[i]!, score: null, result: null, error: reason };
   });
 
   // If EVERY call failed, surface that as isError so the LLM can act
   const allFailed = rows.every((r) => r.error !== null);
 
   return {
-    content: [{ type: "text", text: formatComparisonAsText(rows, args.intent) }],
+    content: [{ type: "text", text: formatComparisonAsText(rows, args.preset) }],
     ...(allFailed ? { isError: true } : {}),
   };
 }
