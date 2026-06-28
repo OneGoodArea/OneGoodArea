@@ -1,11 +1,11 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
   scorePostcodeToolDef,
   parseScorePostcodeArgs,
   formatScoreResultAsText,
   executeScorePostcode,
 } from "./score-postcode.js";
-import { OogaApiClient, OogaApiError } from "../api-client.js";
+import { OogaApiClient, OogaApiError, type OogaScoreResponse } from "../api-client.js";
 
 describe("scorePostcodeToolDef (MCP tool definition)", () => {
   it("has the required MCP fields", () => {
@@ -15,12 +15,12 @@ describe("scorePostcodeToolDef (MCP tool definition)", () => {
     expect(scorePostcodeToolDef.inputSchema.type).toBe("object");
   });
 
-  it("requires postcode and intent", () => {
-    expect(scorePostcodeToolDef.inputSchema.required).toEqual(["postcode", "intent"]);
+  it("requires area and preset", () => {
+    expect(scorePostcodeToolDef.inputSchema.required).toEqual(["area", "preset"]);
   });
 
-  it("intent enum matches the four supported values", () => {
-    expect(scorePostcodeToolDef.inputSchema.properties.intent.enum).toEqual([
+  it("preset enum matches the four supported values", () => {
+    expect(scorePostcodeToolDef.inputSchema.properties.preset.enum).toEqual([
       "moving",
       "business",
       "investing",
@@ -35,14 +35,14 @@ describe("scorePostcodeToolDef (MCP tool definition)", () => {
 
 describe("parseScorePostcodeArgs", () => {
   it("accepts valid args", () => {
-    expect(parseScorePostcodeArgs({ postcode: "M1 1AE", intent: "moving" })).toEqual({
-      postcode: "M1 1AE",
-      intent: "moving",
+    expect(parseScorePostcodeArgs({ area: "M1 1AE", preset: "moving" })).toEqual({
+      area: "M1 1AE",
+      preset: "moving",
     });
   });
 
-  it("trims whitespace from postcode", () => {
-    expect(parseScorePostcodeArgs({ postcode: "  M1 1AE  ", intent: "investing" }).postcode).toBe(
+  it("trims whitespace from area", () => {
+    expect(parseScorePostcodeArgs({ area: "  M1 1AE  ", preset: "investing" }).area).toBe(
       "M1 1AE",
     );
   });
@@ -52,118 +52,142 @@ describe("parseScorePostcodeArgs", () => {
     expect(() => parseScorePostcodeArgs("M1 1AE")).toThrow();
   });
 
-  it("rejects empty postcode", () => {
-    expect(() => parseScorePostcodeArgs({ postcode: "", intent: "moving" })).toThrow(/postcode/);
-    expect(() => parseScorePostcodeArgs({ postcode: "   ", intent: "moving" })).toThrow(/postcode/);
+  it("rejects empty area", () => {
+    expect(() => parseScorePostcodeArgs({ area: "", preset: "moving" })).toThrow(/area/);
+    expect(() => parseScorePostcodeArgs({ area: "   ", preset: "moving" })).toThrow(/area/);
   });
 
-  it("rejects postcode over 100 chars", () => {
+  it("rejects area over 100 chars", () => {
     expect(() =>
-      parseScorePostcodeArgs({ postcode: "x".repeat(101), intent: "moving" }),
+      parseScorePostcodeArgs({ area: "x".repeat(101), preset: "moving" }),
     ).toThrow(/100/);
   });
 
-  it("rejects unsupported intent", () => {
+  it("rejects unsupported preset", () => {
     expect(() =>
-      parseScorePostcodeArgs({ postcode: "M1 1AE", intent: "origination" }),
-    ).toThrow(/intent/);
+      parseScorePostcodeArgs({ area: "M1 1AE", preset: "origination" }),
+    ).toThrow(/preset/);
     expect(() =>
-      parseScorePostcodeArgs({ postcode: "M1 1AE", intent: 42 }),
-    ).toThrow(/intent/);
+      parseScorePostcodeArgs({ area: "M1 1AE", preset: 42 }),
+    ).toThrow(/preset/);
   });
 });
 
 describe("formatScoreResultAsText", () => {
-  const sample = {
+  const sample: OogaScoreResponse = {
     area: "Manchester",
-    intent: "moving" as const,
-    areaiq_score: 84,
-    engine_version: "2.0.0",
-    area_type: "suburban" as const,
-    sub_scores: [
+    preset: "moving",
+    score: 84,
+    engine_version: "2.0.2",
+    area_type: "suburban",
+    confidence: 0.85,
+    weights_source: "preset",
+    dimensions: [
       {
+        key: "safety_crime",
         label: "Safety & Crime",
         score: 80,
         weight: 25,
-        summary: "Low violent crime",
-        reasoning: "10 crimes over 3 months",
         confidence: 0.85,
+        reasoning: "12 violent crimes per 1k residents over 12 months — below the urban benchmark.",
+        confidence_reason: "240 crimes across 12 months provides strong signal",
       },
       {
+        key: "schools_education",
         label: "Schools & Education",
         score: 95,
         weight: 20,
-        summary: "Excellent schools",
-        reasoning: "25 schools within 1.5km",
+        confidence: 1.0,
+        reasoning: "25 Ofsted-rated schools within 1.5km (5 Outstanding, 15 Good, 5 Requires Improvement).",
+        confidence_reason: "Dense Ofsted coverage with multiple outstanding schools",
       },
     ],
-    summary: "Manchester scores 84/100 for moving home.",
-    sections: [],
-    recommendations: ["Visit before deciding", "Compare against Salford"],
-    data_sources: ["Police.uk", "Ofsted"],
-    generated_at: "2026-05-05T10:00:00Z",
+    summary: "84/100 — strong for a suburban area, with high confidence. Strongest on Schools & Education (95/100); weakest on Safety & Crime (80/100).",
+    recommendations: [],
+    data_sources: ["postcodes.io (geocoding)", "police.uk crime archive", "Ofsted school inspections (DfE)"],
   };
 
-  it("renders headline with score and intent", () => {
+  it("renders headline with score and preset", () => {
     const text = formatScoreResultAsText(sample);
     expect(text).toContain("Manchester · moving · 84/100");
   });
 
-  it("includes engine version when present", () => {
-    expect(formatScoreResultAsText(sample)).toContain("Engine version: 2.0.0");
+  it("includes engine version", () => {
+    expect(formatScoreResultAsText(sample)).toContain("Engine version: 2.0.2");
   });
 
-  it("includes confidence on dimensions when present", () => {
+  it("includes confidence on dimensions", () => {
     expect(formatScoreResultAsText(sample)).toContain("confidence 85%");
+    expect(formatScoreResultAsText(sample)).toContain("confidence 100%");
   });
 
-  it("omits confidence when missing on a dimension", () => {
+  it("renders the engine-grounded reasoning on each dimension", () => {
     const text = formatScoreResultAsText(sample);
-    expect(text).toContain("Schools & Education**: 95/100 (weight 20%)");
+    expect(text).toContain("12 violent crimes per 1k residents");
+    expect(text).toContain("25 Ofsted-rated schools");
+  });
+
+  it("renders the confidence reason on each dimension", () => {
+    const text = formatScoreResultAsText(sample);
+    expect(text).toContain("240 crimes across 12 months provides strong signal");
+  });
+
+  it("renders the server-composed summary when present", () => {
+    const text = formatScoreResultAsText(sample);
+    expect(text).toContain("## Summary");
+    expect(text).toContain("Strongest on Schools & Education");
+  });
+
+  it("omits summary section when missing (non-explain mode)", () => {
+    const text = formatScoreResultAsText({ ...sample, summary: undefined });
+    expect(text).not.toContain("## Summary");
   });
 
   it("includes recommendations when present", () => {
-    const text = formatScoreResultAsText(sample);
+    const text = formatScoreResultAsText({ ...sample, recommendations: ["Visit before deciding", "Compare against Salford"] });
     expect(text).toContain("## Recommendations");
     expect(text).toContain("Visit before deciding");
   });
 
   it("omits recommendations section when empty", () => {
-    const text = formatScoreResultAsText({ ...sample, recommendations: [] });
-    expect(text).not.toContain("## Recommendations");
+    expect(formatScoreResultAsText(sample)).not.toContain("## Recommendations");
   });
 
   it("includes data sources joined with separator", () => {
-    expect(formatScoreResultAsText(sample)).toContain("Police.uk · Ofsted");
+    expect(formatScoreResultAsText(sample)).toContain("postcodes.io (geocoding) · police.uk crime archive · Ofsted school inspections (DfE)");
   });
 });
 
 describe("executeScorePostcode", () => {
   function makeClient(scoreAreaImpl: () => Promise<unknown>): OogaApiClient {
-    const client = new OogaApiClient({ apiKey: "aiq_test" });
+    const client = new OogaApiClient({ apiKey: "oga_test" });
     // Replace the network method with a stub
     (client as unknown as { scoreArea: () => Promise<unknown> }).scoreArea = scoreAreaImpl;
     return client;
   }
 
-  it("returns formatted text on success", async () => {
-    const client = makeClient(async () => ({
-      area: "Manchester",
-      intent: "moving",
-      areaiq_score: 84,
-      sub_scores: [],
-      summary: "Strong fit.",
-      sections: [],
-      recommendations: [],
-      data_sources: ["Police.uk"],
-      generated_at: "2026-05-05T10:00:00Z",
-    }));
+  const minimal: OogaScoreResponse = {
+    area: "Manchester",
+    preset: "moving",
+    score: 84,
+    engine_version: "2.0.2",
+    area_type: "suburban",
+    confidence: 0.85,
+    weights_source: "preset",
+    dimensions: [],
+    summary: "Strong fit.",
+    recommendations: [],
+    data_sources: ["postcodes.io (geocoding)"],
+  };
 
-    const out = await executeScorePostcode(client, { postcode: "M1 1AE", intent: "moving" });
+  it("returns formatted text on success", async () => {
+    const client = makeClient(async () => minimal);
+
+    const out = await executeScorePostcode(client, { area: "M1 1AE", preset: "moving" });
     expect(out.isError).toBeFalsy();
-    expect(out.content[0].type).toBe("text");
-    expect(out.content[0].text).toContain("Manchester");
-    expect(out.content[0].text).toContain("84/100");
+    expect(out.content[0]!.type).toBe("text");
+    expect(out.content[0]!.text).toContain("Manchester");
+    expect(out.content[0]!.text).toContain("84/100");
   });
 
   it("returns isError + readable message on API auth failure", async () => {
@@ -171,20 +195,20 @@ describe("executeScorePostcode", () => {
       throw new OogaApiError("Invalid or revoked API key", 401);
     });
 
-    const out = await executeScorePostcode(client, { postcode: "M1 1AE", intent: "moving" });
+    const out = await executeScorePostcode(client, { area: "M1 1AE", preset: "moving" });
     expect(out.isError).toBe(true);
-    expect(out.content[0].text).toContain("HTTP 401");
-    expect(out.content[0].text).toContain("Invalid or revoked API key");
+    expect(out.content[0]!.text).toContain("HTTP 401");
+    expect(out.content[0]!.text).toContain("Invalid or revoked API key");
   });
 
   it("returns isError + readable message on quota exceeded (HTTP 403)", async () => {
     const client = makeClient(async () => {
-      throw new OogaApiError("Monthly report limit reached", 403);
+      throw new OogaApiError("Monthly API call limit reached", 403);
     });
 
-    const out = await executeScorePostcode(client, { postcode: "M1 1AE", intent: "moving" });
+    const out = await executeScorePostcode(client, { area: "M1 1AE", preset: "moving" });
     expect(out.isError).toBe(true);
-    expect(out.content[0].text).toContain("HTTP 403");
+    expect(out.content[0]!.text).toContain("HTTP 403");
   });
 
   it("returns isError on unexpected error type", async () => {
@@ -192,8 +216,8 @@ describe("executeScorePostcode", () => {
       throw new Error("Network exploded");
     });
 
-    const out = await executeScorePostcode(client, { postcode: "M1 1AE", intent: "moving" });
+    const out = await executeScorePostcode(client, { area: "M1 1AE", preset: "moving" });
     expect(out.isError).toBe(true);
-    expect(out.content[0].text).toContain("Network exploded");
+    expect(out.content[0]!.text).toContain("Network exploded");
   });
 });

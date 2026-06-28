@@ -1,33 +1,48 @@
 /**
  * Thin HTTP client for the OneGoodArea REST API.
  * Used by every MCP tool — keeps auth + base URL handling in one place.
+ *
+ * AR-364: rewritten to target the live apps/api at /v1/* directly (not
+ * the apps/web /api/v1/* proxy, which is silently broken since AR-324).
+ * Uses /v1/score?explain=true so brief-shape narrative is composed
+ * server-side from real engine state — no client-side text synthesis.
  */
 
-const DEFAULT_BASE = "https://www.onegoodarea.com";
+const DEFAULT_BASE = "https://onegoodarea.onrender.com";
+const USER_AGENT = "onegoodarea-mcp-server/0.2.0";
 
-export type Intent = "moving" | "business" | "investing" | "research";
+export type Preset = "moving" | "business" | "investing" | "research";
 
+/** One weighted component of a composite score. Matches the
+    @onegoodarea/contracts `ScoreDimension` shape; we redeclare it here
+    so the MCP package can be published independently of the monorepo
+    contracts (the npm release ships only mcp/dist). */
+export interface OogaScoreDimension {
+  key: string;
+  label: string;
+  score: number;
+  weight: number;
+  confidence: number;
+  reasoning: string;
+  confidence_reason: string;
+}
+
+/** The response of POST /v1/score?explain=true. The `summary`,
+    `recommendations`, and `data_sources` fields are server-side
+    composed when explain mode is on (AR-363). */
 export interface OogaScoreResponse {
   area: string;
-  intent: Intent;
-  areaiq_score: number;
-  sub_scores: Array<{
-    label: string;
-    score: number;
-    weight: number;
-    summary: string;
-    reasoning: string;
-    confidence?: number;
-    confidence_reason?: string;
-  }>;
-  summary: string;
-  sections: Array<{ title: string; content: string; data_points: Array<{ label: string; value: string }> }>;
-  recommendations: string[];
-  data_sources: string[];
-  generated_at: string;
-  engine_version?: string;
-  area_type?: "urban" | "suburban" | "rural";
-  confidence?: number;
+  preset: Preset;
+  score: number;
+  area_type: "urban" | "suburban" | "rural";
+  dimensions: OogaScoreDimension[];
+  confidence: number;
+  weights_source: "preset" | "custom";
+  engine_version: string;
+  /** Brief-shape fields — present when ?explain=true. */
+  summary?: string;
+  recommendations?: string[];
+  data_sources?: string[];
 }
 
 export interface OogaApiClientOptions {
@@ -37,13 +52,15 @@ export interface OogaApiClientOptions {
   timeoutMs?: number;
 }
 
+/** /v1/me response shape (the bits MCP relies on). The API returns more
+    fields (org, key allowlist, addons, etc.) — we only declare what we
+    use, since extra fields are fine at runtime. */
 export interface OogaMeResponse {
   plan: string;
   plan_name: string;
-  generation: "v1" | "v2";
   api_access: boolean;
   mcp_access: boolean;
-  reports_per_month: number;
+  api_calls_per_month: number;
   used_this_month: number;
   limit_this_month: number | null;
   engine_version: string;
@@ -73,11 +90,11 @@ export class OogaApiClient {
   }
 
   /**
-   * GET /api/v1/me — returns the authenticated user's plan + entitlements.
-   * Called by the MCP server at startup to check mcp_access.
+   * GET /v1/me — returns the authenticated user's plan + entitlements.
+   * Called by the MCP server at startup to check `mcp_access`.
    */
   async me(): Promise<OogaMeResponse> {
-    const url = `${this.baseUrl}/api/v1/me`;
+    const url = `${this.baseUrl}/v1/me`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10_000);
 
@@ -86,7 +103,7 @@ export class OogaApiClient {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${this.apiKey}`,
-          "User-Agent": "onegoodarea-mcp-server/0.2.0",
+          "User-Agent": USER_AGENT,
         },
         signal: controller.signal,
       });
@@ -110,11 +127,13 @@ export class OogaApiClient {
   }
 
   /**
-   * POST /api/v1/report — generates (or returns cached) report for the given
-   * postcode/area + intent. Returns the full structured response.
+   * POST /v1/score?explain=true — score a UK area for the given preset.
+   * `explain=true` triggers server-side composition of the brief-shape
+   * fields (summary, recommendations, data_sources) from real engine
+   * state. Per the brief-shape policy, the MCP never synthesises text.
    */
-  async scoreArea(area: string, intent: Intent): Promise<OogaScoreResponse> {
-    const url = `${this.baseUrl}/api/v1/report`;
+  async scoreArea(area: string, preset: Preset): Promise<OogaScoreResponse> {
+    const url = `${this.baseUrl}/v1/score?explain=true`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
@@ -124,9 +143,9 @@ export class OogaApiClient {
         headers: {
           "Authorization": `Bearer ${this.apiKey}`,
           "Content-Type": "application/json",
-          "User-Agent": "onegoodarea-mcp-server/0.1.0",
+          "User-Agent": USER_AGENT,
         },
-        body: JSON.stringify({ area, intent }),
+        body: JSON.stringify({ area, preset }),
         signal: controller.signal,
       });
 

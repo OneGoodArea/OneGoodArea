@@ -163,21 +163,38 @@ export const METHODOLOGY: DimensionMethodology[] = [
   },
 ];
 
+/* AR-364: bumped to v2.0.2 (the live engine version). The MCP's static
+   snapshot is intentionally a fallback — the score_postcode tool already
+   echoes the live engine_version from each response. A future story
+   (S3) should make engine_version read the live value from the /me
+   startup call rather than this constant. */
 export const ENGINE = {
-  version: "2.0.0",
-  released: "2026-04-26",
+  version: "2.0.2",
+  released: "2026-05-14",
   changelog: [
+    {
+      version: "2.0.2",
+      date: "2026-05-14",
+      summary:
+        "OpenStreetMap reliability hardening — Overpass timeout doubled, retry-once-with-jitter, errors now logged via logger.warn(). Resolves city-centre Transport NONE-confidence on Manchester/Birmingham/Edinburgh/Cardiff/York. Scoring formulas byte-identical to v2.0.1.",
+    },
+    {
+      version: "2.0.1",
+      date: "2026-05-14",
+      summary:
+        "Variance-aware property confidence rubric: HIGH now requires both >=50 transactions AND <=15% absolute YoY change. Resolves over-confident scores in central York and similar low-volume postcodes. No scoring formula changes.",
+    },
     {
       version: "2.0.0",
       date: "2026-04-26",
       summary:
-        "Confidence scoring per dimension. Engine version stamp on every response. Source attribution per signal. Production rollout via infrastructure-engine merge to main.",
+        "Confidence scoring per dimension. Engine version stamp on every response. Source attribution per signal. Confidence reasons explain WHY each dimension's data quality is what it is.",
     },
     {
       version: "1.x",
       date: "pre 2026-04-26",
       summary:
-        "Initial deterministic scoring engine. 7 public datasets integrated. 4 intent compositions. LSOA-level scoring. Web reports + JSON API + drop-in widget.",
+        "Initial deterministic scoring engine. 7 public datasets integrated. 4 preset compositions (formerly intents). LSOA-level scoring. JSON API.",
     },
   ],
 } as const;
