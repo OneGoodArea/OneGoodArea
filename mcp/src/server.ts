@@ -56,6 +56,18 @@ import {
   engineVersionToolName,
   executeEngineVersion,
 } from "./tools/engine-version.js";
+import {
+  getAreaSignalsToolDef,
+  getAreaSignalsToolName,
+  parseGetAreaSignalsArgs,
+  executeGetAreaSignals,
+} from "./tools/get-area-signals.js";
+import {
+  getSignalsByCategoryToolDef,
+  getSignalsByCategoryToolName,
+  parseGetSignalsByCategoryArgs,
+  executeGetSignalsByCategory,
+} from "./tools/get-signals-by-category.js";
 
 const SERVER_VERSION = "1.0.0";
 
@@ -129,12 +141,15 @@ async function main(): Promise<void> {
     },
   );
 
-  // 4 tools: score_postcode, compare_postcodes (network), methodology_for,
-  // engine_version (static lookup, no network).
+  // 6 tools: score_postcode, compare_postcodes, get_area_signals,
+  // get_signals_by_category (network); methodology_for, engine_version
+  // (static lookup, no network).
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: [
       scorePostcodeToolDef,
       comparePostcodesToolDef,
+      getAreaSignalsToolDef,
+      getSignalsByCategoryToolDef,
       methodologyForToolDef,
       engineVersionToolDef,
     ],
@@ -151,6 +166,14 @@ async function main(): Promise<void> {
     if (name === comparePostcodesToolName) {
       const parsed = parseComparePostcodesArgs(args);
       return executeComparePostcodes(client, parsed);
+    }
+    if (name === getAreaSignalsToolName) {
+      const parsed = parseGetAreaSignalsArgs(args);
+      return executeGetAreaSignals(client, parsed);
+    }
+    if (name === getSignalsByCategoryToolName) {
+      const parsed = parseGetSignalsByCategoryArgs(args);
+      return executeGetSignalsByCategory(client, parsed);
     }
     if (name === methodologyForToolName) {
       const parsed = parseMethodologyForArgs(args);
