@@ -15,6 +15,12 @@ import { computeScores, type ComputedScores } from "../engine/scoring-engine";
 import { METHODOLOGY_VERSION } from "../engine/methodology";
 import { logger } from "../tracking/structured-logger";
 import { isIntent, type Intent, type ScoreResult, type ScoreDimension } from "@onegoodarea/contracts";
+import {
+  composeScoreSummary,
+  composeRecommendations,
+  computeDataSources,
+  type SourcePresence,
+} from "./explain";
 
 export const DEFAULT_PRESET: Intent = "research";
 
@@ -46,6 +52,11 @@ export interface ScoreQuery {
       automatically. Categories whose source has ANY signal in the
       bundle are passed through untouched. */
   bundle_allowed_keys?: readonly string[];
+  /** AR-363: when true, the response includes `summary`,
+      `recommendations[]`, and `data_sources[]`, all composed
+      server-side from real engine state. Default false preserves the
+      narrow primitive shape for existing callers. */
+  explain?: boolean;
 }
 
 /* Map a signal key (e.g. "crime.total_12m", "transport.stations")
@@ -110,11 +121,29 @@ export function parseScoreBody(body: unknown): { ok: true; query: ScoreQuery } |
     weights = out;
   }
 
-  return { ok: true, query: { area, preset, weights } };
+  /* AR-363: `explain` can come on the body or as `?explain=true`
+     (parsed at the route layer). Accept boolean here; coerce strings
+     defensively for callers passing `"true"`/`"false"`. */
+  let explain: boolean | undefined;
+  if (b.explain !== undefined) {
+    if (typeof b.explain === "boolean") {
+      explain = b.explain;
+    } else if (b.explain === "true") {
+      explain = true;
+    } else if (b.explain === "false") {
+      explain = false;
+    } else {
+      return { ok: false, error: "explain must be a boolean." };
+    }
+  }
+
+  return { ok: true, query: { area, preset, weights, explain } };
 }
 
 /** PURE: re-aggregate the engine's per-dimension scores with the effective
-    weights (preset defaults, optionally overridden). */
+    weights (preset defaults, optionally overridden). AR-363: preserves the
+    engine's `reasoning` and `confidence_reason` on each dimension (the
+    previous shape lossily stripped them). */
 export function applyWeights(
   base: ComputedScores,
   weights?: Record<string, number>,
@@ -122,7 +151,15 @@ export function applyWeights(
   const dims: ScoreDimension[] = base.dimensions.map((d) => {
     const key = dimensionKey(d.label);
     const weight = weights?.[key] ?? d.weight;
-    return { key, label: d.label, score: d.score, weight, confidence: d.confidence };
+    return {
+      key,
+      label: d.label,
+      score: d.score,
+      weight,
+      confidence: d.confidence,
+      reasoning: d.reasoning,
+      confidence_reason: d.confidence_reason,
+    };
   });
   const totalWeight = dims.reduce((s, d) => s + d.weight, 0) || 1;
   const score = Math.round(dims.reduce((s, d) => s + d.score * d.weight, 0) / totalWeight);
@@ -131,7 +168,9 @@ export function applyWeights(
 }
 
 /** Score one area. Returns null if the area cannot be geocoded (-> 404). Uses the
-    shared signals fetch (which serves deprivation from the store when enabled). */
+    shared signals fetch (which serves deprivation from the store when enabled).
+    AR-363: when `query.explain` is true, composes a summary + recommendations
+    + data_sources from real engine state (no client-side text synthesis). */
 export async function scoreArea(query: ScoreQuery): Promise<ScoreResult | null> {
   const fetched = await fetchAreaSources(query.area);
   if (!fetched) return null;
@@ -158,9 +197,9 @@ export async function scoreArea(query: ScoreQuery): Promise<ScoreResult | null> 
   );
   const agg = applyWeights(base, query.weights);
 
-  logger.info(`[scoring] /v1/score "${query.area}" preset=${query.preset} weights=${agg.weights_source} dep=${fetched.depFromStore ? "store" : "live"} property=${fetched.propertyFromStore ? "store" : "live"} crime=${fetched.crimeFromStore ? "store" : "live"} -> ${agg.score}`);
+  logger.info(`[scoring] /v1/score "${query.area}" preset=${query.preset} weights=${agg.weights_source} explain=${query.explain ?? false} dep=${fetched.depFromStore ? "store" : "live"} property=${fetched.propertyFromStore ? "store" : "live"} crime=${fetched.crimeFromStore ? "store" : "live"} -> ${agg.score}`);
 
-  return {
+  const result: ScoreResult = {
     area: query.area,
     preset: query.preset,
     score: agg.score,
@@ -170,4 +209,24 @@ export async function scoreArea(query: ScoreQuery): Promise<ScoreResult | null> 
     weights_source: agg.weights_source,
     engine_version: METHODOLOGY_VERSION,
   };
+
+  if (query.explain) {
+    const presence: SourcePresence = {
+      crime: crime !== null,
+      deprivation: deprivation !== null,
+      property: property !== null,
+      amenities: amenities !== null,
+      flood: flood !== null,
+      ofsted: ofsted !== null,
+    };
+    const country =
+      geo.country === "England" || geo.country === "Wales" || geo.country === "Scotland"
+        ? geo.country
+        : "Unknown";
+    result.summary = composeScoreSummary(agg.score, agg.confidence, base.area_type, agg.dimensions);
+    result.recommendations = composeRecommendations(agg.dimensions);
+    result.data_sources = computeDataSources(presence, country);
+  }
+
+  return result;
 }

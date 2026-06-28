@@ -38,7 +38,10 @@ const mockScore = vi.mocked(scoreArea);
 
 const SCORE_RESULT = {
   area: "M1 1AE", preset: "research", score: 62, area_type: "urban",
-  dimensions: [{ key: "safety_crime", label: "Safety & Crime", score: 70, weight: 20, confidence: 0.9 }],
+  dimensions: [{
+    key: "safety_crime", label: "Safety & Crime", score: 70, weight: 20, confidence: 0.9,
+    reasoning: "12 violent crimes per 1k residents", confidence_reason: "240 crimes across 12 months provides strong signal",
+  }],
   confidence: 0.8, weights_source: "preset", engine_version: "2.0.2",
 } as never;
 
@@ -193,6 +196,58 @@ describe("POST /v1/score — Levers methodology pin (AR-197)", () => {
     const res = await postScore({ area: "M1 1AE", preset: "research" });
     expect(res.statusCode).toBe(200);
     expect(res.headers["x-engine-version"]).toBe("2.0.2");
+  });
+});
+
+// ── v1-score-explain.test.ts (AR-363) ────────────────────────────────
+
+describe("POST /v1/score — explain mode (AR-363)", () => {
+  function inject(opts: { body?: unknown; url?: string }) {
+    return app.inject({
+      method: "POST",
+      url: opts.url ?? "/v1/score",
+      headers: { "content-type": "application/json", authorization: "Bearer oga_good" },
+      payload: JSON.stringify(opts.body ?? { area: "M1 1AE" }),
+    });
+  }
+
+  it("defaults to explain undefined when neither query nor body sets it", async () => {
+    const res = await inject({ body: { area: "M1 1AE" } });
+    expect(res.statusCode).toBe(200);
+    expect(mockScore).toHaveBeenCalledWith(expect.objectContaining({ explain: undefined }));
+  });
+
+  it("threads ?explain=true from the query string into ScoreQuery", async () => {
+    const res = await inject({ body: { area: "M1 1AE" }, url: "/v1/score?explain=true" });
+    expect(res.statusCode).toBe(200);
+    expect(mockScore).toHaveBeenCalledWith(expect.objectContaining({ explain: true }));
+  });
+
+  it("threads body.explain=true into ScoreQuery", async () => {
+    const res = await inject({ body: { area: "M1 1AE", explain: true } });
+    expect(res.statusCode).toBe(200);
+    expect(mockScore).toHaveBeenCalledWith(expect.objectContaining({ explain: true }));
+  });
+
+  it("400s when ?explain is not 'true' or 'false'", async () => {
+    const res = await inject({ body: { area: "M1 1AE" }, url: "/v1/score?explain=maybe" });
+    expect(res.statusCode).toBe(400);
+    expect(mockScore).not.toHaveBeenCalled();
+  });
+
+  it("400s when body.explain is not a boolean (or 'true'/'false' string)", async () => {
+    const res = await inject({ body: { area: "M1 1AE", explain: "maybe" } });
+    expect(res.statusCode).toBe(400);
+    expect(mockScore).not.toHaveBeenCalled();
+  });
+
+  it("query takes precedence over body.explain", async () => {
+    const res = await inject({
+      body: { area: "M1 1AE", explain: false },
+      url: "/v1/score?explain=true",
+    });
+    expect(res.statusCode).toBe(200);
+    expect(mockScore).toHaveBeenCalledWith(expect.objectContaining({ explain: true }));
   });
 });
 
