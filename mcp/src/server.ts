@@ -80,6 +80,18 @@ import {
   parseFindPeersArgs,
   executeFindPeers,
 } from "./tools/find-peers.js";
+import {
+  watchPortfolioToolDef,
+  watchPortfolioToolName,
+  parseWatchPortfolioArgs,
+  executeWatchPortfolio,
+} from "./tools/watch-portfolio.js";
+import {
+  getPortfolioChangesToolDef,
+  getPortfolioChangesToolName,
+  parseGetPortfolioChangesArgs,
+  executeGetPortfolioChanges,
+} from "./tools/get-portfolio-changes.js";
 
 const SERVER_VERSION = "1.0.0";
 
@@ -153,9 +165,10 @@ async function main(): Promise<void> {
     },
   );
 
-  // 8 tools: score_postcode, compare_postcodes, get_area_signals,
-  // get_signals_by_category, find_areas, find_peers (network);
-  // methodology_for, engine_version (static lookup, no network).
+  // 10 tools: score_postcode, compare_postcodes, get_area_signals,
+  // get_signals_by_category, find_areas, find_peers, watch_portfolio,
+  // get_portfolio_changes (network); methodology_for, engine_version
+  // (static lookup, no network).
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: [
       scorePostcodeToolDef,
@@ -164,6 +177,8 @@ async function main(): Promise<void> {
       getSignalsByCategoryToolDef,
       findAreasToolDef,
       findPeersToolDef,
+      watchPortfolioToolDef,
+      getPortfolioChangesToolDef,
       methodologyForToolDef,
       engineVersionToolDef,
     ],
@@ -196,6 +211,14 @@ async function main(): Promise<void> {
     if (name === findPeersToolName) {
       const parsed = parseFindPeersArgs(args);
       return executeFindPeers(client, parsed);
+    }
+    if (name === watchPortfolioToolName) {
+      const parsed = parseWatchPortfolioArgs(args);
+      return executeWatchPortfolio(client, parsed);
+    }
+    if (name === getPortfolioChangesToolName) {
+      const parsed = parseGetPortfolioChangesArgs(args);
+      return executeGetPortfolioChanges(client, parsed);
     }
     if (name === methodologyForToolName) {
       const parsed = parseMethodologyForArgs(args);

@@ -64,6 +64,57 @@ export interface OogaQueryResponse {
   meta: { generated_at: string };
 }
 
+/** AR-368: Monitor types — matches @onegoodarea/contracts Portfolio + PortfolioArea. */
+export interface OogaPortfolio {
+  id: string;
+  name: string;
+  area_count?: number;
+  created_at?: string;
+}
+
+export interface OogaPortfolioArea {
+  id: string;
+  area: string;
+  label: string | null;
+  created_at?: string;
+}
+
+/** AR-368: response from POST /v1/portfolios/:id/areas (the route returns
+    the updated portfolio detail with all areas). */
+export interface OogaPortfolioDetail extends OogaPortfolio {
+  areas: OogaPortfolioArea[];
+}
+
+/** AR-368: a material signal change for one tracked area between two
+    time-series periods. Mirrors @onegoodarea/contracts SignalChange. */
+export interface OogaSignalChange {
+  signal_key: string;
+  label: string | null;
+  area: string;
+  geo_code: string;
+  period_from: string;
+  period_to: string;
+  value_from: number | null;
+  value_to: number | null;
+  delta: number | null;
+  pct_change: number | null;
+  direction: "up" | "down" | "flat";
+  material: boolean;
+}
+
+/** AR-368: the response from POST /v1/portfolios/:id/changes — a change
+    detection report for one portfolio between two periods. */
+export interface OogaChangeReport {
+  portfolio_id: string;
+  baseline: "previous" | "first";
+  threshold_pct: number;
+  min_transactions: number;
+  areas_checked: number;
+  material_count: number;
+  changes: OogaSignalChange[];
+  generated_at: string;
+}
+
 /** AR-367: typed peers response from POST /v1/peers. */
 export interface OogaPeersResponse {
   target: {
@@ -298,6 +349,47 @@ export class OogaApiClient {
     const body: { target: { area: string }; k?: number } = { target: { area } };
     if (k !== undefined) body.k = k;
     return this.postIntelligence("/v1/peers", body);
+  }
+
+  /**
+   * POST /v1/portfolios — create a new Monitor portfolio. AR-368.
+   */
+  async createPortfolio(name: string): Promise<OogaPortfolio> {
+    return this.postIntelligence<OogaPortfolio>("/v1/portfolios", { name });
+  }
+
+  /**
+   * POST /v1/portfolios/:id/areas — add tracked areas to a portfolio. Returns
+   * the updated portfolio detail with all areas. AR-368.
+   */
+  async addPortfolioAreas(
+    portfolioId: string,
+    areas: Array<{ area: string; label?: string | null }>,
+  ): Promise<OogaPortfolioDetail> {
+    return this.postIntelligence<OogaPortfolioDetail>(
+      `/v1/portfolios/${encodeURIComponent(portfolioId)}/areas`,
+      { areas },
+    );
+  }
+
+  /**
+   * POST /v1/portfolios/:id/changes — detect material signal changes between
+   * two time-series periods. AR-368.
+   */
+  async getPortfolioChanges(
+    portfolioId: string,
+    opts: { baseline?: "previous" | "first"; threshold_pct?: number; min_transactions?: number } = {},
+  ): Promise<OogaChangeReport> {
+    const body: Record<string, unknown> = {};
+    if (opts.baseline !== undefined) body.baseline = opts.baseline;
+    if (opts.threshold_pct !== undefined) body.threshold_pct = opts.threshold_pct;
+    if (opts.min_transactions !== undefined) body.min_transactions = opts.min_transactions;
+    /* Default emit:false — the MCP shouldn't fire webhooks on a probe call. */
+    body.emit = false;
+    return this.postIntelligence<OogaChangeReport>(
+      `/v1/portfolios/${encodeURIComponent(portfolioId)}/changes`,
+      body,
+    );
   }
 
   /** Shared POST handler for the Intelligence endpoints. */
