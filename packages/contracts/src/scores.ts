@@ -9,7 +9,12 @@
 import { z } from "zod";
 import { AreaTypeSchema } from "./signals";
 
-/** One weighted component of a composite score. */
+/** One weighted component of a composite score.
+
+   AR-363: `reasoning` and `confidence_reason` are now first-class fields,
+   not stripped between the engine and the response. Both come straight
+   from the deterministic engine (`ComputedDimension`) and describe the
+   actual computation — they are not synthesised or LLM-generated. */
 export const ScoreDimensionSchema = z.object({
   /** Stable slug for the dimension, e.g. "safety_crime" (override target for custom weights). */
   key: z.string(),
@@ -21,10 +26,22 @@ export const ScoreDimensionSchema = z.object({
   weight: z.number(),
   /** 0-1 data-quality confidence for this dimension. */
   confidence: z.number().min(0).max(1),
+  /** Engine-produced prose grounded in the real signal values used.
+      Not LLM, not invented. See scoring-engine/v2.ts. */
+  reasoning: z.string(),
+  /** Engine-produced explanation of WHY the confidence is what it is
+      (sample size, data freshness, fallback path). */
+  confidence_reason: z.string(),
 });
 export type ScoreDimension = z.infer<typeof ScoreDimensionSchema>;
 
-/** Request body for POST /v1/score. */
+/** Request body for POST /v1/score.
+
+   AR-363: `explain` is an optional flag (also accepted as `?explain=true`
+   query). When true, the response includes `summary`, `recommendations[]`,
+   and `data_sources[]` — all server-side composed from the engine's
+   real per-dimension reasoning + confidence reasons. There is NO
+   client-side text synthesis. */
 export const ScoreRequestSchema = z.object({
   /** UK postcode or place name to score. */
   area: z.string().min(1),
@@ -33,6 +50,10 @@ export const ScoreRequestSchema = z.object({
   /** Custom weight overrides for the preset's dimensions. Must be a subset of the
       preset's valid dimension keys; each value must be a positive number. */
   weights: z.record(z.string(), z.number()).optional(),
+  /** AR-363: when true, response includes brief-shape composed fields
+      (summary, recommendations, data_sources). Defaults to false for
+      response-shape backward compatibility. */
+  explain: z.boolean().optional(),
 }).strict();
 export type ScoreRequest = z.infer<typeof ScoreRequestSchema>;
 
@@ -51,5 +72,11 @@ export const ScoreResultSchema = z.object({
   /** Whether the overall used the preset's default weights or caller overrides. */
   weights_source: z.enum(["preset", "custom"]),
   engine_version: z.string(),
+  /** AR-363 explain fields. Only populated when `explain=true` was
+      passed; all three are server-side composed from real engine state
+      (no client/LLM synthesis). */
+  summary: z.string().optional(),
+  recommendations: z.array(z.string()).optional(),
+  data_sources: z.array(z.string()).optional(),
 });
 export type ScoreResult = z.infer<typeof ScoreResultSchema>;

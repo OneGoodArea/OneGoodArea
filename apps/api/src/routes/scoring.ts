@@ -86,7 +86,7 @@ export function registerScoringRoutes(app: FastifyInstance): void {
         // prefixes aren't represented in the bundle. v2's computeScores
         // handles null sources by 0-confidencing the affected dimension;
         // applyWeights composes the partial score. v2's math is unchanged.
-        const rawQuery = (request.query ?? {}) as { bundle?: unknown };
+        const rawQuery = (request.query ?? {}) as { bundle?: unknown; explain?: unknown };
         const rawBody = (request.body ?? {}) as { bundle?: unknown };
         const bundleId =
           typeof rawQuery.bundle === "string" ? rawQuery.bundle :
@@ -95,6 +95,20 @@ export function registerScoringRoutes(app: FastifyInstance): void {
         if (!resolved.ok) return reply;
         if (resolved.allowed) {
           parsed.query.bundle_allowed_keys = resolved.allowed;
+        }
+
+        // AR-363: `?explain=true` is the canonical wire format. Body-level
+        // `explain: true` is already parsed by parseScoreBody; query takes
+        // precedence (a query toggle is more discoverable for MCP-style
+        // callers and matches the bundle precedent).
+        if (rawQuery.explain !== undefined) {
+          if (rawQuery.explain === "true" || rawQuery.explain === true) {
+            parsed.query.explain = true;
+          } else if (rawQuery.explain === "false" || rawQuery.explain === false) {
+            parsed.query.explain = false;
+          } else {
+            return reply.code(400).send({ error: "explain query param must be 'true' or 'false'." });
+          }
         }
 
         const result = await scoreArea(parsed.query);
