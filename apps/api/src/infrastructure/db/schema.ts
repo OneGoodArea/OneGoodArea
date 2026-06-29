@@ -884,6 +884,44 @@ export const MIGRATIONS: Migration[] = [
          ON query_planner_logs (event_ts DESC)`,
     ],
   },
+  // AR-377 / plan 029: brief-composer training pairs. Captures
+  // (request → server-composed brief) on every /v1/score?explain=true.
+  //
+  // Logged only when the explain branch fires — the bare score path
+  // has no brief to capture. Per-key training_optout honored on insert.
+  //
+  // Row size: full ScoreResultSchema response is 5-15 KB JSONB. Postgres
+  // handles compression automatically via TOAST. Indexes mirror the
+  // query_planner_logs pattern (org_id+event_ts for org rollups, client_app
+  // for filtering, event_ts for retention sweeps).
+  {
+    name: "brief_composer_logs",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS brief_composer_logs (
+        id TEXT PRIMARY KEY,
+        org_id TEXT,
+        user_id TEXT NOT NULL,
+        event_ts TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        area TEXT NOT NULL,
+        preset TEXT,
+        weights JSONB,
+        request JSONB NOT NULL,
+        response JSONB NOT NULL,
+        response_ok BOOLEAN NOT NULL,
+        latency_ms INTEGER NOT NULL,
+        source TEXT,
+        client_app TEXT
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_brief_composer_logs_org_ts
+         ON brief_composer_logs (org_id, event_ts DESC)`,
+      `CREATE INDEX IF NOT EXISTS idx_brief_composer_logs_client_app
+         ON brief_composer_logs (client_app)`,
+      `CREATE INDEX IF NOT EXISTS idx_brief_composer_logs_event_ts
+         ON brief_composer_logs (event_ts DESC)`,
+      `CREATE INDEX IF NOT EXISTS idx_brief_composer_logs_preset
+         ON brief_composer_logs (preset)`,
+    ],
+  },
   // AR-375 / plan 029: MCP adoption visibility. The view answers
   // "which orgs are using MCP, with which tools, from which client,
   // how much, when last seen?" without exposing chat content.

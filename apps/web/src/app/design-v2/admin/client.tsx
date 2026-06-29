@@ -138,6 +138,9 @@ type TrainingCorpus = {
   planner_pairs_30d: number;
   planner_pairs_total: number;
   planner_last_seen: string | null;
+  brief_pairs_30d: number;
+  brief_pairs_total: number;
+  brief_last_seen: string | null;
   keys_opted_out: number;
   keys_total: number;
 };
@@ -465,7 +468,7 @@ function UsagePanel({
 function TrainingCorpusTile({ corpus }: { corpus: TrainingCorpus | null }) {
   if (!corpus) {
     return (
-      <AppCard title="Training corpus" note="Planner pairs · /v1/query NL captures">
+      <AppCard title="Training corpus" note="Planner + brief composer captures">
         <EmptyNote>Training corpus stats unavailable.</EmptyNote>
       </AppCard>
     );
@@ -475,7 +478,8 @@ function TrainingCorpusTile({ corpus }: { corpus: TrainingCorpus | null }) {
       ? Math.round((corpus.keys_opted_out / corpus.keys_total) * 100)
       : 0;
   return (
-    <AppCard title="Training corpus" note="Planner pairs · /v1/query NL captures">
+    <AppCard title="Training corpus" note="Planner + brief composer captures">
+      <div className="oga-admin__subhead">Planner pairs · /v1/query NL captures</div>
       <div className="oga-admin__kpi">
         <StatCell
           label="Pairs (30d)"
@@ -491,6 +495,28 @@ function TrainingCorpusTile({ corpus }: { corpus: TrainingCorpus | null }) {
               : "—"
           }
         />
+      </div>
+
+      <div className="oga-admin__subhead">Brief composer pairs · /v1/score?explain=true</div>
+      <div className="oga-admin__kpi">
+        <StatCell
+          label="Pairs (30d)"
+          value={corpus.brief_pairs_30d}
+          accent="strong"
+        />
+        <StatCell label="Pairs total" value={corpus.brief_pairs_total} />
+        <StatCell
+          label="Last capture"
+          value={
+            corpus.brief_last_seen
+              ? new Date(corpus.brief_last_seen).toLocaleDateString()
+              : "—"
+          }
+        />
+      </div>
+
+      <div className="oga-admin__subhead">Opt-out coverage</div>
+      <div className="oga-admin__kpi">
         <StatCell
           label="Keys opted out"
           value={`${corpus.keys_opted_out} / ${corpus.keys_total} (${optoutPct}%)`}

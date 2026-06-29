@@ -47,19 +47,25 @@ We do NOT log the response body — only the emitted plan. Programmatic `/v1/que
 
 **Storage:** dedicated `query_planner_logs` table, separate from operational `activity_events`. Superuser-only access at the SQL layer; `/admin` UI shows aggregate counts only.
 
-### Brief-composer training pairs (AR-377 — not yet shipped)
+### Brief-composer training pairs (AR-377 — ACTIVE)
 
-When you call `/v1/score?explain=true` (`score_postcode` via MCP), we'll store:
+When you call `/v1/score?explain=true` (`score_postcode` via MCP), we store:
 
-- The full request (area, preset, weights)
-- The full server-composed brief (score, dimensions with reasoning, summary, recommendations, data sources)
-- Latency + success/failure flag
+- The full request body (area, preset, weights, bundle, preset_id)
+- The full server-composed brief (score, dimensions with reasoning + confidence, summary, recommendations, data sources)
+- Latency in milliseconds
+- Success/failure flag
+- `source` (always `"mcp"` for MCP calls) and `client_app`
+
+We do NOT log calls to the bare `/v1/score` path (without `explain=true`). Those produce no composer prose, so there's nothing to learn.
 
 **Purpose:** train a smaller composer model for richer area briefs without depending on third-party LLM infrastructure.
 
+**Storage:** dedicated `brief_composer_logs` table, separate from operational `activity_events` and the planner corpus. Superuser-only access at the SQL layer; `/admin` UI shows aggregate counts only.
+
 ### Retention
 
-Both training corpora roll off automatically after **365 days** (configurable via `TRAINING_DATA_RETENTION_DAYS`). Rows older than the cutoff are purged by a nightly job.
+Both training corpora roll off automatically after **365 days** (configurable via `TRAINING_DATA_RETENTION_DAYS`; set to `0` to keep indefinitely). Rows older than the cutoff are purged by a nightly cron at `/cron/training-retention`, which deletes from both `query_planner_logs` and `brief_composer_logs` in one pass. The cron returns deletion counts and accepts `?dry_run=true` for a count-only preview.
 
 ### Who can read
 
@@ -85,3 +91,4 @@ We'll surface a UI toggle in `/dashboard/keys` once customers exist. Until then 
 
 - **2026-06-29 (AR-375):** Initial version. Activity logging, source + client_app classification, opt-out flag landed. Training capture (AR-376 / AR-377) not yet active.
 - **2026-06-29 (AR-376):** Planner training pairs ACTIVE on `/v1/query` (NL `question` field path only). Stored in dedicated `query_planner_logs` table. Per-key `training_optout` honored on every insert. AR-377 (brief composer) still pending.
+- **2026-06-29 (AR-377):** Brief-composer training pairs ACTIVE on `/v1/score?explain=true`. Stored in dedicated `brief_composer_logs` table. Per-key `training_optout` honored on every insert. Nightly retention cron at `/cron/training-retention` purges both training tables on a 365-day default rolling window. Plan/029 closed.

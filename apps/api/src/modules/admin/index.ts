@@ -628,23 +628,41 @@ export interface TrainingCorpusStats {
   planner_pairs_30d: number;
   planner_pairs_total: number;
   planner_last_seen: string | null;
+  brief_pairs_30d: number;
+  brief_pairs_total: number;
+  brief_last_seen: string | null;
   keys_opted_out: number;
   keys_total: number;
 }
 
 export async function getTrainingCorpusStats(): Promise<TrainingCorpusStats> {
-  const [pairs30dRows, pairsTotalRows, lastSeenRows, optoutRows, keysTotalRows] = await Promise.all([
+  const [
+    plannerPairs30dRows,
+    plannerPairsTotalRows,
+    plannerLastSeenRows,
+    briefPairs30dRows,
+    briefPairsTotalRows,
+    briefLastSeenRows,
+    optoutRows,
+    keysTotalRows,
+  ] = await Promise.all([
     sql`SELECT COUNT(*)::INT AS count FROM query_planner_logs WHERE event_ts >= NOW() - INTERVAL '30 days'`,
     sql`SELECT COUNT(*)::INT AS count FROM query_planner_logs`,
     sql`SELECT MAX(event_ts) AS last_seen FROM query_planner_logs`,
+    sql`SELECT COUNT(*)::INT AS count FROM brief_composer_logs WHERE event_ts >= NOW() - INTERVAL '30 days'`,
+    sql`SELECT COUNT(*)::INT AS count FROM brief_composer_logs`,
+    sql`SELECT MAX(event_ts) AS last_seen FROM brief_composer_logs`,
     sql`SELECT COUNT(*)::INT AS count FROM api_keys WHERE training_optout = TRUE AND revoked = FALSE`,
     sql`SELECT COUNT(*)::INT AS count FROM api_keys WHERE revoked = FALSE`,
   ]);
 
   return {
-    planner_pairs_30d: row<CountRow>(pairs30dRows[0]).count,
-    planner_pairs_total: row<CountRow>(pairsTotalRows[0]).count,
-    planner_last_seen: row<{ last_seen: string | null }>(lastSeenRows[0]).last_seen,
+    planner_pairs_30d: row<CountRow>(plannerPairs30dRows[0]).count,
+    planner_pairs_total: row<CountRow>(plannerPairsTotalRows[0]).count,
+    planner_last_seen: row<{ last_seen: string | null }>(plannerLastSeenRows[0]).last_seen,
+    brief_pairs_30d: row<CountRow>(briefPairs30dRows[0]).count,
+    brief_pairs_total: row<CountRow>(briefPairsTotalRows[0]).count,
+    brief_last_seen: row<{ last_seen: string | null }>(briefLastSeenRows[0]).last_seen,
     keys_opted_out: row<CountRow>(optoutRows[0]).count,
     keys_total: row<CountRow>(keysTotalRows[0]).count,
   };

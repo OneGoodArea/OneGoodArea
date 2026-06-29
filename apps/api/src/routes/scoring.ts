@@ -9,6 +9,7 @@ import { getConfig } from "../infrastructure/config";
 import { scoreArea, parseScoreBody } from "../modules/scoring";
 import { getPreset } from "../modules/orgs/presets";
 import { trackEvent } from "../modules/tracking/activity";
+import { insertBriefComposerLog } from "../modules/training/brief-composer-logs";
 /** scoring route handlers — extracted from app.ts per AR-286. */
 export function registerScoringRoutes(app: FastifyInstance): void {
     app.post("/v1/score",
@@ -111,7 +112,13 @@ export function registerScoringRoutes(app: FastifyInstance): void {
           }
         }
 
+        /* AR-377: latency captured around scoreArea so we have a real
+           wall-clock number for the brief-composer training row. Insert
+           happens only on the explain branch — the bare score response
+           has no composer prose to learn from. */
+        const t0 = Date.now();
         const result = await scoreArea(parsed.query);
+        const latencyMs = Date.now() - t0;
         if (!result) {
           return reply.code(404).send({
             error: `Could not resolve area "${parsed.query.area}". Provide a UK postcode or place name.`,
@@ -126,6 +133,27 @@ export function registerScoringRoutes(app: FastifyInstance): void {
           bundle: bundleId ?? null,
           score: result.score,
         }, ctx.orgId);
+
+        /* AR-377: capture (request → composed brief) ONLY on explain=true
+           paths. The plain /v1/score response is reproducible from engine
+           state — no training value. */
+        if (parsed.query.explain === true) {
+          insertBriefComposerLog(
+            {
+              userId: ctx.userId,
+              orgId: ctx.orgId,
+              area: parsed.query.area,
+              preset: parsed.query.preset ?? null,
+              weights: parsed.query.weights ?? null,
+              request: parsed.query,
+              response: result,
+              responseOk: true,
+              latencyMs,
+            },
+            ctx.trainingOptout,
+          );
+        }
+
         reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(ctx.orgId, ctx.userId));
         if (bundleId) reply.header("X-Bundle-Applied", bundleId);
         return reply.code(200).send(result);
