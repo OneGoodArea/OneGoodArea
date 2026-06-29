@@ -28,8 +28,13 @@ export async function runMigrations(
   return applied;
 }
 
-/* CLI entry — runs against the real DATABASE_URL when invoked directly. */
-const invokedDirectly = Boolean(process.argv[1]?.endsWith("migrate.ts"));
+/* CLI entry — runs against the real DATABASE_URL when invoked directly.
+   Matches both the local tsx invocation (path ends migrate.ts) AND the
+   esbuild-bundled CJS invocation (path ends migrate.cjs) used by the
+   Containerfile's pre-server boot step. AR-380. */
+const invokedDirectly = Boolean(
+  process.argv[1]?.endsWith("migrate.ts") || process.argv[1]?.endsWith("migrate.cjs"),
+);
 if (invokedDirectly) {
   runMigrations()
     .then((applied) => {

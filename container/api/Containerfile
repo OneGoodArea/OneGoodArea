@@ -72,9 +72,19 @@ COPY packages/contracts/package.json ./packages/contracts/
 # but native modules (@neondatabase/serverless WASM) are loaded at runtime.
 RUN npm install --omit=dev --no-audit --no-fund
 
-# Copy the esbuild bundle and static assets (swagger-ui).
+# Copy the esbuild bundles and static assets (swagger-ui).
 COPY --from=build /app/apps/api/dist/server.cjs ./apps/api/dist/server.cjs
+COPY --from=build /app/apps/api/dist/migrate.cjs ./apps/api/dist/migrate.cjs
 COPY --from=build /app/apps/api/dist/static ./apps/api/dist/static
 
 EXPOSE 8080
-CMD ["node", "apps/api/dist/server.cjs"]
+
+# AR-380: apply DDL on every container start before booting the server.
+# Migrations are idempotent (CREATE TABLE IF NOT EXISTS, ADD COLUMN
+# IF NOT EXISTS, DROP TABLE IF EXISTS, CREATE OR REPLACE VIEW), so
+# running them on every restart is safe + cheap (<1s for the full
+# registry locally). If migrate exits non-zero, the && short-circuits
+# and the server never starts — Render flags the deploy as failed
+# instead of running new code against stale schema. Reads DATABASE_URL
+# from the runtime env.
+CMD ["sh", "-c", "node apps/api/dist/migrate.cjs && node apps/api/dist/server.cjs"]
