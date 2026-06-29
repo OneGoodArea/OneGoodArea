@@ -215,14 +215,14 @@ Cases 2-4 catch direct API-key calls from MCP-aware tools that don't go through 
 ## Step status
 
 **PR1 (AR-375):**
-- [ ] Step 1 — request context hook (IN PROGRESS — code being written, Pedro to review before commit)
-- [ ] Step 2 — User-Agent classifier
-- [ ] Step 3 — `trackEvent` reads from ALS
-- [ ] Step 4 — `api_keys.training_optout` migration
-- [ ] Step 5 — DB smoke
-- [ ] Step 6 — `mcp_adoption` view migration
-- [ ] Step 7 — /admin tile (aggregate counts only)
-- [ ] Step 8 — `docs/DATA_POLICY.md` skeleton
+- [x] Step 1 — request context hook
+- [x] Step 2 — User-Agent classifier
+- [x] Step 3 — `trackEvent` reads from ALS
+- [x] Step 4 — `api_keys.training_optout` migration
+- [ ] Step 5 — DB smoke (post-merge: Render auto-deploys apps/api, then Pedro triggers an MCP call from Claude Code and inspects `mcp_adoption`)
+- [x] Step 6 — `mcp_adoption` view migration
+- [x] Step 7 — /admin tile (aggregate counts only)
+- [x] Step 8 — `docs/DATA_POLICY.md` skeleton
 
 **PR2 (AR-376):**
 - [ ] Step 1 — `query_planner_logs` migration
