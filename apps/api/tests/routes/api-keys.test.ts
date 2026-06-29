@@ -6,13 +6,14 @@ vi.mock("@/modules/api-keys", () => ({
   createApiKey: vi.fn(),
   listApiKeys: vi.fn(),
   revokeApiKey: vi.fn(),
+  setApiKeyTrainingOptout: vi.fn(),
 }));
 vi.mock("@/modules/usage", () => ({ hasApiAccess: vi.fn() }));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
 
 import { buildApp } from "@/app";
 import { verifySessionToken } from "@/modules/auth/session-token";
-import { createApiKey, listApiKeys, revokeApiKey } from "@/modules/api-keys";
+import { createApiKey, listApiKeys, revokeApiKey, setApiKeyTrainingOptout } from "@/modules/api-keys";
 import { hasApiAccess } from "@/modules/usage";
 
 const app = await buildApp();
@@ -21,6 +22,7 @@ const mockVerify = vi.mocked(verifySessionToken);
 const mockCreate = vi.mocked(createApiKey);
 const mockList = vi.mocked(listApiKeys);
 const mockRevoke = vi.mocked(revokeApiKey);
+const mockSetOptout = vi.mocked(setApiKeyTrainingOptout);
 const mockApiAccess = vi.mocked(hasApiAccess);
 
 const AUTH = { authorization: "Bearer session.jwt", "content-type": "application/json" };
@@ -90,5 +92,79 @@ describe("DELETE /keys/:id", () => {
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ success: true });
     expect(mockRevoke).toHaveBeenCalledWith("user_1", "key_1");
+  });
+});
+
+/* AR-385: per-key training-data opt-out toggle. Same auth shape as
+   DELETE — session-only, owner-scoped (non-owner attempts surface as
+   404, not 403, to avoid leaking key-ID existence between users). */
+describe("PATCH /keys/:id", () => {
+  it("401s without a session token", async () => {
+    const res = await app.inject({
+      method: "PATCH",
+      url: "/keys/key_1",
+      headers: { "content-type": "application/json" },
+      payload: JSON.stringify({ training_optout: true }),
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("400s when the body is missing training_optout", async () => {
+    const res = await app.inject({
+      method: "PATCH",
+      url: "/keys/key_1",
+      headers: AUTH,
+      payload: "{}",
+    });
+    expect(res.statusCode).toBe(400);
+    expect(mockSetOptout).not.toHaveBeenCalled();
+  });
+
+  it("400s when training_optout is not a boolean", async () => {
+    const res = await app.inject({
+      method: "PATCH",
+      url: "/keys/key_1",
+      headers: AUTH,
+      payload: JSON.stringify({ training_optout: "yes" }),
+    });
+    expect(res.statusCode).toBe(400);
+    expect(mockSetOptout).not.toHaveBeenCalled();
+  });
+
+  it("404s when the key is not the caller's", async () => {
+    mockSetOptout.mockResolvedValue(false);
+    const res = await app.inject({
+      method: "PATCH",
+      url: "/keys/key_x",
+      headers: AUTH,
+      payload: JSON.stringify({ training_optout: true }),
+    });
+    expect(res.statusCode).toBe(404);
+  });
+
+  it("toggles training_optout TRUE for the caller's key", async () => {
+    mockSetOptout.mockResolvedValue(true);
+    const res = await app.inject({
+      method: "PATCH",
+      url: "/keys/key_1",
+      headers: AUTH,
+      payload: JSON.stringify({ training_optout: true }),
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ id: "key_1", training_optout: true });
+    expect(mockSetOptout).toHaveBeenCalledWith("user_1", "key_1", true);
+  });
+
+  it("toggles training_optout FALSE for the caller's key (opt back IN)", async () => {
+    mockSetOptout.mockResolvedValue(true);
+    const res = await app.inject({
+      method: "PATCH",
+      url: "/keys/key_1",
+      headers: AUTH,
+      payload: JSON.stringify({ training_optout: false }),
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ id: "key_1", training_optout: false });
+    expect(mockSetOptout).toHaveBeenCalledWith("user_1", "key_1", false);
   });
 });

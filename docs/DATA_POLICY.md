@@ -2,7 +2,7 @@
 
 What OneGoodArea stores when you call the API, for how long, who can read it, and how to opt out.
 
-> Living document. Current as of 2026-06-29 (AR-375). Each new training-data capture in the same plan (AR-376 / AR-377) appends a section.
+> Living document. Current as of 2026-06-30 (AR-385). This page is rendered from `docs/DATA_POLICY.md` in the OneGoodArea repository — what you read here is what's in the source.
 
 ---
 
@@ -75,7 +75,7 @@ Raw training tables are queryable only by superusers via direct SQL access. The 
 
 Each API key has a `training_optout` flag, default `FALSE`. When `TRUE`, requests made with that key are NOT inserted into either training table. Adoption tracking via `activity_events` continues — opt-out is for training-corpus inclusion, not for operational logging.
 
-We'll surface a UI toggle in `/dashboard/keys` once customers exist. Until then the flag is settable via direct SQL (we'll handle requests via support).
+**To toggle:** sign in, go to `/api-usage`, click the "Training" switch next to any of your keys. Takes effect on the next request from any client (Claude Desktop, Cursor, Claude Code, direct API) using that key. No support email needed.
 
 ---
 
@@ -92,3 +92,4 @@ We'll surface a UI toggle in `/dashboard/keys` once customers exist. Until then 
 - **2026-06-29 (AR-375):** Initial version. Activity logging, source + client_app classification, opt-out flag landed. Training capture (AR-376 / AR-377) not yet active.
 - **2026-06-29 (AR-376):** Planner training pairs ACTIVE on `/v1/query` (NL `question` field path only). Stored in dedicated `query_planner_logs` table. Per-key `training_optout` honored on every insert. AR-377 (brief composer) still pending.
 - **2026-06-29 (AR-377):** Brief-composer training pairs ACTIVE on `/v1/score?explain=true`. Stored in dedicated `brief_composer_logs` table. Per-key `training_optout` honored on every insert. Nightly retention cron at `/cron/training-retention` purges both training tables on a 365-day default rolling window. Plan/029 closed.
+- **2026-06-30 (AR-385):** Customer surface live. Per-key `training_optout` toggle in `/api-usage`. Disclosure at API-key creation. This policy page now public at `/legal/data-policy` (rendered from source). MCP server (`@oga-mcp/server`) logs current capture state on every boot.

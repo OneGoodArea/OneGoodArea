@@ -429,6 +429,11 @@ export function registerMeRoutes(app: FastifyInstance): void {
       const userId = result.userId;
       const orgIdFromKey = result.orgId;
       const allowedIpCidrs = result.allowedIpCidrs ?? [];
+      /* AR-385: surface training_optout on /v1/me so the MCP server can
+         log the customer's current capture state on every boot. Default
+         FALSE (participate) when the field isn't present on the validated
+         key — matches the runtime contract elsewhere. */
+      const trainingOptout = result.trainingOptout ?? false;
 
       // Rate-limit /me at the same level as /v1/report (MCP calls it once at
       // startup, but a misbehaving client could spam it).
@@ -518,7 +523,9 @@ export function registerMeRoutes(app: FastifyInstance): void {
         mcp_calls_this_month: mcpUsed,
         // Levers AR-200: org branding + key allowlist (Enterprise polish).
         org: orgInfo,
-        key: { allowed_ip_cidrs: allowedIpCidrs },
+        // AR-385: training_optout exposed so MCP server can show capture
+        // state on boot. Customer toggles in /api-usage; effective on next call.
+        key: { allowed_ip_cidrs: allowedIpCidrs, training_optout: trainingOptout },
       };
     });
 

@@ -3,13 +3,13 @@ import { authenticateSession } from "../shared/auth-session";
 import { logger } from "../modules/tracking/structured-logger";
 import { sql } from "../infrastructure/db/client";
 import { rows, row, type ApiKeyRow, type ActivityEventRow } from "../infrastructure/db/types";
-import { createApiKey, listApiKeys, revokeApiKey } from "../modules/api-keys";
+import { createApiKey, listApiKeys, revokeApiKey, setApiKeyTrainingOptout } from "../modules/api-keys";
 import { hasApiAccess, getUserPlan } from "../modules/usage";
 import { PLANS, type PlanId } from "../modules/billing/plans";
 
 interface CountRow { count: number; }
 interface DayCountRow { day: string; count: number; }
-type ApiKeyPreview = Pick<ApiKeyRow, "id" | "name" | "created_at" | "last_used_at"> & { key_preview: string };
+type ApiKeyPreview = Pick<ApiKeyRow, "id" | "name" | "created_at" | "last_used_at" | "training_optout"> & { key_preview: string };
 
 export function registerApiKeysRoutes(app: FastifyInstance): void {
   // API-key usage dashboard: request totals, a 30-day daily series, and the
@@ -123,7 +123,8 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
             ak.key_prefix as key_preview,
             ak.name,
             ak.created_at,
-            ak.last_used_at
+            ak.last_used_at,
+            ak.training_optout
           FROM api_keys ak
           WHERE ak.user_id = ${userId} AND ak.revoked = FALSE
           ORDER BY ak.created_at DESC
@@ -164,6 +165,7 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
           name: k.name,
           created_at: k.created_at,
           last_used_at: k.last_used_at,
+          training_optout: k.training_optout,
         })),
       });
     } catch (error) {
@@ -219,6 +221,38 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
       return reply.send({ success: true });
     } catch (error) {
       logger.error("DELETE /keys/:id failed:", error);
+      return reply.code(500).send({ error: "Something went wrong. Please try again." });
+    }
+  });
+
+  /* AR-385: customer-facing toggle for the per-key training-data
+     opt-out. Session-authed; owner-scoped (the repo's user_id predicate
+     means a customer can only flip flags on keys they own — non-owner
+     attempts surface as 404, not 403, to avoid information leak about
+     which key IDs exist).
+
+     Body shape: { training_optout: boolean }. Only one field for now;
+     if/when more per-key settings exist we can broaden the validation. */
+  app.patch<{ Params: { id: string }; Body: unknown }>("/keys/:id", async (request, reply) => {
+    try {
+      const userId = await authenticateSession(request, reply);
+      if (!userId) return reply; // 401 already sent
+
+      const body = (request.body ?? {}) as Record<string, unknown>;
+      const optout = body.training_optout;
+      if (typeof optout !== "boolean") {
+        return reply.code(400).send({
+          error: "Body must include `training_optout` as a boolean.",
+        });
+      }
+
+      const updated = await setApiKeyTrainingOptout(userId, request.params.id, optout);
+      if (!updated) {
+        return reply.code(404).send({ error: "Key not found" });
+      }
+      return reply.send({ id: request.params.id, training_optout: optout });
+    } catch (error) {
+      logger.error("PATCH /keys/:id failed:", error);
       return reply.code(500).send({ error: "Something went wrong. Please try again." });
     }
   });

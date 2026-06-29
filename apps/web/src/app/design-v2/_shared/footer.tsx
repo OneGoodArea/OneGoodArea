@@ -52,8 +52,12 @@ const COMPANY: Array<{ label: string; href: string }> = [
 ];
 
 const LEGAL: Array<{ label: string; href: string }> = [
-  { label: "Terms",   href: "/terms" },
-  { label: "Privacy", href: "/privacy" },
+  { label: "Terms",       href: "/terms" },
+  { label: "Privacy",     href: "/privacy" },
+  // AR-385: separate from Privacy. Privacy Policy is the lawyer doc (pending);
+  // Data Policy is the practical "what we store, how to opt out" reference,
+  // sourced from docs/DATA_POLICY.md.
+  { label: "Data Policy", href: "/legal/data-policy" },
 ];
 
 interface SocialLink {

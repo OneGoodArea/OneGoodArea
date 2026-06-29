@@ -24,6 +24,10 @@ type ApiKeyInfo = {
   name: string;
   created_at: string;
   last_used_at: string | null;
+  /* AR-385: per-key training-data opt-out flag. TRUE = the customer
+     has opted out of training-data capture for this key. FALSE =
+     default, queries may be used to improve OneGoodArea's AI. */
+  training_optout: boolean;
 };
 type UsageData = {
   totalRequests: number;
@@ -183,6 +187,56 @@ export default function ApiUsageClient() {
     }
   }, [revokeTarget, fetchUsage]);
 
+  /* AR-385: per-key training-data opt-out toggle. Optimistic UI — flip
+     immediately, refetch in the background, rollback on error. Live-
+     applied, no save button. Takes effect on the next request from any
+     client using this key. */
+  const toggleTrainingOptout = useCallback(
+    async (keyId: string, nextValue: boolean) => {
+      // Optimistic: patch local state first.
+      setData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          keys: prev.keys.map((k) =>
+            k.id === keyId ? { ...k, training_optout: nextValue } : k,
+          ),
+        };
+      });
+      try {
+        const res = await fetch(`/api/keys/${keyId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ training_optout: nextValue }),
+        });
+        if (!res.ok) {
+          // Rollback on failure.
+          setData((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              keys: prev.keys.map((k) =>
+                k.id === keyId ? { ...k, training_optout: !nextValue } : k,
+              ),
+            };
+          });
+        }
+      } catch {
+        // Same rollback path for network errors.
+        setData((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            keys: prev.keys.map((k) =>
+              k.id === keyId ? { ...k, training_optout: !nextValue } : k,
+            ),
+          };
+        });
+      }
+    },
+    [],
+  );
+
   useEffect(() => {
     // Valid: fetch usage on session change. setState calls happen inside
     // fetchUsage after the async fetch resolves, not synchronously here.
@@ -232,6 +286,7 @@ export default function ApiUsageClient() {
               onOpenCreate={openCreateModal}
               onRequestRevoke={requestRevoke}
               onDismissNewKey={() => setNewKey(null)}
+              onToggleTrainingOptout={toggleTrainingOptout}
             />
           )
         )}
@@ -270,6 +325,18 @@ export default function ApiUsageClient() {
           Name the key so you can tell it apart later. Use something like the
           environment or service it belongs to: <em>Production</em>,{" "}
           <em>Staging worker</em>, <em>Local dev</em>.
+        </p>
+        {/* AR-385: training-data disclosure at point of creation. Plain,
+            neutral, no marketing fluff. Customer makes an informed choice
+            here and can flip it anytime in the key list below. */}
+        <p className="oga-api-usage__modal-body oga-api-usage__modal-body--meta">
+          By default, queries made with this key may be used to improve
+          OneGoodArea&apos;s AI. You can toggle this off anytime on this page
+          (per-key &quot;Training&quot; switch). Read the full{" "}
+          <a href="/legal/data-policy" target="_blank" rel="noopener">
+            data policy
+          </a>
+          .
         </p>
         <label className="oga-api-usage__modal-field">
           <span className="oga-api-usage__modal-field-label">Key name</span>
@@ -454,12 +521,14 @@ function Content({
   onOpenCreate,
   onRequestRevoke,
   onDismissNewKey,
+  onToggleTrainingOptout,
 }: {
   data: UsageData;
   newKey: string | null;
   onOpenCreate: () => void;
   onRequestRevoke: (keyId: string, preview: string) => void;
   onDismissNewKey: () => void;
+  onToggleTrainingOptout: (keyId: string, nextValue: boolean) => void;
 }) {
   const pct = Math.min((data.requestsThisMonth / data.monthlyLimit) * 100, 100);
   const tone: "strong" | "moderate" | "weak" =
@@ -536,6 +605,28 @@ function Content({
                       ? `Used ${formatTimestamp(k.last_used_at)}`
                       : "Never used"}
                   </span>
+                  {/* AR-385: per-key training-capture toggle. Live-applied
+                      via optimistic UI; effective on next request. Off = the
+                      customer has opted out of their queries being used to
+                      improve OneGoodArea's AI. */}
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={!k.training_optout}
+                    onClick={() => onToggleTrainingOptout(k.id, !k.training_optout)}
+                    className="oga-api-usage__training-toggle"
+                    data-on={k.training_optout ? "false" : "true"}
+                    title={
+                      k.training_optout
+                        ? "Training capture is OFF. Click to opt back in."
+                        : "Training capture is ON. Click to opt out."
+                    }
+                  >
+                    <span className="oga-api-usage__training-toggle-label">Training</span>
+                    <span className="oga-api-usage__training-toggle-state">
+                      {k.training_optout ? "OFF" : "ON"}
+                    </span>
+                  </button>
                   <button
                     type="button"
                     onClick={() => onRequestRevoke(k.id, k.key_preview)}
