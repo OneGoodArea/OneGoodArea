@@ -1,46 +1,154 @@
 "use client";
 
+import type { ComponentType, SVGProps } from "react";
 import Link from "next/link";
 import { Nav } from "../../design-v2/_shared/nav";
 import { Footer } from "../../design-v2/_shared/footer";
+import { ClaudeLogo, CursorLogo, McpLogo } from "../../design-v2/_shared/editor-icons";
+import {
+  SignalsIcon,
+  ScoresIcon,
+  MonitorIcon,
+  IntelligenceIcon,
+} from "../../design-v2/_shared/product-icons";
+import { ApiReferenceIcon, McpServerIcon } from "../../design-v2/_shared/docs-icons";
 import "./mcp.css";
 
-/* /docs/mcp — Brand v3 (Plotted) — AR-204 PR C.
+/* /docs/mcp — Brand v3 (Plotted).
 
    Install + usage guide for @onegoodarea/mcp-server (mcp/src/*).
-   Content stays accurate to the live MCP server:
-   - OOGA_API_KEY env var name (mcp/src/server.ts:62)
-   - aiq_ key prefix validated (mcp/src/server.ts:69)
-   The aiq_→oga_ migration for MCP is a separate ticket; docs
-   must match real code or user setup breaks.
+   Rewritten in AR-370 after epic AR-362 shipped: the rebuild
+   landed, the tool catalog grew from 4 to 11, the key prefix
+   migrated from aiq_ to oga_. Tool groups (Scores / Signals /
+   Intelligence / Monitor / Brief / Reference) mirror the
+   server's actual catalog. Content kept accurate to mcp/src/* —
+   if a tool description here drifts from the real tool def,
+   integration breaks. */
 
-   Pricing table killed per delta-doc decision D5 — replaced
-   with a single roadmap card linking to /pricing. */
+interface ToolEntry {
+  name: string;
+  args: string;
+  blurb: string;
+  example: string;
+  marquee?: boolean;
+}
 
-const TOOLS: { name: string; args: string; blurb: string; example: string }[] = [
+interface ToolGroup {
+  label: string;
+  tagline: string;
+  Icon: ComponentType<SVGProps<SVGSVGElement>>;
+  tools: ToolEntry[];
+}
+
+const TOOL_GROUPS: ToolGroup[] = [
   {
-    name: "score_postcode",
-    args: "postcode, intent",
-    blurb: "Score one UK postcode or place name for a given decision intent. Returns a 0–100 score, five weighted dimensions with confidence and reasoning, plain-English summary, and data sources.",
-    example: "What's the OneGoodArea origination score for SW1A 1AA?",
+    label: "Scores",
+    tagline: "Composite scoring per area for one of four decision presets.",
+    Icon: ScoresIcon,
+    tools: [
+      {
+        name: "score_postcode",
+        args: "area, preset",
+        blurb: "Score a UK postcode or place name for a preset (moving, business, investing, research). Returns a 0–100 score, five weighted dimensions with engine-grounded reasoning and confidence, a server-composed summary, recommendations, and data sources.",
+        example: "Score SW1A 1AA for moving.",
+      },
+      {
+        name: "compare_postcodes",
+        args: "areas[], preset",
+        blurb: "Score 2–8 areas side-by-side for the same preset. Returns a sorted comparison table with per-area summaries. Partial failures surface inline rather than failing the call.",
+        example: "Compare M1 1AE, SW4 0LG, and EH1 1BB for business.",
+      },
+    ],
   },
   {
-    name: "compare_postcodes",
-    args: "postcodes[], intent",
-    blurb: "Score 2–8 postcodes side-by-side for the same intent. Returns a sorted comparison table with per-postcode summaries. Partial failures are inline, not fatal.",
-    example: "Compare M1 1AE, SW4 0LG, and EH1 1BB for site selection.",
+    label: "Signals",
+    tagline: "Raw addressable signals — the primitive underneath every other product.",
+    Icon: SignalsIcon,
+    tools: [
+      {
+        name: "get_area_signals",
+        args: "area",
+        blurb: "Full signals catalog for an area across all seven categories (crime, deprivation, property, schools, amenities, transport, environment). Each signal carries value + unit, percentile when store-backed, confidence with engine-grounded reason, source attribution, and observation period.",
+        example: "Get all signals for M1 1AE.",
+      },
+      {
+        name: "get_signals_by_category",
+        args: "area, category",
+        blurb: "Same signal shape as get_area_signals, narrowed to one category. Use when the LLM needs to focus on a single data domain.",
+        example: "Show me the crime signals for SW1A 1AA.",
+      },
+    ],
   },
   {
-    name: "methodology_for",
-    args: "dimension",
-    blurb: "Methodology for any of the scoring dimensions: data source, summary of the scoring function, per-intent weights. Useful for procurement and model-risk review.",
-    example: "How does OneGoodArea score Cost of Living?",
+    label: "Intelligence",
+    tagline: "Natural-language query plane + peer discovery over the moat.",
+    Icon: IntelligenceIcon,
+    tools: [
+      {
+        name: "find_areas",
+        args: "question",
+        blurb: "Ask in natural language. A planner translates the question into a typed plan (one of seven ops: rank_areas, get_area, score_area, compare_areas, find_peers, find_insights, find_forecast); the database executes it. The response carries the emitted plan + results so every answer is reproducible.",
+        example: "Areas under £250k median price and rising YoY in England.",
+      },
+      {
+        name: "find_peers",
+        args: "area, k?",
+        blurb: "k-nearest-neighbour peers for a UK area by normalized signal values. Returns the target's geo_code + signals_used + a ranked peers list with distance (0 = identical, 1 = maximally distant) and n_dims_used.",
+        example: "Find 10 areas similar to M1 1AE.",
+      },
+    ],
   },
   {
-    name: "engine_version",
-    args: "(no args)",
-    blurb: "Current OneGoodArea engine version, release date, and changelog excerpt. Useful for procurement documentation and confirming you're pinned to the right release.",
-    example: "What version of the OneGoodArea engine is in production?",
+    label: "Monitor",
+    tagline: "Portfolio tracking and material-change detection.",
+    Icon: MonitorIcon,
+    tools: [
+      {
+        name: "watch_portfolio",
+        args: "name, areas[]",
+        blurb: "Set up a Monitor portfolio in one step: creates the portfolio and adds the tracked areas. Returns the new portfolio_id and the area list. If the add step fails after the create, the response surfaces the partial state so the LLM can act.",
+        example: "Watch portfolio 'North Manchester' with M1 1AE, M4 5DR, M8 8QR.",
+      },
+      {
+        name: "get_portfolio_changes",
+        args: "portfolio_id, threshold_pct?, baseline?, min_transactions?",
+        blurb: "Check a portfolio for material signal changes between two time-series periods. Returns scope, counts, and a per-area table of material moves with direction, from/to values, delta, and percent change. Probe calls don't fire customer webhooks.",
+        example: "What's changed in portfolio ptf_abc with a 5% threshold?",
+      },
+    ],
+  },
+  {
+    label: "Brief (marquee)",
+    tagline: "One audience-shaped advisory document per area. The wow-factor composite.",
+    Icon: McpServerIcon,
+    tools: [
+      {
+        name: "area_brief",
+        args: "area, audience",
+        blurb: "Audience ∈ {lender, insurer, retailer, investor}. Fans out to the full signals catalog + the audience's scoring preset (with explain mode), then renders an audience-specific markdown brief: overall verdict, audience-relevant dimensions, audience-relevant signals with provenance, recommendations, data sources. Every value is real engine output.",
+        example: "Give me a lender brief on SW1A 1AA.",
+        marquee: true,
+      },
+    ],
+  },
+  {
+    label: "Reference",
+    tagline: "Static lookups, no quota cost.",
+    Icon: ApiReferenceIcon,
+    tools: [
+      {
+        name: "methodology_for",
+        args: "dimension",
+        blurb: "Methodology for any scoring dimension: data source, scoring function summary, per-preset weights. Useful for procurement and model-risk review.",
+        example: "How does OneGoodArea score Cost of Living?",
+      },
+      {
+        name: "engine_version",
+        args: "(no args)",
+        blurb: "Current engine version, release date, and changelog excerpt. The live engine version is also stamped on every score_postcode and get_area_signals response.",
+        example: "What engine version is in production?",
+      },
+    ],
   },
 ];
 
@@ -53,7 +161,6 @@ export default function McpDocsClient() {
     <div className="oga-root oga-mcp">
       <Nav />
 
-      <RebuildBanner />
       <Hero />
       <SectionInstall />
       <SectionTools />
@@ -66,27 +173,6 @@ export default function McpDocsClient() {
   );
 }
 
-/* Rebuild banner — top-of-page disclosure.
-   Honest signal that this page describes the live server today, and
-   that a rebuild is in flight that will change shape. Commits to a
-   channel (this page) for migration notes, not to a date.
-   AR-357 (epic AR-354). */
-function RebuildBanner() {
-  return (
-    <div className="oga-mcp-banner" role="note" aria-label="MCP rebuild notice">
-      <div className="oga-mcp-banner__inner">
-        <span className="oga-mcp-banner__dot" aria-hidden />
-        <span className="oga-mcp-banner__label">Heads up</span>
-        <span className="oga-mcp-banner__sep" aria-hidden />
-        <p className="oga-mcp-banner__text">
-          The MCP server is being rebuilt. The install steps and tools below describe the server we
-          ship today. When the rebuild lands, migration notes will land here.
-        </p>
-      </div>
-    </div>
-  );
-}
-
 /* ─────── Hero ─────── */
 
 function Hero() {
@@ -94,7 +180,9 @@ function Hero() {
     <section className="oga-mcp-hero oga-section-hero">
       <div className="oga-mcp__container--narrow">
         <div className="oga-mcp-hero__eyebrow">
-          <span className="oga-mcp-hero__dot" aria-hidden />
+          <span className="oga-mcp-hero__brand" aria-hidden>
+            <McpLogo />
+          </span>
           <span>MCP server</span>
           <span className="oga-mcp-hero__eyebrow-sep" aria-hidden />
           <span>npm · @onegoodarea/mcp-server</span>
@@ -105,12 +193,14 @@ function Hero() {
         </h1>
 
         <p className="oga-mcp-hero__lead">
-          Score UK postcodes, compare areas, and query methodology inline in your AI workflow. The
-          server is distributed as an npm package and spawned by your MCP client over stdio.
+          Score UK areas, query signals in natural language, watch portfolios for material change,
+          and generate audience-shaped briefs — all inline in your AI workflow. Eleven tools across
+          six product surfaces. The server is distributed as an npm package and spawned by your MCP
+          client over stdio.
         </p>
 
         <ul className="oga-mcp-hero__stats" aria-label="Server attributes">
-          <li className="oga-mcp-hero__stat">4 tools</li>
+          <li className="oga-mcp-hero__stat">11 tools</li>
           <li className="oga-mcp-hero__stat">Bearer auth</li>
           <li className="oga-mcp-hero__stat">stdio transport</li>
           <li className="oga-mcp-hero__stat">npm package</li>
@@ -156,7 +246,7 @@ function SectionInstall() {
             <div className="oga-mcp-install__step-body">
               <p>
                 Get an API key from your <Link href="/dashboard">dashboard</Link>. Keys start with{" "}
-                <code>aiq_</code>.
+                <code>oga_</code>.
               </p>
             </div>
           </div>
@@ -166,7 +256,12 @@ function SectionInstall() {
             <div className="oga-mcp-install__step-body">
               <p>Add the server to your MCP client config.</p>
 
-              <div className="oga-mcp-install__client">Claude Desktop</div>
+              <div className="oga-mcp-install__client">
+                <span className="oga-mcp-install__client-logo" aria-hidden>
+                  <ClaudeLogo />
+                </span>
+                Claude Desktop
+              </div>
               <p>
                 Edit <code>~/Library/Application Support/Claude/claude_desktop_config.json</code> on
                 macOS, or <code>%APPDATA%\Claude\claude_desktop_config.json</code> on Windows. Add the{" "}
@@ -180,15 +275,20 @@ function SectionInstall() {
       "command": "npx",
       "args": ["-y", "@onegoodarea/mcp-server"],
       "env": {
-        "OOGA_API_KEY": "aiq_..."
+        "OOGA_API_KEY": "oga_..."
       }
     }
   }
 }`}
               />
-              <p>Restart Claude Desktop. The four tools appear when you start a conversation about UK locations.</p>
+              <p>Restart Claude Desktop. The eleven tools appear when you start a conversation about UK locations.</p>
 
-              <div className="oga-mcp-install__client">Cursor</div>
+              <div className="oga-mcp-install__client">
+                <span className="oga-mcp-install__client-logo" aria-hidden>
+                  <CursorLogo />
+                </span>
+                Cursor
+              </div>
               <p>
                 Add to <code>.cursor/mcp.json</code> in your project (or the global Cursor MCP config):
               </p>
@@ -199,7 +299,7 @@ function SectionInstall() {
     "onegoodarea": {
       "command": "npx",
       "args": ["-y", "@onegoodarea/mcp-server"],
-      "env": { "OOGA_API_KEY": "aiq_..." }
+      "env": { "OOGA_API_KEY": "oga_..." }
     }
   }
 }`}
@@ -236,28 +336,46 @@ function SectionTools() {
             <span className="oga-mcp__eyebrow-line" aria-hidden />
             <span>Tools</span>
           </div>
-          <h2 className="oga-mcp__h2">Four tools, one engine.</h2>
+          <h2 className="oga-mcp__h2">Eleven tools across six product surfaces.</h2>
           <p className="oga-mcp__lead">
             Every tool calls the same v1 API under the hood. The MCP server is a thin protocol bridge.
-            Auth, rate-limits, quota, methodology pinning, all enforced on the API side.
+            Auth, rate-limits, quota, methodology pinning, all enforced on the API side. Every brief
+            and summary the LLM sees is composed server-side from real engine state — no client-side
+            text synthesis.
           </p>
         </header>
 
-        <div className="oga-mcp-tools__grid">
-          {TOOLS.map((t) => (
-            <article key={t.name} className="oga-mcp-tools__card">
-              <div className="oga-mcp-tools__card-head">
-                <code className="oga-mcp-tools__card-name">{t.name}</code>
-                <span className="oga-mcp-tools__card-args">({t.args})</span>
+        {TOOL_GROUPS.map((group) => {
+          const Icon = group.Icon;
+          return (
+          <div key={group.label} className="oga-mcp-tools__group">
+            <div className="oga-mcp-tools__group-head">
+              <span className="oga-mcp-tools__group-icon" aria-hidden>
+                <Icon />
+              </span>
+              <div className="oga-mcp-tools__group-head-text">
+                <h3 className="oga-mcp-tools__group-label">{group.label}</h3>
+                <p className="oga-mcp-tools__group-tagline">{group.tagline}</p>
               </div>
-              <p className="oga-mcp-tools__card-body">{t.blurb}</p>
-              <div className="oga-mcp-tools__card-example">
-                <span className="oga-mcp-tools__card-example-label">Try</span>
-                &ldquo;{t.example}&rdquo;
-              </div>
-            </article>
-          ))}
-        </div>
+            </div>
+            <div className="oga-mcp-tools__grid">
+              {group.tools.map((t) => (
+                <article key={t.name} className={`oga-mcp-tools__card${t.marquee ? " oga-mcp-tools__card--marquee" : ""}`}>
+                  <div className="oga-mcp-tools__card-head">
+                    <code className="oga-mcp-tools__card-name">{t.name}</code>
+                    <span className="oga-mcp-tools__card-args">({t.args})</span>
+                  </div>
+                  <p className="oga-mcp-tools__card-body">{t.blurb}</p>
+                  <div className="oga-mcp-tools__card-example">
+                    <span className="oga-mcp-tools__card-example-label">Try</span>
+                    &ldquo;{t.example}&rdquo;
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+          );
+        })}
       </div>
     </section>
   );
@@ -291,8 +409,8 @@ function SectionDev() {
       "command": "npx",
       "args": ["-y", "@onegoodarea/mcp-server"],
       "env": {
-        "OOGA_API_KEY": "aiq_dev",
-        "OOGA_API_BASE": "http://localhost:3000"
+        "OOGA_API_KEY": "oga_dev",
+        "OOGA_API_BASE": "http://localhost:4000"
       }
     }
   }
@@ -360,7 +478,7 @@ function FinalCta() {
           UK area intelligence as a Claude-native tool.
         </h2>
         <p className="oga-mcp-cta__lead">
-          Get a key, paste a config block, restart your client. The four tools appear in your next
+          Get a key, paste a config block, restart your client. The eleven tools appear in your next
           conversation.
         </p>
         <div className="oga-mcp-cta__buttons">
