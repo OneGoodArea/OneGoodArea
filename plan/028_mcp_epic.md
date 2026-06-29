@@ -7,7 +7,7 @@
 
 ## Purpose
 
-The MCP server (`@onegoodarea/mcp-server`) has been non-functional since
+The MCP server (`@oga-mcp/server`) has been non-functional since
 AR-324 killed `/v1/report` — every `score_postcode` call 404s. It also
 still validates `aiq_` API keys which no longer exist, expects
 report-era response fields that the new `/v1/score` doesn't return, and

@@ -12,14 +12,14 @@
  * Override via OOGA_API_BASE env (useful for local dev against
  * `cd apps/api && npm run dev`).
  *
- * Run via npx: `npx @onegoodarea/mcp-server`
+ * Run via npx: `npx @oga-mcp/server`
  *
  * Claude Desktop config example:
  *   {
  *     "mcpServers": {
  *       "onegoodarea": {
  *         "command": "npx",
- *         "args": ["-y", "@onegoodarea/mcp-server"],
+ *         "args": ["-y", "@oga-mcp/server"],
  *         "env": { "OOGA_API_KEY": "oga_..." }
  *       }
  *     }

@@ -15,7 +15,7 @@ In scope:
 - Production web app at https://www.onegoodarea.com
 - Public API endpoints at https://www.onegoodarea.com/api/v1/*
 - Embeddable widget endpoint at https://www.onegoodarea.com/api/widget
-- MCP server package `@onegoodarea/mcp-server`
+- MCP server package `@oga-mcp/server`
 
 Out of scope:
 
