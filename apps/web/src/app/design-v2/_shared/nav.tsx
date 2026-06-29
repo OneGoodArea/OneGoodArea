@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { Wordmark } from "./wordmark";
 import { SignalsIcon, ScoresIcon, MonitorIcon, IntelligenceIcon } from "./product-icons";
 import { DocsHomeIcon, ApiReferenceIcon, McpServerIcon, ChangelogIcon } from "./docs-icons";
+import { McpLogo } from "./editor-icons";
 import "./nav.css";
 
 /* Marketing nav — Brand v3 Plotted (AR-204 PR 1).
@@ -107,6 +108,7 @@ export function Nav() {
 
   return (
     <>
+      <AnnouncementBar />
       <nav
         className={`oga-nav${scrolled ? " oga-nav-glass" : ""}`}
         data-oga-surface={overDarkHero ? "dark" : undefined}
@@ -259,6 +261,36 @@ export function Nav() {
         </div>
       </aside>
     </>
+  );
+}
+
+/* ---------- Announcement bar ---------- */
+
+/* Thin band above the nav. Whole bar is one link to /docs/mcp. Not
+   sticky — scrolls away as the user moves down the page, leaving the
+   regular nav stuck to top. Visible on every public page that mounts
+   <Nav />. Copy points at the live MCP server (@oga-mcp/server@1.0.1
+   on npm, e2e-proven via Claude Code, /docs/mcp documents all 11
+   tools). */
+
+function AnnouncementBar() {
+  return (
+    <Link href="/docs/mcp" className="oga-announce" aria-label="OneGoodArea is live as an MCP server. Read the docs.">
+      <span className="oga-announce__inner">
+        <span className="oga-announce__badge">NEW</span>
+        <McpLogo className="oga-announce__icon" />
+        <span className="oga-announce__copy oga-announce__copy--full">
+          OneGoodArea is live as an MCP server. Use it inside Claude Desktop, Cursor, and Claude Code.
+        </span>
+        <span className="oga-announce__copy oga-announce__copy--short">
+          MCP server is live for Claude Desktop, Cursor, and Claude Code.
+        </span>
+        <span className="oga-announce__cta">
+          Read the docs
+          <span aria-hidden className="oga-announce__arrow">→</span>
+        </span>
+      </span>
+    </Link>
   );
 }
 
