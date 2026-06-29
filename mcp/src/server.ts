@@ -105,13 +105,13 @@ function readApiKey(): string {
   const key = process.env.OOGA_API_KEY;
   if (!key) {
     process.stderr.write(
-      "[onegoodarea-mcp] Missing OOGA_API_KEY env var. Get one at https://www.onegoodarea.com/dashboard\n",
+      "[oga-mcp] Missing OOGA_API_KEY env var. Get one at https://www.onegoodarea.com/dashboard\n",
     );
     process.exit(1);
   }
   if (!key.startsWith("oga_")) {
     process.stderr.write(
-      `[onegoodarea-mcp] OOGA_API_KEY looks malformed (expected to start with 'oga_'). Got prefix: ${key.slice(0, 4)}\n`,
+      `[oga-mcp] OOGA_API_KEY looks malformed (expected to start with 'oga_'). Got prefix: ${key.slice(0, 4)}\n`,
     );
     process.exit(1);
   }
@@ -123,7 +123,7 @@ async function checkMcpAccess(client: OogaApiClient): Promise<void> {
   // before the /v1/me endpoint is deployed). Production should never
   // set this — it's a developer escape hatch.
   if (process.env.OOGA_SKIP_ENTITLEMENT_CHECK === "1") {
-    process.stderr.write("[onegoodarea-mcp] OOGA_SKIP_ENTITLEMENT_CHECK=1 — skipping /me check\n");
+    process.stderr.write("[oga-mcp] OOGA_SKIP_ENTITLEMENT_CHECK=1 — skipping /me check\n");
     return;
   }
 
@@ -132,23 +132,23 @@ async function checkMcpAccess(client: OogaApiClient): Promise<void> {
     me = await client.me();
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    process.stderr.write(`[onegoodarea-mcp] Could not verify entitlement at /v1/me: ${msg}\n`);
-    process.stderr.write(`[onegoodarea-mcp] Check OOGA_API_KEY is valid and OOGA_API_BASE is reachable.\n`);
+    process.stderr.write(`[oga-mcp] Could not verify entitlement at /v1/me: ${msg}\n`);
+    process.stderr.write(`[oga-mcp] Check OOGA_API_KEY is valid and OOGA_API_BASE is reachable.\n`);
     process.exit(1);
   }
 
   if (!me.mcp_access) {
     process.stderr.write(
-      `[onegoodarea-mcp] Your plan (${me.plan_name}) does not include MCP access.\n` +
-        `[onegoodarea-mcp] MCP is included free on Growth (£1,499/mo) and Enterprise tiers.\n` +
-        `[onegoodarea-mcp] On Sandbox / Starter / Build / Scale you can purchase the £29/mo MCP add-on.\n` +
-        `[onegoodarea-mcp] Upgrade or add MCP at https://www.onegoodarea.com/pricing\n`,
+      `[oga-mcp] Your plan (${me.plan_name}) does not include MCP access.\n` +
+        `[oga-mcp] MCP is included free on Growth (£1,499/mo) and Enterprise tiers.\n` +
+        `[oga-mcp] On Sandbox / Starter / Build / Scale you can purchase the £29/mo MCP add-on.\n` +
+        `[oga-mcp] Upgrade or add MCP at https://www.onegoodarea.com/pricing\n`,
     );
     process.exit(1);
   }
 
   process.stderr.write(
-    `[onegoodarea-mcp] Entitlement OK · plan: ${me.plan_name} · engine: ${me.engine_version}\n`,
+    `[oga-mcp] Entitlement OK · plan: ${me.plan_name} · engine: ${me.engine_version}\n`,
   );
 }
 
@@ -249,11 +249,11 @@ async function main(): Promise<void> {
   await server.connect(transport);
 
   process.stderr.write(
-    `[onegoodarea-mcp] v${SERVER_VERSION} listening on stdio (api: ${baseUrl ?? "https://onegoodarea.onrender.com"})\n`,
+    `[oga-mcp] v${SERVER_VERSION} listening on stdio (api: ${baseUrl ?? "https://onegoodarea.onrender.com"})\n`,
   );
 }
 
 main().catch((err) => {
-  process.stderr.write(`[onegoodarea-mcp] Fatal: ${err instanceof Error ? err.message : String(err)}\n`);
+  process.stderr.write(`[oga-mcp] Fatal: ${err instanceof Error ? err.message : String(err)}\n`);
   process.exit(1);
 });
