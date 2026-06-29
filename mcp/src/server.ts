@@ -92,6 +92,12 @@ import {
   parseGetPortfolioChangesArgs,
   executeGetPortfolioChanges,
 } from "./tools/get-portfolio-changes.js";
+import {
+  areaBriefToolDef,
+  areaBriefToolName,
+  parseAreaBriefArgs,
+  executeAreaBrief,
+} from "./tools/area-brief.js";
 
 const SERVER_VERSION = "1.0.0";
 
@@ -165,10 +171,10 @@ async function main(): Promise<void> {
     },
   );
 
-  // 10 tools: score_postcode, compare_postcodes, get_area_signals,
+  // 11 tools: score_postcode, compare_postcodes, get_area_signals,
   // get_signals_by_category, find_areas, find_peers, watch_portfolio,
-  // get_portfolio_changes (network); methodology_for, engine_version
-  // (static lookup, no network).
+  // get_portfolio_changes, area_brief (network); methodology_for,
+  // engine_version (static lookup, no network).
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: [
       scorePostcodeToolDef,
@@ -179,6 +185,7 @@ async function main(): Promise<void> {
       findPeersToolDef,
       watchPortfolioToolDef,
       getPortfolioChangesToolDef,
+      areaBriefToolDef,
       methodologyForToolDef,
       engineVersionToolDef,
     ],
@@ -219,6 +226,10 @@ async function main(): Promise<void> {
     if (name === getPortfolioChangesToolName) {
       const parsed = parseGetPortfolioChangesArgs(args);
       return executeGetPortfolioChanges(client, parsed);
+    }
+    if (name === areaBriefToolName) {
+      const parsed = parseAreaBriefArgs(args);
+      return executeAreaBrief(client, parsed);
     }
     if (name === methodologyForToolName) {
       const parsed = parseMethodologyForArgs(args);
