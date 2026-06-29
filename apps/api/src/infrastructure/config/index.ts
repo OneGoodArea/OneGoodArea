@@ -55,6 +55,12 @@ export interface ApiConfig {
   // Cron
   cronSecret: string | undefined;
 
+  // AR-377: bounded retention for training data tables
+  // (query_planner_logs + brief_composer_logs). Rows older than this
+  // many days are purged by the nightly /cron/training-retention job.
+  // 0 disables purging (kept indefinitely). Default 365.
+  trainingDataRetentionDays: number;
+
   // Logging
   logLevel: string;
   localRuntimeEnabled: boolean;
@@ -120,6 +126,11 @@ export function getConfig(): ApiConfig {
 
     // Cron
     cronSecret: process.env.CRON_SECRET,
+    trainingDataRetentionDays: (() => {
+      const raw = process.env.TRAINING_DATA_RETENTION_DAYS;
+      const parsed = raw ? parseInt(raw, 10) : NaN;
+      return Number.isFinite(parsed) && parsed >= 0 ? parsed : 365;
+    })(),
 
     // Logging
     logLevel: process.env.OGA_LOG_LEVEL ?? (process.env.OGA_LOCAL_RUNTIME_ENABLED === "true" ? "debug" : "info"),

@@ -232,8 +232,9 @@ Cases 2-4 catch direct API-key calls from MCP-aware tools that don't go through 
 - [x] Step 5 — DATA_POLICY.md updated (AR-376 marked active)
 
 **PR3 (AR-377):**
-- [ ] Step 1 — `brief_composer_logs` migration
-- [ ] Step 2 — wire /v1/score (explain branch only)
-- [ ] Step 3 — smoke (with-explain creates row, without-explain does not)
-- [ ] Step 4 — /admin tile
-- [ ] Step 5 — ARCHITECTURE.md data-policy append
+- [x] Step 1 — `brief_composer_logs` migration
+- [x] Step 2 — wire /v1/score (explain branch only)
+- [ ] Step 3 — smoke (post-merge: Claude Code MCP call with explain creates row, plain curl /v1/score without explain does not)
+- [x] Step 4 — /admin tile (Training corpus card extended with brief pairs)
+- [x] Step 5 — DATA_POLICY.md updated (AR-377 active, retention cron documented)
+- [x] Step 6 — retention cron (`/cron/training-retention`) + `TRAINING_DATA_RETENTION_DAYS` config
