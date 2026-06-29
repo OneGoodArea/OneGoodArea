@@ -19,6 +19,8 @@ import { registerOrgPresetsRoutes } from "./routes/org-presets";
 import { registerOrgCohortsRoutes } from "./routes/org-cohorts";
 import { registerOrgMethodologyRoutes } from "./routes/org-methodology";
 import { registerIntelligenceRoutes } from "./routes/intelligence";
+import { classifyClientApp } from "./shared/http";
+import { runWithRequestContext } from "./shared/request-context";
 declare module "fastify" {
   interface FastifyRequest {
     /** Raw request body string, preserved by the JSON content-type parser so the
@@ -91,6 +93,19 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
   // still receive a parsed `request.body` (identical to Fastify's default); the
   // Stripe webhook additionally reads `request.rawBody` to verify the HMAC over
   // the exact payload bytes. Empty bodies error the same way the default does.
+  /* AR-375: stamp every request with {source, client_app} derived from the
+     User-Agent and stash it in AsyncLocalStorage so trackEvent (and the
+     training-table inserts in AR-376 / AR-377) can read it without
+     threading context through every route handler. Bound to the request
+     lifecycle via storage.run() — never leaks across requests. */
+  app.addHook("onRequest", (request, _reply, done) => {
+    const ua = Array.isArray(request.headers["user-agent"])
+      ? request.headers["user-agent"][0]
+      : request.headers["user-agent"];
+    const ctx = classifyClientApp(ua);
+    runWithRequestContext(ctx, () => done());
+  });
+
   app.addContentTypeParser("application/json", { parseAs: "string" }, (request, body, done) => {
     // parseAs:"string" guarantees a string at runtime; Fastify still types it as
     // string | Buffer, so coerce for the type checker.
