@@ -6,13 +6,13 @@
   "homepage": "https://www.onegoodarea.com/docs/mcp",
   "repository": {
     "type": "git",
-    "url": "https://github.com/OneGoodArea/OneGoodArea.git",
+    "url": "git+https://github.com/OneGoodArea/OneGoodArea.git",
     "directory": "mcp"
   },
   "type": "module",
-  "main": "./dist/server.js",
+  "main": "dist/server.js",
   "bin": {
-    "onegoodarea-mcp": "./dist/server.js"
+    "oga-mcp": "dist/server.js"
   },
   "files": [
     "dist",
