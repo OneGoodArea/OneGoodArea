@@ -12,6 +12,7 @@ vi.mock("@/modules/tracking/structured-logger", () => ({
 }));
 
 import { sql } from "@/infrastructure/db/client";
+import { METHODOLOGY_VERSION } from "@onegoodarea/contracts";
 import {
   normaliseCacheKey,
   getCachedAreaResult,
@@ -46,10 +47,15 @@ afterEach(() => {
 });
 
 describe("normaliseCacheKey", () => {
-  it("lowercases, strips separators, and appends the intent", () => {
-    expect(normaliseCacheKey("M1 1AE", "Moving")).toBe("m11ae:moving");
-    expect(normaliseCacheKey("St. Albans", "INVESTING")).toBe("stalbans:investing");
-    expect(normaliseCacheKey("Stoke-on-Trent", "business")).toBe("stokeontrent:business");
+  /* AR-378: keys are pinned to METHODOLOGY_VERSION so a re-score under a
+     new engine version lands at a different key (rather than clobbering
+     the old row). The expectations use the imported version so the test
+     stays correct as the engine bumps — what we're asserting is the
+     SHAPE + the pin, not the literal version string. */
+  it("lowercases, strips separators, appends the intent, and pins to engine version", () => {
+    expect(normaliseCacheKey("M1 1AE", "Moving")).toBe(`m11ae:moving:v${METHODOLOGY_VERSION}`);
+    expect(normaliseCacheKey("St. Albans", "INVESTING")).toBe(`stalbans:investing:v${METHODOLOGY_VERSION}`);
+    expect(normaliseCacheKey("Stoke-on-Trent", "business")).toBe(`stokeontrent:business:v${METHODOLOGY_VERSION}`);
   });
 });
 
@@ -96,7 +102,7 @@ describe("setCachedAreaResult", () => {
 
     expect(mockSql).toHaveBeenCalledTimes(1);
     const call = mockSql.mock.calls[0] as unknown[];
-    expect(call[1]).toBe("bristol:moving");        // cache_key
+    expect(call[1]).toBe(`bristol:moving:v${METHODOLOGY_VERSION}`); // cache_key (AR-378: engine-version pinned)
     expect(call[2]).toBe(JSON.stringify(report));  // report JSON
     expect(call[3]).toBe("Bristol");               // area
     expect(call[4]).toBe(81);                       // score
