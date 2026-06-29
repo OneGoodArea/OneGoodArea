@@ -6,6 +6,18 @@ Score UK areas for one of four decision presets, query the signals catalog direc
 
 ---
 
+## Data policy (read this)
+
+By default, queries made through this MCP server are used to improve OneGoodArea's own AI models (planner translations and brief composition). You can opt out per API key at any time.
+
+- **What's captured:** natural-language questions to `find_areas`, and full `score_postcode` requests + responses when explain is on. Operational logs (which tool was called, when, by whom) are kept either way.
+- **How to opt out:** sign in at https://www.onegoodarea.com/api-usage and click the "Training" toggle next to any of your keys. Takes effect on the next request from any MCP client using that key.
+- **Where state is shown:** on every server start, this MCP logs `[oga-mcp] Training-data capture: ON | OFF` so you can see the current state for the key you're using.
+- **Retention:** training data is purged automatically after 365 days.
+- **Full policy:** https://www.onegoodarea.com/legal/data-policy
+
+---
+
 ## Install
 
 You don't install it directly. Configure your MCP client to spawn it via `npx`.

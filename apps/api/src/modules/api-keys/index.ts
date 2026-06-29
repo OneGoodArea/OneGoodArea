@@ -32,8 +32,10 @@ export function apiKeyPreview(key: string): string {
   return `${key.slice(0, 12)}...${key.slice(-4)}`;
 }
 
-/** Projected shape returned by listApiKeys (subset + computed column). */
-type ApiKeyPreview = Pick<ApiKeyRow, "id" | "name" | "created_at" | "last_used_at"> & {
+/** Projected shape returned by listApiKeys (subset + computed column).
+    AR-385: training_optout included so the dashboard renders the per-key
+    toggle without a second round-trip. */
+type ApiKeyPreview = Pick<ApiKeyRow, "id" | "name" | "created_at" | "last_used_at" | "training_optout"> & {
   key_preview: string;
 };
 
@@ -57,11 +59,24 @@ export async function listApiKeys(userId: string) {
     name: r.name,
     created_at: r.created_at,
     last_used_at: r.last_used_at,
+    training_optout: r.training_optout,
   }));
 }
 
 export async function revokeApiKey(userId: string, keyId: string): Promise<boolean> {
   return repo.revoke(keyId, userId);
+}
+
+/** AR-385: customer-facing toggle for the per-key training-data opt-out.
+    Owner-scoped; returns false when the key doesn't exist or belongs
+    to another user. Wraps the repo with no extra business logic so
+    test mocks of the repo cover both layers. */
+export async function setApiKeyTrainingOptout(
+  userId: string,
+  keyId: string,
+  optout: boolean,
+): Promise<boolean> {
+  return repo.setTrainingOptout(keyId, userId, optout);
 }
 
 /** Result of validating an API key. Includes the org_id the key belongs to

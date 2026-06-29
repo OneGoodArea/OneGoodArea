@@ -99,7 +99,7 @@ import {
   executeAreaBrief,
 } from "./tools/area-brief.js";
 
-const SERVER_VERSION = "1.0.1";
+const SERVER_VERSION = "1.0.2";
 
 function readApiKey(): string {
   const key = process.env.OOGA_API_KEY;
@@ -149,6 +149,19 @@ async function checkMcpAccess(client: OogaApiClient): Promise<void> {
 
   process.stderr.write(
     `[oga-mcp] Entitlement OK · plan: ${me.plan_name} · engine: ${me.engine_version}\n`,
+  );
+
+  /* AR-385: surface the per-key training-data capture state on every
+     boot. Customers can toggle in /api-usage; this log makes the current
+     state visible every time their MCP client (Claude Code / Cursor /
+     Claude Desktop) starts the server. Defaults to false (capturing)
+     when the apps/api response predates AR-385. */
+  const trainingOptout = me.key?.training_optout ?? false;
+  const captureState = trainingOptout ? "OFF (you opted out)" : "ON";
+  process.stderr.write(
+    `[oga-mcp] Training-data capture: ${captureState} for this key. ` +
+      `Toggle at https://www.onegoodarea.com/api-usage · ` +
+      `Policy: https://www.onegoodarea.com/legal/data-policy\n`,
   );
 }
 

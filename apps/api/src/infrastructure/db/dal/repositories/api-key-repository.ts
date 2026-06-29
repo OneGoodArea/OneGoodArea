@@ -1,8 +1,10 @@
 import { sql } from "../../client";
 import { type ApiKeyRow, rows } from "../../types";
 
-/** Projected shape returned by listByUser (subset + computed column). */
-export type ApiKeyPreview = Pick<ApiKeyRow, "id" | "name" | "created_at" | "last_used_at"> & {
+/** Projected shape returned by listByUser (subset + computed column).
+    AR-385: training_optout included so /api-usage can render the per-key
+    toggle without an extra round-trip. */
+export type ApiKeyPreview = Pick<ApiKeyRow, "id" | "name" | "created_at" | "last_used_at" | "training_optout"> & {
   key_preview: string;
 };
 
@@ -23,7 +25,7 @@ export class ApiKeyRepository {
 
   async listByUser(userId: string): Promise<ApiKeyPreview[]> {
     return rows<ApiKeyPreview>(await sql`
-      SELECT id, key_prefix AS key_preview, name, created_at, last_used_at
+      SELECT id, key_prefix AS key_preview, name, created_at, last_used_at, training_optout
         FROM api_keys
        WHERE user_id = ${userId} AND revoked = FALSE
        ORDER BY created_at DESC
@@ -34,6 +36,19 @@ export class ApiKeyRepository {
     const result = await sql`
       UPDATE api_keys SET revoked = TRUE
        WHERE id = ${keyId} AND user_id = ${userId}
+       RETURNING id
+    `;
+    return result.length > 0;
+  }
+
+  /** AR-385: per-key training-data opt-out toggle. Owner-scoped via
+      the user_id predicate — a customer can only flip flags on keys
+      they own. Returns false when the key doesn't exist or belongs to
+      another user (no information leak between users). */
+  async setTrainingOptout(keyId: string, userId: string, optout: boolean): Promise<boolean> {
+    const result = await sql`
+      UPDATE api_keys SET training_optout = ${optout}
+       WHERE id = ${keyId} AND user_id = ${userId} AND revoked = FALSE
        RETURNING id
     `;
     return result.length > 0;

@@ -9,7 +9,7 @@
  */
 
 const DEFAULT_BASE = "https://onegoodarea.onrender.com";
-const USER_AGENT = "onegoodarea-mcp-server/1.0.1";
+const USER_AGENT = "onegoodarea-mcp-server/1.0.2";
 
 export type Preset = "moving" | "business" | "investing" | "research";
 
@@ -203,6 +203,14 @@ export interface OogaMeResponse {
   used_this_month: number;
   limit_this_month: number | null;
   engine_version: string;
+  /* AR-385: per-key training-data opt-out state, surfaced so the MCP
+     server can log capture state on every boot. Optional: legacy apps/api
+     builds before AR-385 don't include it, so the field is undefined for
+     those — caller treats undefined as false (default = participate). */
+  key?: {
+    allowed_ip_cidrs?: string[];
+    training_optout?: boolean;
+  };
 }
 
 export class OogaApiError extends Error {

@@ -11,3 +11,17 @@ export async function DELETE(
   const { id } = await params;
   return proxySession(req, `/keys/${id}`, { method: "DELETE" });
 }
+
+/* AR-385: PATCH /api/keys/[id] — proxied to apps/api PATCH /keys/:id.
+   Body shape: { training_optout: boolean }. Owner-scoped server-side. */
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+  return proxySession(req, `/keys/${id}`, {
+    method: "PATCH",
+    forwardBody: true,
+  });
+}
