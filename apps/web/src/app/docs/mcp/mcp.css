@@ -93,18 +93,18 @@
   margin-bottom: var(--oga-5);
 }
 
-.oga-mcp-hero__dot {
-  width: 6px; height: 6px;
-  background: var(--oga-status-green);
-  border-radius: 50%;
-  box-shadow: 0 0 0 0 var(--oga-status-green);
-  animation: oga-mcp-pulse 2.4s ease-in-out infinite;
+/* AR-370: hero eyebrow brand mark — the canonical MCP logo. Replaces
+   the legacy pulsing-dot indicator (which read as "live status"
+   theatre on a pre-customer site). */
+.oga-mcp-hero__brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px; height: 14px;
+  color: var(--oga-fg);
 }
 
-@keyframes oga-mcp-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(46, 117, 72, 0.45); }
-  50%      { box-shadow: 0 0 0 6px rgba(46, 117, 72, 0); }
-}
+.oga-mcp-hero__brand svg { width: 14px; height: 14px; }
 
 .oga-mcp-hero__eyebrow-sep {
   width: 4px; height: 4px;
@@ -271,12 +271,29 @@
 .oga-mcp-install__step-body p:last-child { margin-bottom: 0; }
 
 .oga-mcp-install__client {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
   font-family: var(--oga-font-sans);
   font-size: 14px;
   font-weight: 500;
   color: var(--oga-fg);
   margin: var(--oga-4) 0 var(--oga-2);
 }
+
+/* AR-370: brand logo next to the editor name (Claude / Cursor). The
+   ClaudeLogo + CursorLogo components use currentColor; sized to
+   match the label's cap height. */
+.oga-mcp-install__client-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px; height: 16px;
+  color: var(--oga-fg);
+  flex-shrink: 0;
+}
+
+.oga-mcp-install__client-logo svg { width: 16px; height: 16px; }
 
 /* ============================================================
    02 — Tools (4 cards)
@@ -526,54 +543,81 @@
 }
 
 /* ============================================================
-   Rebuild banner — top-of-page disclosure (AR-357)
+   Tool groups (AR-370) — surface-level headers inside the
+   tools section. Replaces the flat 4-card grid with five
+   grouped sub-sections (Scores / Signals / Intelligence /
+   Monitor / Brief / Reference). Marquee card variant for
+   the area_brief feature.
    ============================================================ */
 
-.oga-mcp-banner {
-  background: var(--oga-ink-04);
-  border-bottom: 1px solid var(--oga-ink-08, var(--oga-ink-06));
-  padding: var(--oga-4) clamp(20px, 4vw, var(--oga-7));
+.oga-mcp-tools__group {
+  margin-top: var(--oga-7);
 }
 
-.oga-mcp-banner__inner {
-  max-width: 1080px;
-  margin: 0 auto;
+.oga-mcp-tools__group:first-of-type {
+  margin-top: 0;
+}
+
+.oga-mcp-tools__group-head {
   display: flex;
+  align-items: flex-start;
+  gap: var(--oga-4);
+  margin-bottom: var(--oga-4);
+}
+
+/* AR-370: surface icon (Plotted vocabulary — same product icons as
+   /products marketing pages + /docs/api-reference). 36px so it
+   reads as a real illustration alongside the label + tagline. */
+.oga-mcp-tools__group-icon {
+  display: inline-flex;
   align-items: center;
-  gap: var(--oga-3);
-  flex-wrap: wrap;
-}
-
-.oga-mcp-banner__dot {
-  width: 6px; height: 6px;
-  background: var(--oga-fg);
-  border-radius: 50%;
+  justify-content: center;
+  width: 36px; height: 36px;
+  color: var(--oga-fg);
   flex-shrink: 0;
-  opacity: 0.65;
+  margin-top: 2px;
 }
 
-.oga-mcp-banner__label {
+.oga-mcp-tools__group-icon svg { width: 32px; height: 32px; }
+
+.oga-mcp-tools__group-head-text {
+  flex: 1 1 auto;
+}
+
+.oga-mcp-tools__group-label {
   font-family: var(--oga-font-mono);
   font-size: var(--oga-fs-eyebrow);
   letter-spacing: var(--oga-tracking-eyebrow);
   text-transform: uppercase;
-  color: var(--oga-fg);
-  flex-shrink: 0;
+  margin: 0 0 var(--oga-1);
 }
 
-.oga-mcp-banner__sep {
-  width: 4px; height: 4px;
-  background: var(--oga-fg-muted);
-  border-radius: 50%;
-  opacity: 0.5;
-  flex-shrink: 0;
-}
-
-.oga-mcp-banner__text {
+.oga-mcp-tools__group-tagline {
   font-family: var(--oga-font-sans);
   font-size: 14px;
-  line-height: 1.5;
-  color: var(--oga-fg-muted);
+  line-height: 1.55;
   margin: 0;
-  flex: 1 1 240px;
+}
+
+[data-oga-surface="dark"] .oga-mcp-tools__group-icon {
+  color: var(--oga-white);
+}
+
+[data-oga-surface="dark"] .oga-mcp-tools__group-label {
+  color: var(--oga-white);
+}
+
+[data-oga-surface="dark"] .oga-mcp-tools__group-tagline {
+  color: rgba(250, 248, 244, 0.72);
+}
+
+/* Marquee variant — accent stripe on the area_brief card so the
+   wow-factor tool reads as featured without breaking the grid. */
+.oga-mcp-tools__card--marquee {
+  border-left-width: 3px;
+  border-left-color: var(--oga-fg);
+}
+
+[data-oga-surface="dark"] .oga-mcp-tools__card--marquee {
+  border-left-color: var(--oga-white);
 }
