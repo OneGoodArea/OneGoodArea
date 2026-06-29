@@ -443,68 +443,13 @@
 .oga-mcp-dev__source a:hover { background: var(--oga-ink-06); }
 
 /* ============================================================
-   04 — Plans pointer (replaces the killed price table)
+   04 — Plans pointer (AR-373: pricing-tier card killed; the
+   MCP is just free, no other claims)
    ============================================================ */
 
-.oga-mcp-plans__card {
-  border: 1px solid var(--oga-border);
-  border-left: 3px solid var(--oga-ink);
-  border-radius: var(--oga-radius-md);
-  background: var(--oga-white);
-  padding: var(--oga-6);
-  display: grid;
-  grid-template-columns: 200px 1fr;
-  gap: var(--oga-6);
-  align-items: start;
+.oga-mcp-plans__pointer {
+  display: flex;
 }
-
-@media (max-width: 760px) {
-  .oga-mcp-plans__card { grid-template-columns: 1fr; gap: var(--oga-4); }
-}
-
-.oga-mcp-plans__label {
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--oga-fg-muted);
-}
-
-.oga-mcp-plans__body p {
-  font-family: var(--oga-font-sans);
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--oga-fg);
-  margin: 0 0 var(--oga-3);
-}
-
-.oga-mcp-plans__body p:last-child { margin-bottom: 0; }
-
-.oga-mcp-plans__body code {
-  font-family: var(--oga-font-mono);
-  font-size: 12px;
-  background: var(--oga-ink-06);
-  border: 1px solid var(--oga-border);
-  padding: 1px 5px;
-  border-radius: 3px;
-}
-
-.oga-mcp-plans__cta {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--oga-2);
-  margin-top: var(--oga-3);
-  font-family: var(--oga-font-mono);
-  font-size: 12px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--oga-fg);
-  text-decoration: none;
-  border-bottom: 1px solid var(--oga-ink);
-  padding-bottom: 1px;
-}
-
-.oga-mcp-plans__cta:hover { background: var(--oga-ink-06); }
 
 /* ============================================================
    Final CTA (DARK)

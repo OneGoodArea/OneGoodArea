@@ -99,7 +99,7 @@ import {
   executeAreaBrief,
 } from "./tools/area-brief.js";
 
-const SERVER_VERSION = "1.0.0";
+const SERVER_VERSION = "1.0.1";
 
 function readApiKey(): string {
   const key = process.env.OOGA_API_KEY;

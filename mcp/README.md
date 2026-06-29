@@ -1,8 +1,8 @@
 # `@oga-mcp/server`
 
-OneGoodArea MCP server — UK area intelligence inside Claude Desktop, Cursor, Windsurf, or any MCP-compatible client.
+OneGoodArea MCP server — UK area intelligence inside Claude Desktop, Cursor, Claude Code, Windsurf, or any MCP-compatible client.
 
-Score any UK postcode (or place name) for residential mortgage origination, retail site selection, property investment, or as a neutral reference baseline. Driven by the same engine that powers https://www.onegoodarea.com — five weighted dimensions per preset, confidence per dimension with engine-grounded reasoning, source attribution, public methodology.
+Score UK areas for one of four decision presets, query the signals catalog directly, ask in natural language, find peers, watch portfolios for material change, and generate audience-shaped briefs — all server-composed from the deterministic OneGoodArea engine. No client-side prose synthesis: every line of output cites real engine state.
 
 ---
 
@@ -46,71 +46,90 @@ Add to `.cursor/mcp.json` in your project (or global config):
 }
 ```
 
+### Claude Code (CLI)
+
+One command:
+
+```sh
+claude mcp add onegoodarea -e OOGA_API_KEY=oga_xxx -- npx -y @oga-mcp/server
+```
+
 ---
 
 ## Get an API key
 
-1. Sign up at https://www.onegoodarea.com/sign-up (Sandbox tier is free, 35 calls/month for evaluation).
+1. Sign up at https://www.onegoodarea.com/sign-up.
 2. Go to https://www.onegoodarea.com/dashboard.
 3. Create an API key — it starts with `oga_`.
-4. Paste into the `OOGA_API_KEY` env var above.
-
-For higher volume, upgrade at https://www.onegoodarea.com/pricing.
+4. Paste it into the `OOGA_API_KEY` env var above.
 
 ---
 
 ## Tools
 
-Every tool's response is composed server-side from real engine state. No client-side text synthesis: the prose you see comes from the deterministic engine that produced the score.
+Eleven tools across six surfaces. Every response is composed server-side from the deterministic engine — no client-side prose synthesis.
 
-### `score_postcode(area, preset)`
+### Scores
 
-Scores a UK postcode (or place name) for one of four decision presets.
+#### `score_postcode(area, preset)`
 
-**Arguments:**
+Score a UK postcode or place name for a preset (`moving`, `business`, `investing`, `research`). Returns the 0-100 score, five weighted dimensions with engine-grounded reasoning + confidence, a one-paragraph summary, recommendations, and data sources.
 
-- `area` (string, required): UK postcode like `"SW1A 1AA"` or place name like `"Manchester city centre"`. Max 100 characters.
-- `preset` (string, required): One of:
-  - `moving` — origination scoring (residential mortgage suitability, demand-side risk)
-  - `business` — site selection (footfall, competition, commercial viability)
-  - `investing` — investment scoring (yield, growth, regeneration)
-  - `research` — reference scoring (neutral baseline, equal weights)
+#### `compare_postcodes(areas, preset)`
 
-**Returns:** Markdown with the overall 0-100 score, five weighted dimensions with the engine's per-dimension reasoning and confidence reason, a server-composed one-paragraph summary, actionable recommendations from low-scoring or low-confidence dimensions, and the list of public datasets that contributed.
+Score 2-8 areas side-by-side for the same preset. Returns a sorted comparison table with per-area summaries. Partial failures surface inline.
 
-### `compare_postcodes(areas, preset)`
+### Signals
 
-Scores 2-8 UK areas side-by-side for the same preset.
+#### `get_area_signals(area)`
 
-**Arguments:**
+Full signals catalog across all seven categories (crime, deprivation, property, schools, amenities, transport, environment). Each signal carries value + unit, percentile when store-backed, confidence with engine-grounded reason, source attribution, and observation period.
 
-- `areas` (string[], required): 2-8 UK postcodes or place names.
-- `preset` (string, required): Same preset values as `score_postcode`.
+#### `get_signals_by_category(area, category)`
 
-**Returns:** A sorted comparison table (rank, area, score, area type, top dimension) plus per-area summaries from the engine. Partial failures are surfaced inline rather than failing the whole call.
+Same shape as `get_area_signals`, narrowed to one category. Use when the LLM needs to focus on a single data domain.
 
-### `methodology_for(dimension)`
+### Intelligence
 
-Explains how a specific scoring dimension is computed. Static lookup — no network, no quota cost.
+#### `find_areas(question)`
 
-### `engine_version()`
+Ask in natural language. The planner translates the question into a typed plan (one of seven ops: `rank_areas`, `get_area`, `score_area`, `compare_areas`, `find_peers`, `find_insights`, `find_forecast`); the database executes it. The response returns the emitted plan + results so every answer is reproducible.
 
-Returns the current engine version + changelog. Static lookup. The live engine version is also echoed on every `score_postcode` response.
+#### `find_peers(area, k?)`
+
+k-nearest-neighbour peers for a UK area by normalised signal values. Returns the target's geo_code, the signal dimensions used in the comparison, and a ranked peers list with distance (0 = identical, 1 = maximally distant) and `n_dims_used`.
+
+### Monitor
+
+#### `watch_portfolio(name, areas)`
+
+One-shot setup: creates a tracked portfolio and adds areas. Returns the new `portfolio_id` and the area list. If the add step fails after the create, the response surfaces the partial state so the LLM can act.
+
+#### `get_portfolio_changes(portfolio_id, threshold_pct?, baseline?, min_transactions?)`
+
+Check a portfolio for material signal changes between two time-series periods. Returns scope, counts, and a per-area table of material moves with direction, from/to values, delta, and percent change. Probe calls don't fire customer webhooks.
+
+### Brief
+
+#### `area_brief(area, audience)` — marquee
+
+One audience-shaped advisory document per area. Audience ∈ `{lender, insurer, retailer, investor}`. Composes the full signals catalog with the audience's scoring preset (with explain mode), then renders an audience-specific brief: overall verdict, audience-relevant dimensions, audience-relevant signals with provenance, recommendations, and data sources.
+
+### Reference
+
+#### `methodology_for(dimension)`
+
+Methodology for any scoring dimension: data source, scoring function summary, per-preset weights. Static lookup — no network, no quota cost.
+
+#### `engine_version()`
+
+Current engine version and changelog. Static lookup. The live engine version is also stamped on every `score_postcode` and `get_area_signals` response.
 
 ---
 
 ## Pricing
 
-The MCP server itself is free. API calls go through your OneGoodArea plan:
-
-- Sandbox £0/mo · 35 API calls — evaluation only
-- Starter £49/mo · 1,500 calls
-- Build £149/mo · 6,000 calls
-- Scale £499/mo · 25,000 calls
-- Growth £1,499/mo · 100,000 calls — includes MCP server access at no extra cost
-- Enterprise from £4,999/mo · 250,000+ calls — includes MCP server access
-
-For Sandbox / Starter / Build / Scale, MCP access is a £29/mo add-on.
+The MCP server is **free**. API calls go through your OneGoodArea plan — current tiers and any MCP-specific terms live at https://www.onegoodarea.com/pricing.
 
 ---
 
