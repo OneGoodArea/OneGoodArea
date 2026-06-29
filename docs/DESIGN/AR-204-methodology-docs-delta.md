@@ -245,7 +245,7 @@ The Scalar embed itself works fine. The spec it renders is misleading buyers abo
 
 **File:** `apps/web/src/app/docs/mcp/client.tsx`
 
-**Current narrative:** "Add the @onegoodarea/mcp-server npm package to Claude Desktop or Cursor. Four tools. Free on Growth + Enterprise, £29/mo add-on otherwise."
+**Current narrative:** "Add the @oga-mcp/server npm package to Claude Desktop or Cursor. Four tools. Free on Growth + Enterprise, £29/mo add-on otherwise."
 
 ### What's still true
 

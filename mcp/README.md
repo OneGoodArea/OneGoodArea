@@ -1,4 +1,4 @@
-# `@onegoodarea/mcp-server`
+# `@oga-mcp/server`
 
 OneGoodArea MCP server — UK area intelligence inside Claude Desktop, Cursor, Windsurf, or any MCP-compatible client.
 
@@ -19,7 +19,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
   "mcpServers": {
     "onegoodarea": {
       "command": "npx",
-      "args": ["-y", "@onegoodarea/mcp-server"],
+      "args": ["-y", "@oga-mcp/server"],
       "env": {
         "OOGA_API_KEY": "oga_xxx"
       }
@@ -39,7 +39,7 @@ Add to `.cursor/mcp.json` in your project (or global config):
   "mcpServers": {
     "onegoodarea": {
       "command": "npx",
-      "args": ["-y", "@onegoodarea/mcp-server"],
+      "args": ["-y", "@oga-mcp/server"],
       "env": { "OOGA_API_KEY": "oga_xxx" }
     }
   }

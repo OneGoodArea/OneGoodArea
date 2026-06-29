@@ -16,7 +16,7 @@ import "./mcp.css";
 
 /* /docs/mcp — Brand v3 (Plotted).
 
-   Install + usage guide for @onegoodarea/mcp-server (mcp/src/*).
+   Install + usage guide for @oga-mcp/server (mcp/src/*).
    Rewritten in AR-370 after epic AR-362 shipped: the rebuild
    landed, the tool catalog grew from 4 to 11, the key prefix
    migrated from aiq_ to oga_. Tool groups (Scores / Signals /
@@ -185,7 +185,7 @@ function Hero() {
           </span>
           <span>MCP server</span>
           <span className="oga-mcp-hero__eyebrow-sep" aria-hidden />
-          <span>npm · @onegoodarea/mcp-server</span>
+          <span>npm · @oga-mcp/server</span>
         </div>
 
         <h1 className="oga-mcp-hero__title">
@@ -273,7 +273,7 @@ function SectionInstall() {
   "mcpServers": {
     "onegoodarea": {
       "command": "npx",
-      "args": ["-y", "@onegoodarea/mcp-server"],
+      "args": ["-y", "@oga-mcp/server"],
       "env": {
         "OOGA_API_KEY": "oga_..."
       }
@@ -298,7 +298,7 @@ function SectionInstall() {
   "mcpServers": {
     "onegoodarea": {
       "command": "npx",
-      "args": ["-y", "@onegoodarea/mcp-server"],
+      "args": ["-y", "@oga-mcp/server"],
       "env": { "OOGA_API_KEY": "oga_..." }
     }
   }
@@ -407,7 +407,7 @@ function SectionDev() {
   "mcpServers": {
     "onegoodarea-dev": {
       "command": "npx",
-      "args": ["-y", "@onegoodarea/mcp-server"],
+      "args": ["-y", "@oga-mcp/server"],
       "env": {
         "OOGA_API_KEY": "oga_dev",
         "OOGA_API_BASE": "http://localhost:4000"
