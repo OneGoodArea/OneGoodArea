@@ -3,7 +3,7 @@ import { authenticateSession } from "../shared/auth-session";
 import { isAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { isSuperuser } from "../modules/usage";
-import { getAnalytics, getTrafficAnalytics, getAudienceStats, getUsageStats, getRevenueExtras } from "../modules/admin";
+import { getAnalytics, getTrafficAnalytics, getAudienceStats, getUsageStats, getRevenueExtras, getMcpAdoption } from "../modules/admin";
 
 /** admin route handlers — extracted from app.ts per AR-286. */
 export function registerAdminRoutes(app: FastifyInstance): void {
@@ -113,6 +113,33 @@ export function registerAdminRoutes(app: FastifyInstance): void {
         } catch (error) {
           logger.error("Admin revenue extras error:", error);
           return reply.code(500).send({ error: "Failed to fetch revenue extras" });
+        }
+      });
+
+    /* AR-375: MCP adoption tile for the /admin Usage tab. Reads the
+       mcp_adoption view (source=mcp, last 30d) and returns aggregate
+       counts. Raw event metadata is NEVER surfaced here — admin tile
+       privacy default per plan 029. */
+    app.get("/admin/mcp-adoption",
+      {
+        schema: {
+          tags: ["Admin"],
+          summary: "MCP adoption stats (superuser only)",
+          description: "Aggregate MCP usage last 30 days: total events, unique orgs/users, top orgs, breakdown by client app. No raw metadata.",
+        },
+      },
+      async (request, reply) => {
+        try {
+          const userId = await authenticateSession(request, reply);
+          if (!userId) return reply;
+          if (!(await isSuperuser(userId))) {
+            return reply.code(403).send({ error: "Forbidden" });
+          }
+          const data = await getMcpAdoption();
+          return reply.send(data);
+        } catch (error) {
+          logger.error("Admin MCP adoption error:", error);
+          return reply.code(500).send({ error: "Failed to fetch MCP adoption" });
         }
       });
 }

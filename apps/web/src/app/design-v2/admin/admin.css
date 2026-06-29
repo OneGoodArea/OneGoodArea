@@ -294,6 +294,19 @@
   gap: 12px;
   align-items: center;
 }
+
+/* AR-375: lightweight subsection header inside an AppCard. Used by the
+   MCP adoption tile to separate "By client app" from "Top orgs". */
+.oga-admin__subhead {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin: 16px 0 8px;
+}
+.oga-admin__subhead:first-child { margin-top: 0; }
 .oga-admin__intent-label {
   font-family: var(--oga-font-mono);
   font-size: 11px;

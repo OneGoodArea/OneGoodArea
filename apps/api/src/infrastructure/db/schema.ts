@@ -844,4 +844,48 @@ export const MIGRATIONS: Migration[] = [
          WHERE accepted_at IS NULL AND revoked_at IS NULL`,
     ],
   },
+  // AR-375 / plan 029: MCP adoption visibility. The view answers
+  // "which orgs are using MCP, with which tools, from which client,
+  // how much, when last seen?" without exposing chat content.
+  //
+  // Read path: aggregate counts only, never raw metadata. /admin tile
+  // (Step 7) queries this view. Raw event metadata requires deliberate
+  // SQL access (superuser).
+  //
+  // Filter: metadata->>'source' = 'mcp' — set by the AR-375 onRequest
+  // hook for any request bearing the onegoodarea-mcp-server User-Agent.
+  // Pre-AR-375 rows never had 'source' set, so the legacy data is
+  // implicitly excluded (correct — we couldn't have classified it).
+  //
+  // Window: last 30 days. Larger windows are still queryable directly
+  // against activity_events. 30d matches how /api-usage thinks about
+  // adoption and keeps the tile snappy.
+  //
+  // CREATE OR REPLACE VIEW is idempotent by definition.
+  {
+    name: "mcp_adoption_view",
+    statements: [
+      `CREATE OR REPLACE VIEW mcp_adoption AS
+        SELECT
+          ae.org_id,
+          o.name AS org_name,
+          o.display_name AS org_display_name,
+          ae.user_id,
+          u.email AS user_email,
+          ae.event AS event_name,
+          ae.metadata->>'client_app' AS client_app,
+          COUNT(*)::INT AS event_count,
+          MAX(ae.created_at) AS last_seen
+        FROM activity_events ae
+        LEFT JOIN users u ON u.id = ae.user_id
+        LEFT JOIN orgs o ON o.id = ae.org_id
+        WHERE ae.metadata->>'source' = 'mcp'
+          AND ae.created_at >= NOW() - INTERVAL '30 days'
+        GROUP BY
+          ae.org_id, o.name, o.display_name,
+          ae.user_id, u.email,
+          ae.event,
+          ae.metadata->>'client_app'`,
+    ],
+  },
 ];

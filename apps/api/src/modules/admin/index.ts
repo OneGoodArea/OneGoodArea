@@ -552,3 +552,69 @@ export async function getRevenueExtras(): Promise<RevenueExtras> {
     addons: typedRows<{ addon_key: string; active_count: number }>(addonsByKey),
   };
 }
+
+/* AR-375: MCP adoption snapshot for the /admin Usage tab tile. Reads
+   the mcp_adoption view (last 30 days, source=mcp) and returns
+   AGGREGATE counts only — never raw event metadata. Privacy-by-default
+   per plan 029 decision #12. */
+
+export interface McpAdoptionStats {
+  total_events_30d: number;
+  unique_orgs_30d: number;
+  unique_users_30d: number;
+  top_orgs: {
+    org_id: string | null;
+    org_name: string | null;
+    event_count: number;
+    last_seen: string;
+  }[];
+  by_client_app: { client_app: string; event_count: number }[];
+}
+
+export async function getMcpAdoption(): Promise<McpAdoptionStats> {
+  const [totalsRows, topOrgsRows, byClientRows] = await Promise.all([
+    sql`
+      SELECT
+        COALESCE(SUM(event_count), 0)::INT AS total_events,
+        COUNT(DISTINCT org_id)::INT AS unique_orgs,
+        COUNT(DISTINCT user_id)::INT AS unique_users
+      FROM mcp_adoption
+    `,
+    sql`
+      SELECT
+        org_id,
+        COALESCE(org_display_name, org_name) AS org_name,
+        SUM(event_count)::INT AS event_count,
+        MAX(last_seen) AS last_seen
+      FROM mcp_adoption
+      GROUP BY org_id, COALESCE(org_display_name, org_name)
+      ORDER BY event_count DESC
+      LIMIT 10
+    `,
+    sql`
+      SELECT
+        COALESCE(client_app, 'other') AS client_app,
+        SUM(event_count)::INT AS event_count
+      FROM mcp_adoption
+      GROUP BY COALESCE(client_app, 'other')
+      ORDER BY event_count DESC
+    `,
+  ]);
+
+  const totals = row<{ total_events: number; unique_orgs: number; unique_users: number }>(
+    totalsRows[0],
+  );
+
+  return {
+    total_events_30d: totals.total_events,
+    unique_orgs_30d: totals.unique_orgs,
+    unique_users_30d: totals.unique_users,
+    top_orgs: typedRows<{
+      org_id: string | null;
+      org_name: string | null;
+      event_count: number;
+      last_seen: string;
+    }>(topOrgsRows),
+    by_client_app: typedRows<{ client_app: string; event_count: number }>(byClientRows),
+  };
+}

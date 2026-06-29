@@ -115,7 +115,23 @@ type RevenueExtras = {
   addons: { addon_key: string; active_count: number }[];
 };
 
-export type { Analytics, TrafficData, AudienceStats, UsageStats, RevenueExtras };
+/* AR-375: MCP adoption snapshot for the /admin Usage tab tile. Aggregate
+   counts only — see plan/029 decision #12. Raw event metadata is never
+   shipped to the client. */
+type McpAdoption = {
+  total_events_30d: number;
+  unique_orgs_30d: number;
+  unique_users_30d: number;
+  top_orgs: {
+    org_id: string | null;
+    org_name: string | null;
+    event_count: number;
+    last_seen: string;
+  }[];
+  by_client_app: { client_app: string; event_count: number }[];
+};
+
+export type { Analytics, TrafficData, AudienceStats, UsageStats, RevenueExtras, McpAdoption };
 
 const PLAN_PRICES: Record<string, number> = {
   starter: 29,
@@ -155,12 +171,14 @@ export default function AdminClient({
   audience,
   usage,
   revenue,
+  mcpAdoption,
 }: {
   analytics: Analytics | null;
   traffic: TrafficData | null;
   audience: AudienceStats | null;
   usage: UsageStats | null;
   revenue: RevenueExtras | null;
+  mcpAdoption: McpAdoption | null;
 }) {
   const [tab, setTab] = useState<AdminTab>("revenue");
 
@@ -225,7 +243,7 @@ export default function AdminClient({
             )
           ) : tab === "usage" ? (
             usage ? (
-              <UsagePanel usage={usage} />
+              <UsagePanel usage={usage} mcpAdoption={mcpAdoption} />
             ) : (
               <div className="oga-admin__empty">No usage data available</div>
             )
@@ -383,7 +401,13 @@ function StaleUsersList({
 /* ============================================================
    AR-313 Phase 2 — Usage panel
    ============================================================ */
-function UsagePanel({ usage }: { usage: UsageStats }) {
+function UsagePanel({
+  usage,
+  mcpAdoption,
+}: {
+  usage: UsageStats;
+  mcpAdoption: McpAdoption | null;
+}) {
   return (
     <>
       <div className="oga-admin__kpi">
@@ -411,7 +435,60 @@ function UsagePanel({ usage }: { usage: UsageStats }) {
           <EndpointHeatmap endpoints={usage.top_endpoints} />
         )}
       </AppCard>
+
+      {/* AR-375: MCP adoption tile. Aggregate counts only — raw event
+          metadata is never rendered. Per plan/029 decision #12. */}
+      <McpAdoptionTile mcp={mcpAdoption} />
     </>
+  );
+}
+
+function McpAdoptionTile({ mcp }: { mcp: McpAdoption | null }) {
+  if (!mcp) {
+    return (
+      <AppCard title="MCP adoption" note="Last 30 days · source=mcp">
+        <EmptyNote>MCP adoption data unavailable.</EmptyNote>
+      </AppCard>
+    );
+  }
+  const hasData = mcp.total_events_30d > 0;
+  return (
+    <AppCard title="MCP adoption" note="Last 30 days · source=mcp">
+      <div className="oga-admin__kpi">
+        <StatCell label="MCP calls (30d)" value={mcp.total_events_30d} accent="strong" />
+        <StatCell label="Unique orgs (30d)" value={mcp.unique_orgs_30d} />
+        <StatCell label="Unique users (30d)" value={mcp.unique_users_30d} />
+      </div>
+      {!hasData ? (
+        <EmptyNote>No MCP calls in the last 30 days.</EmptyNote>
+      ) : (
+        <>
+          <div className="oga-admin__subhead">By client app</div>
+          <ProductBars
+            data={mcp.by_client_app.map((c) => ({
+              product: c.client_app,
+              calls_30d: c.event_count,
+            }))}
+          />
+          <div className="oga-admin__subhead">Top orgs</div>
+          <ul className="oga-admin__intents">
+            {mcp.top_orgs.map((o) => (
+              <li key={o.org_id ?? "null"} className="oga-admin__intent-row">
+                <span className="oga-admin__intent-label">
+                  {o.org_name ?? o.org_id ?? "(unknown)"}
+                </span>
+                <span className="oga-admin__intent-count">
+                  {o.event_count.toLocaleString()}
+                </span>
+                <span className="oga-admin__intent-pct">
+                  {new Date(o.last_seen).toLocaleDateString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </AppCard>
   );
 }
 
