@@ -132,6 +132,12 @@ export const MIGRATIONS: Migration[] = [
       // validateApiKey checks the request IP against each CIDR and
       // surfaces 403 ip_not_allowed if no match. See ADR 0034.
       `ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS allowed_ip_cidrs TEXT[] NOT NULL DEFAULT '{}'`,
+      // AR-375 / plan 029: per-key opt-out from proprietary training-data
+      // capture (AR-376 query_planner_logs, AR-377 brief_composer_logs).
+      // Default FALSE = customer participates in training. When TRUE, both
+      // training-table inserts skip silently — adoption tracking via
+      // activity_events still happens. Documented in docs/DATA_POLICY.md.
+      `ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS training_optout BOOLEAN NOT NULL DEFAULT FALSE`,
       `CREATE UNIQUE INDEX IF NOT EXISTS api_keys_key_hash_idx ON api_keys (key_hash)`,
       `CREATE INDEX IF NOT EXISTS api_keys_org_idx ON api_keys (org_id)`,
     ],
