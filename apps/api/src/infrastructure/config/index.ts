@@ -22,6 +22,10 @@ export interface ApiConfig {
   // AI
   aiProvider: string;
   anthropicApiKey: string | undefined;
+  /* AR-383: model ID for the NL planner. Defaults to the current
+     Sonnet. Make env-configurable so future Anthropic model retirements
+     are a Render env-var change, not a code deploy. */
+  anthropicModel: string;
 
   // Email
   emailProvider: string;
@@ -94,6 +98,7 @@ export function getConfig(): ApiConfig {
     // AI
     aiProvider: process.env.OGA_AI_PROVIDER ?? "anthropic",
     anthropicApiKey: process.env.ANTHROPIC_API_KEY,
+    anthropicModel: process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-6",
 
     // Email
     emailProvider: process.env.OGA_EMAIL_PROVIDER ?? "resend",
