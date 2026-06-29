@@ -273,15 +273,9 @@ export OGA_CRON_SECRET="cron_..."
 ./scripts/api-test-suite.sh localhost:8080
 ```
 
-**"No cached data available" from widget endpoint**
-The widget endpoint serves **cached reports only**. Generate a report first:
-```bash
-curl -X POST http://localhost:8080/v1/report \
-  -H "Authorization: Bearer $OGA_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"area":"SW1A1AA","intent":"moving"}'
-```
-Then retry the widget test.
+<!-- AR-379: /widget endpoint removed 2026-06-29 (plan/030). Cache
+     infrastructure deleted. Future embeddable surface is a clean rebuild
+     on the v2 signal-first stack, not a resurrection of this code path. -->
 
 ## Related
 

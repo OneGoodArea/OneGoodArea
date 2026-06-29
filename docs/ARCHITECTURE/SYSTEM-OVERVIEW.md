@@ -406,7 +406,7 @@ These endpoints exist in apps/api but the consumer site at www.onegoodarea.com s
 | Method | Path | Auth | Dark? | What it does |
 |---|---|---|---|---|
 | POST | `/track` | Public | — | Analytics event ingest (page views, conversions). |
-| GET | `/widget` | Public | — | Iframe-able widget HTML for embeds. |
+| ~~GET~~ | ~~`/widget`~~ | — | — | Removed 2026-06-29 (AR-379, plan/030) along with the area_cache table. |
 | GET | `/cron/rescore` | CRON_SECRET | — | Legacy in-app cron: re-score every cached report. Gated by header secret. |
 
 ### Tally

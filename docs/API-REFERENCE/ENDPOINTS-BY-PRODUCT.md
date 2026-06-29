@@ -194,20 +194,15 @@ Session-authenticated endpoints for logged-in user account management.
 
 ---
 
-## Public Health & Tracking (4)
+## Public Health & Tracking (3)
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
 | GET | `/health` | Public | Liveness probe (returns `{status: "ok"}`) |
 | GET | `/v1/meta` | Public | Service metadata + contracts version |
 | POST | `/track` | Public | Analytics pageview (device + country + referrer; never fails) |
-| GET | `/widget` | Public | Cached area summary for postcode (rate-limited by origin) |
 
-**CORS preflight:**
-
-| Method | Path | Auth | Notes |
-|---|---|---|---|
-| OPTIONS | `/widget` | Public | CORS preflight for widget |
+> `/widget` removed 2026-06-29 (AR-379, plan/030). Cache infrastructure deleted. A future embeddable surface will be a clean rebuild on the v2 signal-first stack.
 
 ---
 
