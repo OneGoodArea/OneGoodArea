@@ -440,29 +440,19 @@ function SectionPlans() {
             <span className="oga-mcp__eyebrow-line" aria-hidden />
             <span>Plans</span>
           </div>
-          <h2 className="oga-mcp__h2">Free to install. Calls go through your plan.</h2>
+          <h2 className="oga-mcp__h2">The MCP server is free.</h2>
           <p className="oga-mcp__lead">
-            The MCP server itself is open source and free. Every tool invocation makes a real call to
-            the OneGoodArea API and counts against your plan&rsquo;s monthly quota — same as any other
-            integration.
+            Open source, no per-call MCP fee. Tool invocations make real calls to the OneGoodArea API
+            and consume your account quota the same way any other integration does. Current tiers and
+            any MCP-specific terms live on the pricing page.
           </p>
         </header>
 
-        <article className="oga-mcp-plans__card">
-          <div className="oga-mcp-plans__label">
-            Pricing in flight
-          </div>
-          <div className="oga-mcp-plans__body">
-            <p>
-              We&rsquo;re finalising the tier structure for v3. Once that lands, plan pages and any
-              MCP-specific add-on will appear at <code>/pricing</code>. For now: get an API key, point
-              your client at the server, and start.
-            </p>
-            <Link href="/pricing" className="oga-mcp-plans__cta">
-              See plans <span aria-hidden>→</span>
-            </Link>
-          </div>
-        </article>
+        <div className="oga-mcp-plans__pointer">
+          <Link href="/pricing" className="oga-btn oga-btn-secondary">
+            See pricing <span aria-hidden>→</span>
+          </Link>
+        </div>
       </div>
     </section>
   );
