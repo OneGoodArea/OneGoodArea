@@ -131,7 +131,18 @@ type McpAdoption = {
   by_client_app: { client_app: string; event_count: number }[];
 };
 
-export type { Analytics, TrafficData, AudienceStats, UsageStats, RevenueExtras, McpAdoption };
+/* AR-376: training-corpus snapshot. Aggregate planner-pair counts + the
+   opt-out denominator over active API keys. No raw question text or
+   plan content is ever shipped here. */
+type TrainingCorpus = {
+  planner_pairs_30d: number;
+  planner_pairs_total: number;
+  planner_last_seen: string | null;
+  keys_opted_out: number;
+  keys_total: number;
+};
+
+export type { Analytics, TrafficData, AudienceStats, UsageStats, RevenueExtras, McpAdoption, TrainingCorpus };
 
 const PLAN_PRICES: Record<string, number> = {
   starter: 29,
@@ -172,6 +183,7 @@ export default function AdminClient({
   usage,
   revenue,
   mcpAdoption,
+  trainingCorpus,
 }: {
   analytics: Analytics | null;
   traffic: TrafficData | null;
@@ -179,6 +191,7 @@ export default function AdminClient({
   usage: UsageStats | null;
   revenue: RevenueExtras | null;
   mcpAdoption: McpAdoption | null;
+  trainingCorpus: TrainingCorpus | null;
 }) {
   const [tab, setTab] = useState<AdminTab>("revenue");
 
@@ -243,7 +256,7 @@ export default function AdminClient({
             )
           ) : tab === "usage" ? (
             usage ? (
-              <UsagePanel usage={usage} mcpAdoption={mcpAdoption} />
+              <UsagePanel usage={usage} mcpAdoption={mcpAdoption} trainingCorpus={trainingCorpus} />
             ) : (
               <div className="oga-admin__empty">No usage data available</div>
             )
@@ -404,9 +417,11 @@ function StaleUsersList({
 function UsagePanel({
   usage,
   mcpAdoption,
+  trainingCorpus,
 }: {
   usage: UsageStats;
   mcpAdoption: McpAdoption | null;
+  trainingCorpus: TrainingCorpus | null;
 }) {
   return (
     <>
@@ -439,7 +454,49 @@ function UsagePanel({
       {/* AR-375: MCP adoption tile. Aggregate counts only — raw event
           metadata is never rendered. Per plan/029 decision #12. */}
       <McpAdoptionTile mcp={mcpAdoption} />
+
+      {/* AR-376: training corpus tile. Counts only — raw NL questions
+          + plans are never rendered here. */}
+      <TrainingCorpusTile corpus={trainingCorpus} />
     </>
+  );
+}
+
+function TrainingCorpusTile({ corpus }: { corpus: TrainingCorpus | null }) {
+  if (!corpus) {
+    return (
+      <AppCard title="Training corpus" note="Planner pairs · /v1/query NL captures">
+        <EmptyNote>Training corpus stats unavailable.</EmptyNote>
+      </AppCard>
+    );
+  }
+  const optoutPct =
+    corpus.keys_total > 0
+      ? Math.round((corpus.keys_opted_out / corpus.keys_total) * 100)
+      : 0;
+  return (
+    <AppCard title="Training corpus" note="Planner pairs · /v1/query NL captures">
+      <div className="oga-admin__kpi">
+        <StatCell
+          label="Pairs (30d)"
+          value={corpus.planner_pairs_30d}
+          accent="strong"
+        />
+        <StatCell label="Pairs total" value={corpus.planner_pairs_total} />
+        <StatCell
+          label="Last capture"
+          value={
+            corpus.planner_last_seen
+              ? new Date(corpus.planner_last_seen).toLocaleDateString()
+              : "—"
+          }
+        />
+        <StatCell
+          label="Keys opted out"
+          value={`${corpus.keys_opted_out} / ${corpus.keys_total} (${optoutPct}%)`}
+        />
+      </div>
+    </AppCard>
   );
 }
 

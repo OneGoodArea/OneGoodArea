@@ -30,15 +30,22 @@ Retention: indefinite. This is operational data we need to bill, debug, and answ
 
 We capture two additional kinds of data to train smaller proprietary models that eventually replace third-party LLM calls in our infrastructure. **You can opt out per API key at any time** (see below).
 
-### Planner training pairs (AR-376 — not yet shipped)
+### Planner training pairs (AR-376 — ACTIVE)
 
-When you call `/v1/query` (`find_areas` via MCP), we'll store:
+When you call `/v1/query` with a natural-language `question` field (`find_areas` via MCP), we store:
 
 - The raw natural-language `question` you sent
-- The full typed `plan` our planner emitted in response
-- Latency + success/failure flag
+- The full typed `plan` our planner emitted in response (or the error code if the call failed)
+- `plan_source` — `"llm"` when the model authored the plan, `"client"` when the caller supplied it (we do NOT log `"client"` rows — those aren't training data)
+- Latency in milliseconds
+- Success/failure flag plus error code on failure
+- `source` (always `"mcp"` for MCP calls) and `client_app` (claude-code / claude-desktop / cursor / other)
+
+We do NOT log the response body — only the emitted plan. Programmatic `/v1/query` calls with `{plan}` are NOT logged (no training value).
 
 **Purpose:** train a smaller LLM to translate natural-language area questions into typed plans, replacing the Anthropic API call we currently make per request.
+
+**Storage:** dedicated `query_planner_logs` table, separate from operational `activity_events`. Superuser-only access at the SQL layer; `/admin` UI shows aggregate counts only.
 
 ### Brief-composer training pairs (AR-377 — not yet shipped)
 
@@ -77,3 +84,4 @@ We'll surface a UI toggle in `/dashboard/keys` once customers exist. Until then 
 ## Changelog
 
 - **2026-06-29 (AR-375):** Initial version. Activity logging, source + client_app classification, opt-out flag landed. Training capture (AR-376 / AR-377) not yet active.
+- **2026-06-29 (AR-376):** Planner training pairs ACTIVE on `/v1/query` (NL `question` field path only). Stored in dedicated `query_planner_logs` table. Per-key `training_optout` honored on every insert. AR-377 (brief composer) still pending.

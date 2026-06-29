@@ -618,3 +618,34 @@ export async function getMcpAdoption(): Promise<McpAdoptionStats> {
     by_client_app: typedRows<{ client_app: string; event_count: number }>(byClientRows),
   };
 }
+
+/* AR-376: training corpus visibility for /admin Usage tab. Counts
+   captured planner pairs over the last 30 days, plus the opt-out
+   denominator. Pure aggregate — never returns raw question text or
+   plan content. */
+
+export interface TrainingCorpusStats {
+  planner_pairs_30d: number;
+  planner_pairs_total: number;
+  planner_last_seen: string | null;
+  keys_opted_out: number;
+  keys_total: number;
+}
+
+export async function getTrainingCorpusStats(): Promise<TrainingCorpusStats> {
+  const [pairs30dRows, pairsTotalRows, lastSeenRows, optoutRows, keysTotalRows] = await Promise.all([
+    sql`SELECT COUNT(*)::INT AS count FROM query_planner_logs WHERE event_ts >= NOW() - INTERVAL '30 days'`,
+    sql`SELECT COUNT(*)::INT AS count FROM query_planner_logs`,
+    sql`SELECT MAX(event_ts) AS last_seen FROM query_planner_logs`,
+    sql`SELECT COUNT(*)::INT AS count FROM api_keys WHERE training_optout = TRUE AND revoked = FALSE`,
+    sql`SELECT COUNT(*)::INT AS count FROM api_keys WHERE revoked = FALSE`,
+  ]);
+
+  return {
+    planner_pairs_30d: row<CountRow>(pairs30dRows[0]).count,
+    planner_pairs_total: row<CountRow>(pairsTotalRows[0]).count,
+    planner_last_seen: row<{ last_seen: string | null }>(lastSeenRows[0]).last_seen,
+    keys_opted_out: row<CountRow>(optoutRows[0]).count,
+    keys_total: row<CountRow>(keysTotalRows[0]).count,
+  };
+}

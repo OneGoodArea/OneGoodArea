@@ -41,6 +41,11 @@ export interface ApiKeyRow {
       no restriction; existing keys are unaffected. validateApiKey checks
       the request IP against each CIDR when non-empty. */
   allowed_ip_cidrs: string[];
+  /** AR-375 / plan 029: per-key opt-out from proprietary training-data
+      capture (AR-376 query_planner_logs, AR-377 brief_composer_logs).
+      Default FALSE = participate. When TRUE, both training-table
+      inserts skip silently. Adoption tracking still happens. */
+  training_optout: boolean;
   name: string;
   created_at: string;
   last_used_at: string | null;

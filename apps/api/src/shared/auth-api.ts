@@ -75,7 +75,7 @@ export async function requireApiAccess(request: FastifyRequest, reply: FastifyRe
 export async function requireApiAccessWithOrg(
   request: FastifyRequest,
   reply: FastifyReply,
-): Promise<{ userId: string; orgId: string | null } | null> {
+): Promise<{ userId: string; orgId: string | null; trainingOptout: boolean } | null> {
   const userId = await requireApiAccess(request, reply);
   if (!userId) return null;
   // The key just validated above — re-extract orgId from the same row.
@@ -87,8 +87,16 @@ export async function requireApiAccessWithOrg(
   // AR-200: pass clientIp so the second validateApiKey call has the same
   // gate behaviour as the first. The `blocked` branch carries orgId too,
   // so we surface it identically.
+  //
+  // AR-376: also lift `trainingOptout` so the planner-logs / brief-composer
+  // inserts can decide whether to capture this request. Default FALSE
+  // (participate) when the key validates without surfacing the field.
   const header = request.headers.authorization!;
   const result = await validateApiKey(header.slice(7), clientIpOf(request));
-  if (!result) return { userId, orgId: null };
-  return { userId, orgId: result.orgId ?? null };
+  if (!result) return { userId, orgId: null, trainingOptout: false };
+  return {
+    userId,
+    orgId: result.orgId ?? null,
+    trainingOptout: ("trainingOptout" in result ? result.trainingOptout : false) ?? false,
+  };
 }
