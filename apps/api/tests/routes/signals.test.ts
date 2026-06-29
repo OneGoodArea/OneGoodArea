@@ -5,7 +5,6 @@ vi.mock("@/infrastructure/rate-limit", () => ({ rateLimit: vi.fn(), rateLimitHea
 vi.mock("@/modules/usage", () => ({ hasApiAccess: vi.fn() }));
 vi.mock("@/modules/tracking/activity", () => ({ trackEvent: vi.fn() }));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn(), query: vi.fn() }));
-vi.mock("@/modules/cache/area-cache", () => ({ getCachedAreaResult: vi.fn() }));
 // Partial mock: keep real exports (e.g. parseAreasQuery) but stub DB-touching functions.
 vi.mock("@/modules/signals", async (orig) => {
   const actual = await orig() as object;
@@ -19,7 +18,6 @@ import { hasApiAccess } from "@/modules/usage";
 import { getAreaProfile, queryAreas } from "@/modules/signals";
 import { trackEvent } from "@/modules/tracking/activity";
 import { sql } from "@/infrastructure/db/client";
-import { getCachedAreaResult } from "@/modules/cache/area-cache";
 
 const app = await buildApp();
 afterAll(() => {
@@ -32,7 +30,6 @@ const mockRate = vi.mocked(rateLimit);
 const mockApiAccess = vi.mocked(hasApiAccess);
 const mockProfile = vi.mocked(getAreaProfile);
 const mockQuery = vi.mocked(queryAreas);
-const mockCache = vi.mocked(getCachedAreaResult);
 
 // ── v1-area + v1-signals shared profile ────────────────────────────
 
@@ -72,7 +69,6 @@ beforeEach(() => {
   mockQuery.mockResolvedValue([
     { geo_type: "lsoa", geo_code: "E01000001", value: 1, normalized_value: 0.01, percentile: 1 },
   ]);
-  mockCache.mockResolvedValue(null);
 });
 
 // ── v1-area.test.ts ─────────────────────────────────────────────────
@@ -305,70 +301,4 @@ describe("GET /v1/areas", () => {
   });
 });
 
-// ── widget.test.ts ──────────────────────────────────────────────────
-
-describe("OPTIONS /widget", () => {
-  it("returns 204 with CORS headers", async () => {
-    const res = await app.inject({ method: "OPTIONS", url: "/widget", headers: { origin: "https://embed.example.com" } });
-    expect(res.statusCode).toBe(204);
-    expect(res.headers["access-control-allow-origin"]).toBe("https://embed.example.com");
-    expect(res.headers["access-control-allow-methods"]).toBe("GET, OPTIONS");
-  });
-});
-
-describe("GET /widget", () => {
-  it("sets CORS headers and 400s without a postcode", async () => {
-    const res = await app.inject({ method: "GET", url: "/widget" });
-    expect(res.statusCode).toBe(400);
-    expect(res.headers["access-control-allow-origin"]).toBe("*");
-  });
-
-  it("400s on an invalid postcode", async () => {
-    const res = await app.inject({ method: "GET", url: "/widget?postcode=%20" });
-    expect(res.statusCode).toBe(400);
-    expect(mockCache).not.toHaveBeenCalled();
-  });
-
-  it("429s when rate limited", async () => {
-    mockRate.mockResolvedValue({ success: false, remaining: 0, reset: 0 });
-    const res = await app.inject({ method: "GET", url: "/widget?postcode=M1+1AE" });
-    expect(res.statusCode).toBe(429);
-    expect(mockCache).not.toHaveBeenCalled();
-  });
-
-  it("404s on a cache miss (cache-only, never generates)", async () => {
-    mockCache.mockResolvedValue(null);
-    const res = await app.inject({ method: "GET", url: "/widget?postcode=M1+1AE" });
-    expect(res.statusCode).toBe(404);
-  });
-
-  it("returns the shaped cached summary on a hit", async () => {
-    mockCache.mockResolvedValue({
-      report: {
-        area: "Manchester",
-        intent: "moving",
-        areaiq_score: 72,
-        area_type: "urban",
-        sub_scores: [
-          { label: "Safety", score: 60 },
-          { label: "Transport", score: 80 },
-        ],
-      },
-      area: "Manchester",
-      score: 72,
-      created_at: "2026-05-24T00:00:00.000Z",
-    } as never);
-
-    const res = await app.inject({ method: "GET", url: "/widget?postcode=M1+1AE&intent=moving" });
-    expect(res.statusCode).toBe(200);
-    const body = res.json();
-    expect(body.area).toBe("Manchester");
-    expect(body.score).toBe(72);
-    expect(body.area_type).toBe("urban");
-    expect(body.dimensions).toEqual([
-      { label: "Safety", score: 60 },
-      { label: "Transport", score: 80 },
-    ]);
-    expect(body.powered_by).toBe("https://www.onegoodarea.com");
-  });
-});
+// AR-379: /widget tests removed. Endpoint deleted — see plan/030.

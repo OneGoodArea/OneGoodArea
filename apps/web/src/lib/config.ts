@@ -15,7 +15,6 @@ export const RATE_LIMITS = {
   // Each batch HTTP call carries up to 100 reports, so we rate-limit batches
   // more aggressively at the call level. Per-report quota is enforced separately.
   apiBatch: { max: 5, windowSeconds: 60 },
-  widget: { max: 60, windowSeconds: 3600 },
   authRegister: { max: 5, windowSeconds: 60 },
   authSignIn: { max: 10, windowSeconds: 60 },
   /* Email-existence check for /get-started's email-first flow. Tighter

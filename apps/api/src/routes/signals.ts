@@ -1,16 +1,13 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { isSignalCategory, SIGNAL_CATEGORIES } from "@onegoodarea/contracts";
 import { requireApiAccessWithOrg } from "../shared/auth-api";
-import { headerString, widgetCorsHeaders } from "../shared/http";
 import { resolveBundleForCaller, effectiveEngineVersionForCaller } from "../shared/bundles";
 import { isAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
-import { getConfig, RATE_LIMITS } from "../infrastructure/config";
-import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
-import { validateLocationInput, validateIntent } from "../infrastructure/validation/validator";
+import { getConfig } from "../infrastructure/config";
+import { validateLocationInput } from "../infrastructure/validation/validator";
 import { getAreaProfile, queryAreas, parseAreasQuery } from "../modules/signals";
 import { filterSignalsByBundle } from "../modules/orgs/bundles";
-import { getCachedAreaResult } from "../modules/cache/area-cache";
 import { trackEvent } from "../modules/tracking/activity";
 
 import type { Intent } from "@onegoodarea/contracts";
@@ -203,66 +200,10 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.options("/widget", async (request, reply) => {
-      reply.headers(widgetCorsHeaders(headerString(request.headers.origin)));
-      return reply.code(204).send();
-    });
-
-    app.get("/widget", async (request, reply) => {
-      const origin = headerString(request.headers.origin);
-      reply.headers(widgetCorsHeaders(origin));
-
-      try {
-        const q = (request.query ?? {}) as { postcode?: string; intent?: string };
-        const postcode = q.postcode;
-        const intent = q.intent || "moving";
-
-        if (!postcode) {
-          return reply.code(400).send({ error: "Missing postcode parameter" });
-        }
-
-        const locationCheck = validateLocationInput(postcode);
-        if (!locationCheck.valid) {
-          return reply.code(400).send({ error: locationCheck.error });
-        }
-
-        const intentCheck = validateIntent(intent);
-        if (!intentCheck.valid) {
-          return reply.code(400).send({ error: intentCheck.error });
-        }
-
-        // Rate limit by origin domain or IP.
-        const rateLimitKey = `widget:${origin || headerString(request.headers["x-forwarded-for"]) || "unknown"}`;
-        const rl = await rateLimit(rateLimitKey, {
-          max: RATE_LIMITS.widget.max,
-          windowSeconds: RATE_LIMITS.widget.windowSeconds,
-        });
-        if (!rl.success) {
-          reply.headers(rateLimitHeaders(RATE_LIMITS.widget.max, rl));
-          return reply.code(429).send({ error: "Rate limit exceeded. Try again later." });
-        }
-
-        // Cache only: widgets serve cached data to prevent unauthenticated AI spend.
-        const cached = await getCachedAreaResult(locationCheck.sanitized, intent);
-        if (cached) {
-          const report = cached.report;
-          return reply.send({
-            area: report.area,
-            postcode: locationCheck.sanitized,
-            intent: report.intent,
-            score: report.areaiq_score,
-            area_type: report.area_type || null,
-            dimensions: report.sub_scores.map((s) => ({ label: s.label, score: s.score })),
-            powered_by: "https://www.onegoodarea.com",
-          });
-        }
-
-        return reply.code(404).send({
-          error: "No cached data available for this location. Generate a report at https://www.onegoodarea.com first.",
-        });
-      } catch (error) {
-        logger.error("[widget] Error:", error);
-        return reply.code(500).send({ error: "Failed to fetch area data" });
-      }
-    });
+    // AR-379: /widget removed. Embeddable widget surface was a v1
+    // reports-era construct; AR-324 killed every writer to area_cache,
+    // so the endpoint had been returning 404 for every query in prod.
+    // If we want an embeddable surface in the future it'll be rebuilt
+    // greenfield on the v2 signal-first stack — not a resurrection of
+    // this code path. See plan/030.
 }

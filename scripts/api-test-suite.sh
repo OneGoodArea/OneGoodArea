@@ -227,10 +227,9 @@ print_section "Account Dashboard: Watchlist (2)"
 test_endpoint "POST" "/watchlist" "Session" '{"postcode":"SW1A1AA","label":"My Area"}' "Save area"
 test_endpoint "DELETE" "/watchlist/area_123" "Session" "" "Remove area"
 
-print_section "Public: Tracking & Widget (3)"
+print_section "Public: Tracking (1)"
 test_endpoint "POST" "/track" "Public" '{"path":"/report","referrer":"https://google.com"}' "Track pageview"
-test_endpoint "GET" "/widget?postcode=SW1A1AA&intent=moving" "Public" "" "Get widget (cached)"
-test_endpoint "OPTIONS" "/widget" "Public" "" "Widget CORS preflight"
+# AR-379: /widget removed. Cache infrastructure deleted. See plan/030.
 
 print_section "Cron (1)"
 test_endpoint "GET" "/cron/rescore?dry_run=true&limit=5" "CRON" "" "Rescore (dry run)"

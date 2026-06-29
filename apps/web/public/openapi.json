@@ -19,7 +19,6 @@
   ],
   "tags": [
     { "name": "Reports", "description": "Generate area intelligence reports" },
-    { "name": "Widget", "description": "Embeddable widget endpoint, cache-only" },
     { "name": "Webhooks", "description": "Outbound webhook subscriptions for event-driven integrations" }
   ],
   "paths": {
@@ -145,50 +144,6 @@
           },
           "429": { "$ref": "#/components/responses/RateLimitError" },
           "500": { "$ref": "#/components/responses/ServerError" }
-        }
-      }
-    },
-    "/api/widget": {
-      "get": {
-        "tags": ["Widget"],
-        "summary": "Embeddable widget — cached scores only",
-        "description": "Lightweight endpoint for the embeddable widget. Returns simplified scores from the 24h cache. Will not generate fresh reports; if a postcode/intent pair has no cached entry, returns a 404 instructing the caller to generate via the main `/api/v1/report` endpoint first.\n\n**Rate limit:** 60 requests/hour per origin/IP. **CORS:** enabled. **Cache-Control:** s-maxage=3600, stale-while-revalidate=86400.",
-        "operationId": "widgetReport",
-        "parameters": [
-          {
-            "name": "postcode",
-            "in": "query",
-            "required": true,
-            "schema": { "type": "string" },
-            "example": "M1 1AE"
-          },
-          {
-            "name": "intent",
-            "in": "query",
-            "required": true,
-            "schema": { "$ref": "#/components/schemas/Intent" },
-            "example": "moving"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Cached scores",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/WidgetResponse" }
-              }
-            }
-          },
-          "400": { "$ref": "#/components/responses/ValidationError" },
-          "404": {
-            "description": "No cached report for this postcode/intent pair",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
-              }
-            }
-          },
-          "429": { "$ref": "#/components/responses/RateLimitError" }
         }
       }
     },
@@ -695,31 +650,6 @@
           "inspectorate": {
             "type": "string",
             "enum": ["Ofsted", "Estyn", "Education Scotland"]
-          }
-        }
-      },
-      "WidgetResponse": {
-        "type": "object",
-        "required": ["area", "postcode", "intent", "score", "dimensions", "powered_by"],
-        "properties": {
-          "area": { "type": "string" },
-          "postcode": { "type": "string" },
-          "intent": { "$ref": "#/components/schemas/Intent" },
-          "score": { "type": "integer", "minimum": 0, "maximum": 100 },
-          "area_type": { "$ref": "#/components/schemas/AreaType" },
-          "dimensions": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "label": { "type": "string" },
-                "score": { "type": "integer" }
-              }
-            }
-          },
-          "powered_by": {
-            "type": "string",
-            "example": "OneGoodArea"
           }
         }
       },

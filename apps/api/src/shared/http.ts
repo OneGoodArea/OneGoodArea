@@ -48,13 +48,3 @@ export function clientIpOf(request: FastifyRequest): string | null {
   return request.ip ?? null;
 }
 
-/** CORS headers for the public embeddable widget (callable from any site). */
-export function widgetCorsHeaders(origin: string | null): Record<string, string> {
-  return {
-    "Access-Control-Allow-Origin": origin || "*",
-    "Access-Control-Allow-Methods": "GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Max-Age": "86400",
-    "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
-  };
-}

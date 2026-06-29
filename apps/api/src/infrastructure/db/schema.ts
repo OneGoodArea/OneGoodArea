@@ -364,18 +364,13 @@ export const MIGRATIONS: Migration[] = [
        data keyed by (postcode, intent) and is consumed by the Signals route
        (Scores product), not reports. The ALTER renames an existing prod
        table; the CREATE handles fresh databases. Both are idempotent. */
+    // AR-379: area_cache table dropped. The CREATE block stays in git
+    // history; this block now only enforces "the table should not
+    // exist" via DROP TABLE IF EXISTS. Idempotent — runs once on
+    // existing DBs, no-op on fresh ones. See plan/030.
     name: "area_cache",
     statements: [
-      `ALTER TABLE IF EXISTS report_cache RENAME TO area_cache`,
-      `CREATE TABLE IF NOT EXISTS area_cache (
-        id SERIAL PRIMARY KEY,
-        cache_key TEXT UNIQUE NOT NULL,
-        report JSONB NOT NULL,
-        area TEXT NOT NULL,
-        score INTEGER NOT NULL,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        hit_count INTEGER DEFAULT 0
-      )`,
+      `DROP TABLE IF EXISTS area_cache`,
     ],
   },
   {

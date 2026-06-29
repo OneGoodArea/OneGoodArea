@@ -41,9 +41,7 @@ describe("OpenAPI 3.0 spec at public/openapi.json", () => {
     expect(spec.paths?.["/api/v1/report"]?.post).toBeDefined();
   });
 
-  it("documents GET /api/widget", () => {
-    expect(spec.paths?.["/api/widget"]?.get).toBeDefined();
-  });
+  // AR-379: /api/widget removed. Schema + path dropped from openapi.json.
 
   it("declares Bearer auth", () => {
     expect(spec.components?.securitySchemes?.BearerAuth?.scheme).toBe("bearer");
