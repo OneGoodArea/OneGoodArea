@@ -4,6 +4,100 @@
    Brand v3 Plotted vocabulary; no inline styles in the TSX.
    ============================================================ */
 
+/* ---------- Announcement bar (AR-374) ---------- */
+
+.oga-announce {
+  display: block;
+  width: 100%;
+  background: var(--oga-ink);
+  color: var(--oga-white);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(250, 248, 244, 0.10);
+  transition: background var(--oga-dur) var(--oga-ease);
+}
+
+.oga-announce:hover { background: #0f1115; }
+
+.oga-announce__inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 8px 28px 8px 56px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--oga-font-sans);
+  font-size: 12.5px;
+  letter-spacing: -0.005em;
+  line-height: 1;
+}
+
+.oga-announce__badge {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  background: rgba(250, 248, 244, 0.10);
+  color: var(--oga-white);
+  border-radius: 2px;
+  font-family: var(--oga-font-mono, var(--oga-font-sans));
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.oga-announce__icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  opacity: 0.95;
+}
+
+.oga-announce__copy {
+  color: rgba(250, 248, 244, 0.92);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.oga-announce__copy--short { display: none; }
+
+.oga-announce__cta {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--oga-white);
+  font-weight: 600;
+  flex: 0 0 auto;
+}
+
+.oga-announce__arrow {
+  transition: transform var(--oga-dur) var(--oga-ease);
+}
+
+.oga-announce:hover .oga-announce__arrow { transform: translateX(2px); }
+
+@media (max-width: 720px) {
+  .oga-announce__inner { padding: 8px 16px; gap: 8px; }
+  .oga-announce__copy--full { display: none; }
+  .oga-announce__copy--short { display: inline; }
+  .oga-announce__cta { font-size: 12px; }
+}
+
+@media (max-width: 480px) {
+  .oga-announce__copy { font-size: 11.5px; }
+  .oga-announce__cta { display: none; }
+  .oga-announce__inner::after {
+    content: "→";
+    margin-left: auto;
+    color: var(--oga-white);
+    font-weight: 600;
+  }
+}
+
 /* ---------- Shell ---------- */
 
 .oga-nav {
@@ -267,9 +361,22 @@
   background: transparent;
 }
 .oga-nav__item-pill--new {
-  color: var(--oga-status-green);
-  background: var(--oga-status-green-bg);
-  border-color: var(--oga-status-green);
+  /* Matches the announcement bar's NEW badge (.oga-announce__badge):
+     solid ink fill on white text, square corners, tighter letter-spacing.
+     Inverted relative to the bar because the dropdown sits on a light
+     surface — visual treatment matches, colors flip with context. */
+  height: 18px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  background: var(--oga-ink);
+  color: var(--oga-white);
+  border: 0;
+  border-radius: 2px;
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
 }
 
 /* ============================================================
