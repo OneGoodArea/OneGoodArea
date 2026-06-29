@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { callApi } from "@/lib/server/api-client";
 import AdminClient from "./client";
-import type { Analytics, TrafficData, AudienceStats, UsageStats, RevenueExtras, McpAdoption } from "./client";
+import type { Analytics, TrafficData, AudienceStats, UsageStats, RevenueExtras, McpAdoption, TrainingCorpus } from "./client";
 
 export const metadata: Metadata = {
   title: "Admin | OneGoodArea (Design V2)",
@@ -25,13 +25,22 @@ export default async function DesignV2AdminPage() {
   );
   if (!gate?.is_superuser) redirect("/dashboard");
 
-  const [analyticsRes, trafficRes, audienceRes, usageRes, revenueRes, mcpAdoptionRes] = await Promise.all([
+  const [
+    analyticsRes,
+    trafficRes,
+    audienceRes,
+    usageRes,
+    revenueRes,
+    mcpAdoptionRes,
+    trainingCorpusRes,
+  ] = await Promise.all([
     callApi("/admin/analytics", { userId }),
     callApi("/admin/traffic-analytics", { userId }),
     callApi("/admin/audience", { userId }),
     callApi("/admin/usage", { userId }),
     callApi("/admin/revenue", { userId }),
     callApi("/admin/mcp-adoption", { userId }),
+    callApi("/admin/training-corpus", { userId }),
   ]);
 
   return (
@@ -42,6 +51,7 @@ export default async function DesignV2AdminPage() {
       usage={usageRes.ok ? (usageRes.data as UsageStats) : null}
       revenue={revenueRes.ok ? (revenueRes.data as RevenueExtras) : null}
       mcpAdoption={mcpAdoptionRes.ok ? (mcpAdoptionRes.data as McpAdoption) : null}
+      trainingCorpus={trainingCorpusRes.ok ? (trainingCorpusRes.data as TrainingCorpus) : null}
     />
   );
 }

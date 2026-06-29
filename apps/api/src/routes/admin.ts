@@ -3,7 +3,7 @@ import { authenticateSession } from "../shared/auth-session";
 import { isAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { isSuperuser } from "../modules/usage";
-import { getAnalytics, getTrafficAnalytics, getAudienceStats, getUsageStats, getRevenueExtras, getMcpAdoption } from "../modules/admin";
+import { getAnalytics, getTrafficAnalytics, getAudienceStats, getUsageStats, getRevenueExtras, getMcpAdoption, getTrainingCorpusStats } from "../modules/admin";
 
 /** admin route handlers — extracted from app.ts per AR-286. */
 export function registerAdminRoutes(app: FastifyInstance): void {
@@ -140,6 +140,31 @@ export function registerAdminRoutes(app: FastifyInstance): void {
         } catch (error) {
           logger.error("Admin MCP adoption error:", error);
           return reply.code(500).send({ error: "Failed to fetch MCP adoption" });
+        }
+      });
+
+    /* AR-376: training-corpus stats for the /admin Usage tab. Aggregate
+       counts only — never raw question text or plan content. */
+    app.get("/admin/training-corpus",
+      {
+        schema: {
+          tags: ["Admin"],
+          summary: "Training corpus stats (superuser only)",
+          description: "Aggregate planner-pair counts (30d + total + last_seen) plus opt-out denominator over active API keys. No raw training data.",
+        },
+      },
+      async (request, reply) => {
+        try {
+          const userId = await authenticateSession(request, reply);
+          if (!userId) return reply;
+          if (!(await isSuperuser(userId))) {
+            return reply.code(403).send({ error: "Forbidden" });
+          }
+          const data = await getTrainingCorpusStats();
+          return reply.send(data);
+        } catch (error) {
+          logger.error("Admin training corpus error:", error);
+          return reply.code(500).send({ error: "Failed to fetch training corpus stats" });
         }
       });
 }

@@ -844,6 +844,46 @@ export const MIGRATIONS: Migration[] = [
          WHERE accepted_at IS NULL AND revoked_at IS NULL`,
     ],
   },
+  // AR-376 / plan 029: planner training pairs. Captures (NL question →
+  // emitted typed plan) on every /v1/query call where `question` is
+  // present (programmatic {plan} calls skip — nothing to learn).
+  //
+  // Separate from activity_events because (1) different lifecycle —
+  // training data may be exported / archived / dropped per-customer; (2)
+  // different access controls — superuser only; (3) row size is
+  // unbounded by design (NL question + full plan JSON).
+  //
+  // Per-key opt-out: insert path checks api_keys.training_optout before
+  // writing. When TRUE for the calling key, the row is silently
+  // skipped — adoption tracking via activity_events still happens.
+  //
+  // Retention: TRAINING_DATA_RETENTION_DAYS (default 365). AR-377 ships
+  // the nightly purge cron over both training tables.
+  {
+    name: "query_planner_logs",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS query_planner_logs (
+        id TEXT PRIMARY KEY,
+        org_id TEXT,
+        user_id TEXT NOT NULL,
+        event_ts TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        question TEXT NOT NULL,
+        plan JSONB NOT NULL,
+        plan_source TEXT,
+        response_ok BOOLEAN NOT NULL,
+        error_code TEXT,
+        latency_ms INTEGER NOT NULL,
+        source TEXT,
+        client_app TEXT
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_query_planner_logs_org_ts
+         ON query_planner_logs (org_id, event_ts DESC)`,
+      `CREATE INDEX IF NOT EXISTS idx_query_planner_logs_client_app
+         ON query_planner_logs (client_app)`,
+      `CREATE INDEX IF NOT EXISTS idx_query_planner_logs_event_ts
+         ON query_planner_logs (event_ts DESC)`,
+    ],
+  },
   // AR-375 / plan 029: MCP adoption visibility. The view answers
   // "which orgs are using MCP, with which tools, from which client,
   // how much, when last seen?" without exposing chat content.

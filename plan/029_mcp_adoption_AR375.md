@@ -225,11 +225,11 @@ Cases 2-4 catch direct API-key calls from MCP-aware tools that don't go through 
 - [x] Step 8 — `docs/DATA_POLICY.md` skeleton
 
 **PR2 (AR-376):**
-- [ ] Step 1 — `query_planner_logs` migration
-- [ ] Step 2 — wire /v1/query
-- [ ] Step 3 — smoke
-- [ ] Step 4 — /admin tile
-- [ ] Step 5 — ARCHITECTURE.md data-policy note
+- [x] Step 1 — `query_planner_logs` migration
+- [x] Step 2 — wire /v1/query (NL question + plan + plan_source + latency + error code; checks training_optout)
+- [ ] Step 3 — smoke (post-merge, in Claude Code with find_areas)
+- [x] Step 4 — /admin tile (Training corpus card on Usage tab — aggregate counts only)
+- [x] Step 5 — DATA_POLICY.md updated (AR-376 marked active)
 
 **PR3 (AR-377):**
 - [ ] Step 1 — `brief_composer_logs` migration

@@ -82,6 +82,12 @@ export interface ValidatedApiKey {
       treat `undefined` as `[]`. The real runtime always returns an
       array. */
   allowedIpCidrs?: string[];
+  /** AR-375 / plan 029 — per-key opt-out from training-data capture.
+      Optional so existing test mocks keep type-checking; downstream
+      consumers should treat `undefined` as `false` (default = participate).
+      Read by AR-376 query_planner_logs + AR-377 brief_composer_logs
+      inserts to decide whether to write the row. */
+  trainingOptout?: boolean;
 }
 
 /** Levers (AR-200) — discriminated union return shape. A `blocked` result
@@ -106,6 +112,7 @@ export async function validateApiKey(key: string, requestIp?: string | null): Pr
   const userId = found.user_id;
   const orgId = found.org_id ?? null;
   const allowedIpCidrs = found.allowed_ip_cidrs ?? [];
+  const trainingOptout = found.training_optout ?? false;
 
   // Enforce IP allowlist when set. Empty list = no restriction (existing
   // keys are byte-identical to pre-AR-200 behaviour).
@@ -113,5 +120,5 @@ export async function validateApiKey(key: string, requestIp?: string | null): Pr
     return { blocked: "ip_not_allowed", userId, orgId };
   }
 
-  return { userId, orgId, allowedIpCidrs };
+  return { userId, orgId, allowedIpCidrs, trainingOptout };
 }

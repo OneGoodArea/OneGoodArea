@@ -42,9 +42,9 @@ export class ApiKeyRepository {
   /** Returns the minimal columns needed by validateApiKey, or null if not found. */
   async findByHash(
     hash: string,
-  ): Promise<Pick<ApiKeyRow, "user_id" | "org_id" | "allowed_ip_cidrs"> | null> {
-    const result = rows<Pick<ApiKeyRow, "user_id" | "org_id" | "allowed_ip_cidrs">>(await sql`
-      SELECT user_id, org_id, allowed_ip_cidrs
+  ): Promise<Pick<ApiKeyRow, "user_id" | "org_id" | "allowed_ip_cidrs" | "training_optout"> | null> {
+    const result = rows<Pick<ApiKeyRow, "user_id" | "org_id" | "allowed_ip_cidrs" | "training_optout">>(await sql`
+      SELECT user_id, org_id, allowed_ip_cidrs, training_optout
         FROM api_keys
        WHERE key_hash = ${hash} AND revoked = FALSE
     `);

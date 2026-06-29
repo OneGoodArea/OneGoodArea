@@ -11,6 +11,7 @@ import { findPeers, parsePeersInput, PEERS_DEFAULT_K, PEERS_DEFAULT_MIN_SIGNALS,
 import { findInsights, parseInsightsInput, INSIGHTS_DEFAULT_K } from "../modules/signals/insights";
 import { runForecast, parseForecastInput, FORECAST_DEFAULT_WINDOW, FORECAST_DEFAULT_HORIZON } from "../modules/signals/forecast";
 import { trackEvent } from "../modules/tracking/activity";
+import { insertPlannerLog } from "../modules/training/planner-logs";
 
 import { resolveBundleForCaller } from "../shared/bundles";
 import { planSignalsOutsideBundle } from "../modules/orgs/bundles";
@@ -62,6 +63,17 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
         const resolved = await resolveBundleForCaller(bundleId, ctx.orgId, ctx.userId, reply);
         if (!resolved.ok) return reply;
 
+        /* AR-376: capture the NL question for planner training (only
+           when the caller actually sent a question — programmatic
+           {plan} calls aren't training data). Latency is measured
+           around runQuery; the insert happens AFTER the response is
+           sent so it never adds to user-visible time. */
+        const trainingQuestion: string | null =
+          "question" in parsed.req && typeof parsed.req.question === "string"
+            ? parsed.req.question
+            : null;
+        const t0 = Date.now();
+
         let result: Awaited<ReturnType<typeof runQuery>>;
         try {
           result = await runQuery(parsed.req);
@@ -69,6 +81,21 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
           // AR-267: typed surface for ambiguous place names. Don't 500 —
           // tell the caller which candidates to disambiguate between.
           if (err instanceof AmbiguousLocationError) {
+            if (trainingQuestion !== null) {
+              insertPlannerLog(
+                {
+                  userId: ctx.userId,
+                  orgId: ctx.orgId,
+                  question: trainingQuestion,
+                  plan: { error: "ambiguous_location", query: err.query },
+                  planSource: null,
+                  responseOk: false,
+                  errorCode: "ambiguous_location",
+                  latencyMs: Date.now() - t0,
+                },
+                ctx.trainingOptout,
+              );
+            }
             return reply.code(422).send({
               error: `Place name "${err.query}" is ambiguous. Choose a specific candidate or re-ask with a postcode.`,
               code: "ambiguous_location",
@@ -77,12 +104,43 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
           }
           throw err;
         }
+        const latencyMs = Date.now() - t0;
         if (!result.ok) {
+          if (trainingQuestion !== null) {
+            insertPlannerLog(
+              {
+                userId: ctx.userId,
+                orgId: ctx.orgId,
+                question: trainingQuestion,
+                plan: { error: result.error.code, raw: result.error.raw },
+                planSource: null,
+                responseOk: false,
+                errorCode: result.error.code,
+                latencyMs,
+              },
+              ctx.trainingOptout,
+            );
+          }
           return reply.code(422).send({ error: result.error.message, code: result.error.code, raw: result.error.raw });
         }
         if (resolved.allowed) {
           const outside = planSignalsOutsideBundle(result.response.plan, resolved.allowed);
           if (outside.length > 0) {
+            if (trainingQuestion !== null) {
+              insertPlannerLog(
+                {
+                  userId: ctx.userId,
+                  orgId: ctx.orgId,
+                  question: trainingQuestion,
+                  plan: result.response.plan,
+                  planSource: result.response.plan_source,
+                  responseOk: false,
+                  errorCode: "bundle_signal_not_allowed",
+                  latencyMs,
+                },
+                ctx.trainingOptout,
+              );
+            }
             return reply.code(422).send({
               error: `Plan references signals not in bundle: ${outside.join(", ")}.`,
               code: "bundle_signal_not_allowed",
@@ -95,6 +153,21 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
           plan_source: result.response.plan_source,
           bundle: bundleId ?? null,
         }, ctx.orgId);
+        if (trainingQuestion !== null) {
+          insertPlannerLog(
+            {
+              userId: ctx.userId,
+              orgId: ctx.orgId,
+              question: trainingQuestion,
+              plan: result.response.plan,
+              planSource: result.response.plan_source,
+              responseOk: true,
+              errorCode: null,
+              latencyMs,
+            },
+            ctx.trainingOptout,
+          );
+        }
         reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(ctx.orgId, ctx.userId));
         return reply.code(200).send(result.response);
       } catch (error) {
