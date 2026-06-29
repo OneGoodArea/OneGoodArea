@@ -8,6 +8,7 @@ import {
   type TotalRow,
   type AreaHitsRow,
 } from "../../infrastructure/db/types";
+import { METHODOLOGY_VERSION } from "../engine/methodology";
 import { logger } from "../tracking/structured-logger";
 
 /* Read/write cache for generated reports. Migrated from the legacy
@@ -29,12 +30,18 @@ export interface CachedReport {
 
 /* ── Cache key normalisation ── */
 
+/* AR-378: keys are pinned to the current engine version. A rescore at a
+   new METHODOLOGY_VERSION lands at a different key, so cached rows
+   produced by an earlier engine are never served as if they came from
+   the current one. The audit-trail pitch is "version pinning"; the
+   cache must agree. Bumping the engine version implicitly invalidates
+   the entire cache — the correct outcome. */
 export function normaliseCacheKey(area: string, intent: string): string {
   const normalisedArea = area
     .toLowerCase()
     .replace(/[\s,.\-]/g, "");
 
-  return `${normalisedArea}:${intent.toLowerCase()}`;
+  return `${normalisedArea}:${intent.toLowerCase()}:v${METHODOLOGY_VERSION}`;
 }
 
 /* ── Read from cache ── */
