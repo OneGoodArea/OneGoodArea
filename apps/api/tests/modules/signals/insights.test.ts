@@ -12,7 +12,13 @@ describe("parseInsightsInput (pure)", () => {
   it("REQUIRES a peer-relative-z suffix (no on-the-fly ad-hoc anomaly on raw signals)", () => {
     const bad = parseInsightsInput({ signalKey: "crime.total_12m" });
     expect(bad.ok).toBe(false);
-    if (!bad.ok) expect(bad.error).toMatch(/_peer_relative_z/);
+    if (!bad.ok) {
+      expect(bad.error).toMatch(/_peer_relative_z/);
+      // AR-391: error message shows the value the user passed + the
+      // corrected suggestion. Worked example, not just a rule.
+      expect(bad.error).toContain("crime.total_12m");
+      expect(bad.error).toContain("crime.total_12m_peer_relative_z");
+    }
   });
   it("accepts a peer-relative-z signal", () => {
     const r = parseInsightsInput({ signalKey: "crime.total_12m_peer_relative_z" });

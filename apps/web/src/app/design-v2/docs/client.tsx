@@ -355,8 +355,8 @@ const REFERENCES: RefTile[] = [
     num: "01",
     title: "Interactive API reference",
     body:
-      "The structured endpoint catalogue across all six surfaces. Honest placeholder today; the OpenAPI spec is being regenerated from the Fastify route schemas.",
-    status: "regen",
+      "The structured endpoint catalogue across all six surfaces — Signals, Scores, Intelligence, Monitor, Levers, and account. Generated from the Fastify route schemas so it stays in sync with the live API.",
+    status: "live",
     href: "/docs/api-reference",
     cta: "Open reference",
   },

@@ -70,4 +70,25 @@ describe("executeMethodologyFor", () => {
     const out = executeMethodologyFor({ dimension: "Schools" });
     expect(out.content[0].text).toContain("/methodology");
   });
+
+  /* AR-391: "Used in intents" header must agree with the weights
+     table — derived from non-zero weights, NOT the static intents
+     field which had drifted. Safety & Crime previously read
+     "Used in intents: moving, research" but had non-zero weights
+     for all 4 presets. */
+  it("derives 'Used in intents' from non-zero weights (no header/table drift)", () => {
+    const out = executeMethodologyFor({ dimension: "Safety & Crime" });
+    const text = out.content[0].text;
+    // Header reflects ALL 4 presets (all have non-zero weight).
+    expect(text).toMatch(/Used in intents:.*moving.*business.*investing.*research/s);
+  });
+
+  it("'Used in intents' excludes zero-weight presets", () => {
+    // Schools has business: 0, so it should NOT appear in the header.
+    const out = executeMethodologyFor({ dimension: "Schools" });
+    const text = out.content[0].text;
+    const header = text.split("\n").find((l) => l.startsWith("**Used in intents:"));
+    expect(header).toBeDefined();
+    expect(header).not.toContain("business");
+  });
 });
