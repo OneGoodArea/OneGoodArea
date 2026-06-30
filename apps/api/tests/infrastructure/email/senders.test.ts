@@ -7,7 +7,6 @@ import {
   sendVerificationEmail,
   sendWelcomeEmail,
   sendPasswordResetEmail,
-  sendReportEmail,
 } from "@/infrastructure/email/senders";
 
 beforeEach(() => {
@@ -41,25 +40,5 @@ describe("email senders", () => {
     expect(msg.html).toContain("&lt;script&gt;");
   });
 
-  it("sendReportEmail renders score, area, workflow label, and top dimensions", async () => {
-    await sendReportEmail("a@b.com", "rpt_1", {
-      area: "Manchester",
-      intent: "moving",
-      areaiq_score: 72,
-      area_type: "urban",
-      summary: "Solid baseline.",
-      sub_scores: [
-        { label: "Safety", score: 60, weight: 0.3 },
-        { label: "Transport", score: 80, weight: 0.5 },
-      ],
-    } as never);
-    const msg = send.mock.calls[0][0];
-    expect(msg.to).toBe("a@b.com");
-    expect(msg.subject).toContain("Manchester");
-    expect(msg.html).toContain("72");
-    expect(msg.html).toContain("Top band"); // score >= 70 band label
-    expect(msg.html).toContain("Origination"); // intentLabel("moving")
-    expect(msg.html).toContain("Transport");
-    expect(msg.html).toContain("/report/rpt_1");
-  });
+  /* AR-407: sendReportEmail removed alongside the AR-324 reports kill. */
 });
