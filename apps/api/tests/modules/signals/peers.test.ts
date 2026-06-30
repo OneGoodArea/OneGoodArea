@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import {
-  parsePeersInput, buildTargetSignalsSql, buildPeersSql, findPeers,
+  parsePeersInput, buildTargetSignalsSql, buildPeersSql, buildPeerEnrichmentSql, findPeers,
   PEERS_DEFAULT_K, PEERS_MAX_K, PEERS_DEFAULT_MIN_SIGNALS,
   type Runner, type PeersInput,
 } from "@/modules/signals/peers";
@@ -110,33 +110,108 @@ describe("buildPeersSql (pure)", () => {
   });
 });
 
+/* ── buildPeerEnrichmentSql (AR-398) ─────────────────────────────────────── */
+
+describe("buildPeerEnrichmentSql (pure)", () => {
+  const sql = buildPeerEnrichmentSql();
+  it("selects lad_name + region + a representative postcode per LSOA", () => {
+    expect(sql).toMatch(/SELECT DISTINCT ON \(lsoa_code\)/);
+    expect(sql).toMatch(/lsoa_code, lad_name, region, postcode/);
+  });
+  it("matches by ANY against the peer geo_codes array", () => {
+    expect(sql).toMatch(/lsoa_code = ANY\(\$1::text\[\]\)/);
+  });
+  it("orders so DISTINCT ON keeps the alphabetically-first postcode per LSOA", () => {
+    expect(sql).toMatch(/ORDER BY lsoa_code, postcode ASC/);
+  });
+});
+
 /* ── findPeers (I/O wired to an injected runner) ─────────────────────────── */
 
 describe("findPeers", () => {
-  it("calls the target-signals query first, then the candidates query, and maps rows", async () => {
-    const run = vi.fn<Runner>(async (text) => {
-      if (text.startsWith("SELECT signal_key")) {
-        return [
-          { signal_key: "property.median_price", normalized_value: 0.5 },
-          { signal_key: "crime.total_12m", normalized_value: 0.3 },
-        ];
-      }
-      // candidates
-      return [
+  /* AR-398: findPeers now makes THREE queries — target signals, candidates,
+     and a final enrichment lookup against geo_lookup. The runner mock
+     branches on the SQL prefix to keep tests readable. */
+  function runner(opts: {
+    targetSignals?: Record<string, unknown>[];
+    candidates?: Record<string, unknown>[];
+    enrichment?: Record<string, unknown>[];
+  }): Runner {
+    return vi.fn<Runner>(async (text) => {
+      if (text.startsWith("SELECT signal_key")) return opts.targetSignals ?? [];
+      if (text.startsWith("SELECT DISTINCT ON (lsoa_code)")) return opts.enrichment ?? [];
+      return opts.candidates ?? [];
+    });
+  }
+
+  it("returns peers with admin_district + region + sample_postcode when geo_lookup has them", async () => {
+    const run = runner({
+      targetSignals: [
+        { signal_key: "property.median_price", normalized_value: 0.5 },
+        { signal_key: "crime.total_12m", normalized_value: 0.3 },
+      ],
+      candidates: [
         { geo_code: "E01000002", distance: "0.12", n_dims_used: 2 },
         { geo_code: "E01000003", distance: "0.20", n_dims_used: 2 },
-      ];
+      ],
+      enrichment: [
+        { lsoa_code: "E01000002", lad_name: "Manchester", region: "North West", postcode: "M1 1AE" },
+        { lsoa_code: "E01000003", lad_name: "Salford", region: "North West", postcode: "M3 6FZ" },
+      ],
     });
     const out = await findPeers({ targetGeoCode: "E01000001", k: 5, minSignals: 2 }, run);
-    expect(out.signalsUsed).toEqual(["property.median_price", "crime.total_12m"]);
     expect(out.peers).toHaveLength(2);
-    expect(out.peers[0]).toEqual({ geo_code: "E01000002", distance: 0.12, n_dims_used: 2 });
+    expect(out.peers[0]).toEqual({
+      geo_code: "E01000002",
+      distance: 0.12,
+      n_dims_used: 2,
+      admin_district: "Manchester",
+      region: "North West",
+      sample_postcode: "M1 1AE",
+    });
+    expect(out.peers[1].admin_district).toBe("Salford");
   });
+
+  it("returns nulls for peers not in geo_lookup (shape stays stable)", async () => {
+    const run = runner({
+      targetSignals: [{ signal_key: "crime.total_12m", normalized_value: 0.3 }],
+      candidates: [
+        { geo_code: "E01000002", distance: "0.12", n_dims_used: 1 },
+        { geo_code: "E01999999", distance: "0.20", n_dims_used: 1 }, // not in geo_lookup
+      ],
+      enrichment: [
+        { lsoa_code: "E01000002", lad_name: "Manchester", region: "North West", postcode: "M1 1AE" },
+      ],
+    });
+    const out = await findPeers({ targetGeoCode: "E01000001", k: 5, minSignals: 1 }, run);
+    expect(out.peers[0].admin_district).toBe("Manchester");
+    expect(out.peers[1]).toEqual({
+      geo_code: "E01999999",
+      distance: 0.20,
+      n_dims_used: 1,
+      admin_district: null,
+      region: null,
+      sample_postcode: null,
+    });
+  });
+
+  it("skips the enrichment query when there are zero peer candidates", async () => {
+    const run = runner({
+      targetSignals: [{ signal_key: "crime.total_12m", normalized_value: 0.3 }],
+      candidates: [],
+      enrichment: [], // shouldn't be reached
+    });
+    const out = await findPeers({ targetGeoCode: "E01000001", k: 5, minSignals: 1 }, run);
+    expect(out.peers).toEqual([]);
+    // 2 calls: target signals + candidates. NOT 3.
+    expect(run).toHaveBeenCalledTimes(2);
+  });
+
   it("short-circuits to empty peers when the target has no normalized signals", async () => {
     const run = vi.fn<Runner>(async () => []);
     const out = await findPeers({ targetGeoCode: "X", k: 5, minSignals: 3 }, run);
     expect(out.signalsUsed).toEqual([]);
     expect(out.peers).toEqual([]);
-    expect(run).toHaveBeenCalledOnce(); // never reached the candidates query
+    expect(run).toHaveBeenCalledOnce(); // never reached candidates or enrichment
   });
 });

@@ -318,7 +318,7 @@ describe("executePlan — find_peers (AR-188 / ADR 0023)", () => {
     mockParsePeersInput.mockReturnValue({ ok: true, input: { targetGeoCode: "E01034129", k: 20, minSignals: 3 } });
     mockFindPeers.mockResolvedValue({
       signalsUsed: ["property.median_price", "crime.total_12m"],
-      peers: [{ geo_code: "E01034130", distance: 0.1, n_dims_used: 2 }],
+      peers: [{ geo_code: "E01034130", distance: 0.1, n_dims_used: 2, admin_district: null, region: null, sample_postcode: null }],
     });
     const res = await executePlan(
       { op: "find_peers", params: { target: { geo_code: "E01034129" }, k: 20 } },
@@ -344,7 +344,7 @@ describe("executePlan — find_peers (AR-188 / ADR 0023)", () => {
     mockParsePeersInput.mockReturnValue({ ok: true, input: { targetGeoCode: "E01034129", k: 5, minSignals: 3 } });
     mockFindPeers.mockResolvedValue({
       signalsUsed: ["crime.total_12m"],
-      peers: [{ geo_code: "E01034130", distance: 0.05, n_dims_used: 1 }],
+      peers: [{ geo_code: "E01034130", distance: 0.05, n_dims_used: 1, admin_district: null, region: null, sample_postcode: null }],
     });
     await executePlan(
       { op: "find_peers", params: { target: { postcode: "M1 1AE" }, k: 5 } },
