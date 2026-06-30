@@ -407,7 +407,7 @@ exports[`scoring-engine golden master > area-type benchmarks · full data > movi
   "dimensions": [
     {
       "confidence": 0.7,
-      "confidence_reason": "300 crimes across 3 months — moderate sample",
+      "confidence_reason": "300 crimes across 3 months: moderate sample.",
       "label": "Safety & Crime",
       "reasoning": "300 crimes over 3 months (100/month). most common: shoplifting (70%). violent crime: 20% of total. trend: rising",
       "score": 38,
@@ -457,7 +457,7 @@ exports[`scoring-engine golden master > area-type benchmarks · full data > movi
   "dimensions": [
     {
       "confidence": 0.7,
-      "confidence_reason": "300 crimes across 3 months — moderate sample",
+      "confidence_reason": "300 crimes across 3 months: moderate sample.",
       "label": "Safety & Crime",
       "reasoning": "300 crimes over 3 months (100/month). most common: shoplifting (70%). violent crime: 20% of total. trend: rising",
       "score": 38,
@@ -507,7 +507,7 @@ exports[`scoring-engine golden master > area-type benchmarks · full data > rese
   "dimensions": [
     {
       "confidence": 0.7,
-      "confidence_reason": "300 crimes across 3 months — moderate sample",
+      "confidence_reason": "300 crimes across 3 months: moderate sample.",
       "label": "Safety & Crime",
       "reasoning": "300 crimes over 3 months (100/month). most common: shoplifting (70%). violent crime: 20% of total. trend: rising",
       "score": 38,
@@ -557,7 +557,7 @@ exports[`scoring-engine golden master > area-type benchmarks · full data > rese
   "dimensions": [
     {
       "confidence": 0.7,
-      "confidence_reason": "300 crimes across 3 months — moderate sample",
+      "confidence_reason": "300 crimes across 3 months: moderate sample.",
       "label": "Safety & Crime",
       "reasoning": "300 crimes over 3 months (100/month). most common: shoplifting (70%). violent crime: 20% of total. trend: rising",
       "score": 38,
@@ -707,7 +707,7 @@ exports[`scoring-engine golden master > core data only · default area type > mo
   "dimensions": [
     {
       "confidence": 0.7,
-      "confidence_reason": "300 crimes across 3 months — moderate sample",
+      "confidence_reason": "300 crimes across 3 months: moderate sample.",
       "label": "Safety & Crime",
       "reasoning": "300 crimes over 3 months (100/month). most common: shoplifting (70%). violent crime: 20% of total. trend: rising",
       "score": 38,
@@ -757,7 +757,7 @@ exports[`scoring-engine golden master > core data only · default area type > re
   "dimensions": [
     {
       "confidence": 0.7,
-      "confidence_reason": "300 crimes across 3 months — moderate sample",
+      "confidence_reason": "300 crimes across 3 months: moderate sample.",
       "label": "Safety & Crime",
       "reasoning": "300 crimes over 3 months (100/month). most common: shoplifting (70%). violent crime: 20% of total. trend: rising",
       "score": 38,
@@ -907,7 +907,7 @@ exports[`scoring-engine golden master > full data · suburban · prices + ofsted
   "dimensions": [
     {
       "confidence": 0.7,
-      "confidence_reason": "300 crimes across 3 months — moderate sample",
+      "confidence_reason": "300 crimes across 3 months: moderate sample.",
       "label": "Safety & Crime",
       "reasoning": "300 crimes over 3 months (100/month). most common: shoplifting (70%). violent crime: 20% of total. trend: rising",
       "score": 38,
@@ -957,7 +957,7 @@ exports[`scoring-engine golden master > full data · suburban · prices + ofsted
   "dimensions": [
     {
       "confidence": 0.7,
-      "confidence_reason": "300 crimes across 3 months — moderate sample",
+      "confidence_reason": "300 crimes across 3 months: moderate sample.",
       "label": "Safety & Crime",
       "reasoning": "300 crimes over 3 months (100/month). most common: shoplifting (70%). violent crime: 20% of total. trend: rising",
       "score": 38,

@@ -105,18 +105,39 @@ describe("buildAreaProfile", () => {
     expect(byKey(thin.signals, "property.median_price").confidence).toBe(0.4); // <10 txns
   });
 
-  it("scales crime confidence with months of data", () => {
-    const sparse = buildAreaProfile(geo, {
+  /* AR-393: crime confidence is now the same ladder /v1/score uses
+     (was a months-only ladder that drifted from the scoring engine,
+     producing 40% vs 60% on the same data). Sample-count + window
+     hybrid: >=100 crimes AND >=12mo -> HIGH, >=30 -> MEDIUM, else LOW. */
+  it("uses the unified crime confidence ladder (sample-count + window)", () => {
+    const high = buildAreaProfile(geo, fullSources); // 1200 crimes / 12 months
+    expect(byKey(high.signals, "crime.total_12m").confidence).toBe(1.0);
+
+    const medium = buildAreaProfile(geo, {
       ...fullSources,
-      crime: { ...fullSources.crime!, months_covered: 2 },
+      crime: { ...fullSources.crime!, total_crimes: 50, months_covered: 12 },
     });
-    expect(byKey(sparse.signals, "crime.total_12m").confidence).toBe(0.4);
+    expect(byKey(medium.signals, "crime.total_12m").confidence).toBe(0.7);
+
+    const low = buildAreaProfile(geo, {
+      ...fullSources,
+      crime: { ...fullSources.crime!, total_crimes: 4, months_covered: 12 },
+    });
+    expect(byKey(low.signals, "crime.total_12m").confidence).toBe(0.4);
+
+    /* The HIGH band requires the full window even when the sample
+       count is high (one-month spike could be misleading). */
+    const shortWindow = buildAreaProfile(geo, {
+      ...fullSources,
+      crime: { ...fullSources.crime!, total_crimes: 500, months_covered: 3 },
+    });
+    expect(byKey(shortWindow.signals, "crime.total_12m").confidence).toBe(0.7);
   });
 
   it("reports the zero-crime case honestly instead of 'no coverage' (AR-268)", () => {
     /* M20 2RN-style: police.uk responded HTTP 200 for every month but
        returned []. That used to surface as confidence 0 + "No police.uk
-       coverage for this area." — false for any UK LSOA. Now: modest
+       coverage for this area" (false for any UK LSOA). Now: modest
        confidence + honest "zero crimes recorded" copy. */
     const zero = buildAreaProfile(geo, {
       ...fullSources,

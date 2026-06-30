@@ -8,6 +8,7 @@ import type {
   OfstedData,
   AreaType,
 } from "../../signals/inputs";
+import { crimeConfidence } from "../../signals/crime-confidence";
 
 /* ── Types ── */
 
@@ -84,7 +85,7 @@ export function propertyConfidence(
   }
   return {
     value: CONF_LOW,
-    reason: `Sparse sample (${txns} transactions) — insufficient for high confidence`,
+    reason: `Sparse sample (${txns} transactions): insufficient for high confidence.`,
   };
 }
 
@@ -145,7 +146,13 @@ function scoreSafety(crime: CrimeSummary | null): ScoreResult {
     return { score: 50, reasoning: "Crime data unavailable for this location", confidence: CONF_NONE, confidence_reason: "No police.uk data returned for these coordinates" };
   }
   if (crime.total_crimes === 0) {
-    return { score: 50, reasoning: "Crime data unavailable for this location", confidence: CONF_LOW, confidence_reason: "Zero crimes reported in 12-month window — likely a small or low-coverage LSOA" };
+    /* AR-393: zero-crime confidence now comes from the shared
+       crime-confidence module so /v1/score and /v1/area report the same
+       number. The score branch (50) is unchanged because this dimension
+       can't tell a "quiet area" from "police.uk has gaps here" with
+       only the API response. */
+    const { confidence, confidence_reason } = crimeConfidence(crime);
+    return { score: 50, reasoning: "Zero crimes recorded in the trailing window", confidence, confidence_reason };
   }
 
   const monthlyRate = crime.total_crimes / Math.max(crime.months_covered, 1);
@@ -196,19 +203,9 @@ function scoreSafety(crime: CrimeSummary | null): ScoreResult {
     parts.push(`trend: ${trend}`);
   }
 
-  // Confidence: derived from sample size + months of coverage.
-  let confidence: number;
-  let confidence_reason: string;
-  if (crime.total_crimes >= 100 && crime.months_covered >= 12) {
-    confidence = CONF_HIGH;
-    confidence_reason = `${crime.total_crimes} crimes across ${crime.months_covered} months provides strong signal`;
-  } else if (crime.total_crimes >= 30) {
-    confidence = CONF_MEDIUM;
-    confidence_reason = `${crime.total_crimes} crimes across ${crime.months_covered} months — moderate sample`;
-  } else {
-    confidence = CONF_LOW;
-    confidence_reason = `Only ${crime.total_crimes} crimes recorded — sparse sample, treat as indicative`;
-  }
+  // AR-393: confidence comes from the shared crime-confidence module so
+  // /v1/score and /v1/area never disagree on the same data point.
+  const { confidence, confidence_reason } = crimeConfidence(crime);
 
   return { score, reasoning: parts.join(". "), confidence, confidence_reason };
 }
