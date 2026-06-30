@@ -23,6 +23,7 @@
    findPeers wires the runner. See ADR 0023. */
 
 import { query as defaultQuery } from "../../infrastructure/db/client";
+import { bulkLookupPostcodes, type PostcodePlace } from "./data-sources/postcodes";
 
 export type Country = "England" | "Wales" | "Scotland";
 const COUNTRY_PREFIX: Record<Country, string> = { England: "E", Wales: "W", Scotland: "S" };
@@ -229,12 +230,25 @@ export function buildPeerEnrichmentSql(): string {
            ORDER BY lsoa_code, postcode ASC`;
 }
 
+/** Optional postcodes.io enrichment fn — injectable for tests. AR-401. */
+export type BulkPostcodeLookup = (postcodes: string[]) => Promise<Map<string, PostcodePlace>>;
+
 /** I/O: run the queries and assemble the result.
     AR-398: post-rank, enrich each peer with admin_district + region +
     a representative postcode from geo_lookup. Single batched query
     over the peer geo_codes; <50ms on the indexed lsoa_code column.
-    Peers not in geo_lookup get nulls so the shape stays stable. */
-export async function findPeers(input: PeersInput, run: Runner = runDefault): Promise<PeersResult> {
+    Peers not in geo_lookup get nulls so the shape stays stable.
+
+    AR-401: geo_lookup has lad_name=null for many postcodes (NSPL doesn't
+    carry LAD names) and stores region as the GSS code (E12000002) not
+    the readable name (North West). After the geo_lookup enrichment, a
+    bulk postcodes.io lookup overlays the canonical name strings using
+    sample_postcode. Cached for 1 hour per postcode. */
+export async function findPeers(
+  input: PeersInput,
+  run: Runner = runDefault,
+  bulkLookup: BulkPostcodeLookup = bulkLookupPostcodes,
+): Promise<PeersResult> {
   // Step 1: target's available normalized signals (filtered by caller's list if any).
   const targetRows = await run(buildTargetSignalsSql(), [input.targetGeoCode, input.signals ?? null]);
   const signalsUsed = targetRows.map((r) => String(r.signal_key));
@@ -248,7 +262,7 @@ export async function findPeers(input: PeersInput, run: Runner = runDefault): Pr
   const peerCodes = rows.map((r) => String(r.geo_code));
   if (peerCodes.length === 0) return { signalsUsed, peers: [] };
 
-  // Step 3: enrich each peer with admin_district + region + sample_postcode.
+  // Step 3: enrich each peer with admin_district + region + sample_postcode from geo_lookup.
   const enrichmentRows = await run(buildPeerEnrichmentSql(), [peerCodes]);
   const enrichment = new Map<string, { admin_district: string | null; region: string | null; sample_postcode: string | null }>();
   for (const row of enrichmentRows) {
@@ -259,15 +273,27 @@ export async function findPeers(input: PeersInput, run: Runner = runDefault): Pr
     });
   }
 
+  /* Step 4 (AR-401): bulk-lookup sample_postcodes against postcodes.io to
+     get canonical admin_district + region name. Cache hides repeated
+     queries. Postcodes.io values take precedence when present; the
+     geo_lookup values are the fallback. */
+  const samplePostcodes = [...enrichment.values()]
+    .map((e) => e.sample_postcode)
+    .filter((p): p is string => p !== null);
+  const placeMap = samplePostcodes.length > 0
+    ? await bulkLookup(samplePostcodes).catch(() => new Map<string, PostcodePlace>())
+    : new Map<string, PostcodePlace>();
+
   const peers: PeerRow[] = rows.map((r) => {
     const geo_code = String(r.geo_code);
     const e = enrichment.get(geo_code) ?? { admin_district: null, region: null, sample_postcode: null };
+    const live = e.sample_postcode ? placeMap.get(e.sample_postcode) : undefined;
     return {
       geo_code,
       distance: Number(r.distance),
       n_dims_used: Number(r.n_dims_used),
-      admin_district: e.admin_district,
-      region: e.region,
+      admin_district: live?.admin_district ?? e.admin_district,
+      region: live?.region ?? e.region,
       sample_postcode: e.sample_postcode,
     };
   });
