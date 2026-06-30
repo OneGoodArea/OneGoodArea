@@ -180,18 +180,30 @@ export function buildAreaProfile(
     );
   }
 
-  /* schools — Ofsted (England) / Estyn / Education Scotland */
+  /* schools — Ofsted (England) / Estyn / Education Scotland.
+     AR-395: surface the per-rating breakdown the engine already computes
+     internally so B2B integrators don't have to scrape it from
+     score_postcode reasoning prose. */
   {
     const source = ofsted?.inspectorate || "Ofsted";
     const hasRated = !!ofsted && ofsted.total_rated > 0;
+    /* Case-insensitive match on the breakdown keys. Ofsted writes
+       "Requires Improvement"; legacy CSVs sometimes write "Requires
+       improvement". Match by lowercased contains. */
+    const countByRating = (pattern: RegExp): number | null =>
+      hasRated
+        ? Object.entries(ofsted!.rating_breakdown)
+            .filter(([rating]) => pattern.test(rating))
+            .reduce((sum, [, count]) => sum + count, 0)
+        : null;
+
+    const outstandingCount = countByRating(/^outstanding$/i);
+    const goodCount = countByRating(/^good$/i);
+    const requiresImprovementCount = countByRating(/^requires\s*improvement$/i);
+    const inadequateCount = countByRating(/^inadequate$/i);
+
     const goodOrOutstanding = hasRated
-      ? Math.round(
-          (Object.entries(ofsted!.rating_breakdown)
-            .filter(([rating]) => /outstanding|good/i.test(rating))
-            .reduce((sum, [, count]) => sum + count, 0) /
-            ofsted!.total_rated) *
-            100,
-        )
+      ? Math.round((((outstandingCount ?? 0) + (goodCount ?? 0)) / ofsted!.total_rated) * 100)
       : null;
     const conf = hasRated
       ? available(source, `${source}: ${ofsted!.total_rated} rated schools within range.`)
@@ -199,6 +211,10 @@ export function buildAreaProfile(
     signals.push(
       sig("schools.rated_count", "schools", "Inspected schools within range", ofsted?.total_rated ?? null, "count", "neutral", source, "Latest inspections", conf),
       sig("schools.good_or_outstanding_pct", "schools", "Schools rated Good or Outstanding", goodOrOutstanding, "pct", "higher_is_better", source, "Latest inspections", conf),
+      sig("schools.outstanding_count", "schools", "Schools rated Outstanding", outstandingCount, "count", "higher_is_better", source, "Latest inspections", conf),
+      sig("schools.good_count", "schools", "Schools rated Good", goodCount, "count", "higher_is_better", source, "Latest inspections", conf),
+      sig("schools.requires_improvement_count", "schools", "Schools rated Requires Improvement", requiresImprovementCount, "count", "lower_is_better", source, "Latest inspections", conf),
+      sig("schools.inadequate_count", "schools", "Schools rated Inadequate", inadequateCount, "count", "lower_is_better", source, "Latest inspections", conf),
     );
   }
 
