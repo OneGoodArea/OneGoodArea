@@ -14,7 +14,7 @@
    See ADR 0028. */
 
 import { generateId } from "../../infrastructure/utils/id";
-import { OrgRepository } from "../../infrastructure/db/dal";
+import { OrgRepository, UserRepository } from "../../infrastructure/db/dal";
 import type { OrgRow, OrgMemberRow } from "../../infrastructure/db/types";
 import type { OrgRole } from "@onegoodarea/contracts";
 import type {
@@ -22,6 +22,7 @@ import type {
 } from "@onegoodarea/contracts";
 
 const repo = new OrgRepository();
+const userRepo = new UserRepository();
 
 /* ── RBAC (pure) — Levers AR-199 ─────────────────────────────────────── */
 
@@ -195,8 +196,16 @@ export async function updateOrg(
     Idempotent via ON CONFLICT — adding an existing member is a no-op
     (the role is NOT updated, to avoid accidental privilege escalation;
     a future `changeMemberRole` op covers that case explicitly). */
-export async function addMember(input: { orgId: string; userId: string; role: OrgRole }): Promise<void> {
+/** AR-388: returns false when the target user_id doesn't exist in
+    `users`. The endpoint maps that to 404 ("User not found") so a
+    caller can't pollute org_members with rows pointing at non-existent
+    users. Pre-AR-388, this 201'd on any string — surfaced by E2E
+    2026-06-12 security finding. */
+export async function addMember(input: { orgId: string; userId: string; role: OrgRole }): Promise<boolean> {
+  const user = await userRepo.findById(input.userId);
+  if (!user) return false;
   await repo.addMember(input.orgId, input.userId, input.role);
+  return true;
 }
 
 /** Remove a member from an org. Owner-only mutation. The endpoint guards

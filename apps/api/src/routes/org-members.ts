@@ -71,11 +71,21 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
             code: "cannot_grant_owner",
           });
         }
-        await addMember({
+        /* AR-388: addMember now FK-validates user_id against the
+           `users` table. Returns false when the target user doesn't
+           exist — surface as 404 so an attacker can't pollute
+           org_members with rows pointing at fake user IDs. */
+        const added = await addMember({
           orgId: id,
           userId: parsed.data.user_id,
           role: targetRole,
         });
+        if (!added) {
+          return reply.code(404).send({
+            error: "User not found. Add only existing users; invite new users via the invitation flow.",
+            code: "user_not_found",
+          });
+        }
         trackEvent("api.org.member_added", userId, { orgId: id, addedUserId: parsed.data.user_id }, id);
         return reply.code(201).send({ ok: true });
       } catch (error) {
