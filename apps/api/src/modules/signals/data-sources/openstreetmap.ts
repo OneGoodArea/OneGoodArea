@@ -40,9 +40,11 @@ interface OverpassElement {
         so we never silently emit "0 amenities" on a real city centre.
 */
 
-const OVERPASS_QUERY_TIMEOUT_SECONDS = 25;
-const OVERPASS_FETCH_TIMEOUT_MS = 35000;
-const OVERPASS_RETRY_DELAY_MS = 500;
+/* AR-400 narrowed per-query timeouts: each category is a tiny query
+   (~200KB max payload), so the generous 25s/35s set for the old bundled
+   query is overkill. 15s server-side, 20s client-side AbortSignal. */
+const OVERPASS_QUERY_TIMEOUT_SECONDS = 15;
+const OVERPASS_FETCH_TIMEOUT_MS = 20000;
 
 const OVERPASS_CACHE_TTL_MS = 5 * 60 * 1000;
 const OVERPASS_CACHE_MAX = 1000;
@@ -86,31 +88,61 @@ function cacheSet(key: string, value: AmenitiesData | null, now: number): void {
   cache.set(key, { value, expires_at: now + OVERPASS_CACHE_TTL_MS });
 }
 
-async function fetchOverpass(lat: number, lng: number): Promise<unknown | null> {
-  const query = `[out:json][timeout:${OVERPASS_QUERY_TIMEOUT_SECONDS}];
-(
-  nwr["amenity"~"^(school|kindergarten|college|university)$"](around:1500,${lat},${lng});
-  nwr["amenity"~"^(restaurant|cafe|fast_food)$"](around:1000,${lat},${lng});
-  nwr["amenity"~"^(pub|bar)$"](around:1000,${lat},${lng});
-  nwr["amenity"~"^(pharmacy|doctors|hospital|dentist|clinic)$"](around:1500,${lat},${lng});
-  nwr["shop"~"^(supermarket|convenience)$"](around:1000,${lat},${lng});
-  nwr["leisure"~"^(park|playground|sports_centre|swimming_pool|fitness_centre|garden)$"](around:1500,${lat},${lng});
-  nwr["railway"="station"](around:2000,${lat},${lng});
-  nwr["highway"="bus_stop"](around:500,${lat},${lng});
-);
-out tags center;`;
+/* AR-400: 8 small parallel queries, one per amenity category, instead
+   of one big bundled 8-subquery. Each query is tiny (~200KB max), well
+   under Overpass's server-side memory ceiling for dense city centres.
+   Crucially, partial failure becomes OK: if one category times out the
+   other 7 still contribute. The old all-or-nothing behaviour was the
+   root cause of the 2026-07-01 M1 1AE failure even after AR-397's
+   cache + remark detection. */
 
-  const res = await fetch("https://overpass-api.de/api/interpreter", {
-    method: "POST",
-    body: `data=${encodeURIComponent(query)}`,
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    signal: AbortSignal.timeout(OVERPASS_FETCH_TIMEOUT_MS),
-  });
+interface CategorySpec {
+  /** Display name used in logs; not part of the wire shape. */
+  name: string;
+  /** Overpass selector (the bit that goes between `nwr[...](around:..,$lat,$lng)`). */
+  selector: string;
+  /** Radius in metres for the around: clause. */
+  radius: number;
+}
 
-  if (!res.ok) {
-    throw new Error(`Overpass HTTP ${res.status}`);
+const CATEGORIES: CategorySpec[] = [
+  { name: "schools",       selector: `["amenity"~"^(school|kindergarten|college|university)$"]`, radius: 1500 },
+  { name: "food",          selector: `["amenity"~"^(restaurant|cafe|fast_food)$"]`,              radius: 1000 },
+  { name: "pubs_bars",     selector: `["amenity"~"^(pub|bar)$"]`,                                 radius: 1000 },
+  { name: "healthcare",    selector: `["amenity"~"^(pharmacy|doctors|hospital|dentist|clinic)$"]`, radius: 1500 },
+  { name: "shops",         selector: `["shop"~"^(supermarket|convenience)$"]`,                    radius: 1000 },
+  { name: "parks_leisure", selector: `["leisure"~"^(park|playground|sports_centre|swimming_pool|fitness_centre|garden)$"]`, radius: 1500 },
+  { name: "stations",      selector: `["railway"="station"]`,                                     radius: 2000 },
+  { name: "bus_stops",     selector: `["highway"="bus_stop"]`,                                    radius: 500 },
+];
+
+/** Fetch ONE category. Returns its elements[] on success, or null on
+    failure / Overpass remark / parse error. Never throws; the caller
+    aggregates via Promise.allSettled-style result handling. */
+async function fetchCategory(spec: CategorySpec, lat: number, lng: number): Promise<OverpassElement[] | null> {
+  const query = `[out:json][timeout:${OVERPASS_QUERY_TIMEOUT_SECONDS}];nwr${spec.selector}(around:${spec.radius},${lat},${lng});out tags center;`;
+  try {
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      body: `data=${encodeURIComponent(query)}`,
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      signal: AbortSignal.timeout(OVERPASS_FETCH_TIMEOUT_MS),
+    });
+    if (!res.ok) {
+      logger.warn("[overpass] category fetch HTTP error", { category: spec.name, lat, lng, status: res.status });
+      return null;
+    }
+    const data = (await res.json()) as { elements?: unknown; remark?: unknown };
+    if (typeof data.remark === "string" && data.remark.length > 0) {
+      logger.warn("[overpass] category got remark (server-side issue)", { category: spec.name, lat, lng, remark: data.remark });
+      return null;
+    }
+    if (!Array.isArray(data.elements)) return null;
+    return data.elements as OverpassElement[];
+  } catch (err) {
+    logger.warn("[overpass] category fetch threw", { category: spec.name, lat, lng, error: err instanceof Error ? err.message : String(err) });
+    return null;
   }
-  return res.json();
 }
 
 export async function getNearbyAmenities(lat: number, lng: number): Promise<AmenitiesData | null> {
@@ -121,57 +153,29 @@ export async function getNearbyAmenities(lat: number, lng: number): Promise<Amen
   const cached = cacheGet(key, now);
   if (cached !== undefined) return cached;
 
-  let data: unknown;
-  try {
-    data = await fetchOverpass(lat, lng);
-  } catch (firstErr) {
-    logger.warn("[overpass] first attempt failed, retrying once", {
-      lat,
-      lng,
-      error: firstErr instanceof Error ? firstErr.message : String(firstErr),
-    });
-    // Retry once after a brief pause; handles transient Overpass slowness/load
-    await new Promise((resolve) => setTimeout(resolve, OVERPASS_RETRY_DELAY_MS));
-    try {
-      data = await fetchOverpass(lat, lng);
-    } catch (retryErr) {
-      logger.warn("[overpass] retry failed, returning null", {
-        lat,
-        lng,
-        error: retryErr instanceof Error ? retryErr.message : String(retryErr),
-      });
-      /* AR-397: cache null too so a sustained outage doesn't keep
-         paying the 35s timeout per request. Refreshes every 5 min. */
-      cacheSet(key, null, now);
-      return null;
-    }
+  /* AR-400: 8 parallel queries. Each is small and independent.
+     Promise.all is fine even though we want partial failure tolerance:
+     fetchCategory never throws (returns null on any failure mode),
+     so all 8 promises always resolve. */
+  const categoryResults = await Promise.all(CATEGORIES.map((spec) => fetchCategory(spec, lat, lng)));
+
+  /* Detect total outage: if EVERY category failed, treat as if Overpass
+     is unreachable. Cache null so we don't busy-loop the 8x retry
+     until the TTL expires. */
+  const successCount = categoryResults.filter((r) => r !== null).length;
+  if (successCount === 0) {
+    logger.warn("[overpass] ALL 8 categories failed for this area", { lat, lng });
+    cacheSet(key, null, now);
+    return null;
   }
 
   try {
-    if (!data || typeof data !== "object") {
-      cacheSet(key, null, now);
-      return null;
-    }
-    const responseData = data as { elements?: unknown; remark?: unknown };
-
-    /* AR-397: when Overpass times out server-side it returns HTTP 200
-       with a `remark` field and (usually) empty elements. Log it as a
-       warning instead of silently returning null which read as "no OSM
-       data here" downstream. Don't cache this either, so the next
-       request retries cleanly. */
-    if (typeof responseData.remark === "string" && responseData.remark.length > 0) {
-      logger.warn("[overpass] response carried a remark (server-side issue)", {
-        lat,
-        lng,
-        remark: responseData.remark,
-      });
-      return null;
-    }
-
-    if (!Array.isArray(responseData.elements)) {
-      cacheSet(key, null, now);
-      return null;
-    }
+    /* Aggregate elements from successful categories. The original tag
+       inspector below treats each element independently, so order
+       doesn't matter and we don't need to know which category an
+       element came from (an "amenity":"restaurant" element bucketed
+       as restaurants_cafes regardless of which query returned it). */
+    const elements: OverpassElement[] = categoryResults.flatMap((r) => r ?? []);
 
     let schools = 0;
     let restaurants_cafes = 0;
@@ -182,6 +186,9 @@ export async function getNearbyAmenities(lat: number, lng: number): Promise<Amen
     let transport_stations = 0;
     let bus_stops = 0;
     const highlights: string[] = [];
+
+    // Bind `responseData` shape so the original loop below keeps compiling.
+    const responseData = { elements } as { elements: OverpassElement[] };
 
     for (const el of responseData.elements as OverpassElement[]) {
       const tags = el.tags || {};
