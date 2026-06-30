@@ -54,12 +54,20 @@ export function parseInsightsInput(raw: {
     return { ok: false, error: "signal_key must be a peer-relative-z signal (suffix '_peer_relative_z')." };
   }
 
+  /* Developer-experience: country names are case-insensitive on input.
+     "ENGLAND", "england", "England" all normalize to "England". The
+     internal canonical form stays Title-case for the downstream Country
+     type + COUNTRY_PREFIX lookup. */
   let country: Country | undefined;
   if (raw.country !== undefined) {
-    if (raw.country !== "England" && raw.country !== "Wales" && raw.country !== "Scotland") {
-      return { ok: false, error: "country must be one of: England, Wales, Scotland." };
+    const normalized =
+      typeof raw.country === "string"
+        ? raw.country.charAt(0).toUpperCase() + raw.country.slice(1).toLowerCase()
+        : raw.country;
+    if (normalized !== "England" && normalized !== "Wales" && normalized !== "Scotland") {
+      return { ok: false, error: "country must be one of: England, Wales, Scotland (case-insensitive)." };
     }
-    country = raw.country;
+    country = normalized as Country;
   }
 
   const lad = raw.lad && raw.lad.trim() ? raw.lad.trim() : undefined;

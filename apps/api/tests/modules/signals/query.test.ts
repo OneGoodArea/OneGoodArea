@@ -195,4 +195,60 @@ describe("queryAreasCompound", () => {
   it("rejects an empty signals list", () => {
     expect(() => buildCompoundAreasQuery({ signals: [], limit: 10 })).toThrow();
   });
+
+  /* ICP E2E 2026-06-30 finding #3: rank_areas/find_areas was returning
+     duplicate geo_code rows (the SQL fans out across signal_values rows
+     per (signal_key, geo_code) when multiple observation periods exist).
+     queryAreasCompound now dedupes by geo_code, keeping the first
+     occurrence (which honors the SQL's ORDER BY). */
+  it("dedupes duplicate geo_codes returned by the SQL fan-out", async () => {
+    const run: Runner = async () => [
+      // Same geo_code twice — fan-out artifact
+      { geo_type: "lsoa", geo_code: "E01033664",
+        sv0_raw: "1", sv0_norm: "0", sp0_pct: "0",
+        sv1_raw: "6", sv1_norm: "0.5", sp1_pct: "50" },
+      { geo_type: "lsoa", geo_code: "E01033664",
+        sv0_raw: "1", sv0_norm: "0", sp0_pct: "0",
+        sv1_raw: "6", sv1_norm: "0.5", sp1_pct: "50" },
+      // A distinct geo_code
+      { geo_type: "lsoa", geo_code: "E01033673",
+        sv0_raw: "1", sv0_norm: "0", sp0_pct: "0",
+        sv1_raw: "6", sv1_norm: "0.5", sp1_pct: "50" },
+    ];
+    const out = await queryAreasCompound({
+      signals: [
+        { key: "crime.total_12m" },
+        { key: "deprivation.imd_decile" },
+      ],
+      limit: 50,
+    }, run);
+    expect(out).toHaveLength(2);
+    expect(out.map((r) => r.geo_code)).toEqual(["E01033664", "E01033673"]);
+  });
+});
+
+/* ICP E2E 2026-06-30 finding #5: country names case-insensitive on
+   input. "ENGLAND", "england", "England" all accepted; canonical
+   "England" returned to downstream readers. */
+describe("parseAreasQuery — country case insensitivity (AR-387)", () => {
+  it("accepts ENGLAND (uppercase)", () => {
+    const r = parseAreasQuery({ signal: "crime.total_12m", country: "ENGLAND" });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.query.country).toBe("England");
+  });
+  it("accepts england (lowercase)", () => {
+    const r = parseAreasQuery({ signal: "crime.total_12m", country: "england" });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.query.country).toBe("England");
+  });
+  it("accepts wAlEs (mixed)", () => {
+    const r = parseAreasQuery({ signal: "crime.total_12m", country: "wAlEs" });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.query.country).toBe("Wales");
+  });
+  it("rejects garbage", () => {
+    const r = parseAreasQuery({ signal: "crime.total_12m", country: "Mars" });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/case-insensitive/);
+  });
 });
