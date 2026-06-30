@@ -94,6 +94,39 @@ describe("portfolio areas + enrich", () => {
     expect(ok.json().added).toBe(2);
   });
 
+  /* AR-386: the route returns BOTH the added count AND the full
+     PortfolioDetail in a single round-trip. Previously the MCP
+     watch_portfolio tool crashed on .areas.length because the response
+     was just {added: N} — the contract now matches what the MCP types
+     expect. */
+  it("areas: 200 response includes the full PortfolioDetail under `portfolio`", async () => {
+    vi.mocked(monitor.addAreas).mockResolvedValue({ added: 2 });
+    vi.mocked(monitor.getPortfolio).mockResolvedValue({
+      id: "pf_1",
+      name: "e2e",
+      created_at: "2026-06-30T08:00:00.000Z",
+      area_count: 2,
+      areas: [
+        { id: "pfa_1", area: "M1 1AE", label: null, created_at: "2026-06-30T08:00:00.000Z" },
+        { id: "pfa_2", area: "SW1A 1AA", label: "HQ", created_at: "2026-06-30T08:00:01.000Z" },
+      ],
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/portfolios/pf_1/areas",
+      headers: { ...auth, "content-type": "application/json" },
+      payload: JSON.stringify({ areas: [{ area: "M1 1AE" }, { area: "SW1A 1AA", label: "HQ" }] }),
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.added).toBe(2);
+    expect(body.portfolio).toBeDefined();
+    expect(body.portfolio.id).toBe("pf_1");
+    expect(body.portfolio.areas).toHaveLength(2);
+    expect(body.portfolio.areas[0].area).toBe("M1 1AE");
+    expect(body.portfolio.areas[1].area).toBe("SW1A 1AA");
+  });
+
   it("enrich: 400 on bad preset, 404 when not owned, 200 with results", async () => {
     const badPreset = await app.inject({ method: "POST", url: "/v1/portfolios/pf_1/enrich", headers: { ...auth, "content-type": "application/json" }, payload: JSON.stringify({ preset: "vibes" }) });
     expect(badPreset.statusCode).toBe(400);

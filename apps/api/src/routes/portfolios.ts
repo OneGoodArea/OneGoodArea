@@ -154,7 +154,12 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
         const result = await addAreas(userId, id, areas);
         if (!result) return reply.code(404).send({ error: "Portfolio not found" });
         trackEvent("api.portfolio.areas_added", userId, { portfolioId: id, added: result.added }, ctx.orgId);
-        return reply.code(200).send(result);
+        /* AR-386: return the full PortfolioDetail alongside the count so the
+           MCP watch_portfolio tool (and any other batch-add caller) can
+           render the resulting state without a second round-trip. Additive —
+           `added` stays for back-compat. */
+        const portfolio = await getPortfolio(userId, id);
+        return reply.code(200).send({ added: result.added, portfolio });
       } catch (error) {
         if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
         logger.error("[v1/portfolios/:id/areas] error:", error);

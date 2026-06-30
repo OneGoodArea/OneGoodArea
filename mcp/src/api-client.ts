@@ -9,7 +9,7 @@
  */
 
 const DEFAULT_BASE = "https://onegoodarea.onrender.com";
-const USER_AGENT = "onegoodarea-mcp-server/1.0.2";
+const USER_AGENT = "onegoodarea-mcp-server/1.0.3";
 
 export type Preset = "moving" | "business" | "investing" | "research";
 
@@ -367,14 +367,18 @@ export class OogaApiClient {
   }
 
   /**
-   * POST /v1/portfolios/:id/areas — add tracked areas to a portfolio. Returns
-   * the updated portfolio detail with all areas. AR-368.
+   * POST /v1/portfolios/:id/areas — add tracked areas to a portfolio.
+   * AR-386: returns `{ added: <count>, portfolio: PortfolioDetail }`.
+   * Previously typed as bare PortfolioDetail; the actual response shape
+   * was `{added: N}` only, which crashed watch_portfolio's response
+   * formatter on `.areas.length`. apps/api now returns the full detail
+   * alongside the count in a single round-trip.
    */
   async addPortfolioAreas(
     portfolioId: string,
     areas: Array<{ area: string; label?: string | null }>,
-  ): Promise<OogaPortfolioDetail> {
-    return this.postIntelligence<OogaPortfolioDetail>(
+  ): Promise<{ added: number; portfolio: OogaPortfolioDetail }> {
+    return this.postIntelligence<{ added: number; portfolio: OogaPortfolioDetail }>(
       `/v1/portfolios/${encodeURIComponent(portfolioId)}/areas`,
       { areas },
     );
