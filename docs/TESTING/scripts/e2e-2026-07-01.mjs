@@ -43,6 +43,24 @@ const headersAuth = { Authorization: `Bearer ${KEY}`, "Content-Type": "applicati
 
 const results = [];
 
+/* AR-404: per-API-key rate limit on prod is 30 req/min. Pace the script
+   just under that so a ~55-check run never trips its own throttling.
+   2100ms per call -> ~28.5 req/min steady-state. */
+const MIN_DELAY_MS = 2100;
+let lastCallTs = 0;
+
+/* If a call DOES get 429 (e.g. some other client is hitting the same
+   key), sleep through the rate window and retry once. Failing twice
+   indicates a real persistent issue. */
+const RATE_LIMIT_BACKOFF_MS = 61_000;
+
+async function pace() {
+  const elapsed = Date.now() - lastCallTs;
+  const wait = MIN_DELAY_MS - elapsed;
+  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  lastCallTs = Date.now();
+}
+
 async function call(opts) {
   const { name, category, method = "GET", path, body, auth = true, expect = {}, derive } = opts;
   const url = `${BASE}${path}`;
@@ -50,16 +68,28 @@ async function call(opts) {
   const init = { method, headers };
   if (body !== undefined) init.body = typeof body === "string" ? body : JSON.stringify(body);
 
+  await pace();
+  let attempt = 0;
   const t0 = performance.now();
   let res, text, json;
-  try {
-    res = await fetch(url, init);
-    text = await res.text();
-    try { json = JSON.parse(text); } catch { json = null; }
-  } catch (err) {
-    const ms = Math.round(performance.now() - t0);
-    results.push({ name, category, method, path, status: "ERR", latency_ms: ms, ok: false, note: String(err).slice(0, 80) });
-    return null;
+  while (true) {
+    attempt += 1;
+    try {
+      res = await fetch(url, init);
+      text = await res.text();
+      try { json = JSON.parse(text); } catch { json = null; }
+    } catch (err) {
+      const ms = Math.round(performance.now() - t0);
+      results.push({ name, category, method, path, status: "ERR", latency_ms: ms, ok: false, note: String(err).slice(0, 80) });
+      return null;
+    }
+    if (res.status === 429 && attempt === 1) {
+      console.log(`  -> 429 on ${name}; sleeping ${RATE_LIMIT_BACKOFF_MS / 1000}s then retrying once`);
+      await new Promise((r) => setTimeout(r, RATE_LIMIT_BACKOFF_MS));
+      lastCallTs = Date.now();
+      continue;
+    }
+    break;
   }
   const ms = Math.round(performance.now() - t0);
 
