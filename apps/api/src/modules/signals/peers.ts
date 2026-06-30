@@ -53,6 +53,11 @@ export interface PeerRow {
   geo_code: string;
   distance: number;
   n_dims_used: number;
+  /* AR-398: place-context enrichment from geo_lookup. Null when the
+     peer LSOA isn't yet in geo_lookup (incomplete seed, very rare). */
+  admin_district: string | null;
+  region: string | null;
+  sample_postcode: string | null;
 }
 
 export type Runner = (text: string, params: unknown[]) => Promise<Record<string, unknown>[]>;
@@ -213,7 +218,22 @@ export interface PeersResult {
   peers: PeerRow[];
 }
 
-/** I/O: run the two queries and assemble the result. */
+/** PURE: SQL for the peer enrichment lookup. Returns one row per peer LSOA
+    with the canonical admin_district + region + a representative postcode
+    (alphabetically first via DISTINCT ON). AR-398. */
+export function buildPeerEnrichmentSql(): string {
+  return `SELECT DISTINCT ON (lsoa_code)
+                 lsoa_code, lad_name, region, postcode
+            FROM geo_lookup
+           WHERE lsoa_code = ANY($1::text[])
+           ORDER BY lsoa_code, postcode ASC`;
+}
+
+/** I/O: run the queries and assemble the result.
+    AR-398: post-rank, enrich each peer with admin_district + region +
+    a representative postcode from geo_lookup. Single batched query
+    over the peer geo_codes; <50ms on the indexed lsoa_code column.
+    Peers not in geo_lookup get nulls so the shape stays stable. */
 export async function findPeers(input: PeersInput, run: Runner = runDefault): Promise<PeersResult> {
   // Step 1: target's available normalized signals (filtered by caller's list if any).
   const targetRows = await run(buildTargetSignalsSql(), [input.targetGeoCode, input.signals ?? null]);
@@ -225,10 +245,31 @@ export async function findPeers(input: PeersInput, run: Runner = runDefault): Pr
   // consistent and the SQL stays one round trip.
   const { text, params } = buildPeersSql(input);
   const rows = await run(text, params);
-  const peers: PeerRow[] = rows.map((r) => ({
-    geo_code: String(r.geo_code),
-    distance: Number(r.distance),
-    n_dims_used: Number(r.n_dims_used),
-  }));
+  const peerCodes = rows.map((r) => String(r.geo_code));
+  if (peerCodes.length === 0) return { signalsUsed, peers: [] };
+
+  // Step 3: enrich each peer with admin_district + region + sample_postcode.
+  const enrichmentRows = await run(buildPeerEnrichmentSql(), [peerCodes]);
+  const enrichment = new Map<string, { admin_district: string | null; region: string | null; sample_postcode: string | null }>();
+  for (const row of enrichmentRows) {
+    enrichment.set(String(row.lsoa_code), {
+      admin_district: row.lad_name === null || row.lad_name === undefined ? null : String(row.lad_name),
+      region: row.region === null || row.region === undefined ? null : String(row.region),
+      sample_postcode: row.postcode === null || row.postcode === undefined ? null : String(row.postcode),
+    });
+  }
+
+  const peers: PeerRow[] = rows.map((r) => {
+    const geo_code = String(r.geo_code);
+    const e = enrichment.get(geo_code) ?? { admin_district: null, region: null, sample_postcode: null };
+    return {
+      geo_code,
+      distance: Number(r.distance),
+      n_dims_used: Number(r.n_dims_used),
+      admin_district: e.admin_district,
+      region: e.region,
+      sample_postcode: e.sample_postcode,
+    };
+  });
   return { signalsUsed, peers };
 }

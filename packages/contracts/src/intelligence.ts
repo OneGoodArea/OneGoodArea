@@ -247,6 +247,15 @@ export const PeerResultSchema = z.object({
   geo_code: z.string(),
   distance: z.number(),         // 0 = identical, 1 = maximally distant (over [0,1] normalized space)
   n_dims_used: z.number().int(), // how many signal dimensions contributed to this peer's distance
+  /* AR-398: place-context enrichment for B2B integrators (notably the
+     retailer ICP). The bare LSOA code is unreadable as a result row;
+     these fields surface the canonical local-authority and a
+     representative postcode for that LSOA so callers can render the
+     peer as a place, not just a code. All three are nullable for
+     LSOAs not yet in the geo_lookup table. */
+  admin_district: z.string().nullable().optional(),
+  region: z.string().nullable().optional(),
+  sample_postcode: z.string().nullable().optional(),
 }).strict();
 export type PeerResult = z.infer<typeof PeerResultSchema>;
 
