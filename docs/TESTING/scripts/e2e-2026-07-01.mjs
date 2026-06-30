@@ -122,7 +122,14 @@ async function run() {
   let crimeDimension = null;
   await call({
     name: "/v1/area M1 1AE", category: "AR-393", path: "/v1/area?postcode=M1+1AE",
-    expect: { status: 200, maxLatencyMs: 5000 },
+    /* AR-402: post-User-Agent fix, amenities actually fetches real data
+       from Overpass for dense city centres. The cold-cache call pays
+       the slowest of 8 parallel category queries (~10s for Piccadilly-
+       density centres). Warm-cache calls are <500ms (subsequent test
+       calls verify this). 12s threshold accommodates the honest cold
+       cost; the alternative is pre-warming the cache before this test
+       which would hide the real latency profile. */
+    expect: { status: 200, maxLatencyMs: 12000 },
     derive: (j) => { crimeSignal = j?.signals?.find((s) => s.key === "crime.total_12m") ?? null; },
   });
   await call({

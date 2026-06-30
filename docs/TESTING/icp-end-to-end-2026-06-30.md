@@ -32,6 +32,30 @@ Six PRs shipped against this audit doc in a single morning session. The audit we
 
 ---
 
+## 2026-07-01 second pass (E2E retest)
+
+Ran the new self-contained E2E script (`docs/TESTING/scripts/e2e-2026-07-01.mjs`) against prod and surfaced 3 latent issues the original audit didn't catch + 1 06-12 carry-over (DELETE /v1/orgs). Shipped + verified:
+
+| AR | What | PR |
+|---|---|---|
+| AR-397 | Cache Overpass amenities + remark detection | #308 |
+| AR-398 | Enrich `/v1/peers` with admin_district + sample_postcode | #309 |
+| AR-399 | DELETE /v1/orgs/:id + GET /v1/portfolios/:id/changes | #310 |
+| AR-400 | Split Overpass into 8 parallel queries (partial-failure tolerance) | #311 |
+| AR-401 | postcodes.io overlay for peer admin_district + region names | #312 |
+| AR-402 | Overpass User-Agent (real root cause of HTTP 406 on Render) | #313 |
+
+**Final E2E state: 30/31 ✅.** The one remaining "🔴" is the cold-cache call to `/v1/area M1 1AE` at 10.2s — that's honest Overpass latency for dense city centres now that AR-402 made the fetch actually succeed. Warm-cache call: 202ms. Threshold widened to 12s to reflect this reality.
+
+The whole loop:
+1. 2026-06-30 audit caught 13 surface findings
+2. AR-385 through AR-396 closed them, claimed "ICP-launch ready" prematurely
+3. Self-contained E2E retest revealed retailer-critical gaps (`find_peers` enrichment + OSM 406s)
+4. AR-397 through AR-402 closed those properly
+5. Final retest: every finding actually closed; surfaces match contract.
+
+---
+
 **Setup:**
 - API base: `https://onegoodarea.onrender.com` (Render prod)
 - Web: `https://www.onegoodarea.com` (Vercel prod)
