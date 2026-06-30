@@ -123,13 +123,33 @@ const CATEGORIES: CategorySpec[] = [
    normal queue. */
 const OVERPASS_USER_AGENT = "OneGoodArea/1.0 (+https://www.onegoodarea.com)";
 
-/** Fetch ONE category. Returns its elements[] on success, or null on
-    failure / Overpass remark / parse error. Never throws; the caller
-    aggregates via Promise.allSettled-style result handling. */
-async function fetchCategory(spec: CategorySpec, lat: number, lng: number): Promise<OverpassElement[] | null> {
-  const query = `[out:json][timeout:${OVERPASS_QUERY_TIMEOUT_SECONDS}];nwr${spec.selector}(around:${spec.radius},${lat},${lng});out tags center;`;
+/* AR-405: Render's egress IP range was blocked by the main
+   overpass-api.de mirror (verified live 2026-07-01: all 8 category
+   fetches threw "fetch failed" in 0-400ms, i.e. network-level reject).
+   Curl from a dev machine on a different IP returns 200 normally.
+   The fix is a fallback chain across multiple Overpass mirrors. Each
+   mirror has its own egress allowlist; the chain stops at the first
+   that responds. Order is fastest+most-reliable first, with the main
+   mirror still tried first for the (large) fraction of deploys whose
+   IP isn't blocked. */
+const OVERPASS_MIRRORS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://overpass.openstreetmap.fr/api/interpreter",
+] as const;
+
+/** Try ONE mirror. Returns elements[] on a clean success, null on any
+    failure mode (HTTP error / fetch threw / remark response). Never
+    throws. The category fetcher walks all mirrors via this helper. */
+async function tryMirror(
+  url: string,
+  spec: CategorySpec,
+  query: string,
+  lat: number,
+  lng: number,
+): Promise<OverpassElement[] | null> {
   try {
-    const res = await fetch("https://overpass-api.de/api/interpreter", {
+    const res = await fetch(url, {
       method: "POST",
       body: `data=${encodeURIComponent(query)}`,
       headers: {
@@ -140,20 +160,45 @@ async function fetchCategory(spec: CategorySpec, lat: number, lng: number): Prom
       signal: AbortSignal.timeout(OVERPASS_FETCH_TIMEOUT_MS),
     });
     if (!res.ok) {
-      logger.warn("[overpass] category fetch HTTP error", { category: spec.name, lat, lng, status: res.status });
+      logger.warn("[overpass] mirror HTTP error", { mirror: url, category: spec.name, status: res.status });
       return null;
     }
     const data = (await res.json()) as { elements?: unknown; remark?: unknown };
     if (typeof data.remark === "string" && data.remark.length > 0) {
-      logger.warn("[overpass] category got remark (server-side issue)", { category: spec.name, lat, lng, remark: data.remark });
+      logger.warn("[overpass] mirror got remark", { mirror: url, category: spec.name, lat, lng, remark: data.remark });
       return null;
     }
     if (!Array.isArray(data.elements)) return null;
     return data.elements as OverpassElement[];
   } catch (err) {
-    logger.warn("[overpass] category fetch threw", { category: spec.name, lat, lng, error: err instanceof Error ? err.message : String(err) });
+    logger.warn("[overpass] mirror fetch threw", {
+      mirror: url,
+      category: spec.name,
+      lat,
+      lng,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
+}
+
+/** Fetch ONE category by walking the mirror chain (AR-405). Returns the
+    first mirror's elements[] on success, or null if EVERY mirror failed
+    for this category. Never throws. */
+async function fetchCategory(spec: CategorySpec, lat: number, lng: number): Promise<OverpassElement[] | null> {
+  const query = `[out:json][timeout:${OVERPASS_QUERY_TIMEOUT_SECONDS}];nwr${spec.selector}(around:${spec.radius},${lat},${lng});out tags center;`;
+  for (const mirror of OVERPASS_MIRRORS) {
+    const result = await tryMirror(mirror, spec, query, lat, lng);
+    if (result !== null) {
+      /* Log only when a non-primary mirror succeeded; primary success
+         is the happy path and would be noisy. */
+      if (mirror !== OVERPASS_MIRRORS[0]) {
+        logger.info("[overpass] category served by fallback mirror", { mirror, category: spec.name });
+      }
+      return result;
+    }
+  }
+  return null;
 }
 
 export async function getNearbyAmenities(lat: number, lng: number): Promise<AmenitiesData | null> {
