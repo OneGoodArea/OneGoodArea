@@ -151,4 +151,30 @@ export class OrgRepository {
     `;
     return result.length > 0;
   }
+
+  /** AR-399: delete the org and every row that references it.
+      No DB-level FK constraints exist on org_id columns (history reasons),
+      so the cascade is explicit here. Returns true iff the orgs row was
+      actually deleted (covers concurrent-double-delete safely).
+
+      Tables touched, in dependency-safe order:
+        org_methodology_pins, peer_cohorts, scoring_presets,
+        signal_bundles, org_invitations, org_members, orgs
+
+      Out of scope: api_keys, activity_events, sessions (these can
+      have a null org_id and are user-scoped primarily; the user keeps
+      the key, but its org context becomes null after the org is gone). */
+  async deleteOrgEntirely(orgId: string): Promise<boolean> {
+    await sql`DELETE FROM org_methodology_pins WHERE org_id = ${orgId}`;
+    await sql`DELETE FROM peer_cohorts          WHERE org_id = ${orgId}`;
+    await sql`DELETE FROM scoring_presets       WHERE org_id = ${orgId}`;
+    await sql`DELETE FROM signal_bundles        WHERE org_id = ${orgId}`;
+    await sql`DELETE FROM org_invitations       WHERE org_id = ${orgId}`;
+    await sql`DELETE FROM org_members           WHERE org_id = ${orgId}`;
+    const result = await sql`
+      DELETE FROM orgs WHERE id = ${orgId}
+      RETURNING id
+    `;
+    return result.length > 0;
+  }
 }

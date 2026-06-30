@@ -249,4 +249,35 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
         return reply.code(500).send({ error: "Internal server error" });
       }
     });
+
+    /* AR-399: read-only probe variant of /changes. Same detection but
+       emit: false (no webhook fan-out) and no body, so it's safe for
+       GET semantics. The 2026-07-01 E2E retest caught this missing —
+       callers wanted to peek at changes without triggering the
+       material-change webhook chain. */
+    app.get("/v1/portfolios/:id/changes",
+      {
+      schema: {
+            "tags": [
+                "Portfolios"
+            ],
+            "summary": "Probe portfolio changes (read-only)",
+            "description": "Read-only variant of POST /changes. Detects material signal changes for tracked areas without triggering webhooks. Use this for dashboards and previews; use POST when you want the side-effects."
+        },
+      }, async (request, reply) => {
+      try {
+        const ctx = await guardSignalsCtx(request, reply);
+        if (!ctx) return reply;
+        const { userId } = ctx;
+        const { id } = request.params as { id: string };
+        const report = await detectPortfolioChanges(userId, id, { emit: false });
+        if (!report) return reply.code(404).send({ error: "Portfolio not found" });
+        reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(null, userId));
+        return reply.code(200).send(report);
+      } catch (error) {
+        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        logger.error("[v1/portfolios/:id/changes] GET error:", error);
+        return reply.code(500).send({ error: "Internal server error" });
+      }
+    });
 }

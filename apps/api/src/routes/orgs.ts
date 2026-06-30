@@ -3,7 +3,7 @@ import { CreateOrgRequestSchema, UpdateOrgRequestSchema } from "@onegoodarea/con
 import { authenticateEither } from "../shared/auth-either";
 import { isAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
-import { createOrgWithOwner, listOrgsForUser, getOrgIfMember, updateOrg, getRoleInOrg, hasAtLeastRole } from "../modules/orgs";
+import { createOrgWithOwner, listOrgsForUser, getOrgIfMember, updateOrg, getRoleInOrg, hasAtLeastRole, deleteOrg } from "../modules/orgs";
 import { trackEvent } from "../modules/tracking/activity";
 
 /** orgs route handlers — extracted from app.ts per AR-286. */
@@ -87,6 +87,41 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
       } catch (error) {
         if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id] get error:", error);
+        return reply.code(500).send({ error: "Internal server error" });
+      }
+    });
+
+    /* AR-399: DELETE /v1/orgs/:id. Owner-only. Rejects personal orgs
+       (deleting them would orphan the user). Cascades to every
+       per-org child table; see OrgRepository.deleteOrgEntirely. */
+    app.delete("/v1/orgs/:id",
+      {
+      schema: {
+            "tags": [
+                "Orgs"
+            ],
+            "summary": "Delete organization",
+            "description": "Delete an organization and every row that references it (members, presets, bundles, cohorts, methodology pins, invitations). Owner-only. Personal orgs cannot be deleted."
+        },
+      }, async (request, reply) => {
+      try {
+        const userId = await authenticateEither(request, reply);
+        if (!userId) return reply;
+        const { id } = request.params as { id: string };
+        const outcome = await deleteOrg(id, userId);
+        if (outcome === "not_found") return reply.code(404).send({ error: "Org not found" });
+        if (outcome === "forbidden") return reply.code(403).send({ error: "Owner required.", code: "owner_required" });
+        if (outcome === "personal") {
+          return reply.code(409).send({
+            error: "Cannot delete your personal organization. Personal orgs are auto-managed at signup.",
+            code: "personal_org_cannot_be_deleted",
+          });
+        }
+        trackEvent("api.org.deleted", userId, { orgId: id }, id);
+        return reply.code(200).send({ deleted: true });
+      } catch (error) {
+        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        logger.error("[v1/orgs/:id] delete error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
     });
