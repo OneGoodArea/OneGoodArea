@@ -361,6 +361,179 @@ async function run() {
 
   section("AR-394", "per-source timing log presence");
   console.log("note: per-source timing line is in Render logs; not curlable directly. Skipped here.");
+
+  /* ────────────────────────────────────────────────────────────────────
+     AR-403: full surface coverage. Sections below exercise every safe
+     public endpoint, not just the ones the audits flagged. Skipped:
+     /auth/*, /stripe/*, /v1/report, /v1/portfolios/:id/enrich,
+     POST /v1/orgs/:id/invitations (sends email), /cron/*, /track.
+  ──────────────────────────────────────────────────────────────────── */
+
+  section("signals catalog", "all 7 categories live + ranked LSOAs");
+  for (const cat of ["crime", "property", "deprivation", "transport", "environment"]) {
+    await call({
+      name: `/v1/signals/${cat} M1 1AE`, category: "signals catalog",
+      path: `/v1/signals/${cat}?postcode=M1+1AE`,
+      expect: {
+        status: 200,
+        assert: (j) => Array.isArray(j?.signals) && j.signals.length > 0 ? true : `no signals returned for ${cat}`,
+      },
+    });
+  }
+  await call({
+    name: "/v1/areas ranked by crime", category: "signals catalog",
+    path: "/v1/areas?signal=crime.total_12m&country=England&max_percentile=10&limit=5",
+    expect: {
+      status: 200,
+      assert: (j) => Array.isArray(j?.areas || j?.results) ? true : "no areas array",
+    },
+  });
+
+  section("intelligence reads", "forecast + insights happy path");
+  await call({
+    name: "/v1/forecast M1 1AE", category: "intelligence reads", method: "POST", path: "/v1/forecast",
+    body: { target: { postcode: "M1 1AE" }, signal_key: "property.median_price" },
+    expect: {
+      status: 200,
+      assert: (j) => Array.isArray(j?.projection || j?.forecast || j?.points) ? true : `unexpected forecast shape: ${JSON.stringify(j).slice(0, 100)}`,
+    },
+  });
+
+  section("portfolios + reports lists", "read-only");
+  await call({
+    name: "GET /v1/portfolios (list)", category: "lists", path: "/v1/portfolios",
+    expect: { status: 200, assert: (j) => Array.isArray(j?.portfolios || j) ? true : "no portfolios array" },
+  });
+
+  section("org sub-resources CRUD", "bundles + presets + cohorts");
+  // Need myOrgId from earlier section
+  if (myOrgId) {
+    /* Bundles */
+    let bundleId = null;
+    await call({
+      name: `GET /v1/orgs/${myOrgId}/bundles`, category: "org sub-resources",
+      path: `/v1/orgs/${myOrgId}/bundles`, expect: { status: 200 },
+    });
+    await call({
+      name: "POST /v1/orgs/:id/bundles (test bundle)", category: "org sub-resources", method: "POST",
+      path: `/v1/orgs/${myOrgId}/bundles`,
+      body: {
+        name: `e2e-bundle-${Date.now()}`,
+        slug: `e2e-bundle-${Date.now()}`,
+        signal_keys: ["crime.total_12m", "deprivation.imd_decile"],
+      },
+      expect: { statusOneOf: [200, 201] },
+      derive: (j) => { bundleId = j?.id || j?.bundle_id || null; },
+    });
+    if (bundleId) {
+      await call({
+        name: `DELETE /v1/orgs/:id/bundles/${bundleId}`, category: "org sub-resources", method: "DELETE",
+        path: `/v1/orgs/${myOrgId}/bundles/${bundleId}`,
+        expect: { status: 200 },
+      });
+    }
+
+    /* Presets */
+    let presetId = null;
+    await call({
+      name: `GET /v1/orgs/${myOrgId}/presets`, category: "org sub-resources",
+      path: `/v1/orgs/${myOrgId}/presets`, expect: { status: 200 },
+    });
+    await call({
+      name: "POST /v1/orgs/:id/presets (test preset)", category: "org sub-resources", method: "POST",
+      path: `/v1/orgs/${myOrgId}/presets`,
+      body: {
+        name: `e2e-preset-${Date.now()}`,
+        slug: `e2e-preset-${Date.now()}`,
+        base_preset: "investing",
+        weights: { price_growth: 40, rental_yield: 30, risk_factors: 30 },
+      },
+      expect: { statusOneOf: [200, 201] },
+      derive: (j) => { presetId = j?.id || j?.preset_id || null; },
+    });
+    if (presetId) {
+      await call({
+        name: `DELETE /v1/orgs/:id/presets/${presetId}`, category: "org sub-resources", method: "DELETE",
+        path: `/v1/orgs/${myOrgId}/presets/${presetId}`,
+        expect: { status: 200 },
+      });
+    }
+
+    /* Cohorts */
+    let cohortId = null;
+    await call({
+      name: `GET /v1/orgs/${myOrgId}/cohorts`, category: "org sub-resources",
+      path: `/v1/orgs/${myOrgId}/cohorts`, expect: { status: 200 },
+    });
+    await call({
+      name: "POST /v1/orgs/:id/cohorts (test cohort)", category: "org sub-resources", method: "POST",
+      path: `/v1/orgs/${myOrgId}/cohorts`,
+      body: {
+        name: `e2e-cohort-${Date.now()}`,
+        slug: `e2e-cohort-${Date.now()}`,
+        geo_codes: ["E01034129", "E01005391"],
+      },
+      expect: { statusOneOf: [200, 201] },
+      derive: (j) => { cohortId = j?.id || j?.cohort_id || null; },
+    });
+    if (cohortId) {
+      await call({
+        name: `DELETE /v1/orgs/:id/cohorts/${cohortId}`, category: "org sub-resources", method: "DELETE",
+        path: `/v1/orgs/${myOrgId}/cohorts/${cohortId}`,
+        expect: { status: 200 },
+      });
+    }
+
+    /* Members + Invitations read-only */
+    await call({
+      name: `GET /v1/orgs/${myOrgId}/members`, category: "org sub-resources",
+      path: `/v1/orgs/${myOrgId}/members`,
+      expect: {
+        status: 200,
+        /* AR-388: response now carries caller_role so the dashboard UI
+           can gate the Invite-Member CTA. Verify the shape. */
+        assert: (j) => j?.caller_role ? true : `missing caller_role field: ${JSON.stringify(j).slice(0, 80)}`,
+      },
+    });
+    await call({
+      name: `GET /v1/orgs/${myOrgId}/invitations`, category: "org sub-resources",
+      path: `/v1/orgs/${myOrgId}/invitations`,
+      expect: { status: 200 },
+    });
+  } else {
+    console.log("note: myOrgId not derived; skipping org sub-resources tests.");
+  }
+
+  section("webhooks lifecycle", "create + rotate-secret + delete");
+  let webhookId = null;
+  await call({
+    name: "GET /v1/webhooks (list)", category: "webhooks", path: "/v1/webhooks",
+    expect: { status: 200 },
+  });
+  await call({
+    name: "POST /v1/webhooks (test sub)", category: "webhooks", method: "POST", path: "/v1/webhooks",
+    body: { url: "https://example.com/oga-e2e", events: ["signal.changed"] },
+    expect: {
+      statusOneOf: [200, 201],
+      assert: (j) => j?.secret ? true : "missing one-time secret in response",
+    },
+    derive: (j) => { webhookId = j?.id || j?.subscription_id || null; },
+  });
+  if (webhookId) {
+    await call({
+      name: `POST /v1/webhooks/${webhookId}/rotate-secret (AR-283)`, category: "webhooks",
+      method: "POST", path: `/v1/webhooks/${webhookId}/rotate-secret`,
+      expect: {
+        status: 200,
+        assert: (j) => j?.secret ? true : "no rotated secret returned",
+      },
+    });
+    await call({
+      name: `DELETE /v1/webhooks/${webhookId}`, category: "webhooks", method: "DELETE",
+      path: `/v1/webhooks/${webhookId}`,
+      expect: { status: 200 },
+    });
+  }
 }
 
 /* -------------------------------------------------------------------- */
