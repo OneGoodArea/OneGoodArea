@@ -62,6 +62,25 @@ function classifyAreaType(ruralUrban: string): AreaType {
 
 const POSTCODE_REGEX = /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i;
 
+/* AR-390: bound every postcodes.io fetch to 5 seconds. Pre-fix the
+   chain ran un-bounded — geocodePlace + autocomplete + reverse-geocode
+   could string 3 hangs together for ~15-30 seconds on bad input.
+   AbortController cancels the in-flight request; we treat that as a
+   not-found-equivalent (null) at the call site. */
+const POSTCODES_IO_TIMEOUT_MS = 5_000;
+
+async function timedFetch(url: string, timeoutMs = POSTCODES_IO_TIMEOUT_MS): Promise<Response | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { signal: controller.signal });
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function geocodeArea(query: string): Promise<GeocodedArea | null> {
   // Try as postcode first
   if (POSTCODE_REGEX.test(query.trim())) {
@@ -74,8 +93,8 @@ export async function geocodeArea(query: string): Promise<GeocodedArea | null> {
 
 async function geocodePostcode(postcode: string): Promise<GeocodedArea | null> {
   try {
-    const res = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(postcode)}`);
-    if (!res.ok) return null;
+    const res = await timedFetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(postcode)}`);
+    if (!res || !res.ok) return null;
 
     const data = (await res.json()) as { status?: number; result?: PostcodeResult };
     if (data.status !== 200 || !data.result) return null;
@@ -133,8 +152,8 @@ interface RawPlaceResult {
 
 async function fetchPlaces(query: string): Promise<RankedPlace[] | null> {
   try {
-    const res = await fetch(`https://api.postcodes.io/places?q=${encodeURIComponent(query)}&limit=10`);
-    if (!res.ok) return null;
+    const res = await timedFetch(`https://api.postcodes.io/places?q=${encodeURIComponent(query)}&limit=10`);
+    if (!res || !res.ok) return null;
     const data = (await res.json()) as { status?: number; result?: RawPlaceResult[] };
     if (data.status !== 200 || !data.result || data.result.length === 0) return null;
     const normalized: RankedPlace[] = data.result
@@ -167,10 +186,10 @@ async function fetchPlaces(query: string): Promise<RankedPlace[] | null> {
     like national parks). */
 async function placeToGeocodedArea(query: string, r: RankedPlace): Promise<GeocodedArea> {
   try {
-    const reverseRes = await fetch(
+    const reverseRes = await timedFetch(
       `https://api.postcodes.io/postcodes?lon=${r.longitude}&lat=${r.latitude}&limit=1`,
     );
-    if (reverseRes.ok) {
+    if (reverseRes && reverseRes.ok) {
       const reverseData = (await reverseRes.json()) as { result?: PostcodeResult[] };
       if (reverseData.result && reverseData.result.length > 0) {
         const p = reverseData.result[0];
@@ -214,8 +233,8 @@ async function placeToGeocodedArea(query: string, r: RankedPlace): Promise<Geoco
 async function geocodePlace(query: string): Promise<GeocodedArea | null> {
   // First try postcodes autocomplete in case it's a partial postcode
   try {
-    const autocompleteRes = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(query)}/autocomplete`);
-    if (autocompleteRes.ok) {
+    const autocompleteRes = await timedFetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(query)}/autocomplete`);
+    if (autocompleteRes && autocompleteRes.ok) {
       const autocompleteData = (await autocompleteRes.json()) as { result?: string[] };
       if (autocompleteData.result && autocompleteData.result.length > 0) {
         return geocodePostcode(autocompleteData.result[0]);
@@ -225,7 +244,15 @@ async function geocodePlace(query: string): Promise<GeocodedArea | null> {
 
   const ranked = await fetchPlaces(query);
   if (!ranked) return null;
-  return placeToGeocodedArea(query, ranked[0]);
+  const result = await placeToGeocodedArea(query, ranked[0]);
+  /* AR-390: reject results with no UK LSOA. placeToGeocodedArea returns
+     a partial-fallback object when the reverse-geocode fails — that
+     used to leak through as a "valid" geocode with empty LSOA, so
+     /v1/area?postcode=BAD returned 200 with country=Scotland (the
+     nearest-postcode fallback) and downstream signal lookups failed
+     silently. Better to return null and let the route emit 404. */
+  if (!result.lsoa) return null;
+  return result;
 }
 
 /* ── AR-267: ambiguity-aware resolver for the NL query plane ──
@@ -283,8 +310,8 @@ export async function geocodeAreaStrict(query: string): Promise<GeocodeAreaResul
 
   // Same partial-postcode autocomplete fast path as geocodeArea.
   try {
-    const autocompleteRes = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(q)}/autocomplete`);
-    if (autocompleteRes.ok) {
+    const autocompleteRes = await timedFetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(q)}/autocomplete`);
+    if (autocompleteRes && autocompleteRes.ok) {
       const autocompleteData = (await autocompleteRes.json()) as { result?: string[] };
       if (autocompleteData.result && autocompleteData.result.length > 0) {
         const area = await geocodePostcode(autocompleteData.result[0]);
