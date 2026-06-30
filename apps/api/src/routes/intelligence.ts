@@ -198,7 +198,7 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
         const body = (request.body ?? {}) as Record<string, unknown>;
         const target = body.target as { geo_code?: string; postcode?: string; area?: string } | undefined;
         if (!target || typeof target !== "object") {
-          return reply.code(400).send({ error: "Missing 'target' — provide one of {geo_code} | {postcode} | {area}." });
+          return reply.code(400).send({ error: "Missing 'target' object. Provide as nested: {target: {geo_code: \"E01...\"}} OR {target: {postcode: \"M1 1AE\"}} OR {target: {area: \"Manchester\"}}." });
         }
         const present = ["geo_code", "postcode", "area"].filter((k) => typeof target[k as keyof typeof target] === "string" && (target[k as keyof typeof target] as string).trim().length > 0);
         if (present.length !== 1) {
@@ -355,7 +355,7 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
         const body = (request.body ?? {}) as Record<string, unknown>;
         const target = body.target as { geo_code?: string; postcode?: string; area?: string } | undefined;
         if (!target || typeof target !== "object") {
-          return reply.code(400).send({ error: "Missing 'target' — provide one of {geo_code} | {postcode} | {area}." });
+          return reply.code(400).send({ error: "Missing 'target' object. Provide as nested: {target: {geo_code: \"E01...\"}} OR {target: {postcode: \"M1 1AE\"}} OR {target: {area: \"Manchester\"}}." });
         }
         const present = ["geo_code", "postcode", "area"].filter((k) => typeof target[k as keyof typeof target] === "string" && (target[k as keyof typeof target] as string).trim().length > 0);
         if (present.length !== 1) {

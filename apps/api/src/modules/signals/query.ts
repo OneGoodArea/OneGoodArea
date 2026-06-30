@@ -51,10 +51,17 @@ export function parseAreasQuery(raw: Record<string, unknown>): { ok: true; query
   const signal = typeof raw.signal === "string" ? raw.signal.trim() : "";
   if (!signal) return { ok: false, error: "Missing required ?signal= (a signal key, e.g. deprivation.imd_decile)." };
 
+  /* Case-insensitive country names: accept ENGLAND, england, England. */
   let country: Country | undefined;
   if (raw.country !== undefined) {
-    if (!isCountry(raw.country)) return { ok: false, error: "country must be one of: England, Wales, Scotland." };
-    country = raw.country;
+    const normalized =
+      typeof raw.country === "string"
+        ? raw.country.charAt(0).toUpperCase() + raw.country.slice(1).toLowerCase()
+        : raw.country;
+    if (!isCountry(normalized)) {
+      return { ok: false, error: "country must be one of: England, Wales, Scotland (case-insensitive)." };
+    }
+    country = normalized;
   }
 
   const lad = typeof raw.lad === "string" && raw.lad.trim() ? raw.lad.trim() : undefined;
@@ -143,13 +150,24 @@ export interface AreaResult {
 export async function queryAreas(q: AreasQuery, run: Runner = runDefault): Promise<AreaResult[]> {
   const { text, params } = buildAreasQuery(q);
   const rows = await run(text, params);
-  return rows.map((r) => ({
-    geo_type: String(r.geo_type),
-    geo_code: String(r.geo_code),
-    value: r.raw_value === null || r.raw_value === undefined ? null : Number(r.raw_value),
-    normalized_value: r.normalized_value === null || r.normalized_value === undefined ? null : Number(r.normalized_value),
-    percentile: r.percentile === null || r.percentile === undefined ? null : Number(r.percentile),
-  }));
+  /* Dedupe by geo_code, keeping first occurrence (honors the ORDER BY).
+     Same fix as queryAreasCompound — see comment there. ICP E2E
+     finding #3. */
+  const seen = new Set<string>();
+  const out: AreaResult[] = [];
+  for (const r of rows) {
+    const geo_code = String(r.geo_code);
+    if (seen.has(geo_code)) continue;
+    seen.add(geo_code);
+    out.push({
+      geo_type: String(r.geo_type),
+      geo_code,
+      value: r.raw_value === null || r.raw_value === undefined ? null : Number(r.raw_value),
+      normalized_value: r.normalized_value === null || r.normalized_value === undefined ? null : Number(r.normalized_value),
+      percentile: r.percentile === null || r.percentile === undefined ? null : Number(r.percentile),
+    });
+  }
+  return out;
 }
 
 /* ── COMPOUND query (Increment 2, AR-184) ──────────────────────────────────
@@ -298,7 +316,7 @@ export async function queryAreasCompound(q: CompoundAreasQuery, run: Runner = ru
   const rows = await run(text, params);
   const sortIdx = q.sortBy ? Math.max(0, q.signals.findIndex((s) => s.key === q.sortBy!.signal)) : 0;
   const toNum = (v: unknown): number | null => (v === null || v === undefined ? null : Number(v));
-  return rows.map((r) => {
+  const mapped = rows.map((r) => {
     const sig: Record<string, { value: number | null; normalized_value: number | null; percentile: number | null }> = {};
     for (let i = 0; i < q.signals.length; i++) {
       sig[q.signals[i].key] = {
@@ -317,4 +335,20 @@ export async function queryAreasCompound(q: CompoundAreasQuery, run: Runner = ru
       signals: sig,
     };
   });
+
+  /* Dedupe by geo_code, keeping first occurrence (which honors the
+     ORDER BY direction). The SQL can return the same geo_code multiple
+     times if signal_values / signal_percentiles have multiple rows per
+     (signal_key, geo_code) — e.g. different observation periods. Until
+     the SQL is tightened with a DISTINCT ON, this guarantees the API
+     contract that the caller sees one row per area. Surfaced via ICP
+     E2E 2026-06-30 finding #3. */
+  const seen = new Set<string>();
+  const deduped: AreaResult[] = [];
+  for (const r of mapped) {
+    if (seen.has(r.geo_code)) continue;
+    seen.add(r.geo_code);
+    deduped.push(r);
+  }
+  return deduped;
 }
