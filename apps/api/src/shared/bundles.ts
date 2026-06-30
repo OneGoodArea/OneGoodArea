@@ -33,7 +33,7 @@ export async function resolveOrgPinForCaller(
     METHODOLOGY_VERSION (latest). Used by every product endpoint that
     stamps the response header. Pure passthrough of resolveEngineVersion's
     org-pin path; no per-request header consulted (the legacy AR-131
-    header path on /v1/report continues to take precedence where wired).
+    per-request override on /v1/report is gone with AR-324).
 
     Defensive: a DB hiccup on the pin lookup must not 500 the product
     endpoint. Pin is opt-in; absent it, fall back to METHODOLOGY_VERSION. */

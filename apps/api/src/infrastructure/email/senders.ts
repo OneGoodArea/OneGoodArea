@@ -1,4 +1,3 @@
-import { type AreaReport, intentLabel } from "@onegoodarea/contracts";
 import { logger } from "../../modules/tracking/structured-logger";
 import { APP_URL, EMAIL_FROM } from "../config";
 import { getEmailProvider } from "./providers/index";
@@ -218,128 +217,11 @@ export async function sendMagicLinkEmail(email: string, token: string) {
   });
 }
 
-export async function sendReportEmail(email: string, reportId: string, report: AreaReport) {
-  logger.info(`[report-email] Sending report email to ${email} for report ${reportId}`);
-
-  const reportUrl = `${APP_URL}/report/${reportId}`;
-
-  const score = report.areaiq_score ?? 0;
-  const scoreColor = score >= 70 ? COLORS.ink : score >= 45 ? "#B8860B" : "#A01B00";
-  // AR-149: B2B-flavoured score band labels. "Strong fit" / "Moderate fit" /
-  // "Weak fit" were consumer-register; reframed as analyst band descriptors.
-  const scoreLabel = score >= 70 ? "Top band" : score >= 45 ? "Mid band" : "Lower band";
-
-  const areaTypeLabels: Record<string, string> = {
-    urban: "Urban", suburban: "Suburban", rural: "Rural",
-  };
-
-  const subScores = Array.isArray(report.sub_scores) ? report.sub_scores : [];
-  const topDimensions = [...subScores]
-    .sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
-    .slice(0, 3);
-
-  const dimensionRows = topDimensions
-    .map((d) => {
-      const dimColor = d.score >= 70 ? COLORS.ink : d.score >= 45 ? "#B8860B" : "#A01B00";
-      return `
-      <tr>
-        <td style="padding:10px 0; border-bottom:1px solid ${COLORS.borderDim};">
-          <table width="100%" cellpadding="0" cellspacing="0">
-            <tr>
-              <td style="font-family:${FONT_SANS}; font-size:14px; color:${COLORS.text}; font-weight:500;">
-                ${escapeHtml(d.label)}
-              </td>
-              <td align="right" style="font-family:${FONT_MONO}; font-size:14px; font-weight:600; color:${dimColor};">
-                ${d.score}<span style="color:${COLORS.text3}; font-weight:400;"> / 100</span>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>`;
-    })
-    .join("");
-
-  const areaTypeBadge = report.area_type
-    ? `<span style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text2}; background-color:${COLORS.bg}; border:1px solid ${COLORS.border}; padding:3px 8px; border-radius:2px; letter-spacing:1.5px; text-transform:uppercase; margin-left:8px;">${areaTypeLabels[report.area_type] || report.area_type}</span>`
-    : "";
-
-  const summary = report.summary || "Your report is ready. Click below to view the full analysis.";
-  const summaryText = summary.length > 320 ? summary.slice(0, 317) + "..." : summary;
-
-  // Methodology + aggregate confidence footer (optional, gracefully omitted on old reports)
-  const aggConf = typeof report.confidence === "number" ? report.confidence : null;
-  const aggConfLabel =
-    aggConf === null ? null
-    : aggConf >= 0.85 ? "HIGH"
-    : aggConf >= 0.6 ? "MEDIUM"
-    : aggConf >= 0.3 ? "LOW"
-    : "NONE";
-  const methodologyParts: string[] = [];
-  if (report.engine_version) methodologyParts.push(`Methodology v${report.engine_version}`);
-  if (aggConf !== null && aggConfLabel) {
-    methodologyParts.push(`Confidence ${aggConf.toFixed(2)} (${aggConfLabel})`);
-  }
-  const methodologyLine = methodologyParts.length > 0
-    ? `<p style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text3}; margin:0 0 18px 0; letter-spacing:1.5px; text-transform:uppercase;">
-         ${methodologyParts.join(" &middot; ")}
-       </p>`
-    : "";
-
-  const content = `
-    <p style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text3}; margin:0 0 14px 0; text-transform:uppercase; letter-spacing:2px;">
-      Report ready &middot; ${intentLabel(report.intent)}
-    </p>
-    <h1 style="font-family:${FONT_SERIF}; font-size:30px; font-weight:400; letter-spacing:-0.6px; color:${COLORS.inkDeep}; margin:0 0 6px 0; line-height:1.1;">
-      ${escapeHtml(report.area)}
-    </h1>
-    <p style="margin:0 0 24px 0;">${areaTypeBadge}</p>
-
-    <!-- Overall Score -->
-    <div style="background-color:${COLORS.bg}; border:1px solid ${COLORS.border}; border-radius:6px; padding:24px; margin-bottom:22px; text-align:center;">
-      <p style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text3}; margin:0 0 10px 0; text-transform:uppercase; letter-spacing:2px;">
-        Overall score
-      </p>
-      <p style="font-family:${FONT_SERIF}; font-size:54px; font-weight:500; color:${scoreColor}; margin:0; line-height:1; letter-spacing:-2px;">
-        ${score}
-      </p>
-      <p style="font-family:${FONT_MONO}; font-size:11px; color:${scoreColor}; margin:8px 0 0 0; letter-spacing:2px; text-transform:uppercase;">
-        ${scoreLabel}
-      </p>
-    </div>
-
-    <!-- Top Dimensions -->
-    <p style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text3}; margin:0 0 10px 0; text-transform:uppercase; letter-spacing:2px;">
-      Top dimensions
-    </p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:18px;">
-      ${dimensionRows}
-    </table>
-
-    ${methodologyLine}
-
-    <!-- Summary -->
-    <p style="font-family:${FONT_SANS}; font-size:14.5px; color:${COLORS.text}; line-height:1.6; margin:0 0 28px 0;">
-      ${escapeHtml(summaryText)}
-    </p>
-
-    ${ctaButton("View full report", reportUrl)}
-
-    <div style="border-top:1px solid ${COLORS.borderDim}; padding-top:18px;">
-      <p style="font-family:${FONT_SANS}; font-size:13px; color:${COLORS.text3}; margin:0; line-height:1.5;">
-        Your report is saved to your dashboard at OneGoodArea.
-      </p>
-    </div>
-  `;
-
-  await getEmailProvider().send({
-    from: EMAIL_FROM,
-    to: email,
-    subject: `Your OneGoodArea report: ${report.area || "Area Analysis"}`,
-    html: baseTemplate(content),
-  });
-
-  logger.info("Report email sent", { email, reportId, area: report.area });
-}
+/* AR-407: sendReportEmail removed. The /v1/report + /reports surface was
+   killed by AR-324 (epic, 2026-06-25); the function was orphaned at the
+   time and is now genuinely dead. Anything that pointed at /report/<id>
+   would 404 in apps/web today, so keeping the sender around could only
+   produce broken emails. */
 
 /* AR-272: org invitation email. Sent by createInvitation; the token in
    the URL is the ONE plaintext copy that exists anywhere — the DB only

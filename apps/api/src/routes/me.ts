@@ -435,8 +435,8 @@ export function registerMeRoutes(app: FastifyInstance): void {
          key — matches the runtime contract elsewhere. */
       const trainingOptout = result.trainingOptout ?? false;
 
-      // Rate-limit /me at the same level as /v1/report (MCP calls it once at
-      // startup, but a misbehaving client could spam it).
+      // Rate-limit /me at the shared per-key apiReport budget (MCP calls
+      // it once at startup, but a misbehaving client could spam it).
       const rl = await rateLimit(`api-me:${apiKey}`, {
         max: RATE_LIMITS.apiReport.max,
         windowSeconds: RATE_LIMITS.apiReport.windowSeconds,

@@ -6,8 +6,7 @@ import { RATE_LIMITS } from "../infrastructure/config";
 import { clientIpOf } from "./http";
 
 /** Bearer-token auth. Resolves the userId, or sends a 401/403 and
-   resolves null. Shared by every authenticated route (today /me/reports;
-   soon /v1/report).
+   resolves null. Shared by every Bearer-authenticated route.
 
    AR-200: also enforces the api_keys.allowed_ip_cidrs gate. A key with
    a non-empty allowlist whose request IP doesn't match returns a typed
@@ -35,11 +34,12 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
   return result.userId;
 }
 
-/** Auth + per-key rate-limit + plan API-access gate shared by the webhooks CRUD
-   routes. Mirrors the legacy /api/v1/webhooks gate exactly: bearer auth ->
-   rate-limit `api:<key>` (the same apiReport budget /v1/report uses) ->
-   hasApiAccess. On any failure it sends the response and resolves null; on
-   success it resolves the userId with rate-limit headers already on the reply. */
+/** Auth + per-key rate-limit + plan API-access gate. Bearer auth ->
+   rate-limit `api:<key>` against the apiReport budget (named for
+   historical reasons; AR-324 retired /v1/report but the budget is
+   still the shared per-key cap for /v1/* writes) -> hasApiAccess. On
+   any failure it sends the response and resolves null; on success it
+   resolves the userId with rate-limit headers already on the reply. */
 export async function requireApiAccess(request: FastifyRequest, reply: FastifyReply): Promise<string | null> {
   const userId = await authenticate(request, reply);
   if (!userId) return null; // 401 already sent

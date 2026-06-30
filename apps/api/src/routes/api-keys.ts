@@ -44,12 +44,13 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
     }
 
     try {
-      /* AR-306: count ALL api.* events (api.report.generated, api.me.read,
-         api.score.scored, api.batch.processed, api.query.executed, etc.)
-         not just /v1/report. Without this the dashboard chart undercounts
-         by a wide margin once a user touches anything but /v1/report.
-         Re-applies the AR-287 fix that was lost when web's /api/keys/usage
-         BFF became a thin proxy in PR #197 (Plan 010).
+      /* AR-306: count ALL api.* events (api.me.read, api.score.scored,
+         api.query.executed, api.peers.queried, etc.) so the dashboard
+         chart reflects the full breadth of API usage. Originally framed
+         against the legacy /v1/report path (retired AR-324); the count-
+         everything invariant still matters for accurate per-key usage
+         reporting. Re-applies the AR-287 fix lost when web's
+         /api/keys/usage BFF became a thin proxy in PR #197 (Plan 010).
 
          AR-289: when orgFilter is set, AND org_id = ${orgFilter} is
          appended to the four stat queries. orgFilter null → no extra
