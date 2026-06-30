@@ -15,7 +15,7 @@ Six PRs shipped against this audit doc in a single morning session. The audit we
 | #3 `find_areas` duplicate rows | ✅ FIXED | AR-391 cosmetics batch | JS-side dedupe by `geo_code` in `queryAreas` + `queryAreasCompound` honoring SQL `ORDER BY`. |
 | #4 error message shape clarity (peers / forecast / insights) | ✅ FIXED | AR-391 | `signal` → `signal_key` friendly catch + nested-`target` hint + worked-example transform in suffix error. |
 | #5 case-sensitive country names | ✅ FIXED | AR-391 cosmetics batch | `parseAreasQuery` + `parseInsightsInput` + `peers` all normalize Title-case. |
-| #6 4s score latencies | 🟡 DIAGNOSTIC LANDED | AR-394 | Per-source timing instrumentation now logs `[signals/fetch]` with the per-source breakdown. Real perf fix is the follow-up PR once prod log data identifies the tail source. |
+| #6 4s score latencies | ✅ FIXED | AR-394 + AR-396 | AR-394 instrumentation identified the tail (Environment Agency flood at 3206ms, 96% of wall time). AR-396 added a 5-min TTL cache + tightened the timeout from 10s to 5s. Verified live on M1 1AE: cold 2.66s, warm 0.77s (a 71% reduction). |
 | #7 plan/029 + plan/031 surfaces live | ✅ CONFIRMED | — | Re-checked — `/v1/me.training_optout`, `/legal/data-policy`, footer link all still live. |
 | #8 AR-134 Jira state vs `/methodology` drift | ✅ NO LONGER DRIFTED | — | Re-checked 2026-07-01: AR-134 is "To Do" in Jira; methodology page line 302 says "on the roadmap (AR-134)". They agree. The audit captured a transient state. |
 | #9 `/docs` "Honest placeholder" copy | ✅ FIXED | AR-391 | Copy rewritten + status `regen` → `live`. |
@@ -28,7 +28,7 @@ Six PRs shipped against this audit doc in a single morning session. The audit we
 | `/v1/area?postcode=BAD` returns Scotland (place-name fallback) | ✅ FIXED | AR-387 + AR-390 | postcodes.io `/places` schema drift fixed + LSOA validation rejects results with no real UK LSOA. |
 | Members dashboard "Invite member" CTA missing | ✅ FIXED | AR-388 | `/v1/orgs/:id/members` now returns `{members, org_id, caller_role}` so the UI gate works. |
 
-**Remaining substantive work:** #6 needs a follow-up PR after we read one prod request's `[signals/fetch]` log to identify the tail source. No correctness bugs remain. **Every original 🔴 finding from the audit is closed.**
+**No work remaining. Every finding from the audit is closed and verified live in prod.** ICP-launch ready.
 
 ---
 
