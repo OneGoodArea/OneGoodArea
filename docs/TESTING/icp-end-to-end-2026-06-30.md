@@ -34,7 +34,7 @@ Six PRs shipped against this audit doc in a single morning session. The audit we
 
 ## 2026-07-01 second pass (E2E retest)
 
-Ran the new self-contained E2E script (`docs/TESTING/scripts/e2e-2026-07-01.mjs`) against prod and surfaced 3 latent issues the original audit didn't catch + 1 06-12 carry-over (DELETE /v1/orgs). Shipped + verified:
+Ran the new self-contained E2E script (`docs/TESTING/scripts/e2e-2026-07-01.mjs`) against prod and surfaced 3 latent issues the original audit didn't catch + 1 06-12 carry-over (DELETE /v1/orgs). The script grew to ~55 checks covering every safe public endpoint (signals catalog, intelligence reads, org sub-resources CRUD, webhooks lifecycle).
 
 | AR | What | PR |
 |---|---|---|
@@ -43,16 +43,30 @@ Ran the new self-contained E2E script (`docs/TESTING/scripts/e2e-2026-07-01.mjs`
 | AR-399 | DELETE /v1/orgs/:id + GET /v1/portfolios/:id/changes | #310 |
 | AR-400 | Split Overpass into 8 parallel queries (partial-failure tolerance) | #311 |
 | AR-401 | postcodes.io overlay for peer admin_district + region names | #312 |
-| AR-402 | Overpass User-Agent (real root cause of HTTP 406 on Render) | #313 |
+| AR-402 | Overpass User-Agent (root cause of HTTP 406 on Render) | #313 |
+| AR-403 | E2E coverage to ~55 checks (all safe endpoints) | #315 |
+| AR-404 | Script throttling to respect 30 req/min rate limit | #316 |
+| AR-405 | Multi-mirror Overpass fallback (Render IP blocked) | #317 |
+| AR-406 | Race mirrors in parallel via Promise.any (cold path 35s -> 4.5s) | #318 |
 
-**Final E2E state: 30/31 ✅.** The one remaining "🔴" is the cold-cache call to `/v1/area M1 1AE` at 10.2s — that's honest Overpass latency for dense city centres now that AR-402 made the fetch actually succeed. Warm-cache call: 202ms. Threshold widened to 12s to reflect this reality.
+**Final E2E state: 54/54 ✅** at 2026-07-01 00:31 UTC.
+
+Latency snapshot from the final run:
+- `/v1/area M1 1AE` cold-cache: **4.5s** (was 35s pre-AR-406)
+- `/v1/area` warm: <500ms
+- `/v1/score` warm: ~200ms
+- `/v1/signals/amenities` warm: 175ms with confidence 0.85 + 3550 amenities surfaced
+- Every other endpoint: <600ms
 
 The whole loop:
-1. 2026-06-30 audit caught 13 surface findings
-2. AR-385 through AR-396 closed them, claimed "ICP-launch ready" prematurely
-3. Self-contained E2E retest revealed retailer-critical gaps (`find_peers` enrichment + OSM 406s)
-4. AR-397 through AR-402 closed those properly
-5. Final retest: every finding actually closed; surfaces match contract.
+1. 2026-06-30 audit caught 13 surface findings (3 🚨 + 4 🔴 + 6 ⚠️)
+2. AR-385 through AR-396 closed them — claimed "ICP-launch ready" prematurely
+3. Self-contained E2E retest revealed retailer-critical gaps (`find_peers` enrichment + the OSM 406 chain)
+4. AR-397 through AR-402 closed the gaps but the OSM 406 turned out to be only the surface symptom — AR-405 revealed Render's egress IP was blocked entirely by the main Overpass mirror
+5. AR-405 + AR-406 added a parallel multi-mirror race that makes Overpass blocks invisible to callers
+6. Final retest: 54/54 across every safe public endpoint. Every original finding closed. ICP-launch verified.
+
+The script (`docs/TESTING/scripts/e2e-2026-07-01.mjs`) is the reusable artifact: re-run it any time to lock prod's contract.
 
 ---
 
