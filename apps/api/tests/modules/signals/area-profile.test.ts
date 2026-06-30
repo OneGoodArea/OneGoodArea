@@ -83,6 +83,43 @@ describe("buildAreaProfile", () => {
     expect(byKey(signals, "schools.good_or_outstanding_pct").value).toBe(67);
   });
 
+  /* AR-395: surface the rating_breakdown the engine already reads
+     internally so integrators don't have to scrape it from prose. */
+  it("exposes per-rating Ofsted counts (Outstanding / Good / RI / Inadequate)", () => {
+    const { signals } = buildAreaProfile(geo, fullSources);
+    expect(byKey(signals, "schools.outstanding_count").value).toBe(2);
+    expect(byKey(signals, "schools.good_count").value).toBe(2);
+    expect(byKey(signals, "schools.requires_improvement_count").value).toBe(1);
+    expect(byKey(signals, "schools.inadequate_count").value).toBe(1);
+  });
+
+  it("matches 'Requires Improvement' case-insensitively (legacy CSV variants)", () => {
+    const { signals } = buildAreaProfile(geo, {
+      ...fullSources,
+      ofsted: {
+        ...fullSources.ofsted!,
+        total_rated: 3,
+        rating_breakdown: { Outstanding: 1, "requires improvement": 1, "Requires Improvement": 1 },
+      },
+    });
+    expect(byKey(signals, "schools.outstanding_count").value).toBe(1);
+    expect(byKey(signals, "schools.requires_improvement_count").value).toBe(2);
+  });
+
+  it("per-rating counts are null when no Ofsted data is available", () => {
+    const { signals } = buildAreaProfile(geo, emptySources);
+    for (const key of [
+      "schools.outstanding_count",
+      "schools.good_count",
+      "schools.requires_improvement_count",
+      "schools.inadequate_count",
+    ]) {
+      const s = byKey(signals, key);
+      expect(s.value).toBeNull();
+      expect(s.confidence).toBe(0);
+    }
+  });
+
   it("attributes deprivation to the country-correct index", () => {
     const england = buildAreaProfile(geo, fullSources);
     expect(byKey(england.signals, "deprivation.imd_decile").source).toBe("IMD 2025");

@@ -154,8 +154,16 @@ export const SIGNAL_CATALOGUE: SignalCatalogueEntry[] = [
   { key: "property.transaction_count",  category: "property", label: "Sale transactions in period",      unit: "count", direction: "neutral",          source: "HM Land Registry" },
 
   /* schools, Ofsted / Estyn / Education Scotland */
-  { key: "schools.rated_count",                 category: "schools", label: "Inspected schools within range",         unit: "count", direction: "neutral",          source: "Ofsted / Estyn / Education Scotland" },
-  { key: "schools.good_or_outstanding_pct",     category: "schools", label: "Schools rated Good or Outstanding",      unit: "pct",   direction: "higher_is_better", source: "Ofsted / Estyn / Education Scotland" },
+  { key: "schools.rated_count",                  category: "schools", label: "Inspected schools within range",         unit: "count", direction: "neutral",          source: "Ofsted / Estyn / Education Scotland" },
+  { key: "schools.good_or_outstanding_pct",      category: "schools", label: "Schools rated Good or Outstanding",      unit: "pct",   direction: "higher_is_better", source: "Ofsted / Estyn / Education Scotland" },
+  /* AR-395: per-rating breakdown. The engine already reads
+     OfstedData.rating_breakdown to compute good_or_outstanding_pct;
+     these signals just surface the underlying counts so B2B
+     integrators can query the rating distribution directly. */
+  { key: "schools.outstanding_count",            category: "schools", label: "Schools rated Outstanding",              unit: "count", direction: "higher_is_better", source: "Ofsted / Estyn / Education Scotland" },
+  { key: "schools.good_count",                   category: "schools", label: "Schools rated Good",                     unit: "count", direction: "higher_is_better", source: "Ofsted / Estyn / Education Scotland" },
+  { key: "schools.requires_improvement_count",   category: "schools", label: "Schools rated Requires Improvement",     unit: "count", direction: "lower_is_better",  source: "Ofsted / Estyn / Education Scotland" },
+  { key: "schools.inadequate_count",             category: "schools", label: "Schools rated Inadequate",               unit: "count", direction: "lower_is_better",  source: "Ofsted / Estyn / Education Scotland" },
 
   /* amenities, OpenStreetMap */
   { key: "amenities.total",             category: "amenities", label: "Amenities nearby (total)",     unit: "count", direction: "higher_is_better", source: "OpenStreetMap" },
