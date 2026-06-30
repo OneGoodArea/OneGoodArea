@@ -81,6 +81,153 @@ async function timedFetch(url: string, timeoutMs = POSTCODES_IO_TIMEOUT_MS): Pro
   }
 }
 
+/* AR-401: bulk admin_district + region lookup for /v1/peers enrichment.
+   geo_lookup has lad_name=null for many postcodes (NSPL doesn't carry
+   LAD names) and stores region as the GSS code (E12000002) rather than
+   the readable name (North West). Rather than backfill the seed (which
+   needs a full re-run against a different ONS dataset), we look the
+   sample_postcodes up against postcodes.io at query time and overlay
+   the canonical name strings.
+
+   Bulk endpoint accepts up to 100 postcodes per POST, so the typical
+   k=20 peers case fits one round trip.
+
+   Cache: 1-hour TTL, 5k entries LRU. The sample_postcode -> place name
+   mapping is extremely stable (changes when LAD boundaries are
+   reorganised, which is years between events). */
+
+export interface PostcodePlace {
+  admin_district: string | null;
+  region: string | null;
+}
+
+const POSTCODE_PLACE_CACHE_TTL_MS = 60 * 60 * 1000;
+const POSTCODE_PLACE_CACHE_MAX = 5000;
+const POSTCODES_IO_BULK_LIMIT = 100;
+
+interface PlaceCacheEntry {
+  value: PostcodePlace;
+  expires_at: number;
+}
+
+const placeCache = new Map<string, PlaceCacheEntry>();
+
+export function clearPostcodePlaceCache(): void {
+  placeCache.clear();
+}
+
+function placeCacheKey(pc: string): string {
+  return pc.trim().toUpperCase();
+}
+
+function placeCacheGet(pc: string, now: number): PostcodePlace | undefined {
+  const entry = placeCache.get(pc);
+  if (!entry) return undefined;
+  if (entry.expires_at <= now) {
+    placeCache.delete(pc);
+    return undefined;
+  }
+  /* LRU touch */
+  placeCache.delete(pc);
+  placeCache.set(pc, entry);
+  return entry.value;
+}
+
+function placeCacheSet(pc: string, value: PostcodePlace, now: number): void {
+  if (placeCache.size >= POSTCODE_PLACE_CACHE_MAX && !placeCache.has(pc)) {
+    const oldest = placeCache.keys().next().value;
+    if (oldest !== undefined) placeCache.delete(oldest);
+  }
+  placeCache.set(pc, { value, expires_at: now + POSTCODE_PLACE_CACHE_TTL_MS });
+}
+
+/** Internal: split into <=100-postcode batches per the bulk endpoint contract. */
+function chunkPostcodes(postcodes: string[]): string[][] {
+  const chunks: string[][] = [];
+  for (let i = 0; i < postcodes.length; i += POSTCODES_IO_BULK_LIMIT) {
+    chunks.push(postcodes.slice(i, i + POSTCODES_IO_BULK_LIMIT));
+  }
+  return chunks;
+}
+
+/** Bulk look up admin_district + region for a list of postcodes via
+    postcodes.io. Caches per postcode for 1 hour. Returns a Map keyed
+    by the input postcode string (verbatim, before normalization).
+    Postcodes that postcodes.io can't resolve are omitted from the map. */
+export async function bulkLookupPostcodes(
+  postcodes: string[],
+): Promise<Map<string, PostcodePlace>> {
+  const out = new Map<string, PostcodePlace>();
+  const now = Date.now();
+
+  /* 1: serve from cache where we can. */
+  const toFetch: string[] = [];
+  for (const pc of postcodes) {
+    if (!pc) continue;
+    const key = placeCacheKey(pc);
+    const cached = placeCacheGet(key, now);
+    if (cached !== undefined) {
+      out.set(pc, cached);
+    } else if (!toFetch.includes(key)) {
+      toFetch.push(key);
+    }
+  }
+  if (toFetch.length === 0) return out;
+
+  /* 2: bulk-fetch the rest from postcodes.io (chunked at 100/call). */
+  for (const chunk of chunkPostcodes(toFetch)) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), POSTCODES_IO_TIMEOUT_MS);
+      let res: Response | null;
+      try {
+        res = await fetch("https://api.postcodes.io/postcodes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ postcodes: chunk }),
+          signal: controller.signal,
+        });
+      } catch {
+        res = null;
+      } finally {
+        clearTimeout(timer);
+      }
+      if (!res || !res.ok) continue;
+
+      const data = (await res.json()) as {
+        status?: number;
+        result?: Array<{
+          query: string;
+          result: { admin_district?: string | null; region?: string | null } | null;
+        }>;
+      };
+      if (data.status !== 200 || !Array.isArray(data.result)) continue;
+
+      for (const row of data.result) {
+        const queryKey = placeCacheKey(row.query);
+        const place: PostcodePlace = {
+          admin_district: row.result?.admin_district ?? null,
+          region: row.result?.region ?? null,
+        };
+        placeCacheSet(queryKey, place, now);
+        /* Map back to the EXACT input postcode strings (a single batch
+           postcode may correspond to multiple input strings if the
+           caller passed the same postcode twice with different casing). */
+        for (const inputPc of postcodes) {
+          if (placeCacheKey(inputPc) === queryKey) {
+            out.set(inputPc, place);
+          }
+        }
+      }
+    } catch {
+      /* Continue to next chunk on transient failure; partial results
+         are better than none. */
+    }
+  }
+
+  return out;
+}
+
 export async function geocodeArea(query: string): Promise<GeocodedArea | null> {
   // Try as postcode first
   if (POSTCODE_REGEX.test(query.trim())) {

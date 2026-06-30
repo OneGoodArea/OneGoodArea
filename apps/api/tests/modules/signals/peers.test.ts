@@ -2,8 +2,14 @@ import { describe, it, expect, vi } from "vitest";
 import {
   parsePeersInput, buildTargetSignalsSql, buildPeersSql, buildPeerEnrichmentSql, findPeers,
   PEERS_DEFAULT_K, PEERS_MAX_K, PEERS_DEFAULT_MIN_SIGNALS,
-  type Runner, type PeersInput,
+  type Runner, type PeersInput, type BulkPostcodeLookup,
 } from "@/modules/signals/peers";
+import type { PostcodePlace } from "@/modules/signals/data-sources/postcodes";
+
+/* AR-401: a no-op bulk lookup for the default tests. The "geo_lookup
+   already has good names" path means we never need to consult
+   postcodes.io. AR-401-specific tests override this with a stub. */
+const noBulk: BulkPostcodeLookup = async () => new Map<string, PostcodePlace>();
 
 /* ── parsePeersInput ─────────────────────────────────────────────────────── */
 
@@ -159,7 +165,7 @@ describe("findPeers", () => {
         { lsoa_code: "E01000003", lad_name: "Salford", region: "North West", postcode: "M3 6FZ" },
       ],
     });
-    const out = await findPeers({ targetGeoCode: "E01000001", k: 5, minSignals: 2 }, run);
+    const out = await findPeers({ targetGeoCode: "E01000001", k: 5, minSignals: 2 }, run, noBulk);
     expect(out.peers).toHaveLength(2);
     expect(out.peers[0]).toEqual({
       geo_code: "E01000002",
@@ -183,7 +189,7 @@ describe("findPeers", () => {
         { lsoa_code: "E01000002", lad_name: "Manchester", region: "North West", postcode: "M1 1AE" },
       ],
     });
-    const out = await findPeers({ targetGeoCode: "E01000001", k: 5, minSignals: 1 }, run);
+    const out = await findPeers({ targetGeoCode: "E01000001", k: 5, minSignals: 1 }, run, noBulk);
     expect(out.peers[0].admin_district).toBe("Manchester");
     expect(out.peers[1]).toEqual({
       geo_code: "E01999999",
@@ -201,7 +207,7 @@ describe("findPeers", () => {
       candidates: [],
       enrichment: [], // shouldn't be reached
     });
-    const out = await findPeers({ targetGeoCode: "E01000001", k: 5, minSignals: 1 }, run);
+    const out = await findPeers({ targetGeoCode: "E01000001", k: 5, minSignals: 1 }, run, noBulk);
     expect(out.peers).toEqual([]);
     // 2 calls: target signals + candidates. NOT 3.
     expect(run).toHaveBeenCalledTimes(2);
@@ -209,9 +215,91 @@ describe("findPeers", () => {
 
   it("short-circuits to empty peers when the target has no normalized signals", async () => {
     const run = vi.fn<Runner>(async () => []);
-    const out = await findPeers({ targetGeoCode: "X", k: 5, minSignals: 3 }, run);
+    const out = await findPeers({ targetGeoCode: "X", k: 5, minSignals: 3 }, run, noBulk);
     expect(out.signalsUsed).toEqual([]);
     expect(out.peers).toEqual([]);
     expect(run).toHaveBeenCalledOnce(); // never reached candidates or enrichment
+  });
+});
+
+describe("findPeers postcodes.io enrichment overlay (AR-401)", () => {
+  /* AR-401: when geo_lookup has lad_name=null or a region GSS code
+     (E12000002 rather than "North West"), the postcodes.io bulk
+     lookup fills in the canonical names. Verified live 2026-07-01
+     against M1 1AE peers (OL1 2SS → Oldham, North West). */
+  function runner(opts: {
+    targetSignals?: Record<string, unknown>[];
+    candidates?: Record<string, unknown>[];
+    enrichment?: Record<string, unknown>[];
+  }): Runner {
+    return vi.fn<Runner>(async (text) => {
+      if (text.startsWith("SELECT signal_key")) return opts.targetSignals ?? [];
+      if (text.startsWith("SELECT DISTINCT ON (lsoa_code)")) return opts.enrichment ?? [];
+      return opts.candidates ?? [];
+    });
+  }
+
+  it("overlays admin_district + region from postcodes.io when geo_lookup has nulls or GSS codes", async () => {
+    const run = runner({
+      targetSignals: [{ signal_key: "crime.total_12m", normalized_value: 0.3 }],
+      candidates: [{ geo_code: "E01005391", distance: "0.07", n_dims_used: 8 }],
+      enrichment: [
+        { lsoa_code: "E01005391", lad_name: null, region: "E12000002", postcode: "OL1 2SS" },
+      ],
+    });
+    const bulk: BulkPostcodeLookup = async (postcodes) => {
+      expect(postcodes).toEqual(["OL1 2SS"]);
+      return new Map<string, PostcodePlace>([
+        ["OL1 2SS", { admin_district: "Oldham", region: "North West" }],
+      ]);
+    };
+    const out = await findPeers({ targetGeoCode: "E01000001", k: 5, minSignals: 1 }, run, bulk);
+    expect(out.peers[0].admin_district).toBe("Oldham");
+    expect(out.peers[0].region).toBe("North West");
+    expect(out.peers[0].sample_postcode).toBe("OL1 2SS");
+  });
+
+  it("falls back to geo_lookup values when postcodes.io returns nothing for that postcode", async () => {
+    const run = runner({
+      targetSignals: [{ signal_key: "crime.total_12m", normalized_value: 0.3 }],
+      candidates: [{ geo_code: "E01005391", distance: "0.07", n_dims_used: 8 }],
+      enrichment: [
+        { lsoa_code: "E01005391", lad_name: "Manchester", region: "North West", postcode: "M1 1AE" },
+      ],
+    });
+    const bulk: BulkPostcodeLookup = async () => new Map<string, PostcodePlace>();
+    const out = await findPeers({ targetGeoCode: "E01000001", k: 5, minSignals: 1 }, run, bulk);
+    expect(out.peers[0].admin_district).toBe("Manchester");
+    expect(out.peers[0].region).toBe("North West");
+  });
+
+  it("skips the postcodes.io lookup entirely when no peer has a sample_postcode", async () => {
+    const run = runner({
+      targetSignals: [{ signal_key: "crime.total_12m", normalized_value: 0.3 }],
+      candidates: [{ geo_code: "W01000032", distance: "0.07", n_dims_used: 4 }],
+      enrichment: [
+        { lsoa_code: "W01000032", lad_name: null, region: null, postcode: null },
+      ],
+    });
+    const bulk = vi.fn<BulkPostcodeLookup>(async () => new Map<string, PostcodePlace>());
+    const out = await findPeers({ targetGeoCode: "E01000001", k: 5, minSignals: 1 }, run, bulk);
+    expect(bulk).not.toHaveBeenCalled();
+    expect(out.peers[0].admin_district).toBeNull();
+    expect(out.peers[0].sample_postcode).toBeNull();
+  });
+
+  it("tolerates a postcodes.io outage by serving the geo_lookup fallback", async () => {
+    const run = runner({
+      targetSignals: [{ signal_key: "crime.total_12m", normalized_value: 0.3 }],
+      candidates: [{ geo_code: "E01005391", distance: "0.07", n_dims_used: 8 }],
+      enrichment: [
+        { lsoa_code: "E01005391", lad_name: null, region: "E12000002", postcode: "OL1 2SS" },
+      ],
+    });
+    const bulk: BulkPostcodeLookup = async () => { throw new Error("postcodes.io 503"); };
+    const out = await findPeers({ targetGeoCode: "E01000001", k: 5, minSignals: 1 }, run, bulk);
+    // Doesn't crash; geo_lookup fallback (GSS code) is what the caller sees
+    expect(out.peers[0].admin_district).toBeNull();
+    expect(out.peers[0].region).toBe("E12000002");
   });
 });
