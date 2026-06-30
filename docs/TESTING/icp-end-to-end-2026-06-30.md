@@ -2,6 +2,36 @@
 
 **Why:** walk OneGoodArea as each of the 4 ICPs (lender / insurer / investor / retailer) across the full product surface — public API, MCP via Claude Code, marketing site, onboarding — to surface bugs and rough edges before customer launch. Closes the test set started 2026-06-12 with everything shipped since (AR-324 reports kill, AR-362 MCP epic, AR-374 announcement bar, AR-375/376/377 training corpora, AR-378 cache pin, AR-379 widget kill, AR-380/385 — the customer-ready data policy surface, AR-383 planner hotfix, AR-384 auto-migrations).
 
+---
+
+## STATUS as of 2026-07-01 (post-audit fix sweep)
+
+Six PRs shipped against this audit doc in a single morning session. The audit went from 13 open findings (3 🚨, 4 🔴, 6 ⚠️) to **2 genuine remaining issues** (+ a few cosmetic/research-grade items deferred).
+
+| Finding | Status | PR | Notes |
+|---|---|---|---|
+| #1 NL `/v1/query` 500 on `score_area` | ✅ FIXED upstream | AR-383 hotfix (yesterday) | Anthropic model retirement; planner now uses env-configurable model. |
+| #2 invalid postcode 14.9s latency | ✅ FIXED | AR-390 | `timedFetch()` AbortController + LSOA validation. Re-tested: `BAD` returns 404 in 0.27s. |
+| #3 `find_areas` duplicate rows | ✅ FIXED | AR-391 cosmetics batch | JS-side dedupe by `geo_code` in `queryAreas` + `queryAreasCompound` honoring SQL `ORDER BY`. |
+| #4 error message shape clarity (peers / forecast / insights) | ✅ FIXED | AR-391 | `signal` → `signal_key` friendly catch + nested-`target` hint + worked-example transform in suffix error. |
+| #5 case-sensitive country names | ✅ FIXED | AR-391 cosmetics batch | `parseAreasQuery` + `parseInsightsInput` + `peers` all normalize Title-case. |
+| #6 4s score latencies | 🔴 OPEN | — | Needs profiling pass. Not a correctness bug. |
+| #7 plan/029 + plan/031 surfaces live | ✅ CONFIRMED | — | Re-checked — `/v1/me.training_optout`, `/legal/data-policy`, footer link all still live. |
+| #8 AR-134 Jira state vs `/methodology` drift | 🟡 OPEN | — | One-line Jira fix; haven't done it yet. Will batch with `/methodology` edit. |
+| #9 `/docs` "Honest placeholder" copy | ✅ FIXED | AR-391 | Copy rewritten + status `regen` → `live`. |
+| #10 `watch_portfolio` false-failure | ✅ FIXED | AR-386 | Return shape aligned (`{added, portfolio}`), MCP client + formatter updated, `@oga-mcp/server@1.0.3` published to npm. |
+| #11 Safety & Crime dim ↔ signal layer mismatch | 🔴 OPEN | — | **The last big open finding.** Period attribution (3mo vs 12mo) + confidence (40% vs 60%) disagree on the same M1 1AE data point. Engine-internal investigation required. |
+| #12 `methodology_for` "Used in intents" drift | ✅ FIXED | AR-391 | Derived from non-zero weights at render time. |
+| #13 `get_signals_by_category(schools)` granularity gap | 🟡 OPEN | — | Either expose per-school breakdown or document `_ks2` / `_ks4` suffixes in tool description. Deferred. |
+| 2026-06-12 carry-over: arbitrary `user_id` in `/v1/orgs/:id/members` | ✅ FIXED | AR-388 | FK to `users(id)` + 404 on unknown user. |
+| 2026-06-12 carry-over: date format drift on org endpoints | ✅ FIXED | AR-389 | `toIso()` defensive helper for Date / number / string. |
+| `/v1/area?postcode=BAD` returns Scotland (place-name fallback) | ✅ FIXED | AR-387 + AR-390 | postcodes.io `/places` schema drift fixed + LSOA validation rejects results with no real UK LSOA. |
+| Members dashboard "Invite member" CTA missing | ✅ FIXED | AR-388 | `/v1/orgs/:id/members` now returns `{members, org_id, caller_role}` so the UI gate works. |
+
+**Remaining substantive work:** #11 (Safety & Crime mismatch). #6 (latency) and #13 (schools granularity) are quality-of-life, not correctness.
+
+---
+
 **Setup:**
 - API base: `https://onegoodarea.onrender.com` (Render prod)
 - Web: `https://www.onegoodarea.com` (Vercel prod)
