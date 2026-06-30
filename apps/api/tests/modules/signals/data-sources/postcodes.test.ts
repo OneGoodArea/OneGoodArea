@@ -70,10 +70,13 @@ describe("geocodeArea (place-name path)", () => {
       http.get(AUTOCOMPLETE, () => HttpResponse.json({ result: [] })),
       http.get(PLACES, () =>
         HttpResponse.json({
+          /* AR-387: postcodes.io /places returns {name_1, name_2,
+             district_borough, county_unitary} — NOT {name, district,
+             county}. Test mocks updated 2026-07-01 to match live API. */
           status: 200,
           result: [
-            { name: "Manchester Hamlet", latitude: 1, longitude: 1, county: "", district: "X", region: "Y", country: "England", local_type: "Hamlet" },
-            { name: "Manchester", latitude: 53.48, longitude: -2.24, county: "", district: "Manchester", region: "North West", country: "England", local_type: "City" },
+            { name_1: "Manchester Hamlet", latitude: 1, longitude: 1, county_unitary: null, district_borough: "X", region: "Y", country: "England", local_type: "Hamlet" },
+            { name_1: "Manchester", latitude: 53.48, longitude: -2.24, county_unitary: null, district_borough: "Manchester", region: "North West", country: "England", local_type: "City" },
           ],
         })
       ),
@@ -129,8 +132,9 @@ describe("geocodeAreaStrict (AR-267)", () => {
           result: [
             // The actual bug: Devon Brixton wins the type rank (Village=4)
             // over London Brixton (Suburban Area=6).
-            { name: "Brixton", latitude: 50.36, longitude: -4.04, county: "Devon", district: "South Hams", region: "South West", country: "England", local_type: "Village" },
-            { name: "Brixton", latitude: 51.46, longitude: -0.11, county: "Greater London", district: "Lambeth", region: "London", country: "England", local_type: "Suburban Area" },
+            // AR-387: live API uses name_1/district_borough/county_unitary.
+            { name_1: "Brixton", latitude: 50.36, longitude: -4.04, county_unitary: "Devon", district_borough: "South Hams", region: "South West", country: "England", local_type: "Village" },
+            { name_1: "Brixton", latitude: 51.46, longitude: -0.11, county_unitary: "Greater London", district_borough: "Lambeth", region: "London", country: "England", local_type: "Suburban Area" },
           ],
         }),
       ),
@@ -166,8 +170,9 @@ describe("geocodeAreaStrict (AR-267)", () => {
         HttpResponse.json({
           status: 200,
           result: [
-            { name: "Manchester",  latitude: 53.48, longitude: -2.24, county: "", district: "Manchester", region: "North West", country: "England", local_type: "City" },
-            { name: "Manchester Hamlet", latitude: 1, longitude: 1, county: "", district: "X",          region: "Y",          country: "England", local_type: "Hamlet" },
+            // AR-387: live API uses name_1/district_borough/county_unitary.
+            { name_1: "Manchester",  latitude: 53.48, longitude: -2.24, county_unitary: null, district_borough: "Manchester", region: "North West", country: "England", local_type: "City" },
+            { name_1: "Manchester Hamlet", latitude: 1, longitude: 1, county_unitary: null, district_borough: "X",          region: "Y",          country: "England", local_type: "Hamlet" },
           ],
         }),
       ),
@@ -189,6 +194,68 @@ describe("geocodeAreaStrict (AR-267)", () => {
       http.get(PLACES, () => HttpResponse.json({ status: 200, result: [] })),
     );
     const r = await geocodeAreaStrict("PlaceThatDoesNotExist");
+    expect(r.kind).toBe("not_found");
+  });
+
+  /* AR-387: regression test for the contract drift that 500'd /v1/query
+     on score_area with place names. The postcodes.io /places API
+     returns {name_1, name_2, district_borough, county_unitary} — NOT
+     the {name, district, county} shape our PlaceResult expected.
+     fetchPlaces now normalizes; this test pins that contract. */
+  it("normalizes postcodes.io /places fields (name_1, district_borough, county_unitary) without crashing", async () => {
+    server.use(
+      http.get(AUTOCOMPLETE, () => HttpResponse.json({ result: [] })),
+      http.get(PLACES, () =>
+        HttpResponse.json({
+          status: 200,
+          result: [
+            {
+              code: "osgb4000000074567025",
+              name_1: "Manchester",
+              name_1_lang: null,
+              name_2: null,
+              name_2_lang: null,
+              local_type: "City",
+              county_unitary: null,
+              county_unitary_type: null,
+              district_borough: "Manchester",
+              district_borough_type: "MetropolitanDistrict",
+              region: "North West",
+              country: "England",
+              longitude: -2.245,
+              latitude: 53.478,
+            },
+          ],
+        }),
+      ),
+      http.get(REVERSE, () =>
+        HttpResponse.json({
+          result: [{ postcode: "M2 5DB", admin_district: "Manchester", region: "North West", admin_ward: "", parliamentary_constituency: "", country: "England", lsoa: "", msoa: "", rural_urban: "Urban major conurbation", codes: { lsoa: "E01033600", lsoa11: "", msoa: "" } }],
+        }),
+      ),
+    );
+
+    const r = await geocodeAreaStrict("Manchester");
+    expect(r.kind).toBe("ok");
+    if (r.kind === "ok") {
+      expect(r.area.admin_district).toBe("Manchester");
+      // Critical: didn't crash on normalisePlaceName(undefined).
+    }
+  });
+
+  it("drops /places rows missing both name_1 and name_2 (defensive against API garbage)", async () => {
+    server.use(
+      http.get(AUTOCOMPLETE, () => HttpResponse.json({ result: [] })),
+      http.get(PLACES, () =>
+        HttpResponse.json({
+          status: 200,
+          result: [
+            { name_1: null, name_2: null, latitude: 1, longitude: 1, local_type: "Other", county_unitary: null, district_borough: null, region: "", country: "" },
+          ],
+        }),
+      ),
+    );
+    const r = await geocodeAreaStrict("Garbage");
     expect(r.kind).toBe("not_found");
   });
 });

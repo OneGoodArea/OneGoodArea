@@ -114,13 +114,45 @@ const PLACE_TYPE_RANK: Record<string, number> = {
 
 type RankedPlace = PlaceResult & { local_type: string };
 
+/* postcodes.io /places live response shape (snapshot 2026-07-01). The
+   API returns name_1/name_2/district_borough/county_unitary — NOT the
+   {name, district, county} our internal PlaceResult expects. AR-387:
+   normalize here so downstream readers (normalisePlaceName,
+   buildAmbiguousCandidate, placeToGeocodedArea) stay simple. */
+interface RawPlaceResult {
+  name_1?: string | null;
+  name_2?: string | null;
+  district_borough?: string | null;
+  county_unitary?: string | null;
+  region?: string | null;
+  country?: string | null;
+  latitude: number;
+  longitude: number;
+  local_type: string;
+}
+
 async function fetchPlaces(query: string): Promise<RankedPlace[] | null> {
   try {
     const res = await fetch(`https://api.postcodes.io/places?q=${encodeURIComponent(query)}&limit=10`);
     if (!res.ok) return null;
-    const data = (await res.json()) as { status?: number; result?: RankedPlace[] };
+    const data = (await res.json()) as { status?: number; result?: RawPlaceResult[] };
     if (data.status !== 200 || !data.result || data.result.length === 0) return null;
-    return [...data.result].sort(
+    const normalized: RankedPlace[] = data.result
+      .map((raw) => ({
+        name: raw.name_1 ?? raw.name_2 ?? "",
+        latitude: raw.latitude,
+        longitude: raw.longitude,
+        county: raw.county_unitary ?? "",
+        district: raw.district_borough ?? "",
+        region: raw.region ?? "",
+        country: raw.country ?? "",
+        local_type: raw.local_type,
+      }))
+      // AR-387: defensive — drop rows that came back with no usable name
+      // at all (would crash normalisePlaceName downstream).
+      .filter((p) => p.name.length > 0);
+    if (normalized.length === 0) return null;
+    return normalized.sort(
       (a, b) => (PLACE_TYPE_RANK[a.local_type] ?? 9) - (PLACE_TYPE_RANK[b.local_type] ?? 9),
     );
   } catch {
