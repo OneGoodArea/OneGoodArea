@@ -259,3 +259,37 @@ describe("geocodeAreaStrict (AR-267)", () => {
     expect(r.kind).toBe("not_found");
   });
 });
+
+/* AR-390: invalid inputs used to burn 15 seconds chaining 3 HTTP
+   calls then return a "Scotland" geocode with no LSOA. The geocoder
+   now (1) bounds each network call at 5s via AbortController, and
+   (2) rejects place-search results that don't resolve to a real UK
+   LSOA — so /v1/area?postcode=BAD returns null and the route emits
+   404 fast, instead of 200 with garbage data. */
+describe("geocodeArea — invalid input early-rejection (AR-390)", () => {
+  it("returns null when the reverse-geocode has no LSOA (no real UK location)", async () => {
+    server.use(
+      // autocomplete returns nothing
+      http.get(AUTOCOMPLETE, () => HttpResponse.json({ result: [] })),
+      // /places returns SOMETHING (Scotland fallback)
+      http.get(PLACES, () =>
+        HttpResponse.json({
+          status: 200,
+          result: [
+            { name_1: "BAD", name_2: null, latitude: 57.69, longitude: -5.73, local_type: "Suburban Area", county_unitary: null, district_borough: null, region: "Scotland", country: "Scotland" },
+          ],
+        }),
+      ),
+      // reverse-geocode returns a result with no codes.lsoa (the bug surface)
+      http.get(REVERSE, () =>
+        HttpResponse.json({
+          result: [{ postcode: null, admin_district: null, region: "Scotland", admin_ward: "", parliamentary_constituency: "", country: "Scotland", lsoa: "", msoa: "", rural_urban: "", codes: { lsoa: "", lsoa11: "", msoa: "" } }],
+        }),
+      ),
+    );
+    // Pre-AR-390 this returned {country: "Scotland", lsoa: null, ...}
+    // after a 15s chain. Now: null, fast.
+    const r = await geocodeArea("BAD");
+    expect(r).toBeNull();
+  });
+});
