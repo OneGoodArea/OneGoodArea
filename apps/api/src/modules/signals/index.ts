@@ -47,30 +47,77 @@ export interface FetchedArea {
   crimeFromStore: boolean;
 }
 
+/** Time a promise; resolves to [result, duration_ms]. Never rejects: a
+    rejected source becomes [null, ms] so the timing log still records
+    its slot and the overall fetch can decide how to handle nulls.
+    AR-394 latency-diagnostic helper. */
+async function timed<T>(label: string, p: Promise<T>): Promise<[T | null, number]> {
+  const t0 = performance.now();
+  try {
+    const v = await p;
+    return [v, Math.round(performance.now() - t0)];
+  } catch (err) {
+    logger.warn(`[signals/fetch] ${label} threw after ${Math.round(performance.now() - t0)}ms`, { error: err });
+    return [null as T | null, Math.round(performance.now() - t0)];
+  }
+}
+
 /** Geocode an area and gather its six source structs. Deprivation, property and
     crime are read from the persisted store when OGA_SIGNALS_STORE_READ is on and
     present (skipping the live fetch); everything else is live. Returns null if
     the area cannot be geocoded. See ADR 0004 (deprivation), 0012 (property),
-    0016 (crime). */
+    0016 (crime).
+
+    AR-394: per-source timings are captured and emitted as a single
+    structured log line. Used to identify the latency tail (E2E #6).
+    Zero behavioural change vs the prior fan-out. */
 export async function fetchAreaSources(area: string): Promise<FetchedArea | null> {
-  const geo = await geocodeArea(area);
+  const t0 = performance.now();
+  const [geo, geoMs] = await timed("geocode", geocodeArea(area));
   if (!geo) return null;
 
   const storeRead = getConfig().signalsStoreRead;
+  const storeT0 = performance.now();
   const [storedDeprivation, storedProperty, storedCrime] = await Promise.all([
     storeRead ? readDeprivationFromStore(geo.lsoa) : Promise.resolve(null),
     storeRead ? readPropertyFromStore(geo.lsoa) : Promise.resolve(null),
     storeRead ? readCrimeFromStore(geo.lsoa) : Promise.resolve(null),
   ]);
+  const storeMs = Math.round(performance.now() - storeT0);
 
-  const [liveCrime, liveDeprivation, amenities, flood, liveProperty, ofsted] = await Promise.all([
-    storedCrime ? Promise.resolve(null) : getCrimeData(geo.latitude, geo.longitude),
-    storedDeprivation ? Promise.resolve(null) : getDeprivationData(geo.lsoa, geo.lsoa11),
-    getNearbyAmenities(geo.latitude, geo.longitude),
-    getFloodRisk(geo.latitude, geo.longitude),
-    storedProperty ? Promise.resolve(null) : getPropertyPrices(geo.query),
-    getOfstedSchools(geo.latitude, geo.longitude, geo.country),
+  const [
+    [liveCrime, crimeMs],
+    [liveDeprivation, depMs],
+    [amenities, amenitiesMs],
+    [flood, floodMs],
+    [liveProperty, propertyMs],
+    [ofsted, ofstedMs],
+  ] = await Promise.all([
+    storedCrime ? Promise.resolve([null, 0] as [null, number]) : timed("crime", getCrimeData(geo.latitude, geo.longitude)),
+    storedDeprivation ? Promise.resolve([null, 0] as [null, number]) : timed("deprivation", getDeprivationData(geo.lsoa, geo.lsoa11)),
+    timed("amenities", getNearbyAmenities(geo.latitude, geo.longitude)),
+    timed("flood", getFloodRisk(geo.latitude, geo.longitude)),
+    storedProperty ? Promise.resolve([null, 0] as [null, number]) : timed("property", getPropertyPrices(geo.query)),
+    timed("ofsted", getOfstedSchools(geo.latitude, geo.longitude, geo.country)),
   ]);
+
+  const totalMs = Math.round(performance.now() - t0);
+  /* One structured line per request. The fan-out time is roughly
+     max(crime, dep, amenities, flood, property, ofsted) plus the
+     sequential geocode + store prefetch. The slowest source dictates
+     wall time, so the "max" column matters more than the sum. */
+  const fanOut = { crime: crimeMs, deprivation: depMs, amenities: amenitiesMs, flood: floodMs, property: propertyMs, ofsted: ofstedMs };
+  const maxFanOut = Math.max(...Object.values(fanOut));
+  logger.info(`[signals/fetch] "${area}" total=${totalMs}ms geocode=${geoMs}ms store=${storeMs}ms fanout_max=${maxFanOut}ms`, {
+    total_ms: totalMs,
+    geocode_ms: geoMs,
+    store_prefetch_ms: storeMs,
+    fan_out_ms: fanOut,
+    fan_out_max_ms: maxFanOut,
+    crime_from_store: !!storedCrime,
+    dep_from_store: !!storedDeprivation,
+    property_from_store: !!storedProperty,
+  });
 
   return {
     geo,
