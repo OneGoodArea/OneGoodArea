@@ -130,13 +130,16 @@ export async function executeWatchPortfolio(
   }
 
   /* Phase 2 — add areas. If it fails, the portfolio exists empty; surface
-     that so the LLM can act rather than swallowing the create. */
+     that so the LLM can act rather than swallowing the create.
+     AR-386: addPortfolioAreas now returns {added, portfolio} — pass the
+     nested `portfolio` to the formatter (was treating the whole response
+     as a PortfolioDetail and crashing on .areas.length). */
   try {
-    const added = await client.addPortfolioAreas(
+    const result = await client.addPortfolioAreas(
       created.id,
       args.areas.map((a) => ({ area: a })),
     );
-    return { content: [{ type: "text", text: formatPortfolioSetup(created, added, null) }] };
+    return { content: [{ type: "text", text: formatPortfolioSetup(created, result.portfolio, null) }] };
   } catch (err) {
     const msg = err instanceof OogaApiError
       ? `HTTP ${err.status ?? "?"}: ${err.message}`
