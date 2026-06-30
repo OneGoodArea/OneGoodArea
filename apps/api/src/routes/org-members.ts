@@ -31,7 +31,13 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
         const role = await getRoleInOrg(id, userId);
         if (!role) return reply.code(404).send({ error: "Org not found" });
         const members = await listMembers(id);
-        return reply.code(200).send({ members });
+        /* AR-389: dashboard members client (apps/web design-v2/
+           dashboard-members/client.tsx) expects {members, org_id,
+           caller_role}. The "+ Invite member" CTA gates on
+           caller_role >= admin. Before this PR the response was just
+           {members}, so the gate fell back to null → button never
+           rendered for owners. Pedro spotted it as a missing UI control. */
+        return reply.code(200).send({ members, org_id: id, caller_role: role });
       } catch (error) {
         if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id/members] list error:", error);
