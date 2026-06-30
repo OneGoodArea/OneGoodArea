@@ -40,11 +40,15 @@ interface OverpassElement {
         so we never silently emit "0 amenities" on a real city centre.
 */
 
-/* AR-400 narrowed per-query timeouts: each category is a tiny query
-   (~200KB max payload), so the generous 25s/35s set for the old bundled
-   query is overkill. 15s server-side, 20s client-side AbortSignal. */
-const OVERPASS_QUERY_TIMEOUT_SECONDS = 15;
-const OVERPASS_FETCH_TIMEOUT_MS = 20000;
+/* AR-406 tightened these further: cold-path /v1/area was racking up
+   ~35s for Manchester city centre because the AR-405 serial fallback
+   walked main (429) -> kumi (20s timeout) -> .fr (success) for many
+   categories. Parallel race (this PR) means we only wait for the
+   FASTEST mirror, but we still want each mirror's individual timeout
+   to be tight so a stuck mirror doesn't block the race. 8s/10s plays
+   nicely with the parallel pattern: kumi responds in &lt;3s or never. */
+const OVERPASS_QUERY_TIMEOUT_SECONDS = 10;
+const OVERPASS_FETCH_TIMEOUT_MS = 8000;
 
 const OVERPASS_CACHE_TTL_MS = 5 * 60 * 1000;
 const OVERPASS_CACHE_MAX = 1000;
@@ -182,23 +186,42 @@ async function tryMirror(
   }
 }
 
-/** Fetch ONE category by walking the mirror chain (AR-405). Returns the
-    first mirror's elements[] on success, or null if EVERY mirror failed
-    for this category. Never throws. */
+/** Fetch ONE category by RACING all mirrors in parallel (AR-406).
+    First success wins; the rest of the in-flight requests keep going
+    but their results are discarded. If EVERY mirror fails (rejects),
+    Promise.any throws AggregateError and we return null.
+
+    Why race instead of walk: walking pays the slow-mirror tax serially,
+    which made cold-path /v1/area for Piccadilly ~35s (kumi.systems
+    timed out before .fr was tried). Racing means wall time = fastest
+    successful mirror's response time (typically 1-3s), at the cost of
+    bandwidth (3x per category). Overpass queries are small (~200KB
+    max) so bandwidth is cheap; latency is what matters. */
 async function fetchCategory(spec: CategorySpec, lat: number, lng: number): Promise<OverpassElement[] | null> {
   const query = `[out:json][timeout:${OVERPASS_QUERY_TIMEOUT_SECONDS}];nwr${spec.selector}(around:${spec.radius},${lat},${lng});out tags center;`;
-  for (const mirror of OVERPASS_MIRRORS) {
-    const result = await tryMirror(mirror, spec, query, lat, lng);
-    if (result !== null) {
-      /* Log only when a non-primary mirror succeeded; primary success
-         is the happy path and would be noisy. */
-      if (mirror !== OVERPASS_MIRRORS[0]) {
-        logger.info("[overpass] category served by fallback mirror", { mirror, category: spec.name });
-      }
-      return result;
+
+  /* Wrap each tryMirror call so that a null resolution counts as a
+     reject (Promise.any treats only thrown rejections as failures —
+     a resolved-with-null would WIN the race despite being a failure). */
+  const attempts = OVERPASS_MIRRORS.map((mirror) =>
+    tryMirror(mirror, spec, query, lat, lng).then((r) => {
+      if (r === null) throw new Error(`mirror ${mirror} returned null`);
+      return { mirror, elements: r };
+    }),
+  );
+
+  try {
+    const winner = await Promise.any(attempts);
+    /* Only log non-primary wins; primary is the happy path. */
+    if (winner.mirror !== OVERPASS_MIRRORS[0]) {
+      logger.info("[overpass] category served by fallback mirror", { mirror: winner.mirror, category: spec.name });
     }
+    return winner.elements;
+  } catch {
+    /* AggregateError: every mirror failed (rejected or returned null).
+       tryMirror already logged each mirror's specific failure. */
+    return null;
   }
-  return null;
 }
 
 export async function getNearbyAmenities(lat: number, lng: number): Promise<AmenitiesData | null> {
