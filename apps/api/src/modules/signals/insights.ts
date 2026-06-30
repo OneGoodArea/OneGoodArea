@@ -49,9 +49,17 @@ export function parseInsightsInput(raw: {
   k?: number;
 }): { ok: true; input: InsightsInput } | { ok: false; error: string } {
   const signalKey = (raw.signalKey ?? "").trim();
-  if (!signalKey) return { ok: false, error: "Missing required 'signal_key' (a peer-relative-z signal, e.g. crime.total_12m_peer_relative_z)." };
+  if (!signalKey) return { ok: false, error: "Missing required 'signal_key' (a peer-relative-z signal, e.g. 'crime.total_12m_peer_relative_z' or 'property.median_price_peer_relative_z')." };
   if (!signalKey.endsWith("_peer_relative_z")) {
-    return { ok: false, error: "signal_key must be a peer-relative-z signal (suffix '_peer_relative_z')." };
+    /* AR-391: spell out WHY the suffix is required + give a worked
+       example of the transform. ICP E2E finding #4 — devs were
+       passing the base signal name (e.g. 'crime.total_12m') and
+       getting an unhelpful "suffix required" message with no path
+       forward. */
+    return {
+      ok: false,
+      error: `signal_key must be a peer-relative-z signal (i.e. end in '_peer_relative_z'). You passed '${signalKey}'. Try '${signalKey}_peer_relative_z'. These signals rank LSOAs by how far they are from their peer group's mean — used for outlier detection. The base signal (without the suffix) is queryable via /v1/area.`,
+    };
   }
 
   /* Developer-experience: country names are case-insensitive on input.

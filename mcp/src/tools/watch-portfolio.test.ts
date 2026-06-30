@@ -10,15 +10,21 @@ function sampleCreated(): OogaPortfolio {
   return { id: "ptf_abc123", name: "North Manchester picks", created_at: "2026-06-28T01:00:00Z" };
 }
 
-function sampleAdded(): OogaPortfolioDetail {
+/* AR-386: addPortfolioAreas now returns {added, portfolio: PortfolioDetail}
+   instead of bare PortfolioDetail — apps/api change forced by the
+   false-failure crash. Tests track the new shape. */
+function sampleAdded(): { added: number; portfolio: OogaPortfolioDetail } {
   return {
-    id: "ptf_abc123",
-    name: "North Manchester picks",
-    created_at: "2026-06-28T01:00:00Z",
-    areas: [
-      { id: "pa_1", area: "M1 1AE", label: null },
-      { id: "pa_2", area: "M2 5AB", label: "Town hall" },
-    ],
+    added: 2,
+    portfolio: {
+      id: "ptf_abc123",
+      name: "North Manchester picks",
+      created_at: "2026-06-28T01:00:00Z",
+      areas: [
+        { id: "pa_1", area: "M1 1AE", label: null },
+        { id: "pa_2", area: "M2 5AB", label: "Town hall" },
+      ],
+    },
   };
 }
 
@@ -78,14 +84,14 @@ describe("parseWatchPortfolioArgs", () => {
 describe("executeWatchPortfolio", () => {
   function makeClient(opts: {
     create?: () => Promise<OogaPortfolio>;
-    addAreas?: () => Promise<OogaPortfolioDetail>;
+    addAreas?: () => Promise<{ added: number; portfolio: OogaPortfolioDetail }>;
   }): OogaApiClient {
     const client = new OogaApiClient({ apiKey: "oga_test" });
     if (opts.create) {
       (client as unknown as { createPortfolio: () => Promise<OogaPortfolio> }).createPortfolio = opts.create;
     }
     if (opts.addAreas) {
-      (client as unknown as { addPortfolioAreas: () => Promise<OogaPortfolioDetail> }).addPortfolioAreas = opts.addAreas;
+      (client as unknown as { addPortfolioAreas: () => Promise<{ added: number; portfolio: OogaPortfolioDetail }> }).addPortfolioAreas = opts.addAreas;
     }
     return client;
   }

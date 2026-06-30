@@ -67,7 +67,16 @@ export function executeMethodologyFor(
   const lines: string[] = [];
   lines.push(`# ${match.dimension}`);
   lines.push("");
-  lines.push(`**Used in intents:** ${match.intents.join(", ")}`);
+  /* AR-391: derive intents from non-zero weights instead of reading the
+     static `intents` field. The static list drifted from the weights
+     table — e.g. Safety & Crime listed ["moving", "research"] but had
+     non-zero weights for all 4 presets. The weights are the engine's
+     source of truth; derive the header from them so the two can't
+     disagree. Surfaced by ICP E2E 2026-06-30 finding #12. */
+  const usedIntents = Object.entries(match.weights)
+    .filter(([, w]) => w > 0)
+    .map(([intent]) => intent);
+  lines.push(`**Used in intents:** ${usedIntents.join(", ")}`);
   lines.push(`**Data source:** ${match.source}`);
   lines.push("");
   lines.push(`## How it scores`);

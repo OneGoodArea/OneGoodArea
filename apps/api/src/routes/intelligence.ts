@@ -298,6 +298,16 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
         const { userId } = ctx;
 
         const body = (request.body ?? {}) as Record<string, unknown>;
+        /* AR-391: friendly catch for the common `signal` vs `signal_key`
+           field-name mistake. Without this the caller saw "Missing
+           required 'signal_key'" with no hint that their `signal`
+           field is the wrong name. ICP E2E finding #4. */
+        if (typeof body.signal === "string" && typeof body.signal_key !== "string") {
+          return reply.code(400).send({
+            error: "Field name is 'signal_key' (not 'signal'). Value must be a peer-relative-z signal — e.g. 'crime.total_12m_peer_relative_z'. The base signal '" + body.signal + "' is queryable via /v1/area.",
+            code: "wrong_field_name",
+          });
+        }
         const parsed = parseInsightsInput({
           signalKey: typeof body.signal_key === "string" ? body.signal_key : undefined,
           country: typeof body.country === "string" ? body.country : undefined,
