@@ -116,6 +116,13 @@ const CATEGORIES: CategorySpec[] = [
   { name: "bus_stops",     selector: `["highway"="bus_stop"]`,                                    radius: 500 },
 ];
 
+/* AR-402: Overpass 406s anonymous/missing-User-Agent requests as part
+   of its abuse mitigation (the fair-use policy explicitly asks for a
+   descriptive UA). curl works because it sets one by default; Node's
+   fetch does not. Identify ourselves so Overpass routes us through the
+   normal queue. */
+const OVERPASS_USER_AGENT = "OneGoodArea/1.0 (+https://www.onegoodarea.com)";
+
 /** Fetch ONE category. Returns its elements[] on success, or null on
     failure / Overpass remark / parse error. Never throws; the caller
     aggregates via Promise.allSettled-style result handling. */
@@ -125,7 +132,11 @@ async function fetchCategory(spec: CategorySpec, lat: number, lng: number): Prom
     const res = await fetch("https://overpass-api.de/api/interpreter", {
       method: "POST",
       body: `data=${encodeURIComponent(query)}`,
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json",
+        "User-Agent": OVERPASS_USER_AGENT,
+      },
       signal: AbortSignal.timeout(OVERPASS_FETCH_TIMEOUT_MS),
     });
     if (!res.ok) {
