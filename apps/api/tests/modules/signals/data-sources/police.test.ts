@@ -6,8 +6,10 @@ import type { CrimeSummary } from "@/modules/signals/inputs";
 
 /* The legacy police fetcher had no test. MSW intercepts police.uk so we lock
    the failure modes (empty / upstream error -> null) and the aggregation
-   shape without touching the real API. getCrimeData fetches 3 trailing
-   months; the handler answers all three identically (date query ignored). */
+   shape without touching the real API. AR-393: getCrimeData fetches 12
+   trailing months (was 3 — caused label drift since the result was
+   labelled "Recorded crimes (12 months)"). The handler answers all
+   twelve identically (date query ignored). */
 
 const ENDPOINT = "https://data.police.uk/api/crimes-street/all-crime";
 
@@ -55,8 +57,8 @@ describe("getCrimeData", () => {
   });
 
   it("returns the zero summary when SOME months error but at least one returned OK with []", async () => {
-    /* If 1 of 3 months responded HTTP 200 with [], the area IS covered;
-       conservative behaviour is to report the zero count. */
+    /* If at least one of the 12 months responded HTTP 200 with [], the
+       area IS covered; conservative behaviour is to report the zero count. */
     let n = 0;
     server.use(
       http.get(ENDPOINT, () => {
@@ -69,24 +71,24 @@ describe("getCrimeData", () => {
     expect(result!.total_crimes).toBe(0);
   });
 
-  it("aggregates crimes across the 3 trailing months", async () => {
+  it("aggregates crimes across the 12 trailing months (AR-393)", async () => {
     server.use(http.get(ENDPOINT, () => HttpResponse.json(FIXTURE)));
 
     const result = await getCrimeData(53.4, -2.2);
     expect(result).not.toBeNull();
     const r = result!;
 
-    // 2 crimes x 3 months
-    expect(r.total_crimes).toBe(6);
-    expect(r.months_covered).toBe(3);
-    expect(r.by_category).toEqual({ "Anti Social Behaviour": 3, "Violent Crime": 3 });
+    // 2 crimes x 12 months (the handler returns the same fixture for every month)
+    expect(r.total_crimes).toBe(24);
+    expect(r.months_covered).toBe(12);
+    expect(r.by_category).toEqual({ "Anti Social Behaviour": 12, "Violent Crime": 12 });
     expect(r.outcome_breakdown).toEqual({
-      "Under investigation": 3, // null outcome -> default label
-      "Investigation complete; no suspect identified": 3,
+      "Under investigation": 12,
+      "Investigation complete; no suspect identified": 12,
     });
-    expect(r.top_streets).toContainEqual({ name: "High Street", count: 3 });
-    expect(r.top_streets).toContainEqual({ name: "Main Road", count: 3 });
-    expect(r.monthly_trend).toEqual([{ month: "2026-01", count: 6 }]);
+    expect(r.top_streets).toContainEqual({ name: "High Street", count: 12 });
+    expect(r.top_streets).toContainEqual({ name: "Main Road", count: 12 });
+    expect(r.monthly_trend).toEqual([{ month: "2026-01", count: 24 }]);
   });
 });
 

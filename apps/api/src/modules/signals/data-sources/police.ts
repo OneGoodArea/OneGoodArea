@@ -1,9 +1,16 @@
 import type { CrimeSummary } from "../inputs";
+import { CRIME_WINDOW_MONTHS } from "../crime-confidence";
 
 /* Migrated VERBATIM from legacy src/lib/data-sources/police.ts. Only change:
    the exported CrimeSummary result type now lives in ../inputs (the canonical
    data-source type module the scoring engine already imports), so it is
-   imported here instead of re-declared. Runtime behaviour is unchanged. */
+   imported here instead of re-declared. Runtime behaviour is unchanged.
+
+   AR-393: window is now CRIME_WINDOW_MONTHS (12), not 3. The data was
+   being labelled as crime.total_12m / "Recorded crimes (12 months)" but
+   only 3 months were actually being fetched. police.uk handles parallel
+   bulk fetching without rate-limiting issues (the bulk archive sees
+   far heavier load than ~10 concurrent street queries). */
 
 interface PoliceCrime {
   category: string;
@@ -64,7 +71,7 @@ async function fetchCrimesForMonth(
 
 export async function getCrimeData(lat: number, lng: number): Promise<CrimeSummary | null> {
   try {
-    const months = getRecentMonths(3);
+    const months = getRecentMonths(CRIME_WINDOW_MONTHS);
 
     // Fetch all months in parallel
     const results = await Promise.all(

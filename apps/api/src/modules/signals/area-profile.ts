@@ -37,6 +37,7 @@ import type {
 } from "./inputs";
 import type { GeocodedArea } from "./data-sources/postcodes";
 import { METHODOLOGY_VERSION } from "../engine/methodology";
+import { crimeConfidence, crimePeriod } from "./crime-confidence";
 
 /** Full UK postcode shape — used to decide whether the resolved query is itself
     a postcode (so AreaGeo.postcode is honest rather than echoing a place name). */
@@ -65,14 +66,6 @@ const notAvailable = (source: string): Conf => ({
   confidence_reason: `No ${source} coverage for this area.`,
 });
 
-/* AR-268: police.uk responded but recorded zero crimes for the queried
-   window. NOT the same as "no coverage" — every England/Wales LSOA is
-   covered. Low-traffic residential areas legitimately produce this. */
-const zeroCrimesRecorded: Conf = {
-  confidence: 0.6,
-  confidence_reason: "police.uk recorded zero crimes in the last 3 months for this area.",
-};
-
 /* AR-268: police.uk request failed (timeout / 5xx / network). Distinct
    from a definitive zero so we don't mislabel a transient outage as
    "no coverage". */
@@ -99,13 +92,6 @@ function sampleConfidence(source: string, n: number): Conf {
   if (n >= 30) return { confidence: 0.9, confidence_reason: `${source}: ${n} transactions, robust sample.` };
   if (n >= 10) return { confidence: 0.6, confidence_reason: `${source}: ${n} transactions, moderate sample. Treat as indicative.` };
   return { confidence: 0.4, confidence_reason: `${source}: only ${n} transactions, small sample. Low reliability.` };
-}
-
-/** Crime confidence scales with how many months police.uk returned. */
-function crimeConfidence(months: number): Conf {
-  if (months >= 6) return { confidence: 0.9, confidence_reason: `police.uk: ${months} months of data.` };
-  if (months >= 3) return { confidence: 0.6, confidence_reason: `police.uk: only ${months} months of data.` };
-  return { confidence: 0.4, confidence_reason: `police.uk: sparse data (${months} months).` };
 }
 
 /* ── small builders ── */
@@ -137,19 +123,6 @@ function sig(
   };
 }
 
-/** Human-readable period covered by the police.uk crime window. */
-function crimePeriod(crime: CrimeSummary | null): string {
-  if (!crime || crime.monthly_trend.length === 0) return "Last 12 months";
-  const months = crime.monthly_trend.map((m) => m.month).sort();
-  const fmt = (m: string) => {
-    const [y, mo] = m.split("-");
-    return new Date(parseInt(y), parseInt(mo) - 1).toLocaleDateString("en-GB", { month: "short", year: "numeric" });
-  };
-  const oldest = months[0];
-  const newest = months[months.length - 1];
-  return oldest === newest ? fmt(newest) : `${fmt(oldest)} to ${fmt(newest)}`;
-}
-
 /** The official deprivation index name for the area's country. */
 function deprivationSource(d: DeprivationData): string {
   const code = d.lsoa_code || "";
@@ -168,18 +141,13 @@ export function buildAreaProfile(
   const { crime, deprivation, amenities, flood, property, ofsted } = sources;
   const signals: Signal[] = [];
 
-  /* crime — police.uk */
+  /* crime — police.uk. AR-393: confidence + period come from the shared
+     crime-confidence module (also used by /v1/score scoring-engine).
+     A null crime summary means the fetch failed (distinct from a
+     definitive zero, AR-268). */
   {
     const period = crimePeriod(crime);
-    /* AR-268: three-way fork instead of crime-or-not. null = fetch failed,
-       total_crimes === 0 = API said zero, otherwise the usual sample-size
-       confidence ladder. */
-    const conf =
-      crime === null
-        ? fetchFailed("police.uk")
-        : crime.total_crimes === 0
-          ? zeroCrimesRecorded
-          : crimeConfidence(crime.months_covered);
+    const conf = crime === null ? fetchFailed("police.uk") : crimeConfidence(crime);
     const monthlyRate =
       crime && crime.months_covered > 0 ? Math.round(crime.total_crimes / crime.months_covered) : null;
     signals.push(
