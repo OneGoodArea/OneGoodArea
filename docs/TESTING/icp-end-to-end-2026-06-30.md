@@ -20,7 +20,7 @@ Six PRs shipped against this audit doc in a single morning session. The audit we
 | #8 AR-134 Jira state vs `/methodology` drift | 🟡 OPEN | — | One-line Jira fix; haven't done it yet. Will batch with `/methodology` edit. |
 | #9 `/docs` "Honest placeholder" copy | ✅ FIXED | AR-391 | Copy rewritten + status `regen` → `live`. |
 | #10 `watch_portfolio` false-failure | ✅ FIXED | AR-386 | Return shape aligned (`{added, portfolio}`), MCP client + formatter updated, `@oga-mcp/server@1.0.3` published to npm. |
-| #11 Safety & Crime dim ↔ signal layer mismatch | 🔴 OPEN | — | **The last big open finding.** Period attribution (3mo vs 12mo) + confidence (40% vs 60%) disagree on the same M1 1AE data point. Engine-internal investigation required. |
+| #11 Safety & Crime dim ↔ signal layer mismatch | ✅ FIXED | AR-393 | New shared `crime-confidence.ts` module is the single source of truth for both `/v1/score` and `/v1/area`. Live police fetcher extended from 3 to 12 months so the `crime.total_12m` label is honest. 11 new tests pin the unified ladder. |
 | #12 `methodology_for` "Used in intents" drift | ✅ FIXED | AR-391 | Derived from non-zero weights at render time. |
 | #13 `get_signals_by_category(schools)` granularity gap | 🟡 OPEN | — | Either expose per-school breakdown or document `_ks2` / `_ks4` suffixes in tool description. Deferred. |
 | 2026-06-12 carry-over: arbitrary `user_id` in `/v1/orgs/:id/members` | ✅ FIXED | AR-388 | FK to `users(id)` + 404 on unknown user. |
@@ -28,7 +28,7 @@ Six PRs shipped against this audit doc in a single morning session. The audit we
 | `/v1/area?postcode=BAD` returns Scotland (place-name fallback) | ✅ FIXED | AR-387 + AR-390 | postcodes.io `/places` schema drift fixed + LSOA validation rejects results with no real UK LSOA. |
 | Members dashboard "Invite member" CTA missing | ✅ FIXED | AR-388 | `/v1/orgs/:id/members` now returns `{members, org_id, caller_role}` so the UI gate works. |
 
-**Remaining substantive work:** #11 (Safety & Crime mismatch). #6 (latency) and #13 (schools granularity) are quality-of-life, not correctness.
+**Remaining substantive work:** #6 (4s score latency) and #13 (schools granularity). Both are quality-of-life, not correctness. Every 🔴 finding from the audit is now closed.
 
 ---
 
