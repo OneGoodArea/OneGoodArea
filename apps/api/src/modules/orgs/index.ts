@@ -246,3 +246,25 @@ export async function changeMemberRole(
 ): Promise<boolean> {
   return repo.updateMemberRole(orgId, userId, role);
 }
+
+/** AR-399: outcome of a deleteOrg attempt.
+      not_found  : org doesn't exist or caller isn't a member
+      forbidden  : caller is a member but not the owner
+      personal   : org is the caller's personal org (auto-created at signup; deletion would orphan the user)
+      deleted    : the org and every row referencing it were removed */
+export type DeleteOrgOutcome = "not_found" | "forbidden" | "personal" | "deleted";
+
+/** AR-399: delete an org. Owner-only. Personal orgs (the user's
+    auto-created one at signup) are rejected because deleting them would
+    leave the user with no orgs and break onboarding invariants. Cascade
+    includes org_members and every per-org child (presets, bundles,
+    cohorts, methodology pins, invitations). See OrgRepository.deleteOrgEntirely. */
+export async function deleteOrg(orgId: string, userId: string): Promise<DeleteOrgOutcome> {
+  const role = await repo.getRoleInOrg(orgId, userId);
+  if (!role) return "not_found";
+  if (role !== "owner") return "forbidden";
+  if (orgId === personalOrgId(userId)) return "personal";
+
+  const deleted = await repo.deleteOrgEntirely(orgId);
+  return deleted ? "deleted" : "not_found";
+}
