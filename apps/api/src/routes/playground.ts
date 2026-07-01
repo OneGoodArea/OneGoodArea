@@ -159,7 +159,10 @@ export function registerPlaygroundRoutes(app: FastifyInstance): void {
         });
       }
 
-      const base = process.env.API_INTERNAL_URL || `http://127.0.0.1:${process.env.PORT || 4000}`;
+      /* Same default as getConfig().port (apps/api listens on 8080 by
+         default). Kept in sync manually — this is the only place we need
+         it since /v1/* routes live in the same process. */
+      const base = process.env.API_INTERNAL_URL || `http://127.0.0.1:${process.env.PORT || 8080}`;
       const targetUrl = `${base}${path}`;
       const t0 = Date.now();
       let upstreamStatus = 0;

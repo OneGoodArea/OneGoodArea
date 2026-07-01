@@ -96,6 +96,32 @@
   color: var(--oga-fg-muted);
 }
 
+/* Session chip (below hero proof strip) */
+.oga-play-hero__session {
+  margin: var(--oga-5) 0 0;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--oga-fg-muted);
+}
+
+.oga-play-hero__session strong {
+  color: var(--oga-fg);
+  font-weight: 600;
+}
+
+.oga-play-hero__session--warmup {
+  opacity: 0.7;
+}
+
+.oga-play-hero__session--ready {
+  color: var(--oga-fg);
+}
+
+.oga-play-hero__session--err {
+  color: var(--oga-danger, #c1272d);
+}
+
 /* ============================================================
    Workbench (two-pane)
    ============================================================ */
@@ -203,7 +229,7 @@
   justify-content: space-between;
   gap: var(--oga-3);
   padding-bottom: var(--oga-3);
-  border-bottom: 1px solid var(--oga-border-dim);
+  border-bottom: 1px solid var(--oga-border);
 }
 
 .oga-play-panel__label {
@@ -221,7 +247,7 @@
   background: var(--oga-bg);
   padding: 4px 8px;
   border-radius: var(--oga-radius-sm);
-  border: 1px solid var(--oga-border-dim);
+  border: 1px solid var(--oga-border);
 }
 
 .oga-play-panel__meta {
@@ -280,6 +306,202 @@
   background: var(--oga-signal-dim);
   color: var(--oga-signal-ink);
   align-self: flex-start;
+}
+
+/* Query form (Area tab wired in PR3) */
+.oga-play-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+}
+
+.oga-play-form__label {
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-play-form__input {
+  appearance: none;
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-sm);
+  padding: 12px 14px;
+  font-family: var(--oga-font-mono);
+  font-size: 14px;
+  color: var(--oga-fg);
+  background: var(--oga-white);
+  transition: border-color 120ms ease;
+}
+
+.oga-play-form__input:focus {
+  outline: none;
+  border-color: var(--oga-fg);
+}
+
+.oga-play-form__submit {
+  appearance: none;
+  border: 0;
+  padding: 12px var(--oga-5);
+  background: var(--oga-fg);
+  color: var(--oga-white);
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: var(--oga-radius-sm);
+  cursor: pointer;
+  align-self: flex-start;
+  transition: transform 120ms ease, opacity 120ms ease;
+}
+
+.oga-play-form__submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.oga-play-form__submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Submit button loading state (spinner + label) */
+.oga-play-form__submit-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.oga-play-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: var(--oga-white);
+  border-radius: 50%;
+  animation: oga-play-spin 700ms linear infinite;
+}
+
+@keyframes oga-play-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Response meta chips */
+.oga-play-panel__meta--ok {
+  color: var(--oga-success, #2e7d32);
+}
+
+.oga-play-panel__meta--err {
+  color: var(--oga-danger, #c1272d);
+}
+
+.oga-play-panel__meta--live {
+  color: var(--oga-fg);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Loading state: skeleton rows + contextual status line */
+.oga-play-panel__loading {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-4);
+}
+
+.oga-play-panel__skeleton {
+  flex: 1;
+  padding: var(--oga-4);
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 280px;
+}
+
+.oga-play-panel__skeleton-row {
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    rgba(15, 15, 15, 0.06) 0%,
+    rgba(15, 15, 15, 0.14) 50%,
+    rgba(15, 15, 15, 0.06) 100%
+  );
+  background-size: 200% 100%;
+  animation: oga-play-shimmer 1200ms linear infinite;
+  width: 100%;
+}
+
+.oga-play-panel__skeleton-row--short {
+  width: 40%;
+}
+
+.oga-play-panel__skeleton-row--long {
+  width: 82%;
+}
+
+@keyframes oga-play-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.oga-play-panel__loading-hint {
+  margin: 0;
+  padding: 0 4px;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-fg-muted);
+  letter-spacing: 0.04em;
+  min-height: 18px;
+}
+
+/* Rendered JSON */
+.oga-play-panel__json {
+  flex: 1;
+  overflow: auto;
+  margin: 0;
+  padding: var(--oga-4);
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-sm);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--oga-fg);
+  max-height: 520px;
+  white-space: pre;
+}
+
+.oga-play-panel__error {
+  flex: 1;
+  padding: var(--oga-5);
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  border-left: 3px solid var(--oga-danger, #c1272d);
+  border-radius: var(--oga-radius-sm);
+  color: var(--oga-fg);
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.oga-play-panel__error-code {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--oga-danger, #c1272d);
+  margin: 0 0 var(--oga-2);
+}
+
+.oga-play-panel__truncated {
+  margin: var(--oga-3) 0 0;
+  font-family: var(--oga-font-sans);
+  font-size: 12px;
+  color: var(--oga-fg-muted);
+  font-style: italic;
 }
 
 /* Fair-use footnote */
