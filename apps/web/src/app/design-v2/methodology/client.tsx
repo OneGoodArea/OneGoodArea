@@ -689,6 +689,94 @@ function SectionNormalization() {
           </article>
         </div>
 
+        {/* AR-410: live example of the national-vs-regional split. Same
+            query, same signal, only ?scope= differs. National dumps
+            you into prime London; regional gives you the top LSOA of
+            each ONS region. */}
+        <div className="oga-meth-norm__example">
+          <div className="oga-meth-norm__example-head">
+            <span className="oga-meth-norm__example-tag">Live example</span>
+            <span className="oga-meth-norm__example-title">
+              Top-5 most expensive LSOAs in England, by scope
+            </span>
+          </div>
+          <p className="oga-meth-norm__example-lead">
+            Same signal (<code>property.median_price</code>), same country, same limit &mdash;
+            only <code>?scope=</code> differs.
+          </p>
+          <div className="oga-meth-norm__example-cols">
+            <div className="oga-meth-norm__example-col">
+              <div className="oga-meth-norm__example-col-head">
+                <code className="oga-meth-norm__example-col-name">scope=national</code>
+              </div>
+              <ol className="oga-meth-norm__example-list">
+                <li>
+                  <span className="oga-meth-norm__example-val">&pound;16.3M</span>
+                  <span className="oga-meth-norm__example-place">Kensington and Chelsea 007E</span>
+                </li>
+                <li>
+                  <span className="oga-meth-norm__example-val">&pound;11.3M</span>
+                  <span className="oga-meth-norm__example-place">Westminster 019E</span>
+                </li>
+                <li>
+                  <span className="oga-meth-norm__example-val">&pound;8.6M</span>
+                  <span className="oga-meth-norm__example-place">Westminster 018D</span>
+                </li>
+                <li>
+                  <span className="oga-meth-norm__example-val">&pound;6.8M</span>
+                  <span className="oga-meth-norm__example-place">Westminster 003C</span>
+                </li>
+                <li>
+                  <span className="oga-meth-norm__example-val">&pound;6.7M</span>
+                  <span className="oga-meth-norm__example-place">Kensington and Chelsea 014B</span>
+                </li>
+              </ol>
+            </div>
+            <div className="oga-meth-norm__example-col">
+              <div className="oga-meth-norm__example-col-head">
+                <code className="oga-meth-norm__example-col-name">scope=regional</code>
+              </div>
+              <ol className="oga-meth-norm__example-list">
+                <li>
+                  <span className="oga-meth-norm__example-val">&pound;16.3M</span>
+                  <span className="oga-meth-norm__example-place">
+                    Kensington and Chelsea 007E <em>&mdash; London</em>
+                  </span>
+                </li>
+                <li>
+                  <span className="oga-meth-norm__example-val">&pound;3.9M</span>
+                  <span className="oga-meth-norm__example-place">
+                    Oxford 008F <em>&mdash; South East</em>
+                  </span>
+                </li>
+                <li>
+                  <span className="oga-meth-norm__example-val">&pound;2.8M</span>
+                  <span className="oga-meth-norm__example-place">
+                    Broadland 002C <em>&mdash; East of England</em>
+                  </span>
+                </li>
+                <li>
+                  <span className="oga-meth-norm__example-val">&pound;985k</span>
+                  <span className="oga-meth-norm__example-place">
+                    Oadby and Wigston 010C <em>&mdash; East Midlands</em>
+                  </span>
+                </li>
+                <li>
+                  <span className="oga-meth-norm__example-val">&pound;970k</span>
+                  <span className="oga-meth-norm__example-place">
+                    Northumberland 043C <em>&mdash; North East</em>
+                  </span>
+                </li>
+              </ol>
+            </div>
+          </div>
+          <p className="oga-meth-norm__example-caveat">
+            National returns five prime-London LSOAs. Regional returns one from each of five different
+            ONS regions &mdash; the top of each market. Kensington and Chelsea 007E appears in both because
+            it is #1 in London <em>and</em> #1 nationally.
+          </p>
+        </div>
+
         <dl className="oga-meth-stats">
           <div className="oga-meth-stats__cell">
             <dt className="oga-meth-stats__label">Direction</dt>
