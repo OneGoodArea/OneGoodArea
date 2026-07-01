@@ -1,6 +1,6 @@
 # Plan 034 — docs/ directory cleanup
 
-**Status:** In progress
+**Status:** Done (2026-07-01)
 **JIRA:** AR-431
 **Branch:** rearrange-dirs
 **Owner:** Pedro / Claude
@@ -133,3 +133,40 @@ produced the concrete file list below. Key product context: **reports
 One logical change per commit, roughly per step / step-group:
 moves (A), rescues (B), each split (C), link+index fixes (D), test
 rebuild (E). Keep diffs reviewable.
+
+## Completion notes (2026-07-01)
+
+Delivered across ~10 commits on `rearrange-dirs`. Final state: no non-`.md`
+files in `docs/`, no `DEPRECATED-` files outside `ARCHIVE/`, 0 broken
+relative links (verified by script).
+
+Deviations from the plan as written:
+- **Step 8 (AR-248):** un-deprecated instead of archived. It's a locked
+  proposal under the active AR-217 epic, so archiving would lose a
+  ready-to-implement spec. Kept live with a flagged ⚠️ open conflict (old
+  4-intent taxonomy vs shipped 5-ICP model) to resolve at ticketing time.
+- **Step 11 (DATA-SOURCES):** the roadmap moved to a linked in-docs file
+  `ARCHITECTURE/DATA-SOURCES-ROADMAP.md` (not a new ADR), matching the
+  "split large docs into smaller linked docs" instruction.
+- **Step 13 (0034):** restructured in place into two clearly-delineated
+  decisions (no renumber / new ADR file — ADRs are frozen history).
+- **Step 16 (DASHBOARD boilerplate trim):** deferred — those logs are
+  reasonable per-component reference; trimming 17 files risked losing
+  per-component decisions for marginal benefit.
+- **Step 24 (Levers test cases):** the 25 org-management endpoints are
+  tracked as a follow-up in `docs/test-cases/README.md`; the 6 core
+  `/v1`+MCP surfaces were authored fresh, code-grounded.
+
+Real code issues surfaced while authoring the test docs (worth a look,
+outside this docs task):
+- **Add-areas cap mismatch:** `portfolios.ts` enforces `PORTFOLIO_ADD_MAX
+  = 200` but the contract `AddAreaRequestSchema` caps at `.max(100)`.
+- **`X-Engine-Version` no longer honoured on `POST /v1/score`** — the
+  per-request override was retired with `/v1/report` (AR-324); the route
+  stamps only from the org methodology pin / latest. `resolveEngineVersion`
+  still exists but isn't wired to this route.
+- **`find_peers` null handling divergence:** returns `results: null` inside
+  `/v1/query` but 404 standalone on `/v1/peers` for the same no-signal case.
+- **Engine-version stamping divergence:** `/v1/signals/:category` stamps
+  `profile.meta.engine_version` while `/v1/area` + `/v1/areas` stamp the
+  org-pin version.
