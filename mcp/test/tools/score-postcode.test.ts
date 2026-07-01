@@ -4,8 +4,8 @@ import {
   parseScorePostcodeArgs,
   formatScoreResultAsText,
   executeScorePostcode,
-} from "./score-postcode.js";
-import { OogaApiClient, OogaApiError, type OogaScoreResponse } from "../api-client.js";
+} from "../../src/tools/score-postcode.js";
+import { OogaApiClient, OogaApiError, type OogaScoreResponse } from "../../src/api-client.js";
 
 describe("scorePostcodeToolDef (MCP tool definition)", () => {
   it("has the required MCP fields", () => {

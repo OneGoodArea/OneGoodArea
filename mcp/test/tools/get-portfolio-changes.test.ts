@@ -4,8 +4,8 @@ import {
   parseGetPortfolioChangesArgs,
   executeGetPortfolioChanges,
   formatChangeReportAsText,
-} from "./get-portfolio-changes.js";
-import { OogaApiClient, OogaApiError, type OogaChangeReport } from "../api-client.js";
+} from "../../src/tools/get-portfolio-changes.js";
+import { OogaApiClient, OogaApiError, type OogaChangeReport } from "../../src/api-client.js";
 
 function sampleReport(over: Partial<OogaChangeReport> = {}): OogaChangeReport {
   return {

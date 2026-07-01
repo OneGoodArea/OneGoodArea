@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { engineVersionToolDef, executeEngineVersion } from "./engine-version.js";
+import { engineVersionToolDef, executeEngineVersion } from "../../src/tools/engine-version.js";
 
 describe("engineVersionToolDef", () => {
   it("takes no required args", () => {

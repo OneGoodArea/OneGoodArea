@@ -3,16 +3,16 @@ import {
   areaBriefToolDef,
   parseAreaBriefArgs,
   executeAreaBrief,
-} from "./area-brief.js";
+} from "../../src/tools/area-brief.js";
 import {
   OogaApiClient,
   OogaApiError,
   type OogaAreaProfile,
   type OogaScoreResponse,
   type Preset,
-} from "../api-client.js";
-import { AUDIENCES, getAudienceConfig, type Audience } from "./area-brief-audiences.js";
-import { formatAreaBriefAsText } from "./area-brief-format.js";
+} from "../../src/api-client.js";
+import { AUDIENCES, getAudienceConfig, type Audience } from "../../src/tools/area-brief-audiences.js";
+import { formatAreaBriefAsText } from "../../src/tools/area-brief-format.js";
 
 /* ── Sample fixtures ─────────────────────────────────────────────── */
 

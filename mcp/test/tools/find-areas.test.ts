@@ -3,8 +3,8 @@ import {
   findAreasToolDef,
   parseFindAreasArgs,
   executeFindAreas,
-} from "./find-areas.js";
-import { OogaApiClient, OogaApiError, type OogaQueryResponse } from "../api-client.js";
+} from "../../src/tools/find-areas.js";
+import { OogaApiClient, OogaApiError, type OogaQueryResponse } from "../../src/api-client.js";
 
 function rankAreasResponse(rows: Array<{ geo_code: string; value: number | null; percentile: number | null }>): OogaQueryResponse {
   return {

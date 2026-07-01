@@ -3,8 +3,8 @@ import {
   watchPortfolioToolDef,
   parseWatchPortfolioArgs,
   executeWatchPortfolio,
-} from "./watch-portfolio.js";
-import { OogaApiClient, OogaApiError, type OogaPortfolio, type OogaPortfolioDetail } from "../api-client.js";
+} from "../../src/tools/watch-portfolio.js";
+import { OogaApiClient, OogaApiError, type OogaPortfolio, type OogaPortfolioDetail } from "../../src/api-client.js";
 
 function sampleCreated(): OogaPortfolio {
   return { id: "ptf_abc123", name: "North Manchester picks", created_at: "2026-06-28T01:00:00Z" };
