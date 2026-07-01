@@ -1,7 +1,7 @@
 # Separate MCP test files from production code
 
 **JIRA:** [AR-434](https://podnex.atlassian.net/browse/AR-434)
-**Status:** Draft
+**Status:** DONE
 
 ## Problem
 

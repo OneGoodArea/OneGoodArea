@@ -93,4 +93,6 @@
 
 16. Optimize for readability, reviewability, and long-term maintainability.
 
+1. Production code and test code NEVER sits at the same directory. There is always a src/ and a companion test/
+
 1. When writing documentation, JIRA, Github files or any kind of description, be succint, concise and summararized. Long descriptions and explanations should rarely happen, they should be the execptional case by var
