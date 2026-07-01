@@ -13,7 +13,8 @@ How OneGoodArea is built — the system snapshot, the four products, the data la
 | [`CODE-ORG.md`](./CODE-ORG.md) | Code structure + key entry points |
 | [`PRINCIPLES.md`](./PRINCIPLES.md) | The non-negotiable methodology rules |
 | [`DATA-LAYER.md`](./DATA-LAYER.md) | Schema rationale + data sources |
-| [`DATA-SOURCES.md`](./DATA-SOURCES.md) | Ingest strategy per source |
+| [`DATA-SOURCES.md`](./DATA-SOURCES.md) | Per-source current state + the "belongs in the store?" decision frame |
+| [`DATA-SOURCES-ROADMAP.md`](./DATA-SOURCES-ROADMAP.md) | Proposed ingest direction — per-source actions, target cron, priorities |
 | [`QUERY-PLANE.md`](./QUERY-PLANE.md) | Intelligence layer grammar — planner + executor + 6 surfaces |
 | [`DEPLOYMENTS.md`](./DEPLOYMENTS.md) | Deploy topology |
 | [`CONTAINERS.md`](./CONTAINERS.md) | Cross-platform container workflow |
