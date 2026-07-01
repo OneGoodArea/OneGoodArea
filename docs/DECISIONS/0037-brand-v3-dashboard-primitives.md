@@ -126,23 +126,16 @@ Pedro flagged this twice in Phase 0 (AR-228 Tabs + AR-233 Sidebar): the
 showcase and consumer code reinvented icons + stubbed wordmarks inline
 instead of using the existing canonical sets.
 
-The rule, recorded in memory under `feedback_icons_and_canonical_assets.md`:
+The rule:
 
 - **Icons.** Audit existing sets before adding any glyph. The canonical
-  sets today:
-  - `_shared/icons.tsx` — `AiqIcon` 28×28 line glyphs (general-purpose: buyer / renter / investor / agent / operator / researcher / data / intent / read / map / api / repeat / share / watchlist / fresh / pdf / compare / key / gauge / cache / dash / widget / support / billing)
-  - `_shared/product-icons.tsx` — `SignalsIcon` / `ScoresIcon` / `MonitorIcon` / `IntelligenceIcon` — bespoke dot-and-hairline 32×32 diagrams (the 4 products)
-  - `_shared/docs-icons.tsx` — `ApiReferenceIcon` / `McpServerIcon` / `ChangelogIcon`
-  - `_shared/app-shell.tsx` — `NavIconDark` 16×16 sidebar glyphs (dash / read / map / compare / api / key / billing); **exported as of AR-233** so the showcase + future Phase 1 surfaces consume the same set
+  sets today: `_shared/icons.tsx` (`AiqIcon` general-purpose line
+  glyphs), `_shared/product-icons.tsx` (the 4 product diagrams),
+  `_shared/docs-icons.tsx`, and `_shared/app-shell.tsx` (`NavIconDark`
+  sidebar glyphs, exported as of AR-233 so the showcase + future Phase 1
+  surfaces consume the same set).
 - **Wordmark.** Always use the `<Wordmark>` component from `_shared/wordmark.tsx`.
   Never substitute a text stub like `"OneGoodArea"` in a `<span>`.
-- **Bespoke Tabs-set icons** (~20 functions for Query / NL / Peers / Insights /
-  Forecast / Profile / Members / API keys / Webhooks / Billing / Portfolios /
-  Cohorts / Bundles / Compare / Exports / Changes / Alerts + Presets) are
-  currently inlined in the dashboard-primitives showcase. **Open follow-up:**
-  promote to a single `_shared/dashboard/dashboard-nav-icons.tsx` set before
-  Phase 1 ships sidebar consumers. Tracked separately; not gating ADR
-  acceptance.
 
 ### 4. Shared dark-surface vocabulary
 
@@ -177,43 +170,10 @@ per file, setup at `tests/setup-rtl.ts` for `@testing-library/jest-dom`
 matchers + `afterEach` cleanup).
 
 From AR-230 onward, every Phase 0+ primitive ships with component tests
-covering the acceptance criteria from its Jira ticket. Phase 0 tally:
-
-- AR-230 DataTable — 11 tests
-- AR-233 Sidebar — 12 tests
-
-Earlier Phase 0 primitives (AR-219–AR-228) were verified via typecheck +
-visual showcase only — RTL didn't exist yet. **Follow-up:** retrofit
-component tests for FormGroup / Modal / DropdownMenu / Toast / Tabs as
-they ship into real consumers in Phase 1. Not gating ADR acceptance.
-
-### 6. Localhost-first iteration loop (documented separately)
-
-The Phase 0 work also validated the iteration loop documented in memory
-under `feedback_operations_loop.md`:
-
-1. Brief Pedro on scope before code (sometimes deferred for trivial
-   tickets per his standing delegation)
-2. Build the primitive + showcase
-3. Run gates locally (typecheck + lint + tests)
-4. Dev server up; Pedro verifies on `localhost:3000/admin/dashboard-primitives`
-5. Iterate until approved (Phase 0 average: 1–5 cycles per primitive;
-   AR-233 hit 5)
-6. Atomic commits (work log carry-forward + primitive + tests + showcase
-   + any refactor as separate commits)
-7. Push + open PR with structured description (Summary / Test plan /
-   Iteration log)
-8. Jira comment with PR link + gates + iteration log
-9. Watch CI (7 checks: Build / Lint / Test / Typecheck / Security audit /
-   Vercel preview / Vercel deploy)
-10. Squash-merge with `gh pr merge --squash --admin --delete-branch` per
-    Pedro's standing delegation
-11. Sync local main
-12. Write `docs/DESIGN/DASHBOARD/AR-XXX_<slug>.md` work log
-13. Jira merge recap + transition to Done
-14. Mark task complete; start the next ticket
-
-The pattern carries forward into Phase 1+.
+covering the acceptance criteria from its Jira ticket. Earlier Phase 0
+primitives (AR-219–AR-228) were verified via typecheck + visual showcase
+only — RTL didn't exist yet — and gain component tests as they ship into
+real consumers in Phase 1.
 
 ## Consequences
 
@@ -246,18 +206,16 @@ The pattern carries forward into Phase 1+.
   Mitigated by: this ADR + the `docs/DESIGN/DASHBOARD/` work logs +
   `/admin/dashboard-primitives` showcase visible in dev.
 - **Two competing icon vocabularies today.** Tabs-bespoke (inlined in
-  showcase) + NavIconDark (exported from app-shell). Follow-up to
-  canonicalize before Phase 1 ships sidebar consumers (see section 3).
+  showcase) + NavIconDark (exported from app-shell). Canonicalization is
+  owed before Phase 1 ships sidebar consumers.
 - **Dark-surface upgrade rippled to existing pages.** AR-233 deliberately
   upgraded the real `/dashboard` sidebar from flat `var(--oga-ink)` to
   graphite gradient + dot-field per Pedro's explicit ask. The Jira spec's
   "no visual regression" rule was overridden. Flagged in AR-233's PR
   description + work log; not unwound.
 - **Discipline required around invented assets.** The icon + wordmark
-  rule (section 3) needs to be enforced by reviewers + by the iterating-with-
-  Pedro loop. Memory pillar (`feedback_icons_and_canonical_assets.md`)
-  + showcase comments help; but the rule will be tested on every new
-  consumer page.
+  rule (section 3) needs to be enforced by reviewers. Showcase comments
+  help; but the rule will be tested on every new consumer page.
 
 ### Future supersession criteria
 
@@ -364,37 +322,3 @@ Rejected because:
   before they ship into real consumer pages. The iteration cycles on
   Phase 0 (some primitives took 5 cycles) would have been worse if
   surfaced for the first time inside a half-built Levers UI page.
-
-## Sub-ticket trail
-
-Phase 0 work shipped under AR-217 as 8 sub-tickets:
-
-| AR | Phase 0 slot | PR | Squash on main | Date |
-|---|---|---|---|---|
-| [AR-218](https://podnex.atlassian.net/browse/AR-218) | A1 (DB columns; re-tagged out of Phase 0 then re-included) | #131 | `16d6c04` | 2026-06-05 |
-| [AR-219](https://podnex.atlassian.net/browse/AR-219) | A2 — FormGroup | #132 | `67ba231` | 2026-06-05 |
-| [AR-220](https://podnex.atlassian.net/browse/AR-220) | A3 — Modal | #133 | `6069447` | 2026-06-05 |
-| [AR-221](https://podnex.atlassian.net/browse/AR-221) | A4 — DropdownMenu | #134 | `f761bad` | 2026-06-05 |
-| [AR-222](https://podnex.atlassian.net/browse/AR-222) | A5 — Toast | #135 | `a76a724` | 2026-06-05 |
-| [AR-228](https://podnex.atlassian.net/browse/AR-228) | A11 — Tabs | #136 | `24b8dc9` | 2026-06-05 |
-| [AR-230](https://podnex.atlassian.net/browse/AR-230) | A13 — DataTable (+ RTL infra) | #137 | `296cb83` | 2026-06-06 |
-| [AR-233](https://podnex.atlassian.net/browse/AR-233) | A16 — Sidebar | #138 | `2aa67ed` | 2026-06-06 |
-| [AR-237](https://podnex.atlassian.net/browse/AR-237) | A20 — this ADR | — | — | 2026-06-06 |
-
-Deferred (8 tickets closed as deferred per section 2):
-
-- [AR-223](https://podnex.atlassian.net/browse/AR-223) Tooltip
-- [AR-224](https://podnex.atlassian.net/browse/AR-224) Breadcrumb
-- [AR-225](https://podnex.atlassian.net/browse/AR-225) Pagination
-- [AR-226](https://podnex.atlassian.net/browse/AR-226) StatsCard
-- [AR-227](https://podnex.atlassian.net/browse/AR-227) EmptyState
-- [AR-229](https://podnex.atlassian.net/browse/AR-229) CodeBlock
-- [AR-231](https://podnex.atlassian.net/browse/AR-231) FilterBuilder
-- [AR-232](https://podnex.atlassian.net/browse/AR-232) ChartShell
-
-Re-tagged into Phase 1:
-
-- [AR-234](https://podnex.atlassian.net/browse/AR-234) OrgSwitcher (composes
-  `<DropdownMenu>` + `<Sidebar>` top slot)
-- AR-235 Activity endpoint (data, not primitive)
-- AR-236 Production flag (deploy, not primitive)

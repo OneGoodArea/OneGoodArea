@@ -146,8 +146,6 @@ endpoint healthy without breaking compliance teams' setups.
   500 every product endpoint — it logs and falls back to latest.
 - **Test coverage:** 7 new unit tests on `resolveEngineVersion`'s pin
   precedence + 2 integration tests on /v1/score's header stamping.
-  apps/api: 837 tests / 92 files green (was 828). Typecheck + lint
-  clean.
 
 **Negative / accepted**
 
@@ -198,23 +196,3 @@ endpoint healthy without breaking compliance teams' setups.
   rebinding (org owner changes pin from 2.0.1 to 2.0.2 because
   compliance approved the new version) would require touching every
   key. Org-level pin = one row, one update.
-
-## Proven on prod
-
-Acceptance steps (run from local container; the migration auto-runs
-on Render's next deploy):
-
-1. Migrate runs, `org_methodology_pins` table exists.
-2. `PUT /v1/orgs/<id>/methodology {"engine_version": "2.0.1"}` →
-   200 with `{engine_version: "2.0.1", pinned: true}`.
-3. `POST /v1/score {"area":"M1 1AE", "preset":"research"}` →
-   200 with response header `X-Engine-Version: 2.0.1`.
-4. `GET /v1/area?postcode=M1%201AE` from the same org → header echoes
-   `2.0.1`.
-5. With explicit `X-Engine-Version: 2.0.2` request header → response
-   header is `2.0.2` (header beats pin).
-6. `PUT /v1/orgs/<id>/methodology {"engine_version":"9.9.9"}` →
-   400 `unsupported_engine_version`.
-7. `DELETE /v1/orgs/<id>/methodology` → 200. Next call: header back
-   to `2.0.2` (latest).
-8. Non-owner member trying PUT/DELETE → 403.

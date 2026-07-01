@@ -127,7 +127,7 @@ expression.
 - All 7 endpoints share the `requireApiAccess` gate so plan + rate
   limits are honored.
 - Test coverage: 11 unit tests on the pure helpers (slug formula,
-  personalOrgId/Slug round-trips). The 794-test suite is green.
+  personalOrgId/Slug round-trips).
 
 **Negative / accepted**
 
@@ -174,24 +174,3 @@ expression.
 - **Self-removal as a separate endpoint.** Rejected — the same
   DELETE handles "owner removes member" + "member removes
   themselves" with one extra clause. Less surface area.
-
-## Proven on prod
-
-Acceptance checklist for this commit:
-
-1. Migration registry still green (`every DDL statement is
-   idempotent` passes with the broadened predicate).
-2. Full `apps/api` test suite: 90 files, 794 tests green.
-3. End-to-end live calls against the Render API (`oga_` key):
-   - `POST /v1/orgs {"name":"Acme"}` → 201 with id + auto-derived
-     `acme` slug + `created_at`/`updated_at` set.
-   - `GET /v1/orgs` → array including the new org + the personal
-     org from the Foundation backfill, each with `role: "owner"`.
-   - `GET /v1/orgs/<id>` → 200 for member; 404 for stranger.
-   - `PATCH /v1/orgs/<id> {"name":"Acme Ltd"}` → 200 with bumped
-     `updated_at`; second call with same slug → 200 (no-op).
-   - `POST /v1/orgs/<id>/members` for a non-owner caller → 403.
-   - `DELETE /v1/orgs/<id>/members/<lastOwnerId>` → 409 with the
-     last-owner message.
-
-The probe key is revoked after acceptance per ops policy.

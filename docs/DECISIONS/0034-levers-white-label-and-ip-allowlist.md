@@ -25,6 +25,11 @@ because neither warrants a standalone story.
 
 ## Decision
 
+Two independent enterprise-polish features ship in this commit. Their
+schema is additive columns on existing tables; the rest divides cleanly
+into the two decisions below, joined only by a shared `/v1/me` surface
+that exposes both.
+
 ### Schema (additive on existing tables)
 
 ```sql
@@ -40,12 +45,22 @@ All `IF NOT EXISTS` — idempotent. `orgs.display_name` and
 `name` at the consumer layer. `allowed_ip_cidrs` defaults to the empty
 array so every existing key is byte-identical (no restriction).
 
+## Decision 1 — White-label org fields
+
 ### Contracts
 
 `OrgSchema` gains optional `display_name: string | null` and
 `brand_url: string | null`. `UpdateOrgRequestSchema` accepts both
 (URL-validated for brand_url, max 500 chars). Explicit `null` clears
 the field; `undefined` keeps the current value.
+
+### RBAC (ADR 0033 still governs)
+
+`PATCH /v1/orgs/:id` with the new `display_name` / `brand_url` fields
+inherits the existing admin+ gate. No new endpoint, no new role
+matrix entry.
+
+## Decision 2 — Per-key IP allowlist
 
 ### Pure CIDR-match helper (`infrastructure/utils/ip-cidr.ts`)
 
@@ -103,10 +118,20 @@ the `authenticate` helper (`/v1/me`, `/v1/report`, `/v1/batch`) were
 updated identically — extract IP, pass it, surface the blocked branch
 as 403.
 
-### `/v1/me` response shape
+### IP allowlist management
 
-New fields on the existing response (back-compat: adding, never
-removing):
+This commit ships the column + enforcement. Programmatic management
+of `allowed_ip_cidrs` is **deferred**: today the column is settable
+via SQL only (or via the session-auth /keys endpoint flow at key-
+creation time once that gains a request param). The CRUD surface for
+rotating allowlists on existing keys is a small follow-up if a real
+customer needs it. Reading the current allowlist works today via
+`/v1/me`.
+
+## Shared surface — `/v1/me` response shape
+
+Both decisions surface through `/v1/me`. New fields on the existing
+response (back-compat: adding, never removing):
 
 ```json
 {
@@ -125,22 +150,6 @@ has nothing to do with branding; a DB hiccup here shouldn't 500 a
 plan/entitlement check). Same pattern as the methodology-pin
 defensive fallback shipped in ADR 0031.
 
-### RBAC (ADR 0033 still governs)
-
-`PATCH /v1/orgs/:id` with the new `display_name` / `brand_url` fields
-inherits the existing admin+ gate. No new endpoint, no new role
-matrix entry.
-
-### IP allowlist management
-
-This commit ships the column + enforcement. Programmatic management
-of `allowed_ip_cidrs` is **deferred**: today the column is settable
-via SQL only (or via the session-auth /keys endpoint flow at key-
-creation time once that gains a request param). The CRUD surface for
-rotating allowlists on existing keys is a small follow-up if a real
-customer needs it. Reading the current allowlist works today via
-`/v1/me`.
-
 ## Consequences
 
 **Positive**
@@ -156,8 +165,6 @@ customer needs it. Reading the current allowlist works today via
   detect IP-gate hits without conflating with 401 "bad key".
 - **Test coverage** — 17 unit tests on `ipMatchesCidrs` + 4 new
   validateApiKey integration tests for the discriminated union.
-  apps/api: 868 tests / 94 files green (was 848). Typecheck + lint
-  clean.
 
 **Negative / accepted**
 
@@ -209,23 +216,3 @@ customer needs it. Reading the current allowlist works today via
   over-engineered for v1. If per-key brand override becomes a real
   ask, we move display_name onto `api_keys` then; that's a small
   refactor inside the org-fetch path.
-
-## Proven on prod
-
-Acceptance steps (run from local container after migration):
-
-1. Migrate: `orgs.display_name`, `orgs.brand_url`, and
-   `api_keys.allowed_ip_cidrs` columns exist.
-2. As owner: `PATCH /v1/orgs/<id> {"display_name":"Acme Underwriting",
-   "brand_url":"https://acme.example"}` → 200, fields persisted.
-3. `GET /v1/me` returns `org.display_name = "Acme Underwriting"`,
-   `org.brand_url = "https://acme.example"`, `key.allowed_ip_cidrs = []`.
-4. Set `allowed_ip_cidrs = '{"10.0.0.0/8"}'` on an api_keys row via
-   SQL. Hit any authenticated endpoint:
-   - From `10.1.2.3` → succeeds.
-   - From `8.8.8.8` → 403 `ip_not_allowed`.
-5. `GET /v1/me` from the matching IP returns
-   `key.allowed_ip_cidrs = ["10.0.0.0/8"]`.
-6. `PATCH` org with `display_name: null` clears it; subsequent
-   `/v1/me` returns `display_name: null` (consumer falls back to
-   `name`).
