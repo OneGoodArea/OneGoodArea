@@ -456,8 +456,14 @@ function SectionSignal() {
             <div className="oga-meth-signal__attr">
               <div className="oga-meth-signal__attr-name">percentile</div>
               <p className="oga-meth-signal__attr-body">
-                Per-scope rank 0&ndash;100 from PERCENT_RANK(). Today: national-within-country. Regional and
-                per-cohort recompute on the roadmap.
+                National rank 0&ndash;100 from PERCENT_RANK() partitioned by country.
+              </p>
+            </div>
+            <div className="oga-meth-signal__attr">
+              <div className="oga-meth-signal__attr-name">regional_percentile</div>
+              <p className="oga-meth-signal__attr-body">
+                Same rank scale, partitioned by ONS region instead of country. Surfaces within-region
+                outperformers instead of the national flatten. Per-cohort recompute is still on the roadmap.
               </p>
             </div>
             <div className="oga-meth-signal__attr">
@@ -661,11 +667,13 @@ function SectionNormalization() {
           <article className="oga-meth-norm__scope">
             <div className="oga-meth-norm__scope-head">
               <span className="oga-meth-norm__scope-name">scope = &ldquo;regional&rdquo;</span>
-              <span className="oga-status oga-status-yellow oga-meth-norm__scope-status">Roadmap</span>
+              <span className="oga-status oga-status-green oga-meth-norm__scope-status">Live</span>
             </div>
             <p className="oga-meth-norm__scope-body">
-              Rank within ONS region (North West, South East, &hellip;). The geographic spine is loaded;
-              the per-region percentile recompute job is not yet built.
+              Rank within ONS region (North West, South East, &hellip;). Callers pass
+              <code> ?scope=regional</code> to <code>/v1/areas</code> to rank+filter within region,
+              or read <code>regional_percentile</code> alongside <code>percentile</code> on any
+              store-backed signal.
             </p>
           </article>
           <article className="oga-meth-norm__scope">
@@ -1144,7 +1152,7 @@ const LEVERS: Lever[] = [
     endpoint: { verb: "POST", path: "/v1/orgs/:id/cohorts" },
     rbac: "Admin",
     body: "Named list of LSOA codes (max 10,000). Scopes the candidate pool on /v1/peers — \"find peers in MY universe.\"",
-    honest: "Cohorts ship today; per-cohort percentile recompute (scope=peer_group) is on the roadmap.",
+    honest: "Cohorts ship today. National + regional percentile scopes are live; per-cohort recompute (scope=peer_group) is still on the roadmap.",
   },
 ];
 
