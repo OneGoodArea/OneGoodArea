@@ -58,7 +58,7 @@ function SignInForm() {
     }
   };
 
-  const handleOAuth = async (provider: "google" | "github") => {
+  const handleOAuth = async (provider: "google") => {
     try {
       await signIn(provider, { callbackUrl });
     } catch {

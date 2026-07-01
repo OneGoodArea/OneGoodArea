@@ -1,6 +1,5 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
-import GitHub from "next-auth/providers/github";
 import Credentials from "next-auth/providers/credentials";
 import { sql } from "@/lib/db";
 import { row, UserRow, MagicLinkTokenRow } from "@/lib/db-types";
@@ -17,10 +16,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-    GitHub({
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
     }),
     Credentials({
       credentials: {
@@ -143,7 +138,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return true;
     },
     async signIn({ user, account }) {
-      if (account?.provider === "google" || account?.provider === "github") {
+      if (account?.provider === "google") {
         const res = await fetch(`${apiBaseUrl()}/auth/oauth-callback`, {
           method: "POST",
           headers: { "content-type": "application/json" },

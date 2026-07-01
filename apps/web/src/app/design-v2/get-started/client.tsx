@@ -125,20 +125,24 @@ function GetStartedForm() {
         exists: boolean;
         provider?: string;
       };
-      /* OAuth-rooted accounts: legacy /sign-in still supports Google
-         + GitHub; /get-started doesn't. Steer the user back to
-         /sign-in with a hint rather than letting them set a password
-         that won't work. */
+      /* OAuth-rooted accounts: legacy /sign-in still supports Google;
+         /get-started doesn't. Steer Google users back to /sign-in; for
+         GitHub-rooted accounts (AR-415 removed the provider) surface a
+         support-migration message rather than a dead-end. */
       if (data.exists && data.provider && data.provider !== "credentials") {
-        const provider =
-          data.provider === "google"
-            ? "Google"
-            : data.provider === "github"
-              ? "GitHub"
-              : "social";
-        setError(
-          `This email signed up with ${provider}. Use the ${provider} button on the legacy sign-in page.`,
-        );
+        if (data.provider === "github") {
+          setError(
+            "This email signed up with GitHub. GitHub sign-in has been removed — contact support@onegoodarea.com to migrate your account.",
+          );
+        } else if (data.provider === "google") {
+          setError(
+            "This email signed up with Google. Use the Google button on the legacy sign-in page.",
+          );
+        } else {
+          setError(
+            "This email signed up with a social provider. Use the sign-in page.",
+          );
+        }
         setLoading(false);
         return;
       }
