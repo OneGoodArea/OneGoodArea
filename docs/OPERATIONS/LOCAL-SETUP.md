@@ -60,7 +60,7 @@ make stack-up-min
 make db-seed
 ```
 
-This boots the minimal compose stack and seeds baseline database fixtures into the running Postgres service.
+This boots the minimal compose stack and seeds baseline database fixtures into the running Postgres service. For the full stack (pgAdmin, Mailhog, Stripe-mock), profiles, ports, and all `make stack-*` targets, see [`LOCAL-CONTAINERS.md`](./LOCAL-CONTAINERS.md).
 
 ## Gates
 

@@ -18,16 +18,13 @@ Design docs differ from ADRs and engineering docs:
 
 | File | What it covers |
 |---|---|
-| [`AR-204-app-redesign.md`](./AR-204-app-redesign.md) | **The active design brief.** Locked decisions (templates, vocabulary, demo strategy, hygiene rules, signup flow, build order), page-by-page change log, hard rules. Updated after every PR in the AR-204 workstream. |
-| [`AR-204-product-pages-spec-pack.md`](./AR-204-product-pages-spec-pack.md) | Deep per-surface spec pack for the 4 product pages (/products/signals · /scores · /monitor · /intelligence). Endpoint signatures + Zod contracts + sample I/O + 5 ICP narratives + demo-widget strategy. Drives the upcoming product-page PRs. |
+| [`AR-204-app-redesign.md`](./AR-204-app-redesign.md) | **The active design brief.** Locked decisions (templates, vocabulary, demo strategy, hygiene rules, signup flow, build order), hard rules, change log. Updated after every PR in the AR-204 workstream. |
+| [`AR-204-product-pages-spec-pack.md`](./AR-204-product-pages-spec-pack.md) | Per-surface product-page specs for /products/signals · /scores · /monitor · /intelligence (endpoint signatures + Zod contracts + sample I/O + gotchas). |
+| [`dashboard-proposal.md`](./dashboard-proposal.md) | **Source spec** for the authenticated dashboard epic (AR-217): sign-up→arrival flow, org switcher, Levers UI, product playgrounds, ICP onboarding. Phase 0 primitives shipped (see `DASHBOARD/`); phases 1–5 not yet built. |
+| [`AR-248-onboarding-proposal.md`](./AR-248-onboarding-proposal.md) | Locked onboarding + auth-flow proposal under AR-217. ⚠️ Carries an unresolved intent-taxonomy conflict (see the note at its top) to settle at implementation time. |
+| [`DASHBOARD/`](./DASHBOARD/) | Per-component work logs for the AR-217 dashboard primitives (AR-218…AR-246). See [`DASHBOARD/README.md`](./DASHBOARD/README.md). |
 
-### Deprecated (historical, preserved for context)
-
-| File | Why deprecated |
-|---|---|
-| [`DEPRECATED-AR-204-methodology-docs-delta.md`](./DEPRECATED-AR-204-methodology-docs-delta.md) | Historical recon (Mar 2026). Superseded by actual shipped state. |
-| [`DEPRECATED-dashboard-proposal.md`](./DEPRECATED-dashboard-proposal.md) | Superseded by the `DASHBOARD/` work log. |
-| [`DEPRECATED-AR-248-onboarding-proposal.md`](./DEPRECATED-AR-248-onboarding-proposal.md) | Stale proposal, not linked from anywhere. |
+Retired design docs live in [`../ARCHIVE/`](../ARCHIVE/).
 
 ## Related
 

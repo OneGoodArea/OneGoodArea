@@ -5,6 +5,13 @@
 **Phase:** 1 (B3 deliverable + adjacent first-session work)
 **Related ADRs:** ADR 0037 (Brand v3 dashboard primitives), [[feedback-design-bar]], [[feedback-code-bar]]
 
+> ⚠️ **Open conflict — resolve before ticketing.** Step 1's intent picker
+> uses the old **4-intent** taxonomy (Moving / Business / Investing /
+> Research). Shipped `AR-218` validates `users.intent` against the current
+> **5-ICP** taxonomy (proptech / lenders / insurance / cre / public-sector).
+> Reconcile the picker to the 5-ICP model when this proposal is broken into
+> tickets. The rest of the proposal (locked 2026-06-08) still stands.
+
 ## Why this exists
 
 `dashboard-proposal.md` mentions `/welcome` in one paragraph as a Phase 1 deliverable. Pedro flagged 2026-06-08 that the onboarding surface should be **exceptional, not minimal** — the first thing every user touches must match the rest of the Brand v3 polish. This doc captures every decision before code is written, so the implementation can be ticketed cleanly.

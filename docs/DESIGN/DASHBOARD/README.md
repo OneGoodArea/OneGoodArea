@@ -2,7 +2,7 @@
 
 This folder is the per-ticket work log for the dashboard redesign Epic [AR-217](https://podnex.atlassian.net/browse/AR-217). Pedro's request 2026-06-05: *"keep a log of each work we do after done. So we have a track."*
 
-**Source spec:** [`docs/DESIGN/DEPRECATED-dashboard-proposal.md`](../DEPRECATED-dashboard-proposal.md)
+**Source spec:** [`docs/DESIGN/dashboard-proposal.md`](../dashboard-proposal.md)
 **Implementation plan:** [`plan/016_dashboard_redesign_ar217.md`](../../../plan/016_dashboard_redesign_ar217.md)
 **Brand v3 design contract:** memory pillar `feedback_design_bar.md`
 **Engineering contract:** memory pillar `feedback_code_bar.md`
