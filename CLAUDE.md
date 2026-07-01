@@ -92,3 +92,5 @@
 15. Avoid unnecessary complexity, premature abstraction, and speculative architecture.
 
 16. Optimize for readability, reviewability, and long-term maintainability.
+
+1. When writing documentation, JIRA, Github files or any kind of description, be succint, concise and summararized. Long descriptions and explanations should rarely happen, they should be the execptional case by var
