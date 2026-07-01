@@ -129,7 +129,7 @@ shapes.
   / `api.areas.queried` / `api.query.executed` now include a `bundle`
   field when set). Existing meter pipeline absorbs them.
 - **Test coverage:** 21 new unit tests on pure helpers + 3 integration
-  tests on /v1/area; total apps/api 818 / 91 files green.
+  tests on /v1/area.
 
 **Negative / accepted**
 
@@ -186,24 +186,3 @@ shapes.
   the bundle (more prompt, more risk of hallucinated keys). Post-plan
   validation is the simpler invariant: the bundle is the source of
   truth, the planner is best-effort.
-
-## Proven on prod
-
-Acceptance steps for this commit (run from local container against
-prod-like Neon; bundles table is freshly migrated):
-
-1. Migrate runs, signal_bundles table exists.
-2. `POST /v1/orgs/<id>/bundles {"name":"Underwriting v1",
-   "signal_keys":["property.median_price","deprivation.imd_decile"]}` → 201.
-3. `GET /v1/area?postcode=M1%201AE&bundle=<id>` → 200 with exactly the
-   2 bundle signals; `meta.sources` recomputed.
-4. `GET /v1/areas?signal=crime.total_12m&bundle=<id>` → 422 with
-   `code: "bundle_signal_not_allowed"`.
-5. `POST /v1/query?bundle=<id>` with `{plan: {op:"rank_areas",
-   params:{signal:"crime.total_12m"}}}` → 422 same code.
-6. Same request without `?bundle=` → 200 (unchanged behaviour).
-7. Try POST/PATCH/DELETE bundle as a non-owner member → 403.
-
-Steps 1-7 run as a post-commit smoke after Render auto-deploys; the
-local test suite (`bundles.test.ts`, `v1-area.test.ts`) covers the
-unit + integration shapes.

@@ -5,6 +5,13 @@
 - **Context refs:** `MASTER-PROPOSAL.md` section 3; ADR 0001; Jira AR-169 / AR-171.
   Builds on the signal-first contract (`packages/contracts`).
 
+> **Schema extended since Phase 1.** The "7 tables" below are the Phase 1
+> baseline. Later ADRs add tables/columns not shown here: `peer_assignments`
+> (0024); `orgs` / `org_members` / `api_keys.org_id` (0027); `signal_bundles`
+> (0029); `scoring_presets` (0030); `org_methodology_pins` (0031);
+> `peer_cohorts` (0032); `orgs.display_name` / `orgs.brand_url` /
+> `api_keys.allowed_ip_cidrs` (0034). Read those for the current schema.
+
 ## Context
 
 Today all area data is fetched **live per request** (the 7 fetchers run on every

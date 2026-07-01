@@ -4,8 +4,8 @@ How OneGoodArea is packaged + run as OCI images. Same image, same Make
 commands, every host OS.
 
 > **Scope.** This doc is the production-container workflow (plan 008).
-> Local dev compose (`container-compose.yml` + `Containerfile.dev`) is a
-> separate, complementary stack -- see [`OPERATIONS/LOCAL-SETUP.md`](../OPERATIONS/LOCAL-SETUP.md).
+> Local dev compose (`compose/compose.yml`) is a separate, complementary
+> stack -- see [`OPERATIONS/LOCAL-CONTAINERS.md`](../OPERATIONS/LOCAL-CONTAINERS.md).
 
 ## TL;DR
 
@@ -158,4 +158,4 @@ their own image tags; the convention above is for locally-built images.
 
 - [`PROD-CONTAINER-CHECKLIST.md`](../HOME/PROD-CONTAINER-CHECKLIST.md) -- preflight + smoke + rollback steps
 - [`DEPLOYMENTS.md`](./DEPLOYMENTS.md) -- per-provider walkthrough
-- [`adr/0035-prod-container-parity.md`](../adr/0035-prod-container-parity.md) -- the decision record
+- [`DECISIONS/0035-prod-container-parity.md`](../DECISIONS/0035-prod-container-parity.md) -- the decision record

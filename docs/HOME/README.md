@@ -9,8 +9,7 @@ This folder is the navigation hub. Pick the door that matches your role.
 1. [`GETTING-STARTED.md`](./GETTING-STARTED.md) — 5-minute orientation: what OneGoodArea is, who it's for, why it exists
 2. [`OPERATIONS/LOCAL-SETUP.md`](../OPERATIONS/LOCAL-SETUP.md) — clone, install, run the apps locally
 3. [`ARCHITECTURE/SYSTEM-OVERVIEW.md`](../ARCHITECTURE/SYSTEM-OVERVIEW.md) — the full mental model
-4. [`ENGINEERING/CODE-STYLE.md`](../ENGINEERING/CODE-STYLE.md) — how we write code
-5. [`/CLAUDE.md`](../../CLAUDE.md) — workflow + PR conventions
+4. [`/CLAUDE.md`](../../CLAUDE.md) — workflow + PR conventions
 
 ## I'm an operator / DevOps
 
@@ -28,7 +27,6 @@ This folder is the navigation hub. Pick the door that matches your role.
 ## I want to understand WHY decisions were made
 
 - [`DECISIONS/`](../DECISIONS/) — ADRs by category + timeline
-- [`adr/`](../adr/) — the full 35-ADR trail
 
 ## I'm working on a design / re-narrative epic
 

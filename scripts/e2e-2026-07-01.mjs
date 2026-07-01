@@ -9,10 +9,10 @@
 
    Usage (PowerShell):
      $env:OGA_API_KEY = "oga_..."
-     node docs/TESTING/scripts/e2e-2026-07-01.mjs
+     node scripts/e2e-2026-07-01.mjs
 
    Or pass via flag:
-     node docs/TESTING/scripts/e2e-2026-07-01.mjs --key oga_...
+     node scripts/e2e-2026-07-01.mjs --key oga_...
 
    Output: a markdown table to stdout AND to
    docs/TESTING/e2e-2026-07-01-results.md (gitignored by default; commit

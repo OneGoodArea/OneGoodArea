@@ -5,7 +5,7 @@ container surface (`container/**`, `build/container.mk`, `Makefile`
 container targets, `render.yaml`, `env/**`). Fail-fast at the first NO.
 
 > See [`CONTAINERS.md`](../ARCHITECTURE/CONTAINERS.md) for the workflow itself + the
-> decision record in [`adr/0035-prod-container-parity.md`](../adr/0035-prod-container-parity.md).
+> decision record in [`DECISIONS/0035-prod-container-parity.md`](../DECISIONS/0035-prod-container-parity.md).
 
 ## Preflight
 

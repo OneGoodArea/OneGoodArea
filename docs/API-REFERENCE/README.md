@@ -24,4 +24,4 @@ If they disagree, the OpenAPI spec wins for customer behaviour; this folder wins
 
 - [`docs/ARCHITECTURE/PRODUCTS.md`](../ARCHITECTURE/PRODUCTS.md) — product-level view of the surface
 - [`docs/ARCHITECTURE/QUERY-PLANE.md`](../ARCHITECTURE/QUERY-PLANE.md) — the Intelligence layer's typed grammar
-- HTTP test files in [`docs/TESTING/http/`](../TESTING/http/) — runnable in VS Code REST Client / httpyac
+- HTTP request collections in [`scripts/http/`](../../scripts/http/) — runnable in VS Code REST Client / httpyac

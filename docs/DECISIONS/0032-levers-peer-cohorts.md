@@ -136,8 +136,7 @@ philosophy as bundles + presets — validate shape, not domain.
   also gave us the X-Engine-Version stamping for free, closing one
   of the gaps called out in ADR 0031.
 - **Test coverage:** 7 new unit tests (4 on `dedupeGeoCodes`, 3 on
-  `buildPeersSql`'s new cohort branch). apps/api: 844 tests / 93
-  files green (was 837). Typecheck + lint clean.
+  `buildPeersSql`'s new cohort branch).
 
 **Negative / accepted**
 
@@ -186,21 +185,3 @@ philosophy as bundles + presets — validate shape, not domain.
   per-org so unique-WITHIN-org; ids are globally unique. The id-
   based contract is more robust for cross-org sharing later; the
   slug version could land as an alias.
-
-## Proven on prod
-
-Acceptance steps (run from local container; the migration auto-runs
-on Render's next deploy):
-
-1. Migrate runs, `peer_cohorts` table exists.
-2. `POST /v1/orgs/<id>/cohorts` with `{name:"NW pilot", geo_codes:[...]}`
-   (e.g. 5 LSOAs from Greater Manchester) → 201.
-3. `POST /v1/peers {target:{postcode:"M1 1AE"}, cohort_id:"<id>"}`
-   → peers list contains ONLY codes that are in the cohort.
-4. Same call without `cohort_id` → peers list spans the UK.
-5. `POST /v1/peers {target:{postcode:"M1 1AE"}, cohort_id:"unknown"}`
-   → 404 `Cohort not found in your org`.
-6. Non-owner POST/PATCH/DELETE on a cohort → 403.
-7. `X-Engine-Version` response header reflects the caller's org
-   methodology pin (when set, AR-197) — wired here as a side effect
-   of promoting auth to `requireApiAccessWithOrg`.

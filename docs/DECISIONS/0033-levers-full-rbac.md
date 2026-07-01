@@ -119,8 +119,7 @@ Three new typed error codes that consumers can program against:
   loosening for `admin`-role callers (who previously got 403 on
   every mutation).
 - **Test coverage:** 4 new unit tests on `hasAtLeastRole` +
-  `ROLE_RANK` ordering pin. apps/api: 848 tests / 93 files green
-  (was 844). Typecheck + lint clean.
+  `ROLE_RANK` ordering pin.
 
 **Negative / accepted**
 
@@ -163,25 +162,3 @@ Three new typed error codes that consumers can program against:
   an owner click. If a customer wants admin-level pin control, they
   can promote the user to owner — pin is the one place where role
   granularity is intentional.
-
-## Proven on prod
-
-Acceptance steps (run from local container; no schema migration
-in this commit — schema was set up in ADR 0027):
-
-1. Bootstrap: as an `owner` create another user; add them as `admin`
-   to the org → 201.
-2. As that admin: PATCH org name → 200. ✓ admin can rename.
-3. As that admin: POST a bundle / preset / cohort → 201. ✓ admin
-   manages Levers config.
-4. As that admin: PUT methodology → 403 `owner_required`. ✓ pin
-   stays owner-only.
-5. As that admin: POST member with `role: "owner"` → 403
-   `cannot_grant_owner`. ✓ admin can't grant ownership.
-6. As that admin: DELETE another owner → 403
-   `cannot_remove_owner_as_admin`. ✓ admin can't unseat an owner.
-7. As that admin: DELETE themselves from the org → 200 (admin
-   removes themselves; last-owner guard ignored because target
-   isn't owner).
-8. As a `member` (third user): any mutation → 403 `admin_required`.
-9. Owner can still do everything they could before this commit.

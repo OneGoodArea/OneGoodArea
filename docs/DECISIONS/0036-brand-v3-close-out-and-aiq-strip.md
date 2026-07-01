@@ -20,25 +20,10 @@ marketing + product + docs surfaces from scratch on Brand v3
 `/changelog`, `/help`, `/blog`, `/terms`, `/privacy`, the docs index).
 The second phase — this close-out sweep — covered the 15 remaining
 shells + app surfaces still rendering through the legacy `.aiq` cascade
-in `apps/web/src/app/globals.css`:
-
-```
- 1.  loading-states.tsx                    (PR #106)
- 2.  error-shell.tsx                       (PR #107)
- 3.  plan-grid.tsx + /pricing              (PR #108)
- 4.  auth-shell + 5 callers                (PR #109)
- 5.  app-shell.tsx                         (PR #110)
- 6.  /api-usage                            (PR #112)
- 7.  /settings                             (PR #113)
- 8.  /billing                              (PR #114)
- 9.  /admin                                (PR #116)
-10.  /compare                              (PR #119)
-11.  /report                               (PR #120)
-12.  /report/[id]                          (PR #121)
-13.  /area/[slug]                          (PR #122)
-14.  /dashboard                            (PR #123)
-15.  Strip `.aiq` block + this ADR        (this PR)
-```
+in `apps/web/src/app/globals.css` (loading/error shells, the app shell,
+auth shell, pricing, and the `/api-usage`, `/settings`, `/billing`,
+`/admin`, `/compare`, `/report`, `/report/[id]`, `/area/[slug]`,
+`/dashboard` surfaces), then stripped the `.aiq` block itself.
 
 The legacy block under `.aiq` in `globals.css` aliased a parallel token
 namespace (`--ink/--ink-deep/--signal/--signal-ink/--signal-dim/--bg/
@@ -150,11 +135,6 @@ across the entire site:
 - **The next epic (dashboard redesign + signal-first restructure)** is
   no longer blocked by the legacy cascade. It can replace `/dashboard`
   surfaces freely without worrying about `.aiq` token inheritance.
-- **AR-204 closes here.** Follow-up rules captured in:
-  - `memory/feedback_no_light_touch_migrations.md` — every shipped
-    page reads at full Brand v3 altitude
-  - `memory/feedback_surface_rotation.md` — graphite-dark + cream +
-    cream-quiet, in-body DARK section required
-  - `memory/project_dashboard_redesign_pending.md` — next epic
-    scope, sequencing, and the known-temporary status of `/dashboard`
-    14/15
+- **AR-204 closes here.** The durable rules — every shipped page reads
+  at full Brand v3 altitude, and the co-located-CSS convention — are
+  recorded in sections 3 and 5 above.

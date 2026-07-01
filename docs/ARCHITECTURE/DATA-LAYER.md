@@ -46,4 +46,4 @@ Production code reads via `fetchAreaSources()` in `apps/api/src/modules/signals/
 
 - [`SYSTEM-OVERVIEW.md`](./SYSTEM-OVERVIEW.md) section 4 — full schema + moat clock rationale
 - [`PRODUCTS.md`](./PRODUCTS.md) — what each product reads from the store
-- ADRs 0002-0010 in [`docs/adr/`](../adr/) — every schema decision documented
+- ADRs 0002-0010 in [`docs/DECISIONS/`](../DECISIONS/) — every schema decision documented

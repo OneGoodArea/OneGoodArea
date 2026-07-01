@@ -76,8 +76,7 @@ The migration runs three DML statements after the DDL:
 3. `UPDATE api_keys SET org_id = 'org_' || user_id WHERE org_id IS NULL`.
 
 All three are idempotent: re-running is a no-op on already-backfilled
-rows. Verified on prod: 22 users → 22 orgs (1:1) → 22 owner
-memberships; 15/15 api_keys backfilled.
+rows.
 
 ### Auth signature
 
@@ -178,16 +177,3 @@ Touches every call site of `validateApiKey`:
   of the email local part; bumping further is diminishing returns.
   Target-free `ON CONFLICT DO NOTHING` handles the long-tail
   collision case cleanly.
-
-## Proven on prod
-
-The migration ran against prod Neon (idempotent, re-runnable):
-- 22 users → 22 orgs created.
-- 22 org_members rows with role='owner'.
-- 15 api_keys updated, all with non-null `org_id`.
-- Sample orgs verify the slug + name format:
-  `org_user_..._iu6q / cara-robinson0903-user_1773084 / cara.robinson0903 workspace`.
-
-The standard `oga_` fingerprint probe against the live Render API still
-returns the expected 401 (the validateApiKey path runs and finds no
-match for a non-key request); behavior unchanged for existing callers.

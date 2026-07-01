@@ -116,8 +116,7 @@ valid (the validator only flags **unknown** keys, never missing ones).
   (legacy-key fallback exhausted), `unknown_weight_keys` (weight key
   not in the base_preset's dim set).
 - **Test coverage:** 6 unit tests on `findUnknownWeightKeys` + 4
-  integration tests on /v1/score's preset_id path. apps/api: 828 tests
-  / 92 files green (was 818). Typecheck + lint clean.
+  integration tests on /v1/score's preset_id path.
 
 **Negative / accepted**
 
@@ -170,22 +169,3 @@ valid (the validator only flags **unknown** keys, never missing ones).
   `preset` (e.g. `preset: "spr_underwriting"`).** Rejected — would
   break the strict 4-enum `Intent` contract that the engine + report
   shape consume.
-
-## Proven on prod
-
-Acceptance steps for this commit (run from local container; the
-scoring_presets table will be auto-migrated on Render's next deploy):
-
-1. Migrate runs, scoring_presets table exists.
-2. `POST /v1/orgs/<id>/presets {"name":"Underwriting v1",
-   "base_preset":"moving", "weights":{safety_crime:0.5,
-   schools_education:0.2, transport_commute:0.1,
-   daily_amenities:0.1, cost_of_living:0.1}}` → 201.
-3. `POST /v1/score {"area":"M1 1AE", "preset_id":"<id>"}` → 200 with
-   the score; activity event captures `preset_id`.
-4. `POST /v1/score {"area":"M1 1AE", "preset_id":"<id>",
-   "preset":"moving"}` → 422 `preset_id_conflict`.
-5. `POST /v1/orgs/<id>/presets` with `weights` containing
-   `price_growth` (an investing-dim) under `base_preset: "moving"` →
-   400 `unknown_weight_keys`.
-6. Try POST/PATCH/DELETE preset as a non-owner member → 403.
