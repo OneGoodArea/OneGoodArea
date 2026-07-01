@@ -1,20 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Nav } from "../_shared/nav";
 import { Footer } from "../_shared/footer";
 import "./playground.css";
 
-/* /playground client. PR1 (foundation): route + layout + tab bar + empty
-   panels + persistent footer CTA. Zero fetching, zero cookie logic, zero
-   query submission. Those land in PR2 (BFF + demo token) and PR3 (first
-   endpoint wired end-to-end).
-
-   Layout: hero + two-pane workbench + footer CTA + brand footer. The
-   workbench is what will grow: left pane holds tab-specific forms, right
-   pane holds the response viewer. Everything stubbed here uses live
-   copy so the URL is shareable even before functionality lands. */
+/* /playground client. PR3 wires the first endpoint (GET /v1/area) end
+   to end: mint a signed cookie on mount, submit the query through the
+   BFF proxy, render the JSON response + latency + counters. Other tabs
+   (score, peers, rank, insights, forecast, NL) still show the PR4
+   placeholder. */
 
 type TabId =
   | "area"
@@ -86,24 +82,92 @@ const TABS: TabDef[] = [
   },
 ];
 
+interface SessionSnapshot {
+  calls_used: number;
+  calls_remaining: number;
+  nl_calls_used: number;
+  nl_calls_remaining: number;
+}
+
+interface ProxyResponse {
+  endpoint: string;
+  upstream_status: number;
+  latency_ms: number;
+  truncated: boolean;
+  response: unknown;
+  session: SessionSnapshot;
+}
+
 export default function PlaygroundClient() {
   const [activeTab, setActiveTab] = useState<TabId>("area");
+  const [session, setSession] = useState<SessionSnapshot | null>(null);
+  const [tokenReady, setTokenReady] = useState(false);
+  const [tokenError, setTokenError] = useState<string | null>(null);
   const active = TABS.find((t) => t.id === activeTab)!;
+  const tokenRequestedRef = useRef(false);
+
+  /* Mint the demo cookie once on mount. This burns no rate-limit quota
+     and gives the first Run a snappy path (no double round-trip). */
+  useEffect(() => {
+    if (tokenRequestedRef.current) return;
+    tokenRequestedRef.current = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/playground/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: "{}",
+          credentials: "same-origin",
+        });
+        if (!res.ok) {
+          setTokenError(`token_${res.status}`);
+          return;
+        }
+        setTokenReady(true);
+      } catch {
+        setTokenError("token_network");
+      }
+    })();
+  }, []);
+
+  const runProxy = useCallback(
+    async (method: "GET" | "POST", path: string, body?: unknown): Promise<ProxyResponse> => {
+      const res = await fetch("/api/playground/proxy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ method, path, body }),
+        credentials: "same-origin",
+      });
+      const json = (await res.json().catch(() => ({}))) as ProxyResponse | { error?: string; code?: string };
+      if (!res.ok) {
+        const err = json as { error?: string; code?: string };
+        throw new PlaygroundError(err.code ?? `http_${res.status}`, err.error ?? "Proxy call failed");
+      }
+      const proxy = json as ProxyResponse;
+      if (proxy.session) setSession(proxy.session);
+      return proxy;
+    },
+    [],
+  );
 
   return (
     <div className="oga-root">
       <Nav />
 
-      <PlaygroundHero />
+      <PlaygroundHero session={session} tokenReady={tokenReady} tokenError={tokenError} />
 
       <section className="oga-play-workbench oga-section">
         <div className="oga-play__container">
           <TabBar active={activeTab} onSelect={setActiveTab} />
 
-          <div className="oga-play-workbench__grid">
-            <QueryPanel tab={active} />
-            <ResponsePanel />
-          </div>
+          {activeTab === "area" ? (
+            <AreaWorkbench runProxy={runProxy} tokenReady={tokenReady} />
+          ) : (
+            <div className="oga-play-workbench__grid">
+              <QueryPanel tab={active} />
+              <ResponsePanel />
+            </div>
+          )}
 
           <FairUseNote />
         </div>
@@ -115,9 +179,26 @@ export default function PlaygroundClient() {
   );
 }
 
-/* Hero: small. This is a demo tool, not a landing page. Sets expectation
-   with two lines and a proof strip. */
-function PlaygroundHero() {
+class PlaygroundError extends Error {
+  code: string;
+  constructor(code: string, message: string) {
+    super(message);
+    this.code = code;
+  }
+}
+
+/* Hero. Session chip shows counters once the first call lands. Until
+   then we render the token-ready state so users see the plumbing is
+   alive. */
+function PlaygroundHero({
+  session,
+  tokenReady,
+  tokenError,
+}: {
+  session: SessionSnapshot | null;
+  tokenReady: boolean;
+  tokenError: string | null;
+}) {
   return (
     <section className="oga-play-hero oga-section-hero">
       <div className="oga-play__container">
@@ -148,13 +229,52 @@ function PlaygroundHero() {
             <span className="oga-play-hero__proof-label">signals, not fixtures</span>
           </li>
         </ul>
+        <SessionChip session={session} tokenReady={tokenReady} tokenError={tokenError} />
       </div>
     </section>
   );
 }
 
-/* Tab bar. Each tab picks the endpoint under test. NL Query carries an
-   AI badge so users understand cost + rate-limit implications. */
+function SessionChip({
+  session,
+  tokenReady,
+  tokenError,
+}: {
+  session: SessionSnapshot | null;
+  tokenReady: boolean;
+  tokenError: string | null;
+}) {
+  if (tokenError) {
+    return (
+      <p className="oga-play-hero__session oga-play-hero__session--err">
+        Session could not start ({tokenError}). Refresh the page to retry.
+      </p>
+    );
+  }
+  if (session) {
+    return (
+      <p className="oga-play-hero__session">
+        Session active. Calls used: <strong>{session.calls_used}</strong> of{" "}
+        {session.calls_used + session.calls_remaining}. AI queries used:{" "}
+        <strong>{session.nl_calls_used}</strong> of{" "}
+        {session.nl_calls_used + session.nl_calls_remaining}.
+      </p>
+    );
+  }
+  if (tokenReady) {
+    return (
+      <p className="oga-play-hero__session oga-play-hero__session--ready">
+        Ready. Pick an endpoint and run a query.
+      </p>
+    );
+  }
+  return (
+    <p className="oga-play-hero__session oga-play-hero__session--warmup">
+      Warming up demo session...
+    </p>
+  );
+}
+
 function TabBar({
   active,
   onSelect,
@@ -189,8 +309,199 @@ function TabBar({
   );
 }
 
-/* Left pane. PR1 shows the endpoint contract as read-only reference.
-   PR3 replaces the body with an actual form + Run button per tab. */
+/* Wired workbench for GET /v1/area. Postcode input + Run. Response +
+   latency + upstream status rendered in the right pane. Errors surface
+   inline rather than blowing up. */
+function AreaWorkbench({
+  runProxy,
+  tokenReady,
+}: {
+  runProxy: (method: "GET" | "POST", path: string, body?: unknown) => Promise<ProxyResponse>;
+  tokenReady: boolean;
+}) {
+  const [postcode, setPostcode] = useState("SW1A 1AA");
+  const [state, setState] = useState<{
+    status: "idle" | "loading" | "ok" | "error";
+    startedAt?: number;
+    result?: ProxyResponse;
+    error?: { code: string; message: string };
+  }>({ status: "idle" });
+
+  const submit = useCallback(async () => {
+    const clean = postcode.trim();
+    if (!clean) {
+      setState({ status: "error", error: { code: "empty", message: "Enter a UK postcode." } });
+      return;
+    }
+    setState({ status: "loading", startedAt: performance.now() });
+    try {
+      const path = `/v1/area?postcode=${encodeURIComponent(clean)}`;
+      const result = await runProxy("GET", path);
+      setState({ status: "ok", result });
+    } catch (err) {
+      if (err instanceof PlaygroundError) {
+        setState({ status: "error", error: { code: err.code, message: err.message } });
+      } else {
+        setState({ status: "error", error: { code: "network", message: "Network error. Try again." } });
+      }
+    }
+  }, [postcode, runProxy]);
+
+  const disabled = !tokenReady || state.status === "loading";
+
+  return (
+    <div className="oga-play-workbench__grid">
+      <section className="oga-play-panel oga-play-panel--query" aria-label="Area query">
+        <div className="oga-play-panel__head">
+          <span className="oga-play-panel__label">Query</span>
+          <code className="oga-play-panel__endpoint">GET /v1/area</code>
+        </div>
+        <p className="oga-play-panel__desc">
+          Full signal profile for one UK postcode: crime, deprivation, schools, transport,
+          property, amenities, environment.
+        </p>
+
+        <form
+          className="oga-play-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void submit();
+          }}
+        >
+          <label className="oga-play-form__label" htmlFor="area-postcode">
+            Postcode
+          </label>
+          <input
+            id="area-postcode"
+            className="oga-play-form__input"
+            type="text"
+            value={postcode}
+            onChange={(e) => setPostcode(e.target.value)}
+            placeholder="SW1A 1AA"
+            autoComplete="off"
+            spellCheck={false}
+          />
+          <button className="oga-play-form__submit" type="submit" disabled={disabled}>
+            {state.status === "loading" ? (
+              <span className="oga-play-form__submit-loading">
+                <span className="oga-play-spinner" aria-hidden />
+                <span>Running</span>
+              </span>
+            ) : (
+              "Run"
+            )}
+          </button>
+        </form>
+      </section>
+
+      <ResponsePanelWired state={state} />
+    </div>
+  );
+}
+
+/* Live elapsed-ms ticker. Updates 10x/sec so the timer feels alive
+   without hammering the render loop. Only mounted while loading. */
+function useElapsedMs(startedAt: number | undefined): number {
+  const [now, setNow] = useState(() => performance.now());
+  useEffect(() => {
+    if (startedAt === undefined) return;
+    const id = setInterval(() => setNow(performance.now()), 100);
+    return () => clearInterval(id);
+  }, [startedAt]);
+  return startedAt === undefined ? 0 : Math.max(0, now - startedAt);
+}
+
+/* Contextual status line. The API's typical warm latency is ~200-800ms
+   for /v1/area, ~1-3s for a cold postcode. These thresholds map to what
+   the user is actually waiting on — not to fake progress bars. */
+function loadingHint(elapsedMs: number): string {
+  if (elapsedMs < 800) return "Calling the API...";
+  if (elapsedMs < 2500) return "Computing signals for that postcode...";
+  if (elapsedMs < 6000) return "Still working. First calls on cold postcodes take longer.";
+  return "Almost there. Complex postcodes can take up to 10s.";
+}
+
+function ResponsePanelWired({
+  state,
+}: {
+  state: {
+    status: "idle" | "loading" | "ok" | "error";
+    startedAt?: number;
+    result?: ProxyResponse;
+    error?: { code: string; message: string };
+  };
+}) {
+  const elapsed = useElapsedMs(state.status === "loading" ? state.startedAt : undefined);
+  const meta =
+    state.status === "loading"
+      ? `${(elapsed / 1000).toFixed(1)}s`
+      : state.status === "ok" && state.result
+      ? `${state.result.upstream_status} • ${state.result.latency_ms} ms`
+      : state.status === "error"
+      ? "Error"
+      : "Idle";
+
+  return (
+    <section className="oga-play-panel oga-play-panel--response" aria-label="Response panel">
+      <div className="oga-play-panel__head">
+        <span className="oga-play-panel__label">Response</span>
+        <span
+          className={
+            "oga-play-panel__meta" +
+            (state.status === "error" ? " oga-play-panel__meta--err" : "") +
+            (state.status === "ok" ? " oga-play-panel__meta--ok" : "") +
+            (state.status === "loading" ? " oga-play-panel__meta--live" : "")
+          }
+        >
+          {meta}
+        </span>
+      </div>
+      {state.status === "idle" && (
+        <div className="oga-play-panel__placeholder oga-play-panel__placeholder--tall">
+          <p>Pick an endpoint above and run a query. The JSON response appears here.</p>
+          <p className="oga-play-panel__placeholder-hint">
+            Every response is real. Same data your paid integration receives.
+          </p>
+        </div>
+      )}
+      {state.status === "loading" && (
+        <div className="oga-play-panel__loading">
+          <div className="oga-play-panel__skeleton" aria-hidden>
+            <div className="oga-play-panel__skeleton-row oga-play-panel__skeleton-row--short" />
+            <div className="oga-play-panel__skeleton-row" />
+            <div className="oga-play-panel__skeleton-row oga-play-panel__skeleton-row--long" />
+            <div className="oga-play-panel__skeleton-row" />
+            <div className="oga-play-panel__skeleton-row oga-play-panel__skeleton-row--short" />
+            <div className="oga-play-panel__skeleton-row oga-play-panel__skeleton-row--long" />
+            <div className="oga-play-panel__skeleton-row" />
+            <div className="oga-play-panel__skeleton-row oga-play-panel__skeleton-row--short" />
+          </div>
+          <p className="oga-play-panel__loading-hint" role="status" aria-live="polite">
+            {loadingHint(elapsed)}
+          </p>
+        </div>
+      )}
+      {state.status === "error" && state.error && (
+        <div className="oga-play-panel__error">
+          <p className="oga-play-panel__error-code">{state.error.code}</p>
+          <p>{state.error.message}</p>
+        </div>
+      )}
+      {state.status === "ok" && state.result && (
+        <pre className="oga-play-panel__json">
+          {JSON.stringify(state.result.response, null, 2)}
+        </pre>
+      )}
+      {state.status === "ok" && state.result?.truncated && (
+        <p className="oga-play-panel__truncated">
+          Response truncated to fit the playground display. Sign up to see full payloads.
+        </p>
+      )}
+    </section>
+  );
+}
+
+/* Placeholder query panel for the tabs PR4 will fan out. */
 function QueryPanel({ tab }: { tab: TabDef }) {
   return (
     <section className="oga-play-panel oga-play-panel--query" aria-label="Query panel">
@@ -200,19 +511,15 @@ function QueryPanel({ tab }: { tab: TabDef }) {
       </div>
       <p className="oga-play-panel__desc">{tab.description}</p>
       <div className="oga-play-panel__placeholder">
-        <span className="oga-play-panel__placeholder-tag">PR3</span>
+        <span className="oga-play-panel__placeholder-tag">PR4</span>
         <p>
-          The form for this endpoint lands in the next PR. The layout, tab bar and response
-          viewer ship in this one so the URL is real and shareable while the rest fills in.
+          Form for this endpoint lands in the next PR. The Area tab is live now.
         </p>
       </div>
     </section>
   );
 }
 
-/* Right pane: response viewer + latency + curl. PR1 renders a stub so
-   we can see the pane weight and typography. PR3 wires the actual
-   response into it. */
 function ResponsePanel() {
   return (
     <section className="oga-play-panel oga-play-panel--response" aria-label="Response panel">
@@ -221,28 +528,21 @@ function ResponsePanel() {
         <span className="oga-play-panel__meta">Idle</span>
       </div>
       <div className="oga-play-panel__placeholder oga-play-panel__placeholder--tall">
-        <p>Pick an endpoint above and run a query. The JSON response appears here.</p>
-        <p className="oga-play-panel__placeholder-hint">
-          Every response is real. Same data your paid integration receives.
-        </p>
+        <p>Pick the Area tab and run a real query. Other endpoints wire up in the next PR.</p>
       </div>
     </section>
   );
 }
 
-/* Small honesty line. Playgrounds attract abuse; we tell users the rules
-   up front rather than hiding them behind a 429. */
 function FairUseNote() {
   return (
     <p className="oga-play-fair">
-      Fair use: rate-limited per browser and per IP. AI Query calls are capped per session.
-      For unlimited usage, get a free sandbox key.
+      Fair use: 30 calls per browser session, 60 per IP per day. AI Query calls capped at
+      3 per session. For unlimited usage, get a free sandbox key.
     </p>
   );
 }
 
-/* Persistent CTA strip above the footer. Lists the actual signup wins
-   in plain B2B copy. No bait about which model runs the planner. */
 function SignupCta() {
   return (
     <section className="oga-play-signup" aria-label="Sign up">
