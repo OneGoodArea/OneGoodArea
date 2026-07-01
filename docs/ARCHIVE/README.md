@@ -11,6 +11,12 @@ promoted back into a live doc instead.
 ## Contents
 
 ### Superseded test material
+- `test-plan.md` — the old 3000-line "canonical executable test plan"; it
+  tested the killed reports/widget surface. Superseded by the per-surface
+  docs in `../test-cases/`.
+- `tests-manual.md` — manual subset of `test-plan.md` (100% redundant with it).
+- `TESTS-README.md` — described a split into files that were since
+  renamed/deprecated; stale.
 - `DEPRECATED-tests-automated.md` — automated subset of the old
   `test-plan.md`; superseded by the per-surface docs in `../test-cases/`.
 - `DEPRECATED-test-plan-pathways.md` — control-flow map the old plan was
