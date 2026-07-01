@@ -43,6 +43,8 @@ COPY --from=deps /app/packages/contracts/package.json ./packages/contracts/
 # Bring in the source the web build actually needs.
 COPY packages/contracts ./packages/contracts
 COPY apps/web ./apps/web
+# AR-385: the /legal/data-policy page reads docs/DATA_POLICY.md at build time.
+COPY docs ./docs
 
 # Next.js standalone build writes a self-contained server bundle to
 # apps/web/.next/standalone + static assets to apps/web/.next/static.
