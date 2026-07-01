@@ -1,0 +1,420 @@
+/* /playground styles — Brand v3. PR1: layout + tab bar + empty
+   panels + signup CTA. No form/response styling yet; those land
+   with the wire-up PRs. */
+
+.oga-play__container {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 clamp(20px, 4vw, var(--oga-7));
+}
+
+/* ============================================================
+   Hero
+   ============================================================ */
+
+.oga-play-hero {
+  padding: var(--oga-9) 0 var(--oga-8);
+  background: var(--oga-bg);
+  border-bottom: 1px solid var(--oga-border);
+}
+
+.oga-play-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-3);
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-4);
+}
+
+.oga-play-hero__eyebrow-sep {
+  display: inline-block;
+  width: 32px;
+  height: 1px;
+  background: var(--oga-border);
+}
+
+.oga-play-hero__title {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-h1);
+  line-height: var(--oga-lh-tight);
+  letter-spacing: var(--oga-tracking-tight);
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 0 var(--oga-4);
+  max-width: 900px;
+}
+
+.oga-play-hero__lead {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-body-lg);
+  line-height: var(--oga-lh-body);
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-7);
+  max-width: 700px;
+}
+
+.oga-play-hero__proof {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 240px));
+  gap: var(--oga-5);
+}
+
+@media (max-width: 720px) {
+  .oga-play-hero__proof {
+    grid-template-columns: 1fr;
+  }
+}
+
+.oga-play-hero__proof li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-2);
+  padding: var(--oga-4) 0;
+  border-top: 1px solid var(--oga-border);
+}
+
+.oga-play-hero__proof-num {
+  font-family: var(--oga-font-mono);
+  font-size: 24px;
+  color: var(--oga-fg);
+  font-weight: 600;
+}
+
+.oga-play-hero__proof-label {
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+/* ============================================================
+   Workbench (two-pane)
+   ============================================================ */
+
+.oga-play-workbench {
+  padding: var(--oga-8) 0;
+  background: var(--oga-white);
+}
+
+/* Tab bar */
+.oga-play-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--oga-2);
+  margin-bottom: var(--oga-5);
+  border-bottom: 1px solid var(--oga-border);
+  padding-bottom: var(--oga-3);
+}
+
+.oga-play-tab {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: var(--oga-2) var(--oga-4);
+  border-radius: var(--oga-radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--oga-fg-muted);
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.oga-play-tab:hover {
+  background: var(--oga-bg);
+  color: var(--oga-fg);
+}
+
+.oga-play-tab--active {
+  background: var(--oga-fg);
+  color: var(--oga-white);
+}
+
+.oga-play-tab--active:hover {
+  background: var(--oga-fg);
+  color: var(--oga-white);
+}
+
+.oga-play-tab__label {
+  font-weight: 500;
+}
+
+.oga-play-tab__badge {
+  font-family: var(--oga-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 2px;
+  background: var(--oga-signal-dim);
+  color: var(--oga-signal-ink);
+}
+
+.oga-play-tab--active .oga-play-tab__badge {
+  background: var(--oga-signal);
+  color: var(--oga-signal-ink);
+}
+
+/* Workbench grid */
+.oga-play-workbench__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: var(--oga-5);
+  margin-bottom: var(--oga-4);
+}
+
+@media (max-width: 960px) {
+  .oga-play-workbench__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Panels */
+.oga-play-panel {
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  background: var(--oga-white);
+  padding: var(--oga-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-4);
+  min-height: 420px;
+}
+
+.oga-play-panel--response {
+  background: var(--oga-bg);
+}
+
+.oga-play-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--oga-3);
+  padding-bottom: var(--oga-3);
+  border-bottom: 1px solid var(--oga-border-dim);
+}
+
+.oga-play-panel__label {
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-play-panel__endpoint {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-fg);
+  background: var(--oga-bg);
+  padding: 4px 8px;
+  border-radius: var(--oga-radius-sm);
+  border: 1px solid var(--oga-border-dim);
+}
+
+.oga-play-panel__meta {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-fg-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.oga-play-panel__desc {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
+.oga-play-panel__placeholder {
+  flex: 1;
+  border: 1px dashed var(--oga-border);
+  border-radius: var(--oga-radius-sm);
+  padding: var(--oga-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+  align-items: flex-start;
+  justify-content: center;
+  color: var(--oga-fg-muted);
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.oga-play-panel__placeholder--tall {
+  min-height: 240px;
+}
+
+.oga-play-panel__placeholder p {
+  margin: 0;
+}
+
+.oga-play-panel__placeholder-hint {
+  font-size: 12px;
+  color: var(--oga-fg-muted);
+  opacity: 0.8;
+}
+
+.oga-play-panel__placeholder-tag {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 2px;
+  background: var(--oga-signal-dim);
+  color: var(--oga-signal-ink);
+  align-self: flex-start;
+}
+
+/* Fair-use footnote */
+.oga-play-fair {
+  font-family: var(--oga-font-sans);
+  font-size: 12px;
+  color: var(--oga-fg-muted);
+  margin: var(--oga-4) 0 0;
+  text-align: center;
+}
+
+/* ============================================================
+   Sign-up CTA strip
+   ============================================================ */
+
+.oga-play-signup {
+  padding: var(--oga-8) 0;
+  background: var(--oga-fg);
+  color: var(--oga-white);
+}
+
+.oga-play-signup__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
+  gap: var(--oga-6);
+  align-items: center;
+}
+
+@media (max-width: 880px) {
+  .oga-play-signup__inner {
+    grid-template-columns: 1fr;
+  }
+}
+
+.oga-play-signup__title {
+  font-family: var(--oga-font-sans);
+  font-size: var(--oga-fs-h3);
+  line-height: 1.2;
+  letter-spacing: var(--oga-tracking-tight);
+  font-weight: 500;
+  margin: 0 0 var(--oga-3);
+  color: var(--oga-white);
+}
+
+.oga-play-signup__lead {
+  font-family: var(--oga-font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--oga-white);
+  opacity: 0.8;
+  margin: 0 0 var(--oga-4);
+  max-width: 560px;
+}
+
+.oga-play-signup__bullets {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--oga-2) var(--oga-4);
+}
+
+@media (max-width: 640px) {
+  .oga-play-signup__bullets {
+    grid-template-columns: 1fr;
+  }
+}
+
+.oga-play-signup__bullets li {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--oga-white);
+  opacity: 0.85;
+  padding-left: 18px;
+  position: relative;
+}
+
+.oga-play-signup__bullets li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 8px;
+  height: 8px;
+  background: var(--oga-signal);
+  border-radius: 2px;
+}
+
+.oga-play-signup__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+  align-items: stretch;
+}
+
+.oga-play-signup__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px var(--oga-5);
+  background: var(--oga-signal);
+  color: var(--oga-signal-ink);
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: var(--oga-radius-sm);
+  text-decoration: none;
+  font-weight: 600;
+  transition: transform 120ms ease;
+}
+
+.oga-play-signup__cta:hover {
+  transform: translateY(-1px);
+}
+
+.oga-play-signup__secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px var(--oga-5);
+  background: transparent;
+  color: var(--oga-white);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: var(--oga-radius-sm);
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: background 120ms ease;
+}
+
+.oga-play-signup__secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
