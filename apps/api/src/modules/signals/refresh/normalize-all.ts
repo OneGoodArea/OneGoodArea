@@ -16,8 +16,10 @@ import { PRICES_NORMALIZE_KEYS } from "./prices";
 import { CRIME_NORMALIZE_KEYS } from "./crime";
 import { DERIVED_NORMALIZE_KEYS } from "./derive";
 
-/** Every signal that needs national-within-country normalization. Add new keys
-    here as new sources / derived signals land. Ordering doesn't matter
+/** Every signal that goes through the normalize job. Each key writes into
+    signal_values.normalized_value + signal_percentiles rows for BOTH
+    scope='national' AND scope='regional' (AR-408). Add new keys here as
+    new sources / derived signals land. Ordering doesn't matter
     (normalize is independent per key). */
 export const ALL_NORMALIZE_KEYS = [
   ...DEPRIVATION_SIGNAL_KEYS,
@@ -32,7 +34,7 @@ const invokedDirectly = Boolean(process.argv[1]?.endsWith("normalize-all.ts"));
 if (invokedDirectly) {
   normalizeSignals(ALL_NORMALIZE_KEYS)
     .then((s) => {
-      console.log(`[normalize:signals] normalized ${s.signals.length} signals (national-within-country):`);
+      console.log(`[normalize:signals] normalized ${s.signals.length} signals (scopes: national + regional):`);
       for (const k of s.signals) console.log(`  ✓ ${k}`);
       process.exit(0);
     })
