@@ -3,8 +3,8 @@ import {
   findPeersToolDef,
   parseFindPeersArgs,
   executeFindPeers,
-} from "./find-peers.js";
-import { OogaApiClient, OogaApiError, type OogaPeersResponse } from "../api-client.js";
+} from "../../src/tools/find-peers.js";
+import { OogaApiClient, OogaApiError, type OogaPeersResponse } from "../../src/api-client.js";
 
 function samplePeers(): OogaPeersResponse {
   return {

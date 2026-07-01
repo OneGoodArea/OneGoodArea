@@ -3,8 +3,8 @@ import {
   getSignalsByCategoryToolDef,
   parseGetSignalsByCategoryArgs,
   executeGetSignalsByCategory,
-} from "./get-signals-by-category.js";
-import { OogaApiClient, OogaApiError, SIGNAL_CATEGORIES, type OogaAreaProfile, type SignalCategory } from "../api-client.js";
+} from "../../src/tools/get-signals-by-category.js";
+import { OogaApiClient, OogaApiError, SIGNAL_CATEGORIES, type OogaAreaProfile, type SignalCategory } from "../../src/api-client.js";
 
 function profileForCategory(category: SignalCategory): OogaAreaProfile {
   return {

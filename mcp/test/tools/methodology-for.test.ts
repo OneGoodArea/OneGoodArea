@@ -3,7 +3,7 @@ import {
   methodologyForToolDef,
   parseMethodologyForArgs,
   executeMethodologyFor,
-} from "./methodology-for.js";
+} from "../../src/tools/methodology-for.js";
 
 describe("methodologyForToolDef", () => {
   it("requires dimension", () => {

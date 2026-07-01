@@ -4,8 +4,8 @@ import {
   parseComparePostcodesArgs,
   formatComparisonAsText,
   executeComparePostcodes,
-} from "./compare-postcodes.js";
-import { OogaApiClient, OogaApiError, type OogaScoreResponse } from "../api-client.js";
+} from "../../src/tools/compare-postcodes.js";
+import { OogaApiClient, OogaApiError, type OogaScoreResponse } from "../../src/api-client.js";
 
 /* Helper: build a minimal OogaScoreResponse for tests. */
 function makeResult(over: Partial<OogaScoreResponse>): OogaScoreResponse {

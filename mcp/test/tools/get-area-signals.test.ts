@@ -3,8 +3,8 @@ import {
   getAreaSignalsToolDef,
   parseGetAreaSignalsArgs,
   executeGetAreaSignals,
-} from "./get-area-signals.js";
-import { OogaApiClient, OogaApiError, type OogaAreaProfile } from "../api-client.js";
+} from "../../src/tools/get-area-signals.js";
+import { OogaApiClient, OogaApiError, type OogaAreaProfile } from "../../src/api-client.js";
 
 function sampleProfile(over: Partial<OogaAreaProfile> = {}): OogaAreaProfile {
   return {
