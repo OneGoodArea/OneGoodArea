@@ -80,7 +80,7 @@ export default function SignUpClient() {
     }
   };
 
-  const handleOAuth = async (provider: "google" | "github") => {
+  const handleOAuth = async (provider: "google") => {
     try {
       await signIn(provider, { callbackUrl: "/dashboard" });
     } catch {

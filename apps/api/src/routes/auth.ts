@@ -64,10 +64,19 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         const existing = await sql`SELECT id, provider FROM users WHERE email = ${sanitized}`;
         if (existing.length > 0) {
           const { provider } = row<Pick<UserRow, "id" | "provider">>(existing[0]);
-          if (provider === "google" || provider === "github") {
+          if (provider === "google") {
             return reply.code(409).send({
               error: "email_oauth",
-              message: `This email is linked to a ${provider === "google" ? "Google" : "GitHub"} account. Try signing in with ${provider === "google" ? "Google" : "GitHub"} instead.`,
+              message: "This email is linked to a Google account. Try signing in with Google instead.",
+            });
+          }
+          if (provider === "github") {
+            /* AR-415: GitHub sign-in removed. Legacy github-provider
+               accounts land here on any password path; point them at
+               support for account migration rather than a dead-end. */
+            return reply.code(409).send({
+              error: "email_github_removed",
+              message: "This email signed up with GitHub. GitHub sign-in has been removed — contact support@onegoodarea.com to migrate your account.",
             });
           }
           return reply.code(409).send({
@@ -434,9 +443,12 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         if (!email || typeof email !== "string") {
           return reply.code(400).send({ error: "Email is required" });
         }
-        const safeProvider = provider === "google" || provider === "github" ? provider : undefined;
+        /* AR-415: only Google OAuth is supported. GitHub was removed;
+           the callback route rejects it explicitly so a stray legacy
+           client can't create a github-provider user. */
+        const safeProvider = provider === "google" ? provider : undefined;
         if (!safeProvider) {
-          return reply.code(400).send({ error: "Provider must be google or github" });
+          return reply.code(400).send({ error: "Provider must be google" });
         }
 
         const sanitized = email.trim().toLowerCase();
