@@ -96,6 +96,20 @@
   color: var(--oga-fg-muted);
 }
 
+/* Turnstile widget strip (mounted between hero and workbench while
+   we wait for the first solve). Wraps a Cloudflare-provided iframe;
+   we don't restyle the widget itself. */
+.oga-play-turnstile-section {
+  background: var(--oga-bg);
+  border-bottom: 1px solid var(--oga-border);
+  padding: var(--oga-4) 0;
+}
+
+.oga-play-turnstile {
+  max-width: 320px;
+  margin: 0 auto;
+}
+
 /* Session chip (below hero proof strip) */
 .oga-play-hero__session {
   margin: var(--oga-5) 0 0;

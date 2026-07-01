@@ -4,13 +4,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Nav } from "../_shared/nav";
 import { Footer } from "../_shared/footer";
+import { TurnstileWidget } from "./turnstile-widget";
 import "./playground.css";
 
-/* /playground client. PR3 wires the first endpoint (GET /v1/area) end
-   to end: mint a signed cookie on mount, submit the query through the
-   BFF proxy, render the JSON response + latency + counters. Other tabs
-   (score, peers, rank, insights, forecast, NL) still show the PR4
-   placeholder. */
+/* /playground client. PR3 wired the first endpoint (GET /v1/area) end
+   to end. AR-435 adds the Cloudflare Turnstile widget so /playground
+   works once TURNSTILE_SECRET_KEY is set on the API.
+
+   Falls back to no-widget mint when NEXT_PUBLIC_TURNSTILE_SITE_KEY is
+   unset (local dev without Turnstile keys). */
+
+/* Inlined at build time by Next.js. Undefined string in prod means we
+   never configured Turnstile — the client skips the widget. */
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 type TabId =
   | "area"
@@ -103,20 +109,24 @@ export default function PlaygroundClient() {
   const [session, setSession] = useState<SessionSnapshot | null>(null);
   const [tokenReady, setTokenReady] = useState(false);
   const [tokenError, setTokenError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const active = TABS.find((t) => t.id === activeTab)!;
   const tokenRequestedRef = useRef(false);
 
-  /* Mint the demo cookie once on mount. This burns no rate-limit quota
-     and gives the first Run a snappy path (no double round-trip). */
+  /* Mint the demo cookie once we have what we need. With Turnstile
+     configured, that means we need a solved token first. Without it
+     (local dev, or during an incident when we've killed the secret),
+     we mint immediately with an empty body — apps/api stub-passes. */
   useEffect(() => {
     if (tokenRequestedRef.current) return;
+    if (TURNSTILE_SITE_KEY && !turnstileToken) return;
     tokenRequestedRef.current = true;
     (async () => {
       try {
         const res = await fetch("/api/playground/token", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: "{}",
+          body: JSON.stringify(turnstileToken ? { turnstile_token: turnstileToken } : {}),
           credentials: "same-origin",
         });
         if (!res.ok) {
@@ -128,7 +138,7 @@ export default function PlaygroundClient() {
         setTokenError("token_network");
       }
     })();
-  }, []);
+  }, [turnstileToken]);
 
   const runProxy = useCallback(
     async (method: "GET" | "POST", path: string, body?: unknown): Promise<ProxyResponse> => {
@@ -155,6 +165,18 @@ export default function PlaygroundClient() {
       <Nav />
 
       <PlaygroundHero session={session} tokenReady={tokenReady} tokenError={tokenError} />
+
+      {TURNSTILE_SITE_KEY && !tokenReady && !tokenError && (
+        <section className="oga-play-turnstile-section" aria-label="Bot check">
+          <div className="oga-play__container">
+            <TurnstileWidget
+              siteKey={TURNSTILE_SITE_KEY}
+              onToken={setTurnstileToken}
+              onError={(code) => setTokenError(code)}
+            />
+          </div>
+        </section>
+      )}
 
       <section className="oga-play-workbench oga-section">
         <div className="oga-play__container">
