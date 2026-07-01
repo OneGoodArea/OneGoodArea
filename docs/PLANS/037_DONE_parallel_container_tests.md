@@ -12,11 +12,11 @@ Currently, `api-test-container` and `web-test-container` both use `--project-nam
 
 ## Solution
 Add a new target `test-all-container` that:
-1. Runs API and web tests sequentially with different `--project-name` values
+1. Runs API and web tests in parallel using subshells with `&`
 2. Uses `--project-name oga-test-api` for API tests
 3. Uses `--project-name oga-test-web` for web tests
-4. Captures exit codes from both test suites
-5. Returns failure if either test suite fails
+4. `wait` blocks until both finish
+5. Captures exit codes via temp files, returns failure if either fails
 
 ## Implementation Steps
 
@@ -24,8 +24,8 @@ Add a new target `test-all-container` that:
 - Add new target `test-all-container`
 - Use `--project-name oga-test-api` for API tests
 - Use `--project-name oga-test-web` for web tests
-- Run tests sequentially to ensure proper cleanup
-- Check exit codes and return failure if any test fails
+- Run tests in parallel via subshells with `&`
+- `wait` for both to complete, then check exit codes
 
 ### Step 2: Update `build/help.mk`
 - Help text automatically generated via regex pattern `^[a-z]+-[a-z-]*container:.*## `
@@ -39,7 +39,7 @@ Add a new target `test-all-container` that:
 - `build/targets-services.mk` - Added new target
 
 ## Success Criteria
-- `make test-all-container` runs both API and web tests with isolated projects
+- `make test-all-container` runs both API and web tests in parallel
 - No container name collisions
 - Proper cleanup of all containers
 - Exit code reflects test results (0 = all pass, non-zero = any failure)
