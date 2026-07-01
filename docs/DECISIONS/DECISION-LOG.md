@@ -33,9 +33,9 @@ Major decisions in chronological order. Detailed reasoning lives in the linked A
 ## 2026 Q2 late — repo organisation
 
 - **Plan 006: test/prod separation** — every `*.test.ts` moved out of `src/` into `tests/`; `@/` alias added to apps/api + reused in apps/web. ~125 test files moved, 461 imports rewritten.
-- **Plan 007: documentation organisation** — three-tier `docs/` hierarchy (this PR). Test artifacts routed to gitignored `.artifacts/`. Manual QA docs centralised under `docs/TESTING/`.
+- **Plan 007: documentation organisation** — three-tier `docs/` hierarchy. Test artifacts routed to gitignored `.artifacts/`. Manual QA docs centralised under `docs/TESTING/`.
 
 ## See also
 
 - [`README.md`](./README.md) — ADRs by category
-- [`docs/adr/README.md`](../adr/README.md) — canonical full ADR table
+- [`docs/DECISIONS/README.md`](./README.md) — full ADR table

@@ -1,51 +1,50 @@
-# Decisions
+# Architecture Decision Records
 
-The architectural-decision trail. Why each non-obvious choice was made + what was rejected and why.
+Short, durable records of the load-bearing decisions in the signal-first
+restructure (and beyond). Each ADR captures the *context*, the *decision*, and
+the *consequences* so future contributors (and future us) understand the *why*,
+not just the *what*.
 
-## Sources
+Format: one file per decision, `NNNN-short-slug.md`, numbered in order. A
+decision is never edited away once superseded; instead a later ADR supersedes it
+and both are kept (the trail matters).
 
-- [`docs/adr/`](../adr/) — the 35 ADRs in chronological order with the canonical index
-- [`DECISION-LOG.md`](./DECISION-LOG.md) — timeline view of major decisions
-
-## ADRs by category
-
-### Signal-first restructure foundation (0001-0008)
-
-| ADR | Topic |
-|---|---|
-| [0001](../adr/0001-signal-first-primitive.md) | Signal as the public primitive; `/v1/area` thin over live-fetch first |
-| [0002](../adr/0002-signal-store-schema.md) | The 7-table persisted signal store schema |
-| [0003](../adr/0003-source-refresh-jobs.md) | Reusable store-writer + deprivation first |
-| [0004](../adr/0004-store-read-hybrid.md) | Store read-through + live fallback + `fetch_mode` provenance |
-| [0005](../adr/0005-normalization-percentiles.md) | In-DB percentiles + normalised values, within-country scope |
-| [0006](../adr/0006-geo-spine-loader.md) | The ONS geo spine loader |
-| [0007](../adr/0007-cross-area-query.md) | `GET /v1/areas` cross-area query |
-| [0008](../adr/0008-scores-v3.md) | Scores v3 — presets + custom weights, engine reused untouched |
-
-### Time-series + first dynamic source (0009-0016)
-
-`0009-monitor-portfolios` · `0010-timeseries-append` · `0011-prices-into-store` · `0012-property-store-read` · `0013-monitor-change-detection` · `0014-property-yoy-and-change-denoise` · `0015-crime-into-store` · `0016-crime-store-read`
-
-### Intelligence — query plane + derived signals + peers + insights + forecast + eval (0017-0026)
-
-Ten ADRs spanning the 6 Intelligence surfaces. Highlights: [0017](../adr/0017-query-plane.md) (typed plan grammar), [0023](../adr/0023-peers-knn.md) (k-NN over normalised vectors), [0026](../adr/0026-ai-eval-harness.md) (92.9% baseline).
-
-### Levers — per-org configurability (0027-0034)
-
-The 8-commit Levers epic, one ADR per commit:
-
-| ADR | Topic |
-|---|---|
-| [0027](../adr/0027-levers-foundation.md) | orgs + org_members + api_keys.org_id + auth signature change |
-| [0028](../adr/0028-levers-org-crud.md) | 7 `/v1/orgs/*` endpoints + signup auto-org |
-| [0029](../adr/0029-levers-custom-signal-bundles.md) | Per-org signal whitelists + `?bundle=` filter |
-| [0030](../adr/0030-levers-custom-scoring-presets.md) | Saved `{base_preset, weights}` + `preset_id` on `/v1/score` |
-| [0031](../adr/0031-levers-methodology-pinning.md) | Per-org engine_version pin |
-| [0032](../adr/0032-levers-peer-cohorts.md) | Per-org peer cohort filter on `/v1/peers` |
-| [0033](../adr/0033-levers-full-rbac.md) | Full admin-tier RBAC + typed 403 codes |
-| [0034](../adr/0034-levers-white-label-and-ip-allowlist.md) | orgs.display_name/brand_url + api_keys.allowed_ip_cidrs |
-
-## See also
-
-- [`docs/adr/README.md`](../adr/README.md) — full canonical ADR table
-- [`docs/ARCHITECTURE/SYSTEM-OVERVIEW.md`](../ARCHITECTURE/SYSTEM-OVERVIEW.md) — how the decisions stack up into the live system
+| ADR | Title | Status |
+|-----|-------|--------|
+| [0001](./0001-signal-first-primitive.md) | Signal as the public primitive; thin `/v1/area` over live-fetch first | Accepted |
+| [0002](./0002-signal-store-schema.md) | The persisted signal store schema (7 tables, Phase 1) | Accepted |
+| [0003](./0003-source-refresh-jobs.md) | Source refresh jobs (reusable store-writer + deprivation first) | Accepted |
+| [0004](./0004-store-read-hybrid.md) | Serving from the store (read-through + live fallback + hybrid provenance) | Accepted |
+| [0005](./0005-normalization-percentiles.md) | Normalization (in-DB percentiles + normalized values, within-country scope) | Accepted |
+| [0006](./0006-geo-spine-loader.md) | The ONS geo spine loader (streaming NSPL, config-driven, seed in git) | Accepted |
+| [0007](./0007-cross-area-query.md) | Cross-area query (`GET /v1/areas`) — country-by-prefix, LAD via the spine | Accepted |
+| [0008](./0008-scores-v3.md) | Scores v3 (`POST /v1/score`) — presets + custom weights, engine reused untouched | Accepted |
+| [0009](./0009-monitor-portfolios.md) | Monitor v1 — portfolios + bulk enrich (change detection later) | Accepted |
+| [0010](./0010-timeseries-append.md) | Time-series append (the moat clock) — monthly snapshot, immutable per period | Accepted |
+| [0011](./0011-prices-into-store.md) | HM Land Registry prices into the store — first dynamic + backfilled source (LSOA × month) | Accepted |
+| [0012](./0012-property-store-read.md) | Serve property (prices) from the store on `/v1/area` — robust annual median, grain district→LSOA | Accepted |
+| [0013](./0013-monitor-change-detection.md) | Monitor change detection (`signal.changed`) — diff time-series periods, alert on material moves | Accepted |
+| [0014](./0014-property-yoy-and-change-denoise.md) | Property YoY from the store (2yr backfill) + change-detection sample-size de-noising | Accepted |
+| [0015](./0015-crime-into-store.md) | Crime into the store (police.uk bulk archive, LSOA-native) — loader + sample; prod load on archive download | Accepted |
+| [0016](./0016-crime-store-read.md) | Serve crime from the store on `/v1/area` — store-read flip mirroring property, real monthly_trend, by_category gap documented | Accepted |
+| [0017](./0017-query-plane.md) | Intelligence v1: `POST /v1/query` — the typed query plane (programmatic + NL), planner/executor split, deterministic principle | Accepted |
+| [0018](./0018-derived-signals-and-write-only-refresh.md) | Derived signals layer + write-only refresh / unified normalize — `property.price_change_pct_yoy` queryable; resilient cron | Accepted |
+| [0019](./0019-compound-rank-areas.md) | Intelligence Increment 2: multi-signal compound `rank_areas` grammar — `signals[]` + `sort_by`, one JOIN per filter signal, AND semantics, backward-compat sugar | Accepted |
+| [0020](./0020-rolling-yoy-derived-signals.md) | Intelligence Increment 3: parameterized rolling-12-month YoY derived signals (`buildRollingSumYoYSql`) — adds `crime.total_12m_change_pct_yoy` + `property.transaction_count_change_pct_yoy` | Accepted |
+| [0021](./0021-trend-slope-derived-signals.md) | Intelligence Increment 3 follow-up: trend-slope derived signals (`buildRegrSlopeSql` via Postgres `regr_slope`) — adds `crime.monthly_count_trend_slope_24m` + `property.transaction_count_trend_slope_24m` | Accepted |
+| [0022](./0022-six-month-momentum-derived-signals.md) | Intelligence Increment 3 follow-up: 6-month short-horizon momentum (parameterized `buildCountWeightedMedianDeltaSql` + `buildRollingSumDeltaSql`) — adds `property.median_price_change_pct_6m` + `crime.total_6m_change_pct` | Accepted |
+| [0023](./0023-peers-knn.md) | Intelligence Increment 6: `POST /v1/peers` — k-NN over normalized signals (Euclidean, dim-mean-squared, country/LAD scope); `find_peers` plan op composes through `/v1/query` | Accepted |
+| [0024](./0024-peer-relative-and-insights.md) | Intelligence Increment 7: `peer_assignments` materialization + peer-relative z-score derived signals (`buildPeerRelativeZSql`) + `POST /v1/insights` (anomaly screening) + `find_insights` plan op | Accepted |
+| [0025](./0025-forecast-linear-projection.md) | Intelligence Increment 8: `POST /v1/forecast` — linear time-series projection via Postgres `regr_*` aggregates; constant-width residual-stderr CI; `find_forecast` plan op | Accepted |
+| [0026](./0026-ai-eval-harness.md) | Intelligence Increment 9: AI eval harness — golden NL→plan corpus + subset structural comparison + CLI; baseline 92.9% (13/14) on `claude-sonnet-4`; the 6th Intelligence surface (product mental model complete) | Accepted |
+| [0027](./0027-levers-foundation.md) | Levers Foundation (AR-193): `orgs` + `org_members` tables + `api_keys.org_id` nullable column + backfill (1 personal org per user; 1 owner per org; api_keys.org_id populated); `validateApiKey` returns `{userId, orgId}`; expand-contract migration | Accepted |
+| [0028](./0028-levers-org-crud.md) | Levers Org CRUD (AR-194): 7 endpoints under `/v1/orgs` + `/auth/register` auto-creates personal org for new credentials signups; owner-only mutations + last-owner guard; slug derivation matches the Foundation backfill formula | Accepted |
+| [0029](./0029-levers-custom-signal-bundles.md) | Levers Custom Signal Bundles (AR-195): `signal_bundles` table + 5 CRUD endpoints under `/v1/orgs/:id/bundles`; `?bundle=<id>` filters `/v1/area` response, gates `/v1/areas` rank-signal, validates `/v1/query` plans via pure `extractSignalKeysFromPlan` helper; `requireApiAccessWithOrg` helper + lazy first-owner fallback when key.org_id is null | Accepted |
+| [0030](./0030-levers-custom-scoring-presets.md) | Levers Custom Scoring Presets (AR-196): `scoring_presets` table + 5 CRUD endpoints under `/v1/orgs/:id/presets`; `POST /v1/score` accepts `preset_id` (mutually exclusive with `preset`/`weights`) resolving to saved `{base_preset, weights}`; deterministic engine reused untouched; pure `findUnknownWeightKeys` reuses `PRESET_DIMENSION_KEYS` | Accepted |
+| [0031](./0031-levers-methodology-pinning.md) | Levers Methodology Pinning (AR-197): `org_methodology_pins` table + 3 endpoints under `/v1/orgs/:id/methodology` (GET/PUT/DELETE); `resolveEngineVersion` extended with optional `orgPin`; precedence = explicit header > org pin > METHODOLOGY_VERSION; pin validated at WRITE time, defense-in-depth fallback at READ time so silent EOL doesn't 500 product endpoints | Accepted |
+| [0032](./0032-levers-peer-cohorts.md) | Levers Peer Cohorts (AR-198): `peer_cohorts` table + 5 CRUD endpoints under `/v1/orgs/:id/cohorts`; `POST /v1/peers` accepts `cohort_id` to filter the candidate set via `buildPeersSql`'s new `cohortGeoCodes` ANY-array filter; query-time filtering on the existing global graph (materialized per-org graph deferred); `/v1/peers` also gains X-Engine-Version pin support as a side-effect | Accepted |
+| [0033](./0033-levers-full-rbac.md) | Levers Full RBAC (AR-199): `ROLE_RANK` + `hasAtLeastRole` central helpers; admin honored as a distinct mutator (org rename, member CRUD for non-owners, bundles, presets, cohorts); owner-only kept on methodology pin + granting ownership + removing owners + last-owner guard; typed error codes `admin_required` / `owner_required` / `cannot_grant_owner` / `cannot_remove_owner_as_admin` | Accepted |
+| [0034](./0034-levers-white-label-and-ip-allowlist.md) | Levers White-Label + IP Allowlist (AR-200): `orgs.display_name` + `orgs.brand_url` columns + PATCH org accepts them; `api_keys.allowed_ip_cidrs TEXT[]` enforced at `validateApiKey` via pure `ipMatchesCidrs` (IPv4 prefix, IPv6 exact-equality, OR-semantics across entries, skip-bad-cidr); discriminated-union return shape with `blocked: "ip_not_allowed"` → 403; `/v1/me` exposes org branding + key allowlist | Accepted |
+| [0035](./0035-prod-container-parity.md) | Production container parity (AR-201, Plan 008): cross-platform runtime abstraction (`build/container.mk` — Podman on Linux, Docker on macOS/Windows), three-image layout under `container/{api,web,postgres}/Containerfile` (api primary, web + postgres parity-only — Vercel + Neon stay primary), env split across `env/{local,dev,prod}/{api,web,postgres}.env.example`, portable `make container-*` interface with guarded `ENV` + `SERVICE`, no compose in production | Accepted |
+| [0036](./0036-brand-v3-close-out-and-aiq-strip.md) | AR-204 close-out + `.aiq` cascade strip — final 15 shells / app surfaces migrated onto Brand v3; the legacy `.aiq` block + parallel `--ink/--signal/--text-N/--display/--sans/--mono` token namespace stripped from `globals.css` (952 → 159 lines); 3 legacy-token holdouts migrated; `.aiq` className removed from `AppShell` outer wrapper | Accepted |
+| [0037](./0037-brand-v3-dashboard-primitives.md) | Brand v3 dashboard primitives extraction (AR-217 Phase 0) — 7 primitives shipped under `_shared/dashboard/` (FormGroup / Modal / DropdownMenu / Toast / Tabs / DataTable / Sidebar), 8 deferred via extract-on-second-use per AR-211 convention; canonical-asset discipline (no invented icons, real `<Wordmark>` always); shared dark-surface vocabulary (graphite gradient + edge-lit material + dot-field motif); RTL + jsdom infra installed for component tests | Accepted |

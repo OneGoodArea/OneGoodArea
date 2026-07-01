@@ -39,12 +39,12 @@ Phrase-search map. Find your question on the left; the doc on the right has the 
 
 | Question | Doc |
 |---|---|
-| What's our code style? | [`ENGINEERING/CODE-STYLE.md`](../ENGINEERING/CODE-STYLE.md) |
+| What's our code style? | [`/CLAUDE.md`](../../CLAUDE.md) |
 | What's the commit message format? | [`/CLAUDE.md`](../../CLAUDE.md) |
 | How do I name a branch? | [`/CLAUDE.md`](../../CLAUDE.md) |
 | When do I add a test, what kind? | [`ENGINEERING/TESTING-STRATEGY.md`](../ENGINEERING/TESTING-STRATEGY.md) |
 | When do I update the scoring golden? | [`ENGINEERING/GOLDEN-TESTS.md`](../ENGINEERING/GOLDEN-TESTS.md) |
-| Where are the engineering rules? | [`/CLAUDE.md`](../../CLAUDE.md) (canonical) + [`ENGINEERING/CODE-STYLE.md`](../ENGINEERING/CODE-STYLE.md) (distilled) |
+| Where are the engineering rules? | [`/CLAUDE.md`](../../CLAUDE.md) (canonical) |
 
 ## Operating + debugging
 
@@ -62,7 +62,7 @@ Phrase-search map. Find your question on the left; the doc on the right has the 
 |---|---|
 | Why did we build it this way? | [`DECISIONS/README.md`](../DECISIONS/README.md) (by category) |
 | Show me the major decisions in chronological order | [`DECISIONS/DECISION-LOG.md`](../DECISIONS/DECISION-LOG.md) |
-| Where's the ADR for X? | [`adr/`](../adr/) — search by number or topic |
+| Where's the ADR for X? | [`DECISIONS/`](../DECISIONS/) — search by number or topic |
 
 ## Testing + QA
 
@@ -78,7 +78,7 @@ Phrase-search map. Find your question on the left; the doc on the right has the 
 |---|---|
 | What's the active design brief? | [`DESIGN/AR-204-app-redesign.md`](../DESIGN/AR-204-app-redesign.md) |
 | Where are AR-204 locked decisions? | [`DESIGN/AR-204-app-redesign.md`](../DESIGN/AR-204-app-redesign.md) section 6-section 11 |
-| What's the methodology / docs reskin context? | [`DESIGN/AR-204-methodology-docs-delta.md`](../DESIGN/AR-204-methodology-docs-delta.md) |
+| What's the methodology / docs reskin context? | [`DESIGN/DEPRECATED-AR-204-methodology-docs-delta.md`](../DESIGN/DEPRECATED-AR-204-methodology-docs-delta.md) (historical) |
 | What's the product-pages spec pack? | [`DESIGN/AR-204-product-pages-spec-pack.md`](../DESIGN/AR-204-product-pages-spec-pack.md) |
 
 ## See also

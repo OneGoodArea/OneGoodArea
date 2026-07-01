@@ -176,7 +176,7 @@ Three operational changes should ship regardless of source-coverage work:
 
 ## How to apply
 
-When evaluating any new data source (or proposed addition to an existing source), run the four-question frame at the top of this document. If it should be in the store, follow the refresh-job pattern proven by prices and crime (`docs/adr/0003-source-refresh-jobs.md` is the template). If it should stay live, document why in the source's file header.
+When evaluating any new data source (or proposed addition to an existing source), run the four-question frame at the top of this document. If it should be in the store, follow the refresh-job pattern proven by prices and crime (`docs/DECISIONS/0003-source-refresh-jobs.md` is the template). If it should stay live, document why in the source's file header.
 
 The strategic frame stays the same: **the data layer is the product**. Every source that's live-fetched is a source that can't be ranked across, can't accrue history, and can't be normalized into the percentile system. Closing the gap from 3 sources in the auto-refresh cron to 7 is the largest commercial unlock available without new product capability.
 
@@ -184,7 +184,7 @@ The strategic frame stays the same: **the data layer is the product**. Every sou
 
 - [`DATA-LAYER.md`](./DATA-LAYER.md) — the schema and storage shape
 - [`docs/OPERATIONS/SIGNAL-REFRESH.md`](../OPERATIONS/SIGNAL-REFRESH.md) — operational runbook for the cron
-- [`docs/adr/0003-source-refresh-jobs.md`](../adr/0003-source-refresh-jobs.md) — refresh-job pattern
-- [`docs/adr/0011-prices-into-store.md`](../adr/0011-prices-into-store.md) — prices ingest + the late-registration gap
-- [`docs/adr/0015-crime-into-store.md`](../adr/0015-crime-into-store.md) — crime ingest + the no-cron gap
-- [`docs/adr/0018-derived-signals-and-write-only-refresh.md`](../adr/0018-derived-signals-and-write-only-refresh.md) — write-only refresh, the operational discipline
+- [`docs/DECISIONS/0003-source-refresh-jobs.md`](../DECISIONS/0003-source-refresh-jobs.md) — refresh-job pattern
+- [`docs/DECISIONS/0011-prices-into-store.md`](../DECISIONS/0011-prices-into-store.md) — prices ingest + the late-registration gap
+- [`docs/DECISIONS/0015-crime-into-store.md`](../DECISIONS/0015-crime-into-store.md) — crime ingest + the no-cron gap
+- [`docs/DECISIONS/0018-derived-signals-and-write-only-refresh.md`](../DECISIONS/0018-derived-signals-and-write-only-refresh.md) — write-only refresh, the operational discipline

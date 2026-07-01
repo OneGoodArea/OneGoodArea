@@ -6,13 +6,13 @@ This folder holds **human-authored test artifacts** (manual test plans, HTTP tes
 
 | Folder | Contents |
 |---|---|
-| [`manual/`](./manual/) | Manual QA test plans, browser test scripts, the test-pathways breakdown, automated-vs-manual classification (TESTS-README), completed-tickets log |
+| [`manual/`](./manual/) | Manual QA test plans, browser test scripts, completed-tickets log |
 | [`http/`](./http/) | `.http` files for API testing via REST Client / httpyac (api keys + curl-equivalent payloads) |
 | [`bugs/`](./bugs/) | Known issues + bugs-to-solve tracker |
 
 ## How to use
 
-- **Manual QA pass:** start with [`manual/TESTS-README.md`](./manual/TESTS-README.md) for the strategy + split between automated and manual coverage.
+- **Manual QA pass:** start with [`manual/test-plan.md`](./manual/test-plan.md) — the canonical executable test plan.
 - **Hit an endpoint directly:** open one of the `.http` files in [`http/`](./http/) inside VS Code with the REST Client extension (or `httpyac` CLI).
 - **Found a bug:** add to [`bugs/bugs-to-solve.md`](./bugs/bugs-to-solve.md) following the existing entry format.
 

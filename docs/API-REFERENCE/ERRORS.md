@@ -56,4 +56,4 @@ For business-rule violations (422) the body may also include extra context:
 ## See also
 
 - [`AUTHENTICATION.md`](./AUTHENTICATION.md) — auth-related errors
-- [`docs/ARCHITECTURE/SYSTEM-OVERVIEW.md`](../ARCHITECTURE/SYSTEM-OVERVIEW.md) section 6 — the full endpoint × auth × dark-flag matrix
+- [`docs/API-REFERENCE/ENDPOINTS-BY-PRODUCT.md`](./ENDPOINTS-BY-PRODUCT.md) — the full endpoint × auth × dark-flag matrix
