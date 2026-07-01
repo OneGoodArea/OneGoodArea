@@ -51,8 +51,14 @@ export function TurnstileWidget({
   const widgetIdRef = useRef<string | null>(null);
   const onTokenRef = useRef(onToken);
   const onErrorRef = useRef(onError);
-  onTokenRef.current = onToken;
-  onErrorRef.current = onError;
+
+  /* Keep refs in sync with the latest callbacks so the render effect
+     can capture them without listing the callbacks in its deps (which
+     would tear down + rebuild the widget on every render). */
+  useEffect(() => {
+    onTokenRef.current = onToken;
+    onErrorRef.current = onError;
+  });
 
   useEffect(() => {
     if (!siteKey || !containerRef.current) return;
