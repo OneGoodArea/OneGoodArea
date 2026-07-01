@@ -53,32 +53,46 @@ export async function readDeprivationFromStore(
   return { lsoa_code: geoCode, lsoa_name: "", local_authority: "", imd_rank: rank, imd_decile: decile };
 }
 
-/** Per-signal normalization (normalized_value 0-1 + national percentile 0-100)
+/* AR-408: normalization enrichment now includes regional_percentile in
+   addition to the national percentile. All three read helpers below
+   share this shape so area-profile.ts (and future callers) get both
+   scopes back from one round trip per source. */
+export interface StoredNormalization {
+  normalized_value: number | null;
+  percentile: number | null;
+  regional_percentile: number | null;
+}
+
+/** Per-signal normalization (normalized_value + national + regional percentile)
     for the deprivation signals at an LSOA, keyed by signal_key. Used to enrich
     the served Signals when deprivation is store-backed. Empty when absent. */
 export async function readDeprivationNormalization(
   geoCode: string,
   run: Reader = runDefault,
-): Promise<Record<string, { normalized_value: number | null; percentile: number | null }>> {
+): Promise<Record<string, StoredNormalization>> {
   if (!geoCode) return {};
 
   const rows = await run(
-    `SELECT sv.signal_key, sv.normalized_value, sp.percentile
+    `SELECT sv.signal_key, sv.normalized_value, sp_nat.percentile AS percentile, sp_reg.percentile AS regional_percentile
        FROM signal_values sv
-       LEFT JOIN signal_percentiles sp
-         ON sp.signal_key = sv.signal_key AND sp.geo_type = sv.geo_type
-        AND sp.geo_code = sv.geo_code AND sp.scope = 'national'
+       LEFT JOIN signal_percentiles sp_nat
+         ON sp_nat.signal_key = sv.signal_key AND sp_nat.geo_type = sv.geo_type
+        AND sp_nat.geo_code = sv.geo_code AND sp_nat.scope = 'national'
+       LEFT JOIN signal_percentiles sp_reg
+         ON sp_reg.signal_key = sv.signal_key AND sp_reg.geo_type = sv.geo_type
+        AND sp_reg.geo_code = sv.geo_code AND sp_reg.scope = 'regional'
       WHERE sv.geo_type = 'lsoa' AND sv.geo_code = $1
         AND sv.signal_key IN ('deprivation.imd_rank', 'deprivation.imd_decile')`,
     [geoCode],
   );
 
-  const out: Record<string, { normalized_value: number | null; percentile: number | null }> = {};
+  const out: Record<string, StoredNormalization> = {};
   for (const r of rows) {
     const key = r.signal_key as string;
     out[key] = {
       normalized_value: r.normalized_value === null || r.normalized_value === undefined ? null : Number(r.normalized_value),
       percentile: r.percentile === null || r.percentile === undefined ? null : Number(r.percentile),
+      regional_percentile: r.regional_percentile === null || r.regional_percentile === undefined ? null : Number(r.regional_percentile),
     };
   }
   return out;
@@ -201,32 +215,36 @@ export async function readPropertyFromStore(
   };
 }
 
-/** Normalization (normalized_value + national percentile) for the store-backed
-    property signals at an LSOA, keyed by signal_key. Only median_price is
+/** Normalization (normalized_value + national + regional percentile) for
+    the store-backed property signals at an LSOA. Only median_price is
     normalized. Empty when absent. */
 export async function readPropertyNormalization(
   geoCode: string,
   run: Reader = runDefault,
-): Promise<Record<string, { normalized_value: number | null; percentile: number | null }>> {
+): Promise<Record<string, StoredNormalization>> {
   if (!geoCode) return {};
 
   const rows = await run(
-    `SELECT sv.signal_key, sv.normalized_value, sp.percentile
+    `SELECT sv.signal_key, sv.normalized_value, sp_nat.percentile AS percentile, sp_reg.percentile AS regional_percentile
        FROM signal_values sv
-       LEFT JOIN signal_percentiles sp
-         ON sp.signal_key = sv.signal_key AND sp.geo_type = sv.geo_type
-        AND sp.geo_code = sv.geo_code AND sp.scope = 'national'
+       LEFT JOIN signal_percentiles sp_nat
+         ON sp_nat.signal_key = sv.signal_key AND sp_nat.geo_type = sv.geo_type
+        AND sp_nat.geo_code = sv.geo_code AND sp_nat.scope = 'national'
+       LEFT JOIN signal_percentiles sp_reg
+         ON sp_reg.signal_key = sv.signal_key AND sp_reg.geo_type = sv.geo_type
+        AND sp_reg.geo_code = sv.geo_code AND sp_reg.scope = 'regional'
       WHERE sv.geo_type = 'lsoa' AND sv.geo_code = $1
         AND sv.signal_key = 'property.median_price'`,
     [geoCode],
   );
 
-  const out: Record<string, { normalized_value: number | null; percentile: number | null }> = {};
+  const out: Record<string, StoredNormalization> = {};
   for (const r of rows) {
     const key = r.signal_key as string;
     out[key] = {
       normalized_value: r.normalized_value === null || r.normalized_value === undefined ? null : Number(r.normalized_value),
       percentile: r.percentile === null || r.percentile === undefined ? null : Number(r.percentile),
+      regional_percentile: r.regional_percentile === null || r.regional_percentile === undefined ? null : Number(r.regional_percentile),
     };
   }
   return out;
@@ -292,31 +310,35 @@ export async function readCrimeFromStore(
   };
 }
 
-/** Normalization for the store-backed crime signals at an LSOA (only
-    crime.total_12m is normalized). Empty when absent. */
+/** Normalization for the store-backed crime signals at an LSOA. Only
+    crime.total_12m is normalized. Empty when absent. */
 export async function readCrimeNormalization(
   geoCode: string,
   run: Reader = runDefault,
-): Promise<Record<string, { normalized_value: number | null; percentile: number | null }>> {
+): Promise<Record<string, StoredNormalization>> {
   if (!geoCode) return {};
 
   const rows = await run(
-    `SELECT sv.signal_key, sv.normalized_value, sp.percentile
+    `SELECT sv.signal_key, sv.normalized_value, sp_nat.percentile AS percentile, sp_reg.percentile AS regional_percentile
        FROM signal_values sv
-       LEFT JOIN signal_percentiles sp
-         ON sp.signal_key = sv.signal_key AND sp.geo_type = sv.geo_type
-        AND sp.geo_code = sv.geo_code AND sp.scope = 'national'
+       LEFT JOIN signal_percentiles sp_nat
+         ON sp_nat.signal_key = sv.signal_key AND sp_nat.geo_type = sv.geo_type
+        AND sp_nat.geo_code = sv.geo_code AND sp_nat.scope = 'national'
+       LEFT JOIN signal_percentiles sp_reg
+         ON sp_reg.signal_key = sv.signal_key AND sp_reg.geo_type = sv.geo_type
+        AND sp_reg.geo_code = sv.geo_code AND sp_reg.scope = 'regional'
       WHERE sv.geo_type = 'lsoa' AND sv.geo_code = $1
         AND sv.signal_key = 'crime.total_12m'`,
     [geoCode],
   );
 
-  const out: Record<string, { normalized_value: number | null; percentile: number | null }> = {};
+  const out: Record<string, StoredNormalization> = {};
   for (const r of rows) {
     const key = r.signal_key as string;
     out[key] = {
       normalized_value: r.normalized_value === null || r.normalized_value === undefined ? null : Number(r.normalized_value),
       percentile: r.percentile === null || r.percentile === undefined ? null : Number(r.percentile),
+      regional_percentile: r.regional_percentile === null || r.regional_percentile === undefined ? null : Number(r.regional_percentile),
     };
   }
   return out;

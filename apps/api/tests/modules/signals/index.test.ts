@@ -106,8 +106,8 @@ describe("getAreaProfile (store-read flip)", () => {
     process.env.OGA_SIGNALS_STORE_READ = "true";
     mockStoreDep.mockResolvedValue(STORE_DEP);
     mockStoreNorm.mockResolvedValue({
-      "deprivation.imd_decile": { normalized_value: 0.5, percentile: 50 },
-      "deprivation.imd_rank": { normalized_value: 0.786, percentile: 78.58 },
+      "deprivation.imd_decile": { normalized_value: 0.5, percentile: 50, regional_percentile: 45 },
+      "deprivation.imd_rank": { normalized_value: 0.786, percentile: 78.58, regional_percentile: 82.1 },
     });
 
     const profile = (await getAreaProfile("M1 1AE"))!;
@@ -138,7 +138,7 @@ describe("getAreaProfile (store-read flip)", () => {
       price_change_pct: null, by_property_type: [], tenure_split: { freehold: 0, leasehold: 0 },
       price_range: { min: 285000, max: 285000 }, period: "2025-01 to 2025-12", prior_median: null,
     });
-    mockStorePropertyNorm.mockResolvedValue({ "property.median_price": { normalized_value: 0.99, percentile: 99.24 } });
+    mockStorePropertyNorm.mockResolvedValue({ "property.median_price": { normalized_value: 0.99, percentile: 99.24, regional_percentile: 95 } });
 
     const profile = (await getAreaProfile("M1 1AE"))!;
 
@@ -157,7 +157,7 @@ describe("getAreaProfile (store-read flip)", () => {
       top_streets: [], outcome_breakdown: {},
       monthly_trend: [{ month: "2025-01", count: 18 }, { month: "2025-12", count: 22 }],
     });
-    mockStoreCrimeNorm.mockResolvedValue({ "crime.total_12m": { normalized_value: 0.42, percentile: 41.5 } });
+    mockStoreCrimeNorm.mockResolvedValue({ "crime.total_12m": { normalized_value: 0.42, percentile: 41.5, regional_percentile: 38.2 } });
 
     const profile = (await getAreaProfile("M1 1AE"))!;
 

@@ -84,6 +84,10 @@ function singularRankAreasParams(p: Extract<Extract<QueryPlan, { op: "rank_areas
     maxPercentile: p.max_percentile,
     minValue: p.min_value,
     maxValue: p.max_value,
+    /* AR-408: rank_areas plans don't carry scope yet; default to
+       national for backward compat. Adding scope to the plan shape
+       is a separate enhancement. */
+    scope: "national",
   };
 }
 
