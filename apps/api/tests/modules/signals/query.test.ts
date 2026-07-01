@@ -28,7 +28,7 @@ describe("parseAreasQuery", () => {
 });
 
 describe("buildAreasQuery (pure)", () => {
-  const base: AreasQuery = { signal: "deprivation.imd_decile", sort: "percentile", limit: 50 };
+  const base: AreasQuery = { signal: "deprivation.imd_decile", sort: "percentile", limit: 50, scope: "national" };
 
   it("builds a minimal national query", () => {
     const { text, params } = buildAreasQuery(base);
@@ -36,20 +36,30 @@ describe("buildAreasQuery (pure)", () => {
     expect(text).toContain("LEFT JOIN signal_percentiles sp");
     expect(text).toContain("WHERE sv.signal_key = $1");
     expect(text).toContain("ORDER BY sp.percentile ASC NULLS LAST");
-    expect(params).toEqual(["deprivation.imd_decile", 50]); // signal + limit
+    expect(text).toContain("sp.scope = $2");
+    expect(params).toEqual(["deprivation.imd_decile", "national", 50]); // signal + scope + limit
   });
 
   it("adds a country prefix filter", () => {
     const { text, params } = buildAreasQuery({ ...base, country: "Scotland" });
     expect(text).toContain("sv.geo_code LIKE $2");
-    expect(params).toEqual(["deprivation.imd_decile", "S%", 50]);
+    expect(params).toEqual(["deprivation.imd_decile", "S%", "national", 50]);
   });
 
   it("adds a LAD scope via geo_lookup + a percentile bound", () => {
     const { text, params } = buildAreasQuery({ ...base, lad: "E08000003", maxPercentile: 10 });
     expect(text).toContain("sv.geo_code IN (SELECT DISTINCT lsoa_code FROM geo_lookup WHERE lad_code = $2)");
     expect(text).toContain("sp.percentile <= $3");
-    expect(params).toEqual(["deprivation.imd_decile", "E08000003", 10, 50]);
+    expect(params).toEqual(["deprivation.imd_decile", "E08000003", 10, "national", 50]);
+  });
+
+  /* AR-408: scope parameter picks which signal_percentiles rows drive
+     percentile filters + ranking. Regional scope surfaces within-region
+     outperformers instead of the national flatten. */
+  it("uses scope='regional' when the query asks for it", () => {
+    const { text, params } = buildAreasQuery({ ...base, scope: "regional" });
+    expect(text).toContain("sp.scope = $2");
+    expect(params).toEqual(["deprivation.imd_decile", "regional", 50]);
   });
 });
 
@@ -59,17 +69,17 @@ describe("queryAreas", () => {
       { geo_type: "lsoa", geo_code: "E01000001", raw_value: 3, normalized_value: 0.3, percentile: "30" },
       { geo_type: "lsoa", geo_code: "E01000002", raw_value: null, normalized_value: null, percentile: null },
     ];
-    const out = await queryAreas({ signal: "deprivation.imd_decile", sort: "percentile", limit: 50 }, run);
+    const out = await queryAreas({ signal: "deprivation.imd_decile", sort: "percentile", limit: 50, scope: "national" }, run);
     expect(out[0]).toEqual({ geo_type: "lsoa", geo_code: "E01000001", value: 3, normalized_value: 0.3, percentile: 30 });
     expect(out[1].value).toBeNull();
   });
 
   it("passes the built SQL + params to the runner", async () => {
     const run = vi.fn<Runner>(async () => []);
-    await queryAreas({ signal: "crime.total_12m", country: "England", sort: "value_desc", limit: 5 }, run);
+    await queryAreas({ signal: "crime.total_12m", country: "England", sort: "value_desc", limit: 5, scope: "national" }, run);
     const [text, params] = run.mock.calls[0];
     expect(text).toContain("ORDER BY sv.raw_value DESC NULLS LAST");
-    expect(params).toEqual(["crime.total_12m", "E%", 5]);
+    expect(params).toEqual(["crime.total_12m", "E%", "national", 5]);
   });
 });
 

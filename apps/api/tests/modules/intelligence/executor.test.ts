@@ -72,6 +72,8 @@ describe("executePlan — rank_areas", () => {
       signal: "property.median_price", country: "England", lad: undefined,
       sort: "value", limit: 25,
       minPercentile: 10, maxPercentile: 90, minValue: 50000, maxValue: 5000000,
+      /* AR-408: executor defaults rank_areas to scope='national'. */
+      scope: "national",
     });
   });
 });

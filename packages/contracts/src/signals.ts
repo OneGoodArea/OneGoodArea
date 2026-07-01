@@ -99,10 +99,16 @@ export const SignalSchema = z.object({
       ascending by raw value). Present only when served from the store + a
       normalization run; absent on live-fetched signals. Read with `direction`. */
   normalized_value: z.number().nullable().optional(),
-  /** Percentile rank (0-100) within the signal's comparison scope
-      (national-within-country for deprivation). Present only when store-backed
-      + normalized. */
+  /** Percentile rank (0-100) within the signal's NATIONAL comparison scope
+      (per-country: England LSOAs ranked against England, etc.). Present only
+      when store-backed + normalized. */
   percentile: z.number().min(0).max(100).nullable().optional(),
+  /** AR-408: percentile rank (0-100) within the signal's REGIONAL scope
+      (per-ONS-region: North West LSOAs ranked against other North West
+      LSOAs). Complementary to `percentile`: retailers/lenders operating
+      within one region want the within-region ranking, not the flattened
+      national one. Present only when store-backed + normalized. */
+  regional_percentile: z.number().min(0).max(100).nullable().optional(),
   direction: SignalDirectionSchema,
   /** 0..1 data-trust for THIS signal. v1 = availability/sample-based heuristic;
       the calibrated confidence model lands with the store (Phase 7). */

@@ -57,23 +57,55 @@ export function buildPercentilesSql(): string {
           DO UPDATE SET percentile = EXCLUDED.percentile, computed_at = NOW()`;
 }
 
+/** AR-408: INSERT/UPSERT regional (ONS region) percentile (0-100) into
+    signal_percentiles for one signal. PARTITION BY ge.region so each
+    LSOA is ranked only against other LSOAs in the same ONS region
+    (E12000001 North East, E12000002 North West, ...). Regions with a
+    single LSOA get percentile 0 (PERCENT_RANK definition); rows with
+    NULL region are excluded so we don't spam scope_key=''.
+
+    Retailer + lender ICPs both need this: national percentiles flatten
+    the "top decile of the North West" signal into "just Manchester" or
+    "top decile of London" into "any London postcode is high". Regional
+    isolates the within-market outperformers. PURE string. */
+export function buildRegionalPercentilesSql(): string {
+  return `INSERT INTO signal_percentiles
+            (signal_key, geo_type, geo_code, scope, scope_key, percentile, computed_at)
+          SELECT v.signal_key, v.geo_type, v.geo_code, 'regional', ge.region,
+                 PERCENT_RANK() OVER (PARTITION BY ge.region ORDER BY v.raw_value) * 100,
+                 NOW()
+            FROM signal_values v
+            JOIN geo_entities ge ON ge.geo_type = v.geo_type AND ge.geo_code = v.geo_code
+           WHERE v.signal_key = $1
+             AND v.raw_value IS NOT NULL
+             AND ge.region IS NOT NULL
+          ON CONFLICT (signal_key, geo_type, geo_code, scope, scope_key)
+          DO UPDATE SET percentile = EXCLUDED.percentile, computed_at = NOW()`;
+}
+
 export interface NormalizeSummary {
   signals: string[];
 }
 
-/** Normalize an arbitrary set of signal keys (national-within-country).
-    Reused by every source's refresh (deprivation, prices, …) so normalization
-    lives in ONE place. Idempotent: re-running recomputes in place. */
+/** Normalize an arbitrary set of signal keys.
+    Writes:
+      - signal_values.normalized_value (national-within-country, 0-1)
+      - signal_percentiles scope='national' (per-country ranking, 0-100)
+      - signal_percentiles scope='regional' (per-ONS-region ranking, 0-100) (AR-408)
+    All three run per key so a single normalize:signals invocation covers
+    every scope callers can query. Idempotent: re-running recomputes in place. */
 export async function normalizeSignals(
   keys: readonly string[],
   run: QueryRunner = runDefault,
 ): Promise<NormalizeSummary> {
   const normalizedValueSql = buildNormalizedValueSql();
   const percentilesSql = buildPercentilesSql();
+  const regionalPercentilesSql = buildRegionalPercentilesSql();
 
   for (const key of keys) {
     await run(normalizedValueSql, [key]);
     await run(percentilesSql, [key]);
+    await run(regionalPercentilesSql, [key]);
   }
 
   return { signals: [...keys] };

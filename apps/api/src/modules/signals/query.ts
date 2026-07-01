@@ -27,6 +27,15 @@ const SORT_SQL: Record<AreasSort, string> = {
   value_desc: "sv.raw_value DESC NULLS LAST",
 };
 
+/* AR-408: comparison scope for percentile filters + ranking. Default
+   'national' preserves existing callers. 'regional' filters/ranks using
+   the per-ONS-region percentile so within-region outperformers rank
+   above weak areas that just happen to be in a competitive region. */
+export type AreasScope = "national" | "regional";
+export function isAreasScope(v: unknown): v is AreasScope {
+  return v === "national" || v === "regional";
+}
+
 export const AREAS_LIMIT_DEFAULT = 100;
 export const AREAS_LIMIT_MAX = 1000;
 
@@ -40,6 +49,8 @@ export interface AreasQuery {
   maxValue?: number;
   sort: AreasSort;
   limit: number;
+  /** AR-408: which signal_percentiles.scope column to filter+rank by. */
+  scope: AreasScope;
 }
 
 export type Runner = (text: string, params: unknown[]) => Promise<Record<string, unknown>[]>;
@@ -96,6 +107,15 @@ export function parseAreasQuery(raw: Record<string, unknown>): { ok: true; query
     limit = Math.min(n, AREAS_LIMIT_MAX);
   }
 
+  /* AR-408: scope defaults to 'national' when omitted. */
+  let scope: AreasScope = "national";
+  if (raw.scope !== undefined) {
+    if (!isAreasScope(raw.scope)) {
+      return { ok: false, error: "scope must be one of: national, regional." };
+    }
+    scope = raw.scope;
+  }
+
   return {
     ok: true,
     query: {
@@ -104,12 +124,13 @@ export function parseAreasQuery(raw: Record<string, unknown>): { ok: true; query
       minPercentile: minPercentile as number | undefined,
       minValue: minValue as number | undefined,
       maxValue: maxValue as number | undefined,
-      sort, limit,
+      sort, limit, scope,
     },
   };
 }
 
-/** PURE: build the parameterized SQL for a cross-area query. */
+/** PURE: build the parameterized SQL for a cross-area query.
+    AR-408: sp.scope filter picks up q.scope (national or regional). */
 export function buildAreasQuery(q: AreasQuery): { text: string; params: unknown[] } {
   const where: string[] = ["sv.signal_key = $1"];
   const params: unknown[] = [q.signal];
@@ -121,13 +142,14 @@ export function buildAreasQuery(q: AreasQuery): { text: string; params: unknown[
   if (q.maxValue !== undefined) { where.push(`sv.raw_value <= $${p}`); params.push(q.maxValue); p++; }
   if (q.minValue !== undefined) { where.push(`sv.raw_value >= $${p}`); params.push(q.minValue); p++; }
 
+  const scopeP = p; params.push(q.scope); p++;
   params.push(q.limit);
   const text =
     `SELECT sv.geo_type, sv.geo_code, sv.raw_value, sv.normalized_value, sp.percentile
        FROM signal_values sv
        LEFT JOIN signal_percentiles sp
          ON sp.signal_key = sv.signal_key AND sp.geo_type = sv.geo_type
-        AND sp.geo_code = sv.geo_code AND sp.scope = 'national'
+        AND sp.geo_code = sv.geo_code AND sp.scope = $${scopeP}
       WHERE ${where.join(" AND ")}
       ORDER BY ${SORT_SQL[q.sort]}
       LIMIT $${p}`;

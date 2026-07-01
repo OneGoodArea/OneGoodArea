@@ -140,13 +140,14 @@ export async function fetchAreaSources(area: string): Promise<FetchedArea | null
 
     `fetch_mode` reports provenance honestly: "hybrid" when deprivation is
     store-backed and the rest are live, "live" otherwise. Store-backed signals
-    are enriched with their normalized_value + percentile. See ADR 0004. */
+    are enriched with their normalized_value + national percentile + regional
+    percentile (AR-408). See ADR 0004. */
 export async function getAreaProfile(area: string): Promise<AreaProfile | null> {
   const fetched = await fetchAreaSources(area);
   if (!fetched) return null;
   const { geo, sources, depFromStore, propertyFromStore, crimeFromStore } = fetched;
 
-  type NormMap = Record<string, { normalized_value: number | null; percentile: number | null }>;
+  type NormMap = Record<string, { normalized_value: number | null; percentile: number | null; regional_percentile: number | null }>;
   const emptyNorm: NormMap = {};
   const [depNormalization, propertyNormalization, crimeNormalization] = await Promise.all([
     depFromStore ? readDeprivationNormalization(geo.lsoa) : Promise.resolve(emptyNorm),
@@ -167,6 +168,7 @@ export async function getAreaProfile(area: string): Promise<AreaProfile | null> 
       if (n) {
         s.normalized_value = n.normalized_value;
         s.percentile = n.percentile;
+        s.regional_percentile = n.regional_percentile;
       }
     }
   }

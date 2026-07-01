@@ -607,6 +607,16 @@ export const MIGRATIONS: Migration[] = [
         PRIMARY KEY (geo_type, geo_code)
       )`,
       `CREATE INDEX IF NOT EXISTS idx_geo_entities_country ON geo_entities (country)`,
+      /* AR-408: region column so the normalize job can PARTITION BY
+         region for scope='regional' percentiles. Nullable; backfilled
+         from geo_lookup (which carries region per postcode) on
+         migration. Postcodes within one LSOA never span regions, so
+         the DISTINCT lsoa_code -> region mapping is well-defined. */
+      `ALTER TABLE geo_entities ADD COLUMN IF NOT EXISTS region TEXT`,
+      `UPDATE geo_entities ge SET region = gr.region
+         FROM (SELECT DISTINCT lsoa_code, region FROM geo_lookup WHERE region IS NOT NULL) gr
+        WHERE ge.geo_type = 'lsoa' AND ge.geo_code = gr.lsoa_code AND ge.region IS NULL`,
+      `CREATE INDEX IF NOT EXISTS idx_geo_entities_region ON geo_entities (region)`,
     ],
   },
   {

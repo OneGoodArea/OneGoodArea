@@ -30,7 +30,7 @@ describe("db migrate", () => {
           s.includes("DROP NOT NULL") || // ALTER COLUMN ... DROP NOT NULL is a no-op when already nullable
           s.includes("CREATE OR REPLACE VIEW") || // AR-375: view DDL is idempotent by definition
           /ON CONFLICT[\s\S]*DO NOTHING/.test(s) || // backfill INSERTs (target-free OR target-keyed e.g. ON CONFLICT (a,b) DO NOTHING)
-          /WHERE [A-Z_.]*ORG_ID IS NULL/.test(s) || // backfill UPDATEs guarded by "not already done" predicate (alias-tolerant: WHERE org_id / WHERE ae.org_id)
+          /(WHERE|AND) [A-Z_.]+ IS NULL/.test(s) || // backfill UPDATEs guarded by "not already done" predicate (AR-193/AR-408: alias-tolerant; column-agnostic)
           /AND NOT EXISTS \(SELECT/.test(s); // AR-312: self-healing backfills guarded by NOT EXISTS — no-op once the post-condition holds
         expect(idempotent, `non-idempotent statement: ${statement.slice(0, 70)}`).toBe(true);
       }

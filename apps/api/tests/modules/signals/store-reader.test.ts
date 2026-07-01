@@ -44,14 +44,14 @@ describe("readDeprivationFromStore", () => {
 });
 
 describe("readDeprivationNormalization", () => {
-  it("maps normalized_value + percentile by signal key", async () => {
+  it("maps normalized_value + percentile + regional_percentile by signal key", async () => {
     const run: Reader = async () => [
-      { signal_key: "deprivation.imd_rank", normalized_value: 0.786, percentile: "78.58" },
-      { signal_key: "deprivation.imd_decile", normalized_value: 0.5, percentile: null },
+      { signal_key: "deprivation.imd_rank", normalized_value: 0.786, percentile: "78.58", regional_percentile: "82.1" },
+      { signal_key: "deprivation.imd_decile", normalized_value: 0.5, percentile: null, regional_percentile: null },
     ];
     const m = await readDeprivationNormalization("E01000001", run);
-    expect(m["deprivation.imd_rank"]).toEqual({ normalized_value: 0.786, percentile: 78.58 });
-    expect(m["deprivation.imd_decile"]).toEqual({ normalized_value: 0.5, percentile: null });
+    expect(m["deprivation.imd_rank"]).toEqual({ normalized_value: 0.786, percentile: 78.58, regional_percentile: 82.1 });
+    expect(m["deprivation.imd_decile"]).toEqual({ normalized_value: 0.5, percentile: null, regional_percentile: null });
   });
 
   it("returns {} for an empty geo code without querying", async () => {
@@ -206,10 +206,10 @@ describe("readCrimeFromStore", () => {
 });
 
 describe("readCrimeNormalization", () => {
-  it("maps normalized_value + percentile for crime.total_12m", async () => {
-    const run: Reader = async () => [{ signal_key: "crime.total_12m", normalized_value: 0.42, percentile: "41.50" }];
+  it("maps normalized_value + percentile + regional_percentile for crime.total_12m", async () => {
+    const run: Reader = async () => [{ signal_key: "crime.total_12m", normalized_value: 0.42, percentile: "41.50", regional_percentile: "38.20" }];
     const m = await readCrimeNormalization("E01005207", run);
-    expect(m["crime.total_12m"]).toEqual({ normalized_value: 0.42, percentile: 41.5 });
+    expect(m["crime.total_12m"]).toEqual({ normalized_value: 0.42, percentile: 41.5, regional_percentile: 38.2 });
   });
 
   it("returns {} for an empty geo code without querying", async () => {
@@ -220,12 +220,12 @@ describe("readCrimeNormalization", () => {
 });
 
 describe("readPropertyNormalization", () => {
-  it("maps normalized_value + percentile for median_price", async () => {
+  it("maps normalized_value + percentile + regional_percentile for median_price", async () => {
     const run: Reader = async () => [
-      { signal_key: "property.median_price", normalized_value: 0.99, percentile: "99.24" },
+      { signal_key: "property.median_price", normalized_value: 0.99, percentile: "99.24", regional_percentile: "95.10" },
     ];
     const m = await readPropertyNormalization("E01000002", run);
-    expect(m["property.median_price"]).toEqual({ normalized_value: 0.99, percentile: 99.24 });
+    expect(m["property.median_price"]).toEqual({ normalized_value: 0.99, percentile: 99.24, regional_percentile: 95.1 });
   });
 
   it("returns {} for an empty geo code without querying", async () => {
