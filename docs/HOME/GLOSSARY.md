@@ -3,7 +3,7 @@
 Domain terms used across the codebase + docs. Alphabetised.
 
 ## ADR
-Architecture Decision Record. Short, durable record of a load-bearing decision with context + alternatives considered. See [`adr/`](../adr/) for the 35-strong catalog.
+Architecture Decision Record. Short, durable record of a load-bearing decision with context + alternatives considered. See [`DECISIONS/`](../DECISIONS/) for the 37-strong catalog.
 
 ## .artifacts/
 Repo-root directory for **generated** test reports + coverage + build outputs. Gitignored. Plan 007 phase 0.

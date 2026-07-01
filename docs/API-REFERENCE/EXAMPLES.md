@@ -95,6 +95,6 @@ Response includes plan + entitlements + your org's branding + your key's allowli
 
 ## More
 
-- `.http` files runnable in VS Code REST Client / httpyac: [`docs/TESTING/http/`](../TESTING/http/)
+- `.http` files runnable in VS Code REST Client / httpyac: [`scripts/http/`](../../scripts/http/)
 - Live OpenAPI spec: [/openapi.json](https://www.onegoodarea.com/openapi.json)
 - Interactive Scalar reference: [/docs/api-reference](https://www.onegoodarea.com/docs/api-reference)

@@ -69,7 +69,7 @@ Phrase-search map. Find your question on the left; the doc on the right has the 
 | Question | Doc |
 |---|---|
 | What manual test plans exist? | [`TESTING/manual/`](../TESTING/manual/) |
-| Where are the .http files? | [`TESTING/http/`](../TESTING/http/) |
+| Where are the .http files? | [`scripts/http/`](../../scripts/http/) |
 | Where are known bugs tracked? | [`TESTING/bugs/`](../TESTING/bugs/) |
 
 ## Design (visual + narrative)
@@ -78,7 +78,7 @@ Phrase-search map. Find your question on the left; the doc on the right has the 
 |---|---|
 | What's the active design brief? | [`DESIGN/AR-204-app-redesign.md`](../DESIGN/AR-204-app-redesign.md) |
 | Where are AR-204 locked decisions? | [`DESIGN/AR-204-app-redesign.md`](../DESIGN/AR-204-app-redesign.md) section 6-section 11 |
-| What's the methodology / docs reskin context? | [`DESIGN/DEPRECATED-AR-204-methodology-docs-delta.md`](../DESIGN/DEPRECATED-AR-204-methodology-docs-delta.md) (historical) |
+| What's the methodology / docs reskin context? | [`ARCHIVE/DEPRECATED-AR-204-methodology-docs-delta.md`](../ARCHIVE/DEPRECATED-AR-204-methodology-docs-delta.md) (historical) |
 | What's the product-pages spec pack? | [`DESIGN/AR-204-product-pages-spec-pack.md`](../DESIGN/AR-204-product-pages-spec-pack.md) |
 
 ## See also

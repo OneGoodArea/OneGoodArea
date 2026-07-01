@@ -81,4 +81,20 @@ Logs land here as tickets close. Newest first.
 
 | Ticket | Primitive | Merged |
 |---|---|---|
-| _(none yet)_ | | |
+| [AR-246](./AR-246_phase_0_5_polish.md) | Phase 0.5 polish | 2026-06-07 (#151) |
+| [AR-245](./AR-245_chart_shell.md) | `<ChartShell>` | 2026-06-07 (#148) |
+| [AR-244](./AR-244_filter_builder.md) | `<FilterBuilder>` | 2026-06-06 (#147) |
+| [AR-243](./AR-243_breadcrumb.md) | `<Breadcrumb>` | 2026-06-06 (#146) |
+| [AR-242](./AR-242_pagination.md) | `<Pagination>` | 2026-06-06 (#145) |
+| [AR-241](./AR-241_stats_card.md) | `<StatsCard>` | 2026-06-06 (#144) |
+| [AR-240](./AR-240_code_block.md) | `<CodeBlock>` | 2026-06-06 (#142) |
+| [AR-239](./AR-239_tooltip.md) | `<Tooltip>` | 2026-06-06 (#141) |
+| [AR-238](./AR-238_empty_state.md) | `<EmptyState>` | 2026-06-06 (#140) |
+| [AR-233](./AR-233_sidebar.md) | `<Sidebar>` | 2026-06-06 (#138) |
+| [AR-230](./AR-230_data_table.md) | `<DataTable>` | 2026-06-06 (#137) |
+| [AR-228](./AR-228_tabs.md) | `<Tabs>` | 2026-06-06 (#136) |
+| [AR-222](./AR-222_toast.md) | `<Toast>` + provider | 2026-06-05 (#135) |
+| [AR-221](./AR-221_dropdown_menu.md) | `<DropdownMenu>` | 2026-06-05 (#134) |
+| [AR-220](./AR-220_modal.md) | `<Modal>` | 2026-06-05 (#133) |
+| [AR-219](./AR-219_form_group.md) | `<FormGroup>` + inputs | 2026-06-05 (#132) |
+| [AR-218](./AR-218_user_intent_source_columns.md) | `users.intent` + signup columns | 2026-06-05 (#131) |

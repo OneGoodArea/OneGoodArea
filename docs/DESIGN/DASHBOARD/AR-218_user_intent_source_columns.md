@@ -15,7 +15,7 @@ The schema foundation for the immaculate sign-up → /welcome → dashboard user
 
 All three are nullable. Existing users have NULL until they revisit `/welcome` (Phase 1 prompts them).
 
-Also shipped: the implementation plan for the whole AR-217 Epic ([`plan/016_dashboard_redesign_ar217.md`](../../plan/016_dashboard_redesign_ar217.md)) and the per-ticket work-log scaffold at [`docs/DESIGN/DASHBOARD/README.md`](./README.md). These are Epic-level setup that happened to ship in the first sub-ticket's PR.
+Also shipped: the implementation plan for the whole AR-217 Epic ([`plan/016_dashboard_redesign_ar217.md`](../../../plan/016_dashboard_redesign_ar217.md)) and the per-ticket work-log scaffold at [`docs/DESIGN/DASHBOARD/README.md`](./README.md). These are Epic-level setup that happened to ship in the first sub-ticket's PR.
 
 ## Files
 

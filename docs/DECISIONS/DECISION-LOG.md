@@ -35,7 +35,12 @@ Major decisions in chronological order. Detailed reasoning lives in the linked A
 - **Plan 006: test/prod separation** — every `*.test.ts` moved out of `src/` into `tests/`; `@/` alias added to apps/api + reused in apps/web. ~125 test files moved, 461 imports rewritten.
 - **Plan 007: documentation organisation** — three-tier `docs/` hierarchy. Test artifacts routed to gitignored `.artifacts/`. Manual QA docs centralised under `docs/TESTING/`.
 
+## 2026 Q2 late — prod parity + Brand v3
+
+- **Prod container parity** (ADR 0035, Plan 008) — production-image workflow (`make container-*`) mirroring Render; see `docs/ARCHITECTURE/CONTAINERS.md`.
+- **Brand v3 close-out + `.aiq` strip** (ADR 0036) — token-holdout migrations, co-located CSS convention, "no light-touch migrations" rule.
+- **Brand v3 dashboard primitives** (ADR 0037) — the shipped primitive set + extract-on-second-use convention + dark-surface vocabulary; opens the AR-217 dashboard redesign.
+
 ## See also
 
-- [`README.md`](./README.md) — ADRs by category
-- [`docs/DECISIONS/README.md`](./README.md) — full ADR table
+- [`README.md`](./README.md) — full ADR table, by category
