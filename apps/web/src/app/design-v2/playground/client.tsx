@@ -904,7 +904,7 @@ function NudgeStrip({ callsUsed }: { callsUsed: number }) {
   return (
     <div className="oga-play-nudge" role="note">
       <p className="oga-play-nudge__title">
-        You've made {callsUsed} calls. Ready for unlimited?
+        You&apos;ve made {callsUsed} calls. Ready for unlimited?
       </p>
       <p className="oga-play-nudge__lead">
         Free sandbox key. No credit card. Same endpoints, no session cap.
