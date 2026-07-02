@@ -1,4 +1,4 @@
-.PHONY: compose-down api-test-container api-test-coverage-container web-test-container web-test-coverage-container build-api-test-image build-web-test-image build-stripe-mock-test-image build-test-images
+.PHONY: compose-down api-test-container api-test-coverage-container web-test-container web-test-coverage-container build-api-test-image build-web-test-image build-stripe-mock-test-image build-test-images test-all-container
 
 COMPOSE_TEST_FILE ?= compose/compose.test.yml
 CTR_COMPOSE_TEST_CMD = $(CTR_COMPOSE) -f $(COMPOSE_TEST_FILE) --project-name oga-test
@@ -32,3 +32,14 @@ build-stripe-mock-test-image: ## Build the stripe-mock-test Docker image
 
 build-test-images: ## Build all test Docker images
 	$(CTR_COMPOSE_TEST_CMD) build stripe-mock-test api-test web-test
+
+test-all-container: ## Run API and web tests in parallel (uses different project names)
+	@set -e; TMP=$$(mktemp); \
+	( $(CTR_COMPOSE) -f $(COMPOSE_TEST_FILE) --project-name oga-test-api run $(BUILD_FLAG_TEST) --rm --entrypoint sh api-test -lc "npm install --no-audit --no-fund && npm run test -w @onegoodarea/api"; echo $$? > $$TMP.api; $(CTR_COMPOSE) -f $(COMPOSE_TEST_FILE) --project-name oga-test-api down > /dev/null 2>&1 ) & \
+	( $(CTR_COMPOSE) -f $(COMPOSE_TEST_FILE) --project-name oga-test-web run $(BUILD_FLAG_TEST) --rm --entrypoint sh web-test -lc "npm run test -w @onegoodarea/web"; echo $$? > $$TMP.web; $(CTR_COMPOSE) -f $(COMPOSE_TEST_FILE) --project-name oga-test-web down > /dev/null 2>&1 ) & \
+	wait; \
+	API_EXIT=$$(cat $$TMP.api); WEB_EXIT=$$(cat $$TMP.web); rm -f $$TMP.*; \
+	if [ $$API_EXIT -ne 0 ] || [ $$WEB_EXIT -ne 0 ]; then \
+		echo "Tests failed: API exit=$$API_EXIT, Web exit=$$WEB_EXIT"; \
+		exit 1; \
+	fi
