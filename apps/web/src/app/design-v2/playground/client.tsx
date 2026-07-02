@@ -1,31 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Nav } from "../_shared/nav";
 import { Footer } from "../_shared/footer";
 import { TurnstileWidget } from "./turnstile-widget";
 import "./playground.css";
 
-/* /playground client. PR3 wired the first endpoint (GET /v1/area) end
-   to end. AR-435 adds the Cloudflare Turnstile widget so /playground
-   works once TURNSTILE_SECRET_KEY is set on the API.
-
-   Falls back to no-widget mint when NEXT_PUBLIC_TURNSTILE_SITE_KEY is
-   unset (local dev without Turnstile keys). */
+/* /playground client. PR4 fans out to all seven tabs:
+     - Area: GET /v1/area (postcode)
+     - Score: POST /v1/score (postcode + preset)
+     - Peers: POST /v1/peers (target postcode + k)
+     - Rank: GET /v1/areas (signal + limit + percentile_gte)
+     - Insights: POST /v1/insights (peer-relative signal_key + country + k)
+     - Forecast: POST /v1/forecast (target postcode + signal_key + horizon_months)
+     - NL Query: POST /v1/query (natural-language question) */
 
 /* Inlined at build time by Next.js. Undefined string in prod means we
    never configured Turnstile — the client skips the widget. */
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
-type TabId =
-  | "area"
-  | "score"
-  | "peers"
-  | "rank"
-  | "insights"
-  | "forecast"
-  | "nl";
+type TabId = "area" | "score" | "peers" | "rank" | "insights" | "forecast" | "nl";
 
 interface TabDef {
   id: TabId;
@@ -104,6 +99,11 @@ interface ProxyResponse {
   session: SessionSnapshot;
 }
 
+/* Nudge shows once the session has been used enough to prove real
+   interest but before rate caps stop the user. Tuned to fire at 5 —
+   enough exploration to see the API works, still 25 calls of headroom. */
+const NUDGE_AT = 5;
+
 export default function PlaygroundClient() {
   const [activeTab, setActiveTab] = useState<TabId>("area");
   const [session, setSession] = useState<SessionSnapshot | null>(null);
@@ -114,9 +114,8 @@ export default function PlaygroundClient() {
   const tokenRequestedRef = useRef(false);
 
   /* Mint the demo cookie once we have what we need. With Turnstile
-     configured, that means we need a solved token first. Without it
-     (local dev, or during an incident when we've killed the secret),
-     we mint immediately with an empty body — apps/api stub-passes. */
+     configured, wait for the solved token; without it (local dev),
+     mint immediately with an empty body — apps/api stub-passes. */
   useEffect(() => {
     if (tokenRequestedRef.current) return;
     if (TURNSTILE_SITE_KEY && !turnstileToken) return;
@@ -148,7 +147,9 @@ export default function PlaygroundClient() {
         body: JSON.stringify({ method, path, body }),
         credentials: "same-origin",
       });
-      const json = (await res.json().catch(() => ({}))) as ProxyResponse | { error?: string; code?: string };
+      const json = (await res.json().catch(() => ({}))) as
+        | ProxyResponse
+        | { error?: string; code?: string };
       if (!res.ok) {
         const err = json as { error?: string; code?: string };
         throw new PlaygroundError(err.code ?? `http_${res.status}`, err.error ?? "Proxy call failed");
@@ -163,7 +164,6 @@ export default function PlaygroundClient() {
   return (
     <div className="oga-root">
       <Nav />
-
       <PlaygroundHero session={session} tokenReady={tokenReady} tokenError={tokenError} />
 
       {TURNSTILE_SITE_KEY && !tokenReady && !tokenError && (
@@ -182,14 +182,11 @@ export default function PlaygroundClient() {
         <div className="oga-play__container">
           <TabBar active={activeTab} onSelect={setActiveTab} />
 
-          {activeTab === "area" ? (
-            <AreaWorkbench runProxy={runProxy} tokenReady={tokenReady} />
-          ) : (
-            <div className="oga-play-workbench__grid">
-              <QueryPanel tab={active} />
-              <ResponsePanel />
-            </div>
+          {session && session.calls_used >= NUDGE_AT && (
+            <NudgeStrip callsUsed={session.calls_used} />
           )}
+
+          <TabRouter activeTab={activeTab} runProxy={runProxy} tokenReady={tokenReady} />
 
           <FairUseNote />
         </div>
@@ -209,9 +206,35 @@ class PlaygroundError extends Error {
   }
 }
 
-/* Hero. Session chip shows counters once the first call lands. Until
-   then we render the token-ready state so users see the plumbing is
-   alive. */
+function TabRouter({
+  activeTab,
+  runProxy,
+  tokenReady,
+}: {
+  activeTab: TabId;
+  runProxy: (method: "GET" | "POST", path: string, body?: unknown) => Promise<ProxyResponse>;
+  tokenReady: boolean;
+}) {
+  const shared = { runProxy, tokenReady };
+  switch (activeTab) {
+    case "area":
+      return <AreaWorkbench {...shared} />;
+    case "score":
+      return <ScoreWorkbench {...shared} />;
+    case "peers":
+      return <PeersWorkbench {...shared} />;
+    case "rank":
+      return <RankWorkbench {...shared} />;
+    case "insights":
+      return <InsightsWorkbench {...shared} />;
+    case "forecast":
+      return <ForecastWorkbench {...shared} />;
+    case "nl":
+      return <NlWorkbench {...shared} />;
+  }
+}
+
+/* Hero */
 function PlaygroundHero({
   session,
   tokenReady,
@@ -229,28 +252,12 @@ function PlaygroundHero({
           <span className="oga-play-hero__eyebrow-sep" aria-hidden />
           <span>Live prod, no signup</span>
         </div>
-        <h1 className="oga-play-hero__title">
-          Try the API for real.
-        </h1>
+        <h1 className="oga-play-hero__title">Try the API for real.</h1>
         <p className="oga-play-hero__lead">
           Every response below is a live call against production. Same signals your paid
           integration would see. Same latency. Same numbers. Sign up when you want to use
           this in your own code.
         </p>
-        <ul className="oga-play-hero__proof">
-          <li>
-            <span className="oga-play-hero__proof-num">7</span>
-            <span className="oga-play-hero__proof-label">public endpoints</span>
-          </li>
-          <li>
-            <span className="oga-play-hero__proof-num">32k+</span>
-            <span className="oga-play-hero__proof-label">England LSOAs indexed</span>
-          </li>
-          <li>
-            <span className="oga-play-hero__proof-num">Live</span>
-            <span className="oga-play-hero__proof-label">signals, not fixtures</span>
-          </li>
-        </ul>
         <SessionChip session={session} tokenReady={tokenReady} tokenError={tokenError} />
       </div>
     </section>
@@ -312,9 +319,7 @@ function TabBar({
           <button
             key={t.id}
             type="button"
-            className={
-              "oga-play-tab" + (isActive ? " oga-play-tab--active" : "")
-            }
+            className={"oga-play-tab" + (isActive ? " oga-play-tab--active" : "")}
             aria-current={isActive}
             onClick={() => onSelect(t.id)}
           >
@@ -331,9 +336,96 @@ function TabBar({
   );
 }
 
-/* Wired workbench for GET /v1/area. Postcode input + Run. Response +
-   latency + upstream status rendered in the right pane. Errors surface
-   inline rather than blowing up. */
+/* ==============================================================
+   Workbench state + hook
+   ============================================================== */
+
+type LoadState = {
+  status: "idle" | "loading" | "ok" | "error";
+  startedAt?: number;
+  result?: ProxyResponse;
+  error?: { code: string; message: string };
+  /* The exact request we sent — powers the copy-as-curl button. */
+  lastRequest?: { method: "GET" | "POST"; path: string; body?: unknown };
+};
+
+function useRunner(
+  runProxy: (method: "GET" | "POST", path: string, body?: unknown) => Promise<ProxyResponse>,
+) {
+  const [state, setState] = useState<LoadState>({ status: "idle" });
+  const run = useCallback(
+    async (method: "GET" | "POST", path: string, body?: unknown) => {
+      setState({ status: "loading", startedAt: performance.now(), lastRequest: { method, path, body } });
+      try {
+        const result = await runProxy(method, path, body);
+        setState((s) => ({ status: "ok", result, lastRequest: s.lastRequest }));
+      } catch (err) {
+        const e = err as { code?: string; message?: string };
+        setState((s) => ({
+          status: "error",
+          error: { code: e.code ?? "network", message: e.message ?? "Request failed." },
+          lastRequest: s.lastRequest,
+        }));
+      }
+    },
+    [runProxy],
+  );
+  return { state, run };
+}
+
+/* ==============================================================
+   Chip row (pre-warmed inputs)
+   ============================================================== */
+
+function Chips({
+  label,
+  chips,
+  onPick,
+}: {
+  label: string;
+  chips: string[];
+  onPick: (value: string) => void;
+}) {
+  return (
+    <div className="oga-play-chips">
+      <span className="oga-play-chips__label">{label}</span>
+      <div className="oga-play-chips__list">
+        {chips.map((c) => (
+          <button
+            key={c}
+            type="button"
+            className="oga-play-chip"
+            onClick={() => onPick(c)}
+          >
+            {c}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const POSTCODE_CHIPS = ["SW1A 1AA", "M1 1AE", "L1 8JQ", "OX1 3QU", "B1 1AA"];
+const SIGNAL_CHIPS = [
+  "crime.total_12m",
+  "deprivation.imd_score",
+  "property.median_price_paid",
+  "schools.ofsted_pct_outstanding",
+];
+const PEER_Z_SIGNAL_CHIPS = [
+  "crime.total_12m_peer_relative_z",
+  "deprivation.imd_score_peer_relative_z",
+];
+const NL_QUESTION_CHIPS = [
+  "best areas for families in London",
+  "rank LAs by crime rate in England",
+  "cheap postcodes near Manchester",
+];
+
+/* ==============================================================
+   Area — GET /v1/area?postcode=...
+   ============================================================== */
+
 function AreaWorkbench({
   runProxy,
   tokenReady,
@@ -341,118 +433,350 @@ function AreaWorkbench({
   runProxy: (method: "GET" | "POST", path: string, body?: unknown) => Promise<ProxyResponse>;
   tokenReady: boolean;
 }) {
+  const { state, run } = useRunner(runProxy);
   const [postcode, setPostcode] = useState("SW1A 1AA");
-  const [state, setState] = useState<{
-    status: "idle" | "loading" | "ok" | "error";
-    startedAt?: number;
-    result?: ProxyResponse;
-    error?: { code: string; message: string };
-  }>({ status: "idle" });
-
-  const submit = useCallback(async () => {
+  const submit = () => {
     const clean = postcode.trim();
-    if (!clean) {
-      setState({ status: "error", error: { code: "empty", message: "Enter a UK postcode." } });
-      return;
-    }
-    setState({ status: "loading", startedAt: performance.now() });
-    try {
-      const path = `/v1/area?postcode=${encodeURIComponent(clean)}`;
-      const result = await runProxy("GET", path);
-      setState({ status: "ok", result });
-    } catch (err) {
-      if (err instanceof PlaygroundError) {
-        setState({ status: "error", error: { code: err.code, message: err.message } });
-      } else {
-        setState({ status: "error", error: { code: "network", message: "Network error. Try again." } });
-      }
-    }
-  }, [postcode, runProxy]);
-
-  const disabled = !tokenReady || state.status === "loading";
-
+    if (!clean) return;
+    void run("GET", `/v1/area?postcode=${encodeURIComponent(clean)}`);
+  };
   return (
     <div className="oga-play-workbench__grid">
       <section className="oga-play-panel oga-play-panel--query" aria-label="Area query">
-        <div className="oga-play-panel__head">
-          <span className="oga-play-panel__label">Query</span>
-          <code className="oga-play-panel__endpoint">GET /v1/area</code>
-        </div>
-        <p className="oga-play-panel__desc">
-          Full signal profile for one UK postcode: crime, deprivation, schools, transport,
-          property, amenities, environment.
-        </p>
-
+        <PanelHead label="Query" endpoint="GET /v1/area" />
+        <p className="oga-play-panel__desc">{TABS[0].description}</p>
+        <Chips label="Try" chips={POSTCODE_CHIPS} onPick={setPostcode} />
         <form
           className="oga-play-form"
           onSubmit={(e) => {
             e.preventDefault();
-            void submit();
+            submit();
           }}
         >
-          <label className="oga-play-form__label" htmlFor="area-postcode">
-            Postcode
-          </label>
-          <input
-            id="area-postcode"
-            className="oga-play-form__input"
-            type="text"
-            value={postcode}
-            onChange={(e) => setPostcode(e.target.value)}
-            placeholder="SW1A 1AA"
-            autoComplete="off"
-            spellCheck={false}
-          />
-          <button className="oga-play-form__submit" type="submit" disabled={disabled}>
-            {state.status === "loading" ? (
-              <span className="oga-play-form__submit-loading">
-                <span className="oga-play-spinner" aria-hidden />
-                <span>Running</span>
-              </span>
-            ) : (
-              "Run"
-            )}
-          </button>
+          <FormField label="Postcode" id="area-pc" value={postcode} onChange={setPostcode} placeholder="SW1A 1AA" />
+          <SubmitButton state={state} disabled={!tokenReady} />
         </form>
       </section>
-
       <ResponsePanelWired state={state} />
     </div>
   );
 }
 
-/* Live elapsed-ms ticker. Updates 10x/sec so the timer feels alive
-   without hammering the render loop. Only mounted while loading. */
-function useElapsedMs(startedAt: number | undefined): number {
-  const [now, setNow] = useState(() => performance.now());
-  useEffect(() => {
-    if (startedAt === undefined) return;
-    const id = setInterval(() => setNow(performance.now()), 100);
-    return () => clearInterval(id);
-  }, [startedAt]);
-  return startedAt === undefined ? 0 : Math.max(0, now - startedAt);
-}
+/* ==============================================================
+   Score — POST /v1/score { area, preset }
+   ============================================================== */
 
-/* Contextual status line. The API's typical warm latency is ~200-800ms
-   for /v1/area, ~1-3s for a cold postcode. These thresholds map to what
-   the user is actually waiting on — not to fake progress bars. */
-function loadingHint(elapsedMs: number): string {
-  if (elapsedMs < 800) return "Calling the API...";
-  if (elapsedMs < 2500) return "Computing signals for that postcode...";
-  if (elapsedMs < 6000) return "Still working. First calls on cold postcodes take longer.";
-  return "Almost there. Complex postcodes can take up to 10s.";
-}
+const PRESETS = ["moving", "business", "investing", "research"] as const;
 
-function ResponsePanelWired({
-  state,
+function ScoreWorkbench({
+  runProxy,
+  tokenReady,
 }: {
-  state: {
-    status: "idle" | "loading" | "ok" | "error";
-    startedAt?: number;
-    result?: ProxyResponse;
-    error?: { code: string; message: string };
-  };
+  runProxy: (method: "GET" | "POST", path: string, body?: unknown) => Promise<ProxyResponse>;
+  tokenReady: boolean;
 }) {
+  const { state, run } = useRunner(runProxy);
+  const [postcode, setPostcode] = useState("SW1A 1AA");
+  const [preset, setPreset] = useState<(typeof PRESETS)[number]>("business");
+  const submit = () => {
+    const clean = postcode.trim();
+    if (!clean) return;
+    void run("POST", "/v1/score", { area: clean, preset });
+  };
+  return (
+    <div className="oga-play-workbench__grid">
+      <section className="oga-play-panel oga-play-panel--query" aria-label="Score query">
+        <PanelHead label="Query" endpoint="POST /v1/score" />
+        <p className="oga-play-panel__desc">{TABS[1].description}</p>
+        <Chips label="Try" chips={POSTCODE_CHIPS} onPick={setPostcode} />
+        <form
+          className="oga-play-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit();
+          }}
+        >
+          <FormField label="Area (postcode)" id="score-pc" value={postcode} onChange={setPostcode} />
+          <SelectField
+            label="Preset"
+            id="score-preset"
+            value={preset}
+            options={PRESETS as unknown as string[]}
+            onChange={(v) => setPreset(v as (typeof PRESETS)[number])}
+          />
+          <SubmitButton state={state} disabled={!tokenReady} />
+        </form>
+      </section>
+      <ResponsePanelWired state={state} />
+    </div>
+  );
+}
+
+/* ==============================================================
+   Peers — POST /v1/peers { target: { postcode }, k }
+   ============================================================== */
+
+function PeersWorkbench({
+  runProxy,
+  tokenReady,
+}: {
+  runProxy: (method: "GET" | "POST", path: string, body?: unknown) => Promise<ProxyResponse>;
+  tokenReady: boolean;
+}) {
+  const { state, run } = useRunner(runProxy);
+  const [postcode, setPostcode] = useState("SW1A 1AA");
+  const [k, setK] = useState("10");
+  const submit = () => {
+    const clean = postcode.trim();
+    if (!clean) return;
+    const kNum = parseInt(k, 10);
+    void run("POST", "/v1/peers", {
+      target: { postcode: clean },
+      k: Number.isFinite(kNum) && kNum > 0 ? kNum : 10,
+    });
+  };
+  return (
+    <div className="oga-play-workbench__grid">
+      <section className="oga-play-panel oga-play-panel--query" aria-label="Peers query">
+        <PanelHead label="Query" endpoint="POST /v1/peers" />
+        <p className="oga-play-panel__desc">{TABS[2].description}</p>
+        <Chips label="Try" chips={POSTCODE_CHIPS} onPick={setPostcode} />
+        <form
+          className="oga-play-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit();
+          }}
+        >
+          <FormField label="Target postcode" id="peers-pc" value={postcode} onChange={setPostcode} />
+          <FormField label="k (number of peers)" id="peers-k" value={k} onChange={setK} inputMode="numeric" />
+          <SubmitButton state={state} disabled={!tokenReady} />
+        </form>
+      </section>
+      <ResponsePanelWired state={state} />
+    </div>
+  );
+}
+
+/* ==============================================================
+   Rank — GET /v1/areas?signal=&limit=&percentile_gte=
+   ============================================================== */
+
+function RankWorkbench({
+  runProxy,
+  tokenReady,
+}: {
+  runProxy: (method: "GET" | "POST", path: string, body?: unknown) => Promise<ProxyResponse>;
+  tokenReady: boolean;
+}) {
+  const { state, run } = useRunner(runProxy);
+  const [signal, setSignal] = useState("crime.total_12m");
+  const [limit, setLimit] = useState("10");
+  const [percentileGte, setPercentileGte] = useState("");
+  const submit = () => {
+    const s = signal.trim();
+    if (!s) return;
+    const params = new URLSearchParams({ signal: s });
+    const nLim = parseInt(limit, 10);
+    if (Number.isFinite(nLim) && nLim > 0) params.set("limit", String(nLim));
+    const nPct = parseFloat(percentileGte);
+    if (Number.isFinite(nPct)) params.set("percentile_gte", String(nPct));
+    void run("GET", `/v1/areas?${params.toString()}`);
+  };
+  return (
+    <div className="oga-play-workbench__grid">
+      <section className="oga-play-panel oga-play-panel--query" aria-label="Rank query">
+        <PanelHead label="Query" endpoint="GET /v1/areas" />
+        <p className="oga-play-panel__desc">{TABS[3].description}</p>
+        <Chips label="Signals" chips={SIGNAL_CHIPS} onPick={setSignal} />
+        <form
+          className="oga-play-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit();
+          }}
+        >
+          <FormField label="Signal key" id="rank-signal" value={signal} onChange={setSignal} />
+          <FormField label="Limit" id="rank-limit" value={limit} onChange={setLimit} inputMode="numeric" />
+          <FormField
+            label="Percentile floor (optional, 0-100)"
+            id="rank-pct"
+            value={percentileGte}
+            onChange={setPercentileGte}
+            inputMode="numeric"
+            placeholder="e.g. 90"
+          />
+          <SubmitButton state={state} disabled={!tokenReady} />
+        </form>
+      </section>
+      <ResponsePanelWired state={state} />
+    </div>
+  );
+}
+
+/* ==============================================================
+   Insights — POST /v1/insights { signal_key, country, k }
+   ============================================================== */
+
+function InsightsWorkbench({
+  runProxy,
+  tokenReady,
+}: {
+  runProxy: (method: "GET" | "POST", path: string, body?: unknown) => Promise<ProxyResponse>;
+  tokenReady: boolean;
+}) {
+  const { state, run } = useRunner(runProxy);
+  const [signal, setSignal] = useState("crime.total_12m_peer_relative_z");
+  const [country, setCountry] = useState("England");
+  const [k, setK] = useState("20");
+  const submit = () => {
+    const s = signal.trim();
+    if (!s) return;
+    const kNum = parseInt(k, 10);
+    void run("POST", "/v1/insights", {
+      signal_key: s,
+      country: country.trim() || undefined,
+      k: Number.isFinite(kNum) && kNum > 0 ? kNum : 20,
+    });
+  };
+  return (
+    <div className="oga-play-workbench__grid">
+      <section className="oga-play-panel oga-play-panel--query" aria-label="Insights query">
+        <PanelHead label="Query" endpoint="POST /v1/insights" />
+        <p className="oga-play-panel__desc">{TABS[4].description}</p>
+        <Chips label="Signals" chips={PEER_Z_SIGNAL_CHIPS} onPick={setSignal} />
+        <form
+          className="oga-play-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit();
+          }}
+        >
+          <FormField
+            label="Signal key (must end in _peer_relative_z)"
+            id="ins-signal"
+            value={signal}
+            onChange={setSignal}
+          />
+          <FormField label="Country" id="ins-country" value={country} onChange={setCountry} />
+          <FormField label="k (top outliers)" id="ins-k" value={k} onChange={setK} inputMode="numeric" />
+          <SubmitButton state={state} disabled={!tokenReady} />
+        </form>
+      </section>
+      <ResponsePanelWired state={state} />
+    </div>
+  );
+}
+
+/* ==============================================================
+   Forecast — POST /v1/forecast { target, signal_key, horizon_months }
+   ============================================================== */
+
+function ForecastWorkbench({
+  runProxy,
+  tokenReady,
+}: {
+  runProxy: (method: "GET" | "POST", path: string, body?: unknown) => Promise<ProxyResponse>;
+  tokenReady: boolean;
+}) {
+  const { state, run } = useRunner(runProxy);
+  const [postcode, setPostcode] = useState("SW1A 1AA");
+  const [signal, setSignal] = useState("crime.total_12m");
+  const [horizon, setHorizon] = useState("6");
+  const submit = () => {
+    const clean = postcode.trim();
+    const s = signal.trim();
+    if (!clean || !s) return;
+    const h = parseInt(horizon, 10);
+    void run("POST", "/v1/forecast", {
+      target: { postcode: clean },
+      signal_key: s,
+      horizon_months: Number.isFinite(h) && h > 0 ? h : 6,
+    });
+  };
+  return (
+    <div className="oga-play-workbench__grid">
+      <section className="oga-play-panel oga-play-panel--query" aria-label="Forecast query">
+        <PanelHead label="Query" endpoint="POST /v1/forecast" />
+        <p className="oga-play-panel__desc">{TABS[5].description}</p>
+        <Chips label="Postcodes" chips={POSTCODE_CHIPS} onPick={setPostcode} />
+        <Chips label="Signals" chips={SIGNAL_CHIPS} onPick={setSignal} />
+        <form
+          className="oga-play-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit();
+          }}
+        >
+          <FormField label="Target postcode" id="fc-pc" value={postcode} onChange={setPostcode} />
+          <FormField label="Signal key" id="fc-signal" value={signal} onChange={setSignal} />
+          <FormField label="Horizon (months)" id="fc-h" value={horizon} onChange={setHorizon} inputMode="numeric" />
+          <SubmitButton state={state} disabled={!tokenReady} />
+        </form>
+      </section>
+      <ResponsePanelWired state={state} />
+    </div>
+  );
+}
+
+/* ==============================================================
+   NL Query — POST /v1/query { question }
+   ============================================================== */
+
+function NlWorkbench({
+  runProxy,
+  tokenReady,
+}: {
+  runProxy: (method: "GET" | "POST", path: string, body?: unknown) => Promise<ProxyResponse>;
+  tokenReady: boolean;
+}) {
+  const { state, run } = useRunner(runProxy);
+  const [question, setQuestion] = useState("best areas for families in London");
+  const submit = () => {
+    const q = question.trim();
+    if (!q) return;
+    void run("POST", "/v1/query", { question: q });
+  };
+  return (
+    <div className="oga-play-workbench__grid">
+      <section className="oga-play-panel oga-play-panel--query" aria-label="NL query">
+        <PanelHead label="Query" endpoint="POST /v1/query" badge="AI" />
+        <p className="oga-play-panel__desc">{TABS[6].description}</p>
+        <p className="oga-play-panel__nl-cap">
+          AI queries cost more to run, so sessions are capped at 3. Sign up for unlimited.
+        </p>
+        <Chips label="Try" chips={NL_QUESTION_CHIPS} onPick={setQuestion} />
+        <form
+          className="oga-play-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit();
+          }}
+        >
+          <label className="oga-play-form__label" htmlFor="nl-q">
+            Question
+          </label>
+          <textarea
+            id="nl-q"
+            className="oga-play-form__textarea"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            rows={3}
+            placeholder="Ask a question..."
+          />
+          <SubmitButton state={state} disabled={!tokenReady} />
+        </form>
+      </section>
+      <ResponsePanelWired state={state} />
+    </div>
+  );
+}
+
+/* ==============================================================
+   Response panel (shared)
+   ============================================================== */
+
+function ResponsePanelWired({ state }: { state: LoadState }) {
   const elapsed = useElapsedMs(state.status === "loading" ? state.startedAt : undefined);
   const meta =
     state.status === "loading"
@@ -467,17 +791,23 @@ function ResponsePanelWired({
     <section className="oga-play-panel oga-play-panel--response" aria-label="Response panel">
       <div className="oga-play-panel__head">
         <span className="oga-play-panel__label">Response</span>
-        <span
-          className={
-            "oga-play-panel__meta" +
-            (state.status === "error" ? " oga-play-panel__meta--err" : "") +
-            (state.status === "ok" ? " oga-play-panel__meta--ok" : "") +
-            (state.status === "loading" ? " oga-play-panel__meta--live" : "")
-          }
-        >
-          {meta}
-        </span>
+        <div className="oga-play-panel__head-right">
+          {state.status === "ok" && state.lastRequest && (
+            <CopyCurlButton request={state.lastRequest} />
+          )}
+          <span
+            className={
+              "oga-play-panel__meta" +
+              (state.status === "error" ? " oga-play-panel__meta--err" : "") +
+              (state.status === "ok" ? " oga-play-panel__meta--ok" : "") +
+              (state.status === "loading" ? " oga-play-panel__meta--live" : "")
+            }
+          >
+            {meta}
+          </span>
+        </div>
       </div>
+
       {state.status === "idle" && (
         <div className="oga-play-panel__placeholder oga-play-panel__placeholder--tall">
           <p>Pick an endpoint above and run a query. The JSON response appears here.</p>
@@ -510,9 +840,7 @@ function ResponsePanelWired({
         </div>
       )}
       {state.status === "ok" && state.result && (
-        <pre className="oga-play-panel__json">
-          {JSON.stringify(state.result.response, null, 2)}
-        </pre>
+        <pre className="oga-play-panel__json">{JSON.stringify(state.result.response, null, 2)}</pre>
       )}
       {state.status === "ok" && state.result?.truncated && (
         <p className="oga-play-panel__truncated">
@@ -523,37 +851,202 @@ function ResponsePanelWired({
   );
 }
 
-/* Placeholder query panel for the tabs PR4 will fan out. */
-function QueryPanel({ tab }: { tab: TabDef }) {
+/* ==============================================================
+   Copy-as-curl
+   ============================================================== */
+
+function CopyCurlButton({
+  request,
+}: {
+  request: { method: "GET" | "POST"; path: string; body?: unknown };
+}) {
+  const [copied, setCopied] = useState(false);
+  const curl = useMemo(() => buildCurl(request), [request]);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(curl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      /* no clipboard permission - silently no-op */
+    }
+  };
   return (
-    <section className="oga-play-panel oga-play-panel--query" aria-label="Query panel">
-      <div className="oga-play-panel__head">
-        <span className="oga-play-panel__label">Query</span>
-        <code className="oga-play-panel__endpoint">{tab.endpoint}</code>
-      </div>
-      <p className="oga-play-panel__desc">{tab.description}</p>
-      <div className="oga-play-panel__placeholder">
-        <span className="oga-play-panel__placeholder-tag">PR4</span>
-        <p>
-          Form for this endpoint lands in the next PR. The Area tab is live now.
-        </p>
-      </div>
-    </section>
+    <button
+      type="button"
+      className="oga-play-panel__curl"
+      onClick={copy}
+      title="Copy this call as a curl command with your API key placeholder"
+    >
+      {copied ? "Copied" : "Copy as curl"}
+    </button>
   );
 }
 
-function ResponsePanel() {
+function buildCurl(request: { method: "GET" | "POST"; path: string; body?: unknown }): string {
+  const base = "https://www.onegoodarea.com";
+  const url = `${base}${request.path}`;
+  const lines = [`curl -X ${request.method} '${url}' \\`, `  -H 'Authorization: Bearer YOUR_API_KEY'`];
+  if (request.method === "POST" && request.body !== undefined) {
+    const body = JSON.stringify(request.body);
+    lines[lines.length - 1] += ` \\`;
+    lines.push(`  -H 'Content-Type: application/json' \\`);
+    lines.push(`  -d '${body.replace(/'/g, "'\\''")}'`);
+  }
+  return lines.join("\n");
+}
+
+/* ==============================================================
+   Signup nudge (shown once calls_used >= NUDGE_AT)
+   ============================================================== */
+
+function NudgeStrip({ callsUsed }: { callsUsed: number }) {
   return (
-    <section className="oga-play-panel oga-play-panel--response" aria-label="Response panel">
-      <div className="oga-play-panel__head">
-        <span className="oga-play-panel__label">Response</span>
-        <span className="oga-play-panel__meta">Idle</span>
-      </div>
-      <div className="oga-play-panel__placeholder oga-play-panel__placeholder--tall">
-        <p>Pick the Area tab and run a real query. Other endpoints wire up in the next PR.</p>
-      </div>
-    </section>
+    <div className="oga-play-nudge" role="note">
+      <p className="oga-play-nudge__title">
+        You've made {callsUsed} calls. Ready for unlimited?
+      </p>
+      <p className="oga-play-nudge__lead">
+        Free sandbox key. No credit card. Same endpoints, no session cap.
+      </p>
+      <Link href="/get-started" className="oga-play-nudge__cta">
+        Get a sandbox key
+      </Link>
+    </div>
   );
+}
+
+/* ==============================================================
+   Form primitives + helpers
+   ============================================================== */
+
+function PanelHead({
+  label,
+  endpoint,
+  badge,
+}: {
+  label: string;
+  endpoint: string;
+  badge?: "AI";
+}) {
+  return (
+    <div className="oga-play-panel__head">
+      <span className="oga-play-panel__label">{label}</span>
+      <div className="oga-play-panel__head-right">
+        <code className="oga-play-panel__endpoint">{endpoint}</code>
+        {badge && (
+          <span className="oga-play-tab__badge" aria-label={badge}>
+            {badge}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FormField({
+  label,
+  id,
+  value,
+  onChange,
+  placeholder,
+  inputMode,
+}: {
+  label: string;
+  id: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  inputMode?: "text" | "numeric";
+}) {
+  return (
+    <>
+      <label className="oga-play-form__label" htmlFor={id}>
+        {label}
+      </label>
+      <input
+        id={id}
+        className="oga-play-form__input"
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        inputMode={inputMode}
+        autoComplete="off"
+        spellCheck={false}
+      />
+    </>
+  );
+}
+
+function SelectField({
+  label,
+  id,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  id: string;
+  value: string;
+  options: string[];
+  onChange: (v: string) => void;
+}) {
+  return (
+    <>
+      <label className="oga-play-form__label" htmlFor={id}>
+        {label}
+      </label>
+      <select
+        id={id}
+        className="oga-play-form__select"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {options.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
+    </>
+  );
+}
+
+function SubmitButton({ state, disabled }: { state: LoadState; disabled: boolean }) {
+  return (
+    <button
+      className="oga-play-form__submit"
+      type="submit"
+      disabled={disabled || state.status === "loading"}
+    >
+      {state.status === "loading" ? (
+        <span className="oga-play-form__submit-loading">
+          <span className="oga-play-spinner" aria-hidden />
+          <span>Running</span>
+        </span>
+      ) : (
+        "Run"
+      )}
+    </button>
+  );
+}
+
+function useElapsedMs(startedAt: number | undefined): number {
+  const [now, setNow] = useState(() => performance.now());
+  useEffect(() => {
+    if (startedAt === undefined) return;
+    const id = setInterval(() => setNow(performance.now()), 100);
+    return () => clearInterval(id);
+  }, [startedAt]);
+  return startedAt === undefined ? 0 : Math.max(0, now - startedAt);
+}
+
+function loadingHint(elapsedMs: number): string {
+  if (elapsedMs < 800) return "Calling the API...";
+  if (elapsedMs < 2500) return "Computing signals for that query...";
+  if (elapsedMs < 6000) return "Still working. First calls on cold inputs take longer.";
+  return "Almost there. Complex queries can take up to 10s.";
 }
 
 function FairUseNote() {
