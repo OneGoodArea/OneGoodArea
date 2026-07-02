@@ -1,12 +1,550 @@
-/* /playground styles — Brand v3. PR1: layout + tab bar + empty
-   panels + signup CTA. No form/response styling yet; those land
-   with the wire-up PRs. */
+/* /playground styles. Brand v3. AR-437 step 1 rewrites the shell
+   into a Stripe/Vercel-style three-column layout: top bar + sidebar +
+   docs + runner. The old hero and horizontal tab bar are gone. */
 
 .oga-play__container {
-  max-width: 1200px;
+  max-width: 1440px;
   margin: 0 auto;
   width: 100%;
   padding: 0 clamp(20px, 4vw, var(--oga-7));
+}
+
+.oga-play-root {
+  background: var(--oga-bg);
+}
+
+/* ============================================================
+   Stage. centered card that "floats" against the tinted page
+   background. Gives the shell breathing room from the site Nav.
+   ============================================================ */
+
+.oga-play-stage {
+  padding: clamp(24px, 5vw, 56px) 0;
+}
+
+.oga-play-stage__container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3vw, var(--oga-4));
+}
+
+/* ============================================================
+   Shell. sidebar + main split, as an elevated card
+   ============================================================ */
+
+.oga-play-shell {
+  position: relative;
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  box-shadow: 0 1px 2px rgba(15, 15, 15, 0.03), 0 12px 40px rgba(15, 15, 15, 0.05);
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  gap: 0;
+  min-height: 640px;
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .oga-play-shell {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Monitor preview (AR-437 step 1). Static docs+sample block for the
+   fourth product since /v1/portfolios/* isn't safe in an anonymous
+   playground. */
+.oga-play-monitor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-4);
+}
+
+.oga-play-monitor__intro {
+  display: flex;
+  gap: var(--oga-3);
+  align-items: flex-start;
+  padding: var(--oga-4);
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  background: var(--oga-bg);
+}
+
+.oga-play-monitor__tag {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: var(--oga-signal, #ff5c1a);
+  color: var(--oga-signal-ink, #fff);
+  flex-shrink: 0;
+}
+
+.oga-play-monitor__intro p {
+  margin: 0;
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--oga-fg);
+}
+
+.oga-play-monitor__intro code {
+  font-family: var(--oga-font-mono);
+  font-size: 12.5px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+}
+
+.oga-play-monitor__cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--oga-4);
+  padding: var(--oga-3) var(--oga-4);
+  border-top: 1px solid var(--oga-border);
+}
+
+.oga-play-monitor__cta p {
+  margin: 0;
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  color: var(--oga-fg-muted);
+}
+
+.oga-play-monitor__cta-btn {
+  padding: 8px 14px;
+  background: var(--oga-fg);
+  color: var(--oga-white);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: var(--oga-radius-sm);
+  text-decoration: none;
+  transition: transform 120ms ease;
+  flex-shrink: 0;
+}
+
+.oga-play-monitor__cta-btn:hover {
+  transform: translateY(-1px);
+}
+
+.oga-play-sidebar {
+  border-right: 1px solid var(--oga-border);
+  background: var(--oga-bg);
+  padding: var(--oga-6) var(--oga-4);
+  align-self: stretch;
+}
+
+@media (max-width: 900px) {
+  .oga-play-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid var(--oga-border);
+    padding: var(--oga-4);
+  }
+}
+
+.oga-play-sidebar__group + .oga-play-sidebar__group {
+  margin-top: var(--oga-5);
+}
+
+.oga-play-sidebar__group-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  padding: 0 var(--oga-3);
+  margin-bottom: var(--oga-2);
+}
+
+.oga-play-sidebar__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.oga-play-sidebar__item {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--oga-3);
+  width: 100%;
+  padding: 9px var(--oga-3);
+  border-radius: var(--oga-radius-sm);
+  font-family: var(--oga-font-sans);
+  color: var(--oga-fg-muted);
+  transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+  text-align: left;
+  position: relative;
+}
+
+.oga-play-sidebar__item:hover {
+  background: var(--oga-white);
+  color: var(--oga-fg);
+  transform: translateX(2px);
+}
+
+.oga-play-sidebar__item--active {
+  background: var(--oga-white);
+  color: var(--oga-fg);
+  box-shadow: 0 1px 2px rgba(15, 15, 15, 0.04), 0 4px 12px rgba(15, 15, 15, 0.03);
+}
+
+.oga-play-sidebar__item--active::before {
+  content: "";
+  position: absolute;
+  left: -12px;
+  top: 25%;
+  bottom: 25%;
+  width: 3px;
+  background: var(--oga-signal, #ff5c1a);
+  border-radius: 0 3px 3px 0;
+}
+
+.oga-play-sidebar__item--active:hover {
+  background: var(--oga-white);
+  color: var(--oga-fg);
+  transform: none;
+}
+
+.oga-play-sidebar__method {
+  font-family: var(--oga-font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 3px 6px;
+  border-radius: 3px;
+  background: var(--oga-white);
+  color: var(--oga-fg-muted);
+  border: 1px solid var(--oga-border);
+  min-width: 40px;
+  text-align: center;
+}
+
+.oga-play-sidebar__item--active .oga-play-sidebar__method {
+  background: var(--oga-fg);
+  color: var(--oga-white);
+  border-color: var(--oga-fg);
+}
+
+.oga-play-sidebar__label {
+  font-size: 14px;
+  font-weight: 500;
+  flex: 1;
+}
+
+.oga-play-sidebar__badge {
+  font-family: var(--oga-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 2px 5px;
+  border-radius: 2px;
+  background: var(--oga-signal-dim);
+  color: var(--oga-signal-ink);
+}
+
+.oga-play-sidebar__item--active .oga-play-sidebar__badge {
+  background: var(--oga-signal);
+  color: var(--oga-signal-ink);
+}
+
+/* ============================================================
+   Split content: docs (left) + runner (right)
+   ============================================================ */
+
+.oga-play-main {
+  min-width: 0;
+  padding: var(--oga-6) var(--oga-6) var(--oga-5);
+}
+
+@media (max-width: 900px) {
+  .oga-play-main {
+    padding: var(--oga-5) var(--oga-4);
+  }
+}
+
+.oga-play-split {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: var(--oga-5);
+  margin-top: var(--oga-4);
+  margin-bottom: var(--oga-4);
+}
+
+@media (max-width: 1160px) {
+  .oga-play-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+.oga-play-docs {
+  min-width: 0;
+}
+
+.oga-play-docs__inner {
+  padding-right: var(--oga-3);
+}
+
+.oga-play-docs__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  margin-bottom: var(--oga-4);
+}
+
+.oga-play-docs__method {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: var(--oga-fg);
+  color: var(--oga-white);
+}
+
+.oga-play-docs__path {
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
+  color: var(--oga-fg);
+  background: var(--oga-bg);
+  padding: 4px 8px;
+  border-radius: 3px;
+}
+
+.oga-play-docs__title {
+  font-family: var(--oga-font-sans);
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: var(--oga-tracking-tight);
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0 0 var(--oga-3);
+}
+
+.oga-play-docs__desc {
+  font-family: var(--oga-font-sans);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-5);
+}
+
+.oga-play-docs__soon {
+  padding: var(--oga-4);
+  border: 1px dashed var(--oga-border);
+  border-radius: var(--oga-radius-sm);
+  display: flex;
+  gap: var(--oga-3);
+  align-items: flex-start;
+}
+
+.oga-play-docs__soon-tag {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 2px;
+  background: var(--oga-signal-dim);
+  color: var(--oga-signal-ink);
+  flex-shrink: 0;
+}
+
+.oga-play-docs__soon p {
+  margin: 0;
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+}
+
+/* Docs pane sections (AR-437 step 2) */
+.oga-play-docs__section {
+  margin-top: var(--oga-5);
+}
+
+.oga-play-docs__section--icp {
+  padding: var(--oga-4);
+  border-left: 3px solid var(--oga-signal, #ff5c1a);
+  background: var(--oga-bg);
+  border-radius: 0 var(--oga-radius-sm) var(--oga-radius-sm) 0;
+}
+
+.oga-play-docs__section--icp p {
+  margin: 0;
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--oga-fg);
+  font-style: italic;
+}
+
+.oga-play-docs__section--rate {
+  display: flex;
+  align-items: center;
+  gap: var(--oga-3);
+  padding: var(--oga-3) var(--oga-4);
+  background: var(--oga-bg);
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-sm);
+}
+
+.oga-play-docs__section--rate p {
+  margin: 0;
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  color: var(--oga-fg-muted);
+}
+
+.oga-play-docs__rate-tag {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 2px;
+  background: var(--oga-fg);
+  color: var(--oga-white);
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.oga-play-docs__h {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin: 0 0 var(--oga-3);
+  font-weight: 600;
+}
+
+.oga-play-docs__table {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+}
+
+.oga-play-docs__row {
+  padding: var(--oga-3) 0;
+  border-bottom: 1px solid var(--oga-border);
+}
+
+.oga-play-docs__row:last-child {
+  border-bottom: 0;
+}
+
+.oga-play-docs__row-head {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oga-2);
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.oga-play-docs__name {
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--oga-fg);
+  background: var(--oga-bg);
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+.oga-play-docs__type {
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: var(--oga-fg-muted);
+}
+
+.oga-play-docs__req {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 2px;
+  background: rgba(255, 92, 26, 0.1);
+  color: var(--oga-signal, #ff5c1a);
+}
+
+.oga-play-docs__opt {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 2px;
+  background: var(--oga-bg);
+  color: var(--oga-fg-muted);
+}
+
+.oga-play-docs__row-desc {
+  margin: 0;
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+}
+
+.oga-play-docs__row-desc code {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--oga-bg);
+  color: var(--oga-fg);
+}
+
+.oga-play-docs__errors {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-2);
+}
+
+.oga-play-docs__errors li {
+  display: flex;
+  gap: var(--oga-3);
+  align-items: flex-start;
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+}
+
+.oga-play-docs__err-code {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: rgba(193, 39, 45, 0.1);
+  color: var(--oga-danger, #c1272d);
+  flex-shrink: 0;
+  min-width: 44px;
+  text-align: center;
+}
+
+.oga-play-runner {
+  min-width: 0;
 }
 
 /* ============================================================
@@ -322,7 +860,7 @@
   align-self: flex-start;
 }
 
-/* Chip row — pre-warmed inputs */
+/* Chip row. pre-warmed inputs */
 .oga-play-chips {
   display: flex;
   flex-wrap: wrap;
@@ -458,12 +996,17 @@
   gap: var(--oga-4);
 }
 
+.oga-play-nudge__copy {
+  flex: 1;
+  min-width: 240px;
+}
+
 .oga-play-nudge__title {
   font-family: var(--oga-font-sans);
   font-size: 15px;
   font-weight: 500;
   color: var(--oga-fg);
-  margin: 0;
+  margin: 0 0 2px;
 }
 
 .oga-play-nudge__lead {
@@ -471,8 +1014,6 @@
   font-size: 13px;
   color: var(--oga-fg-muted);
   margin: 0;
-  flex: 1;
-  min-width: 200px;
 }
 
 .oga-play-nudge__cta {
@@ -654,11 +1195,85 @@
   border: 1px solid var(--oga-border);
   border-radius: var(--oga-radius-sm);
   font-family: var(--oga-font-mono);
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: 12.5px;
+  line-height: 1.65;
   color: var(--oga-fg);
   max-height: 520px;
-  white-space: pre;
+}
+
+/* Brand v3 skin for react-json-view-lite (AR-437 step 1).
+   The library ships a default CSS; we override with .oga-json* classes
+   passed via the style prop. Keys stay foreground-strong, values are
+   colour-coded by type so a first glance at a response reads well. */
+.oga-json {
+  --oga-json-key: var(--oga-fg);
+  --oga-json-punc: var(--oga-fg-muted);
+  --oga-json-string: #2f855a;
+  --oga-json-number: #b7791f;
+  --oga-json-bool: var(--oga-signal, #ff5c1a);
+  --oga-json-null: var(--oga-fg-muted);
+  --oga-json-caret: var(--oga-fg-muted);
+}
+
+.oga-json__row {
+  padding-left: 14px;
+}
+
+.oga-json__key {
+  color: var(--oga-json-key);
+  font-weight: 500;
+  margin-right: 6px;
+}
+
+.oga-json__key--clickable {
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.oga-json__key--clickable:hover {
+  color: var(--oga-signal, #ff5c1a);
+}
+
+.oga-json__val--string {
+  color: var(--oga-json-string);
+}
+
+.oga-json__val--number {
+  color: var(--oga-json-number);
+  font-variant-numeric: tabular-nums;
+}
+
+.oga-json__val--bool {
+  color: var(--oga-json-bool);
+  font-weight: 600;
+  text-transform: lowercase;
+}
+
+.oga-json__val--null {
+  color: var(--oga-json-null);
+  font-style: italic;
+}
+
+.oga-json__punc {
+  color: var(--oga-json-punc);
+}
+
+.oga-json__caret {
+  color: var(--oga-json-caret);
+  margin-right: 4px;
+  cursor: pointer;
+  user-select: none;
+  transition: color 120ms ease;
+}
+
+.oga-json__caret:hover {
+  color: var(--oga-fg);
+}
+
+.oga-json__collapsed {
+  color: var(--oga-fg-muted);
+  font-style: italic;
+  padding: 0 4px;
 }
 
 .oga-play-panel__error {
@@ -691,6 +1306,28 @@
   font-style: italic;
 }
 
+/* AR-437 step D: soft in-context CTA under a successful response. */
+.oga-play-panel__take-live {
+  margin: var(--oga-3) 0 0;
+  padding-top: var(--oga-3);
+  border-top: 1px solid var(--oga-border);
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  color: var(--oga-fg-muted);
+  text-align: left;
+}
+
+.oga-play-panel__take-live-link {
+  color: var(--oga-signal, #ff5c1a);
+  text-decoration: none;
+  font-weight: 600;
+  transition: opacity 120ms ease;
+}
+
+.oga-play-panel__take-live-link:hover {
+  opacity: 0.8;
+}
+
 /* Fair-use footnote */
 .oga-play-fair {
   font-family: var(--oga-font-sans);
@@ -712,15 +1349,68 @@
 
 .oga-play-signup__inner {
   display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
-  gap: var(--oga-6);
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--oga-7);
+  align-items: stretch;
 }
 
-@media (max-width: 880px) {
+@media (max-width: 900px) {
   .oga-play-signup__inner {
     grid-template-columns: 1fr;
   }
+}
+
+.oga-play-signup__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oga-3);
+}
+
+.oga-play-signup__col--buyer {
+  padding-left: var(--oga-6);
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+@media (max-width: 900px) {
+  .oga-play-signup__col--buyer {
+    padding-left: 0;
+    padding-top: var(--oga-6);
+    border-left: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+}
+
+.oga-play-signup__eyebrow {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-signal, #ff5c1a);
+  font-weight: 600;
+}
+
+.oga-play-signup__icps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: var(--oga-2) 0 var(--oga-3);
+}
+
+.oga-play-signup__icp {
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--oga-white);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  text-decoration: none;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.oga-play-signup__icp:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 .oga-play-signup__title {
@@ -784,6 +1474,8 @@
   flex-direction: column;
   gap: var(--oga-3);
   align-items: stretch;
+  margin-top: auto;
+  padding-top: var(--oga-4);
 }
 
 .oga-play-signup__cta {
