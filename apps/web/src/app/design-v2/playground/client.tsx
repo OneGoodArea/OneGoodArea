@@ -2,9 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { JsonView } from "react-json-view-lite";
+import "react-json-view-lite/dist/index.css";
 import { Nav } from "../_shared/nav";
 import { Footer } from "../_shared/footer";
 import { TurnstileWidget } from "./turnstile-widget";
+import { ENDPOINT_DOCS, type EndpointDoc } from "./endpoint-docs";
 import "./playground.css";
 
 /* /playground client. PR4 fans out to all seven tabs:
@@ -17,10 +20,42 @@ import "./playground.css";
      - NL Query: POST /v1/query (natural-language question) */
 
 /* Inlined at build time by Next.js. Undefined string in prod means we
-   never configured Turnstile — the client skips the widget. */
+   never configured Turnstile. the client skips the widget. */
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
-type TabId = "area" | "score" | "peers" | "rank" | "insights" | "forecast" | "nl";
+/* Brand v3 skin for react-json-view-lite. Classes styled in
+   playground.css so we override the library's default CSS without
+   forking it. Keeps keys mono + fg, values color-coded by type. */
+const ogaJsonStyle = {
+  container: "oga-json",
+  basicChildStyle: "oga-json__row",
+  label: "oga-json__key",
+  clickableLabel: "oga-json__key oga-json__key--clickable",
+  nullValue: "oga-json__val oga-json__val--null",
+  undefinedValue: "oga-json__val oga-json__val--null",
+  numberValue: "oga-json__val oga-json__val--number",
+  stringValue: "oga-json__val oga-json__val--string",
+  booleanValue: "oga-json__val oga-json__val--bool",
+  otherValue: "oga-json__val",
+  punctuation: "oga-json__punc",
+  collapseIcon: "oga-json__caret oga-json__caret--open",
+  expandIcon: "oga-json__caret oga-json__caret--closed",
+  collapsedContent: "oga-json__collapsed",
+  noQuotesForStringValues: false,
+  quotesForFieldNames: false,
+  ariaLabelForTreeNodes: "JSON tree",
+  ariaLabelForCollapsedTreeNodes: "Collapsed JSON tree",
+};
+
+type TabId =
+  | "area"
+  | "score"
+  | "peers"
+  | "rank"
+  | "insights"
+  | "forecast"
+  | "nl"
+  | "monitor";
 
 interface TabDef {
   id: TabId;
@@ -81,6 +116,13 @@ const TABS: TabDef[] = [
       "Ask in plain English. The AI planner translates to a structured plan and executes deterministically.",
     badge: "AI",
   },
+  {
+    id: "monitor",
+    label: "Portfolios",
+    endpoint: "PREVIEW /v1/portfolios",
+    description:
+      "Track a book of areas and get material-change alerts via webhooks when a monitored signal moves. Preview only: the write endpoints (create portfolio, add areas, subscribe to signal.changed) sign up for a sandbox key to unlock.",
+  },
 ];
 
 interface SessionSnapshot {
@@ -100,7 +142,7 @@ interface ProxyResponse {
 }
 
 /* Nudge shows once the session has been used enough to prove real
-   interest but before rate caps stop the user. Tuned to fire at 5 —
+   interest but before rate caps stop the user. Tuned to fire at 5 .
    enough exploration to see the API works, still 25 calls of headroom. */
 const NUDGE_AT = 5;
 
@@ -115,7 +157,7 @@ export default function PlaygroundClient() {
 
   /* Mint the demo cookie once we have what we need. With Turnstile
      configured, wait for the solved token; without it (local dev),
-     mint immediately with an empty body — apps/api stub-passes. */
+     mint immediately with an empty body. apps/api stub-passes. */
   useEffect(() => {
     if (tokenRequestedRef.current) return;
     if (TURNSTILE_SITE_KEY && !turnstileToken) return;
@@ -162,9 +204,8 @@ export default function PlaygroundClient() {
   );
 
   return (
-    <div className="oga-root">
+    <div className="oga-root oga-play-root">
       <Nav />
-      <PlaygroundHero session={session} tokenReady={tokenReady} tokenError={tokenError} />
 
       {TURNSTILE_SITE_KEY && !tokenReady && !tokenError && (
         <section className="oga-play-turnstile-section" aria-label="Bot check">
@@ -178,22 +219,263 @@ export default function PlaygroundClient() {
         </section>
       )}
 
-      <section className="oga-play-workbench oga-section">
-        <div className="oga-play__container">
-          <TabBar active={activeTab} onSelect={setActiveTab} />
+      <section className="oga-play-stage">
+        <div className="oga-play-stage__container">
+          <div className="oga-play-shell">
+            <EndpointSidebar activeTab={activeTab} onSelect={setActiveTab} />
 
-          {session && session.calls_used >= NUDGE_AT && (
-            <NudgeStrip callsUsed={session.calls_used} />
-          )}
+            <main className="oga-play-main">
+              {session && session.calls_used >= NUDGE_AT && (
+                <NudgeStrip callsUsed={session.calls_used} />
+              )}
 
-          <TabRouter activeTab={activeTab} runProxy={runProxy} tokenReady={tokenReady} />
+              <div className="oga-play-split">
+                <aside className="oga-play-docs" aria-label="Endpoint documentation">
+                  <EndpointDocsPane tab={active} />
+                </aside>
 
-          <FairUseNote />
+                <section className="oga-play-runner" aria-label="Runner">
+                  <TabRouter activeTab={activeTab} runProxy={runProxy} tokenReady={tokenReady} />
+                </section>
+              </div>
+
+              <FairUseNote />
+            </main>
+          </div>
         </div>
       </section>
 
       <SignupCta />
       <Footer />
+    </div>
+  );
+}
+
+/* Grouped sidebar (AR-437 step 1). Signals / Scores / Intelligence.
+   Reinforces the four-product story surfaced everywhere else on the
+   marketing site. */
+interface SidebarGroup {
+  label: string;
+  tabs: TabId[];
+}
+
+const SIDEBAR_GROUPS: SidebarGroup[] = [
+  { label: "Signals", tabs: ["area", "rank"] },
+  { label: "Scores", tabs: ["score"] },
+  { label: "Intelligence", tabs: ["peers", "insights", "forecast", "nl"] },
+  { label: "Monitor", tabs: ["monitor"] },
+];
+
+function EndpointSidebar({
+  activeTab,
+  onSelect,
+}: {
+  activeTab: TabId;
+  onSelect: (id: TabId) => void;
+}) {
+  return (
+    <nav className="oga-play-sidebar" aria-label="Endpoints">
+      {SIDEBAR_GROUPS.map((group) => (
+        <div key={group.label} className="oga-play-sidebar__group">
+          <div className="oga-play-sidebar__group-label">{group.label}</div>
+          <ul className="oga-play-sidebar__list">
+            {group.tabs.map((tabId) => {
+              const t = TABS.find((tab) => tab.id === tabId)!;
+              const isActive = t.id === activeTab;
+              return (
+                <li key={t.id}>
+                  <button
+                    type="button"
+                    className={"oga-play-sidebar__item" + (isActive ? " oga-play-sidebar__item--active" : "")}
+                    aria-current={isActive}
+                    onClick={() => onSelect(t.id)}
+                  >
+                    <span className="oga-play-sidebar__method">{t.endpoint.split(" ")[0]}</span>
+                    <span className="oga-play-sidebar__label">{t.label}</span>
+                    {t.badge && <span className="oga-play-sidebar__badge">{t.badge}</span>}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+/* Docs pane (AR-437 step 2). Renders per-endpoint documentation from
+   endpoint-docs.ts. Method + path + title + description come from the
+   shared TABS array; the ICP framing / params / response / errors /
+   rate-limit come from ENDPOINT_DOCS. */
+function EndpointDocsPane({ tab }: { tab: TabDef }) {
+  const docs = ENDPOINT_DOCS[tab.id];
+  const method = tab.endpoint.split(" ")[0];
+  const path = tab.endpoint.split(" ").slice(1).join(" ");
+
+  return (
+    <div className="oga-play-docs__inner">
+      <div className="oga-play-docs__eyebrow">
+        <span className="oga-play-docs__method">{method}</span>
+        <code className="oga-play-docs__path">{path}</code>
+      </div>
+      <h1 className="oga-play-docs__title">{tab.label}</h1>
+      <p className="oga-play-docs__desc">{tab.description}</p>
+
+      {docs ? <EndpointDocsBody docs={docs} /> : null}
+    </div>
+  );
+}
+
+function EndpointDocsBody({ docs }: { docs: EndpointDoc }) {
+  return (
+    <>
+      <section className="oga-play-docs__section oga-play-docs__section--icp">
+        <p>{docs.icp}</p>
+      </section>
+
+      {docs.params.length > 0 && (
+        <section className="oga-play-docs__section">
+          <h2 className="oga-play-docs__h">Parameters</h2>
+          <div className="oga-play-docs__table">
+            {docs.params.map((p) => (
+              <div key={p.name} className="oga-play-docs__row">
+                <div className="oga-play-docs__row-head">
+                  <code className="oga-play-docs__name">{p.name}</code>
+                  <span className="oga-play-docs__type">{p.type}</span>
+                  {p.required ? (
+                    <span className="oga-play-docs__req">required</span>
+                  ) : (
+                    <span className="oga-play-docs__opt">optional</span>
+                  )}
+                </div>
+                <p className="oga-play-docs__row-desc">{p.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {docs.response.length > 0 && (
+        <section className="oga-play-docs__section">
+          <h2 className="oga-play-docs__h">Response</h2>
+          <div className="oga-play-docs__table">
+            {docs.response.map((r) => (
+              <div key={r.key} className="oga-play-docs__row">
+                <div className="oga-play-docs__row-head">
+                  <code className="oga-play-docs__name">{r.key}</code>
+                  <span className="oga-play-docs__type">{r.type}</span>
+                </div>
+                <p className="oga-play-docs__row-desc">{r.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {docs.errors.length > 0 && (
+        <section className="oga-play-docs__section">
+          <h2 className="oga-play-docs__h">Errors</h2>
+          <ul className="oga-play-docs__errors">
+            {docs.errors.map((e) => (
+              <li key={e.code}>
+                <span className="oga-play-docs__err-code">{e.code}</span>
+                <span>{e.when}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section className="oga-play-docs__section oga-play-docs__section--rate">
+        <span className="oga-play-docs__rate-tag">Rate limit</span>
+        <p>{docs.rateLimit}</p>
+      </section>
+    </>
+  );
+}
+
+/* Monitor preview (AR-437 step 1). The four-product story includes
+   Monitor (portfolios + change detection) but the write-side surface
+   isn't safe to expose in an anonymous playground. creating a
+   portfolio, adding areas, subscribing to signal.changed all require
+   an org-scoped write path. Instead we show a static preview of what
+   the /v1/portfolios/:id/changes response looks like so users see the
+   shape of the Monitor moat without us having to build a mutating
+   sandbox around it. */
+const MONITOR_SAMPLE_RESPONSE = {
+  portfolio_id: "pfo_demo_manchester_book",
+  portfolio_name: "Manchester store book (sample)",
+  baseline: "first",
+  threshold_pct: 5,
+  window: "2025-01 to 2026-06",
+  changes: [
+    {
+      geo_code: "E01005207",
+      area_label: "Manchester 021D",
+      signal_key: "property.median_price",
+      direction: "up",
+      pct_change: 16.6,
+      material: true,
+      latest_value: 207000,
+      baseline_value: 177500,
+    },
+    {
+      geo_code: "E01005216",
+      area_label: "Manchester 021C",
+      signal_key: "crime.total_12m",
+      direction: "down",
+      pct_change: -8.1,
+      material: true,
+      latest_value: 412,
+      baseline_value: 448,
+    },
+    {
+      geo_code: "E01005208",
+      area_label: "Manchester 021E",
+      signal_key: "deprivation.imd_score",
+      direction: "flat",
+      pct_change: 0.4,
+      material: false,
+    },
+  ],
+  meta: {
+    engine_version: "v2.0.2",
+    generated_at: "2026-06-14T12:00:00Z",
+  },
+};
+
+function MonitorPreview() {
+  return (
+    <div className="oga-play-monitor">
+      <div className="oga-play-monitor__intro">
+        <span className="oga-play-monitor__tag">Preview</span>
+        <p>
+          Monitor watches a book of postcodes and fires <code>signal.changed</code>{" "}
+          webhooks when a tracked signal moves past your threshold. It&apos;s the
+          product that turns the moat clock into ops. Below is a sample response
+          the way it looks after a portfolio detection run.
+        </p>
+      </div>
+      <div className="oga-play-panel oga-play-panel--response">
+        <div className="oga-play-panel__head">
+          <span className="oga-play-panel__label">Sample response</span>
+          <span className="oga-play-panel__meta">POST /v1/portfolios/:id/changes</span>
+        </div>
+        <div className="oga-play-panel__json">
+          <JsonView
+            data={MONITOR_SAMPLE_RESPONSE}
+            shouldExpandNode={(level) => level < 3}
+            style={ogaJsonStyle}
+          />
+        </div>
+        <div className="oga-play-monitor__cta">
+          <p>Portfolios need an authenticated org. Sign up (free) to create one and hit these endpoints live.</p>
+          <Link href="/get-started" className="oga-play-monitor__cta-btn">
+            Sign up →
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
@@ -231,6 +513,8 @@ function TabRouter({
       return <ForecastWorkbench {...shared} />;
     case "nl":
       return <NlWorkbench {...shared} />;
+    case "monitor":
+      return <MonitorPreview />;
   }
 }
 
@@ -345,7 +629,7 @@ type LoadState = {
   startedAt?: number;
   result?: ProxyResponse;
   error?: { code: string; message: string };
-  /* The exact request we sent — powers the copy-as-curl button. */
+  /* The exact request we sent. powers the copy-as-curl button. */
   lastRequest?: { method: "GET" | "POST"; path: string; body?: unknown };
 };
 
@@ -423,7 +707,7 @@ const NL_QUESTION_CHIPS = [
 ];
 
 /* ==============================================================
-   Area — GET /v1/area?postcode=...
+   Area. GET /v1/area?postcode=...
    ============================================================== */
 
 function AreaWorkbench({
@@ -463,7 +747,7 @@ function AreaWorkbench({
 }
 
 /* ==============================================================
-   Score — POST /v1/score { area, preset }
+   Score. POST /v1/score { area, preset }
    ============================================================== */
 
 const PRESETS = ["moving", "business", "investing", "research"] as const;
@@ -513,7 +797,7 @@ function ScoreWorkbench({
 }
 
 /* ==============================================================
-   Peers — POST /v1/peers { target: { postcode }, k }
+   Peers. POST /v1/peers { target: { postcode }, k }
    ============================================================== */
 
 function PeersWorkbench({
@@ -559,7 +843,7 @@ function PeersWorkbench({
 }
 
 /* ==============================================================
-   Rank — GET /v1/areas?signal=&limit=&percentile_gte=
+   Rank. GET /v1/areas?signal=&limit=&percentile_gte=
    ============================================================== */
 
 function RankWorkbench({
@@ -615,7 +899,7 @@ function RankWorkbench({
 }
 
 /* ==============================================================
-   Insights — POST /v1/insights { signal_key, country, k }
+   Insights. POST /v1/insights { signal_key, country, k }
    ============================================================== */
 
 function InsightsWorkbench({
@@ -669,7 +953,7 @@ function InsightsWorkbench({
 }
 
 /* ==============================================================
-   Forecast — POST /v1/forecast { target, signal_key, horizon_months }
+   Forecast. POST /v1/forecast { target, signal_key, horizon_months }
    ============================================================== */
 
 function ForecastWorkbench({
@@ -720,7 +1004,7 @@ function ForecastWorkbench({
 }
 
 /* ==============================================================
-   NL Query — POST /v1/query { question }
+   NL Query. POST /v1/query { question }
    ============================================================== */
 
 function NlWorkbench({
@@ -840,11 +1124,25 @@ function ResponsePanelWired({ state }: { state: LoadState }) {
         </div>
       )}
       {state.status === "ok" && state.result && (
-        <pre className="oga-play-panel__json">{JSON.stringify(state.result.response, null, 2)}</pre>
+        <div className="oga-play-panel__json">
+          <JsonView
+            data={state.result.response as object}
+            shouldExpandNode={(level) => level < 3}
+            style={ogaJsonStyle}
+          />
+        </div>
       )}
       {state.status === "ok" && state.result?.truncated && (
         <p className="oga-play-panel__truncated">
           Response truncated to fit the playground display. Sign up to see full payloads.
+        </p>
+      )}
+      {state.status === "ok" && state.result && (
+        <p className="oga-play-panel__take-live">
+          This is what your code would receive.{" "}
+          <Link href="/get-started" className="oga-play-panel__take-live-link">
+            Take it live with a free sandbox key →
+          </Link>
         </p>
       )}
     </section>
@@ -900,17 +1198,36 @@ function buildCurl(request: { method: "GET" | "POST"; path: string; body?: unkno
    Signup nudge (shown once calls_used >= NUDGE_AT)
    ============================================================== */
 
+/* Contextual nudge that escalates as the user consumes more of the
+   session cap. Copy varies by call count so a curious first-timer and
+   a power-user see the right level of urgency. */
 function NudgeStrip({ callsUsed }: { callsUsed: number }) {
+  let title;
+  let lead;
+  if (callsUsed >= 25) {
+    title = `Almost at the session cap (${callsUsed} of 30).`;
+    lead = "Grab a free sandbox key before the next Run hits the wall. No credit card.";
+  } else if (callsUsed >= 15) {
+    title = `${callsUsed} calls in. You&apos;ve seen the shape.`;
+    lead = "A free sandbox key drops the 30-call session cap and lifts NL queries beyond 3.";
+  } else {
+    title = `${callsUsed} calls in. ${30 - callsUsed} left this session.`;
+    lead = "Beyond that you&apos;ll need a free sandbox key. Same endpoints, no session cap, no credit card.";
+  }
   return (
     <div className="oga-play-nudge" role="note">
-      <p className="oga-play-nudge__title">
-        You&apos;ve made {callsUsed} calls. Ready for unlimited?
-      </p>
-      <p className="oga-play-nudge__lead">
-        Free sandbox key. No credit card. Same endpoints, no session cap.
-      </p>
+      <div className="oga-play-nudge__copy">
+        <p
+          className="oga-play-nudge__title"
+          dangerouslySetInnerHTML={{ __html: title }}
+        />
+        <p
+          className="oga-play-nudge__lead"
+          dangerouslySetInnerHTML={{ __html: lead }}
+        />
+      </div>
       <Link href="/get-started" className="oga-play-nudge__cta">
-        Get a sandbox key
+        Get a sandbox key →
       </Link>
     </div>
   );
@@ -1058,30 +1375,56 @@ function FairUseNote() {
   );
 }
 
+/* Bottom CTA reworked (AR-437 step 4 polish). Two clear paths:
+   builders self-select left, buyers self-select right. Removes the
+   one-loud-block feeling of the previous version and stops asking
+   every visitor the same thing. */
 function SignupCta() {
   return (
-    <section className="oga-play-signup" aria-label="Sign up">
+    <section className="oga-play-signup" aria-label="What next">
       <div className="oga-play__container oga-play-signup__inner">
-        <div className="oga-play-signup__copy">
-          <h2 className="oga-play-signup__title">Ready to use this in your code?</h2>
+        <div className="oga-play-signup__col">
+          <span className="oga-play-signup__eyebrow">For builders</span>
+          <h2 className="oga-play-signup__title">Take this to production.</h2>
           <p className="oga-play-signup__lead">
-            Free sandbox key. No credit card. Everything the playground does, in your
-            editor, MCP client, or wherever you build.
+            Free sandbox key. No credit card. Every endpoint you just tried, in your
+            editor, your CI, your MCP client.
           </p>
           <ul className="oga-play-signup__bullets">
-            <li>Unlimited queries. No session cap.</li>
-            <li>Advanced AI planning for complex multi-step questions.</li>
+            <li>No session caps.</li>
+            <li>Full NL planning, not the 3-query preview.</li>
             <li>Save and share query URLs.</li>
-            <li>Use directly from your code and MCP.</li>
+            <li>Live in the OneGoodArea MCP server.</li>
           </ul>
+          <div className="oga-play-signup__actions">
+            <Link href="/get-started" className="oga-play-signup__cta">
+              Get a sandbox key →
+            </Link>
+            <Link href="/docs" className="oga-play-signup__secondary">
+              Read the docs
+            </Link>
+          </div>
         </div>
-        <div className="oga-play-signup__actions">
-          <Link href="/get-started" className="oga-play-signup__cta">
-            Get a sandbox key
-          </Link>
-          <Link href="/docs" className="oga-play-signup__secondary">
-            Read the docs
-          </Link>
+        <div className="oga-play-signup__col oga-play-signup__col--buyer">
+          <span className="oga-play-signup__eyebrow">For your team</span>
+          <h2 className="oga-play-signup__title">See how it fits.</h2>
+          <p className="oga-play-signup__lead">
+            You&apos;re not the one writing the code, but the shape of the answer
+            still lands in your workflow. Pick your industry, see the moves teams
+            already run on OneGoodArea.
+          </p>
+          <div className="oga-play-signup__icps">
+            <Link href="/for/lenders" className="oga-play-signup__icp">Lenders</Link>
+            <Link href="/for/insurance" className="oga-play-signup__icp">Insurance</Link>
+            <Link href="/for/proptech" className="oga-play-signup__icp">PropTech</Link>
+            <Link href="/for/cre" className="oga-play-signup__icp">CRE</Link>
+            <Link href="/for/public-sector" className="oga-play-signup__icp">Public sector</Link>
+          </div>
+          <div className="oga-play-signup__actions">
+            <Link href="/methodology" className="oga-play-signup__secondary">
+              How the engine works →
+            </Link>
+          </div>
         </div>
       </div>
     </section>

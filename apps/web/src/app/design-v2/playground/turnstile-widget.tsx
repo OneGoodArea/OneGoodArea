@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 /* Cloudflare Turnstile widget for /playground. Loads the api.js script
    once per page, renders a single widget, and calls back with the
    solved token. When NEXT_PUBLIC_TURNSTILE_SITE_KEY is unset the
-   parent should not mount this component — it treats missing script
+   parent should not mount this component. it treats missing script
    or missing sitekey as an error path.
 
    Managed mode is the default and gives Cloudflare full control over
@@ -108,7 +108,7 @@ export function TurnstileWidget({
         try {
           window.turnstile.remove(id);
         } catch {
-          /* Fine — component unmounted before Cloudflare finished cleanup. */
+          /* Fine. component unmounted before Cloudflare finished cleanup. */
         }
       }
       widgetIdRef.current = null;
