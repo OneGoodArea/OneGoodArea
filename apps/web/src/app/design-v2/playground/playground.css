@@ -322,6 +322,179 @@
   align-self: flex-start;
 }
 
+/* Chip row — pre-warmed inputs */
+.oga-play-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--oga-3);
+  margin-bottom: var(--oga-3);
+}
+
+.oga-play-chips__label {
+  font-family: var(--oga-font-mono);
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+.oga-play-chips__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.oga-play-chip {
+  appearance: none;
+  border: 1px solid var(--oga-border);
+  background: var(--oga-white);
+  color: var(--oga-fg);
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  transition: background 120ms ease, transform 120ms ease;
+}
+
+.oga-play-chip:hover {
+  background: var(--oga-bg);
+  transform: translateY(-1px);
+}
+
+/* Right-side cluster in the panel head (endpoint + AI badge, or curl + meta) */
+.oga-play-panel__head-right {
+  display: flex;
+  align-items: center;
+  gap: var(--oga-2);
+}
+
+/* NL-specific cap notice */
+.oga-play-panel__nl-cap {
+  font-family: var(--oga-font-sans);
+  font-size: 12px;
+  color: var(--oga-fg-muted);
+  margin: 0;
+  padding: 8px 12px;
+  border-left: 2px solid var(--oga-signal, #ff5c1a);
+  background: var(--oga-bg);
+  border-radius: 2px;
+}
+
+/* Textarea for NL */
+.oga-play-form__textarea {
+  appearance: none;
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-sm);
+  padding: 12px 14px;
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--oga-fg);
+  background: var(--oga-white);
+  resize: vertical;
+  min-height: 88px;
+  transition: border-color 120ms ease;
+}
+
+.oga-play-form__textarea:focus {
+  outline: none;
+  border-color: var(--oga-fg);
+}
+
+/* Select */
+.oga-play-form__select {
+  appearance: none;
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-sm);
+  padding: 12px 14px;
+  font-family: var(--oga-font-mono);
+  font-size: 14px;
+  color: var(--oga-fg);
+  background: var(--oga-white);
+  cursor: pointer;
+  transition: border-color 120ms ease;
+}
+
+.oga-play-form__select:focus {
+  outline: none;
+  border-color: var(--oga-fg);
+}
+
+/* Copy-as-curl button in response head */
+.oga-play-panel__curl {
+  appearance: none;
+  border: 1px solid var(--oga-border);
+  background: var(--oga-white);
+  color: var(--oga-fg-muted);
+  padding: 4px 10px;
+  border-radius: var(--oga-radius-sm);
+  cursor: pointer;
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+.oga-play-panel__curl:hover {
+  color: var(--oga-fg);
+  background: var(--oga-bg);
+}
+
+/* Signup nudge strip (shown after N calls) */
+.oga-play-nudge {
+  margin-bottom: var(--oga-5);
+  padding: var(--oga-4) var(--oga-5);
+  background: var(--oga-bg);
+  border: 1px solid var(--oga-border);
+  border-left: 3px solid var(--oga-signal, #ff5c1a);
+  border-radius: var(--oga-radius-sm);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--oga-4);
+}
+
+.oga-play-nudge__title {
+  font-family: var(--oga-font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  margin: 0;
+}
+
+.oga-play-nudge__lead {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  color: var(--oga-fg-muted);
+  margin: 0;
+  flex: 1;
+  min-width: 200px;
+}
+
+.oga-play-nudge__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  background: var(--oga-fg);
+  color: var(--oga-white);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: var(--oga-radius-sm);
+  text-decoration: none;
+  transition: transform 120ms ease;
+}
+
+.oga-play-nudge__cta:hover {
+  transform: translateY(-1px);
+}
+
 /* Query form (Area tab wired in PR3) */
 .oga-play-form {
   display: flex;
