@@ -1,10 +1,16 @@
 # Endpoints by Product
 
-Complete catalog of 72 endpoints (73 HTTP operations with CORS) grouped by the four products + cross-cutting Levers + legacy/dashboard report API + webhooks + Stripe + auth + account. 
+Complete catalog of the HTTP surface, about **104 handler registrations**
+across the route modules in `apps/api/src/routes/`, grouped by the four
+products plus cross-cutting Levers, webhooks, Stripe, auth, account and
+platform.
 
-**Auth modes:** **API** (Bearer token), **Session** (JWT cookie), **Public** (none), **CRON** (Bearer CRON_SECRET).
+**Auth modes:** **API** (Bearer token), **Session** (JWT cookie),
+**Public** (none), **CRON** (Bearer `CRON_SECRET`).
 
-**Dark-flag:** Routes behind `OGA_SIGNALS_API=true` return 404 when disabled.
+**Dark flag:** the four product families (Signals, Scores, Monitor,
+Intelligence) sit behind `signalsApiEnabled` (env `OGA_SIGNALS_API`) and
+return 404 when disabled.
 
 ---
 
@@ -16,7 +22,7 @@ Complete catalog of 72 endpoints (73 HTTP operations with CORS) grouped by the f
 | GET | `/v1/signals/:category?area=…` | API | Category-scoped subset |
 | GET | `/v1/areas?signal=…&country=…` | API | Cross-area filter + rank |
 
-**Gate:** `requireApiAccessWithOrg` (API key + rate limit + org context).
+**Gate:** flag + `requireApiAccessWithOrg`.
 
 ---
 
@@ -24,15 +30,13 @@ Complete catalog of 72 endpoints (73 HTTP operations with CORS) grouped by the f
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| POST | `/v1/score` | API | `{area, preset \| weights \| preset_id}` — deterministic composite |
+| POST | `/v1/score` | API | `{area, preset \| weights \| preset_id}` deterministic composite |
 
-**Gate:** `requireApiAccess`.
+**Gate:** flag + `requireApiAccessWithOrg`.
 
 ---
 
-## Monitor (7)
-
-Dark-flagged behind `OGA_SIGNALS_API=true`. Return 404 when disabled.
+## Monitor (8)
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
@@ -43,14 +47,13 @@ Dark-flagged behind `OGA_SIGNALS_API=true`. Return 404 when disabled.
 | POST | `/v1/portfolios/:id/areas` | API | Bulk add tracked areas (max 100) |
 | POST | `/v1/portfolios/:id/enrich` | API | Full signal enrichment for every area |
 | POST | `/v1/portfolios/:id/changes` | API | Diff vs baseline, fires webhooks |
+| GET | `/v1/portfolios/:id/changes` | API | Read-only diff, no webhooks (AR-399) |
 
-**Gate:** `guardSignals` helper (flag + `requireApiAccess`).
+**Gate:** flag + `requireApiAccess` / `requireApiAccessWithOrg`.
 
 ---
 
 ## Intelligence (4)
-
-Dark-flagged behind `OGA_SIGNALS_API=true`. Return 404 when disabled.
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
@@ -59,93 +62,148 @@ Dark-flagged behind `OGA_SIGNALS_API=true`. Return 404 when disabled.
 | POST | `/v1/insights` | API | Anomaly screening by peer-relative z-score |
 | POST | `/v1/forecast` | API | Linear projection for one (signal, area) |
 
-**Gate:** `requireApiAccessWithOrg`.
+**Gate:** flag + `requireApiAccessWithOrg`.
 
 ---
 
-## Levers: Org Management (25)
-
-All require API key auth + org membership.
-
-### Org CRUD (4)
+## Webhooks (4)
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| POST | `/v1/orgs` | API | Create org; caller becomes owner |
-| GET | `/v1/orgs` | API | List orgs caller is member of |
-| GET | `/v1/orgs/:id` | API | Fetch org by ID |
-| PATCH | `/v1/orgs/:id` | API | Update org metadata (owner-gated) |
+| POST | `/v1/webhooks` | API | Create subscription (`signal.changed`, …) |
+| GET | `/v1/webhooks` | API | List active subscriptions |
+| DELETE | `/v1/webhooks/:id` | API | Revoke subscription |
+| POST | `/v1/webhooks/:id/rotate-secret` | API | Rotate the signing secret |
 
-### Members (3)
+---
 
-| Method | Path | Auth | Notes |
-|---|---|---|---|
-| GET | `/v1/orgs/:id/members` | API | List members + roles |
-| POST | `/v1/orgs/:id/members` | API | Invite member (owner-gated) |
-| DELETE | `/v1/orgs/:id/members/:userId` | API | Remove member (owner-gated) |
+## Levers: Org Management (31)
+
+All via `authenticateEither` (session bridge token OR API key + org
+membership).
+
+### Org CRUD (5)
+
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/v1/orgs` | Create org; caller becomes owner |
+| GET | `/v1/orgs` | List orgs caller is a member of |
+| GET | `/v1/orgs/:id` | Fetch org by ID (404 if not a member) |
+| PATCH | `/v1/orgs/:id` | Update metadata / white-label (admin+) |
+| DELETE | `/v1/orgs/:id` | Delete org (owner; personal org rejected, AR-399) |
+
+### Members + Invitations (8)
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/v1/orgs/:id/members` | List members + roles |
+| POST | `/v1/orgs/:id/members` | Add member (admin+) |
+| PATCH | `/v1/orgs/:id/members/:userId` | Change role (owner-guard rules) |
+| DELETE | `/v1/orgs/:id/members/:userId` | Remove member |
+| POST | `/v1/orgs/:id/invitations` | Invite by email |
+| GET | `/v1/orgs/:id/invitations` | List pending invitations |
+| DELETE | `/v1/orgs/:id/invitations/:invitationId` | Revoke an invitation |
+| POST | `/v1/invitations/:token/accept` | Accept an invitation |
 
 ### Bundles (5)
 
-| Method | Path | Auth | Notes |
-|---|---|---|---|
-| POST | `/v1/orgs/:id/bundles` | API | Create signal bundle |
-| GET | `/v1/orgs/:id/bundles` | API | List bundles in org |
-| GET | `/v1/orgs/:id/bundles/:bundleId` | API | Fetch one bundle |
-| PATCH | `/v1/orgs/:id/bundles/:bundleId` | API | Update bundle |
-| DELETE | `/v1/orgs/:id/bundles/:bundleId` | API | Delete bundle |
+`POST/GET /v1/orgs/:id/bundles`, `GET/PATCH/DELETE …/:bundleId`. Per-org
+signal-key whitelists (admin+ to mutate).
 
 ### Presets (5)
 
-| Method | Path | Auth | Notes |
-|---|---|---|---|
-| POST | `/v1/orgs/:id/presets` | API | Create score preset |
-| GET | `/v1/orgs/:id/presets` | API | List presets in org |
-| GET | `/v1/orgs/:id/presets/:presetId` | API | Fetch one preset |
-| PATCH | `/v1/orgs/:id/presets/:presetId` | API | Update preset |
-| DELETE | `/v1/orgs/:id/presets/:presetId` | API | Delete preset |
-
-### Methodology (3)
-
-| Method | Path | Auth | Notes |
-|---|---|---|---|
-| GET | `/v1/orgs/:id/methodology` | API | Fetch methodology pin (if set) |
-| PUT | `/v1/orgs/:id/methodology` | API | Pin a specific methodology version |
-| DELETE | `/v1/orgs/:id/methodology` | API | Clear the methodology pin |
+`POST/GET /v1/orgs/:id/presets`, `GET/PATCH/DELETE …/:presetId`. Per-org
+saved scoring weights over a base preset (admin+ to mutate).
 
 ### Cohorts (5)
 
-| Method | Path | Auth | Notes |
-|---|---|---|---|
-| POST | `/v1/orgs/:id/cohorts` | API | Create cohort |
-| GET | `/v1/orgs/:id/cohorts` | API | List cohorts in org |
-| GET | `/v1/orgs/:id/cohorts/:cohortId` | API | Fetch one cohort |
-| PATCH | `/v1/orgs/:id/cohorts/:cohortId` | API | Update cohort |
-| DELETE | `/v1/orgs/:id/cohorts/:cohortId` | API | Delete cohort |
+`POST/GET /v1/orgs/:id/cohorts`, `GET/PATCH/DELETE …/:cohortId`. Per-org
+peer candidate sets (admin+ to mutate).
+
+### Methodology (3)
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/v1/orgs/:id/methodology` | Fetch methodology pin (if set) |
+| PUT | `/v1/orgs/:id/methodology` | Pin an engine version (owner) |
+| DELETE | `/v1/orgs/:id/methodology` | Clear the pin (owner) |
 
 ---
 
-## Legacy Report API (6)
-
-### Report Generation & History
+## Entitlement (1)
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| POST | `/v1/report` | API | Full report (score + AI narrative) — v1 consumer entry |
-| POST | `/v1/batch` | API | Up to `BATCH_MAX_ITEMS` reports per call |
 | GET | `/v1/me` | API | Plan + entitlements + org branding + key allowlist |
-| GET | `/me/reports` | Session | List caller's recent reports (dashboard) |
-| POST | `/report` | Session | Generate report from dashboard (browser); sends email |
-| DELETE | `/report/:id` | Session | Delete a specific report |
 
 ---
 
-## Webhooks (3)
+## API Keys (5)
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| POST | `/v1/webhooks` | API | Create subscription (`signal.changed`, `report.created`, …) |
-| GET | `/v1/webhooks` | API | List active subscriptions |
-| DELETE | `/v1/webhooks/:id` | API | Revoke subscription |
+| GET | `/keys` | Session | List caller's API keys |
+| GET | `/keys/usage` | Session | Detailed key usage analytics |
+| POST | `/keys` | Session | Create a key (requires API plan access) |
+| DELETE | `/keys/:id` | Session | Revoke a key |
+| PATCH | `/keys/:id` | Session | Toggle `training_optout` |
+
+---
+
+## Account Dashboard (17)
+
+Session-authenticated user account management.
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/me/activity` | Recent activity feed |
+| GET | `/me/is-superuser` | Superuser check |
+| GET | `/me/webhooks` | List webhooks (dashboard) |
+| POST | `/me/webhooks` | Create webhook (dashboard) |
+| DELETE | `/me/webhooks/:id` | Delete webhook |
+| POST | `/me/webhooks/:id/rotate-secret` | Rotate webhook secret |
+| GET | `/me/portfolios` | List portfolios (dashboard) |
+| GET | `/me/score-usage` | Score usage summary |
+| GET | `/me/org` | Caller's org |
+| PATCH | `/me/org` | Update org (dashboard) |
+| PATCH | `/me/profile` | Update profile |
+| GET | `/usage` | API usage dashboard |
+| GET | `/dashboard` | Dashboard aggregate |
+| GET | `/settings/subscription` | Current subscription + plan |
+| GET | `/watchlist` | List saved areas |
+| POST | `/watchlist` | Save an area |
+| DELETE | `/watchlist/:id` | Remove a saved area |
+
+---
+
+## Auth (11)
+
+Public credential flows plus two session settings actions. IP
+rate-limited where public.
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| POST | `/auth/register` | Public | Register + send verification |
+| POST | `/auth/login` | Public | Credentials login |
+| POST | `/auth/resend-verification` | Public | Re-send verification (throttled) |
+| POST | `/auth/forgot-password` | Public | Request reset (throttled, always 200) |
+| POST | `/auth/reset-password` | Public | Complete reset with token |
+| POST | `/auth/magic-link/request` | Public | Request a magic link |
+| GET | `/auth/check-email` | Public | Check email availability |
+| POST | `/auth/check-email` | Public | Check email availability |
+| POST | `/auth/oauth-callback` | Public | OAuth provider callback |
+| POST | `/settings/password` | Session | Change password (credentials only) |
+| DELETE | `/settings/delete-account` | Session | Permanently delete user + data |
+
+---
+
+## Admin (7)
+
+Superuser-only analytics (session).
+
+`GET /admin/analytics`, `/admin/traffic-analytics`, `/admin/audience`,
+`/admin/usage`, `/admin/revenue`, `/admin/mcp-adoption`,
+`/admin/training-corpus`.
 
 ---
 
@@ -153,64 +211,44 @@ All require API key auth + org membership.
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| POST | `/stripe/webhook` | Public | Webhook from Stripe (signature verified) |
-| POST | `/stripe/portal` | Session | Redirect to Stripe customer portal |
-| POST | `/stripe/checkout` | Session | Create checkout session for plan upgrade |
-| POST | `/stripe/cancel` | Session | Cancel subscription |
-| POST | `/stripe/addon-checkout` | Session | Create checkout for MCP/addon purchase |
+| POST | `/stripe/webhook` | Public | Signature-verified webhook |
+| POST | `/stripe/portal` | Session | Redirect to customer portal |
+| POST | `/stripe/checkout` | Session | New subscription or plan swap |
+| POST | `/stripe/cancel` | Session | Cancel at period end |
+| POST | `/stripe/addon-checkout` | Session | MCP add-on purchase |
 
 ---
 
-## Auth: Credentials Flows (4)
-
-Public endpoints for pre-login credential registration & password reset. IP rate-limited.
+## System, Health & Tracking (5)
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| POST | `/auth/register` | Public | Register credentials user + send verification email |
-| POST | `/auth/resend-verification` | Public | Re-send verification email (3/hour throttle) |
-| POST | `/auth/forgot-password` | Public | Request password reset email (3/hour throttle, always 200) |
-| POST | `/auth/reset-password` | Public | Complete password reset with token |
+| GET | `/health` | Public | Liveness probe (`{status:"ok"}`) |
+| GET | `/v1/meta` | Public | Service metadata + supported intents |
+| POST | `/track` | Public | Analytics pageview (never fails) |
+| GET | `/cron/rescore` | CRON | Re-score top UK postcodes |
+| GET | `/cron/training-retention` | CRON | Purge expired training rows |
 
 ---
 
-## Account Dashboard (9)
+## Playground (2)
 
-Session-authenticated endpoints for logged-in user account management.
+Anonymous demo tunnel, deliberately not under `/v1`.
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| GET | `/usage` | Session | API usage dashboard (requests this month, daily breakdown, keys) |
-| GET | `/settings/subscription` | Session | Current subscription + plan details |
-| GET | `/keys` | Session | List caller's API keys |
-| GET | `/keys/usage` | Session | Detailed API key usage analytics |
-| POST | `/keys` | Session | Create new API key (requires API plan access) |
-| DELETE | `/keys/:id` | Session | Revoke an API key |
-| POST | `/settings/password` | Session | Change password (credentials accounts only) |
-| DELETE | `/settings/delete-account` | Session | Permanently delete user + all data (multi-statement transaction) |
-| GET | `/watchlist` | Session | List caller's saved areas |
-| POST | `/watchlist` | Session | Save an area (postcode + optional label/intent) |
-| DELETE | `/watchlist/:id` | Session | Remove an area from watchlist |
+| POST | `/playground/token` | Public | Turnstile check, issues signed 24h cookie |
+| POST | `/playground/proxy` | Public | Whitelisted `/v1/*` proxy, rate-limited |
 
 ---
 
-## Public Health & Tracking (3)
+## Removed
 
-| Method | Path | Auth | Notes |
-|---|---|---|---|
-| GET | `/health` | Public | Liveness probe (returns `{status: "ok"}`) |
-| GET | `/v1/meta` | Public | Service metadata + contracts version |
-| POST | `/track` | Public | Analytics pageview (device + country + referrer; never fails) |
-
-> `/widget` removed 2026-06-29 (AR-379, plan/030). Cache infrastructure deleted. A future embeddable surface will be a clean rebuild on the v2 signal-first stack.
-
----
-
-## Cron (1)
-
-| Method | Path | Auth | Notes |
-|---|---|---|---|
-| GET | `/cron/rescore` | CRON | Re-score top UK postcodes → report_history; `Bearer CRON_SECRET` auth; `?limit=N` `?dry_run=true` supported |
+- `GET /v1/widget` removed 2026-06-29 (AR-379, plan/030). Cache
+  infrastructure deleted; a future embeddable surface will be a clean
+  rebuild on the v2 signal-first stack.
+- The legacy report API (`/v1/report`, `/v1/batch`, `/report`,
+  `/me/reports`, `/report/:id`) was removed in the AR-324 epic.
 
 ---
 
@@ -220,17 +258,18 @@ Session-authenticated endpoints for logged-in user account management.
 |---|---|
 | Signals | 3 |
 | Scores | 1 |
-| Monitor | 7 |
+| Monitor | 8 |
 | Intelligence | 4 |
-| Levers (Orgs) | 25 |
-| Legacy Report | 6 |
-| Webhooks | 3 |
+| Webhooks | 4 |
+| Levers (Orgs) | 31 |
+| Entitlement | 1 |
+| API Keys | 5 |
+| Account Dashboard | 17 |
+| Auth | 11 |
+| Admin | 7 |
 | Stripe | 5 |
-| Auth | 4 |
-| Account Dashboard | 9 |
-| Health & Tracking | 4 |
-| CORS | 1 |
-| Cron | 1 |
-| **TOTAL** | **73** |
+| System, Health & Tracking | 5 |
+| Playground | 2 |
+| **TOTAL** | **104** |
 
-**Last updated:** June 3, 2026 | Verified against `apps/api/src/app.ts`
+**Last updated:** July 8, 2026 | Verified against `apps/api/src/routes/*.ts` on branch `docs/fix-doc-drift`.

@@ -6,7 +6,7 @@ The rules that everything in the codebase obeys. These are what make the product
 
 2. **Deterministic core, audit-replayable.** Every response echoes `plan_source` (`"client"` or `"nl"`). NL queries reproducible as `{plan}` programmatic calls.
 
-3. **Engine version pinned.** `X-Engine-Version: 2.0.0` stamped on every score. Customers can pin via header. v2 frozen with golden tests.
+3. **Engine version pinned.** `X-Engine-Version: 2.0.2` stamped on every score (supported window 2.0.0 to 2.0.2, all score-equivalent). Customers can pin via header. v2 frozen with golden tests.
 
 4. **Idempotency everywhere.** `ON CONFLICT DO UPDATE`/`DO NOTHING`. `CREATE TABLE IF NOT EXISTS`. Monthly cron safe to re-run.
 
