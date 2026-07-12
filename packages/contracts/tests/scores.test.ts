@@ -19,7 +19,7 @@ const result: ScoreResult = {
   dimensions: [dim],
   confidence: 0.5,
   weights_source: "preset",
-  engine_version: "2.0.2",
+  engine_version: "1.0.0",
 };
 
 describe("ScoreResultSchema", () => {

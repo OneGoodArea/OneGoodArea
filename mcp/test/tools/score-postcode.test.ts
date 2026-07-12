@@ -78,7 +78,7 @@ describe("formatScoreResultAsText", () => {
     area: "Manchester",
     preset: "moving",
     score: 84,
-    engine_version: "2.0.2",
+    engine_version: "1.0.0",
     area_type: "suburban",
     confidence: 0.85,
     weights_source: "preset",
@@ -113,7 +113,7 @@ describe("formatScoreResultAsText", () => {
   });
 
   it("includes engine version", () => {
-    expect(formatScoreResultAsText(sample)).toContain("Engine version: 2.0.2");
+    expect(formatScoreResultAsText(sample)).toContain("Engine version: 1.0.0");
   });
 
   it("includes confidence on dimensions", () => {
@@ -170,7 +170,7 @@ describe("executeScorePostcode", () => {
     area: "Manchester",
     preset: "moving",
     score: 84,
-    engine_version: "2.0.2",
+    engine_version: "1.0.0",
     area_type: "suburban",
     confidence: 0.85,
     weights_source: "preset",

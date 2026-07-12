@@ -120,7 +120,7 @@ describe("AreaProfileSchema", () => {
     },
     signals: [validSignal],
     meta: {
-      engine_version: "2.0.2",
+      engine_version: "1.0.0",
       generated_at: "2026-05-25T12:00:00.000Z",
       sources: ["police.uk"],
       fetch_mode: "live",

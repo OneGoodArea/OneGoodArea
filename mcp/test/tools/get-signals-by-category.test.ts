@@ -35,7 +35,7 @@ function profileForCategory(category: SignalCategory): OogaAreaProfile {
       },
     ],
     meta: {
-      engine_version: "2.0.2",
+      engine_version: "1.0.0",
       generated_at: "2026-06-28T01:00:00Z",
       sources: ["Test source"],
       fetch_mode: "live",

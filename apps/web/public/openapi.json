@@ -2,8 +2,8 @@
   "openapi": "3.0.3",
   "info": {
     "title": "OneGoodArea API",
-    "description": "Deterministic UK location intelligence. Scores any UK postcode against four intents (origination / site selection / investment / reference) using seven public datasets. Numbers are computed from real data using fixed formulas; AI narrates the results but never generates the scores.\n\nEvery response carries an `engine_version` string and per-dimension `confidence` values, so a buyer's model risk register can pin to a specific methodology and trust-band the inputs.",
-    "version": "2.0.2",
+    "description": "Deterministic UK location intelligence. Scores any UK postcode against four decision presets (moving / business / investing / research) using seven public datasets. Numbers are computed from real data using fixed formulas; no AI touches the scoring path.\n\nEvery response carries an `engine_version` string and per-dimension `confidence` values, so a buyer's model risk register can pin to a specific methodology and trust-band the inputs.",
+    "version": "1.0.0",
     "contact": {
       "name": "OneGoodArea",
       "url": "https://www.onegoodarea.com",
@@ -58,7 +58,7 @@
               },
               "X-Engine-Version": {
                 "description": "The methodology version that processed the request. Echoes the request's `X-Engine-Version` header when supplied, or the current default version when omitted. Match against the `engine_version` field inside the response body for audit-trail purposes.",
-                "schema": { "type": "string", "example": "2.0.2" }
+                "schema": { "type": "string", "example": "1.0.0" }
               }
             },
             "content": {
@@ -122,7 +122,7 @@
               },
               "X-Engine-Version": {
                 "description": "The methodology version that processed this batch. Applies uniformly to every item.",
-                "schema": { "type": "string", "example": "2.0.2" }
+                "schema": { "type": "string", "example": "1.0.0" }
               }
             },
             "content": {
@@ -263,7 +263,7 @@
         "in": "header",
         "required": false,
         "description": "Optional methodology pin. When supplied, the request is processed against the given engine version so the response can be entered into a model risk register without ambiguity. Omit to use the latest version (default).\n\n**Supported versions:** `2.0.0`, `2.0.1`, `2.0.2`. All three are score-equivalent today — patch versions in the v2.x series changed only the confidence rubric and data-source reliability, not scoring math. So pinning to any v2.x guarantees byte-identical SCORE values; per-dimension `confidence` metadata may refine between patches.\n\n**End-of-life:** versions `1.0.0` / `1.1.0` / `1.2.0` are reconstructed-from-history snapshots; we do not run a frozen engine for them. Requests pinned to a 1.x version return HTTP 400 with code `engine_version_unsupported`.\n\n**Unknown versions** return HTTP 400 with code `engine_version_unknown` and the supported set in `supported_versions`.\n\n**Response:** every successful response carries an `X-Engine-Version` response header echoing the version that processed the request, and the response body's `engine_version` field stamps the same value into the report payload (audit trail).",
-        "schema": { "type": "string", "enum": ["2.0.0", "2.0.1", "2.0.2"], "example": "2.0.2" }
+        "schema": { "type": "string", "enum": ["1.0.0"], "example": "1.0.0" }
       }
     },
     "securitySchemes": {
@@ -501,7 +501,7 @@
             "type": "string",
             "pattern": "^\\d+\\.\\d+\\.\\d+$",
             "description": "Methodology version that produced this report. Pin to a specific version in your model risk register. Changelog at /methodology.",
-            "example": "2.0.0"
+            "example": "1.0.0"
           },
           "generated_at": {
             "type": "string",

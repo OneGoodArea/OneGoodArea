@@ -72,7 +72,7 @@ describe("domain writers", () => {
       signal_key: "deprivation.imd_decile", geo_type: "lsoa", geo_code: "E01000001",
       raw_value: 5, raw_value_text: null, normalized_value: null, confidence: 0.9,
       confidence_reason: "official", source_snapshot_id: "snap_1", observed_period: "IMD 2025",
-      engine_version: "2.0.2",
+      engine_version: "1.0.0",
     };
 
     await upsertSignalValues([row], run);

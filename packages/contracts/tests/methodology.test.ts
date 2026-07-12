@@ -58,8 +58,8 @@ describe("@onegoodarea/contracts — methodology version registry", () => {
 
 describe("@onegoodarea/contracts — methodology pin schemas", () => {
   it("MethodologyPinSchema accepts both pinned + unpinned shapes", () => {
-    expect(MethodologyPinSchema.parse({ engine_version: "2.0.2", pinned: true })).toEqual({
-      engine_version: "2.0.2",
+    expect(MethodologyPinSchema.parse({ engine_version: "1.0.0", pinned: true })).toEqual({
+      engine_version: "1.0.0",
       pinned: true,
     });
     expect(MethodologyPinSchema.parse({ engine_version: null, pinned: false })).toEqual({
@@ -70,8 +70,8 @@ describe("@onegoodarea/contracts — methodology pin schemas", () => {
 
   it("SetMethodologyPinRequestSchema requires a non-empty engine_version", () => {
     expect(() => SetMethodologyPinRequestSchema.parse({ engine_version: "" })).toThrow();
-    expect(SetMethodologyPinRequestSchema.parse({ engine_version: "2.0.2" })).toEqual({
-      engine_version: "2.0.2",
+    expect(SetMethodologyPinRequestSchema.parse({ engine_version: "1.0.0" })).toEqual({
+      engine_version: "1.0.0",
     });
   });
 });

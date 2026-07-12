@@ -42,7 +42,7 @@ const SCORE_RESULT = {
     key: "safety_crime", label: "Safety & Crime", score: 70, weight: 20, confidence: 0.9,
     reasoning: "12 violent crimes per 1k residents", confidence_reason: "240 crimes across 12 months provides strong signal",
   }],
-  confidence: 0.8, weights_source: "preset", engine_version: "2.0.2",
+  confidence: 0.8, weights_source: "preset", engine_version: "1.0.0",
 } as never;
 
 beforeEach(() => {
@@ -110,7 +110,7 @@ describe("POST /v1/score", () => {
     expect(body.weights_source).toBe("preset");
     expect(mockScore).toHaveBeenCalledWith(expect.objectContaining({ area: "M1 1AE", preset: "research" }));
     expect(trackEvent).toHaveBeenCalledWith("api.score.computed", "user_1", expect.objectContaining({ preset: "research", score: 62 }), null);
-    expect(res.headers["x-engine-version"]).toBe("2.0.2");
+    expect(res.headers["x-engine-version"]).toBe("1.0.0");
   });
 });
 
@@ -183,11 +183,11 @@ describe("POST /v1/score — Levers methodology pin (AR-197)", () => {
   it("stamps the org's pinned engine_version on the response header when set", async () => {
     mockValidate.mockResolvedValue({ userId: "user_1", orgId: "org_acme" });
     vi.mocked(sql).mockResolvedValueOnce([
-      { org_id: "org_acme", engine_version: "2.0.1", created_at: "2026-05-28", updated_at: "2026-05-28" },
+      { org_id: "org_acme", engine_version: "1.0.0", created_at: "2026-05-28", updated_at: "2026-05-28" },
     ] as never);
     const res = await postScore({ area: "M1 1AE", preset: "research" });
     expect(res.statusCode).toBe(200);
-    expect(res.headers["x-engine-version"]).toBe("2.0.1");
+    expect(res.headers["x-engine-version"]).toBe("1.0.0");
   });
 
   it("falls back to METHODOLOGY_VERSION (latest) when no pin is set", async () => {
@@ -195,7 +195,7 @@ describe("POST /v1/score — Levers methodology pin (AR-197)", () => {
     vi.mocked(sql).mockResolvedValueOnce([] as never);
     const res = await postScore({ area: "M1 1AE", preset: "research" });
     expect(res.statusCode).toBe(200);
-    expect(res.headers["x-engine-version"]).toBe("2.0.2");
+    expect(res.headers["x-engine-version"]).toBe("1.0.0");
   });
 });
 

@@ -13,7 +13,7 @@ function makeResult(over: Partial<OogaScoreResponse>): OogaScoreResponse {
     area: "X",
     preset: "moving",
     score: 50,
-    engine_version: "2.0.2",
+    engine_version: "1.0.0",
     area_type: "urban",
     confidence: 0.7,
     weights_source: "preset",
@@ -117,7 +117,7 @@ describe("formatComparisonAsText", () => {
       ],
       "investing",
     );
-    expect(text).toContain("Engine version: 2.0.2");
+    expect(text).toContain("Engine version: 1.0.0");
   });
 
   it("shows top dimension in the comparison row", () => {

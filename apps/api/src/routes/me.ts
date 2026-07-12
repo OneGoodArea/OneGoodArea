@@ -517,7 +517,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
         api_calls_per_month: planConfig?.apiCallsPerMonth ?? 0,
         used_this_month: usage.used,
         limit_this_month: usage.limit === Infinity ? null : usage.limit,
-        // Canonical engine version (the legacy route hardcoded a now-stale "2.0.0").
+        // Canonical engine version from the methodology registry.
         engine_version: METHODOLOGY_VERSION,
         addons,
         mcp_calls_this_month: mcpUsed,
