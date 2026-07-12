@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "OneGoodArea API",
-    "description": "Deterministic UK location intelligence. Scores any UK postcode against four decision presets (moving / business / investing / research) using seven public datasets. Numbers are computed from real data using fixed formulas; no AI touches the scoring path.\n\nEvery response carries an `engine_version` string and per-dimension `confidence` values, so a buyer's model risk register can pin to a specific methodology and trust-band the inputs.",
+    "description": "OneGoodArea is the deterministic data and intelligence layer underneath UK area workflows. It maintains normalised, sourced, dated small-area signals across seven categories (crime, deprivation, property, schools, amenities, transport, environment) and serves them through four products:\n\n- **Signals** — the raw per-area values, each with source, observed period, confidence and percentile.\n- **Scores** — deterministic 0-100 composites over five weighted dimensions per preset.\n- **Monitor** — portfolio tracking with material-change detection and webhooks.\n- **Intelligence** — a typed query plane (programmatic or natural-language) with peers, anomalies and forecasts.\n\nScores are computed from public data by fixed formulas; no AI touches the scoring path. Natural-language queries are translated into a typed, validated plan, but the deterministic executor produces every number. Every response carries an `engine_version` and can be pinned via the `X-Engine-Version` header, so a buyer's model risk register can lock to a specific methodology.",
     "version": "1.0.0",
     "contact": {
       "name": "OneGoodArea",
@@ -15,683 +15,633 @@
     }
   },
   "servers": [
-    { "url": "https://www.onegoodarea.com", "description": "Production" }
+    { "url": "https://api.onegoodarea.com", "description": "Production" }
   ],
+  "security": [{ "BearerAuth": [] }],
   "tags": [
-    { "name": "Reports", "description": "Generate area intelligence reports" },
-    { "name": "Webhooks", "description": "Outbound webhook subscriptions for event-driven integrations" }
+    { "name": "Signals", "description": "Per-area signal values across seven categories." },
+    { "name": "Scores", "description": "Deterministic 0-100 composite scores." },
+    { "name": "Monitor", "description": "Portfolio tracking and material-change detection." },
+    { "name": "Intelligence", "description": "Typed query plane: ranking, peers, anomalies, forecasts." },
+    { "name": "Webhooks", "description": "Outbound webhook subscriptions for event-driven integrations." }
   ],
   "paths": {
-    "/api/v1/report": {
-      "post": {
-        "tags": ["Reports"],
-        "summary": "Generate an area intelligence report",
-        "description": "Scores a UK postcode or place name against the requested intent. Returns the deterministic score, five weighted dimensions with reasoning and confidence, source attribution, and an AI-generated narrative. Cache-aware (24h TTL per area:intent pair).\n\n**Rate limit:** 30 requests/minute per API key.\n\n**Idempotency:** supply an `Idempotency-Key` header for safe retries. See the parameter description.\n\n**Methodology pinning:** supply an `X-Engine-Version` header to lock the request to a specific engine version — needed for regulated buyers entering responses into a model risk register.",
-        "operationId": "generateReport",
-        "security": [{ "BearerAuth": [] }],
+    "/v1/area": {
+      "get": {
+        "tags": ["Signals"],
+        "summary": "Full signal profile for one area",
+        "description": "Returns every signal for a UK postcode or place name, across all seven categories, with geo metadata and source attribution. Missing coverage is returned explicitly as `value: null` with a reason, never omitted.",
+        "operationId": "getArea",
         "parameters": [
-          { "$ref": "#/components/parameters/IdempotencyKey" },
+          { "name": "postcode", "in": "query", "schema": { "type": "string" }, "example": "M1 1AE", "description": "UK postcode. Either postcode or area is required." },
+          { "name": "area", "in": "query", "schema": { "type": "string" }, "example": "Manchester city centre", "description": "Postcode or place name." },
+          { "name": "bundle", "in": "query", "schema": { "type": "string" }, "description": "Optional org signal-bundle id; projects the response to the bundle's whitelist." },
           { "$ref": "#/components/parameters/EngineVersion" }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/ReportRequest" },
-              "example": {
-                "area": "Manchester",
-                "intent": "moving"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
-            "description": "Report generated or served from cache",
-            "headers": {
-              "X-RateLimit-Limit": { "schema": { "type": "integer" } },
-              "X-RateLimit-Remaining": { "schema": { "type": "integer" } },
-              "X-RateLimit-Reset": { "schema": { "type": "integer" } },
-              "X-Idempotency-Replayed": {
-                "description": "`true` when this response was served from the idempotency cache; `false` when freshly generated. Only present if the request supplied an Idempotency-Key.",
-                "schema": { "type": "string", "enum": ["true", "false"] }
-              },
-              "X-Engine-Version": {
-                "description": "The methodology version that processed the request. Echoes the request's `X-Engine-Version` header when supplied, or the current default version when omitted. Match against the `engine_version` field inside the response body for audit-trail purposes.",
-                "schema": { "type": "string", "example": "1.0.0" }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ReportResponse" }
-              }
-            }
+            "description": "Signal profile",
+            "headers": { "X-Engine-Version": { "$ref": "#/components/headers/XEngineVersion" } },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AreaProfile" } } }
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/AuthError" },
           "403": { "$ref": "#/components/responses/PlanError" },
-          "409": {
-            "description": "Idempotency-Key conflict: the same key was previously used with a different request body. Use a fresh key.",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
-              }
-            }
-          },
-          "429": { "$ref": "#/components/responses/RateLimitError" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "404": { "$ref": "#/components/responses/NotFoundError" },
+          "429": { "$ref": "#/components/responses/RateLimitError" }
         }
       }
     },
-    "/api/v1/batch": {
-      "post": {
-        "tags": ["Reports"],
-        "summary": "Score up to 100 postcodes in a single request",
-        "description": "Bulk variant of `/api/v1/report` for portfolio-scale buyers (mortgage lenders, insurance underwriters, CRE site-selection teams). Accepts an array of `{ area, intent }` items, processes them with bounded concurrency, and returns a per-item result array.\n\n**Limits:**\n- Max 100 items per request. Larger workloads should be split client-side, or use the async pattern (roadmap).\n- 5 batch requests per minute per API key.\n- Each item counts as 1 report against the monthly quota. Pre-check: if `items.length > remaining_quota`, returns 429 with full details, no quota consumed.\n- Items are processed in parallel with concurrency=5 internally; cache hits resolve in ~100ms, cache misses up to ~30s each.\n\n**Failure handling:** per-item errors do not fail the batch. Each result is either `{ area, intent, report }` (success) or `{ area, intent, error }` (failure).\n\n**Methodology pinning:** `X-Engine-Version` applies to every item in the batch — buyers cannot mix versions inside one call.",
-        "operationId": "batchReport",
-        "security": [{ "BearerAuth": [] }],
+    "/v1/signals/{category}": {
+      "get": {
+        "tags": ["Signals"],
+        "summary": "Signals for one category",
+        "description": "The signal profile narrowed to a single category.",
+        "operationId": "getSignalsByCategory",
         "parameters": [
-          { "$ref": "#/components/parameters/IdempotencyKey" },
+          { "name": "category", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/SignalCategory" } },
+          { "name": "area", "in": "query", "schema": { "type": "string" }, "example": "M1 1AE" },
+          { "name": "postcode", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Category-scoped signal profile",
+            "headers": { "X-Engine-Version": { "$ref": "#/components/headers/XEngineVersion" } },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AreaProfile" } } }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" },
+          "429": { "$ref": "#/components/responses/RateLimitError" }
+        }
+      }
+    },
+    "/v1/areas": {
+      "get": {
+        "tags": ["Signals"],
+        "summary": "Rank areas by a signal",
+        "description": "Rank and filter LSOAs by a single normalised signal, scoped by country or local authority district, with percentile and value filters. Only normalised signals (the deprivation pair, property.median_price, crime.total_12m, and the derived signals) are rankable.",
+        "operationId": "queryAreas",
+        "parameters": [
+          { "name": "signal", "in": "query", "required": true, "schema": { "type": "string" }, "example": "property.median_price" },
+          { "name": "country", "in": "query", "schema": { "type": "string", "enum": ["England", "Wales", "Scotland"] } },
+          { "name": "lad", "in": "query", "schema": { "type": "string" }, "description": "ONS local authority district code, e.g. E08000003." },
+          { "name": "min_percentile", "in": "query", "schema": { "type": "number", "minimum": 0, "maximum": 100 } },
+          { "name": "max_percentile", "in": "query", "schema": { "type": "number", "minimum": 0, "maximum": 100 } },
+          { "name": "min_value", "in": "query", "schema": { "type": "number" } },
+          { "name": "max_value", "in": "query", "schema": { "type": "number" } },
+          { "name": "sort", "in": "query", "schema": { "type": "string", "enum": ["percentile", "percentile_desc", "value", "value_desc"], "default": "percentile" } },
+          { "name": "scope", "in": "query", "schema": { "type": "string", "enum": ["national", "regional"], "default": "national" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 100, "maximum": 1000 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ranked areas",
+            "headers": { "X-Engine-Version": { "$ref": "#/components/headers/XEngineVersion" } },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AreasResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "429": { "$ref": "#/components/responses/RateLimitError" }
+        }
+      }
+    },
+    "/v1/score": {
+      "post": {
+        "tags": ["Scores"],
+        "summary": "Score one area",
+        "description": "Deterministic 0-100 composite for one area, over five weighted dimensions chosen by a preset. Supply a preset, custom weights over that preset's dimensions, or a saved org preset_id (mutually exclusive). No AI: the same input and engine version always produce the same number. Set explain=true for a server-composed summary, recommendations and data sources (still no AI, pure formatters).",
+        "operationId": "scoreArea",
+        "parameters": [
+          { "name": "explain", "in": "query", "schema": { "type": "boolean" }, "description": "Include summary, recommendations and data_sources." },
+          { "name": "bundle", "in": "query", "schema": { "type": "string" } },
           { "$ref": "#/components/parameters/EngineVersion" }
         ],
         "requestBody": {
           "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/BatchRequest" },
-              "example": {
-                "items": [
-                  { "area": "Manchester", "intent": "moving" },
-                  { "area": "M1 1AE", "intent": "business" },
-                  { "area": "Edinburgh", "intent": "investing" }
-                ]
-              }
-            }
-          }
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScoreRequest" }, "example": { "area": "M1 1AE", "preset": "moving" } } }
         },
         "responses": {
           "200": {
-            "description": "Batch processed. Individual items may have succeeded or failed; check the `error` field on each result.",
-            "headers": {
-              "X-RateLimit-Limit": { "schema": { "type": "integer" } },
-              "X-RateLimit-Remaining": { "schema": { "type": "integer" } },
-              "X-RateLimit-Reset": { "schema": { "type": "integer" } },
-              "X-Idempotency-Replayed": {
-                "description": "`true` when this response was served from the idempotency cache; `false` when freshly generated. Only present if the request supplied an Idempotency-Key.",
-                "schema": { "type": "string", "enum": ["true", "false"] }
-              },
-              "X-Engine-Version": {
-                "description": "The methodology version that processed this batch. Applies uniformly to every item.",
-                "schema": { "type": "string", "example": "1.0.0" }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/BatchResponse" }
-              }
-            }
+            "description": "Score result",
+            "headers": { "X-Engine-Version": { "$ref": "#/components/headers/XEngineVersion" } },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScoreResult" } } }
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/AuthError" },
           "403": { "$ref": "#/components/responses/PlanError" },
-          "409": {
-            "description": "Idempotency-Key conflict: the same key was previously used with a different request body. Use a fresh key.",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
-              }
-            }
-          },
-          "429": { "$ref": "#/components/responses/RateLimitError" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "404": { "$ref": "#/components/responses/NotFoundError" },
+          "422": { "$ref": "#/components/responses/UnprocessableError" },
+          "429": { "$ref": "#/components/responses/RateLimitError" }
         }
       }
     },
-    "/api/v1/webhooks": {
+    "/v1/portfolios": {
+      "post": {
+        "tags": ["Monitor"],
+        "summary": "Create a portfolio",
+        "operationId": "createPortfolio",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["name"], "properties": { "name": { "type": "string", "maxLength": 200 } } }, "example": { "name": "UK mortgage book Q3" } } }
+        },
+        "responses": {
+          "201": { "description": "Portfolio created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Portfolio" } } } },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "429": { "$ref": "#/components/responses/RateLimitError" }
+        }
+      },
+      "get": {
+        "tags": ["Monitor"],
+        "summary": "List portfolios",
+        "operationId": "listPortfolios",
+        "responses": {
+          "200": { "description": "Portfolios", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Portfolio" } } } } },
+          "401": { "$ref": "#/components/responses/AuthError" }
+        }
+      }
+    },
+    "/v1/portfolios/{id}": {
+      "get": {
+        "tags": ["Monitor"],
+        "summary": "Get a portfolio",
+        "operationId": "getPortfolio",
+        "parameters": [{ "$ref": "#/components/parameters/PortfolioId" }],
+        "responses": {
+          "200": { "description": "Portfolio with member areas", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PortfolioDetail" } } } },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      },
+      "delete": {
+        "tags": ["Monitor"],
+        "summary": "Delete a portfolio",
+        "operationId": "deletePortfolio",
+        "parameters": [{ "$ref": "#/components/parameters/PortfolioId" }],
+        "responses": {
+          "200": { "description": "Deleted" },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      }
+    },
+    "/v1/portfolios/{id}/areas": {
+      "post": {
+        "tags": ["Monitor"],
+        "summary": "Add tracked areas",
+        "description": "Bulk-add up to 100 areas to a portfolio.",
+        "operationId": "addPortfolioAreas",
+        "parameters": [{ "$ref": "#/components/parameters/PortfolioId" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["areas"], "properties": { "areas": { "type": "array", "maxItems": 100, "items": { "type": "object", "required": ["area"], "properties": { "area": { "type": "string" }, "label": { "type": "string" } } } } } } } }
+        },
+        "responses": {
+          "200": { "description": "Areas added", "content": { "application/json": { "schema": { "type": "object", "properties": { "added": { "type": "integer" }, "portfolio": { "$ref": "#/components/schemas/PortfolioDetail" } } } } } },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      }
+    },
+    "/v1/portfolios/{id}/enrich": {
+      "post": {
+        "tags": ["Monitor"],
+        "summary": "Enrich every area",
+        "description": "Compute a full signal profile or score for every area in the portfolio.",
+        "operationId": "enrichPortfolio",
+        "parameters": [{ "$ref": "#/components/parameters/PortfolioId" }],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "preset": { "$ref": "#/components/schemas/Preset" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Enrichment results", "content": { "application/json": { "schema": { "type": "object", "properties": { "count": { "type": "integer" }, "results": { "type": "array", "items": { "type": "object" } } } } } } },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      }
+    },
+    "/v1/portfolios/{id}/changes": {
+      "post": {
+        "tags": ["Monitor"],
+        "summary": "Detect material change (fires webhooks)",
+        "description": "Diff each tracked area's signals across two time-series periods and surface the material moves. A move is material when its absolute percentage change meets the threshold; property moves are gated by a minimum transaction count in both periods to suppress small-sample noise. Fires signal.changed webhooks for material moves.",
+        "operationId": "detectPortfolioChanges",
+        "parameters": [{ "$ref": "#/components/parameters/PortfolioId" }],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "baseline": { "type": "string", "enum": ["previous", "first"], "default": "previous" }, "threshold_pct": { "type": "number", "default": 5 }, "min_transactions": { "type": "integer", "default": 8 }, "emit": { "type": "boolean", "default": true } } } } }
+        },
+        "responses": {
+          "200": { "description": "Change report", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChangeReport" } } } },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      },
+      "get": {
+        "tags": ["Monitor"],
+        "summary": "Preview material change (read-only)",
+        "description": "The same detection as the POST variant but read-only: never fires webhooks. For dashboards and previews.",
+        "operationId": "previewPortfolioChanges",
+        "parameters": [
+          { "$ref": "#/components/parameters/PortfolioId" },
+          { "name": "baseline", "in": "query", "schema": { "type": "string", "enum": ["previous", "first"] } },
+          { "name": "threshold_pct", "in": "query", "schema": { "type": "number" } }
+        ],
+        "responses": {
+          "200": { "description": "Change report (no webhooks)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChangeReport" } } } },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      }
+    },
+    "/v1/query": {
+      "post": {
+        "tags": ["Intelligence"],
+        "summary": "Typed query plane",
+        "description": "Ask a question over the signal store. Send a programmatic plan (skips the LLM entirely) or a natural-language question (translated by a planner into a strict, validated plan). Both run through the same deterministic executor over one of seven operations: rank_areas, get_area, score_area, compare_areas, find_peers, find_insights, find_forecast. The response echoes the executed plan and plan_source so any answer is replayable.",
+        "operationId": "runQuery",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/QueryRequest" }, "example": { "question": "cheapest areas under 250k median price rising year on year in Manchester" } } }
+        },
+        "responses": {
+          "200": { "description": "Query result", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/QueryResponse" } } } },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "422": { "$ref": "#/components/responses/UnprocessableError" },
+          "429": { "$ref": "#/components/responses/RateLimitError" }
+        }
+      }
+    },
+    "/v1/peers": {
+      "post": {
+        "tags": ["Intelligence"],
+        "summary": "Find peer areas (k-NN)",
+        "description": "Nearest neighbours to a target area in normalised-signal space (Euclidean over normalised values). Default k=20, minimum 3 overlapping signals.",
+        "operationId": "findPeers",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PeersRequest" }, "example": { "target": { "area": "M1 1AE" }, "k": 20 } } }
+        },
+        "responses": {
+          "200": { "description": "Peers", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PeersResponse" } } } },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "429": { "$ref": "#/components/responses/RateLimitError" }
+        }
+      }
+    },
+    "/v1/insights": {
+      "post": {
+        "tags": ["Intelligence"],
+        "summary": "Peer-relative anomalies",
+        "description": "Rank LSOAs by the absolute value of a peer-relative z-score. The signal_key must end in _peer_relative_z. Default k=50.",
+        "operationId": "findInsights",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/InsightsRequest" }, "example": { "signal_key": "crime.total_12m_peer_relative_z", "country": "England" } } }
+        },
+        "responses": {
+          "200": { "description": "Insights", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/InsightsResponse" } } } },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "429": { "$ref": "#/components/responses/RateLimitError" }
+        }
+      }
+    },
+    "/v1/forecast": {
+      "post": {
+        "tags": ["Intelligence"],
+        "summary": "Linear forecast for one (signal, area)",
+        "description": "Linear regression over the time-series for one signal in one area. Default 24-month window, 12-month horizon. The confidence band is constant-width (it does not widen with horizon); the response meta exposes r2 and residual stderr so callers can filter on quality. Not a learned model.",
+        "operationId": "runForecast",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ForecastRequest" }, "example": { "target": { "area": "M1 1AE" }, "signal_key": "property.median_price", "horizon_months": 12 } } }
+        },
+        "responses": {
+          "200": { "description": "Forecast", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ForecastResponse" } } } },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "429": { "$ref": "#/components/responses/RateLimitError" }
+        }
+      }
+    },
+    "/v1/webhooks": {
       "post": {
         "tags": ["Webhooks"],
-        "summary": "Register a webhook subscription",
-        "description": "Subscribe to outbound webhook events. We POST signed payloads to your URL when matching events fire. Stripe-style HMAC-SHA256 signature in the `X-OneGoodArea-Signature` header (format: `t=<unix-ts>,v1=<hex>`).\n\n**Supported event types:**\n- `report.created`: fires after every successful report generation by your API key (live now).\n- `score.changed`: fires when the time-series cron detects a score change >5 points for a postcode you've watched. (Available once the cron is scheduled — see roadmap.)\n\n**Secret:** the per-subscription HMAC signing secret (`whsec_<48-hex>`) is returned ONCE in the create response. Store it server-side; it cannot be retrieved later. Rotate by revoking + recreating.\n\n**URL requirements:** must be HTTPS. Localhost and RFC 1918 private ranges are rejected.\n\n**Delivery:** synchronous POST with 5s timeout. Failed deliveries are recorded in our internal audit log; a Phase-2 retry cron will pick them up with exponential backoff.",
-        "operationId": "createWebhookSubscription",
-        "security": [{ "BearerAuth": [] }],
+        "summary": "Create a webhook subscription",
+        "operationId": "createWebhook",
         "requestBody": {
           "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/WebhookSubscriptionRequest" },
-              "example": {
-                "url": "https://hooks.acme-lender.example.com/onegoodarea",
-                "events": ["report.created"]
-              }
-            }
-          }
+          "content": { "application/json": { "schema": { "type": "object", "required": ["url", "event_types"], "properties": { "url": { "type": "string", "format": "uri" }, "event_types": { "type": "array", "items": { "type": "string", "enum": ["signal.changed"] } } } } } }
         },
         "responses": {
-          "201": {
-            "description": "Subscription created. The `secret` is returned ONCE and is never recoverable.",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/CreatedWebhookSubscription" }
-              }
-            }
-          },
+          "201": { "description": "Subscription created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WebhookSubscription" } } } },
           "400": { "$ref": "#/components/responses/ValidationError" },
-          "401": { "$ref": "#/components/responses/AuthError" },
-          "403": { "$ref": "#/components/responses/PlanError" },
-          "429": { "$ref": "#/components/responses/RateLimitError" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "401": { "$ref": "#/components/responses/AuthError" }
         }
       },
       "get": {
         "tags": ["Webhooks"],
-        "summary": "List your active webhook subscriptions",
-        "description": "Returns active subscriptions for the API key. Secrets are NEVER included in list responses — only the URL, event types, status, and delivery timestamps.",
-        "operationId": "listWebhookSubscriptions",
-        "security": [{ "BearerAuth": [] }],
+        "summary": "List webhook subscriptions",
+        "operationId": "listWebhooks",
         "responses": {
-          "200": {
-            "description": "Subscription list",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/WebhookSubscriptionList" }
-              }
-            }
-          },
-          "401": { "$ref": "#/components/responses/AuthError" },
-          "403": { "$ref": "#/components/responses/PlanError" },
-          "429": { "$ref": "#/components/responses/RateLimitError" }
+          "200": { "description": "Subscriptions", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/WebhookSubscription" } } } } },
+          "401": { "$ref": "#/components/responses/AuthError" }
         }
       }
     },
-    "/api/v1/webhooks/{id}": {
+    "/v1/webhooks/{id}": {
       "delete": {
         "tags": ["Webhooks"],
         "summary": "Revoke a webhook subscription",
-        "description": "Marks the subscription as `revoked`. No further events will be delivered. Idempotent: revoking an already-revoked subscription returns 404.",
-        "operationId": "revokeWebhookSubscription",
-        "security": [{ "BearerAuth": [] }],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "example": "whsub_abc123"
-          }
-        ],
+        "operationId": "revokeWebhook",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
         "responses": {
-          "200": {
-            "description": "Revoked",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": { "type": "string" },
-                    "status": { "type": "string", "example": "revoked" }
-                  }
-                }
-              }
-            }
-          },
+          "200": { "description": "Revoked" },
           "401": { "$ref": "#/components/responses/AuthError" },
-          "403": { "$ref": "#/components/responses/PlanError" },
-          "404": {
-            "description": "Subscription not found or already revoked",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
-              }
-            }
-          },
-          "429": { "$ref": "#/components/responses/RateLimitError" }
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      }
+    },
+    "/v1/webhooks/{id}/rotate-secret": {
+      "post": {
+        "tags": ["Webhooks"],
+        "summary": "Rotate the signing secret",
+        "operationId": "rotateWebhookSecret",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "New signing secret", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WebhookSubscription" } } } },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
         }
       }
     }
   },
   "components": {
+    "securitySchemes": {
+      "BearerAuth": { "type": "http", "scheme": "bearer", "description": "API key as a Bearer token. Keys are prefixed oga_." }
+    },
+    "headers": {
+      "XEngineVersion": {
+        "description": "The methodology version that processed the request. Echoes the request's X-Engine-Version when supplied, else the org pin or the latest. Match against the body's engine_version for audit.",
+        "schema": { "type": "string", "example": "1.0.0" }
+      }
+    },
     "parameters": {
-      "IdempotencyKey": {
-        "name": "Idempotency-Key",
-        "in": "header",
-        "required": false,
-        "description": "Optional opaque string (UUID v4 recommended, 1-255 chars). When supplied, the response is cached for 24 hours keyed by `(your-api-key, idempotency-key)`. A retry with the same key + same request body returns the original response without re-running the engine and without consuming additional quota. If the same key is reused with a different request body, the API returns HTTP 409 with code `IDEMPOTENCY_CONFLICT`. Stripe-style. Recommended for any retry-on-network-failure pattern.",
-        "schema": { "type": "string", "minLength": 1, "maxLength": 255, "example": "550e8400-e29b-41d4-a716-446655440000" }
-      },
       "EngineVersion": {
         "name": "X-Engine-Version",
         "in": "header",
         "required": false,
-        "description": "Optional methodology pin. When supplied, the request is processed against the given engine version so the response can be entered into a model risk register without ambiguity. Omit to use the latest version (default).\n\n**Supported versions:** `2.0.0`, `2.0.1`, `2.0.2`. All three are score-equivalent today — patch versions in the v2.x series changed only the confidence rubric and data-source reliability, not scoring math. So pinning to any v2.x guarantees byte-identical SCORE values; per-dimension `confidence` metadata may refine between patches.\n\n**End-of-life:** versions `1.0.0` / `1.1.0` / `1.2.0` are reconstructed-from-history snapshots; we do not run a frozen engine for them. Requests pinned to a 1.x version return HTTP 400 with code `engine_version_unsupported`.\n\n**Unknown versions** return HTTP 400 with code `engine_version_unknown` and the supported set in `supported_versions`.\n\n**Response:** every successful response carries an `X-Engine-Version` response header echoing the version that processed the request, and the response body's `engine_version` field stamps the same value into the report payload (audit trail).",
-        "schema": { "type": "string", "enum": ["1.0.0"], "example": "1.0.0" }
-      }
-    },
-    "securitySchemes": {
-      "BearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "aiq_<48-char hex>",
-        "description": "API key issued from your dashboard at https://www.onegoodarea.com/api-usage. Format: `aiq_` followed by 48 hex characters. Pass as `Authorization: Bearer aiq_...`."
-      }
+        "schema": { "type": "string", "enum": ["1.0.0"], "example": "1.0.0" },
+        "description": "Pin the request to a specific engine version for a model risk register. Unknown versions return 400."
+      },
+      "PortfolioId": { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
     },
     "schemas": {
-      "Intent": {
-        "type": "string",
-        "description": "The scoring product to apply. Each intent reweights the same five dimensions for a different decision.",
-        "enum": ["moving", "business", "investing", "research"],
-        "x-product-mapping": {
-          "moving": "Origination scoring — residential mortgage suitability and demand-side risk",
-          "business": "Site selection — footfall, competition, and commercial viability",
-          "investing": "Investment scoring — yield, growth, regeneration, tenant risk",
-          "research": "Reference scoring — neutral baseline, equal weights"
-        }
-      },
-      "AreaType": {
-        "type": "string",
-        "enum": ["urban", "suburban", "rural"],
-        "description": "Auto-detected from postcodes.io rural/urban classification. Scores are benchmarked against the relevant peer group."
-      },
-      "ReportRequest": {
+      "SignalCategory": { "type": "string", "enum": ["crime", "deprivation", "property", "schools", "amenities", "transport", "environment"] },
+      "Preset": { "type": "string", "enum": ["moving", "business", "investing", "research"] },
+      "Signal": {
         "type": "object",
-        "required": ["area", "intent"],
         "properties": {
-          "area": {
-            "type": "string",
-            "description": "UK postcode (e.g. `M1 1AE`), place name (`Manchester`), or partial. Will be geocoded and resolved to an LSOA before scoring.",
-            "minLength": 2,
-            "maxLength": 80
-          },
-          "intent": { "$ref": "#/components/schemas/Intent" }
+          "key": { "type": "string", "example": "crime.total_12m" },
+          "category": { "$ref": "#/components/schemas/SignalCategory" },
+          "label": { "type": "string" },
+          "value": { "nullable": true, "description": "Number or string; null when there is no coverage." },
+          "unit": { "type": "string", "example": "count" },
+          "direction": { "type": "string", "enum": ["higher_is_better", "lower_is_better", "neutral"] },
+          "source": { "type": "string", "example": "police.uk" },
+          "observed_period": { "type": "string", "example": "2025-01 to 2025-12" },
+          "confidence": { "type": "number", "format": "float", "minimum": 0, "maximum": 1 },
+          "confidence_reason": { "type": "string" },
+          "normalized_value": { "type": "number", "nullable": true, "description": "0-1 position within the country. Store-backed signals only." },
+          "percentile": { "type": "number", "nullable": true, "description": "National percentile 0-100. Store-backed signals only." },
+          "regional_percentile": { "type": "number", "nullable": true }
         }
       },
-      "BatchRequest": {
+      "AreaGeo": {
         "type": "object",
-        "required": ["items"],
         "properties": {
-          "items": {
-            "type": "array",
-            "description": "Array of (area, intent) pairs to score. Minimum 1, maximum 100. Order is preserved in the response.",
-            "minItems": 1,
-            "maxItems": 100,
-            "items": { "$ref": "#/components/schemas/ReportRequest" }
-          }
+          "query": { "type": "string" }, "postcode": { "type": "string", "nullable": true }, "lat": { "type": "number" }, "lng": { "type": "number" },
+          "lsoa": { "type": "string" }, "msoa": { "type": "string", "nullable": true }, "admin_district": { "type": "string", "nullable": true },
+          "region": { "type": "string", "nullable": true }, "country": { "type": "string" }, "area_type": { "type": "string", "enum": ["urban", "suburban", "rural"] }
         }
       },
-      "BatchResultItem": {
-        "oneOf": [
-          {
-            "type": "object",
-            "required": ["area", "intent", "report"],
-            "properties": {
-              "area": { "type": "string", "description": "Echo of the input area string" },
-              "intent": { "$ref": "#/components/schemas/Intent" },
-              "report": { "$ref": "#/components/schemas/AreaReport" }
-            }
-          },
-          {
-            "type": "object",
-            "required": ["area", "intent", "error"],
-            "properties": {
-              "area": { "type": "string" },
-              "intent": { "type": "string" },
-              "error": {
-                "type": "string",
-                "description": "Per-item failure reason (e.g. invalid intent, geocode failure, upstream error). The batch as a whole still returns 200; this item is just not fulfilled."
-              }
-            }
-          }
+      "AreaProfileMeta": {
+        "type": "object",
+        "properties": {
+          "engine_version": { "type": "string", "example": "1.0.0" },
+          "generated_at": { "type": "string", "format": "date-time" },
+          "sources": { "type": "array", "items": { "type": "string" } },
+          "fetch_mode": { "type": "string", "enum": ["live", "store", "hybrid"] }
+        }
+      },
+      "AreaProfile": {
+        "type": "object",
+        "properties": {
+          "geo": { "$ref": "#/components/schemas/AreaGeo" },
+          "signals": { "type": "array", "items": { "$ref": "#/components/schemas/Signal" } },
+          "meta": { "$ref": "#/components/schemas/AreaProfileMeta" }
+        }
+      },
+      "AreaResult": {
+        "type": "object",
+        "properties": {
+          "geo_type": { "type": "string", "example": "lsoa" }, "geo_code": { "type": "string", "example": "E01033664" },
+          "value": { "type": "number" }, "normalized_value": { "type": "number" }, "percentile": { "type": "number" }
+        }
+      },
+      "AreasResponse": {
+        "type": "object",
+        "properties": {
+          "signal": { "type": "string" }, "count": { "type": "integer" },
+          "areas": { "type": "array", "items": { "$ref": "#/components/schemas/AreaResult" } }
+        }
+      },
+      "ScoreRequest": {
+        "type": "object",
+        "required": ["area"],
+        "properties": {
+          "area": { "type": "string", "example": "M1 1AE" },
+          "preset": { "$ref": "#/components/schemas/Preset" },
+          "weights": { "type": "object", "additionalProperties": { "type": "number" }, "description": "Custom weights over the chosen preset's five dimensions." },
+          "preset_id": { "type": "string", "description": "A saved org preset id. Mutually exclusive with preset/weights." },
+          "explain": { "type": "boolean" }
+        }
+      },
+      "Dimension": {
+        "type": "object",
+        "properties": {
+          "key": { "type": "string", "example": "safety_crime" }, "label": { "type": "string", "example": "Safety & Crime" },
+          "score": { "type": "number", "minimum": 0, "maximum": 100 }, "weight": { "type": "number" },
+          "confidence": { "type": "number", "format": "float", "minimum": 0, "maximum": 1 },
+          "reasoning": { "type": "string" }, "confidence_reason": { "type": "string" }
+        }
+      },
+      "ScoreResult": {
+        "type": "object",
+        "properties": {
+          "area": { "type": "string" }, "preset": { "$ref": "#/components/schemas/Preset" },
+          "score": { "type": "number", "minimum": 0, "maximum": 100 },
+          "area_type": { "type": "string", "enum": ["urban", "suburban", "rural"] },
+          "dimensions": { "type": "array", "minItems": 5, "maxItems": 5, "items": { "$ref": "#/components/schemas/Dimension" } },
+          "confidence": { "type": "number", "format": "float", "minimum": 0, "maximum": 1 },
+          "weights_source": { "type": "string", "enum": ["preset", "custom"] },
+          "engine_version": { "type": "string", "example": "1.0.0" },
+          "summary": { "type": "string", "description": "Present when explain=true. Server-composed, no AI." },
+          "recommendations": { "type": "array", "items": { "type": "string" } },
+          "data_sources": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "Portfolio": {
+        "type": "object",
+        "properties": { "id": { "type": "string" }, "name": { "type": "string" }, "created_at": { "type": "string", "format": "date-time" } }
+      },
+      "TrackedArea": {
+        "type": "object",
+        "properties": { "area": { "type": "string" }, "label": { "type": "string", "nullable": true }, "geo_code": { "type": "string", "nullable": true } }
+      },
+      "PortfolioDetail": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Portfolio" },
+          { "type": "object", "properties": { "areas": { "type": "array", "items": { "$ref": "#/components/schemas/TrackedArea" } } } }
         ]
       },
-      "BatchResponse": {
+      "SignalChange": {
         "type": "object",
-        "required": ["results", "summary"],
         "properties": {
-          "results": {
-            "type": "array",
-            "description": "Per-item results in input order. Each entry is either a success (has `report`) or an error (has `error`).",
-            "items": { "$ref": "#/components/schemas/BatchResultItem" }
-          },
-          "summary": {
-            "type": "object",
-            "required": ["total", "succeeded", "failed"],
-            "properties": {
-              "total": { "type": "integer", "description": "Number of items submitted." },
-              "succeeded": { "type": "integer", "description": "Items that produced a report." },
-              "failed": { "type": "integer", "description": "Items that returned an error." }
-            }
-          }
+          "signal_key": { "type": "string" }, "label": { "type": "string" }, "area": { "type": "string" }, "geo_code": { "type": "string" },
+          "period_from": { "type": "string" }, "period_to": { "type": "string" },
+          "value_from": { "type": "number" }, "value_to": { "type": "number" }, "delta": { "type": "number" },
+          "pct_change": { "type": "number", "nullable": true }, "direction": { "type": "string", "enum": ["up", "down", "flat"] },
+          "material": { "type": "boolean" }
         }
       },
-      "WebhookEventType": {
-        "type": "string",
-        "enum": ["report.created", "score.changed"],
-        "description": "Event types that a webhook subscription can fire on. `report.created` is live; `score.changed` becomes active when the time-series cron is scheduled."
-      },
-      "WebhookSubscriptionRequest": {
+      "ChangeReport": {
         "type": "object",
-        "required": ["url", "events"],
         "properties": {
-          "url": {
-            "type": "string",
-            "format": "uri",
-            "description": "HTTPS URL we POST signed event payloads to. Must be publicly reachable — localhost and RFC 1918 private ranges are rejected.",
-            "example": "https://hooks.acme-lender.example.com/onegoodarea"
-          },
-          "events": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/WebhookEventType" },
-            "minItems": 1,
-            "description": "Event types this subscription should fire on. Unknown types are silently filtered."
-          }
+          "portfolio_id": { "type": "string" }, "baseline": { "type": "string", "enum": ["previous", "first"] },
+          "threshold_pct": { "type": "number" }, "min_transactions": { "type": "integer" },
+          "areas_checked": { "type": "integer" }, "material_count": { "type": "integer" },
+          "changes": { "type": "array", "items": { "$ref": "#/components/schemas/SignalChange" } },
+          "generated_at": { "type": "string", "format": "date-time" }
         }
       },
-      "CreatedWebhookSubscription": {
+      "QueryPlan": {
         "type": "object",
-        "required": ["id", "url", "events", "secret", "created_at"],
         "properties": {
-          "id": { "type": "string", "example": "whsub_abc123def" },
-          "url": { "type": "string", "format": "uri" },
-          "events": { "type": "array", "items": { "$ref": "#/components/schemas/WebhookEventType" } },
-          "secret": {
-            "type": "string",
-            "description": "HMAC-SHA256 signing secret. Format: `whsec_<48-hex>`. RETURNED ONCE on create; never recoverable. Use to verify the `X-OneGoodArea-Signature` header on incoming webhook deliveries.",
-            "example": "whsec_a1b2c3d4..."
-          },
-          "created_at": { "type": "string", "format": "date-time" }
+          "op": { "type": "string", "enum": ["rank_areas", "get_area", "score_area", "compare_areas", "find_peers", "find_insights", "find_forecast"] },
+          "params": { "type": "object" }
+        }
+      },
+      "QueryRequest": {
+        "type": "object",
+        "description": "Exactly one of question or plan.",
+        "properties": {
+          "question": { "type": "string" },
+          "plan": { "$ref": "#/components/schemas/QueryPlan" },
+          "bundle": { "type": "string" }
+        }
+      },
+      "QueryResponse": {
+        "type": "object",
+        "properties": {
+          "plan": { "$ref": "#/components/schemas/QueryPlan" },
+          "plan_source": { "type": "string", "enum": ["client", "nl"] },
+          "results": {},
+          "meta": { "type": "object" }
+        }
+      },
+      "PeerTarget": {
+        "type": "object",
+        "description": "Exactly one of geo_code, postcode or area.",
+        "properties": { "geo_code": { "type": "string" }, "postcode": { "type": "string" }, "area": { "type": "string" } }
+      },
+      "PeersRequest": {
+        "type": "object",
+        "required": ["target"],
+        "properties": {
+          "target": { "$ref": "#/components/schemas/PeerTarget" },
+          "signals": { "type": "array", "items": { "type": "string" } },
+          "country": { "type": "string" }, "lad": { "type": "string" }, "cohort_id": { "type": "string" },
+          "k": { "type": "integer", "default": 20, "maximum": 200 }, "min_signals": { "type": "integer", "default": 3 }
+        }
+      },
+      "Peer": {
+        "type": "object",
+        "properties": { "geo_code": { "type": "string" }, "distance": { "type": "number" }, "admin_district": { "type": "string", "nullable": true }, "region": { "type": "string", "nullable": true }, "sample_postcode": { "type": "string", "nullable": true } }
+      },
+      "PeersResponse": {
+        "type": "object",
+        "properties": {
+          "target": { "type": "object", "properties": { "geo_code": { "type": "string" }, "signals_used": { "type": "array", "items": { "type": "string" } } } },
+          "peers": { "type": "array", "items": { "$ref": "#/components/schemas/Peer" } },
+          "meta": { "type": "object" }
+        }
+      },
+      "InsightsRequest": {
+        "type": "object",
+        "required": ["signal_key"],
+        "properties": {
+          "signal_key": { "type": "string", "description": "Must end in _peer_relative_z." },
+          "country": { "type": "string" }, "lad": { "type": "string" },
+          "min_abs_z": { "type": "number" }, "k": { "type": "integer", "default": 50, "maximum": 500 }
+        }
+      },
+      "Insight": {
+        "type": "object",
+        "properties": { "geo_code": { "type": "string" }, "value": { "type": "number", "description": "The peer-relative z-score." } }
+      },
+      "InsightsResponse": {
+        "type": "object",
+        "properties": {
+          "signal_key": { "type": "string" },
+          "insights": { "type": "array", "items": { "$ref": "#/components/schemas/Insight" } },
+          "meta": { "type": "object" }
+        }
+      },
+      "ForecastRequest": {
+        "type": "object",
+        "required": ["target", "signal_key"],
+        "properties": {
+          "target": { "$ref": "#/components/schemas/PeerTarget" },
+          "signal_key": { "type": "string" },
+          "window_months": { "type": "integer", "default": 24, "minimum": 6, "maximum": 120 },
+          "horizon_months": { "type": "integer", "default": 12, "maximum": 60 }
+        }
+      },
+      "ForecastPoint": {
+        "type": "object",
+        "properties": { "observed_period": { "type": "string" }, "value": { "type": "number" }, "lower": { "type": "number", "nullable": true }, "upper": { "type": "number", "nullable": true } }
+      },
+      "ForecastResponse": {
+        "type": "object",
+        "properties": {
+          "target": { "type": "object", "properties": { "geo_code": { "type": "string" } } },
+          "signal_key": { "type": "string" },
+          "points": { "type": "array", "items": { "$ref": "#/components/schemas/ForecastPoint" } },
+          "meta": { "type": "object", "properties": { "r2": { "type": "number" }, "slope_per_month": { "type": "number" }, "intercept": { "type": "number" }, "residual_stderr": { "type": "number", "nullable": true }, "n_observations": { "type": "integer" } } }
         }
       },
       "WebhookSubscription": {
         "type": "object",
-        "required": ["id", "url", "events", "status", "created_at"],
-        "properties": {
-          "id": { "type": "string" },
-          "url": { "type": "string", "format": "uri" },
-          "events": { "type": "array", "items": { "$ref": "#/components/schemas/WebhookEventType" } },
-          "status": { "type": "string", "enum": ["active", "revoked"] },
-          "created_at": { "type": "string", "format": "date-time" },
-          "last_success_at": { "type": "string", "format": "date-time", "nullable": true },
-          "last_failure_at": { "type": "string", "format": "date-time", "nullable": true }
-        }
-      },
-      "WebhookSubscriptionList": {
-        "type": "object",
-        "required": ["subscriptions"],
-        "properties": {
-          "subscriptions": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/WebhookSubscription" }
-          }
-        }
-      },
-      "WebhookEventEnvelope": {
-        "type": "object",
-        "description": "Shape of the JSON body POST'ed to your webhook URL when an event fires. The body is signed by `X-OneGoodArea-Signature: t=<unix-seconds>,v1=<hmac-sha256-hex>` — verify by recomputing HMAC over `<timestamp>.<raw-body>` with your secret.",
-        "required": ["id", "type", "created", "data"],
-        "properties": {
-          "id": { "type": "string", "example": "evt_abc123def" },
-          "type": { "$ref": "#/components/schemas/WebhookEventType" },
-          "created": { "type": "integer", "description": "Unix timestamp (seconds) when the event was generated" },
-          "data": {
-            "type": "object",
-            "description": "Event-specific payload. For `report.created`: `{report_id, area, intent, score, engine_version, confidence}`.",
-            "additionalProperties": true
-          }
-        }
-      },
-      "ReportResponse": {
-        "type": "object",
-        "required": ["id", "report"],
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Internal report ID, prefixed `rpt_`",
-            "example": "rpt_abc123def"
-          },
-          "report": { "$ref": "#/components/schemas/AreaReport" }
-        }
-      },
-      "AreaReport": {
-        "type": "object",
-        "description": "The full area intelligence report.",
-        "required": ["area", "intent", "areaiq_score", "sub_scores", "summary", "sections", "recommendations", "generated_at"],
-        "properties": {
-          "area": { "type": "string", "example": "Manchester" },
-          "intent": { "$ref": "#/components/schemas/Intent" },
-          "areaiq_score": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 100,
-            "description": "Overall deterministic score, 0–100. Server-locked: AI cannot drift this value."
-          },
-          "area_type": { "$ref": "#/components/schemas/AreaType" },
-          "sub_scores": {
-            "type": "array",
-            "minItems": 5,
-            "maxItems": 5,
-            "items": { "$ref": "#/components/schemas/SubScore" }
-          },
-          "summary": { "type": "string", "description": "AI-generated 2–3 sentence executive summary, intent-aware." },
-          "sections": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/ReportSection" }
-          },
-          "recommendations": {
-            "type": "array",
-            "items": { "type": "string" }
-          },
-          "data_sources": {
-            "type": "array",
-            "description": "Authoritative public datasets that contributed to this report.",
-            "items": { "type": "string" },
-            "example": ["postcodes.io", "police.uk", "IMD 2025", "OpenStreetMap", "Environment Agency", "HM Land Registry", "Ofsted"]
-          },
-          "data_freshness": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/DataFreshness" }
-          },
-          "property_data": { "$ref": "#/components/schemas/PropertyMarketData" },
-          "schools_data": { "$ref": "#/components/schemas/SchoolsData" },
-          "confidence": {
-            "type": "number",
-            "minimum": 0.0,
-            "maximum": 1.0,
-            "description": "Aggregate confidence across all dimensions, weight-weighted. 1.0 = rich data on every dimension; 0.4 = sparse data or proxy fallback used. See `confidence_reason` on each sub_score for per-dimension explanation."
-          },
-          "engine_version": {
-            "type": "string",
-            "pattern": "^\\d+\\.\\d+\\.\\d+$",
-            "description": "Methodology version that produced this report. Pin to a specific version in your model risk register. Changelog at /methodology.",
-            "example": "1.0.0"
-          },
-          "generated_at": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "SubScore": {
-        "type": "object",
-        "required": ["label", "score", "weight", "summary"],
-        "properties": {
-          "label": {
-            "type": "string",
-            "description": "Dimension name, e.g. `Safety & Crime`",
-            "example": "Safety & Crime"
-          },
-          "score": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 100,
-            "description": "Deterministic dimension score, 0–100"
-          },
-          "weight": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 100,
-            "description": "This dimension's weight in the overall score. The five weights sum to 100 per intent.",
-            "example": 25
-          },
-          "summary": {
-            "type": "string",
-            "description": "AI-generated one-sentence summary of the score with specific data references."
-          },
-          "reasoning": {
-            "type": "string",
-            "description": "Deterministic reasoning string from the engine — exact data points that drove the score."
-          },
-          "confidence": {
-            "type": "number",
-            "minimum": 0.0,
-            "maximum": 1.0,
-            "description": "Per-dimension confidence: 1.0 HIGH (fresh primary data), 0.7 MEDIUM (partial fallback or older dataset), 0.4 LOW (full proxy fallback), 0.2 NONE (no data, default 50)."
-          },
-          "confidence_reason": {
-            "type": "string",
-            "description": "Human-readable explanation of the confidence value."
-          }
-        }
-      },
-      "ReportSection": {
-        "type": "object",
-        "required": ["title", "content"],
-        "properties": {
-          "title": { "type": "string" },
-          "content": { "type": "string" },
-          "data_points": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "label": { "type": "string" },
-                "value": { "type": "string" }
-              }
-            }
-          }
-        }
-      },
-      "DataFreshness": {
-        "type": "object",
-        "required": ["source", "period", "status"],
-        "properties": {
-          "source": { "type": "string", "example": "police.uk" },
-          "period": { "type": "string", "example": "Apr 2024 to Mar 2025" },
-          "status": {
-            "type": "string",
-            "enum": ["live", "recent", "static"],
-            "description": "live = real-time API; recent = updated within last quarter; static = annual or less frequent release"
-          }
-        }
-      },
-      "PropertyMarketData": {
-        "type": "object",
-        "description": "HM Land Registry sold-price summary for the postcode area.",
-        "properties": {
-          "postcode_area": { "type": "string", "example": "M1" },
-          "median_price": { "type": "integer", "example": 245000 },
-          "mean_price": { "type": "integer", "example": 280000 },
-          "transaction_count": { "type": "integer", "example": 124 },
-          "price_change_pct": {
-            "type": "number",
-            "nullable": true,
-            "description": "Year-over-year change percentage, null if insufficient prior-year data",
-            "example": 4.2
-          },
-          "by_property_type": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "type": { "type": "string", "example": "Flat" },
-                "median": { "type": "integer", "example": 198000 },
-                "count": { "type": "integer", "example": 80 }
-              }
-            }
-          },
-          "tenure_split": {
-            "type": "object",
-            "properties": {
-              "freehold": { "type": "integer" },
-              "leasehold": { "type": "integer" }
-            }
-          },
-          "price_range": {
-            "type": "object",
-            "properties": {
-              "min": { "type": "integer" },
-              "max": { "type": "integer" }
-            }
-          },
-          "period": { "type": "string", "example": "2024-2025" }
-        }
-      },
-      "SchoolsData": {
-        "type": "object",
-        "description": "Ofsted school inspection data (England). Estyn (Wales) and Education Scotland on roadmap.",
-        "properties": {
-          "schools": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "name": { "type": "string" },
-                "phase": { "type": "string", "example": "Primary" },
-                "rating": {
-                  "type": "string",
-                  "enum": ["Outstanding", "Good", "Requires Improvement", "Inadequate", "Not rated"]
-                },
-                "distance_km": { "type": "number" }
-              }
-            }
-          },
-          "rating_breakdown": {
-            "type": "object",
-            "additionalProperties": { "type": "integer" }
-          },
-          "inspectorate": {
-            "type": "string",
-            "enum": ["Ofsted", "Estyn", "Education Scotland"]
-          }
-        }
+        "properties": { "id": { "type": "string" }, "url": { "type": "string", "format": "uri" }, "event_types": { "type": "array", "items": { "type": "string" } }, "secret": { "type": "string", "description": "Signing secret; shown on create and rotate only." } }
       },
       "Error": {
         "type": "object",
-        "properties": {
-          "error": { "type": "string" },
-          "code": { "type": "string" }
-        }
+        "properties": { "error": { "type": "string" }, "code": { "type": "string" } }
       }
     },
     "responses": {
-      "ValidationError": {
-        "description": "Invalid request — missing or malformed `area` or `intent`",
-        "content": {
-          "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
-        }
-      },
-      "AuthError": {
-        "description": "Missing or invalid API key",
-        "content": {
-          "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
-        }
-      },
-      "PlanError": {
-        "description": "API access requires a Developer, Business, or Growth plan",
-        "content": {
-          "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
-        }
-      },
-      "RateLimitError": {
-        "description": "Rate limit exceeded",
-        "content": {
-          "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
-        }
-      },
-      "ServerError": {
-        "description": "Internal server error",
-        "content": {
-          "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
-        }
-      }
+      "ValidationError": { "description": "Malformed request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "AuthError": { "description": "Missing, invalid or revoked API key", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "PlanError": { "description": "Plan lacks API access, or the request is blocked by the key's IP allowlist", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "NotFoundError": { "description": "Area or resource not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "UnprocessableError": { "description": "Business-rule failure (for example a planner error, a bundle violation, or preset_id conflict)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "RateLimitError": { "description": "Per-key rate limit exceeded (30 requests/minute default)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "ServerError": { "description": "Internal server error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
     }
   }
 }
