@@ -246,7 +246,7 @@ Anonymous demo tunnel, deliberately not under `/v1`.
 
 - `GET /v1/widget` removed 2026-06-29 (AR-379, plan/030). Cache
   infrastructure deleted; a future embeddable surface will be a clean
-  rebuild on the v2 signal-first stack.
+  rebuild on the signal-first stack.
 - The legacy report API (`/v1/report`, `/v1/batch`, `/report`,
   `/me/reports`, `/report/:id`) was removed in the AR-324 epic.
 

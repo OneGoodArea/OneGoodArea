@@ -4,7 +4,7 @@
 
 1. We first plan, barinstorm and discuss
 1. Sometimes you are not involved in the discussion and there is porposals in /docs direcotry that I will let you know about
-1. You save the plan in plan/ directory
+1. You save the plan in docs/PLANS/ directory
 1. Someone will ask to implement the plan
 1. Sometimes the plan have a linked JIRA and if that his the case you assign that to the executor of the plan and update the jira stauts
 1. Sometimes the plan does not have a linked jira and then you create it and follow the steps of th epoint just above
