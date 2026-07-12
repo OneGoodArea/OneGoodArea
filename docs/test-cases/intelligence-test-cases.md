@@ -1,6 +1,6 @@
 # Intelligence (Query Plane) — Test Cases
 
-> **Source:** OneGoodArea API (Engine v2.0.2)
+> **Source:** OneGoodArea API (Engine v1.0.0)
 > **Endpoints covered:** `POST /v1/query`, `POST /v1/peers`, `POST /v1/insights`, `POST /v1/forecast`
 > **Last updated:** 2026-07-01
 
