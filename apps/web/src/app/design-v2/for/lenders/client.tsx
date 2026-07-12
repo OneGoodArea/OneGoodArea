@@ -137,10 +137,10 @@ const FLOW: FlowStep[] = [
     title: "Pin the engine version at the org level",
     text: "Owner-only PUT call sets the methodology version your book consumes. Validated at write time against the supported version window. Every subsequent API call from any key in the org returns responses stamped with that version on both the body and the X-Engine-Version header.",
     code: `PUT /v1/orgs/:id/methodology
-{ "engine_version": "2.0.1" }
+{ "engine_version": "1.0.0" }
 
 # Every response thereafter:
-X-Engine-Version: 2.0.1`,
+X-Engine-Version: 1.0.0`,
   },
   {
     num: "Step 02",
@@ -244,7 +244,7 @@ const PRODUCTS: ProductUse[] = [
     num: "01",
     name: "Scores",
     slug: "scores",
-    use: "Primary surface for underwriting. POST /v1/score returns a 0-to-100 composite with per-dimension components, per-dimension confidence, and engine_version. The engine is frozen v2, golden-tested; AI never touches it. NOT metered against the monthly API call quota, so bulk-scoring a portfolio overnight does not consume report budget.",
+    use: "Primary surface for underwriting. POST /v1/score returns a 0-to-100 composite with per-dimension components, per-dimension confidence, and engine_version. The engine is frozen and golden-tested; AI never touches it. NOT metered against the monthly API call quota, so bulk-scoring a portfolio overnight does not consume report budget.",
     code: `POST /v1/score
 { "area": "M1 1AE", "preset": "research" }
 -> { "score": 62,
@@ -348,7 +348,7 @@ const DEFEND: DefendCard[] = [
   {
     num: "02",
     title: "Engine version on body AND header",
-    body: "Every product response carries engine_version in the body (what actually ran) and X-Engine-Version on the response header (the auditor's anchor). The split is deliberate: body = ground truth, header = pin. Will become semantically distinct when v3 freezes a separate engine module.",
+    body: "Every product response carries engine_version in the body (what actually ran) and X-Engine-Version on the response header (the auditor's anchor). The split is deliberate: body = ground truth, header = pin. Will become semantically distinct when the next major engine version freezes a separate module.",
   },
   {
     num: "03",
@@ -414,11 +414,11 @@ type Faq = { q: string; a: string };
 const FAQS: Faq[] = [
   {
     q: "Is the engine version pinnable at the org level?",
-    a: "Yes. PUT /v1/orgs/:id/methodology persists a per-org engine_version pin. Owner-only. Validated against the supported version window at write time. Every product surface (Score, Area, Areas, Query, Peers, plus the portfolio enrich and changes endpoints) honours the pin by stamping it on the X-Engine-Version response header. Body engine_version still reports what actually ran. The split is deliberate so v2 and v3 can run mixed from a single deployment when v3 ships.",
+    a: "Yes. PUT /v1/orgs/:id/methodology persists a per-org engine_version pin. Owner-only. Validated against the supported version window at write time. Every product surface (Score, Area, Areas, Query, Peers, plus the portfolio enrich and changes endpoints) honours the pin by stamping it on the X-Engine-Version response header. Body engine_version still reports what actually ran. The split is deliberate so engine versions can run mixed from a single deployment when the next major ships.",
   },
   {
     q: "How is the methodology versioned?",
-    a: "Semver convention. MAJOR is a breaking change to dimension structure or core weighting (would invalidate prior scores). MINOR is additive. PATCH is formula tuning or confidence-rubric refinement. Today the supported pin window is 2.0.0, 2.0.1, 2.0.2; all three are score-equivalent (patches changed only the confidence rubric and source-reliability handling, not the scoring math). The registry is public on /methodology and stamped on every response.",
+    a: "Semver convention. MAJOR is a breaking change to dimension structure or core weighting (would invalidate prior scores). MINOR is additive. PATCH is formula tuning or confidence-rubric refinement. Today the supported version is 1.0.0. The registry is public on /methodology and stamped on every response.",
   },
   {
     q: "Can we replay an AI-assisted query for audit?",
@@ -434,7 +434,7 @@ const FAQS: Faq[] = [
   },
   {
     q: "Can the engine version be locked across multiple environments?",
-    a: "Yes. The org-level pin is set once and honoured on every key inside the org. If you operate prod and staging on different orgs, you can pin staging to a newer version (say 2.0.2) while prod stays on 2.0.1, run your back-test on staging, then flip prod via a single owner-only PUT. Two API calls at the same pin always return the same numbers across deploys.",
+    a: "Yes. The org-level pin is set once and honoured on every key inside the org. If you operate prod and staging on different orgs, you can pin staging to a new engine version while prod stays on the current one, run your back-test on staging, then flip prod via a single owner-only PUT. Two API calls at the same pin always return the same numbers across deploys.",
   },
   {
     q: "What gets stored about our portfolios?",

@@ -169,7 +169,7 @@ function Hero() {
         <div className="oga-pricing-hero__stamps">
           <span className="oga-pricing-hero__stamp">
             <span className="oga-pricing-hero__stamp-label">Engine</span>
-            <span className="oga-pricing-hero__stamp-value">v2.0.2</span>
+            <span className="oga-pricing-hero__stamp-value">v1.0.0</span>
           </span>
           <span className="oga-pricing-hero__stamp">
             <span className="oga-pricing-hero__stamp-label">Rate limit</span>

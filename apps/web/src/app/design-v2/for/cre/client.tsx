@@ -375,7 +375,7 @@ const DEFEND: DefendCard[] = [
   {
     num: "05",
     title: "Deterministic + stable",
-    body: "Same postcode plus same scoring profile gives the same score across deploys. Same plan gives the same shortlist across the same data state. The deterministic engine is frozen v2, golden-tested; AI never sets the numbers (AI translates NL into the typed plan; the database produces the rows).",
+    body: "Same postcode plus same scoring profile gives the same score across deploys. Same plan gives the same shortlist across the same data state. The deterministic engine is frozen and golden-tested; AI never sets the numbers (AI translates NL into the typed plan; the database produces the rows).",
   },
   {
     num: "06",

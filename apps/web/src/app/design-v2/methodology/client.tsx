@@ -266,7 +266,7 @@ const DERIVED_THREE: { num: string; name: string; endpoint: string; body: string
   },
 ];
 
-/* ───────────────────────────── confidence rubric (v2.0.0, refined v2.0.1) */
+/* ───────────────────────────── confidence rubric */
 
 const CONFIDENCE_BANDS: { band: string; value: string; criteria: string; example: string }[] = [
   { band: "HIGH",   value: "1.0", criteria: "Fresh primary data, sufficient sample, low volatility.", example: "Crime from Police.uk last 12 months; Prices with ≥50 transactions and ≤15% YoY swing." },
@@ -955,7 +955,7 @@ function SectionScoring() {
         </div>
 
         <p className="oga-meth-scoring__foot">
-          The frozen v2 engine computes every dimension. Custom weights pass <code>{`{ preset, weights }`}</code>;
+          The frozen deterministic engine computes every dimension. Custom weights pass <code>{`{ preset, weights }`}</code>;
           saved organisation presets pass <code>{`{ preset_id }`}</code>. Response carries <code>weights_source</code>
           {" "}(<code>&quot;preset&quot;</code> or <code>&quot;custom&quot;</code>) and the engine version that produced the number.
         </p>
@@ -1224,7 +1224,7 @@ const LEVERS: Lever[] = [
     endpoint: { verb: "POST", path: "/v1/orgs/:id/presets" },
     rbac: "Admin",
     body: "Save a (base_preset, weights) pair server-side. Call by preset_id from POST /v1/score. Reusable across team members and replayable in audits.",
-    honest: "Frozen v2 engine unchanged. weights_source surfaces as \"custom\" on response.",
+    honest: "Frozen engine unchanged. weights_source surfaces as \"custom\" on response.",
   },
   {
     num: "12.3",

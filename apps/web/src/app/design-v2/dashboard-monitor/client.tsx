@@ -27,7 +27,7 @@ interface LivePortfolio {
   areas: Array<{ id: string; area: string; label: string | null }>;
 }
 
-const ENGINE_VERSION = "2.0.2";
+const ENGINE_VERSION = "1.0.0";
 
 export default function MonitorClient() {
   return (

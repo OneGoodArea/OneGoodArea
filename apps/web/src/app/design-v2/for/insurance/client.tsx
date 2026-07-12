@@ -442,7 +442,7 @@ const FAQS: Faq[] = [
   },
   {
     q: "What happens during the renewal cycle when the engine version changes?",
-    a: "Pin the engine version per org via PUT /v1/orgs/:id/methodology (owner-only). Two quarterly back-tests at the same pin return the same numbers. When a new engine version ships, run a parallel back-test on a staging org pinned to the new version, validate against your loss-ratio model, then flip the prod pin via a single owner-only PUT. Supported pin window today is 2.0.0, 2.0.1, 2.0.2.",
+    a: "Pin the engine version per org via PUT /v1/orgs/:id/methodology (owner-only). Two quarterly back-tests at the same pin return the same numbers. When a new engine version ships, run a parallel back-test on a staging org pinned to the new version, validate against your loss-ratio model, then flip the prod pin via a single owner-only PUT. Supported version today is 1.0.0.",
   },
   {
     q: "Do you support MGA or carrier-of-carriers setups with separate books?",
