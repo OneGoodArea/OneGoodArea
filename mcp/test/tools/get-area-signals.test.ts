@@ -61,7 +61,7 @@ function sampleProfile(over: Partial<OogaAreaProfile> = {}): OogaAreaProfile {
       },
     ],
     meta: {
-      engine_version: "2.0.2",
+      engine_version: "1.0.0",
       generated_at: "2026-06-28T01:00:00Z",
       sources: ["police.uk", "MHCLG IMD 2025", "HM Land Registry"],
       fetch_mode: "hybrid",
@@ -117,7 +117,7 @@ describe("executeGetAreaSignals", () => {
     expect(out.isError).toBeFalsy();
     const text = out.content[0]!.text;
     expect(text).toContain("M1 1AE");
-    expect(text).toContain("Engine version: 2.0.2");
+    expect(text).toContain("Engine version: 1.0.0");
     expect(text).toContain("Fetch mode: hybrid");
     expect(text).toContain("## crime");
     expect(text).toContain("## deprivation");

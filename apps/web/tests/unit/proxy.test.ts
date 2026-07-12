@@ -65,12 +65,12 @@ describe("proxySession", () => {
   it("passes through whitelisted headers only", async () => {
     const req = fakeReq({
       method: "POST",
-      headers: { "idempotency-key": "abc", "x-engine-version": "2.0.0", cookie: "secret" },
+      headers: { "idempotency-key": "abc", "x-engine-version": "1.0.0", cookie: "secret" },
       body: {},
     });
     await proxySession(req, "/v1/report", { forwardBody: true, forwardHeaders: ["idempotency-key", "x-engine-version"] });
     const [, opts] = mockCallApi.mock.calls[0];
-    expect(opts.headers).toEqual({ "idempotency-key": "abc", "x-engine-version": "2.0.0" });
+    expect(opts.headers).toEqual({ "idempotency-key": "abc", "x-engine-version": "1.0.0" });
     expect(opts.headers).not.toHaveProperty("cookie");
   });
 

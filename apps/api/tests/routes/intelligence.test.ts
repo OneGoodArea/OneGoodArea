@@ -10,7 +10,7 @@ vi.mock("@/modules/orgs/bundles", () => ({
   planSignalsOutsideBundle: vi.fn().mockReturnValue([]),
 }));
 vi.mock("@/modules/orgs/engine-version", () => ({
-  effectiveEngineVersionForCaller: vi.fn().mockResolvedValue("2.0.2"),
+  effectiveEngineVersionForCaller: vi.fn().mockResolvedValue("1.0.0"),
 }));
 
 /* Partial mock: keep parseQueryRequest real (so body validation runs) but

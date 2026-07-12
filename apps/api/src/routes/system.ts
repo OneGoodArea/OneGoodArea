@@ -29,7 +29,7 @@ export function registerSystemRoutes(app: FastifyInstance): void {
         },
       }, async () => ({
       service: "onegoodarea-api",
-      phase: "1-reports-vertical",
+      phase: "production",
       intents: INTENTS,
     }));
 

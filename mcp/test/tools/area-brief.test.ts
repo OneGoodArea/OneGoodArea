@@ -93,7 +93,7 @@ function sampleProfile(): OogaAreaProfile {
       },
     ],
     meta: {
-      engine_version: "2.0.2",
+      engine_version: "1.0.0",
       generated_at: "2026-06-28T01:00:00Z",
       sources: ["HM Land Registry", "police.uk", "Environment Agency", "OpenStreetMap"],
       fetch_mode: "hybrid",
@@ -118,7 +118,7 @@ function sampleScore(preset: Preset, dimensions: Array<{ label: string; score: n
     })),
     confidence: 0.85,
     weights_source: "preset",
-    engine_version: "2.0.2",
+    engine_version: "1.0.0",
     summary: `73/100 — above-average for an urban area, with high confidence.`,
     recommendations: ["Cost of Living confidence is medium: 47 transactions. Treat as indicative."],
     data_sources: ["postcodes.io (geocoding)", "MHCLG IMD 2025", "HM Land Registry"],

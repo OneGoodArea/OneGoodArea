@@ -108,7 +108,7 @@ describe("executeFindAreas — other plan ops", () => {
         msoa: null, admin_district: "Manchester", region: "North West", country: "England", area_type: "urban" as const,
       },
       signals: [],
-      meta: { engine_version: "2.0.2", generated_at: "x", sources: [], fetch_mode: "live" as const },
+      meta: { engine_version: "1.0.0", generated_at: "x", sources: [], fetch_mode: "live" as const },
     };
     const out = await executeFindAreas(
       makeClient({

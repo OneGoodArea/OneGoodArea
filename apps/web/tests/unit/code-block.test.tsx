@@ -101,7 +101,7 @@ describe("<CodeBlock> (AR-240)", () => {
 
   it("highlights JSON keys as key tokens", () => {
     const code = `{
-  "engine_version": "2.0.2"
+  "engine_version": "1.0.0"
 }`;
     const { container } = render(<CodeBlock code={code} language="json" />);
     const keyTokens = container.querySelectorAll(".oga-code-panel__key");

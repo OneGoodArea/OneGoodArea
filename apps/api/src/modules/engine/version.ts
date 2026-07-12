@@ -43,7 +43,7 @@ import { METHODOLOGY_VERSION, METHODOLOGY_VERSIONS } from "./methodology";
    The orgPin is fetched once per request by the endpoint and passed
    in; the resolver stays pure (no DB I/O). See ADR 0031. */
 
-const SUPPORTED_ENGINE_VERSIONS = ["2.0.0", "2.0.1", "2.0.2"] as const;
+const SUPPORTED_ENGINE_VERSIONS = ["1.0.0"] as const;
 export type SupportedEngineVersion = (typeof SUPPORTED_ENGINE_VERSIONS)[number];
 
 export function getSupportedEngineVersions(): readonly string[] {
