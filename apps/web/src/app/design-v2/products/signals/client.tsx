@@ -9,6 +9,7 @@ import { ProductHero } from "../../_shared/product-hero";
 import { ProductEndpointPanel } from "../../_shared/product-endpoint-panel";
 import { ProductFinalCta } from "../../_shared/product-final-cta";
 import { ProductIcpGrid } from "../../_shared/product-icp-grid";
+import { DEMO_URL } from "../../_shared/book-demo";
 import {
   METHODOLOGY_VERSION,
   getCurrentMethodology,
@@ -171,8 +172,8 @@ export default function ProductSignalsClient() {
         Icon={SignalsIcon}
         h1="Signals: the typed UK area-data layer."
         lead="One typed primitive over seven categories of public-record data, resolved to LSOA grain across England, Wales and Scotland. Value, normalised position, national-within-country percentile, per-signal confidence and source attribution on every response. Provenance is on the wire, not in a follow-up email."
-        primaryHref="/sign-up"
-        primaryLabel="Get an API key"
+        primaryHref={DEMO_URL}
+        primaryLabel="Book a demo"
         secondaryHref="/methodology"
         secondaryLabel="Read the methodology"
       />
@@ -196,8 +197,8 @@ export default function ProductSignalsClient() {
         titleId="sig-cta-title"
         title="Build on the typed UK area-data layer."
         lead="One endpoint resolves any UK postcode to the seven-category Signal catalog at LSOA grain. Provenance on the wire, methodology version stamped on every response, percentiles country-scoped by design."
-        primaryHref="/sign-up"
-        primaryLabel="Get an API key"
+        primaryHref={DEMO_URL}
+        primaryLabel="Book a demo"
         secondaryHref="/methodology"
         secondaryLabel="Read the methodology"
       />

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Nav } from "../_shared/nav";
 import { Footer } from "../_shared/footer";
+import { DEMO_URL } from "../_shared/book-demo";
 import {
   METHODOLOGY_VERSION,
   METHODOLOGY_VERSIONS,
@@ -1397,8 +1398,8 @@ function FinalCta() {
           methodology pinning. Same answer, every time you ask.
         </p>
         <div className="oga-meth-cta__buttons">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
+          <Link href={DEMO_URL} className="oga-btn oga-btn-primary">
+            Book a demo
             <span aria-hidden>→</span>
           </Link>
           <Link href="/docs" className="oga-btn oga-btn-secondary">

@@ -10,6 +10,7 @@ import { ProductEndpointPanel } from "../../_shared/product-endpoint-panel";
 import { ProductFinalCta } from "../../_shared/product-final-cta";
 import { SCORING_PROFILES } from "@/lib/scoring-profiles";
 import { ProductIcpGrid } from "../../_shared/product-icp-grid";
+import { DEMO_URL } from "../../_shared/book-demo";
 import {
   METHODOLOGY_VERSION,
   getCurrentMethodology,
@@ -121,8 +122,8 @@ export default function ProductScoresClient() {
         Icon={ScoresIcon}
         h1="Scores: deterministic composite scoring."
         lead="One 0-to-100 number per UK area. Four scoring profiles tuned to four workflows: residential origination, commercial site selection, investment underwrite, and research. Each profile uses its own five-dimension set; override the weights per request or save your own recipe against your org. The engine is frozen, golden-tested, and AI never touches the scoring path. Every response stamps the engine version that produced it."
-        primaryHref="/sign-up"
-        primaryLabel="Get an API key"
+        primaryHref={DEMO_URL}
+        primaryLabel="Book a demo"
         secondaryHref="/methodology"
         secondaryLabel="Read the methodology"
       />
@@ -146,8 +147,8 @@ export default function ProductScoresClient() {
         titleId="scr-cta-title"
         title="Configurable composite scoring, version-stamped and deterministic."
         lead="Four presets, each with its own five dimensions. Override weights per request or save them as a per-org preset. AI never touches the scoring path. The methodology version is on every response, both body and header."
-        primaryHref="/sign-up"
-        primaryLabel="Get an API key"
+        primaryHref={DEMO_URL}
+        primaryLabel="Book a demo"
         secondaryHref="/methodology"
         secondaryLabel="Read the methodology"
       />

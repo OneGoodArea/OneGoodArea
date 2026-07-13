@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { Nav } from "../../_shared/nav";
 import { Footer } from "../../_shared/footer";
+import { DEMO_URL } from "../../_shared/book-demo";
 import type { AreaData, AreaDimension } from "@/data/area-types";
 import "./area-slug.css";
 
@@ -57,7 +58,7 @@ function ragColor(tone: RagTone, surface: "light" | "dark"): string {
 export default function AreaClient({ slug, area, related }: {
   slug: string; area: AreaData; related: Related[];
 }) {
-  const signupHref = `/sign-up?postcode=${encodeURIComponent(area.postcode)}`;
+  const demoHref = DEMO_URL;
   return (
     <div className="oga-root oga-area">
       <Nav />
@@ -80,8 +81,8 @@ export default function AreaClient({ slug, area, related }: {
           <p className="oga-area-hero__lead">{area.summary}</p>
 
           <div className="oga-area-hero__ctas">
-            <Link href={signupHref} className="oga-btn oga-btn-primary">
-              Generate full report
+            <Link href={demoHref} className="oga-btn oga-btn-primary">
+              Book a demo
               <span aria-hidden>→</span>
             </Link>
             <Link href="/methodology" className="oga-btn oga-btn-secondary">
@@ -101,7 +102,7 @@ export default function AreaClient({ slug, area, related }: {
       <LockedTeaser area={area} />
 
       {/* 04 — CLOSING CTA (DARK) -------------------------------- */}
-      <ClosingCta area={area} signupHref={signupHref} />
+      <ClosingCta area={area} demoHref={demoHref} />
 
       {/* Related -------------------------------------------------- */}
       <Related items={related} />
@@ -385,7 +386,7 @@ function LockIcon() {
 /* ============================================================
    05 — Closing CTA (DARK)
    ============================================================ */
-function ClosingCta({ area, signupHref }: { area: AreaData; signupHref: string }) {
+function ClosingCta({ area, demoHref }: { area: AreaData; demoHref: string }) {
   return (
     <section className="oga-section-dark oga-area-cta" data-oga-surface="dark">
       <div className="oga-area-cta__inner">
@@ -403,8 +404,8 @@ function ClosingCta({ area, signupHref }: { area: AreaData; signupHref: string }
         </p>
 
         <div className="oga-area-cta__actions">
-          <Link href={signupHref} className="oga-btn oga-btn-primary">
-            Generate full report
+          <Link href={demoHref} className="oga-btn oga-btn-primary">
+            Book a demo
             <span aria-hidden>→</span>
           </Link>
           <Link href="/methodology" className="oga-btn oga-btn-secondary">

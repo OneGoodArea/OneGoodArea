@@ -4,6 +4,7 @@ import type { ComponentType, SVGProps } from "react";
 import Link from "next/link";
 import { Wordmark } from "./wordmark";
 import { XIcon, LinkedInIcon, EmailIcon } from "./social-icons";
+import { BookDemo } from "./book-demo";
 import "./footer.css";
 
 /* Footer — Plotted brand v3, reorganized (AR-204 PR 2 commit 8).
@@ -84,10 +85,10 @@ export function Footer() {
             <p className="oga-footer__tagline">
               The data and intelligence layer underneath UK property workflows.
             </p>
-            <Link href="/sign-up" className="oga-btn oga-btn-sm oga-btn-secondary oga-footer__cta">
-              Get an API key
+            <BookDemo className="oga-btn oga-btn-sm oga-btn-secondary oga-footer__cta">
+              Book a demo
               <span aria-hidden>→</span>
-            </Link>
+            </BookDemo>
           </div>
 
           <FooterColumn title="Products">

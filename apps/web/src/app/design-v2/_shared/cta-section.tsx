@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { DEMO_URL } from "./book-demo";
 import { Mark } from "./mark";
 
 /* CtaSection — the close (06).
@@ -48,8 +49,8 @@ export function CtaSection() {
         </p>
 
         <div className="oga-cta__buttons">
-          <Link href="/sign-up" className="oga-btn oga-btn-lg oga-btn-primary">
-            Get an API key
+          <Link href={DEMO_URL} className="oga-btn oga-btn-lg oga-btn-primary">
+            Book a demo
             <span aria-hidden>→</span>
           </Link>
           <Link href="/methodology" className="oga-btn oga-btn-lg oga-btn-secondary">

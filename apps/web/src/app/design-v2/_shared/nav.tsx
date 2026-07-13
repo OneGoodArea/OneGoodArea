@@ -8,6 +8,7 @@ import { Wordmark } from "./wordmark";
 import { SignalsIcon, ScoresIcon, MonitorIcon, IntelligenceIcon } from "./product-icons";
 import { DocsHomeIcon, ApiReferenceIcon, McpServerIcon, ChangelogIcon } from "./docs-icons";
 import { McpLogo } from "./editor-icons";
+import { BookDemo } from "./book-demo";
 import "./nav.css";
 
 /* Marketing nav — Brand v3 Plotted (AR-204 PR 1).
@@ -103,9 +104,6 @@ export function Nav() {
     };
   }, [drawerOpen]);
 
-  const ctaHref = isSignedIn ? "/dashboard" : "/sign-up";
-  const ctaLabel = isSignedIn ? "Dashboard" : "Get started";
-
   return (
     <>
       <AnnouncementBar />
@@ -144,9 +142,13 @@ export function Nav() {
                 Sign in
               </Link>
             )}
-            <Link href={ctaHref} className="oga-btn oga-btn-primary">
-              {ctaLabel}
-            </Link>
+            {isSignedIn ? (
+              <Link href="/dashboard" className="oga-btn oga-btn-primary">
+                Dashboard
+              </Link>
+            ) : (
+              <BookDemo className="oga-btn oga-btn-primary">Book a demo</BookDemo>
+            )}
           </div>
 
           <button
@@ -251,13 +253,22 @@ export function Nav() {
               Sign in
             </Link>
           )}
-          <Link
-            href={ctaHref}
-            onClick={() => setDrawerOpen(false)}
-            className="oga-btn oga-btn-lg oga-btn-primary"
-          >
-            {ctaLabel}
-          </Link>
+          {isSignedIn ? (
+            <Link
+              href="/dashboard"
+              onClick={() => setDrawerOpen(false)}
+              className="oga-btn oga-btn-lg oga-btn-primary"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <BookDemo
+              className="oga-btn oga-btn-lg oga-btn-primary"
+              onClick={() => setDrawerOpen(false)}
+            >
+              Book a demo
+            </BookDemo>
+          )}
         </div>
       </aside>
     </>
