@@ -3,34 +3,58 @@ import { APP_URL, CONTACT_INBOX, EMAIL_FROM } from "../config";
 import { getEmailProvider } from "./providers/index";
 
 /* ────────────────────────────────────────────────────────────
-   OneGoodArea email templates. Migrated from legacy src/lib/email.ts.
-   Changes: imports repointed to apps/api (contracts + infrastructure);
-   getEmailProvider is now sync (await getEmailProvider().send) and selected via
-   getConfig(); the legacy's unused ghostButton helper is dropped. Template
-   markup is otherwise verbatim.
+   OneGoodArea transactional email templates.
 
-   Email clients limit CSS to inline styles + a small set of properties; no
-   flex, no @import, no custom fonts. We use system-stack fonts.
+   Brand v3 (Plotted) restyle, AR-454: warm graphite + warm white, sans
+   wordmark + headings that match the site. The old forest-green + lime
+   palette was the pre-v3 brand, scrapped on the site 2026-05-18.
+
+   Email clients limit CSS to inline styles + a small set of properties:
+   no flex, no @import, no custom web fonts (Geist falls back to the
+   system stack), no reliable SVG (so the dot-grid mark is text-only
+   here). Layout is table-based; colours are solid hex (no rgba) for
+   Outlook safety.
    ──────────────────────────────────────────────────────────── */
 
 const COLORS = {
-  ink: "#0A4D3A",
-  inkDeep: "#062A1E",
-  signal: "#D4F33A",
-  signalInk: "#1A2600",
-  signalDim: "#E9F69E",
-  bg: "#F6F9F4",
-  card: "#FFFFFF",
-  border: "#E4EAE3",
-  borderDim: "#F0F3EE",
-  text: "#0B2018",
-  text2: "#445A51",
-  text3: "#6E8278",
+  ink: "#1A1C1F",       // graphite, primary ink (Brand v3 --oga-ink)
+  inkDeep: "#0F1014",   // deepest graphite, button hairline
+  bg: "#EFECE6",        // warm canvas (--oga-canvas)
+  card: "#FFFFFF",      // card surface
+  border: "#E4E1DB",    // warm hairline border
+  borderDim: "#EDEAE5", // dimmer divider
+  text: "#1A1C1F",      // strong body text
+  text2: "#4A4C50",     // secondary text
+  text3: "#77787C",     // captions / labels / footer
+  white: "#FAF8F4",     // warm white, used for text on graphite
 };
 
-const FONT_SERIF = "Georgia, 'Times New Roman', serif";
 const FONT_SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
 const FONT_MONO = "ui-monospace, 'SF Mono', 'Menlo', 'Consolas', monospace";
+
+/* The Plotted mark (mark.tsx) reconstructed as an HTML dot-grid so it
+   renders in every email client: inline SVG is stripped by Gmail, and
+   remote images are blocked by default in many clients. 7x7 grid, 5x5
+   core + 4 cardinal tips + enlarged centre. Degrades to squares in
+   Outlook desktop (no border-radius), which still reads as the mark. */
+const MARK_ROWS = ["...X...", ".XXXXX.", ".XXXXX.", "XXXCXXX", ".XXXXX.", ".XXXXX.", "...X..."];
+
+function markGrid(): string {
+  const CELL = 7;
+  const rows = MARK_ROWS.map((r) => {
+    const tds = [...r]
+      .map((ch) => {
+        if (ch === ".") {
+          return `<td width="${CELL}" height="${CELL}" style="padding:0; font-size:0; line-height:0;"><div style="width:${CELL}px; height:${CELL}px; font-size:0; line-height:0;">&nbsp;</div></td>`;
+        }
+        const d = ch === "C" ? 7 : 4;
+        return `<td width="${CELL}" height="${CELL}" align="center" valign="middle" style="padding:0; font-size:0; line-height:0;"><div style="width:${d}px; height:${d}px; background-color:${COLORS.ink}; border-radius:50%; font-size:0; line-height:0;">&nbsp;</div></td>`;
+      })
+      .join("");
+    return `<tr>${tds}</tr>`;
+  }).join("");
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tbody>${rows}</tbody></table>`;
+}
 
 function baseTemplate(content: string): string {
   return `<!DOCTYPE html>
@@ -44,15 +68,20 @@ function baseTemplate(content: string): string {
     <tr>
       <td align="center">
         <table width="520" cellpadding="0" cellspacing="0" style="max-width:520px; width:100%;">
-          <!-- Wordmark -->
+          <!-- Wordmark: dot-grid mark + text lockup -->
           <tr>
             <td style="padding-bottom:28px;">
-              <span style="font-family:${FONT_SERIF}; font-size:22px; font-weight:500; letter-spacing:-0.5px; color:${COLORS.inkDeep};">One<span style="font-style:italic; color:${COLORS.ink}; border-bottom:2px solid ${COLORS.signal}; padding-bottom:1px;">Good</span>Area</span>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td valign="middle" style="padding-right:11px;">${markGrid()}</td>
+                  <td valign="middle"><span style="font-family:${FONT_SANS}; font-size:20px; font-weight:600; letter-spacing:-0.4px; color:${COLORS.ink};">onegoodarea</span></td>
+                </tr>
+              </table>
             </td>
           </tr>
           <!-- Card -->
           <tr>
-            <td style="background-color:${COLORS.card}; border:1px solid ${COLORS.border}; border-radius:6px; padding:36px;">
+            <td style="background-color:${COLORS.card}; border:1px solid ${COLORS.border}; border-radius:12px; padding:36px;">
               ${content}
             </td>
           </tr>
@@ -75,11 +104,21 @@ function baseTemplate(content: string): string {
 function ctaButton(label: string, href: string): string {
   return `<table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
     <tr>
-      <td style="background-color:${COLORS.signal}; border:1px solid ${COLORS.inkDeep}; border-radius:999px; padding:12px 22px;">
-        <a href="${href}" style="font-family:${FONT_MONO}; font-size:12px; font-weight:500; color:${COLORS.signalInk}; text-decoration:none; letter-spacing:1.5px; text-transform:uppercase;">${label} &rarr;</a>
+      <td style="background-color:${COLORS.ink}; border:1px solid ${COLORS.inkDeep}; border-radius:6px; padding:13px 22px;">
+        <a href="${href}" style="font-family:${FONT_SANS}; font-size:14px; font-weight:600; color:${COLORS.white}; text-decoration:none; letter-spacing:-0.2px;">${label} &rarr;</a>
       </td>
     </tr>
   </table>`;
+}
+
+/* Brand v3 heading: sans, graphite, with the key word underlined in
+   graphite (echoes the site's wordmark underline motif, email-safe). */
+function heading(inner: string): string {
+  return `<h1 style="font-family:${FONT_SANS}; font-size:25px; font-weight:600; letter-spacing:-0.4px; color:${COLORS.ink}; margin:0 0 12px 0; line-height:1.2;">${inner}</h1>`;
+}
+
+function emph(text: string): string {
+  return `<span style="border-bottom:2px solid ${COLORS.ink}; padding-bottom:1px;">${text}</span>`;
 }
 
 function escapeHtml(text: string): string {
@@ -94,9 +133,7 @@ export async function sendVerificationEmail(email: string, token: string) {
   const verifyUrl = `${APP_URL}/verify?token=${token}`;
 
   const content = `
-    <h1 style="font-family:${FONT_SERIF}; font-size:26px; font-weight:400; letter-spacing:-0.5px; color:${COLORS.inkDeep}; margin:0 0 10px 0; line-height:1.15;">
-      Verify your <em style="font-style:italic; color:${COLORS.ink}; border-bottom:2px solid ${COLORS.signal}; padding-bottom:1px;">email</em>.
-    </h1>
+    ${heading(`Verify your ${emph("email")}.`)}
     <p style="font-family:${FONT_SANS}; font-size:15px; line-height:1.55; color:${COLORS.text2}; margin:0 0 26px 0;">
       Click the button below to confirm your email address and activate your OneGoodArea account.
     </p>
@@ -125,17 +162,15 @@ export async function sendVerificationEmail(email: string, token: string) {
 export async function sendWelcomeEmail(email: string, name: string) {
   const safeName = escapeHtml(name);
   const content = `
-    <h1 style="font-family:${FONT_SERIF}; font-size:26px; font-weight:400; letter-spacing:-0.5px; color:${COLORS.inkDeep}; margin:0 0 10px 0; line-height:1.15;">
-      Welcome to <em style="font-style:italic; color:${COLORS.ink}; border-bottom:2px solid ${COLORS.signal}; padding-bottom:1px;">OneGoodArea</em>.
-    </h1>
+    ${heading(`Welcome to ${emph("OneGoodArea")}.`)}
     <p style="font-family:${FONT_SANS}; font-size:15px; line-height:1.55; color:${COLORS.text2}; margin:0 0 24px 0;">
       ${safeName}, your account is verified. You start on the Sandbox tier: 35 API calls a month for evaluation, no card required. Make your first call whenever you&apos;re ready.
     </p>
-    <div style="background-color:${COLORS.bg}; border:1px solid ${COLORS.border}; border-radius:4px; padding:18px 20px; margin-bottom:24px;">
+    <div style="background-color:${COLORS.bg}; border:1px solid ${COLORS.border}; border-radius:8px; padding:18px 20px; margin-bottom:24px;">
       <p style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text3}; margin:0 0 6px 0; text-transform:uppercase; letter-spacing:2px;">
         Your plan
       </p>
-      <p style="font-family:${FONT_SERIF}; font-size:22px; font-weight:500; color:${COLORS.inkDeep}; margin:0 0 4px 0;">
+      <p style="font-family:${FONT_SANS}; font-size:22px; font-weight:600; color:${COLORS.ink}; margin:0 0 4px 0;">
         Sandbox
       </p>
       <p style="font-family:${FONT_SANS}; font-size:13px; color:${COLORS.text2}; margin:0; line-height:1.5;">
@@ -157,9 +192,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
   const resetUrl = `${APP_URL}/reset-password?token=${token}`;
 
   const content = `
-    <h1 style="font-family:${FONT_SERIF}; font-size:26px; font-weight:400; letter-spacing:-0.5px; color:${COLORS.inkDeep}; margin:0 0 10px 0; line-height:1.15;">
-      Reset your <em style="font-style:italic; color:${COLORS.ink}; border-bottom:2px solid ${COLORS.signal}; padding-bottom:1px;">password</em>.
-    </h1>
+    ${heading(`Reset your ${emph("password")}.`)}
     <p style="font-family:${FONT_SANS}; font-size:15px; line-height:1.55; color:${COLORS.text2}; margin:0 0 26px 0;">
       We received a request to reset your password. Click the button below to choose a new one.
     </p>
@@ -189,9 +222,7 @@ export async function sendMagicLinkEmail(email: string, token: string) {
   const magicUrl = `${APP_URL}/auth/magic-link?token=${token}`;
 
   const content = `
-    <h1 style="font-family:${FONT_SERIF}; font-size:26px; font-weight:400; letter-spacing:-0.5px; color:${COLORS.inkDeep}; margin:0 0 10px 0; line-height:1.15;">
-      Sign in to <em style="font-style:italic; color:${COLORS.ink}; border-bottom:2px solid ${COLORS.signal}; padding-bottom:1px;">OneGoodArea</em>.
-    </h1>
+    ${heading(`Sign in to ${emph("OneGoodArea")}.`)}
     <p style="font-family:${FONT_SANS}; font-size:15px; line-height:1.55; color:${COLORS.text2}; margin:0 0 26px 0;">
       Click the button below to sign in. This link is single-use and expires in 15 minutes.
     </p>
@@ -224,8 +255,8 @@ export async function sendMagicLinkEmail(email: string, token: string) {
    produce broken emails. */
 
 /* AR-272: org invitation email. Sent by createInvitation; the token in
-   the URL is the ONE plaintext copy that exists anywhere — the DB only
-   has a SHA-256 hash. We escape orgName since admins control it. */
+   the URL is the ONE plaintext copy that exists anywhere (the DB only
+   has a SHA-256 hash). We escape orgName since admins control it. */
 export async function sendOrgInvitationEmail(params: {
   to: string;
   token: string;
@@ -237,11 +268,9 @@ export async function sendOrgInvitationEmail(params: {
   const roleLabel = params.role === "admin" ? "Admin" : "Member";
 
   const content = `
-    <h1 style="font-family:${FONT_SERIF}; font-size:26px; font-weight:400; letter-spacing:-0.5px; color:${COLORS.inkDeep}; margin:0 0 10px 0; line-height:1.15;">
-      You&apos;ve been invited to <em style="font-style:italic; color:${COLORS.ink}; border-bottom:2px solid ${COLORS.signal}; padding-bottom:1px;">${safeOrg}</em>.
-    </h1>
+    ${heading(`You&apos;ve been invited to ${emph(safeOrg)}.`)}
     <p style="font-family:${FONT_SANS}; font-size:15px; line-height:1.55; color:${COLORS.text2}; margin:0 0 24px 0;">
-      Join the team on OneGoodArea, the data and intelligence layer for UK property workflows. You&apos;ll join as <strong style="color:${COLORS.inkDeep}; font-weight:500;">${roleLabel}</strong>.
+      Join the team on OneGoodArea, the data and intelligence layer for UK property workflows. You&apos;ll join as <strong style="color:${COLORS.ink}; font-weight:600;">${roleLabel}</strong>.
     </p>
     ${ctaButton("Accept invitation", acceptUrl)}
     <p style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text3}; margin:0 0 8px 0; letter-spacing:1.5px; text-transform:uppercase;">
@@ -252,7 +281,7 @@ export async function sendOrgInvitationEmail(params: {
     </p>
     <div style="border-top:1px solid ${COLORS.borderDim}; padding-top:18px;">
       <p style="font-family:${FONT_SANS}; font-size:13px; color:${COLORS.text3}; margin:0; line-height:1.5;">
-        This invitation expires in 7 days. If you weren&apos;t expecting this, ignore the email — the link can only be used once and only by the person it was sent to.
+        This invitation expires in 7 days. If you weren&apos;t expecting this, ignore the email. The link can only be used once and only by the person it was sent to.
       </p>
     </div>
   `;
@@ -260,7 +289,7 @@ export async function sendOrgInvitationEmail(params: {
   await getEmailProvider().send({
     from: EMAIL_FROM,
     to: params.to,
-    subject: `You’ve been invited to ${params.orgName} on OneGoodArea`,
+    subject: `You've been invited to ${params.orgName} on OneGoodArea`,
     html: baseTemplate(content),
   });
 
@@ -292,9 +321,7 @@ export async function sendContactEmail(params: {
     </tr>`;
 
   const content = `
-    <h1 style="font-family:${FONT_SERIF}; font-size:24px; font-weight:400; letter-spacing:-0.5px; color:${COLORS.inkDeep}; margin:0 0 8px 0; line-height:1.15;">
-      New <em style="font-style:italic; color:${COLORS.ink}; border-bottom:2px solid ${COLORS.signal}; padding-bottom:1px;">enquiry</em>.
-    </h1>
+    ${heading(`New ${emph("enquiry")}.`)}
     <p style="font-family:${FONT_SANS}; font-size:14px; line-height:1.55; color:${COLORS.text2}; margin:0 0 22px 0;">
       Submitted through the contact form at onegoodarea.com.
     </p>
