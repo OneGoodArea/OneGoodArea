@@ -1,98 +1,89 @@
-/* AR-385: Data Policy page styling. B2B-infrastructure tone, generous
-   line height, mono code, neutral palette. No marketing flourishes —
-   this is the document a customer's lawyer reads. */
+/* Data Policy: markdown body rendered inside LegalShell sections (AR-452).
+   The page reuses the shared LegalShell (dark hero + sticky TOC + contact
+   CTA + footer) like /privacy and /terms; these rules style the markdown
+   that comes from docs/DATA_POLICY.md so it matches the legal typography.
+   Scoped to .oga-legal-md so nothing bleeds into the hand-authored legal
+   primitives on /privacy and /terms. */
 
-.oga-data-policy {
-  max-width: 740px;
-  margin: 0 auto;
-  padding: 80px 28px 120px;
-  color: var(--oga-fg);
-  font-family: var(--oga-font-sans);
+.oga-legal-md {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.oga-data-policy__content h1 {
+.oga-legal-md p {
   font-family: var(--oga-font-sans);
-  font-size: 36px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  margin: 0 0 24px;
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--oga-fg-subtle);
+  margin: 0;
+  text-wrap: pretty;
 }
 
-.oga-data-policy__content h2 {
-  font-size: 22px;
+/* Sub-headings within a section (### / ####). */
+.oga-legal-md h3 {
+  font-family: var(--oga-font-sans);
+  font-size: 17px;
   font-weight: 600;
   letter-spacing: -0.01em;
-  margin: 48px 0 16px;
-}
-
-.oga-data-policy__content h3 {
-  font-size: 16.5px;
-  font-weight: 600;
-  letter-spacing: -0.005em;
-  margin: 32px 0 12px;
-}
-
-.oga-data-policy__content h4 {
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.005em;
-  margin: 24px 0 8px;
-}
-
-.oga-data-policy__content p {
-  font-size: 14.5px;
-  line-height: 1.65;
   color: var(--oga-fg);
-  margin: 0 0 16px;
+  margin: 12px 0 -2px;
 }
-
-.oga-data-policy__content blockquote {
-  font-size: 13.5px;
-  line-height: 1.55;
+.oga-legal-md h4 {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--oga-fg-muted);
-  border-left: 2px solid var(--oga-border);
-  padding: 4px 0 4px 16px;
-  margin: 0 0 24px;
+  margin: 8px 0 -4px;
 }
 
-.oga-data-policy__content ul {
-  font-size: 14.5px;
+.oga-legal-md ul {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.oga-legal-md li {
+  font-family: var(--oga-font-sans);
+  font-size: 15px;
   line-height: 1.6;
+  color: var(--oga-fg-subtle);
+}
+.oga-legal-md li::marker {
+  color: var(--oga-fg-muted);
+}
+
+.oga-legal-md strong {
   color: var(--oga-fg);
-  padding-left: 22px;
-  margin: 0 0 20px;
+  font-weight: 600;
 }
 
-.oga-data-policy__content li {
-  margin: 0 0 8px;
-}
-
-.oga-data-policy__content hr {
-  border: 0;
-  border-top: 1px solid var(--oga-border);
-  margin: 40px 0;
-}
-
-.oga-data-policy__content code {
+.oga-legal-md code {
   font-family: var(--oga-font-mono);
   font-size: 12.5px;
   background: var(--oga-ink-06);
-  padding: 1px 5px;
-  border-radius: 2px;
+  padding: 1px 6px;
+  border-radius: 3px;
   color: var(--oga-fg);
 }
 
-.oga-data-policy__content a {
+.oga-legal-md a {
   color: var(--oga-fg);
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(26, 28, 31, 0.3);
+  transition: border-color 160ms ease;
+}
+.oga-legal-md a:hover {
+  border-bottom-color: var(--oga-fg);
 }
 
-.oga-data-policy__content a:hover {
-  color: var(--oga-fg-subtle);
-}
-
-.oga-data-policy__content strong {
-  font-weight: 600;
-  color: var(--oga-fg);
+.oga-legal-md blockquote {
+  border-left: 2px solid var(--oga-border);
+  padding-left: 16px;
+  margin: 0;
+  color: var(--oga-fg-muted);
+  font-size: 14px;
+  line-height: 1.6;
 }
