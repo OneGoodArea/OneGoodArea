@@ -7,6 +7,7 @@ import {
   sendVerificationEmail,
   sendWelcomeEmail,
   sendPasswordResetEmail,
+  sendContactConfirmationEmail,
 } from "@/infrastructure/email/senders";
 
 beforeEach(() => {
@@ -38,6 +39,15 @@ describe("email senders", () => {
     expect(msg.subject).toBe("Welcome to OneGoodArea");
     expect(msg.html).not.toContain("<script>x</script>");
     expect(msg.html).toContain("&lt;script&gt;");
+  });
+
+  it("sendContactConfirmationEmail confirms to the submitter and escapes the name", async () => {
+    await sendContactConfirmationEmail("dana@lender.co.uk", "<b>Dana</b>");
+    const msg = send.mock.calls[0][0];
+    expect(msg.to).toBe("dana@lender.co.uk");
+    expect(msg.subject).toContain("Thanks for reaching out");
+    expect(msg.html).not.toContain("<b>Dana</b>");
+    expect(msg.html).toContain("&lt;b&gt;Dana");
   });
 
   /* AR-407: sendReportEmail removed alongside the AR-324 reports kill. */
