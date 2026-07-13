@@ -3,7 +3,7 @@ import Script from "next/script";
 import ForProptechClient from "@/app/design-v2/for/proptech/client";
 
 export const metadata: Metadata = {
-  title: "OneGoodArea for PropTech — UK area data API for listing pages and property products",
+  title: "OneGoodArea for PropTech: UK area data API for listing pages and property products",
   description:
     "Replace a dozen UK area-data integrations with one API key. LSOA-grain signals across seven categories with country-scoped percentiles, per-signal confidence, and source attribution. Built for portals, valuation tools, agent CRMs, and search products.",
   keywords: [
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     "property portal API",
   ],
   openGraph: {
-    title: "OneGoodArea for PropTech — UK area data API",
+    title: "OneGoodArea for PropTech: UK area data API",
     description:
       "Replace a dozen UK area-data integrations with one API key. LSOA-grain signals with country-scoped percentiles, per-signal confidence, and source attribution.",
     type: "website",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "OneGoodArea for PropTech — UK area data API",
+    title: "OneGoodArea for PropTech: UK area data API",
     description:
       "One API key. LSOA-grain signals with country-scoped percentiles and per-signal confidence. Built for portals, valuation tools, agent CRMs, and search products.",
   },

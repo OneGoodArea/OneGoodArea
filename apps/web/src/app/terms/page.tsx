@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import TermsClient from "@/app/design-v2/terms/client";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — OneGoodArea",
+  title: "Terms of Service | OneGoodArea",
   description:
     "Terms governing use of OneGoodArea, the UK area intelligence layer. Covers account, subscriptions across the six V2 tiers, API access on every plan, soft and hard caps, data accuracy disclaimer, and English-law jurisdiction.",
   openGraph: {
-    title: "Terms of Service — OneGoodArea",
+    title: "Terms of Service | OneGoodArea",
     description:
       "Terms governing use of OneGoodArea, the UK area intelligence layer.",
     type: "article",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Terms of Service — OneGoodArea",
+    title: "Terms of Service | OneGoodArea",
   },
   alternates: { canonical: "https://www.onegoodarea.com/terms" },
 };

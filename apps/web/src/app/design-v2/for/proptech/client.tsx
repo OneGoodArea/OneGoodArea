@@ -352,8 +352,8 @@ function SectionDefend() {
             Four properties your customer success and product teams will thank you for.
           </h2>
           <p className="oga-icp__lead">
-            None of these are unique pitches per ICP — they hold across the
-            platform — but they matter for PropTech because your end users
+            None of these are unique pitches per ICP. They hold across the
+            platform, but they matter for PropTech because your end users
             ask questions about every number you show.
           </p>
         </header>

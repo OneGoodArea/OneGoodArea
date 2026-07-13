@@ -43,7 +43,7 @@ const PRODUCTS: Product[] = [
     slug: "scores",
     number: "02",
     name: "Scores",
-    body: "Composite 0–100 score per area. Presets or custom weights. Deterministic frozen engine; same input always returns the same number.",
+    body: "Composite 0-100 score per area. Presets or custom weights. Deterministic frozen engine; same input always returns the same number.",
     endpoint: { verb: "POST", path: "/v1/score" },
     caps: [
       "Three presets or per-dimension custom weights",

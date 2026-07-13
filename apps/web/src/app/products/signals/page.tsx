@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import ProductSignalsClient from "@/app/design-v2/products/signals/client";
 
 export const metadata: Metadata = {
-  title: "Signals — UK area data API | OneGoodArea",
+  title: "Signals: UK area data API | OneGoodArea",
   description:
     "Deterministic, addressable UK area data at LSOA grain. Typed Signal primitive with national-within-country percentiles, per-signal confidence and source provenance on every response.",
   openGraph: {
-    title: "Signals — UK area data API | OneGoodArea",
+    title: "Signals: UK area data API | OneGoodArea",
     description:
       "Deterministic, addressable UK area data at LSOA grain. Typed Signal primitive with national-within-country percentiles, per-signal confidence and source provenance on every response.",
     type: "article",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Signals — UK area data API | OneGoodArea",
+    title: "Signals: UK area data API | OneGoodArea",
     description:
       "Deterministic, addressable UK area data at LSOA grain. Typed Signal primitive with national-within-country percentiles, per-signal confidence and source provenance on every response.",
   },

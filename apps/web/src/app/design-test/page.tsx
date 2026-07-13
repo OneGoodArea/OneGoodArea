@@ -142,7 +142,7 @@ export default function DesignTestPage() {
             <Swatch label="canvas" color="#EFECE6" value="--oga-canvas / #EFECE6" />
           </div>
 
-          <div className="oga-label" style={{ marginBottom: "var(--oga-3)" }}>Derived tints (typography only — not new brand colors)</div>
+          <div className="oga-label" style={{ marginBottom: "var(--oga-3)" }}>Derived tints (typography only, not new brand colors)</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "var(--oga-4)", marginBottom: "var(--oga-6)" }}>
             <Swatch label="green-95" color="#DCE3DF" value="hairline borders" />
             <Swatch label="green-80" color="#B6C2BC" value="—" />
@@ -198,21 +198,21 @@ export default function DesignTestPage() {
 
         {/* ---------- Buttons ---------- */}
         <Section id="buttons" eyebrow="05 - Components" title="Buttons">
-          <div className="oga-label" style={{ marginBottom: "var(--oga-3)" }}>Default (38px) — Anthropic / macOS altitude</div>
+          <div className="oga-label" style={{ marginBottom: "var(--oga-3)" }}>Default (38px): Anthropic / macOS altitude</div>
           <div style={{ display: "flex", gap: "var(--oga-3)", flexWrap: "wrap", marginBottom: "var(--oga-5)" }}>
             <button type="button" className="oga-btn oga-btn-primary">Primary action</button>
             <button type="button" className="oga-btn oga-btn-secondary">Secondary</button>
             <button type="button" className="oga-btn oga-btn-ghost">Ghost</button>
           </div>
 
-          <div className="oga-label" style={{ marginBottom: "var(--oga-3)" }}>Small (30px) — for dense UIs, nav bars, table actions</div>
+          <div className="oga-label" style={{ marginBottom: "var(--oga-3)" }}>Small (30px): for dense UIs, nav bars, table actions</div>
           <div style={{ display: "flex", gap: "var(--oga-3)", flexWrap: "wrap", marginBottom: "var(--oga-5)" }}>
             <button type="button" className="oga-btn oga-btn-sm oga-btn-primary">Primary</button>
             <button type="button" className="oga-btn oga-btn-sm oga-btn-secondary">Secondary</button>
             <button type="button" className="oga-btn oga-btn-sm oga-btn-ghost">Ghost</button>
           </div>
 
-          <div className="oga-label" style={{ marginBottom: "var(--oga-3)" }}>Large (44px) — hero CTAs only</div>
+          <div className="oga-label" style={{ marginBottom: "var(--oga-3)" }}>Large (44px): hero CTAs only</div>
           <div style={{ display: "flex", gap: "var(--oga-3)", flexWrap: "wrap" }}>
             <button type="button" className="oga-btn oga-btn-lg oga-btn-primary">Get started</button>
             <button type="button" className="oga-btn oga-btn-lg oga-btn-secondary">Book a call</button>

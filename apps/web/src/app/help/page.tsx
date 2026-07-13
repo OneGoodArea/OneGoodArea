@@ -4,7 +4,7 @@ import HelpClient from "@/app/design-v2/help/client";
 import { TOPICS } from "@/app/design-v2/help/topics";
 
 export const metadata: Metadata = {
-  title: "Help & FAQs — OneGoodArea",
+  title: "Help & FAQs | OneGoodArea",
   description:
     "FAQs across Signals, Scores, Monitor, Intelligence, methodology, API access, billing, and account management. Verified pricing, rate limits, and engine version. Search across every answer.",
   keywords: [
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     "fetch_mode signals",
   ],
   openGraph: {
-    title: "Help & FAQs — OneGoodArea",
+    title: "Help & FAQs | OneGoodArea",
     description:
       "FAQs across Signals, Scores, Monitor, Intelligence, methodology, API access, billing, and account management.",
     type: "website",
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Help & FAQs — OneGoodArea",
+    title: "Help & FAQs | OneGoodArea",
     description:
       "FAQs across Signals, Scores, Monitor, Intelligence, methodology, API access, billing, and account management.",
   },

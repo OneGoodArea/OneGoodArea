@@ -49,20 +49,20 @@ const TOOL_GROUPS: ToolGroup[] = [
       {
         name: "score_postcode",
         args: "area, preset",
-        blurb: "Score a UK postcode or place name for a preset (moving, business, investing, research). Returns a 0–100 score, five weighted dimensions with engine-grounded reasoning and confidence, a server-composed summary, recommendations, and data sources.",
+        blurb: "Score a UK postcode or place name for a preset (moving, business, investing, research). Returns a 0-100 score, five weighted dimensions with engine-grounded reasoning and confidence, a server-composed summary, recommendations, and data sources.",
         example: "Score SW1A 1AA for moving.",
       },
       {
         name: "compare_postcodes",
         args: "areas[], preset",
-        blurb: "Score 2–8 areas side-by-side for the same preset. Returns a sorted comparison table with per-area summaries. Partial failures surface inline rather than failing the call.",
+        blurb: "Score 2-8 areas side-by-side for the same preset. Returns a sorted comparison table with per-area summaries. Partial failures surface inline rather than failing the call.",
         example: "Compare M1 1AE, SW4 0LG, and EH1 1BB for business.",
       },
     ],
   },
   {
     label: "Signals",
-    tagline: "Raw addressable signals — the primitive underneath every other product.",
+    tagline: "Raw addressable signals: the primitive underneath every other product.",
     Icon: SignalsIcon,
     tools: [
       {
@@ -194,7 +194,7 @@ function Hero() {
 
         <p className="oga-mcp-hero__lead">
           Score UK areas, query signals in natural language, watch portfolios for material change,
-          and generate audience-shaped briefs — all inline in your AI workflow. Eleven tools across
+          and generate audience-shaped briefs, all inline in your AI workflow. Eleven tools across
           six product surfaces. The server is distributed as an npm package and spawned by your MCP
           client over stdio.
         </p>
@@ -340,7 +340,7 @@ function SectionTools() {
           <p className="oga-mcp__lead">
             Every tool calls the same v1 API under the hood. The MCP server is a thin protocol bridge.
             Auth, rate-limits, quota, methodology pinning, all enforced on the API side. Every brief
-            and summary the LLM sees is composed server-side from real engine state — no client-side
+            and summary the LLM sees is composed server-side from real engine state. No client-side
             text synthesis.
           </p>
         </header>

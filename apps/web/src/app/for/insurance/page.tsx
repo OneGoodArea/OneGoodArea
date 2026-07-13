@@ -3,7 +3,7 @@ import Script from "next/script";
 import ForInsuranceClient from "@/app/design-v2/for/insurance/client";
 
 export const metadata: Metadata = {
-  title: "OneGoodArea for insurance + InsureTech — UK area-risk API the actuary can audit",
+  title: "OneGoodArea for insurance + InsureTech: UK area-risk API the actuary can audit",
   description:
     "Configurable composite scoring with per-dimension confidence the actuary owns. Continuous portfolio drift detection with sample-size gating and signed webhooks. Peer-relative anomaly screening over a materialised similarity graph. Built for specialist carriers, MGAs, and InsureTech rating engines.",
   keywords: [
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     "MGA underwriting API",
   ],
   openGraph: {
-    title: "OneGoodArea for insurance + InsureTech — UK area-risk API the actuary can audit",
+    title: "OneGoodArea for insurance + InsureTech: UK area-risk API the actuary can audit",
     description:
       "Configurable composite scoring with per-dimension confidence. Continuous portfolio drift detection with signed webhooks. Peer-relative anomaly screening.",
     type: "website",
