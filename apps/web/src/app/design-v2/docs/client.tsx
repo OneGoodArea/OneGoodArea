@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Nav } from "../_shared/nav";
 import { Footer } from "../_shared/footer";
+import { DEMO_URL } from "../_shared/book-demo";
 import {
   SignalsIcon,
   ScoresIcon,
@@ -69,8 +70,8 @@ function Hero() {
           behaves per organisation.
         </p>
         <div className="oga-docs-hero__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
+          <Link href={DEMO_URL} className="oga-btn oga-btn-primary">
+            Book a demo
             <span aria-hidden>→</span>
           </Link>
           <Link href="/methodology" className="oga-btn oga-btn-secondary">
@@ -718,8 +719,8 @@ function FinalCta() {
           everything live is linked above.
         </p>
         <div className="oga-docs-cta__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
+          <Link href={DEMO_URL} className="oga-btn oga-btn-primary">
+            Book a demo
             <span aria-hidden>→</span>
           </Link>
           <Link href="/methodology" className="oga-btn oga-btn-secondary">

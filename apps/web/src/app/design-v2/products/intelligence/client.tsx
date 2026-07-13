@@ -9,6 +9,7 @@ import { ProductHero } from "../../_shared/product-hero";
 import { ProductEndpointPanel } from "../../_shared/product-endpoint-panel";
 import { ProductFinalCta } from "../../_shared/product-final-cta";
 import { ProductIcpGrid } from "../../_shared/product-icp-grid";
+import { DEMO_URL } from "../../_shared/book-demo";
 import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 import "./intelligence.css";
 
@@ -173,8 +174,8 @@ export default function ProductIntelligenceClient() {
         Icon={IntelligenceIcon}
         h1="Intelligence: a typed query plane over the moat."
         lead="Six plan ops, one Zod-strict grammar. Send a programmatic plan object or a natural-language question. Either way the same deterministic executor runs the plan against the database and returns typed rows. The response always echoes the executed plan so any natural-language answer can be replayed as a programmatic call. Not a chatbot. Not a narrative. AI never sets the numbers."
-        primaryHref="/sign-up"
-        primaryLabel="Get an API key"
+        primaryHref={DEMO_URL}
+        primaryLabel="Book a demo"
         secondaryHref="/methodology"
         secondaryLabel="Read the methodology"
       />
@@ -199,8 +200,8 @@ export default function ProductIntelligenceClient() {
         titleId="int-cta-title"
         title="Query UK areas in JSON or English. Get the same deterministic answer."
         lead={`Six plan ops. One typed grammar. AI emits the plan, the database produces the rows, the response always echoes the plan so any natural-language answer can be replayed as a programmatic call. Engine version ${METHODOLOGY_VERSION} is stamped on every response.`}
-        primaryHref="/sign-up"
-        primaryLabel="Get an API key"
+        primaryHref={DEMO_URL}
+        primaryLabel="Book a demo"
         secondaryHref="/methodology"
         secondaryLabel="Read the methodology"
       />

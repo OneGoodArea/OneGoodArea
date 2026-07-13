@@ -4,6 +4,7 @@ import type { ReactElement } from "react";
 import Link from "next/link";
 import { Nav } from "../_shared/nav";
 import { Footer } from "../_shared/footer";
+import { DEMO_URL } from "../_shared/book-demo";
 import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 import "./business.css";
 
@@ -263,8 +264,8 @@ function Hero() {
           workflows.
         </p>
         <div className="oga-biz-hero__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
+          <Link href={DEMO_URL} className="oga-btn oga-btn-primary">
+            Book a demo
             <span aria-hidden>→</span>
           </Link>
           <Link href="/methodology" className="oga-btn oga-btn-secondary">
@@ -433,8 +434,8 @@ function SectionIcp({ icp, altSurface }: { icp: Icp; altSurface: boolean }) {
                 <span className="oga-biz-icp__cta-soon-pill">Soon</span>
               </button>
             )}
-            <Link href="/sign-up" className="oga-btn oga-btn-secondary">
-              Get an API key
+            <Link href={DEMO_URL} className="oga-btn oga-btn-secondary">
+              Book a demo
               <span aria-hidden>→</span>
             </Link>
           </div>
@@ -713,8 +714,8 @@ function FinalCta() {
           same numbers every quarter.
         </p>
         <div className="oga-biz-cta__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
+          <Link href={DEMO_URL} className="oga-btn oga-btn-primary">
+            Book a demo
             <span aria-hidden>→</span>
           </Link>
           <Link href="/methodology" className="oga-btn oga-btn-secondary">

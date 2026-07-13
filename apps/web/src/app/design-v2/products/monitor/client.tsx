@@ -9,6 +9,7 @@ import { ProductHero } from "../../_shared/product-hero";
 import { ProductEndpointPanel } from "../../_shared/product-endpoint-panel";
 import { ProductFinalCta } from "../../_shared/product-final-cta";
 import { ProductIcpGrid } from "../../_shared/product-icp-grid";
+import { DEMO_URL } from "../../_shared/book-demo";
 import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 import "./monitor.css";
 
@@ -168,8 +169,8 @@ export default function ProductMonitorClient() {
         Icon={MonitorIcon}
         h1="Monitor: portfolios plus signed change detection."
         lead="Save a book of UK areas, enrich it on intake, and detect material moves across the monthly time-series on demand. Each move arrives as a structured row with the exact periods compared, the raw values before and after, and the percent change. Material alerts deliver as Stripe-style HMAC-SHA256 signed webhooks. Sample-size gated so a 47% swing on two sales never earns an alert."
-        primaryHref="/sign-up"
-        primaryLabel="Get an API key"
+        primaryHref={DEMO_URL}
+        primaryLabel="Book a demo"
         secondaryHref="/methodology"
         secondaryLabel="Read the methodology"
       />
@@ -193,8 +194,8 @@ export default function ProductMonitorClient() {
         titleId="mon-cta-title"
         title="Monitor your book of UK areas. Sample-size honest by default."
         lead="Save areas, bulk-enrich, run change detection, get signed webhooks when something material shifts. The diff core is unit-tested, the envelope is HMAC-SHA256 signed, and a 47% swing on 2 sales never earns an alert."
-        primaryHref="/sign-up"
-        primaryLabel="Get an API key"
+        primaryHref={DEMO_URL}
+        primaryLabel="Book a demo"
         secondaryHref="/methodology"
         secondaryLabel="Read the methodology"
       />

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Nav } from "../../_shared/nav";
 import { Footer } from "../../_shared/footer";
+import { DEMO_URL } from "../../_shared/book-demo";
 import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 import "../_shared/icp-page.css";
 
@@ -57,8 +58,8 @@ function Hero() {
           deterministic programmatic call. Built for regulated underwriting.
         </p>
         <div className="oga-icp-hero__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
+          <Link href={DEMO_URL} className="oga-btn oga-btn-primary">
+            Book a demo
             <span aria-hidden>→</span>
           </Link>
           <Link href="/products/scores" className="oga-btn oga-btn-secondary">
@@ -495,8 +496,8 @@ function FinalCta() {
           plan. The audit trail is the API response itself.
         </p>
         <div className="oga-icp-cta__ctas">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
+          <Link href={DEMO_URL} className="oga-btn oga-btn-primary">
+            Book a demo
             <span aria-hidden>→</span>
           </Link>
           <Link href="/methodology" className="oga-btn oga-btn-secondary">
