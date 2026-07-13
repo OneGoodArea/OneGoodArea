@@ -2,7 +2,7 @@
 
 What OneGoodArea stores when you call the API, for how long, who can read it, and how to opt out.
 
-> Living document. Current as of 2026-06-30 (AR-385). This page is rendered from `docs/DATA_POLICY.md` in the OneGoodArea repository — what you read here is what's in the source.
+> Living document. Last updated 13 July 2026.
 
 ---
 
@@ -14,13 +14,13 @@ We log structured metadata for every authenticated API call. This is the only th
 - `user_id` + `org_id` (you, your organization)
 - `created_at` (timestamp)
 - A small, structured `metadata` JSON describing the call shape: area, preset, op (for `/v1/query`), counts, the computed score number. No raw response body, no chat content.
-- `source` ("mcp" | "api") and `client_app` ("claude-desktop" | "cursor" | "claude-code" | "other"), derived from the `User-Agent` header. We use this to understand which integrations are used.
+- `source` ("mcp" or "api") and `client_app` ("claude-desktop", "cursor", "claude-code", "other"), derived from the `User-Agent` header. We use this to understand which integrations are used.
 
 We do NOT log:
-- Your raw IP beyond what's needed for IP allowlist enforcement (per-key, opt-in feature)
+- Your raw IP beyond what is needed for IP allowlist enforcement (a per-key, opt-in feature)
 - Your full request body for most endpoints
-- The narrative text we compose on `/v1/score?explain=true` (UNLESS you participate in training — see below)
-- The raw natural-language question on `/v1/query` (UNLESS you participate in training — see below)
+- The narrative text we compose on `/v1/score?explain=true` (unless you participate in training, see below)
+- The raw natural-language question on `/v1/query` (unless you participate in training, see below)
 
 Retention: indefinite. This is operational data we need to bill, debug, and answer support questions.
 
@@ -28,68 +28,56 @@ Retention: indefinite. This is operational data we need to bill, debug, and answ
 
 ## What we capture for AI training (opt-out available)
 
-We capture two additional kinds of data to train smaller proprietary models that eventually replace third-party LLM calls in our infrastructure. **You can opt out per API key at any time** (see below).
+We capture two additional kinds of data to train smaller proprietary models that, over time, replace third-party LLM calls inside our infrastructure. **You can opt out per API key at any time** (see below).
 
-### Planner training pairs (AR-376 — ACTIVE)
+### Planner training pairs
 
-When you call `/v1/query` with a natural-language `question` field (`find_areas` via MCP), we store:
+When you call `/v1/query` with a natural-language `question` (for example `find_areas` via MCP), we store:
 
-- The raw natural-language `question` you sent
-- The full typed `plan` our planner emitted in response (or the error code if the call failed)
-- `plan_source` — `"llm"` when the model authored the plan, `"client"` when the caller supplied it (we do NOT log `"client"` rows — those aren't training data)
-- Latency in milliseconds
-- Success/failure flag plus error code on failure
-- `source` (always `"mcp"` for MCP calls) and `client_app` (claude-code / claude-desktop / cursor / other)
+- The raw natural-language question you sent
+- The typed plan our planner produced in response (or the error code if the call failed)
+- Latency, and a success or failure flag
+- `source` and `client_app`
 
-We do NOT log the response body — only the emitted plan. Programmatic `/v1/query` calls with `{plan}` are NOT logged (no training value).
+We do NOT log the response body, only the emitted plan. Programmatic `/v1/query` calls that supply their own plan are not logged; there is no training value in them.
 
-**Purpose:** train a smaller LLM to translate natural-language area questions into typed plans, replacing the Anthropic API call we currently make per request.
+**Purpose:** train a smaller model to translate natural-language area questions into typed plans, so we depend less on a third-party LLM per request.
 
-**Storage:** dedicated `query_planner_logs` table, separate from operational `activity_events`. Superuser-only access at the SQL layer; `/admin` UI shows aggregate counts only.
+**Storage:** a dedicated store, kept separate from operational logs. Internal access is restricted, and our admin tooling shows aggregate counts only, never the raw question text.
 
-### Brief-composer training pairs (AR-377 — ACTIVE)
+### Brief-composer training pairs
 
-When you call `/v1/score?explain=true` (`score_postcode` via MCP), we store:
+When you call `/v1/score?explain=true` (for example `score_postcode` via MCP), we store:
 
-- The full request body (area, preset, weights, bundle, preset_id)
-- The full server-composed brief (score, dimensions with reasoning + confidence, summary, recommendations, data sources)
-- Latency in milliseconds
-- Success/failure flag
-- `source` (always `"mcp"` for MCP calls) and `client_app`
+- The request body (area, preset, weights, bundle, preset id)
+- The server-composed brief (score, dimensions with reasoning and confidence, summary, recommendations, data sources)
+- Latency, and a success or failure flag
+- `source` and `client_app`
 
-We do NOT log calls to the bare `/v1/score` path (without `explain=true`). Those produce no composer prose, so there's nothing to learn.
+We do NOT log calls to the bare `/v1/score` path (without `explain=true`). Those produce no composed prose, so there is nothing to learn.
 
 **Purpose:** train a smaller composer model for richer area briefs without depending on third-party LLM infrastructure.
 
-**Storage:** dedicated `brief_composer_logs` table, separate from operational `activity_events` and the planner corpus. Superuser-only access at the SQL layer; `/admin` UI shows aggregate counts only.
+**Storage:** a dedicated store, kept separate from operational logs and from the planner data. Internal access is restricted, and our admin tooling shows aggregate counts only.
 
 ### Retention
 
-Both training corpora roll off automatically after **365 days** (configurable via `TRAINING_DATA_RETENTION_DAYS`; set to `0` to keep indefinitely). Rows older than the cutoff are purged by a nightly cron at `/cron/training-retention`, which deletes from both `query_planner_logs` and `brief_composer_logs` in one pass. The cron returns deletion counts and accepts `?dry_run=true` for a count-only preview.
+Both training corpora roll off automatically after **365 days**. Rows older than that are purged nightly.
 
 ### Who can read
 
-Raw training tables are queryable only by superusers via direct SQL access. The `/admin` UI shows AGGREGATE counts only (row counts, top orgs by volume) — never the raw question text or brief body.
+Raw training data is accessible only to a small number of internal administrators. Our admin tooling shows aggregate counts only, never the raw question text or brief body.
 
 ### Opt out
 
-Each API key has a `training_optout` flag, default `FALSE`. When `TRUE`, requests made with that key are NOT inserted into either training table. Adoption tracking via `activity_events` continues — opt-out is for training-corpus inclusion, not for operational logging.
+Each API key has a training opt-out setting, off by default. When you turn it on, requests made with that key are not added to either training set. Operational logging continues; opt-out applies to the training corpora only.
 
-**To toggle:** sign in, go to `/api-usage`, click the "Training" switch next to any of your keys. Takes effect on the next request from any client (Claude Desktop, Cursor, Claude Code, direct API) using that key. No support email needed.
+**To toggle:** sign in, go to `/api-usage`, and use the "Training" switch next to any of your keys. It takes effect on the next request from any client using that key. No support email needed.
 
 ---
 
 ## Your rights
 
-- Request a copy of what we hold for your `user_id` or `org_id` — email support.
-- Request deletion of your training-corpus rows — email support. We'll execute and confirm.
-- Toggle `training_optout` on any key, any time — takes effect on the next request.
-
----
-
-## Changelog
-
-- **2026-06-29 (AR-375):** Initial version. Activity logging, source + client_app classification, opt-out flag landed. Training capture (AR-376 / AR-377) not yet active.
-- **2026-06-29 (AR-376):** Planner training pairs ACTIVE on `/v1/query` (NL `question` field path only). Stored in dedicated `query_planner_logs` table. Per-key `training_optout` honored on every insert. AR-377 (brief composer) still pending.
-- **2026-06-29 (AR-377):** Brief-composer training pairs ACTIVE on `/v1/score?explain=true`. Stored in dedicated `brief_composer_logs` table. Per-key `training_optout` honored on every insert. Nightly retention cron at `/cron/training-retention` purges both training tables on a 365-day default rolling window. Plan/029 closed.
-- **2026-06-30 (AR-385):** Customer surface live. Per-key `training_optout` toggle in `/api-usage`. Disclosure at API-key creation. This policy page now public at `/legal/data-policy` (rendered from source). MCP server (`@oga-mcp/server`) logs current capture state on every boot.
+- Request a copy of what we hold for your `user_id` or `org_id`. Email support.
+- Request deletion of your training data. Email support, and we will execute and confirm.
+- Toggle training opt-out on any key, at any time. It takes effect on the next request.
