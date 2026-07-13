@@ -20,6 +20,7 @@ import { registerOrgCohortsRoutes } from "./routes/org-cohorts";
 import { registerOrgMethodologyRoutes } from "./routes/org-methodology";
 import { registerIntelligenceRoutes } from "./routes/intelligence";
 import { registerPlaygroundRoutes } from "./routes/playground";
+import { registerContactRoutes } from "./routes/contact";
 import { classifyClientApp } from "./shared/http";
 import { runWithRequestContext } from "./shared/request-context";
 declare module "fastify" {
@@ -146,6 +147,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
   registerOrgMethodologyRoutes(app);
   registerIntelligenceRoutes(app);
   registerPlaygroundRoutes(app);
+  registerContactRoutes(app);
 
   return app;
 }

@@ -1,0 +1,285 @@
+/* Contact page: co-located CSS for /contact (AR-451).
+   Brand v3 (Plotted). Depends on tokens.css + components.css +
+   backgrounds.css. No inline styles in client.tsx.
+
+   Layout: single cream section, two columns (aside + form card).
+   Stacks to one column below 860px. */
+
+/* ---- eyebrow children (page-scoped, mirrors about.css) ---- */
+.oga-contact .oga-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.oga-contact .oga-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--oga-ink);
+  display: inline-block;
+}
+
+/* ---- section shell ---- */
+.oga-contact-hero {
+  background: var(--oga-canvas);
+  padding: clamp(56px, 8vw, 120px) 24px clamp(56px, 8vw, 112px);
+}
+.oga-contact__inner {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.oga-contact__grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: clamp(32px, 5vw, 72px);
+  align-items: start;
+}
+
+/* ---- left rail ---- */
+.oga-contact__eyebrow {
+  margin-bottom: 22px;
+}
+.oga-contact__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--oga-fg);
+  text-wrap: balance;
+  margin: 0 0 20px;
+}
+.oga-contact__lead {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(16px, 1.4vw, 18px);
+  line-height: 1.6;
+  color: var(--oga-fg-subtle);
+  text-wrap: pretty;
+  margin: 0 0 40px;
+  max-width: 440px;
+}
+
+.oga-contact__channels {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  border-top: 1px solid var(--oga-border);
+  padding-top: 28px;
+}
+.oga-contact__channel {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.oga-contact__channel-icon {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  color: var(--oga-fg);
+}
+.oga-contact__channel-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.oga-contact__channel-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.oga-contact__channel-value {
+  font-family: var(--oga-font-mono);
+  font-size: 14px;
+  color: var(--oga-fg);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+}
+.oga-contact__channel-value:hover {
+  text-decoration: underline;
+}
+.oga-contact__channel-arrow {
+  font-size: 12px;
+  color: var(--oga-fg-muted);
+}
+.oga-contact__channel-note {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--oga-fg-muted);
+}
+
+/* ---- form card ---- */
+.oga-contact__form-wrap {
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-lg);
+  padding: clamp(24px, 3vw, 36px);
+  box-shadow: var(--oga-shadow-md);
+}
+.oga-contact__form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.oga-contact__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.oga-contact__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.oga-contact__label {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+.oga-contact__optional {
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.7;
+}
+.oga-contact__input {
+  font-family: var(--oga-font-sans);
+  font-size: 15px;
+  color: var(--oga-fg);
+  background: var(--oga-white);
+  border: 1px solid rgba(26, 28, 31, 0.18);
+  border-radius: var(--oga-radius-md);
+  padding: 11px 13px;
+  width: 100%;
+  transition:
+    border-color var(--oga-dur-fast) var(--oga-ease),
+    box-shadow var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-contact__input::placeholder {
+  color: var(--oga-ink-50);
+}
+.oga-contact__input:focus {
+  outline: none;
+  border-color: var(--oga-ink);
+  box-shadow: 0 0 0 3px var(--oga-ink-10);
+}
+.oga-contact__textarea {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.55;
+}
+.oga-contact__select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' stroke='%2374757A' stroke-width='1.3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 13px center;
+  padding-right: 34px;
+  cursor: pointer;
+}
+
+/* honeypot: off-screen, never shown to real users */
+.oga-contact__hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.oga-contact__error {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--oga-status-red);
+  margin: 0;
+}
+
+.oga-contact__submit {
+  width: 100%;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.oga-contact__fineprint {
+  font-family: var(--oga-font-sans);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+  margin: 0;
+  text-align: center;
+}
+.oga-contact__fineprint a {
+  color: var(--oga-fg-subtle);
+  text-decoration: underline;
+}
+
+/* ---- success panel ---- */
+.oga-contact__success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  padding: clamp(24px, 4vw, 48px) 8px;
+}
+.oga-contact__success-mark {
+  width: 52px;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--oga-ink);
+  color: var(--oga-white);
+}
+.oga-contact__success-title {
+  font-family: var(--oga-font-sans);
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--oga-fg);
+  margin: 0;
+}
+.oga-contact__success-body {
+  font-family: var(--oga-font-sans);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--oga-fg-subtle);
+  margin: 0 0 8px;
+  max-width: 380px;
+  text-wrap: pretty;
+}
+.oga-contact__success-email {
+  font-family: var(--oga-font-mono);
+  font-size: 14px;
+  color: var(--oga-fg);
+}
+
+/* ---- responsive ---- */
+@media (max-width: 860px) {
+  .oga-contact__grid {
+    grid-template-columns: 1fr;
+  }
+  .oga-contact__lead {
+    max-width: none;
+  }
+}
+@media (max-width: 520px) {
+  .oga-contact__row {
+    grid-template-columns: 1fr;
+  }
+}
