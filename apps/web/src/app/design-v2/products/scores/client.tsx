@@ -274,8 +274,8 @@ function SectionSpecimen() {
             <dd>
               Stamped on the response body and on the
               <strong> X-Engine-Version</strong> header. Org-level methodology
-              pinning (Levers) overrides per caller. Supported window today:
-              2.0.0, 2.0.1, 2.0.2. All score-equivalent.
+              pinning (Levers) overrides per caller. Supported version today:
+              1.0.0.
             </dd>
           </dl>
         </div>
@@ -509,7 +509,7 @@ function SectionAnatomy() {
             <span className="oga-scr-anat__note-num">Step 02</span>
             <h3 className="oga-scr-anat__note-title">Compute scores</h3>
             <p className="oga-scr-anat__note-body">
-              Frozen v2 deterministic engine produces the five per-dimension
+              Frozen deterministic engine produces the five per-dimension
               scores for the chosen preset, plus per-dimension confidence.
               Golden-tested. AI does not touch this step.
             </p>
@@ -578,7 +578,7 @@ function PipelineSvg() {
         <text x="80" y="52" textAnchor="middle" fontFamily="var(--oga-font-sans)" fontSize="14"
               fill="currentColor">computeScores</text>
         <text x="80" y="75" textAnchor="middle" fontFamily="var(--oga-font-mono)" fontSize="10"
-              fill="currentColor" opacity="0.65" letterSpacing="2">FROZEN v2 ENGINE</text>
+              fill="currentColor" opacity="0.65" letterSpacing="2">FROZEN ENGINE</text>
         <circle cx="0" cy="50" r="3" fill="currentColor" />
         <circle cx="160" cy="50" r="3" fill="currentColor" />
       </g>
@@ -643,7 +643,7 @@ const EPS: Endpoint[] = [
       { name: "preset", type: "enum", required: false, desc: "moving · business · investing · research. Defaults to research. Each preset has its OWN 5 dimensions." },
       { name: "weights", type: "Record<key, positive number>", required: false, desc: "Override the preset's default weights. Keys must be in PRESET_DIMENSION_KEYS[preset]. Partial overrides keep defaults for missing keys." },
       { name: "preset_id", type: "string (Lever)", required: false, desc: "Reference a saved per-org preset (spr_…). Mutually exclusive with preset + weights. 422 preset_id_conflict otherwise." },
-      { name: "X-Engine-Version", type: "header", required: false, desc: "Pin response engine version per request. Must be in SUPPORTED_ENGINE_VERSIONS = ['2.0.0','2.0.1','2.0.2']. Beats org-level pin." },
+      { name: "X-Engine-Version", type: "header", required: false, desc: "Pin response engine version per request. Must be in SUPPORTED_ENGINE_VERSIONS = ['1.0.0']. Beats org-level pin." },
     ],
     response:
       "ScoreResult: { area, preset, score, area_type, dimensions[5]: { key, label, score, weight, confidence }, confidence, weights_source ('preset' | 'custom'), engine_version }. Response header X-Engine-Version carries the effective pin.",
@@ -704,7 +704,7 @@ const ICPS: Icp[] = [
     problem:
       "A mortgage lender's model risk register treats every API the underwriting model depends on as a model input. If the supplier silently changes a coefficient, that's an undisclosed model change, a regulated event. Auditors ask: 'what version of the area score produced this decision, and is it byte-equivalent to the score you'd compute today?'",
     why:
-      "Every /v1/score response carries engine_version in the body AND X-Engine-Version on the response header. Both can be locked at the org level (Levers methodology pin), owner-only, write-time validated against SUPPORTED_ENGINE_VERSIONS. The deterministic engine is frozen v2, golden-tested. AI never touches the scoring path.",
+      "Every /v1/score response carries engine_version in the body AND X-Engine-Version on the response header. Both can be locked at the org level (Levers methodology pin), owner-only, write-time validated against SUPPORTED_ENGINE_VERSIONS. The deterministic engine is frozen and golden-tested. AI never touches the scoring path.",
     value:
       "Every decision produced from /v1/score is reproducible to a known methodology version. The model risk register has a 1:1 mapping between an API call and the engine that ran. Closes a compliance gap that's table-stakes for any production underwriting model.",
     sales:

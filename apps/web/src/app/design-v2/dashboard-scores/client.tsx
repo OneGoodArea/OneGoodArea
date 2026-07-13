@@ -331,14 +331,14 @@ function summariseWeights(weights: Record<string, number>): string {
 
 function CodeBlock() {
   const curl = `# Call /v1/score with one of the four built-in profiles
-curl https://api.onegoodarea.com/v1/score \\
+curl https://onegoodarea.onrender.com/v1/score \\
   -H "Authorization: Bearer $OGA_API_KEY" \\
   -H "Content-Type: application/json" \\
   -X POST \\
   -d '{ "area": "SW1A 1AA", "preset": "research" }'
 
 # ... or call it with one of your org's saved presets
-curl https://api.onegoodarea.com/v1/score \\
+curl https://onegoodarea.onrender.com/v1/score \\
   -H "Authorization: Bearer $OGA_API_KEY" \\
   -H "Content-Type: application/json" \\
   -X POST \\

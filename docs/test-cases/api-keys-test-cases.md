@@ -1,6 +1,6 @@
 # API Keys, Usage & Entitlements — Test Cases
 
-> **Source:** OneGoodArea API (Engine v2.0.2)
+> **Source:** OneGoodArea API (Engine v1.0.0)
 > **Endpoints covered:** `GET /keys`, `POST /keys`, `DELETE /keys/:id`, `GET /keys/usage`, `GET /usage`, `GET /v1/me`
 > **Last updated:** 2026-07-01
 

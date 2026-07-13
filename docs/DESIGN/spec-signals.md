@@ -30,7 +30,7 @@ The Signal is the atomic unit. AreaProfile bundles the seven-category Signal cat
 | `geo.msoa / admin_district / region / country` | strings | ONS spine handles. | `"Manchester"` |
 | `geo.area_type` | enum | urban / suburban / rural, from the ONS rural-urban code. | `"urban"` |
 | `meta.fetch_mode` | enum (live / store / hybrid) | Provenance on the wire. The live→store flip is non-breaking. | `"hybrid"` |
-| `meta.engine_version` | string | Pinnable methodology version. Also returned as `X-Engine-Version` header. Org methodology pin overrides. | `"2.0.2"` |
+| `meta.engine_version` | string | Pinnable methodology version. Also returned as `X-Engine-Version` header. Org methodology pin overrides. | `"1.0.0"` |
 | `meta.generated_at` | ISO string | When the profile was assembled. | `"2026-05-25T00:00:00.000Z"` |
 | `meta.sources` | `string[]` | Source datasets that contributed at least one signal. | `["police.uk", "HM Land Registry"]` |
 
@@ -65,7 +65,7 @@ Returns the full Signal catalog (seven categories) for one UK postcode or place 
 **Sample curl:**
 ```
 curl -H "Authorization: Bearer oga_live_xxx" \
-  "https://api.onegoodarea.com/v1/area?postcode=M1%201AE"
+  "https://onegoodarea.onrender.com/v1/area?postcode=M1%201AE"
 ```
 
 **Sample response (abridged):**
@@ -83,7 +83,7 @@ curl -H "Authorization: Bearer oga_live_xxx" \
       "confidence": 0.9, "confidence_reason": "police.uk: 12 months of data.",
       "source": "police.uk", "observed_period": "Apr 2025 to Mar 2026" }
   ],
-  "meta": { "engine_version": "2.0.2", "fetch_mode": "hybrid", "sources": ["police.uk","HM Land Registry"] }
+  "meta": { "engine_version": "1.0.0", "fetch_mode": "hybrid", "sources": ["police.uk","HM Land Registry"] }
 }
 ```
 

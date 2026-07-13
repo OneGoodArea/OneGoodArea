@@ -1,6 +1,6 @@
 # Dashboard — Test Cases
 
-> **Source:** https://www.onegoodarea.com/ (Engine v2.0.2)
+> **Source:** https://www.onegoodarea.com/ (Engine v1.0.0)
 > **Dashboard URL:** `/dashboard` (authenticated)
 > **Last updated:** 2026-06-19
 
@@ -256,7 +256,7 @@ The OneGoodArea Dashboard is the authenticated **control plane** for the UK loca
 - **Auth providers:** Google OAuth, GitHub OAuth, Email + Password
 - **Browser targets:** Chromium (latest), Firefox (latest), Safari (latest)
 - **Viewport breakpoints:** >880px (desktop), 720–880px (tablet), <720px (mobile)
-- **API version:** v2.0.2
+- **API version:** v1.0.0
 - **Backend endpoints consumed by dashboard:**
   - GET /api/me/reports
   - GET /api/usage

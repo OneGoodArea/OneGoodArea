@@ -162,10 +162,10 @@ const FLOW: FlowStep[] = [
     title: "Lock the methodology for the contract cycle",
     text: "PUT /v1/orgs/:id/methodology pins the engine version your org consumes. Owner-only, validated at write time. Same call from any key inside the org returns responses stamped with that version. Procurement teams pin to the version named in the contract; analysts get reproducible numbers across the deliverable timeline.",
     code: `PUT /v1/orgs/:id/methodology
-{ "engine_version": "2.0.1" }
+{ "engine_version": "1.0.0" }
 
 # Every subsequent product response:
-X-Engine-Version: 2.0.1`,
+X-Engine-Version: 1.0.0`,
   },
   {
     num: "Step 04",

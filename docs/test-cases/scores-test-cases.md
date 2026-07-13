@@ -1,6 +1,6 @@
 # Scores API — Test Cases
 
-> **Source:** OneGoodArea API (Engine v2.0.2)
+> **Source:** OneGoodArea API (Engine v1.0.0)
 > **Endpoint:** `POST /v1/score`
 > **Last updated:** 2026-07-01
 
@@ -51,8 +51,8 @@ Same order as the signals routes: `401` missing key ("Missing API key. Use: Auth
 | **SCORE-01** | Score with default preset | 1. `POST /v1/score` body `{ "area": "M1 1AE" }` with a valid Bearer key | `200`. `preset` = `"research"`. Body: `{ area, preset, score (0–100), area_type, dimensions[], confidence (0–1), weights_source, engine_version }`. `weights_source` = `"preset"`. |
 | **SCORE-02** | Score with explicit preset | 1. Body `{ "area": "M1 1AE", "preset": "business" }` | `200`. `preset` = `"business"`. `dimensions[].key` are the business dimension keys. |
 | **SCORE-03** | Dimension shape | 1. Inspect any element of `dimensions[]` | `{ key, label, score (0–100), weight, confidence (0–1), reasoning, confidence_reason }`. `reasoning` and `confidence_reason` come straight from the engine (not LLM-generated). |
-| **SCORE-04** | `engine_version` stamped in body | 1. Inspect `engine_version` in the response body | Equals `METHODOLOGY_VERSION` = `"2.0.2"`. |
-| **SCORE-05** | `X-Engine-Version` response header | 1. Inspect the response header | Set from the caller's org methodology pin (via `effectiveEngineVersionForCaller`), defaulting to `"2.0.2"` when no pin is set. |
+| **SCORE-04** | `engine_version` stamped in body | 1. Inspect `engine_version` in the response body | Equals `METHODOLOGY_VERSION` = `"1.0.0"`. |
+| **SCORE-05** | `X-Engine-Version` response header | 1. Inspect the response header | Set from the caller's org methodology pin (via `effectiveEngineVersionForCaller`), defaulting to `"1.0.0"` when no pin is set. |
 | **SCORE-06** | Aggregate confidence is weighted | 1. Inspect `confidence` | 0–1, the weight-weighted average of the dimension confidences (rounded to 2 dp). |
 
 ---
@@ -113,9 +113,9 @@ Same order as the signals routes: `401` missing key ("Missing API key. Use: Auth
 |---|---|---|---|
 | **SCORE-50** | Determinism / repeatability | 1. Send the same request body twice (same area, preset, weights) | Identical `score` and per-dimension `score` values. Engine is frozen v2, golden-master tested, no randomness, no AI. |
 | **SCORE-51** | Custom weights don't change dimension scores | 1. Compare a preset run vs. a custom-weights run for the same area | Per-dimension `score` values are unchanged; only the overall `score` and `weights_source` differ (weights affect aggregation only). |
-| **SCORE-52** | Version stamp is consistent | 1. Compare body `engine_version` and the `X-Engine-Version` header (no org pin) | Both report `"2.0.2"` (`METHODOLOGY_VERSION`). |
+| **SCORE-52** | Version stamp is consistent | 1. Compare body `engine_version` and the `X-Engine-Version` header (no org pin) | Both report `"1.0.0"` (`METHODOLOGY_VERSION`). |
 | **SCORE-53** | Org methodology pin drives the header | 1. Caller's org has a valid v2.x methodology pin set | `X-Engine-Version` echoes the pinned version (resolved via `resolveEngineVersion`); body `engine_version` still reflects what the engine produced. |
-| **SCORE-54** | Per-request `X-Engine-Version` header is not honoured | 1. Send request header `X-Engine-Version: 2.0.0` | The per-request override was retired with `/v1/report` (AR-324); the response stamp is driven only by the org pin / latest. Supported versions remain `2.0.0`, `2.0.1`, `2.0.2`. |
+| **SCORE-54** | Per-request `X-Engine-Version` header is not honoured | 1. Send request header `X-Engine-Version: 1.0.0` | The per-request override was retired with `/v1/report` (AR-324); the response stamp is driven only by the org pin / latest. The supported version is `1.0.0`. |
 
 ---
 
@@ -138,6 +138,6 @@ Same order as the signals routes: `401` missing key ("Missing API key. Use: Auth
 - **Auth:** Bearer API key via `requireApiAccessWithOrg` (returns `{ userId, orgId, trainingOptout }`).
 - **Rate limit:** per-key `apiReport` budget, 30 requests/minute → `429`.
 - **Determinism:** the scoring engine is the frozen v2 module (`scoring-engine/v2.ts`), golden-master tested; custom `weights` only re-aggregate the engine's per-dimension scores (`applyWeights`).
-- **Engine version:** `2.0.2` (`METHODOLOGY_VERSION`); supported pins `2.0.0`/`2.0.1`/`2.0.2` are score-equivalent (patches changed only confidence metadata).
+- **Engine version:** `1.0.0` (`METHODOLOGY_VERSION`); the supported window is `1.0.0`.
 - **Training capture:** on `explain=true` paths only, a brief-composer training row is inserted (respecting `trainingOptout`); plain score responses are not captured.
 </content>

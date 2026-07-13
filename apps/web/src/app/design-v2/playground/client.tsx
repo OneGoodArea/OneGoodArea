@@ -440,7 +440,7 @@ const MONITOR_SAMPLE_RESPONSE = {
     },
   ],
   meta: {
-    engine_version: "v2.0.2",
+    engine_version: "v1.0.0",
     generated_at: "2026-06-14T12:00:00Z",
   },
 };

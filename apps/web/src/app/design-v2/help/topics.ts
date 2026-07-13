@@ -38,7 +38,7 @@ export const TOPICS: Topic[] = [
       },
       {
         q: "How do I make my first API call?",
-        a: "Sign up, generate a key from your dashboard, then curl POST https://api.onegoodarea.com/v1/score with body { \"area\": \"M1 1AE\", \"preset\": \"residential_origination\" } and Authorization: Bearer <your_key>. Full code samples in cURL, Node, Python, and Go live at /docs/api-reference.",
+        a: "Sign up, generate a key from your dashboard, then curl POST https://onegoodarea.onrender.com/v1/score with body { \"area\": \"M1 1AE\", \"preset\": \"residential_origination\" } and Authorization: Bearer <your_key>. Full code samples in cURL, Node, Python, and Go live at /docs/api-reference.",
       },
       {
         q: "What is the difference between the four products?",
@@ -190,7 +190,7 @@ export const TOPICS: Topic[] = [
       },
       {
         q: "What is the methodology version today?",
-        a: "v2.0.2. Released 2026-05-14. Registry of supported versions is on /methodology. We publish breaking changes through SemVer: major bump = new methodology, minor bump = new signal or dimension, patch bump = bug fix in a fixed formula.",
+        a: "v1.0.0. Released 2026-07-08. Registry of supported versions is on /methodology. We publish breaking changes through SemVer: major bump = new methodology, minor bump = new signal or dimension, patch bump = bug fix in a fixed formula.",
       },
     ],
   },

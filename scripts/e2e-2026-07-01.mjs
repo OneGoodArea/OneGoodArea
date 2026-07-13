@@ -399,7 +399,7 @@ async function run() {
   /* ────────────────────────────────────────────────────────────────────
      AR-403: full surface coverage. Sections below exercise every safe
      public endpoint, not just the ones the audits flagged. Skipped:
-     /auth/*, /stripe/*, /v1/report, /v1/portfolios/:id/enrich,
+     /auth/*, /stripe/*, /v1/portfolios/:id/enrich,
      POST /v1/orgs/:id/invitations (sends email), /cron/*, /track.
   ──────────────────────────────────────────────────────────────────── */
 
@@ -433,7 +433,7 @@ async function run() {
     },
   });
 
-  section("portfolios + reports lists", "read-only");
+  section("portfolios list", "read-only");
   await call({
     name: "GET /v1/portfolios (list)", category: "lists", path: "/v1/portfolios",
     expect: { status: 200, assert: (j) => Array.isArray(j?.portfolios || j) ? true : "no portfolios array" },

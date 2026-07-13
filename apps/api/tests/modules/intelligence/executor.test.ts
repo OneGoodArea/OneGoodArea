@@ -173,7 +173,7 @@ describe("executePlan — compare_areas (AR-266)", () => {
     return {
       geo: { query: postcode, postcode, latitude: 0, longitude: 0, lsoa: `lsoa_${postcode}`, msoa: "x", admin_district: "x", region: "x", country: "England", area_type: "urban" },
       signals: [],
-      meta: { engine_version: "2.0.2", generated_at: "2026-06-12T00:00:00.000Z", sources: [], fetch_mode: "live" },
+      meta: { engine_version: "1.0.0", generated_at: "2026-06-12T00:00:00.000Z", sources: [], fetch_mode: "live" },
     } as never;
   }
 

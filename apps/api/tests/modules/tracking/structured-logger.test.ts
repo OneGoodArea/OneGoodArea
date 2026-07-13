@@ -81,9 +81,9 @@ describe("structured-logger", () => {
     });
 
     it("leaves URIs without a userinfo:password segment untouched", () => {
-      logger.info("ping", { url: "https://api.onegoodarea.com/v1/health" });
+      logger.info("ping", { url: "https://onegoodarea.onrender.com/v1/health" });
       const raw = logSpy.mock.calls[0]![0] as string;
-      expect(raw).toContain("https://api.onegoodarea.com/v1/health");
+      expect(raw).toContain("https://onegoodarea.onrender.com/v1/health");
     });
 
     it("does not mangle host:port patterns (no @ follows)", () => {

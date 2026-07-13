@@ -1,6 +1,6 @@
 # MCP Server — Test Cases
 
-> **Source:** OneGoodArea MCP server (Engine v2.0.2)
+> **Source:** OneGoodArea MCP server (Engine v1.0.0)
 > **Last updated:** 2026-07-01
 
 ## Scope
@@ -252,7 +252,7 @@ The server registers **eleven tools**: nine network tools that proxy the OneGood
 
 | ID | Test Case | Steps | Expected Result |
 |---|---|---|---|
-| **MCP-102** | Happy path | 1. Call `engine_version` (no args) | Returns `# OneGoodArea engine 2.0.2`, `Released: 2026-05-14`, a `## Changelog` section listing each entry (2.0.2, 2.0.1, 2.0.0, 1.x), and the methodology URL. |
+| **MCP-102** | Happy path | 1. Call `engine_version` (no args) | Returns `# OneGoodArea engine 1.0.0`, `Released: 2026-05-14`, a `## Changelog` section listing the 1.0.0 entry, and the methodology URL. |
 | **MCP-103** | Takes no arguments | 1. Inspect the tool's `inputSchema` | `properties: {}`, `additionalProperties: false`; ignores any supplied args. |
 | **MCP-104** | No network / no quota cost | 1. Call the tool | No `/v1/*` HTTP call is made; data comes from the static `ENGINE` constant. |
 
@@ -261,7 +261,7 @@ The server registers **eleven tools**: nine network tools that proxy the OneGood
 ## Test Environment Notes
 
 - **Package:** `@oga-mcp/server`, server version `1.0.3` (`SERVER_VERSION` in `mcp/src/server.ts`).
-- **Engine (static snapshot):** v2.0.2, released 2026-05-14 (`ENGINE` in `mcp/src/methodology-data.ts`). The live engine version is echoed from each `/v1/score` and `/v1/area` response.
+- **Engine (static snapshot):** v1.0.0, released 2026-05-14 (`ENGINE` in `mcp/src/methodology-data.ts`). The live engine version is echoed from each `/v1/score` and `/v1/area` response.
 - **Transport:** stdio (`StdioServerTransport`).
 - **Default API base:** `https://onegoodarea.onrender.com` (override via `OOGA_API_BASE`).
 - **Auth:** `OOGA_API_KEY` env var (must start with `oga_`) sent as `Authorization: Bearer <key>` on every REST call.

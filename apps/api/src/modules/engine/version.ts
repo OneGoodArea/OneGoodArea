@@ -9,28 +9,22 @@ import { METHODOLOGY_VERSION, METHODOLOGY_VERSIONS } from "./methodology";
 
    ## Today's contract
 
-   The v2.x series ("2.0.0", "2.0.1", "2.0.2") is score-equivalent — patch
-   versions in this range changed only the confidence rubric and data-source
-   reliability, NOT scoring math. So any v2.x request resolves to the current
-   engine and produces byte-identical SCORE values. Confidence metadata may
-   refine between patches.
+   The supported window is the current engine only ("1.0.0"). Any valid
+   pin resolves to METHODOLOGY_VERSION and produces byte-identical SCORE
+   values; confidence metadata may refine between patch releases.
 
-   1.x.x versions are reconstructed-from-history snapshots in
-   `methodology-versions.ts`; we never shipped frozen scoring modules for
-   them, so they are EOL.
-
-   When v3.0.0 ships (a MAJOR bump that actually changes scoring math), the
-   pattern becomes: freeze the v2 engine module, route v2.x requests there,
-   route v3.x requests to the new module. The header-routing scaffolding in
-   this file is the seam that enables that split. Until then, all valid v2.x
-   pins resolve to the latest patch of v2.
+   When the next MAJOR ships (a bump that actually changes scoring math),
+   the pattern becomes: freeze the current engine module, route the prior
+   MAJOR's requests there, route the new MAJOR to the new module. The
+   header-routing scaffolding in this file is the seam that enables that
+   split.
 
    ## API shape
 
-   - No header           → routes to METHODOLOGY_VERSION (no breaking change)
-   - Valid v2.x version  → routes to METHODOLOGY_VERSION; X-Engine-Version
-                           response header echoes the *requested* version
-   - Unknown / EOL       → 400 with a payload listing supported_versions
+   - No header            -> routes to METHODOLOGY_VERSION (no breaking change)
+   - Valid supported pin  -> routes to METHODOLOGY_VERSION; X-Engine-Version
+                             response header echoes the requested version
+   - Unknown version      -> 400 with a payload listing supported_versions
 
    ## Levers AR-197 — org-level methodology pin
 

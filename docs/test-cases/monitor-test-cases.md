@@ -1,6 +1,6 @@
 # Monitor (Portfolios) — Test Cases
 
-> **Source:** OneGoodArea API (Engine v2.0.2)
+> **Source:** OneGoodArea API (Engine v1.0.0)
 > **Endpoints covered:** `POST /v1/portfolios`, `GET /v1/portfolios`, `GET /v1/portfolios/:id`, `DELETE /v1/portfolios/:id`, `POST /v1/portfolios/:id/areas`, `POST /v1/portfolios/:id/enrich`, `POST /v1/portfolios/:id/changes`, `GET /v1/portfolios/:id/changes`, plus the webhook subscription surface (`POST/GET/DELETE /v1/webhooks`, `POST /v1/webhooks/:id/rotate-secret`) that receives `signal.changed`.
 > **Last updated:** 2026-07-01
 

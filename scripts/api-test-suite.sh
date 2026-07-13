@@ -3,14 +3,14 @@
 ################################################################################
 # OneGoodArea API Test Suite
 # 
-# Tests all 73 endpoints with curl, using parameterized domain and auth tokens.
+# Tests all 68 endpoints with curl, using parameterized domain and auth tokens.
 #
 # Usage:
 #   ./scripts/api-test-suite.sh DOMAIN [API_KEY] [SESSION_COOKIE] [CRON_SECRET]
 #
 # Examples:
 #   ./scripts/api-test-suite.sh localhost:8080
-#   ./scripts/api-test-suite.sh onegoodarea.co.uk
+#   ./scripts/api-test-suite.sh https://onegoodarea.onrender.com
 #   ./scripts/api-test-suite.sh https://localhost:8080 oga_test1234... session_jwt...
 #
 # Environment variables (fallbacks):
@@ -145,13 +145,8 @@ test_endpoint "POST" "/v1/peers" "API" '{"area":"SW1A1AA"}' "Find peers (k-NN)"
 test_endpoint "POST" "/v1/insights" "API" '{"area":"SW1A1AA"}' "Anomaly screening"
 test_endpoint "POST" "/v1/forecast" "API" '{"area":"SW1A1AA","signal":"deprivation"}' "Forecast"
 
-print_section "Legacy Report API (6)"
-test_endpoint "POST" "/v1/report" "API" '{"area":"SW1A1AA","intent":"moving"}' "Generate report (API key)"
-test_endpoint "POST" "/v1/batch" "API" '[{"area":"SW1A1AA","intent":"moving"}]' "Batch reports"
+print_section "Caller (1)"
 test_endpoint "GET" "/v1/me" "API" "" "Get caller (API key)"
-test_endpoint "GET" "/me/reports" "Session" "" "List reports (Session)"
-test_endpoint "POST" "/report" "Session" '{"area":"SW1A1AA","intent":"moving"}' "Generate report (Session/Dashboard)"
-test_endpoint "DELETE" "/report/report_123" "Session" "" "Delete report"
 
 print_section "Webhooks (3)"
 test_endpoint "POST" "/v1/webhooks" "API" '{"event":"signal.changed","url":"https://example.com/webhook"}' "Create webhook"

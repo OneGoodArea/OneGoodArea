@@ -283,7 +283,7 @@ const PRINCIPLES = [
 ];
 
 const STATS = [
-  { value: "v2.0.2",  label: "Engine version stamped on every response" },
+  { value: "v1.0.0",  label: "Engine version stamped on every response" },
   { value: "4",       label: "Products live (Signals, Scores, Monitor, Intelligence)" },
   { value: "5",       label: "ICPs served (PropTech, insurance, lenders, CRE, public sector)" },
   { value: "35+",     label: "Architectural decision records published" },

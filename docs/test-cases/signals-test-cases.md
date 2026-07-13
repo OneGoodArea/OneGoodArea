@@ -1,6 +1,6 @@
 # Signals API — Test Cases
 
-> **Source:** OneGoodArea API (Engine v2.0.2)
+> **Source:** OneGoodArea API (Engine v1.0.0)
 > **Endpoints:** `GET /v1/area`, `GET /v1/signals/:category`, `GET /v1/areas`
 > **Last updated:** 2026-07-01
 
@@ -122,6 +122,6 @@ Backed by the persisted store (`signal_values` + `signal_percentiles`); ranks LS
 - **Signal shape (contracts):** `key`, `category`, `label`, `value` (`number|string|null`), `unit`, `direction` (`higher_is_better|lower_is_better|neutral`), `confidence` (0–1), `confidence_reason`, `source`, `observed_period`; plus optional `normalized_value`, `percentile`, `regional_percentile` (present only on store-backed + normalized signals).
 - **Categories:** `crime, deprivation, property, schools, amenities, transport, environment` (OpenStreetMap feeds both `amenities` and `transport`).
 - **`fetch_mode`:** `live` (all fetched per request), `store` (all from the persisted store), `hybrid` (mixed during source-by-source migration).
-- **Engine version:** `2.0.2` (`METHODOLOGY_VERSION`). `/v1/area` and `/v1/areas` stamp the caller's org pin (or latest); `/v1/signals/:category` stamps the profile's own engine version.
+- **Engine version:** `1.0.0` (`METHODOLOGY_VERSION`). `/v1/area` and `/v1/areas` stamp the caller's org pin (or latest); `/v1/signals/:category` stamps the profile's own engine version.
 </content>
 </invoke>

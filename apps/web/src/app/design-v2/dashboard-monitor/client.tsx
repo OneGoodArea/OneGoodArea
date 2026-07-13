@@ -27,7 +27,7 @@ interface LivePortfolio {
   areas: Array<{ id: string; area: string; label: string | null }>;
 }
 
-const ENGINE_VERSION = "2.0.2";
+const ENGINE_VERSION = "1.0.0";
 
 export default function MonitorClient() {
   return (
@@ -349,14 +349,14 @@ function LivePortfoliosSection({
 
 function CodeBlock() {
   const curl = `# Create a portfolio
-curl https://api.onegoodarea.com/v1/portfolios \\
+curl https://onegoodarea.onrender.com/v1/portfolios \\
   -H "Authorization: Bearer $OGA_API_KEY" \\
   -H "Content-Type: application/json" \\
   -X POST \\
   -d '{ "name": "Your portfolio name", "areas": ["M1 1AE", "EC1A 1BB"] }'
 
 # Check for material change since the last period
-curl https://api.onegoodarea.com/v1/portfolios/$PORTFOLIO_ID/changes \\
+curl https://onegoodarea.onrender.com/v1/portfolios/$PORTFOLIO_ID/changes \\
   -H "Authorization: Bearer $OGA_API_KEY" \\
   -G \\
   --data-urlencode "threshold_pct=5"`;

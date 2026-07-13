@@ -62,7 +62,7 @@ export function intentLabel(intent: Intent | string | null | undefined): string 
   return INTENT_WORKFLOW[intent as Intent] ?? intent;
 }
 
-/** A single-area scoring query (the shape behind POST /v1/report today). */
+/** A single-area scoring query (the shape behind POST /v1/score). */
 export interface AreaQuery {
   /** Free-text area or postcode, e.g. "M1 1AE" or "Clapham". */
   area: string;
@@ -140,7 +140,7 @@ export interface AreaReport {
   property_data?: PropertyMarketData;
   schools_data?: SchoolsData;
   confidence?: number;          // Aggregate confidence across dimensions, 0.0-1.0. Optional for back-compat.
-  engine_version?: string;      // Methodology version that produced this report (e.g. "2.0.0"). Optional for back-compat.
+  engine_version?: string;      // Methodology version that produced this report (e.g. "1.0.0"). Optional for back-compat.
   generated_at: string;
 }
 

@@ -331,7 +331,7 @@ function Connector() {
 function OpDetail({ entry }: { entry: OpEntry }) {
   const planJson = JSON.stringify(entry.example.plan, null, 2);
   const compactPlan = JSON.stringify(entry.example.plan);
-  const curl = `curl https://api.onegoodarea.com/v1/query \\
+  const curl = `curl https://onegoodarea.onrender.com/v1/query \\
   -H "Authorization: Bearer $OGA_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '${compactPlan}'`;

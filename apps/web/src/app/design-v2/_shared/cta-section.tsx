@@ -60,7 +60,7 @@ export function CtaSection() {
 
         <div className="oga-cta__foot" aria-hidden>
           <span className="oga-status-dot" />
-          Engine v2.0.2 · 1.8M postcodes · 43,916 LSOAs · monthly snapshots
+          Engine v1.0.0 · 1.8M postcodes · 43,916 LSOAs · monthly snapshots
         </div>
       </div>
     </section>

@@ -227,8 +227,8 @@ function FormGroupSection() {
               htmlFor="demo-engine"
               help="Owner-only. Change from the Methodology page."
             >
-              <Select id="demo-engine" value="2.0.2" disabled>
-                <option value="2.0.2">v2.0.2 (current)</option>
+              <Select id="demo-engine" value="1.0.0" disabled>
+                <option value="1.0.0">v1.0.0 (current)</option>
               </Select>
             </FormGroup>
           </Variant>
@@ -656,7 +656,7 @@ function ToastSection() {
                   toast({ variant: "success", title: "Webhook delivered", body: "signal.changed → https://hooks.acme.dev/oga" });
                   toast({ variant: "info", title: "Cron run completed", body: "Re-scored 1,283 postcodes. Run id run_2026_06_05." });
                   toast({ variant: "success", title: "Bundle updated", body: "Lender-only bundle now includes 12 signals." });
-                  toast({ variant: "warning", title: "Methodology pin will affect 4 future calls", body: "Your org pinned to v2.0.1." });
+                  toast({ variant: "warning", title: "Methodology pin will affect 4 future calls", body: "Your org pinned to v1.0.0." });
                   toast({ variant: "success", title: "API key copied", body: "oga_live_*** copied to clipboard." });
                 }}
               >
@@ -796,7 +796,7 @@ function ModalSection() {
             >
               <p>The Intelligence query you just ran, as a programmatic plan you can replay from your own backend:</p>
               <pre className="oga-prim-pre">
-{`curl -X POST https://api.onegoodarea.com/v1/query \\
+{`curl -X POST https://onegoodarea.onrender.com/v1/query \\
   -H "Authorization: Bearer oga_..." \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -1335,7 +1335,7 @@ const ACTIVITY_ROWS: ActivityRow[] = [
   { id: "ev_1", when: "00:38", actor: "ptengelmann", action: "Created preset", target: "lender-default" },
   { id: "ev_2", when: "00:31", actor: "system", action: "Re-scored 1,283 postcodes", target: "run_2026_06_05" },
   { id: "ev_3", when: "00:14", actor: "marcos", action: "Updated bundle", target: "lender-only" },
-  { id: "ev_4", when: "23:58", actor: "ptengelmann", action: "Pinned methodology", target: "v2.0.2" },
+  { id: "ev_4", when: "23:58", actor: "ptengelmann", action: "Pinned methodology", target: "v1.0.0" },
   { id: "ev_5", when: "23:42", actor: "ops@acmeunderwriting.com", action: "Added IP to allowlist", target: "192.168.1.42/32" },
   { id: "ev_6", when: "23:11", actor: "system", action: "Delivered webhook", target: "signal.changed -> hooks.acme.dev" },
 ];
@@ -1936,7 +1936,7 @@ function TooltipSection() {
 
         <div className="oga-prim-doc">
           <Variant label="Default" caption="Hover the trigger (250ms delay) or tab to it (instant). Mono label, flat ink solid, 6px arrow pointing at the trigger.">
-            <Tooltip content="Owner-only. Pinned to engine v2.0.2.">
+            <Tooltip content="Owner-only. Pinned to engine v1.0.0.">
               <button type="button" className="oga-btn oga-btn-secondary">
                 Methodology pin
               </button>
@@ -2046,12 +2046,12 @@ function TooltipDarkSection() {
    product playground + the public /playground + Webhooks reveal. */
 
 const SHOWCASE_CURL = `curl -H "Authorization: Bearer oga_..." \\
-  "https://api.onegoodarea.com/v1/area?postcode=M1+1AE"`;
+  "https://onegoodarea.onrender.com/v1/area?postcode=M1+1AE"`;
 
 const SHOWCASE_JSON = `// 200 OK
 {
   "geo_code": "E01005132",
-  "engine_version": "2.0.2",
+  "engine_version": "1.0.0",
   "signals": {
     "deprivation.imd_decile": {
       "value": 2,
@@ -2131,8 +2131,8 @@ npm run dev`}
           <Variant label="No header" caption="Header is optional — for minimal inline snippets.">
             <CodeBlock
               code={`POSTCODE=M1 1AE
-curl -H "X-Engine-Version: 2.0.2" \\
-  "https://api.onegoodarea.com/v1/area?postcode=$POSTCODE"`}
+curl -H "X-Engine-Version: 1.0.0" \\
+  "https://onegoodarea.onrender.com/v1/area?postcode=$POSTCODE"`}
               language="bash"
             />
           </Variant>
@@ -2140,16 +2140,16 @@ curl -H "X-Engine-Version: 2.0.2" \\
           <Variant label="HTTP verb canonical colours" caption="Each verb gets the canonical .oga-verb--{verb} colour from styles/brand/components.css — green for GET, amber for POST, yellow for PUT, red for DELETE. Same vocabulary as the /docs/api-reference Surface Map.">
             <CodeBlock
               code={`# Read one area
-curl -X GET "https://api.onegoodarea.com/v1/area?postcode=M1+1AE"
+curl -X GET "https://onegoodarea.onrender.com/v1/area?postcode=M1+1AE"
 
 # Score with a custom preset
-curl -X POST "https://api.onegoodarea.com/v1/score" -d '{"preset_id":"..."}'
+curl -X POST "https://onegoodarea.onrender.com/v1/score" -d '{"preset_id":"..."}'
 
 # Update an org bundle
-curl -X PUT "https://api.onegoodarea.com/v1/orgs/org_.../bundles/bnd_..." -d '{...}'
+curl -X PUT "https://onegoodarea.onrender.com/v1/orgs/org_.../bundles/bnd_..." -d '{...}'
 
 # Remove a member
-curl -X DELETE "https://api.onegoodarea.com/v1/orgs/org_.../members/usr_..."`}
+curl -X DELETE "https://onegoodarea.onrender.com/v1/orgs/org_.../members/usr_..."`}
               language="bash"
               header="HTTP VERBS · Canonical colour map"
             />
@@ -2211,10 +2211,10 @@ function CodeBlockDarkSection() {
           <Variant label="HTTP verbs on dark — auto-brighten" caption="The canonical .oga-verb--{verb} colours auto-brighten on data-oga-surface=&quot;dark&quot; (set by the primitive itself when surface=&quot;dark&quot;). GET reads brighter green, POST brighter amber, etc. — same lift as the api-reference Surface Map on its dark sections.">
             <CodeBlock
               code={`# Read
-curl -X GET    "https://api.onegoodarea.com/v1/area"
-curl -X POST   "https://api.onegoodarea.com/v1/score"
-curl -X PUT    "https://api.onegoodarea.com/v1/orgs/.../bundles/..."
-curl -X DELETE "https://api.onegoodarea.com/v1/orgs/.../members/..."`}
+curl -X GET    "https://onegoodarea.onrender.com/v1/area"
+curl -X POST   "https://onegoodarea.onrender.com/v1/score"
+curl -X PUT    "https://onegoodarea.onrender.com/v1/orgs/.../bundles/..."
+curl -X DELETE "https://onegoodarea.onrender.com/v1/orgs/.../members/..."`}
               language="bash"
               header="HTTP VERBS · Canonical colour map (dark)"
               surface="dark"

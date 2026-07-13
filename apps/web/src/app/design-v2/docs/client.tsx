@@ -507,7 +507,7 @@ const QS_STEPS: { num: string; title: string; body: string }[] = [
   },
 ];
 
-const QS_CURL = `curl https://api.onegoodarea.com/v1/area?postcode=SW1A%201AA \\
+const QS_CURL = `curl https://onegoodarea.onrender.com/v1/area?postcode=SW1A%201AA \\
   -H "Authorization: Bearer oga_your_api_key"`;
 
 function SectionQuickstart() {
@@ -587,7 +587,7 @@ const EXAMPLES: Record<LangKey, { label: string; lang: string; snippet: string; 
   curl: {
     label: "cURL",
     lang: "bash",
-    snippet: `curl https://api.onegoodarea.com/v1/area?postcode=SW1A%201AA \\
+    snippet: `curl https://onegoodarea.onrender.com/v1/area?postcode=SW1A%201AA \\
   -H "Authorization: Bearer oga_your_api_key" \\
   -H "Accept: application/json"`,
     note: "Plain HTTP rejected. HTTPS only. JSON over the wire.",
@@ -596,7 +596,7 @@ const EXAMPLES: Record<LangKey, { label: string; lang: string; snippet: string; 
     label: "Node",
     lang: "typescript",
     snippet: `const response = await fetch(
-  "https://api.onegoodarea.com/v1/area?postcode=SW1A%201AA",
+  "https://onegoodarea.onrender.com/v1/area?postcode=SW1A%201AA",
   {
     headers: {
       "Authorization": "Bearer oga_your_api_key",
@@ -616,7 +616,7 @@ console.log(profile.meta.fetch_mode); // 'live' | 'store' | 'hybrid'`,
     snippet: `import httpx
 
 response = httpx.get(
-    "https://api.onegoodarea.com/v1/area",
+    "https://onegoodarea.onrender.com/v1/area",
     params={"postcode": "SW1A 1AA"},
     headers={"Authorization": "Bearer oga_your_api_key"},
 )
@@ -629,7 +629,7 @@ print(profile["meta"]["fetch_mode"])`,
     lang: "go",
     snippet: `req, _ := http.NewRequest(
     "GET",
-    "https://api.onegoodarea.com/v1/area?postcode=SW1A%201AA",
+    "https://onegoodarea.onrender.com/v1/area?postcode=SW1A%201AA",
     nil,
 )
 req.Header.Set("Authorization", "Bearer oga_your_api_key")

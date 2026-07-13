@@ -152,7 +152,7 @@ const FLOW: FlowStep[] = [
     text: "If you want a single number per listing for your search filters or summary card, POST /v1/score with one of four scoring profiles. Deterministic engine, version stamped on every response, same input always returns the same number so cached UI states stay coherent.",
     code: `POST /v1/score
 { "area": "M1 1AE", "preset": "moving" }
--> { "score": 58, "engine_version": "2.0.2" }`,
+-> { "score": 58, "engine_version": "1.0.0" }`,
   },
   {
     num: "Step 04",
@@ -233,7 +233,7 @@ const PRODUCTS: ProductUse[] = [
 {
   "geo":   { "lsoa": "E01000001", "country": "England" },
   "signals": [ { "key": "...", "value": ..., "percentile": ... } ],
-  "meta":  { "engine_version": "2.0.2", "fetch_mode": "hybrid" }
+  "meta":  { "engine_version": "1.0.0", "fetch_mode": "hybrid" }
 }`,
   },
   {
@@ -244,7 +244,7 @@ const PRODUCTS: ProductUse[] = [
     code: `POST /v1/score
 { "area": "SW1A 1AA", "preset": "investing" }
 -> { "score": 71, "area_type": "urban",
-     "dimensions": [...], "engine_version": "2.0.2" }`,
+     "dimensions": [...], "engine_version": "1.0.0" }`,
   },
   {
     num: "03",
@@ -333,7 +333,7 @@ const DEFEND: DefendCard[] = [
   {
     num: "04",
     title: "Deterministic + stable for caching",
-    body: "Same postcode plus same scoring profile equals the same score across deploys. Cached UI states stay coherent. The engine is frozen v2 and golden-tested; AI never sets the numbers.",
+    body: "Same postcode plus same scoring profile equals the same score across deploys. Cached UI states stay coherent. The engine is frozen and golden-tested; AI never sets the numbers.",
   },
 ];
 

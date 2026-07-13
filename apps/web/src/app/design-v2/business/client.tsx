@@ -126,7 +126,7 @@ X-OneGoodArea-Signature: t=...,v1=<sha256>
     problem:
       "A regulated lender's model risk register treats every API the underwriting model depends on as a model input. Auditors ask which version of the area score produced this decision, and whether it is byte-equivalent to the score you would compute today. Most vendors version their codebase, not the methodology, so the honest answer is we do not know.",
     why:
-      "Every Scores response carries engine_version in the body and X-Engine-Version on the response header. Both can be locked at the org level (methodology pinning, owner-only, write-time validated). The deterministic engine is frozen v2, golden-tested; AI never touches the scoring path. Monitor records every period_from, period_to and pct_change so risk teams can prove they knew on date X. Intelligence echoes the executed plan plus plan_source so any natural-language answer is replayable as a deterministic programmatic call.",
+      "Every Scores response carries engine_version in the body and X-Engine-Version on the response header. Both can be locked at the org level (methodology pinning, owner-only, write-time validated). The deterministic engine is frozen and golden-tested; AI never touches the scoring path. Monitor records every period_from, period_to and pct_change so risk teams can prove they knew on date X. Intelligence echoes the executed plan plus plan_source so any natural-language answer is replayable as a deterministic programmatic call.",
     value:
       "Every decision produced from /v1/score is reproducible to a known methodology version. The model risk register has a 1-to-1 mapping between an API call and the engine that ran. AI-assisted screening is auditable because the LLM only ever emits a typed plan that gets validated and run against deterministic SQL.",
     sales:
@@ -136,14 +136,14 @@ X-OneGoodArea-Signature: t=...,v1=<sha256>
     proof: {
       title: "Engine version pinning",
       snippet: `# Pin per request
-curl -H "X-Engine-Version: 2.0.1" /v1/score
+curl -H "X-Engine-Version: 1.0.0" /v1/score
 
 # Pin org-wide (owner only)
 PUT /v1/orgs/:id/methodology
-{ "engine_version": "2.0.1" }
+{ "engine_version": "1.0.0" }
 
 # Response header on every call
-X-Engine-Version: 2.0.1`,
+X-Engine-Version: 1.0.0`,
       foot: "Audit anchor. Compliance-grade.",
     },
   },
@@ -508,9 +508,7 @@ function VizLender() {
         <circle cx="158" cy="148" r="5" />
       </g>
       <line x1="80" y1="132" x2="160" y2="132" stroke="currentColor" strokeWidth="1" opacity="0.55" />
-      <text x="78" y="44" fontFamily="var(--oga-font-mono)" fontSize="9" fill="currentColor" opacity="0.55">v2.0.0</text>
-      <text x="98" y="88" fontFamily="var(--oga-font-mono)" fontSize="9" fill="currentColor" opacity="0.55">v2.0.1</text>
-      <text x="118" y="132" fontFamily="var(--oga-font-mono)" fontSize="10" fill="currentColor">v2.0.2</text>
+      <text x="118" y="132" fontFamily="var(--oga-font-mono)" fontSize="10" fill="currentColor">v1.0.0</text>
     </svg>
   );
 }
