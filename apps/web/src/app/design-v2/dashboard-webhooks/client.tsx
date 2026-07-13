@@ -261,8 +261,8 @@ function SecretReveal({
         </span>
         <p className="oga-wh__secret-hint">
           {reason === "rotated"
-            ? "The previous secret is now invalid — any in-flight retries will fail signature verification on the receiver. Update your verifier with this value before the next delivery."
-            : "Copy this now — we won't show it again. Use it to verify the HMAC-SHA256 signature on every delivery to "}
+            ? "The previous secret is now invalid. Any in-flight retries will fail signature verification on the receiver. Update your verifier with this value before the next delivery."
+            : "Copy this now. We won't show it again. Use it to verify the HMAC-SHA256 signature on every delivery to "}
           {reason === "created" ? (
             <code className="oga-wh__inline-code">{subscription.url}</code>
           ) : null}
@@ -482,7 +482,7 @@ function CreateModal({
       <p className="oga-wh__modal-intro">
         Point at one of your own HTTPS endpoints. We&apos;ll POST a signed
         JSON payload whenever a subscribed event fires. The signing secret
-        is shown ONCE after you save — copy it then.
+        is shown ONCE after you save. Copy it then.
       </p>
 
       <label className="oga-wh__modal-field">
@@ -613,7 +613,7 @@ function RotateModal({
             We&apos;ll generate a fresh signing secret for{" "}
             <code className="oga-wh__modal-code">{target.url}</code>{" "}
             and surface it once. The current secret stops verifying
-            signatures immediately — any deliveries still in the retry
+            signatures immediately. Any deliveries still in the retry
             queue will fail signature verification on your receiver
             until you redeploy with the new value. Standard practice:
             rotate during a low-traffic window or after dual-key support

@@ -268,7 +268,7 @@ export default function ApiUsageClient() {
             <h2 className="oga-api-usage__product-title">API usage</h2>
             <p className="oga-api-usage__product-tagline">
               Monthly quota, daily traffic, and the keys your code calls with.
-              Keys are SHA-256 hashed at rest — copy the full value when you
+              Keys are SHA-256 hashed at rest. Copy the full value when you
               create one, treat it like a password from then on.
             </p>
           </div>
@@ -480,7 +480,7 @@ function DailyChart({
                 onMouseEnter={() => setActiveIdx(i)}
                 onFocus={() => setActiveIdx(i)}
                 onBlur={() => setActiveIdx(null)}
-                aria-label={`${formatDay(d.day)} — ${d.count} request${d.count === 1 ? "" : "s"}`}
+                aria-label={`${formatDay(d.day)}, ${d.count} request${d.count === 1 ? "" : "s"}`}
               />
             );
           })}

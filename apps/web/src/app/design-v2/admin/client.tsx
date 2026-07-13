@@ -173,10 +173,10 @@ const EVENT_LABELS: Record<string, string> = {
 type AdminTab = "audience" | "usage" | "revenue" | "health";
 
 const TABS: { id: AdminTab; label: string; phase: number; question: string }[] = [
-  { id: "audience", label: "Audience", phase: 1, question: "Who's using us — users, orgs, geography, churn signals." },
-  { id: "usage", label: "Usage", phase: 2, question: "What they're using — 4 products, endpoint heatmap, engine-version cohorts." },
-  { id: "revenue", label: "Revenue", phase: 3, question: "What we're earning — MRR, plans, conversion funnel, add-ons." },
-  { id: "health", label: "Health", phase: 4, question: "System health — latency, errors, cron jobs, signal-store freshness." },
+  { id: "audience", label: "Audience", phase: 1, question: "Who's using us: users, orgs, geography, churn signals." },
+  { id: "usage", label: "Usage", phase: 2, question: "What they're using: 4 products, endpoint heatmap, engine-version cohorts." },
+  { id: "revenue", label: "Revenue", phase: 3, question: "What we're earning: MRR, plans, conversion funnel, add-ons." },
+  { id: "health", label: "Health", phase: 4, question: "System health: latency, errors, cron jobs, signal-store freshness." },
 ];
 
 export default function AdminClient({

@@ -103,7 +103,7 @@ const OP_CATALOGUE: readonly OpEntry[] = [
     key: "compare_areas",
     family: "Multi-area",
     label: "Compare areas",
-    blurb: "Side-by-side profiles for 2-5 areas in plan order. Not-found slots stay null — never silently dropped.",
+    blurb: "Side-by-side profiles for 2-5 areas in plan order. Not-found slots stay null, never silently dropped.",
     returns: "CompareAreaSlot[]",
     params: [
       { name: "areas", type: "string[] (2..5)", desc: "Ordered list of postcodes or place names. Each slot resolves independently.", required: true },
@@ -151,7 +151,7 @@ const OP_CATALOGUE: readonly OpEntry[] = [
     key: "find_insights",
     family: "Discovery",
     label: "Find insights",
-    blurb: "Anomaly screening — LSOAs ranked by |peer-relative z| on a chosen signal. Statistical outliers vs their peer group.",
+    blurb: "Anomaly screening: LSOAs ranked by |peer-relative z| on a chosen signal. Statistical outliers vs their peer group.",
     returns: "InsightsResponse",
     params: [
       { name: "signal_key",  type: "string", desc: "A peer_relative_z signal key (e.g. crime.total_12m_peer_relative_z).", required: true },
@@ -184,11 +184,11 @@ const OP_CATALOGUE: readonly OpEntry[] = [
 ] as const;
 
 const ERROR_REFERENCE: ReadonlyArray<{ code: string; status: number; desc: string }> = [
-  { code: "ambiguous_location",        status: 422, desc: "A place name matched multiple distinct places. Body carries candidates[] — re-ask with a specific postcode." },
+  { code: "ambiguous_location",        status: 422, desc: "A place name matched multiple distinct places. Body carries candidates[]. Re-ask with a specific postcode." },
   { code: "bundle_signal_not_allowed", status: 422, desc: "The validated plan references signals outside the caller's bundle. Body lists the offending signal keys." },
   { code: "invalid_plan",              status: 422, desc: "The plan failed Zod validation against the typed grammar. Body carries the validation error path + reason." },
   { code: "no_json",                   status: 422, desc: "The planner LLM did not return parseable JSON. Body carries the raw model output for debugging." },
-  { code: "llm_error",                 status: 422, desc: "The planner LLM call failed (network, auth, upstream timeout). Retry — typically transient." },
+  { code: "llm_error",                 status: 422, desc: "The planner LLM call failed (network, auth, upstream timeout). Retry, typically transient." },
 ];
 
 export default function IntelligenceCatalogueClient() {
@@ -217,7 +217,7 @@ function Body() {
           <h2 className="oga-int__product-title">Intelligence</h2>
           <p className="oga-int__product-tagline">
             Seven typed operations over the moat. Send a natural-language
-            question or a pre-built plan — the validated plan, plan_source,
+            question or a pre-built plan, and the validated plan, plan_source,
             and result ride back together so you can audit, replay, and pin
             versions in production.
           </p>

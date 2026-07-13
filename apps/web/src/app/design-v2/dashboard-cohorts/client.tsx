@@ -353,7 +353,7 @@ function CohortFormModal({
   const requirementHint = busy
     ? "Saving…"
     : tooMany
-      ? `Cap is ${COHORT_MAX.toLocaleString()} entries — paste fewer.`
+      ? `Cap is ${COHORT_MAX.toLocaleString()} entries. Paste fewer.`
       : trimmedName.length === 0 && entries.length === 0
         ? "Add a name and at least one entry."
         : trimmedName.length === 0
