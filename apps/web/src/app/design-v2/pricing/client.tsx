@@ -170,13 +170,12 @@ function Hero() {
           <span>Pricing</span>
         </div>
         <h1 className="oga-pricing-hero__title">
-          Priced as infrastructure, not an API subscription.
+          One engine, four ways to buy.
         </h1>
         <p className="oga-pricing-hero__lead">
-          OneGoodArea is packaged around how your team uses UK area
-          intelligence. Four ways to buy, annual contracts, and optional paid
-          pilots. The API is the delivery method; the value is decision-grade
-          signals, scoring and monitoring you can explain later.
+          Developer is free to evaluate. The three paid plans are annual
+          contracts, priced to the job: area data, decision workflows, or
+          portfolio monitoring. Run a paid pilot first if you want to prove it.
         </p>
         <div className="oga-pricing-hero__stamps">
           <Stamp label="Engine" value="v1.0.0" />
@@ -210,11 +209,9 @@ function Packages() {
           ))}
         </div>
         <p className="oga-pricing-cards__note">
-          Prices shown are public guide prices from the annual contract. Final
-          pricing scales with workflow value, usage and support. Not sure which
-          fits?{" "}
-          <BookDemo className="oga-pricing-cards__note-link">Book a demo</BookDemo>{" "}
-          and we will scope it with you.
+          Guide prices, billed annually. Final pricing depends on usage, support
+          and scope. Not sure which fits?{" "}
+          <BookDemo className="oga-pricing-cards__note-link">Book a demo</BookDemo>.
         </p>
       </div>
     </section>
@@ -290,9 +287,9 @@ function Comparison() {
           </div>
           <h2 className="oga-pricing-table__title">What each package includes.</h2>
           <p className="oga-pricing-table__lead">
-            Every capability below is shipped in the product today. Packages are
-            workflow-led: you get the signals and scores your workflow needs, not
-            a pile of SKUs.
+            Every capability below ships in the product today. You buy the
+            package that fits the job; it includes the signals and scores that
+            job needs.
           </p>
         </header>
 
@@ -403,10 +400,10 @@ function FinalCta() {
   return (
     <section className="oga-section-dark oga-pricing-cta" data-oga-surface="dark">
       <div className="oga-pricing-cta__inner">
-        <h2 className="oga-pricing-cta__title">See it against your own use case.</h2>
+        <h2 className="oga-pricing-cta__title">See it on your own use case.</h2>
         <p className="oga-pricing-cta__lead">
-          Book a demo and we will show OneGoodArea on a real workflow, then scope
-          a pilot or an annual contract around it.
+          Book a demo and we will run OneGoodArea against a real workflow, then
+          size a pilot or an annual contract.
         </p>
         <div className="oga-pricing-cta__buttons">
           <BookDemo className="oga-btn oga-btn-primary">
