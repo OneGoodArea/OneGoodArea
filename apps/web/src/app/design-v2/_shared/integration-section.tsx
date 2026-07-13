@@ -120,7 +120,7 @@ const SURFACES: Surface[] = [
     codePanelHeader: "REQUEST · GET /v1/area",
     codeLines: [
       `curl -H "Authorization: Bearer oga_..." \\`,
-      `  "https://api.onegoodarea.com/v1/area?postcode=M1+1AE"`,
+      `  "https://onegoodarea.onrender.com/v1/area?postcode=M1+1AE"`,
       ``,
       `// 200 OK`,
       `{`,
@@ -155,7 +155,7 @@ const SURFACES: Surface[] = [
       `    "question":`,
       `      "areas under £250k AND rising YoY in England"`,
       `  }' \\`,
-      `  "https://api.onegoodarea.com/v1/query"`,
+      `  "https://onegoodarea.onrender.com/v1/query"`,
       ``,
       `// 200 OK`,
       `{`,

@@ -332,7 +332,7 @@ function SectionSpecimen() {
               Replay as a programmatic call (no LLM, deterministic)
             </p>
             <pre className="oga-int-spec__replay-pre">
-{`curl https://api.onegoodarea.com/v1/query \\
+{`curl https://onegoodarea.onrender.com/v1/query \\
   -H "Authorization: Bearer oga_your_api_key" \\
   -H "Content-Type: application/json" \\
   -d '${s.curlBody}'`}

@@ -184,7 +184,7 @@ function Body() {
 }
 
 function CodeBlock({ category }: { category: SignalCategory }) {
-  const curl = `curl https://api.onegoodarea.com/v1/signals/${category} \\
+  const curl = `curl https://onegoodarea.onrender.com/v1/signals/${category} \\
   -H "Authorization: Bearer $OGA_API_KEY" \\
   -G \\
   --data-urlencode "postcode=SW1A 1AA"`;

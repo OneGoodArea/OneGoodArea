@@ -1,6 +1,6 @@
 # Authentication — Test Cases
 
-> **Source:** https://www.onegoodarea.com/ (Engine v2.0.2)
+> **Source:** https://www.onegoodarea.com/ (Engine v1.0.0)
 > **Auth pages:** `/sign-in`, `/sign-up`, `/forgot-password`, `/reset-password`, `/verify`
 > **Last updated:** 2026-06-19
 

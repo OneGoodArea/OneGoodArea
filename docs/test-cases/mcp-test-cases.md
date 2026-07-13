@@ -252,7 +252,7 @@ The server registers **eleven tools**: nine network tools that proxy the OneGood
 
 | ID | Test Case | Steps | Expected Result |
 |---|---|---|---|
-| **MCP-102** | Happy path | 1. Call `engine_version` (no args) | Returns `# OneGoodArea engine 1.0.0`, `Released: 2026-05-14`, a `## Changelog` section listing each entry (1.0.0, 2.0.1, 2.0.0, 1.x), and the methodology URL. |
+| **MCP-102** | Happy path | 1. Call `engine_version` (no args) | Returns `# OneGoodArea engine 1.0.0`, `Released: 2026-05-14`, a `## Changelog` section listing the 1.0.0 entry, and the methodology URL. |
 | **MCP-103** | Takes no arguments | 1. Inspect the tool's `inputSchema` | `properties: {}`, `additionalProperties: false`; ignores any supplied args. |
 | **MCP-104** | No network / no quota cost | 1. Call the tool | No `/v1/*` HTTP call is made; data comes from the static `ENGINE` constant. |
 

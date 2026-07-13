@@ -286,7 +286,7 @@ function ApiCard({ primaryKey }: { primaryKey: PrimaryApiKey | null }) {
     : null;
 
   const samples: Record<ApiLang, string> = {
-    curl: `curl https://api.onegoodarea.com/v1/score \\
+    curl: `curl https://onegoodarea.onrender.com/v1/score \\
   -H "Authorization: Bearer $OGA_API_KEY" \\
   -G \\
   --data-urlencode "postcode=SW1A 1AA" \\
@@ -298,7 +298,7 @@ function ApiCard({ primaryKey }: { primaryKey: PrimaryApiKey | null }) {
 });
 
 const res = await fetch(
-  \`https://api.onegoodarea.com/v1/score?\${params}\`,
+  \`https://onegoodarea.onrender.com/v1/score?\${params}\`,
   { headers: { Authorization: \`Bearer \${process.env.OGA_API_KEY}\` } },
 );
 const data = await res.json();`,
@@ -306,7 +306,7 @@ const data = await res.json();`,
     python: `import os, requests
 
 r = requests.get(
-    "https://api.onegoodarea.com/v1/score",
+    "https://onegoodarea.onrender.com/v1/score",
     headers={"Authorization": f"Bearer {os.environ['OGA_API_KEY']}"},
     params={"postcode": "SW1A 1AA", "preset": "research"},
 )

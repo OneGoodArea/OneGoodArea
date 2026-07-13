@@ -33,7 +33,7 @@ describe("OpenAPI 3.0 spec at public/openapi.json", () => {
 
   it("declares the production API server", () => {
     const urls = (spec.servers ?? []).map((s: { url: string }) => s.url);
-    expect(urls).toContain("https://api.onegoodarea.com");
+    expect(urls).toContain("https://onegoodarea.onrender.com");
   });
 
   it("documents the four products", () => {

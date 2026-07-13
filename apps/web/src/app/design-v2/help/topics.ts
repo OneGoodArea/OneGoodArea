@@ -38,7 +38,7 @@ export const TOPICS: Topic[] = [
       },
       {
         q: "How do I make my first API call?",
-        a: "Sign up, generate a key from your dashboard, then curl POST https://api.onegoodarea.com/v1/score with body { \"area\": \"M1 1AE\", \"preset\": \"residential_origination\" } and Authorization: Bearer <your_key>. Full code samples in cURL, Node, Python, and Go live at /docs/api-reference.",
+        a: "Sign up, generate a key from your dashboard, then curl POST https://onegoodarea.onrender.com/v1/score with body { \"area\": \"M1 1AE\", \"preset\": \"residential_origination\" } and Authorization: Bearer <your_key>. Full code samples in cURL, Node, Python, and Go live at /docs/api-reference.",
       },
       {
         q: "What is the difference between the four products?",

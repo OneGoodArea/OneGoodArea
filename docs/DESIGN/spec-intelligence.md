@@ -28,7 +28,7 @@ Intelligence is a typed query + insight plane over the UK area moat. **Not a cha
 | `results` (find_insights) | `InsightsResponse \| null` | `{ signal_key, insights:[{geo_code, peer_relative_z (signed), abs_z}], meta }`. Ranked by abs_z DESC. | `{ insights:[{geo_code, peer_relative_z: -2.7, abs_z: 2.7}, ...] }` |
 | `results` (find_forecast) | `ForecastResponse \| null` | `{ target, signal_key, points: [{observed_period 'YYYY-MM', projected_value, lower_bound, upper_bound}], meta:{n_observations, r2, slope_per_month, intercept, residual_stderr, ...} }`. | `{ points:[{...}], meta:{r2:0.71, ...} }` |
 | `meta.generated_at` | ISO timestamp | Same across every op. | `2026-05-31T...` |
-| `X-Engine-Version` | header | Echoes effective methodology version (honours Levers methodology pin). | `2.0.2` |
+| `X-Engine-Version` | header | Echoes effective methodology version (honours Levers methodology pin). | `1.0.0` |
 | `PlannerError` | `{ code, message, raw? }` | Typed planner failure. `code ∈ {no_json, invalid_plan, llm_error}`. `raw` carries LLM output. Endpoint maps to 422. | `{ code:'invalid_plan', message:'(root): Unknown op', raw:'...' }` |
 
 ## Under the hood
@@ -58,7 +58,7 @@ The typed query plane. Send EITHER `{plan}` (programmatic, LLM untouched) OR `{q
 
 **Sample curl:**
 ```
-curl -s https://api.onegoodarea.com/v1/query \
+curl -s https://onegoodarea.onrender.com/v1/query \
   -H 'Authorization: Bearer oga_live_...' \
   -H 'Content-Type: application/json' \
   -d '{"question":"England LSOAs under 250000 GBP AND rising YoY AND in bottom quartile crime, sort by YoY desc, limit 5"}'

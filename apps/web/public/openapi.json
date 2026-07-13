@@ -15,7 +15,7 @@
     }
   },
   "servers": [
-    { "url": "https://api.onegoodarea.com", "description": "Production" }
+    { "url": "https://onegoodarea.onrender.com", "description": "Production" }
   ],
   "security": [{ "BearerAuth": [] }],
   "tags": [

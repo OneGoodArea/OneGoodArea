@@ -85,7 +85,7 @@ Response: `ChangeReport` with material-only rows. Status: 200 (material_count ma
 
 **Sample curl:**
 ```
-curl -X POST https://api.onegoodarea.com/v1/portfolios/pf_8s2k4m9q/changes \
+curl -X POST https://onegoodarea.onrender.com/v1/portfolios/pf_8s2k4m9q/changes \
   -H 'Authorization: Bearer oga_live_...' \
   -H 'Content-Type: application/json' \
   -d '{"baseline":"first","threshold_pct":5,"min_transactions":8}'
