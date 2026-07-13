@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { sendContactEmail } from "../infrastructure/email/senders";
+import { sendContactEmail, sendContactConfirmationEmail } from "../infrastructure/email/senders";
 import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
 import { RATE_LIMITS } from "../infrastructure/config";
 import { headerString } from "../shared/http";
@@ -73,6 +73,13 @@ export function registerContactRoutes(app: FastifyInstance): void {
       return reply.code(502).send({
         error: "We couldn't send your message. Please email operation@onegoodarea.co.uk directly.",
       });
+    }
+
+    // Best-effort confirmation to the submitter. Never fail the request on this.
+    try {
+      await sendContactConfirmationEmail(email, name);
+    } catch (err) {
+      logger.warn("[contact] confirmation email failed (non-fatal)", err);
     }
 
     logger.info("[contact] enquiry received", { ip, company: company || null, role: role ?? null });

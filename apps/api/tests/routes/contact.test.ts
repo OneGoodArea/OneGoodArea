@@ -8,6 +8,7 @@ vi.mock("@/infrastructure/email/senders", () => ({
   sendWelcomeEmail: vi.fn(),
   sendOrgInvitationEmail: vi.fn(),
   sendContactEmail: vi.fn(),
+  sendContactConfirmationEmail: vi.fn(),
 }));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
 vi.mock("@/modules/billing/stripe-client", () => ({
@@ -16,12 +17,13 @@ vi.mock("@/modules/billing/stripe-client", () => ({
 
 import { buildApp } from "@/app";
 import { rateLimit } from "@/infrastructure/rate-limit";
-import { sendContactEmail } from "@/infrastructure/email/senders";
+import { sendContactEmail, sendContactConfirmationEmail } from "@/infrastructure/email/senders";
 
 const app = await buildApp();
 
 const mockRate = vi.mocked(rateLimit);
 const mockSend = vi.mocked(sendContactEmail);
+const mockConfirm = vi.mocked(sendContactConfirmationEmail);
 
 const JSON_HEADERS = { "content-type": "application/json" };
 function post(body: unknown) {
@@ -40,6 +42,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockRate.mockResolvedValue({ success: true, remaining: 4, reset: 0 });
   mockSend.mockResolvedValue(undefined as never);
+  mockConfirm.mockResolvedValue(undefined as never);
 });
 
 describe("POST /contact", () => {
@@ -74,6 +77,7 @@ describe("POST /contact", () => {
       role: "Lender",
       message: "We'd like to evaluate the Scores API for our underwriting workflow.",
     });
+    expect(mockConfirm).toHaveBeenCalledWith("dana@lender.co.uk", "Dana Cole");
   });
 
   it("accepts silently and does not send when the honeypot is filled", async () => {
@@ -81,6 +85,7 @@ describe("POST /contact", () => {
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ ok: true });
     expect(mockSend).not.toHaveBeenCalled();
+    expect(mockConfirm).not.toHaveBeenCalled();
   });
 
   it("treats company and role as optional", async () => {
@@ -91,5 +96,13 @@ describe("POST /contact", () => {
     });
     expect(res.statusCode).toBe(200);
     expect(mockSend).toHaveBeenCalledWith(expect.objectContaining({ company: null, role: null }));
+  });
+
+  it("still 200s and sends the notification even if the confirmation email fails", async () => {
+    mockConfirm.mockRejectedValue(new Error("smtp down"));
+    const res = await post(VALID);
+    expect(res.statusCode).toBe(200);
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    expect(mockConfirm).toHaveBeenCalledTimes(1);
   });
 });

@@ -350,3 +350,36 @@ export async function sendContactEmail(params: {
 
   logger.info("Contact enquiry email sent", { to: CONTACT_INBOX, company: params.company ?? null });
 }
+
+/* AR-455: confirmation sent back to whoever submitted the contact form,
+   so they know it landed. Copy is deliberately pivot-agnostic ("your
+   message") so it still fits if /contact becomes a book-a-demo form.
+   Best-effort at the call site: a failed confirmation must never fail
+   the submission itself. */
+export async function sendContactConfirmationEmail(to: string, name: string) {
+  const safeName = escapeHtml(name);
+  const content = `
+    ${heading(`Thanks for ${emph("reaching out")}.`)}
+    <p style="font-family:${FONT_SANS}; font-size:15px; line-height:1.55; color:${COLORS.text2}; margin:0 0 20px 0;">
+      ${safeName}, we&apos;ve received your message. Someone from the team will get back to you shortly.
+    </p>
+    <p style="font-family:${FONT_SANS}; font-size:15px; line-height:1.55; color:${COLORS.text2}; margin:0 0 26px 0;">
+      While you wait, here is how OneGoodArea works under the hood.
+    </p>
+    ${ctaButton("Read the methodology", `${APP_URL}/methodology`)}
+    <div style="border-top:1px solid ${COLORS.borderDim}; padding-top:18px;">
+      <p style="font-family:${FONT_SANS}; font-size:13px; color:${COLORS.text3}; margin:0; line-height:1.5;">
+        You&apos;re receiving this because you contacted us through onegoodarea.com. No action is needed.
+      </p>
+    </div>
+  `;
+
+  await getEmailProvider().send({
+    from: EMAIL_FROM,
+    to,
+    subject: "Thanks for reaching out | OneGoodArea",
+    html: baseTemplate(content),
+  });
+
+  logger.info("Contact confirmation email sent", { to });
+}
