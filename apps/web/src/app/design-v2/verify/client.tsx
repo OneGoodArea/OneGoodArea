@@ -54,7 +54,7 @@ function SuccessState() {
       </AuthStatusIcon>
       <AuthTitle
         title="Email verified."
-        sub="Your account is ready and writes are now unlocked — the API will accept calls signed with your key. Sandbox tier includes 35 API calls a month for evaluation, no card required."
+        sub="Your account is ready and writes are now unlocked. The API will accept calls signed with your key. Sandbox tier includes 35 API calls a month for evaluation, no card required."
       />
       <div className="oga-auth-actions">
         {/* AR-253: dashboard is the destination, not /sign-in. If the

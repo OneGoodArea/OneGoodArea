@@ -73,7 +73,7 @@ const DATA_SOURCES: SourceTile[] = [
     num: "04",
     name: "Ofsted inspections",
     provider: "Department for Education",
-    body: "School inspection ratings — Outstanding, Good, Requires Improvement, Inadequate — within 1.5km of postcode. England only.",
+    body: "School inspection ratings (Outstanding, Good, Requires Improvement, Inadequate) within 1.5km of postcode. England only.",
     coverage: "England",
     cadence: "Live (Ofsted API)",
     grain: "School (1.5km radius)",
@@ -116,7 +116,7 @@ const STORE_TABLES: { name: string; desc: string }[] = [
   { name: "signals", desc: "Catalog of every signal we expose. signal_key, label, direction, unit, source, description." },
   { name: "signal_values", desc: "One row per (signal_key, geo_type, geo_code). Current value, normalized_value, source_snapshot_id, engine_version." },
   { name: "signal_percentiles", desc: "Per-scope percentile rank, 0 to 100. Computed in-DB via PERCENT_RANK() window function." },
-  { name: "signal_timeseries", desc: "Append-only history. PK includes observed_period; INSERT … ON CONFLICT DO NOTHING — corrections surface as next period, never overwrite." },
+  { name: "signal_timeseries", desc: "Append-only history. PK includes observed_period; INSERT … ON CONFLICT DO NOTHING. Corrections surface as next period, never overwrite." },
 ];
 
 /* ───────────────────────────── store fetch modes */
@@ -124,7 +124,7 @@ const STORE_TABLES: { name: string; desc: string }[] = [
 const STORE_MODES: { tag: string; body: string }[] = [
   { tag: "live", body: "Every contributing signal was fetched from a live source on this request. The fallback path; happens when the store has no row for an area." },
   { tag: "store", body: "Every contributing signal was read from the persisted store. No live calls were made. The path that scales." },
-  { tag: "hybrid", body: "A mix — some signals store-served, some live-served on this request. Honest about partial coverage during the live-to-store migration." },
+  { tag: "hybrid", body: "A mix: some signals store-served, some live-served on this request. Honest about partial coverage during the live-to-store migration." },
 ];
 
 /* ───────────────────────────── derived signals (ADRs 0018, 0020-0024) */
@@ -280,7 +280,7 @@ const CONFIDENCE_BANDS: { band: string; value: string; criteria: string; example
 
 const SEMVER: { tag: string; desc: string }[] = [
   { tag: "MAJOR", desc: "Breaking change to dimension structure, intent set, or core weight. Anything that would invalidate prior scores." },
-  { tag: "MINOR", desc: "New dimension, new data source, new intent. Additive — old responses still parse." },
+  { tag: "MINOR", desc: "New dimension, new data source, new intent. Additive. Old responses still parse." },
   { tag: "PATCH", desc: "Formula tuning, threshold adjustment, confidence rubric refinement. Score values stay byte-identical." },
 ];
 
@@ -1216,7 +1216,7 @@ const LEVERS: Lever[] = [
     name: "Signal bundles",
     endpoint: { verb: "POST", path: "/v1/orgs/:id/bundles" },
     rbac: "Admin",
-    body: "Named whitelist of signal_keys. Scopes /v1/area, /v1/areas, and /v1/query — the API exposes only the bundle's signals to your keys.",
+    body: "Named whitelist of signal_keys. Scopes /v1/area, /v1/areas, and /v1/query: the API exposes only the bundle's signals to your keys.",
     honest: "A request for an out-of-bundle signal returns 422 bundle_signal_not_allowed. No silent omission.",
   },
   {
@@ -1240,7 +1240,7 @@ const LEVERS: Lever[] = [
     name: "Peer cohorts",
     endpoint: { verb: "POST", path: "/v1/orgs/:id/cohorts" },
     rbac: "Admin",
-    body: "Named list of LSOA codes (max 10,000). Scopes the candidate pool on /v1/peers — \"find peers in MY universe.\"",
+    body: "Named list of LSOA codes (max 10,000). Scopes the candidate pool on /v1/peers: \"find peers in MY universe.\"",
     honest: "Cohorts ship today. National + regional percentile scopes are live; per-cohort recompute (scope=peer_group) is still on the roadmap.",
   },
 ];

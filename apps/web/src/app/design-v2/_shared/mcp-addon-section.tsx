@@ -43,7 +43,7 @@ export function McpAddOnSection({ mcp }: { mcp: McpStatus }) {
         return;
       }
       if (data.plan_includes) {
-        setError("Your plan already includes MCP — no add-on needed.");
+        setError("Your plan already includes MCP, no add-on needed.");
         setPurchaseLoading(false);
         return;
       }

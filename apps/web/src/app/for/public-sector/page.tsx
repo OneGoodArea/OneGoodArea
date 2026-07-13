@@ -3,7 +3,7 @@ import Script from "next/script";
 import ForPublicSectorClient from "@/app/design-v2/for/public-sector/client";
 
 export const metadata: Metadata = {
-  title: "OneGoodArea for public sector + research — Sourced, dated, FOI-survivable UK area metrics",
+  title: "OneGoodArea for public sector + research: Sourced, dated, FOI-survivable UK area metrics",
   description:
     "Sourced, dated, methodology-stamped UK area metrics that survive FOI and procurement review. Provenance on every signal, country-scoped percentiles by design, methodology version pinning for the contract cycle, plan-replayable AI for audit. Built for council planning, central-gov analytical units, regeneration bodies, and research institutes.",
   keywords: [
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     "Homes England MHCLG data",
   ],
   openGraph: {
-    title: "OneGoodArea for public sector + research — Sourced, dated, FOI-survivable UK area metrics",
+    title: "OneGoodArea for public sector + research: Sourced, dated, FOI-survivable UK area metrics",
     description:
       "Sourced, dated, methodology-stamped UK area metrics that survive FOI and procurement review. Country-scoped percentiles by design.",
     type: "website",

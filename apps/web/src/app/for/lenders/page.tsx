@@ -3,7 +3,7 @@ import Script from "next/script";
 import ForLendersClient from "@/app/design-v2/for/lenders/client";
 
 export const metadata: Metadata = {
-  title: "OneGoodArea for lenders — Versioned, pinnable area scoring for regulated underwriting",
+  title: "OneGoodArea for lenders: Versioned, pinnable area scoring for regulated underwriting",
   description:
     "Versioned, pinnable area scoring your model risk team can defend. Engine version stamped on every response; pinning at the org level locks the numbers across deploys. Sample-size gated portfolio drift detection; plan-replayable AI for analyst queries. Built for residential and commercial lenders.",
   keywords: [
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     "FCA PRA SS1/23 area data",
   ],
   openGraph: {
-    title: "OneGoodArea for lenders — Versioned, pinnable area scoring",
+    title: "OneGoodArea for lenders: Versioned, pinnable area scoring",
     description:
       "Versioned, pinnable area scoring your model risk team can defend. Engine version stamped on every response; pinning at the org level locks the numbers across deploys.",
     type: "website",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "OneGoodArea for lenders — Versioned, pinnable area scoring",
+    title: "OneGoodArea for lenders: Versioned, pinnable area scoring",
     description:
       "Engine version stamped on every response. Org-level methodology pinning. Plan-replayable AI for analyst queries.",
   },

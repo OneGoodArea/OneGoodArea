@@ -683,7 +683,7 @@ function SectionProof() {
             <span className="oga-biz-proof-stat__num">3</span>
             <span className="oga-biz-proof-stat__label">Country-scoped</span>
             <p className="oga-biz-proof-stat__body">
-              England, Wales, Scotland — three separate percentile spaces
+              England, Wales, Scotland: three separate percentile spaces
               by design. No cross-border lies in any score.
             </p>
           </div>

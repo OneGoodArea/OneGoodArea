@@ -149,7 +149,7 @@ const PRODUCTS: Product[] = [
       "POST /v1/query with {plan} (programmatic) or {question} (NL)",
       "k-NN peers with materialised ~840k-row peer graph",
       "Anomaly screening via pre-materialised peer-relative z-scores",
-      "Linear-regression forecast — not a learned model, not ARIMA, not Prophet",
+      "Linear-regression forecast: not a learned model, not ARIMA, not Prophet",
     ],
     endpoint: { verb: "POST", path: "/v1/query" },
   },
@@ -356,7 +356,7 @@ const REFERENCES: RefTile[] = [
     num: "01",
     title: "Interactive API reference",
     body:
-      "The structured endpoint catalogue across all six surfaces — Signals, Scores, Intelligence, Monitor, Levers, and account. Generated from the Fastify route schemas so it stays in sync with the live API.",
+      "The structured endpoint catalogue across all six surfaces: Signals, Scores, Intelligence, Monitor, Levers, and account. Generated from the Fastify route schemas so it stays in sync with the live API.",
     status: "live",
     href: "/docs/api-reference",
     cta: "Open reference",
@@ -667,7 +667,7 @@ function SectionExamples() {
           </h2>
           <p className="oga-docs__lead">
             Every example reads the same area profile. Swap the postcode, swap
-            the surface, swap the language — the shape is the same. No SDK is
+            the surface, swap the language. The shape is the same. No SDK is
             required, no client library is shipped today.
           </p>
         </div>

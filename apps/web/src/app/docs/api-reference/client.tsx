@@ -44,7 +44,7 @@ const PRODUCTS: Product[] = [
     num: "01",
     name: "Signals",
     count: "4 endpoints",
-    body: "Raw normalised signal catalog per area. The primitive — every other product composes from this.",
+    body: "Raw normalised signal catalog per area. The primitive: every other product composes from this.",
     icon: SignalsIcon,
     endpoints: [
       { verb: "GET", path: "/v1/area" },
@@ -222,7 +222,7 @@ function SectionLevers() {
             <span className="oga-apiref__eyebrow-line" aria-hidden />
             <span>Control plane</span>
           </div>
-          <h2 className="oga-apiref__h2">Levers — per-organisation methodology and admin.</h2>
+          <h2 className="oga-apiref__h2">Levers: per-organisation methodology and admin.</h2>
           <p className="oga-apiref__lead">
             Different audience to the four products. Admins configure how the engine behaves for
             their organisation: custom signal bundles, saved scoring presets, methodology pinning,

@@ -3,7 +3,7 @@ import Script from "next/script";
 import ForCreClient from "@/app/design-v2/for/cre/client";
 
 export const metadata: Metadata = {
-  title: "OneGoodArea for CRE + site selection — UK catchment-screening API",
+  title: "OneGoodArea for CRE + site selection: UK catchment-screening API",
   description:
     "Screen the whole UK against your compound site criteria in one typed call. Up to eight AND-joined signal filters with eleven comparison operators, country or LAD scope, peer-set discovery for your best-performing catchment, deterministic engine for reproducible shortlists. Built for retail expansion, CRE platforms, leasing analytics.",
   keywords: [
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     "commercial real estate analytics",
   ],
   openGraph: {
-    title: "OneGoodArea for CRE + site selection — UK catchment-screening API",
+    title: "OneGoodArea for CRE + site selection: UK catchment-screening API",
     description:
       "Screen the whole UK against your compound site criteria in one typed call. Peer-set discovery and reproducible shortlists.",
     type: "website",
