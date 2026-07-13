@@ -340,10 +340,10 @@ export default function AboutClient() {
               Read the methodology
               <span aria-hidden>→</span>
             </Link>
-            <a href="mailto:operation@onegoodarea.co.uk" className="oga-btn oga-btn-secondary">
+            <Link href="/contact" className="oga-btn oga-btn-secondary">
               Talk to us
               <span aria-hidden>→</span>
-            </a>
+            </Link>
           </div>
         </div>
       </section>

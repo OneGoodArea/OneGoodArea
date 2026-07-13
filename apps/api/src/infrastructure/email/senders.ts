@@ -1,5 +1,5 @@
 import { logger } from "../../modules/tracking/structured-logger";
-import { APP_URL, EMAIL_FROM } from "../config";
+import { APP_URL, CONTACT_INBOX, EMAIL_FROM } from "../config";
 import { getEmailProvider } from "./providers/index";
 
 /* ────────────────────────────────────────────────────────────
@@ -265,4 +265,61 @@ export async function sendOrgInvitationEmail(params: {
   });
 
   logger.info("Org invitation email sent", { to: params.to, orgName: params.orgName, role: params.role });
+}
+
+/* AR-451: public contact-form notification. Sent to the operations
+   inbox (CONTACT_INBOX) when someone submits /contact. All values are
+   attacker-controlled, so every field is HTML-escaped and the subject
+   line is stripped of CR/LF to prevent header injection. The submitter's
+   email is rendered as a mailto so the operator can reply in one click. */
+export async function sendContactEmail(params: {
+  name: string;
+  email: string;
+  company: string | null;
+  role: string | null;
+  message: string;
+}) {
+  const safeName = escapeHtml(params.name);
+  const safeEmail = escapeHtml(params.email);
+  const safeCompany = params.company ? escapeHtml(params.company) : "Not provided";
+  const safeRole = params.role ? escapeHtml(params.role) : "Not specified";
+  const safeMessage = escapeHtml(params.message).replace(/\n/g, "<br>");
+
+  const detailRow = (label: string, value: string) => `
+    <tr>
+      <td style="padding:8px 0; font-family:${FONT_MONO}; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:${COLORS.text3}; vertical-align:top; width:110px;">${label}</td>
+      <td style="padding:8px 0; font-family:${FONT_SANS}; font-size:14px; color:${COLORS.text}; vertical-align:top;">${value}</td>
+    </tr>`;
+
+  const content = `
+    <h1 style="font-family:${FONT_SERIF}; font-size:24px; font-weight:400; letter-spacing:-0.5px; color:${COLORS.inkDeep}; margin:0 0 8px 0; line-height:1.15;">
+      New <em style="font-style:italic; color:${COLORS.ink}; border-bottom:2px solid ${COLORS.signal}; padding-bottom:1px;">enquiry</em>.
+    </h1>
+    <p style="font-family:${FONT_SANS}; font-size:14px; line-height:1.55; color:${COLORS.text2}; margin:0 0 22px 0;">
+      Submitted through the contact form at onegoodarea.com.
+    </p>
+    <table cellpadding="0" cellspacing="0" style="width:100%; border-top:1px solid ${COLORS.borderDim}; border-bottom:1px solid ${COLORS.borderDim}; margin-bottom:22px;">
+      ${detailRow("Name", safeName)}
+      ${detailRow("Email", `<a href="mailto:${safeEmail}" style="color:${COLORS.ink}; text-decoration:none;">${safeEmail}</a>`)}
+      ${detailRow("Company", safeCompany)}
+      ${detailRow("Role", safeRole)}
+    </table>
+    <p style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text3}; margin:0 0 8px 0; letter-spacing:1.5px; text-transform:uppercase;">
+      Message
+    </p>
+    <p style="font-family:${FONT_SANS}; font-size:15px; line-height:1.6; color:${COLORS.text}; margin:0;">
+      ${safeMessage}
+    </p>
+  `;
+
+  const subjectName = params.name.replace(/[\r\n]+/g, " ").slice(0, 80);
+
+  await getEmailProvider().send({
+    from: EMAIL_FROM,
+    to: CONTACT_INBOX,
+    subject: `New enquiry: ${subjectName}`,
+    html: baseTemplate(content),
+  });
+
+  logger.info("Contact enquiry email sent", { to: CONTACT_INBOX, company: params.company ?? null });
 }

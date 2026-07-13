@@ -170,6 +170,10 @@ export const APP_URL = process.env.NEXTAUTH_URL || "https://www.onegoodarea.com"
    src/lib/config.ts. */
 export const EMAIL_FROM = "OneGoodArea <noreply@onegoodarea.com>";
 
+/* Inbox that public contact-form submissions (AR-451) are delivered to.
+   Env-overridable; defaults to the canonical operations address. */
+export const CONTACT_INBOX = process.env.CONTACT_INBOX || "operation@onegoodarea.co.uk";
+
 export const RATE_LIMITS = {
   report: { max: 10, windowSeconds: 60 },
   apiReport: { max: 30, windowSeconds: 60 },
@@ -178,6 +182,8 @@ export const RATE_LIMITS = {
   apiBatch: { max: 5, windowSeconds: 60 },
   authRegister: { max: 5, windowSeconds: 60 },
   authSignIn: { max: 10, windowSeconds: 60 },
+  // Public contact form (AR-451): 5 submissions per IP per hour.
+  contact: { max: 5, windowSeconds: 3600 },
 } as const;
 
 // Bulk endpoint hard cap. Larger workloads should use the async pattern (roadmap).
