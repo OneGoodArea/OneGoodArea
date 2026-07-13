@@ -22,6 +22,13 @@ export class ResendEmailProvider implements EmailProvider {
   }
 
   async send(message: EmailMessage): Promise<void> {
-    await this.client.emails.send(message);
+    /* Resend does not throw on API-level failures (unverified sending
+       domain, bad/expired key, quota); it resolves with { error }. Surface
+       it so a failed send becomes a logged 5xx instead of a silent success
+       that returns 200 with nothing delivered (AR-459). */
+    const { error } = await this.client.emails.send(message);
+    if (error) {
+      throw new Error(`Resend rejected the email: ${error.name}: ${error.message}`);
+    }
   }
 }
