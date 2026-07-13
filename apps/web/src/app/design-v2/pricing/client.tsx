@@ -128,7 +128,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "What is a paid pilot?",
-    a: "A time-boxed evaluation against one defined use case and one success metric agreed up front, from £7,500. Half the pilot fee is credited against your first annual contract if you convert within 60 days.",
+    a: "A short, paid, time-boxed evaluation against one defined use case and one success metric agreed up front. If you convert, part of the pilot fee is credited to your first annual contract.",
   },
   {
     q: "How is OneGoodArea priced?",
@@ -140,7 +140,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Do you support procurement and security review?",
-    a: "Yes, on Enterprise Monitor and regulated pilots: security review support, signed DPA, methodology documentation, IP allowlisting, training opt-out and audit-ready version pinning.",
+    a: "What is built in today: IP allowlisting, training opt-out, and per-organisation methodology and version pinning. Data handling, retention, and our sub-processors are documented in the public privacy and data policies, and for your review we will sign a DPA and complete your security questionnaire. Formal certifications like SOC 2 and ISO 27001 are on the roadmap as we grow into larger regulated deals.",
   },
 ];
 
@@ -149,6 +149,7 @@ export default function PricingClient() {
     <div className="oga-root oga-pricing">
       <Nav />
       <Hero />
+      <HowBuyingWorks />
       <Packages />
       <Comparison />
       <Faq />
@@ -197,6 +198,58 @@ function Stamp({ label, value }: { label: string; value: string }) {
 }
 
 /* ============================================================
+   HOW BUYING WORKS (cream-quiet), AR-463
+   ============================================================ */
+const BUY_STEPS = [
+  {
+    n: "01",
+    title: "Evaluate, free",
+    body: "Explore the API and the MCP server on the Developer tier, or book a demo and we will run it against a real workflow. No card, no commitment.",
+  },
+  {
+    n: "02",
+    title: "Prove it with a paid pilot",
+    body: "A short, paid pilot against one of your real use cases, scoped to a single success metric. You buy on evidence, not a demo.",
+  },
+  {
+    n: "03",
+    title: "Move to an annual contract",
+    body: "Land on the package that fits the job: Core API, Decision Intelligence, or Enterprise Monitor. Expand as your usage and teams grow.",
+  },
+];
+
+function HowBuyingWorks() {
+  return (
+    <section className="oga-section-quiet oga-pricing-how" data-oga-surface="light">
+      <div className="oga-pricing-how__inner">
+        <header className="oga-pricing-how__head">
+          <div className="oga-pricing-how__eyebrow oga-eyebrow">
+            <span className="oga-eyebrow-dot" aria-hidden />
+            <span>How buying works</span>
+          </div>
+          <h2 className="oga-pricing-how__title">
+            Bought like infrastructure, not a subscription.
+          </h2>
+          <p className="oga-pricing-how__lead">
+            No self-serve checkout. You evaluate, prove it on your own use case,
+            then sign an annual contract for the package that fits.
+          </p>
+        </header>
+        <ol className="oga-pricing-how__steps">
+          {BUY_STEPS.map((s) => (
+            <li key={s.n} className="oga-pricing-how__step">
+              <span className="oga-pricing-how__step-n">{s.n}</span>
+              <h3 className="oga-pricing-how__step-title">{s.title}</h3>
+              <p className="oga-pricing-how__step-body">{s.body}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
    PACKAGE CARDS (cream)
    ============================================================ */
 function Packages() {
@@ -204,15 +257,20 @@ function Packages() {
     <section className="oga-pricing-cards" data-oga-surface="light">
       <div className="oga-pricing-cards__inner">
         <div className="oga-pricing-cards__grid">
-          {PACKAGES.map((p) => (
+          {PACKAGES.filter((p) => p.id !== "developer").map((p) => (
             <PackageCard key={p.id} pkg={p} />
           ))}
         </div>
+        <DeveloperBar />
         <p className="oga-pricing-cards__note">
           Guide prices, billed annually. Final pricing depends on usage, support
           and scope. Not sure which fits?{" "}
           <BookDemo className="oga-pricing-cards__note-link">Book a demo</BookDemo>.
         </p>
+        <a href="#compare" className="oga-pricing-cards__compare">
+          Compare all features
+          <span aria-hidden>↓</span>
+        </a>
       </div>
     </section>
   );
@@ -226,6 +284,7 @@ function PackageCard({ pkg }: { pkg: Pkg }) {
           ? "oga-pricing-card oga-pricing-card--highlight"
           : "oga-pricing-card"
       }
+      data-oga-surface={pkg.highlight ? "dark" : undefined}
     >
       {pkg.badge && <span className="oga-pricing-card__badge">{pkg.badge}</span>}
       <div className="oga-pricing-card__name">{pkg.name}</div>
@@ -240,7 +299,22 @@ function PackageCard({ pkg }: { pkg: Pkg }) {
       <ul className="oga-pricing-card__features">
         {pkg.features.map((f) => (
           <li key={f} className="oga-pricing-card__feature">
-            <span className="oga-pricing-card__feature-dot" aria-hidden />
+            <svg
+              className="oga-pricing-card__feature-check"
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden
+            >
+              <path
+                d="M5 12.5l4.5 4.5L19 7.5"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
             <span>{f}</span>
           </li>
         ))}
@@ -273,12 +347,32 @@ function PackageCta({ pkg }: { pkg: Pkg }) {
   );
 }
 
+/* Developer is free and evaluation-only, so it sits as a slim bar under
+   the three paid tiers rather than competing with them as a 4th card. */
+function DeveloperBar() {
+  const dev = PACKAGES.find((p) => p.id === "developer");
+  if (!dev) return null;
+  return (
+    <div className="oga-pricing-devbar">
+      <div className="oga-pricing-devbar__lead">
+        <span className="oga-pricing-devbar__name">{dev.name}</span>
+        <span className="oga-pricing-devbar__price">Free</span>
+      </div>
+      <p className="oga-pricing-devbar__tag">{dev.tagline}</p>
+      <Link href="/docs" className="oga-btn oga-btn-secondary oga-pricing-devbar__cta">
+        View the docs
+        <span aria-hidden>→</span>
+      </Link>
+    </div>
+  );
+}
+
 /* ============================================================
    COMPARISON TABLE (cream)
    ============================================================ */
 function Comparison() {
   return (
-    <section className="oga-pricing-table" data-oga-surface="light">
+    <section id="compare" className="oga-pricing-table" data-oga-surface="light">
       <div className="oga-pricing-table__inner">
         <header className="oga-pricing-table__head">
           <div className="oga-pricing-table__eyebrow oga-eyebrow">
