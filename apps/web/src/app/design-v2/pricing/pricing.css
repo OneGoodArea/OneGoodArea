@@ -1,4 +1,4 @@
-/* /pricing page CSS — Brand v3 (AR-204 close-out sweep 3/16).
+/* /pricing page CSS. Brand v3 (AR-204 close-out sweep 3/16).
    Co-located, zero inline styles in client.tsx.
 
    Surface plan:
@@ -414,4 +414,147 @@
   flex-wrap: wrap;
   gap: 12px;
   justify-content: center;
+}
+
+/* ============================================================
+   PACKAGE CARDS (cream), AR-456
+   ============================================================ */
+.oga-pricing-cards {
+  background: var(--oga-canvas);
+  padding: clamp(44px, 6vw, 76px) 24px clamp(32px, 4vw, 56px);
+}
+.oga-pricing-cards__inner {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+.oga-pricing-cards__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+@media (max-width: 1080px) {
+  .oga-pricing-cards__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .oga-pricing-cards__grid {
+    grid-template-columns: 1fr;
+  }
+}
+.oga-pricing-card {
+  position: relative;
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  border-radius: 10px;
+  padding: 26px 22px;
+  display: flex;
+  flex-direction: column;
+}
+.oga-pricing-card--highlight {
+  border-color: var(--oga-ink);
+  box-shadow: var(--oga-shadow-md);
+}
+.oga-pricing-card__badge {
+  position: absolute;
+  top: -10px;
+  left: 22px;
+  background: var(--oga-ink);
+  color: var(--oga-white);
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+.oga-pricing-card__name {
+  font-family: var(--oga-font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--oga-fg);
+  margin-bottom: 12px;
+}
+.oga-pricing-card__price {
+  font-family: var(--oga-font-sans);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--oga-fg);
+  line-height: 1.1;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.oga-pricing-card__price-unit {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--oga-fg-muted);
+  letter-spacing: 0;
+}
+.oga-pricing-card__price-note {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-top: 6px;
+}
+.oga-pricing-card__tagline {
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--oga-fg-subtle);
+  margin: 16px 0 0;
+  text-wrap: pretty;
+}
+.oga-pricing-card__features {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 18px 0 0;
+  border-top: 1px solid var(--oga-border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 auto;
+}
+.oga-pricing-card__feature {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--oga-fg);
+}
+.oga-pricing-card__feature-dot {
+  flex: 0 0 auto;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--oga-ink);
+  margin-top: 7px;
+}
+.oga-pricing-card__cta-wrap {
+  margin-top: 22px;
+}
+.oga-pricing-card__cta {
+  width: 100%;
+  justify-content: center;
+}
+.oga-pricing-cards__note {
+  font-family: var(--oga-font-sans);
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--oga-fg-muted);
+  text-align: center;
+  max-width: 720px;
+  margin: 28px auto 0;
+}
+.oga-pricing-cards__note-link {
+  color: var(--oga-fg);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }

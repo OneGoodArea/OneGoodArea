@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { BookDemo } from "./book-demo";
 
 /* HeroPlotted — bold dark hero with vertically-rotating ICP word.
    "The area intelligence layer for [cycling]." 5 ICPs cycle on
@@ -67,10 +68,10 @@ export function HeroPlotted() {
         </p>
 
         <div className="oga-hero-dark__cta">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get started
+          <BookDemo className="oga-btn oga-btn-primary">
+            Book a demo
             <span aria-hidden>→</span>
-          </Link>
+          </BookDemo>
           <Link href="/methodology" className="oga-btn oga-btn-secondary">
             Read the methodology
             <span aria-hidden>→</span>
