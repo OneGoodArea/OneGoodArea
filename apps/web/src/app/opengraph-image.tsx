@@ -1,15 +1,53 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "OneGoodArea - UK Area Intelligence";
+export const alt = "OneGoodArea, UK area intelligence infrastructure";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-/* OG image in OneGoodArea visual language.
-   Cream background, forest-ink text, chartreuse accents on eyebrow dot
-   and the italic headline underline. ImageResponse runs on the edge
-   runtime, so we use system fallbacks for Fraunces (Georgia) and
-   Geist Mono (ui-monospace). */
+/* OG / social preview, Brand v3 (Plotted). Warm cream canvas, graphite ink,
+   the dot-grid mark as the logo plus a large faint mark as background
+   texture, and the product-led headline that matches the homepage hero.
+   Edge runtime, so system font fallbacks (Geist -> sans-serif /
+   ui-monospace). AR-473 (replaces the old forest-green + lime B2C card). */
+
+const MARK_ROWS = ["...X...", ".XXXXX.", ".XXXXX.", "XXXCXXX", ".XXXXX.", ".XXXXX.", "...X..."];
+
+function Mark({ cell, color, opacity = 1 }: { cell: number; color: string; opacity?: number }) {
+  const dot = Math.round(cell * 0.56);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", opacity }}>
+      {MARK_ROWS.map((row, ri) => (
+        <div key={ri} style={{ display: "flex" }}>
+          {[...row].map((ch, ci) => (
+            <div
+              key={ci}
+              style={{
+                width: cell,
+                height: cell,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {ch !== "." ? (
+                <div
+                  style={{
+                    width: ch === "C" ? cell : dot,
+                    height: ch === "C" ? cell : dot,
+                    borderRadius: cell,
+                    background: color,
+                    display: "flex",
+                  }}
+                />
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function OGImage() {
   return new ImageResponse(
@@ -21,218 +59,137 @@ export default function OGImage() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          padding: "70px 80px",
-          background: "#F6F9F4",
+          padding: "68px 80px",
+          background: "#EFECE6",
           position: "relative",
         }}
       >
-        {/* Subtle radial chartreuse wash behind hero */}
+        {/* large faint mark, background texture bleeding off the right edge */}
+        <div style={{ position: "absolute", top: 130, right: -80, display: "flex" }}>
+          <Mark cell={64} color="#1A1C1F" opacity={0.05} />
+        </div>
+
+        {/* top: mark + wordmark lockup */}
+        <div style={{ display: "flex", alignItems: "center", gap: 16, position: "relative" }}>
+          <Mark cell={9} color="#1A1C1F" />
+          <div
+            style={{
+              display: "flex",
+              fontSize: 26,
+              fontFamily: "sans-serif",
+              fontWeight: 600,
+              letterSpacing: -0.6,
+              color: "#1A1C1F",
+            }}
+          >
+            onegoodarea
+          </div>
+        </div>
+
+        {/* middle: eyebrow + headline + subhead */}
         <div
           style={{
-            position: "absolute",
-            top: -240,
-            left: 200,
-            width: 800,
-            height: 600,
             display: "flex",
-            background:
-              "radial-gradient(ellipse at center, rgba(212,243,58,0.28) 0%, rgba(212,243,58,0) 58%)",
+            flexDirection: "column",
+            gap: 20,
+            position: "relative",
+            maxWidth: 1000,
           }}
-        />
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 8, height: 8, borderRadius: 8, background: "#1A1C1F", display: "flex" }} />
+            <div
+              style={{
+                display: "flex",
+                fontSize: 15,
+                fontFamily: "ui-monospace, monospace",
+                fontWeight: 500,
+                letterSpacing: 4,
+                textTransform: "uppercase",
+                color: "#55565A",
+              }}
+            >
+              Built for property and risk teams
+            </div>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              fontSize: 66,
+              fontFamily: "sans-serif",
+              fontWeight: 600,
+              lineHeight: 1.04,
+              letterSpacing: -2,
+              color: "#1A1C1F",
+            }}
+          >
+            Build UK area intelligence into your product.
+          </div>
+          <div
+            style={{
+              display: "flex",
+              fontSize: 24,
+              fontFamily: "sans-serif",
+              color: "#45474B",
+              lineHeight: 1.45,
+              maxWidth: 880,
+            }}
+          >
+            Area scores, source-backed signals, monitoring, and intelligence you
+            can audit. One API.
+          </div>
+        </div>
 
-        {/* Top row: eyebrow + brand */}
+        {/* bottom: proof + domain */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            gap: 20,
-            position: "relative",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <div
-              style={{
-                width: 10,
-                height: 10,
-                borderRadius: 10,
-                background: "#D4F33A",
-                boxShadow: "0 0 0 6px rgba(212,243,58,0.3)",
-                display: "flex",
-              }}
-            />
-            <span
-              style={{
-                fontSize: 16,
-                fontFamily: "ui-monospace, monospace",
-                fontWeight: 500,
-                letterSpacing: 4,
-                textTransform: "uppercase",
-                color: "#445A51",
-              }}
-            >
-              UK area intelligence
-            </span>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-            <span
-              style={{
-                fontSize: 26,
-                fontFamily: "Georgia, serif",
-                fontWeight: 500,
-                letterSpacing: -0.5,
-                color: "#062A1E",
-              }}
-            >
-              OneGood
-            </span>
-            <span
-              style={{
-                fontSize: 26,
-                fontFamily: "Georgia, serif",
-                fontStyle: "italic",
-                fontWeight: 500,
-                letterSpacing: -0.5,
-                color: "#0A4D3A",
-              }}
-            >
-              Area
-            </span>
-          </div>
-        </div>
-
-        {/* Middle: headline */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 24,
-            position: "relative",
-            maxWidth: 980,
-          }}
-        >
-          <div
-            style={{
-              fontSize: 72,
-              fontFamily: "Georgia, serif",
-              fontWeight: 400,
-              lineHeight: 1.02,
-              letterSpacing: -2,
-              color: "#062A1E",
-              display: "flex",
-              flexWrap: "wrap",
-            }}
-          >
-            <span>An intelligence report for&nbsp;</span>
-            <span
-              style={{
-                fontStyle: "italic",
-                color: "#0A4D3A",
-                position: "relative",
-                display: "flex",
-                paddingBottom: 8,
-                borderBottom: "5px solid #D4F33A",
-              }}
-            >
-              every UK postcode
-            </span>
-            <span>.</span>
-          </div>
-          <div
-            style={{
-              fontSize: 22,
-              fontFamily: "sans-serif",
-              color: "#445A51",
-              lineHeight: 1.5,
-              maxWidth: 820,
-              display: "flex",
-            }}
-          >
-            Type a place. Pick why you&apos;re looking. Seven public datasets
-            do the rest.
-          </div>
-        </div>
-
-        {/* Bottom row: stats + domain */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "space-between",
-            gap: 32,
-            borderTop: "1px solid #E4EAE3",
+            borderTop: "1px solid rgba(26,28,31,0.14)",
             paddingTop: 24,
             position: "relative",
           }}
         >
-          <div style={{ display: "flex", gap: 48 }}>
-            {[
-              { value: "42,640", label: "UK neighbourhoods" },
-              { value: "7", label: "Public datasets" },
-              { value: "4", label: "Intents" },
-            ].map((s) => (
-              <div
-                key={s.label}
-                style={{ display: "flex", flexDirection: "column", gap: 6 }}
-              >
-                <span
-                  style={{
-                    fontSize: 36,
-                    fontFamily: "Georgia, serif",
-                    fontWeight: 500,
-                    letterSpacing: -1,
-                    color: "#062A1E",
-                    display: "flex",
-                  }}
-                >
-                  {s.value}
-                </span>
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontFamily: "ui-monospace, monospace",
-                    fontWeight: 500,
-                    letterSpacing: 2,
-                    textTransform: "uppercase",
-                    color: "#6E8278",
-                    display: "flex",
-                  }}
-                >
-                  {s.label}
-                </span>
-              </div>
-            ))}
+          <div
+            style={{
+              display: "flex",
+              fontSize: 15,
+              fontFamily: "ui-monospace, monospace",
+              fontWeight: 500,
+              letterSpacing: 2,
+              textTransform: "uppercase",
+              color: "#6E6F73",
+            }}
+          >
+            UK-wide · Versioned · Explainable
           </div>
-
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 10,
-              padding: "10px 16px",
-              border: "1px solid #062A1E",
-              background: "#D4F33A",
+              padding: "10px 18px",
+              border: "1px solid rgba(26,28,31,0.4)",
               borderRadius: 999,
             }}
           >
-            <span
+            <div
               style={{
+                display: "flex",
                 fontSize: 14,
                 fontFamily: "ui-monospace, monospace",
                 fontWeight: 500,
                 letterSpacing: 2,
                 textTransform: "uppercase",
-                color: "#1A2600",
-                display: "flex",
+                color: "#1A1C1F",
               }}
             >
               onegoodarea.com
-            </span>
+            </div>
           </div>
         </div>
       </div>
     ),
-    { ...size }
+    { ...size },
   );
 }
