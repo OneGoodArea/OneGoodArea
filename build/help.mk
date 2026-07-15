@@ -16,6 +16,9 @@ help: ## Display available Make targets
 	@echo "\033[1;36mContainer tests\033[0m"
 	@grep -hE '^[a-z]+-[a-z-]*container:.*## ' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*## "}; {printf "  \033[36m%-32s\033[0m %s\n", $$1, $$2}'
 	@echo ""
+	@echo "\033[1;36mScripts\033[0m"
+	@grep -hE '^scripts-[a-zA-Z0-9._-]+:.*## ' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*## "}; {printf "  \033[36m%-32s\033[0m %s\n", $$1, $$2}'
+	@echo ""
 	@echo "\033[1;36mInfo\033[0m"
 	@grep -hE '^stack-engine-info:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  \033[36m%-32s\033[0m %s\n", $$1, $$2}'
 	@echo ""
