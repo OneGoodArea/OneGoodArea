@@ -57,6 +57,22 @@ node scripts/reset-playground-rate-limit.mjs --ip 1.2.3.4 --confirm
 | `--confirm` | No | false (dry-run) | Actually DELETE rows |
 | `--help` / `-h` | No | — | Show usage text |
 
+## Reset via Neon Console (production)
+
+The CLI script refuses to run in production. To reset a playground rate limit on
+the live Neon database, use the SQL Editor at https://console.neon.tech:
+
+```bash
+# 1. Open Neon Console → project → SQL Editor
+# 2. Preview rows (safe):
+#    SELECT COUNT(*) FROM rate_limit_entries WHERE identifier = 'playground:ip:203.0.113.42';
+# 3. Replace '203.0.113.42' with your IP, then delete (destructive):
+#    DELETE FROM rate_limit_entries WHERE identifier = 'playground:ip:203.0.113.42';
+```
+
+See `scripts/reset-playground-rate-limit.sql` for the full annotated SQL with
+safety guards — copy-paste from there into the Neon console.
+
 ## Production safety
 
 The script refuses to run when `NODE_ENV=production`:
