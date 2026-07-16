@@ -173,7 +173,7 @@ export default function ProductIntelligenceClient() {
       <ProductHero
         Icon={IntelligenceIcon}
         h1="Intelligence: a typed query plane over the moat."
-        lead="Six plan ops, one Zod-strict grammar. Send a programmatic plan object or a natural-language question. Either way the same deterministic executor runs the plan against the database and returns typed rows. The response always echoes the executed plan so any natural-language answer can be replayed as a programmatic call. Not a chatbot. Not a narrative. AI never sets the numbers."
+        lead="Seven plan ops, one Zod-strict grammar. Send a programmatic plan object or a natural-language question. Either way the same deterministic executor runs the plan against the database and returns typed rows. The response always echoes the executed plan so any natural-language answer can be replayed as a programmatic call. Not a chatbot. Not a narrative. AI never sets the numbers."
         primaryHref={DEMO_URL}
         primaryLabel="Book a demo"
         secondaryHref="/methodology"
@@ -186,7 +186,7 @@ export default function ProductIntelligenceClient() {
       <ProductEndpointPanel
         titleId="int-ep-title"
         title="One typed query plane. Three convenience endpoints."
-        sub="/v1/query is the typed plane (6 ops). /v1/peers, /v1/insights, /v1/forecast are convenience endpoints over the same plan ops. Same executor, two surfaces."
+        sub="/v1/query is the typed plane (7 ops). /v1/peers, /v1/insights, /v1/forecast are convenience endpoints over the same plan ops. Same executor, two surfaces."
         endpoints={EPS}
       />
       <ProductIcpGrid
@@ -199,7 +199,7 @@ export default function ProductIntelligenceClient() {
       <ProductFinalCta
         titleId="int-cta-title"
         title="Query UK areas in JSON or English. Get the same deterministic answer."
-        lead={`Six plan ops. One typed grammar. AI emits the plan, the database produces the rows, the response always echoes the plan so any natural-language answer can be replayed as a programmatic call. Engine version ${METHODOLOGY_VERSION} is stamped on every response.`}
+        lead={`Seven plan ops. One typed grammar. AI emits the plan, the database produces the rows, the response always echoes the plan so any natural-language answer can be replayed as a programmatic call. Engine version ${METHODOLOGY_VERSION} is stamped on every response.`}
         primaryHref={DEMO_URL}
         primaryLabel="Book a demo"
         secondaryHref="/methodology"
@@ -380,7 +380,7 @@ function SectionSpecimen() {
 }
 
 /* ============================================================
-   02 — Six plan ops (cream)
+   02 — Seven plan ops (cream)
    ============================================================ */
 
 type Op = {
@@ -405,6 +405,13 @@ const OPS: Op[] = [
     body: "Return the full AreaProfile for one resolved area. Same shape as GET /v1/area on the Signals product; exposed here for plan chaining.",
     Glyph: GlyphGet,
     example: "params: { area }",
+  },
+  {
+    slug: "compare_areas",
+    name: "Compare areas",
+    body: "Return the resolved AreaProfiles for two or more areas side by side for direct comparison. Same shapes as get_area, one call per plan.",
+    Glyph: GlyphCompare,
+    example: "params: { areas: [\"M1 1AE\", \"EC1A 1BB\"] }",
   },
   {
     slug: "score_area",
@@ -445,10 +452,10 @@ function SectionOps() {
       <div className="oga-int__wrap">
         <header className="oga-int-ops__head">
           <h2 id="int-ops-title" className="oga-int-ops__title">
-            Six plan ops. One typed grammar.
+            Seven plan ops. One typed grammar.
           </h2>
           <p className="oga-int-ops__sub">
-            Every operation under /v1/query is one of these six. The shape
+            Every operation under /v1/query is one of these seven. The shape
             is a Zod-strict discriminated union; the planner can only emit
             valid plans; unknown ops are rejected before execution.
           </p>
@@ -479,6 +486,18 @@ function SectionOps() {
 }
 
 /* Tiny per-op glyphs — 36x36, dot-and-hairline */
+function GlyphCompare() {
+  // two areas side by side (comparison)
+  return (
+    <svg viewBox="0 0 36 36" width="36" height="36" aria-hidden>
+      <g fill="currentColor">
+        <rect x="7" y="12" width="8" height="16" rx="1.5" />
+        <rect x="21" y="8" width="8" height="20" rx="1.5" opacity="0.6" />
+      </g>
+    </svg>
+  );
+}
+
 function GlyphRank() {
   return (
     <svg viewBox="0 0 36 36" width="36" height="36" aria-hidden>

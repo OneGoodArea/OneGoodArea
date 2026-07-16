@@ -401,7 +401,7 @@ const FAQS: Faq[] = [
   },
   {
     q: "Is there a free tier for me to integrate against?",
-    a: "Pricing is being finalised. The /v1/area endpoint is the primary read for PropTech and is rate-limited rather than monthly-quota-metered, which makes integration testing cheap. Get an API key and use it; we will tell you ahead of any price changes.",
+    a: "Yes. The free Developer tier lets you evaluate the /v1/area endpoint, the primary read for PropTech, with no card required. It is for evaluation, not production. For production, book a demo and we scope a paid pilot or an annual contract; pricing is published at /pricing.",
   },
 ];
 
