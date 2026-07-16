@@ -10,24 +10,20 @@ import {
   type LegalSection as LegalSectionType,
 } from "../_shared/legal-shell";
 
-/* /terms — Brand v3 rewrite + content refresh (AR-204 PR).
+/* /terms, Brand v3 legal page.
 
-   Content audited against current product state on 2026-06-02:
-   - Pricing tiers refreshed to the 6 V2 plans (Sandbox / Starter /
-     Build / Scale / Growth / Enterprise) verified against
-     apps/web/src/lib/stripe.ts PLANS.
-   - API access language updated: API is on ALL tiers including
-     Sandbox (not just Developer/Business/Growth as the legacy
-     text said).
-   - Data source list refreshed against /methodology to include
-     IMD 2025 + WIMD 2019 + SIMD 2020 separately, ONS NSPL, and
-     Companies House. */
+   AR-479: subscriptions and usage sections made plan-agnostic to match the
+   demo-led /pricing packages. The hardcoded 6-tier price list, the £29 MCP
+   add-on, and the soft-cap tier specifics were removed; fees and allowances
+   now reference the plan or order form. GitHub OAuth dropped (sign-in
+   removed). This is a starting legal page, not legal advice; have a
+   solicitor review it before relying on it for a real contract. */
 
 const SECTIONS: LegalSectionType[] = [
   { id: "acceptance",     label: "Acceptance" },
   { id: "account",        label: "Account registration" },
   { id: "subscriptions",  label: "Subscriptions + payments" },
-  { id: "limits",         label: "Usage limits + soft caps" },
+  { id: "limits",         label: "Usage limits" },
   { id: "api",            label: "API usage" },
   { id: "ip",             label: "Intellectual property" },
   { id: "accuracy",       label: "Data accuracy + disclaimer" },
@@ -43,7 +39,7 @@ export default function TermsClient() {
     <LegalShell
       eyebrow="Legal · Terms of Service"
       title="Terms of Service"
-      lastUpdated="2 June 2026"
+      lastUpdated="16 July 2026"
       intro="These terms govern your use of OneGoodArea. By creating an account or using the service you agree to them. Read them carefully."
       sections={SECTIONS}
     >
@@ -65,10 +61,10 @@ export default function TermsClient() {
 
       <LegalSection id="account" n={2} title="Account registration">
         <LegalP>
-          To use OneGoodArea you must create an account using Google OAuth,
-          GitHub OAuth, or email and password. You are responsible for
-          maintaining the confidentiality of your account credentials and
-          for all activity that occurs under your account.
+          To use OneGoodArea you must create an account using Google or
+          email and password. You are responsible for maintaining the
+          confidentiality of your account credentials and for all activity
+          that occurs under your account.
         </LegalP>
         <LegalP>
           You must provide accurate, current information during registration.
@@ -80,63 +76,50 @@ export default function TermsClient() {
 
       <LegalSection id="subscriptions" n={3} title="Subscriptions and payments">
         <LegalP>
-          OneGoodArea offers six tiers. Sandbox (free, no card required,
-          35 API calls per month, hard cap, API and dashboard access).
-          Starter (£49 per month, 1,500 calls, hard cap). Build (£149 per
-          month, 6,000 calls, soft cap). Scale (£499 per month, 25,000
-          calls, soft cap). Growth (£1,499 per month, 100,000 calls, soft
-          cap, MCP add-on included). Enterprise (from £4,999 per month,
-          250,000-call floor negotiated up, custom contract, MCP add-on
-          included).
+          OneGoodArea is offered as workflow packages. A free Developer tier
+          is available for evaluation and prototyping and is not licensed
+          for production, customer-facing, or revenue-generating use.
+          Production access is provided under our paid packages. Current
+          packages and guide prices are published at{" "}
+          <LegalLink href="/pricing">/pricing</LegalLink>.
         </LegalP>
         <LegalP>
-          The MCP add-on is available at £29 per month for Sandbox,
-          Starter, Build, and Scale (and included free on Growth and
-          Enterprise). It exposes the OneGoodArea API to Claude Desktop,
-          Cursor, and any MCP-compatible client.
+          The fees, usage allowances, billing period, and any add-ons that
+          apply to your account are those set out in the plan you subscribe
+          to or the order form you agree with us. Paid packages are
+          ordinarily annual contracts. Prices are in GBP; applicable taxes
+          are shown on your invoice.
         </LegalP>
         <LegalP>
-          All prices are in GBP and inclusive of applicable taxes. Paid
-          subscriptions are billed monthly through Stripe. By subscribing
-          to a paid plan you authorise us to charge your payment method on
-          a recurring basis until you cancel. You can cancel at any time
-          through the Stripe billing portal. Cancellation takes effect at
-          the end of your current billing period and you retain access
-          until then.
+          Where you subscribe online, billing is handled by Stripe and
+          recurs for the stated period until you cancel; cancellation takes
+          effect at the end of the current billing period and you retain
+          access until then. Where you sign an order form, billing follows
+          that agreement. We do not offer refunds for partial billing
+          periods. If we change pricing, we will notify affected subscribers
+          at least 30 days in advance and the new pricing applies from the
+          next billing cycle.
         </LegalP>
         <LegalP>
-          We do not offer refunds for partial billing periods. If we
-          change pricing, existing subscribers will be notified at least
-          30 days in advance and the new pricing will apply from the next
-          billing cycle. Legacy v1 consumer tiers (Free, Starter, Pro,
-          Developer, Business, Growth on the old pricing scheme) were
-          retired in April 2026; existing subscribers on those legacy
-          tiers continue on their plan with the features they paid for.
+          Legacy consumer tiers on the old pricing scheme were retired in
+          April 2026; existing subscribers on those legacy tiers continue on
+          their plan with the features they paid for.
         </LegalP>
       </LegalSection>
 
-      <LegalSection id="limits" n={4} title="Usage limits and soft caps">
+      <LegalSection id="limits" n={4} title="Usage limits">
         <LegalP>
-          Each plan includes a monthly API call allowance. The counter
-          resets on the first day of each calendar month. Unused calls do
-          not carry over.
+          Each plan includes usage allowances, such as a monthly API call
+          allowance, as set out in your plan or order form. Where a monthly
+          allowance applies, the counter resets on the first day of each
+          calendar month and unused calls do not carry over.
         </LegalP>
         <LegalP>
-          <LegalEmph>Hard-cap tiers (Sandbox, Starter).</LegalEmph> When
-          you reach the included call count, further API calls return 402
-          Payment Required and the dashboard prompts an upgrade. No
-          overage charges apply.
-        </LegalP>
-        <LegalP>
-          <LegalEmph>Soft-cap tiers (Build, Scale, Growth).</LegalEmph>{" "}
-          You receive an additional 25 percent headroom above the included
-          call count, charged at £0.05 per call (5p) on the next invoice.
-          Past the 25 percent headroom the limit becomes hard and further
-          calls return 402.
-        </LegalP>
-        <LegalP>
-          <LegalEmph>Enterprise.</LegalEmph> Overage is negotiated in the
-          master services agreement.
+          Depending on your plan, reaching your allowance either stops
+          further calls (which return 402 Payment Required) or continues
+          into a metered overage band at the rate stated in your plan or
+          order form. The behaviour that applies to your account is set out
+          in your plan or order form.
         </LegalP>
         <LegalP>
           We reserve the right to implement rate limiting or throttling to
@@ -151,7 +134,7 @@ export default function TermsClient() {
       <LegalSection id="api" n={5} title="API usage">
         <LegalP>
           API access is available on every plan, including the free
-          Sandbox tier. API keys are personal to your account and must not
+          Developer tier. API keys are personal to your account and must not
           be shared or published publicly. You are responsible for all
           usage associated with your API keys.
         </LegalP>

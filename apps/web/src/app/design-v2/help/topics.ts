@@ -1,18 +1,20 @@
-/* /help topics — single source of truth for the help-page Q&A data.
+/* /help topics, single source of truth for the help-page Q&A data.
    Imported by both:
      - apps/web/src/app/design-v2/help/client.tsx  (UI)
      - apps/web/src/app/help/page.tsx              (FAQPage JSON-LD)
    So the structured data + the visible content cannot drift.
 
-   AR-204 PR — /help full rewrite.
+   AR-204 PR: /help full rewrite.
    Replaces the 374 LOC legacy /help that used out-of-date
    "Reports / moving / business / investing / research" framing.
    New IA: by product (Signals/Scores/Monitor/Intelligence) +
-   cross-cutting (Methodology / API / Billing / Account).
+   cross-cutting (Methodology / API / Plans / Account).
 
-   All pricing + limit numbers verified against
-   apps/web/src/lib/stripe.ts (PLANS + ADDONS) +
-   apps/api/src/infrastructure/config/index.ts (RATE_LIMITS). */
+   AR-479: pricing/plans section realigned to the demo-led B2B
+   packages on /pricing (Developer free eval + Core API / Decision
+   Intelligence / Enterprise Monitor, annual, no self-serve checkout).
+   The old self-serve 6-tier story (Sandbox/Starter/Build/Scale/Growth
+   with prices, soft caps, and the £29 MCP add-on) was removed. */
 
 export type QA = { q: string; a: string };
 export type Topic = {
@@ -26,7 +28,7 @@ export const TOPICS: Topic[] = [
   {
     num: "01",
     title: "Getting started",
-    lead: "What OneGoodArea is, what you get on the free tier, and where to take the first call.",
+    lead: "What OneGoodArea is, what the free Developer tier includes, and how to start.",
     items: [
       {
         q: "What is OneGoodArea?",
@@ -34,11 +36,11 @@ export const TOPICS: Topic[] = [
       },
       {
         q: "Do I need a card to try it?",
-        a: "No. The Sandbox tier is free, no card required, and includes 35 API calls per month. It is enough to evaluate the API across a few postcodes, a couple of scoring profiles, and a small Intelligence query. Sign up at /sign-up and generate an API key from your dashboard.",
+        a: "No. The Developer tier is free with no card required, for evaluating the API and exploring the MCP server. It is not licensed for production use. When you are ready for production, book a demo and we scope a paid pilot or an annual contract.",
       },
       {
         q: "How do I make my first API call?",
-        a: "Sign up, generate a key from your dashboard, then curl POST https://onegoodarea.onrender.com/v1/score with body { \"area\": \"M1 1AE\", \"preset\": \"residential_origination\" } and Authorization: Bearer <your_key>. Full code samples in cURL, Node, Python, and Go live at /docs/api-reference.",
+        a: "On the free Developer tier, generate an evaluation key, then curl POST https://onegoodarea.onrender.com/v1/score with body { \"area\": \"M1 1AE\", \"preset\": \"residential_origination\" } and Authorization: Bearer <your_key>. Full code samples in cURL, Node, Python, and Go live at /docs/api-reference.",
       },
       {
         q: "What is the difference between the four products?",
@@ -146,7 +148,7 @@ export const TOPICS: Topic[] = [
       },
       {
         q: "What plan operations exist?",
-        a: "Six today. rank_areas (multi-signal compound filter + sort), get_signal (single value lookup), score_area (Scores via the planner), find_peers (k-NN similarity over an LSOA), find_insights (peer-relative anomaly detection), and find_forecast (time-series projection). Each maps to a /v1/<op> endpoint that you can also call directly without natural language.",
+        a: "Seven today. rank_areas (multi-signal compound filter + sort), get_area (single area lookup), compare_areas (side-by-side comparison), score_area (Scores via the planner), find_peers (k-NN similarity over an LSOA), find_insights (peer-relative anomaly detection), and find_forecast (time-series projection). Each maps to a /v1/<op> endpoint that you can also call directly without natural language.",
       },
       {
         q: "How accurate is the natural-language planner?",
@@ -202,7 +204,7 @@ export const TOPICS: Topic[] = [
     items: [
       {
         q: "How do I get API access?",
-        a: "Sign up for the free Sandbox tier and generate an API key from your dashboard. Sandbox is API-enabled and includes 35 calls per month. Pass the key as Authorization: Bearer <key> on every request.",
+        a: "The free Developer tier lets you generate an evaluation key to try the API and MCP server, no card required. It is for evaluation, not production. Pass the key as Authorization: Bearer <key> on every request. For production access, book a demo and we scope a paid pilot or an annual contract.",
       },
       {
         q: "What is the rate limit?",
@@ -214,7 +216,7 @@ export const TOPICS: Topic[] = [
       },
       {
         q: "What client libraries are available?",
-        a: "cURL works against any endpoint directly. Code samples in Node, Python, and Go are on /docs/api-reference (Scalar-rendered). An official Node SDK is on the near roadmap. The MCP server (£29 add-on, free on Growth and Enterprise) lets you call the API from Claude Desktop, Cursor, and any MCP-compatible client.",
+        a: "cURL works against any endpoint directly. Code samples in Node, Python, and Go are on /docs/api-reference (Scalar-rendered). An official Node SDK is on the near roadmap. The MCP server, included with your plan, lets you call the API from Claude Desktop, Cursor, and any MCP-compatible client.",
       },
       {
         q: "How do I handle errors?",
@@ -229,32 +231,32 @@ export const TOPICS: Topic[] = [
 
   {
     num: "08",
-    title: "Billing and plans",
-    lead: "Pricing tiers, soft caps, the MCP add-on, upgrades, cancellation.",
+    title: "Plans and buying",
+    lead: "How OneGoodArea is packaged, priced, and bought.",
     items: [
       {
         q: "What plans are available?",
-        a: "Six tiers. Sandbox (£0, 35 calls per month, hard cap, no card required). Starter (£49 per month, 1,500 calls, hard cap). Build (£149 per month, 6,000 calls, soft cap). Scale (£499 per month, 25,000 calls, soft cap). Growth (£1,499 per month, 100,000 calls, soft cap, MCP included). Enterprise (from £4,999 per month, 250,000-call floor negotiated up, MCP included, custom contract). Full table at /pricing.",
+        a: "Four workflow packages. Developer (free, evaluation only: the API and MCP server, no card, not for production). Core API (from £2,000 per month, billed annually: Signals and deterministic Scores in production). Decision Intelligence (from £5,000 per month, billed annually: full Scores and Intelligence, ranked search, peer comparison, insights, forecasts, and the natural-language planner). Enterprise Monitor (custom annual contract: portfolio monitoring, webhooks, methodology pinning, IP allowlisting, SLA, and security review). Full comparison at /pricing.",
       },
       {
-        q: "What is the difference between Sandbox and Starter?",
-        a: "Sandbox is the developer-led evaluation tier: free forever, no card, 35 calls per month, hard cap. When the cap hits, new calls return 402 and the dashboard prompts an upgrade. Starter is the smallest paid tier: £49 per month, 1,500 calls, still a hard cap (no overage charges by design). Both include full API access.",
+        q: "How is OneGoodArea priced?",
+        a: "Around workflow value and production importance, not raw API-call volume. The three paid packages are annual contracts. Usage limits exist to protect the platform, but they are not the headline. There is no self-serve checkout; you buy it like infrastructure.",
       },
       {
-        q: "How does the soft cap work?",
-        a: "Build, Scale, and Growth get +25% headroom above the included monthly call count. Calls in that headroom band are charged at £0.05 per call (5p) on the next invoice. Past +25% the limit becomes hard and calls return 402. Sandbox, Starter, and Enterprise are not on the soft-cap model.",
+        q: "How do I get started?",
+        a: "Book a demo. We look at your use case, then either run a paid pilot or move straight to an annual contract. Developer access is free if you just want to evaluate the API or explore the MCP server first.",
       },
       {
-        q: "What is the MCP add-on?",
-        a: "The MCP (Model Context Protocol) server lets you call the OneGoodArea API inline from Claude Desktop, Cursor, and any MCP-compatible client. £29 per month as an add-on for Sandbox / Starter / Build / Scale. Included free on Growth and Enterprise. Set up via /docs/mcp.",
+        q: "What is a paid pilot?",
+        a: "A short, paid, time-boxed evaluation against one defined use case and one success metric agreed up front. You buy on evidence, not a demo. If you convert, part of the pilot fee is credited to your first annual contract.",
       },
       {
-        q: "How do I upgrade or cancel?",
-        a: "From your dashboard's Billing page. Stripe handles the upgrade flow; the new tier is active immediately. Cancellation is also from Billing (it opens the Stripe customer portal). You retain access until the end of your current billing period; no refunds for the unused portion.",
+        q: "Is the Developer tier enough to build on?",
+        a: "It is for evaluation and prototyping, not production, customer-facing, or revenue-generating use. It covers the API and the MCP server so you can test the integration. For a production evaluation we run a paid pilot, and production use is licensed under one of the paid packages.",
       },
       {
-        q: "What happens when I hit my monthly quota?",
-        a: "On a hard-cap tier (Sandbox / Starter) further calls return 402 Payment Required with an upgrade prompt; the dashboard shows your usage bar at 100%. On a soft-cap tier (Build / Scale / Growth) you continue through the +25% headroom at the overage rate, then 402 above that. Quotas reset on the first of each calendar month.",
+        q: "Do you support procurement and security review?",
+        a: "Built in today: IP allowlisting, training opt-out, and per-organisation methodology and version pinning. Data handling, retention, and our sub-processors are documented in the public privacy, data, and security pages, and for your review we will sign a DPA and complete your security questionnaire. Formal certifications like SOC 2 and ISO 27001 are on the roadmap as we grow into larger regulated deals.",
       },
     ],
   },
@@ -266,7 +268,7 @@ export const TOPICS: Topic[] = [
     items: [
       {
         q: "How do I sign up?",
-        a: "Sign up with email and password at /sign-up. Google and GitHub OAuth are supported as alternatives. We send a verification email; you must verify before generating an API key.",
+        a: "Sign up with email and password at /sign-up, or use Google. We send a verification email; you must verify before generating an evaluation key on the free Developer tier.",
       },
       {
         q: "How do I reset my password?",

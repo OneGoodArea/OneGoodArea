@@ -365,7 +365,7 @@ const REFERENCES: RefTile[] = [
     num: "02",
     title: "MCP server",
     body:
-      "Add OneGoodArea to Claude Desktop, Cursor, or any MCP-compatible client. Four tools, stdio transport, npm-distributed.",
+      "Add OneGoodArea to Claude Desktop, Cursor, or any MCP-compatible client. 11 tools, stdio transport, npm-distributed.",
     status: "live",
     href: "/docs/mcp",
     cta: "Install guide",

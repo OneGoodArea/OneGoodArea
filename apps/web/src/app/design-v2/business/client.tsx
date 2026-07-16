@@ -709,9 +709,9 @@ function FinalCta() {
           One data and intelligence layer. Five buyer workflows.
         </h2>
         <p className="oga-biz-cta__lead">
-          Get an API key and integrate against the surfaces that already
-          exist. Pin the methodology version once and your team is on the
-          same numbers every quarter.
+          Integrate against the surfaces that already exist. Pin the
+          methodology version once and your team is on the same numbers
+          every quarter.
         </p>
         <div className="oga-biz-cta__ctas">
           <Link href={DEMO_URL} className="oga-btn oga-btn-primary">

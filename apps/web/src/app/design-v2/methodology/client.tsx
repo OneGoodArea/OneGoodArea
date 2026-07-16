@@ -300,7 +300,7 @@ const SCOPE_NOT: { tag: string; title: string; body: string }[] = [
   {
     tag: "Not",
     title: "Address-level",
-    body: "LSOA grain is the floor today. Address-level scoring via OS AddressBase Premium + UPRN is on the roadmap (AR-134).",
+    body: "LSOA grain is the floor today. Address-level scoring via OS AddressBase Premium + UPRN is on the roadmap.",
   },
   {
     tag: "MAUP",
