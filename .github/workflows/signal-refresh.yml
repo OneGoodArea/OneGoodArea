@@ -17,8 +17,8 @@ name: signal-refresh
 on:
   workflow_dispatch: {}
   schedule:
-    # 04:00 UTC on the 1st of each month. Light today (deprivation is static);
-    # becomes meaningful as monthly/quarterly sources (crime, prices) are added.
+    # 04:00 UTC on the 1st of each month. Refreshes the monthly sources
+    # (prices, crime) and re-derives; deprivation is static and no-ops.
     - cron: "0 4 1 * *"
 
 concurrency:
@@ -38,30 +38,47 @@ jobs:
           cache: npm
       - run: npm install --no-audit --no-fund
       - name: Migrate (idempotent)
-        run: npm run migrate -w @onegoodarea/api
+        run: bash .github/scripts/retry.sh npm run migrate -w @onegoodarea/api
       - name: Refresh deprivation (write-only)
-        run: npm run refresh:deprivation -w @onegoodarea/api
+        run: bash .github/scripts/retry.sh npm run refresh:deprivation -w @onegoodarea/api
       - name: Refresh prices (HM Land Registry, current year, write-only)
-        run: npm run refresh:prices -w @onegoodarea/api -- $(date -u +%Y)
+        run: bash .github/scripts/retry.sh npm run refresh:prices -w @onegoodarea/api -- $(date -u +%Y)
+      # Crime (police.uk street-level). The refresh CLI needs the bulk archive
+      # as a local directory. police.uk publishes a stable rolling ~36-month
+      # snapshot at latest.zip (~1.6GB) that unzips to
+      # <YYYY-MM>/<YYYY-MM>-<force>-street.csv. Download, unzip, refresh, then
+      # delete to reclaim runner disk. Write-only; the normalize step below
+      # picks up the raw crime values.
+      - name: Refresh crime (police.uk latest archive, write-only)
+        run: |
+          set -euo pipefail
+          work="$(mktemp -d)"
+          echo "Downloading police.uk latest.zip ..."
+          curl -fSL --retry 3 --retry-delay 15 -o "$work/latest.zip" https://data.police.uk/data/archive/latest.zip
+          ls -lh "$work/latest.zip"
+          unzip -q "$work/latest.zip" -d "$work/archive"
+          rm -f "$work/latest.zip"
+          bash .github/scripts/retry.sh npm run refresh:crime -w @onegoodarea/api -- "$work/archive"
+          rm -rf "$work"
       # First derive pass: YoY / 6m / trend-slope signals — depend on
       # time-series + normalized raw values, NOT on peer_assignments.
       # The peer-relative-z spec in derive.ts is also queued here but
       # produces zero rows on first run (peer_assignments empty); the
       # second derive pass below populates it after refresh:peers.
       - name: Derive signals — non-peer derivations (write-only)
-        run: npm run derive:signals -w @onegoodarea/api
+        run: bash .github/scripts/retry.sh npm run derive:signals -w @onegoodarea/api
       - name: Normalize all signals (covers raw + non-peer derived; idempotent)
-        run: npm run normalize:signals -w @onegoodarea/api
+        run: bash .github/scripts/retry.sh npm run normalize:signals -w @onegoodarea/api
       # Materialize the k-NN peer assignments off the normalized vectors —
       # ADR 0024. Heavy LATERAL k-NN, idempotent (ON CONFLICT DO UPDATE).
       - name: Refresh peer assignments (the moat's similarity graph)
-        run: npm run refresh:peers -w @onegoodarea/api
+        run: bash .github/scripts/retry.sh npm run refresh:peers -w @onegoodarea/api
       # Second derive pass: peer-relative-z signals now have a populated
       # peer_assignments table to JOIN against. Same CLI; the YoY etc.
       # specs no-op (idempotent), the peer-relative-z specs populate.
       - name: Derive signals — peer-relative pass (write-only)
-        run: npm run derive:signals -w @onegoodarea/api
+        run: bash .github/scripts/retry.sh npm run derive:signals -w @onegoodarea/api
       - name: Normalize all signals again (covers the peer-relative-z signals; idempotent)
-        run: npm run normalize:signals -w @onegoodarea/api
+        run: bash .github/scripts/retry.sh npm run normalize:signals -w @onegoodarea/api
       - name: Append time-series (the moat clock — un-backfillable history)
-        run: npm run timeseries:append -w @onegoodarea/api
+        run: bash .github/scripts/retry.sh npm run timeseries:append -w @onegoodarea/api
