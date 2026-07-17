@@ -286,16 +286,16 @@ export async function runOfstedRefresh(csvUrlArg?: string): Promise<OfstedRefres
     rows,
   );
 
-  // Collapse guard: abort BEFORE the delete if the load came back far smaller
-  // than the live table (broken CSV, geocoder down) rather than wipe it. The
-  // upserted rows stay; a later good run reconciles. Relative to the current
-  // table on purpose: the graded-school count declines over time because
-  // Ofsted removed overall-effectiveness grades from Sept 2024, so only
-  // schools still carrying a 1-4 grade are stored (~9.8k and falling, out of
-  // ~22k). A fixed floor would go stale; halving does not.
-  if (loaded < 1000 || (existing > 0 && loaded < existing / 2)) {
+  // Sanity guard on the LOAD, not the delete. `loaded` should be almost all of
+  // the graded schools we parsed from the CSV; a big shortfall means geocoding
+  // broke, so abort before the delete rather than wipe the table. Compare
+  // against the PARSED count, not the existing table: the first refresh
+  // legitimately shrinks the table a lot (the seed is months stale and Ofsted
+  // keeps removing overall grades since Sept 2024), and that large-but-real
+  // correction must be allowed through. `existing` is kept for the log only.
+  if (schools.length < 1000 || loaded < schools.length * 0.8) {
     throw new Error(
-      `[refresh:ofsted] loaded ${loaded} vs existing ${existing}; below safety floor, aborting before delete to protect ofsted_schools`,
+      `[refresh:ofsted] parsed ${schools.length}, loaded ${loaded} (existing ${existing}); load shortfall suggests a bad CSV or geocoder failure, aborting before delete`,
     );
   }
 
