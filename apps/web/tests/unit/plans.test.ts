@@ -103,8 +103,8 @@ describe("PLANS object integrity", () => {
     expect(PLANS.enterprise.mcpAccess).toBe(true);
   });
 
-  it("mcpAccess NOT included on Sandbox/Starter/Build/Scale (must add £29/mo add-on)", () => {
-    expect(PLANS.sandbox.mcpAccess).toBe(false);
+  it("mcpAccess: free on Sandbox (Developer, AR-487); Starter/Build/Scale add the £29/mo add-on", () => {
+    expect(PLANS.sandbox.mcpAccess).toBe(true);
     expect(PLANS.starter_v2.mcpAccess).toBe(false);
     expect(PLANS.build.mcpAccess).toBe(false);
     expect(PLANS.scale.mcpAccess).toBe(false);

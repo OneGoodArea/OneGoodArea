@@ -134,7 +134,9 @@ describe("POST /stripe/addon-checkout", () => {
 
   beforeEach(() => {
     mockHasAddon.mockResolvedValue(false);
-    mockGetPlan.mockResolvedValue("sandbox");
+    // AR-487: sandbox now includes MCP, so it short-circuits (plan_includes).
+    // Use "build" for the add-on flow: a paid tier that genuinely lacks MCP.
+    mockGetPlan.mockResolvedValue("build");
   });
 
   it("401s without a session token", async () => {

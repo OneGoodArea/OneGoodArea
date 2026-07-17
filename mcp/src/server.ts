@@ -140,9 +140,8 @@ async function checkMcpAccess(client: OogaApiClient): Promise<void> {
   if (!me.mcp_access) {
     process.stderr.write(
       `[oga-mcp] Your plan (${me.plan_name}) does not include MCP access.\n` +
-        `[oga-mcp] MCP is included free on Growth (£1,499/mo) and Enterprise tiers.\n` +
-        `[oga-mcp] On Sandbox / Starter / Build / Scale you can purchase the £29/mo MCP add-on.\n` +
-        `[oga-mcp] Upgrade or add MCP at https://www.onegoodarea.com/pricing\n`,
+        `[oga-mcp] The MCP server is included on the free Developer tier and every paid package.\n` +
+        `[oga-mcp] See https://www.onegoodarea.com/pricing or book a demo.\n`,
     );
     process.exit(1);
   }

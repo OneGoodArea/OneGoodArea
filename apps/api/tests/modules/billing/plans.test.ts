@@ -8,10 +8,10 @@ describe("plan catalog", () => {
     expect(PLANS.sandbox.apiCallsPerMonth).toBe(35);
     expect(PLANS.sandbox.price).toBe(0);
     expect(PLANS.sandbox.apiAccess).toBe(true);
-    expect(PLANS.sandbox.mcpAccess).toBe(false);
+    expect(PLANS.sandbox.mcpAccess).toBe(true); // AR-487: MCP free on Developer
   });
 
-  it("MCP is included on growth_v2 + enterprise only", () => {
+  it("MCP is included on growth_v2 + enterprise (paid) and the free sandbox tier (AR-487)", () => {
     expect(PLANS.growth_v2.mcpAccess).toBe(true);
     expect(PLANS.enterprise.mcpAccess).toBe(true);
     expect(PLANS.build.mcpAccess).toBe(false);

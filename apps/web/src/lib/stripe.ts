@@ -133,7 +133,7 @@ export const PLANS = {
     apiCallsPerMonth: 35,
     priceId: null,
     apiAccess: true,
-    mcpAccess: false,
+    mcpAccess: true, // AR-487: free Developer tier includes MCP (matches apps/api plans.ts)
     generation: "v2",
     overageMode: "hard" as const,
     overagePence: 0,
