@@ -72,10 +72,11 @@ export const PLANS = {
 
   /* ─── V2 ACTIVE (public on /pricing, AR-143) ───
    *
-   * mcpAccess: included free on growth_v2 + enterprise per AR-144 / AR-142
-   * pricing v2 spec. Sandbox/Starter/Build/Scale must purchase the £29/mo
-   * MCP add-on (purchase flow shipping in a follow-up; for now, "false" =
-   * no MCP access, MCP server refuses to start at /api/v1/me check).
+   * mcpAccess: free on the Developer/sandbox tier (AR-487, honouring the
+   * demo-led /pricing promise that MCP is a free-tier adoption hook) and on
+   * growth_v2 + enterprise. The interim paid tiers (starter_v2/build/scale)
+   * still gate MCP behind the £29/mo add-on. hasMcpAccess() enforces this;
+   * the MCP server refuses to start when /v1/me returns mcp_access: false.
    */
   sandbox: {
     name: "Sandbox",
@@ -83,7 +84,7 @@ export const PLANS = {
     apiCallsPerMonth: 35,
     priceId: null,
     apiAccess: true,
-    mcpAccess: false,
+    mcpAccess: true, // AR-487: free Developer tier includes MCP (the /pricing promise)
     generation: "v2",
     overageMode: "hard" as const,
     overagePence: 0,
