@@ -35,7 +35,7 @@ export async function getUserPlan(userId: string): Promise<PlanId> {
     WHERE user_id = ${userId} AND status = 'active'
   `;
   // Default for users with no subscription row = sandbox (v2). This is what
-  // makes the homepage's "Free sandbox · 35 API calls / month" claim TRUE.
+  // makes the homepage's "Free sandbox · 200 API calls / month" claim TRUE.
   // Existing v1 grandfathered users have an explicit subscriptions row with
   // their plan name and are unaffected.
   if (rows.length === 0) return "sandbox";
@@ -144,6 +144,42 @@ export async function canMakeApiCall(userId: string): Promise<{
     used,
     limit: superuser ? Infinity : limit,
   };
+}
+
+/* AR-488: NL (natural-language) calls hit /v1/query with a `question`, which
+   invokes the Anthropic-backed planner (executePlan stamps plan_source = 'nl').
+   Unlike the deterministic endpoints these carry a real per-call marginal cost,
+   so hard-overage tiers get a separate, tighter monthly NL sub-cap on top of the
+   total. Plans absent from this map have no NL sub-cap (Infinity). */
+export const NL_MONTHLY_LIMIT: Partial<Record<PlanId, number>> = {
+  sandbox: 10,
+};
+
+export async function getMonthlyNlCallCount(userId: string): Promise<number> {
+  const rows = await sql`
+    SELECT COUNT(*)::int as count FROM activity_events
+    WHERE user_id = ${userId}
+    AND event = 'api.query.executed'
+    AND metadata->>'plan_source' = 'nl'
+    AND created_at >= date_trunc('month', NOW())
+  `;
+  return row<CountRow>(rows[0]).count;
+}
+
+export async function canMakeNlCall(userId: string): Promise<{
+  allowed: boolean;
+  plan: PlanId;
+  used: number;
+  limit: number;
+}> {
+  const plan = await getUserPlan(userId);
+  const superuser = await isSuperuser(userId);
+  const capped = NL_MONTHLY_LIMIT[plan];
+  // Superuser and any plan without an NL sub-cap are unlimited; only the
+  // capped free tier pays for the COUNT query.
+  const limit = superuser || capped === undefined ? Infinity : capped;
+  const used = limit === Infinity ? 0 : await getMonthlyNlCallCount(userId);
+  return { allowed: used < limit, plan, used, limit };
 }
 
 /** The user's email, read live from the DB. Used by the Stripe checkout routes
