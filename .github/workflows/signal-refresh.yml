@@ -60,6 +60,12 @@ jobs:
           rm -f "$work/latest.zip"
           bash .github/scripts/retry.sh npm run refresh:crime -w @onegoodarea/api -- "$work/archive"
           rm -rf "$work"
+      # Ofsted (state-funded school inspections). No local archive: the refresh
+      # resolves the latest gov.uk CSV, geocodes via postcodes.io, and reloads
+      # ofsted_schools with provenance. Standalone table, independent of the
+      # signal store, so ordering vs derive/normalize does not matter.
+      - name: Refresh Ofsted (gov.uk latest inspections)
+        run: bash .github/scripts/retry.sh npm run refresh:ofsted -w @onegoodarea/api
       # First derive pass: YoY / 6m / trend-slope signals — depend on
       # time-series + normalized raw values, NOT on peer_assignments.
       # The peer-relative-z spec in derive.ts is also queued here but
