@@ -14,6 +14,7 @@ month (and on manual `workflow_dispatch`), against prod Neon via the
 | Deprivation | `refresh:deprivation` | England IMD 2025 + Wales WIMD 2019 + Scotland SIMD 2020 (static; re-runs no-op) |
 | Prices | `refresh:prices -- <year>` | HM Land Registry price paid, current year, at LSOA x month |
 | Crime | `refresh:crime -- <dir>` | Police.uk street-level crime at LSOA x month. The archive is downloaded in the step (see below) |
+| Ofsted | `refresh:ofsted` | State-funded school inspections into `ofsted_schools`. Resolves the latest gov.uk CSV, geocodes via postcodes.io, reloads with provenance (see below) |
 | Derive + normalize | `derive:signals`, `normalize:signals` | First pass: YoY, rolling trends, then percentiles within country scope |
 | Peers | `refresh:peers` | k-NN peer assignments off the normalized vectors |
 | Derive + normalize | `derive:signals`, `normalize:signals` | Second pass: peer-relative-z, then re-normalize |
@@ -39,15 +40,29 @@ To run it by hand against a local archive:
 DATABASE_URL=... npm run refresh:crime -w @onegoodarea/api -- <police-archive-folder>
 ```
 
+## Ofsted (auto-resolved on the cron)
+
+`refresh:ofsted` needs no local file. gov.uk has no stable "latest CSV" URL
+(the filename is dated monthly), so the job reads the index page and picks the
+"latest inspections as at <date>" CSV, geocodes postcodes via postcodes.io,
+and upserts `ofsted_schools`, then deletes any school not in the latest file.
+Every row carries an `updated_at` stamp and a `source_snapshots` row is written.
+
+Override the source with an explicit URL if needed:
+
+```bash
+DATABASE_URL=... npm run refresh:ofsted -w @onegoodarea/api -- "https://assets.publishing.service.gov.uk/.../file.csv"
+```
+
 ## Freshness and provenance
 
 Each source refresh writes a row to `source_snapshots` (source, ingested_at,
-row_count, notes). To check when crime last updated:
+row_count, notes). To check when a source last updated:
 
 ```sql
 SELECT ingested_at, row_count, notes
 FROM source_snapshots
-WHERE source = 'Police.uk street-level crime'
+WHERE source = 'Police.uk street-level crime'  -- or 'Ofsted state-funded school inspections'
 ORDER BY ingested_at DESC
 LIMIT 1;
 ```

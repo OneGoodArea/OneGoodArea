@@ -570,6 +570,10 @@ export const MIGRATIONS: Migration[] = [
         rating_text TEXT,
         inspection_date TEXT
       )`,
+      // AR-482: provenance stamp for the monthly refresh:ofsted job. NULL on
+      // rows seeded before the refresh existed; the first refresh sets it and
+      // deletes any rows it did not touch.
+      `ALTER TABLE ofsted_schools ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ`,
       `CREATE INDEX IF NOT EXISTS idx_ofsted_lat ON ofsted_schools (latitude)`,
       `CREATE INDEX IF NOT EXISTS idx_ofsted_lng ON ofsted_schools (longitude)`,
     ],
