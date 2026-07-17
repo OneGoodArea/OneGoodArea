@@ -255,6 +255,11 @@ export async function runOfstedRefresh(csvUrlArg?: string): Promise<OfstedRefres
     });
   }
 
+  // Pre-run row count, for the collapse guard below.
+  const existing = Number(
+    (await sql`SELECT COUNT(*)::int AS n FROM ofsted_schools`)[0]?.n ?? 0,
+  );
+
   const loaded = await bulkUpsert(
     run,
     {
@@ -281,13 +286,16 @@ export async function runOfstedRefresh(csvUrlArg?: string): Promise<OfstedRefres
     rows,
   );
 
-  // Safety floor: there are ~22k state schools, and a healthy run loads well
-  // over 10k. If far fewer loaded, something upstream broke (bad CSV, geocoder
-  // down), so abort BEFORE the delete rather than wipe the live table. The
-  // upserted rows stay; a later good run reconciles.
-  if (loaded < 10000) {
+  // Collapse guard: abort BEFORE the delete if the load came back far smaller
+  // than the live table (broken CSV, geocoder down) rather than wipe it. The
+  // upserted rows stay; a later good run reconciles. Relative to the current
+  // table on purpose: the graded-school count declines over time because
+  // Ofsted removed overall-effectiveness grades from Sept 2024, so only
+  // schools still carrying a 1-4 grade are stored (~9.8k and falling, out of
+  // ~22k). A fixed floor would go stale; halving does not.
+  if (loaded < 1000 || (existing > 0 && loaded < existing / 2)) {
     throw new Error(
-      `[refresh:ofsted] only ${loaded} schools loaded (expected ~20k); aborting before delete to protect ofsted_schools`,
+      `[refresh:ofsted] loaded ${loaded} vs existing ${existing}; below safety floor, aborting before delete to protect ofsted_schools`,
     );
   }
 
