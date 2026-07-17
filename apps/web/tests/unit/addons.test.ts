@@ -50,8 +50,8 @@ describe("ADDONS vs PLANS coherence (no contradictory entitlements)", () => {
     expect(PLANS.enterprise.mcpAccess).toBe(true);
   });
 
-  it("Sandbox/Starter/Build/Scale have mcpAccess: false (must purchase add-on)", () => {
-    expect(PLANS.sandbox.mcpAccess).toBe(false);
+  it("Sandbox (free Developer) includes MCP; Starter/Build/Scale purchase the add-on", () => {
+    expect(PLANS.sandbox.mcpAccess).toBe(true); // AR-487
     expect(PLANS.starter_v2.mcpAccess).toBe(false);
     expect(PLANS.build.mcpAccess).toBe(false);
     expect(PLANS.scale.mcpAccess).toBe(false);
@@ -83,8 +83,8 @@ describe("computeMcpAccess (pure decision logic)", () => {
     expect(computeMcpAccess("enterprise", false, false)).toBe(true);
   });
 
-  it("Sandbox without add-on = no MCP", () => {
-    expect(computeMcpAccess("sandbox", false, false)).toBe(false);
+  it("Sandbox includes MCP by plan, no add-on needed (AR-487)", () => {
+    expect(computeMcpAccess("sandbox", false, false)).toBe(true);
   });
 
   it("Sandbox WITH add-on = MCP granted", () => {
