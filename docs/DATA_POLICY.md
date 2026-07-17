@@ -2,7 +2,13 @@
 
 What OneGoodArea stores when you call the API, for how long, who can read it, and how to opt out.
 
-> Living document. Last updated 13 July 2026.
+> Living document. Last updated 17 July 2026.
+
+---
+
+## Area-level data, no personal data
+
+OneGoodArea processes area-level statistical data only. All signals are aggregated to small-area geographies (LSOA in England and Wales, Data Zone in Scotland), typically around 1,500 residents. We do not collect, store, or process personal data about individuals in our signal store, and no output can identify a person, household, or property.
 
 ---
 
