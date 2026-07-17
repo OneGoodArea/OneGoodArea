@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
 
 vi.mock("@/modules/api-keys", () => ({ validateApiKey: vi.fn() }));
 vi.mock("@/infrastructure/rate-limit", () => ({ rateLimit: vi.fn(), rateLimitHeaders: () => ({}) }));
-vi.mock("@/modules/usage", () => ({ hasApiAccess: vi.fn() }));
+vi.mock("@/modules/usage", () => ({ hasApiAccess: vi.fn(), canMakeApiCall: vi.fn(), canMakeNlCall: vi.fn() }));
 vi.mock("@/modules/tracking/activity", () => ({ trackEvent: vi.fn() }));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
 vi.mock("@/modules/orgs/bundles", () => ({
@@ -26,7 +26,7 @@ vi.mock("@/modules/intelligence", async () => {
 import { buildApp } from "@/app";
 import { validateApiKey } from "@/modules/api-keys";
 import { rateLimit } from "@/infrastructure/rate-limit";
-import { hasApiAccess } from "@/modules/usage";
+import { hasApiAccess, canMakeApiCall, canMakeNlCall } from "@/modules/usage";
 import { runQuery, AmbiguousLocationError } from "@/modules/intelligence";
 
 const app = await buildApp();
@@ -46,6 +46,8 @@ beforeEach(() => {
   mockValidate.mockResolvedValue({ userId: "user_1", orgId: null });
   mockRate.mockResolvedValue({ success: true, remaining: 29, reset: 0 });
   mockApiAccess.mockResolvedValue(true);
+  vi.mocked(canMakeApiCall).mockResolvedValue({ allowed: true, plan: "sandbox", used: 0, limit: 200 } as never);
+  vi.mocked(canMakeNlCall).mockResolvedValue({ allowed: true, plan: "sandbox", used: 0, limit: 10 } as never);
 });
 
 function post(body: unknown) {

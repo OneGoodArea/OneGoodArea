@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
 
 vi.mock("@/modules/api-keys", () => ({ validateApiKey: vi.fn() }));
 vi.mock("@/infrastructure/rate-limit", () => ({ rateLimit: vi.fn(), rateLimitHeaders: () => ({}) }));
-vi.mock("@/modules/usage", () => ({ hasApiAccess: vi.fn() }));
+vi.mock("@/modules/usage", () => ({ hasApiAccess: vi.fn(), canMakeApiCall: vi.fn() }));
 vi.mock("@/modules/tracking/activity", () => ({ trackEvent: vi.fn() }));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn(), query: vi.fn() }));
 vi.mock("@/modules/monitor", () => ({
@@ -14,7 +14,7 @@ vi.mock("@/modules/monitor", () => ({
 import { buildApp } from "@/app";
 import { validateApiKey } from "@/modules/api-keys";
 import { rateLimit } from "@/infrastructure/rate-limit";
-import { hasApiAccess } from "@/modules/usage";
+import { hasApiAccess, canMakeApiCall } from "@/modules/usage";
 import * as monitor from "@/modules/monitor";
 
 const app = await buildApp();
@@ -28,6 +28,7 @@ beforeEach(() => {
   vi.mocked(validateApiKey).mockResolvedValue({ userId: "user_1", orgId: null });
   vi.mocked(rateLimit).mockResolvedValue({ success: true, remaining: 29, reset: 0 });
   vi.mocked(hasApiAccess).mockResolvedValue(true);
+  vi.mocked(canMakeApiCall).mockResolvedValue({ allowed: true, plan: "sandbox", used: 0, limit: 200 } as never);
 });
 
 describe("portfolios CRUD", () => {

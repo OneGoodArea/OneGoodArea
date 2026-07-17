@@ -1,6 +1,7 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
 import { validateApiKey } from "../modules/api-keys";
-import { hasApiAccess } from "../modules/usage";
+import { hasApiAccess, canMakeApiCall } from "../modules/usage";
+import { PLANS } from "../modules/billing/plans";
 import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
 import { RATE_LIMITS } from "../infrastructure/config";
 import { clientIpOf } from "./http";
@@ -57,6 +58,20 @@ export async function requireApiAccess(request: FastifyRequest, reply: FastifyRe
 
   if (!(await hasApiAccess(userId))) {
     reply.code(403).send({ error: "API access not available on your current plan. Upgrade at /pricing." });
+    return null;
+  }
+
+  /* AR-488: enforce the monthly total-call quota for hard-overage tiers
+     (sandbox, starter_v2, and the v1 legacy tiers). Soft-overage tiers
+     (build / scale / growth) are allowed to exceed and bill the overage;
+     superuser has an Infinity limit so it never trips. Before this the
+     quota was display-only and the free tier was unbounded production. */
+  const quota = await canMakeApiCall(userId);
+  if (!quota.allowed && PLANS[quota.plan].overageMode === "hard") {
+    reply.code(429).send({
+      error: `Monthly call limit reached (${quota.limit} calls on the ${PLANS[quota.plan].name} plan). It resets at the start of next month. Upgrade at /pricing.`,
+      code: "monthly_quota_exceeded",
+    });
     return null;
   }
 

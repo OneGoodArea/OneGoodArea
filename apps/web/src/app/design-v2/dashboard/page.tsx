@@ -43,7 +43,7 @@ export default function DesignV2DashboardPage() {
       plan="sandbox"
       planName="Sandbox"
       used={12}
-      limit={35}
+      limit={200}
       mcp={{
         access: true,
         addonOwned: true,

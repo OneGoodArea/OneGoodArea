@@ -40,7 +40,7 @@ export type DisplayPlan = {
 };
 
 export const DISPLAY_PLANS: DisplayPlan[] = [
-  { id: "sandbox",    name: "Sandbox",  price: "£0",     cadence: "forever",   reports: "35 calls / month",      perReport: "no card required", blurb: "Evaluate the API across a handful of postcodes and intents. Hard cap.",  cta: "Start free", ctaBilling: "Sandbox", free: true },
+  { id: "sandbox",    name: "Sandbox",  price: "£0",     cadence: "forever",   reports: "200 calls / month",      perReport: "no card required", blurb: "Evaluate the API across a handful of postcodes and intents. Hard cap.",  cta: "Start free", ctaBilling: "Sandbox", free: true },
   { id: "starter_v2", name: "Starter",  price: "£49",    cadence: "/ month",   reports: "1,500 calls / month",   perReport: "£0.033 per call",  blurb: "Indie devs and small PropTech in early production.",                    cta: "Start building", ctaBilling: "Switch to Starter" },
   { id: "build",      name: "Build",    price: "£149",   cadence: "/ month",   reports: "6,000 calls / month",   perReport: "£0.025 per call",  blurb: "Niche PropTech, small InsureTech MGA, small CRE team.",                 cta: "Get Build", ctaBilling: "Switch to Build", highlight: true },
   { id: "scale",      name: "Scale",    price: "£499",   cadence: "/ month",   reports: "25,000 calls / month",  perReport: "£0.020 per call",  blurb: "Mid-tier challenger lender, mid insurer, mid PropTech.",                cta: "Get Scale", ctaBilling: "Switch to Scale" },

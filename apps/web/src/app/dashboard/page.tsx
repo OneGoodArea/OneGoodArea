@@ -64,7 +64,7 @@ export default async function DashboardPage() {
       plan={data?.plan ?? "sandbox"}
       planName={data?.planName ?? "Sandbox"}
       used={data?.used ?? 0}
-      limit={data?.limit ?? 35}
+      limit={data?.limit ?? 200}
       mcp={{
         access: data?.mcp?.access ?? false,
         addonOwned: data?.mcp?.addonOwned ?? false,

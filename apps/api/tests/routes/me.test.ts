@@ -87,7 +87,7 @@ beforeEach(() => {
   mockGetPlan.mockResolvedValue("sandbox");
   mockApiAccess.mockResolvedValue(true);
   mockMcpAccess.mockResolvedValue(false);
-  mockQuota.mockResolvedValue({ allowed: true, plan: "sandbox", used: 3, limit: 35 } as never);
+  mockQuota.mockResolvedValue({ allowed: true, plan: "sandbox", used: 3, limit: 200 } as never);
   mockAddons.mockResolvedValue([]);
   mockMcpUsage.mockResolvedValue(0);
   // Defaults for track and watchlist:
@@ -311,9 +311,9 @@ describe("GET /v1/me", () => {
     expect(body.plan_name).toBe("Sandbox");
     expect(body.api_access).toBe(true);
     expect(body.mcp_access).toBe(false);
-    expect(body.api_calls_per_month).toBe(35);
+    expect(body.api_calls_per_month).toBe(200);
     expect(body.used_this_month).toBe(3);
-    expect(body.limit_this_month).toBe(35);
+    expect(body.limit_this_month).toBe(200);
     expect(body.engine_version).toBe(METHODOLOGY_VERSION);
     expect(body.addons).toEqual([]);
   });

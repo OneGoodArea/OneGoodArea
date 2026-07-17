@@ -271,10 +271,10 @@ describe("GET /usage", () => {
   });
 
   it("returns the caller's quota usage", async () => {
-    mockQuota.mockResolvedValue({ allowed: true, plan: "sandbox", used: 3, limit: 35 } as never);
+    mockQuota.mockResolvedValue({ allowed: true, plan: "sandbox", used: 3, limit: 200 } as never);
     const res = await app.inject({ method: "GET", url: "/usage", headers: AUTH });
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toMatchObject({ allowed: true, used: 3, limit: 35 });
+    expect(res.json()).toMatchObject({ allowed: true, used: 3, limit: 200 });
   });
 });
 

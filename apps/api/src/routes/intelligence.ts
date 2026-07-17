@@ -1,5 +1,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { requireApiAccessWithOrg } from "../shared/auth-api";
+import { canMakeNlCall } from "../modules/usage";
+import { PLANS } from "../modules/billing/plans";
 import { headerString } from "../shared/http";
 import { effectiveEngineVersionForCaller } from "../shared/bundles";
 import { isAppError } from "../shared/errors";
@@ -50,6 +52,23 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
         if (!ctx) return reply;
         const parsed = parseQueryRequest(request.body);
         if (!parsed.ok) return reply.code(400).send({ error: parsed.error });
+
+        /* AR-488: the NL path invokes the Anthropic-backed planner (real
+           marginal cost). Enforce the per-plan monthly NL sub-cap before we
+           touch the LLM. Programmatic {plan} calls carry no `question` and
+           are unaffected. */
+        const isNlCall =
+          "question" in parsed.req &&
+          typeof (parsed.req as { question?: unknown }).question === "string";
+        if (isNlCall) {
+          const nlQuota = await canMakeNlCall(ctx.userId);
+          if (!nlQuota.allowed) {
+            return reply.code(429).send({
+              error: `Monthly natural-language query limit reached (${nlQuota.limit} on the ${PLANS[nlQuota.plan].name} plan). Programmatic plan queries are not affected. Upgrade at /pricing.`,
+              code: "nl_quota_exceeded",
+            });
+          }
+        }
 
         // Levers (AR-195): if ?bundle= or body.bundle is set, resolve the
         // bundle's whitelist for the caller's org. The plan is then

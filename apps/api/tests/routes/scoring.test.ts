@@ -51,7 +51,7 @@ beforeEach(() => {
   mockValidate.mockResolvedValue({ userId: "user_1", orgId: null });
   mockRate.mockResolvedValue({ success: true, remaining: 29, reset: 0 });
   mockApiAccess.mockResolvedValue(true);
-  mockQuota.mockResolvedValue({ allowed: true, plan: "sandbox", used: 0, limit: 35 } as never);
+  mockQuota.mockResolvedValue({ allowed: true, plan: "sandbox", used: 0, limit: 200 } as never);
   mockScore.mockResolvedValue(SCORE_RESULT);
 });
 

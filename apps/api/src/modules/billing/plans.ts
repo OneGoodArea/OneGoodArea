@@ -81,7 +81,7 @@ export const PLANS = {
   sandbox: {
     name: "Sandbox",
     price: 0,
-    apiCallsPerMonth: 35,
+    apiCallsPerMonth: 200, // AR-488: sized for the free-tier growth loop (was 35)
     priceId: null,
     apiAccess: true,
     mcpAccess: true, // AR-487: free Developer tier includes MCP (the /pricing promise)

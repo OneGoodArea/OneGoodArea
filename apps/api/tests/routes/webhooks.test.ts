@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/modules/api-keys", () => ({ validateApiKey: vi.fn() }));
 vi.mock("@/infrastructure/rate-limit", () => ({ rateLimit: vi.fn(), rateLimitHeaders: () => ({}) }));
-vi.mock("@/modules/usage", () => ({ hasApiAccess: vi.fn() }));
+vi.mock("@/modules/usage", () => ({ hasApiAccess: vi.fn(), canMakeApiCall: vi.fn() }));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
 // Partial mock: keep the pure validators (validateWebhookUrl / validateEventTypes)
 // real so the 400 paths exercise the genuine logic; only the DB-touching CRUD
@@ -20,7 +20,7 @@ vi.mock("@/modules/webhooks", async () => {
 import { buildApp } from "@/app";
 import { validateApiKey } from "@/modules/api-keys";
 import { rateLimit } from "@/infrastructure/rate-limit";
-import { hasApiAccess } from "@/modules/usage";
+import { hasApiAccess, canMakeApiCall } from "@/modules/usage";
 import {
   createWebhookSubscription,
   listWebhookSubscriptions,
@@ -44,6 +44,7 @@ beforeEach(() => {
   mockValidate.mockResolvedValue({ userId: "user_1", orgId: null });
   mockRate.mockResolvedValue({ success: true, remaining: 29, reset: 0 });
   mockApiAccess.mockResolvedValue(true);
+  vi.mocked(canMakeApiCall).mockResolvedValue({ allowed: true, plan: "sandbox", used: 0, limit: 200 } as never);
   mockCreate.mockResolvedValue({
     id: "whsub_1",
     url: "https://example.com/hook",
