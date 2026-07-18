@@ -25,7 +25,7 @@
    - Inspect the existing codebase, architecture, conventions, and patterns before making changes.
 
 1. Plan should be made interactively in small increments
-   - There ios no Big Bang for creating a plan
+   - There is no Big Bang for creating a plan
    - A plan will be done interactively for each step
    - All and each steps must be human approved, so the plan file (whose naming convention you can find below) will be changed quite a lot
    - YOU ALWAYS start writing a smal file, describing the purpose, the JIRA that will be associated with it and the steps. After that you detail each step in interactive user sessions
@@ -47,20 +47,24 @@
 
 ## Git & Change Management
 
-7. Never modify `main` or `master` directly.
+1. Never modify `main` or `master` directly.
    - Always create a dedicated branch first.
 
-8. Every logical change must be a separate commit.
+1. Every logical change must be a separate commit.
    - Keep commits small, incremental, and reviewable.
    - Avoid bundling unrelated changes together.
 
-9. Use clear commit messages that describe intent.
+1. Use clear commit messages that describe intent.
    - Prefer:
      - `Add validation for missing workspace config`
    - Avoid:
      - `fix stuff`
 
-1. Create the branch with the JIRA key in the plan or in the prompt
+1. Branch naming by phase:
+    - Planning: `plan/<slug>` — NO JIRA number (planning is spec work, JIRA numbers belong to implementation).
+    - Implementation: branch carries the JIRA key (e.g. `feat/AR-464-...`), created from the plan.
+
+1. Every JIRA that is in progress MUST be in a Sprint, i.e, the current sprint
 ---
 
 ## Safety & Reliability
