@@ -1,11 +1,13 @@
 # Plan 040 — QA scripts: reset playground rate-limit + bootstrap test key Make targets
 
-**Status:** Implementation
+**Status:** Done
 **JIRA:** AR-464 (To Do → In Progress → Done)
-**Follow-up:** AR-478 (cleanup old e2e + bootstrap fallback after this is proven)
+**Merged:** PR #354 into `main`
+**Follow-up:** AR-478 → covered by Plan 042
 **Branch:** `feat/AR-464-reset-playground-rate-limit` (off `main`)
 **Owner:** Pedro / Claude
 **Started:** 2026-07-15
+**Completed:** 2026-07-15
 
 ## Purpose
 
@@ -138,12 +140,10 @@ Scenario:
 
 Runs against the compose test stack.
 
-### Step 8 — Cleanup (AR-478, out of initial scope)
+### Step 8 — Cleanup (AR-478 → moved to Plan 042)
 
-After this plan is merged and the new scripts are proven:
-- Refactor `e2e/` properly (move old e2e scenarios)
-- Delete old `apps/api/src/scripts/bootstrap-test-key.ts`
-- Delete `scripts/e2e-2026-07-01.mjs`
+Moved out to Plan 042 / AR-478, now that the new scripts are merged and proven.
+Out of scope for this plan; tracked separately.
 
 ## Reference files
 
