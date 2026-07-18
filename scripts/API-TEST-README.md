@@ -69,11 +69,11 @@ export OGA_CRON_SECRET="cron_secret_xyz"
 
 **Option A: Via CLI (quickest)**
 ```bash
-make bootstrap-test-key
+make scripts-bootstrap-test-key
 ```
 Creates a disposable test API key. Customize with:
 ```bash
-make bootstrap-test-key BOOTSTRAP_EMAIL=mytest@example.com BOOTSTRAP_PLAN=sandbox
+make scripts-bootstrap-test-key ARGS="--email mytest@example.com --plan sandbox"
 ```
 
 **Option B: Via API (programmatic)**
@@ -150,7 +150,7 @@ set -e
 
 # 1. Bootstrap API key
 echo "Creating API key..."
-API_KEY=$(make bootstrap-test-key BOOTSTRAP_EMAIL=testuser@test.com 2>/dev/null | grep -oP 'oga_\w+' | head -1)
+API_KEY=$(make scripts-bootstrap-test-key ARGS="--email testuser@test.com" 2>/dev/null | grep -oP 'oga_\w+' | head -1)
 
 # 2. Register & login to get session
 echo "Creating test user..."
@@ -280,4 +280,4 @@ export OGA_CRON_SECRET="cron_..."
 ## Related
 
 - [ENDPOINTS-BY-PRODUCT.md](docs/API-REFERENCE/ENDPOINTS-BY-PRODUCT.md) — Complete endpoint reference
-- [Makefile](Makefile) — `make bootstrap-test-key` to create a test API key
+- [Makefile](Makefile) — `make scripts-bootstrap-test-key` to create a test API key

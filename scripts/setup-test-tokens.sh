@@ -29,12 +29,12 @@ echo ""
 
 # === 1. Bootstrap API Key ===
 echo "Step 1/3: Creating API key..."
-API_KEY=$(make bootstrap-test-key BOOTSTRAP_EMAIL="$TEST_EMAIL" BOOTSTRAP_PLAN=sandbox 2>/dev/null | grep -oP 'oga_\w+' | head -1 || echo "")
+API_KEY=$(make scripts-bootstrap-test-key ARGS="--email $TEST_EMAIL --plan sandbox" 2>/dev/null | grep -oP 'oga_\w+' | head -1 || echo "")
 
 if [ -z "$API_KEY" ]; then
   echo "⚠ Could not bootstrap API key via make. Trying direct DB approach..."
   # Fallback: would need direct DB access
-  echo "Run 'make bootstrap-test-key' manually and set OGA_API_KEY"
+  echo "Run 'make scripts-bootstrap-test-key' manually and set OGA_API_KEY"
   API_KEY=""
 else
   echo "✓ API_KEY: ${API_KEY:0:15}..."

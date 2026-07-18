@@ -19,7 +19,7 @@ Authorization: Bearer oga_a1b2c3d4e5f6...
 For a disposable local test account + API key, run:
 
 ```bash
-npm run bootstrap:test-key -w @onegoodarea/api -- --email api-test@onegoodarea.local --plan sandbox
+make scripts-bootstrap-test-key ARGS="--email api-test@onegoodarea.local --plan sandbox"
 ```
 
 It creates or updates a local credentials user, gives them an API-enabled sandbox plan, creates a personal org, and prints a fresh `oga_...` key.
