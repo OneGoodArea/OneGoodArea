@@ -73,11 +73,6 @@ const PROCESSORS = [
     purpose: "Authentication provider",
     data: "Name, email, profile image (provided by Google)",
   },
-  {
-    name: "GitHub OAuth",
-    purpose: "Authentication provider",
-    data: "Name, email, profile image (provided by GitHub)",
-  },
 ];
 
 export default function PrivacyClient() {
@@ -280,11 +275,12 @@ export default function PrivacyClient() {
         <LegalP>
           We implement appropriate technical and organisational measures
           to protect your personal data, including: encrypted connections
-          (HTTPS) for all traffic, hashed passwords using the Web Crypto
-          API, encrypted database connections to Neon Postgres, fingerprint
-          + salted-hash storage for API keys (raw secret shown once and
-          never persisted), and environment-variable-based secret
-          management on Vercel and Render.
+          (HTTPS) for all traffic, passwords hashed with PBKDF2-SHA256
+          (600,000 iterations with a unique per-password salt), encrypted
+          database connections to Neon Postgres, fingerprint + SHA-256
+          hash storage for API keys (raw secret shown once and never
+          persisted), and environment-variable-based secret management on
+          Vercel and Render.
         </LegalP>
         <LegalP>
           While we take reasonable precautions, no method of transmission
