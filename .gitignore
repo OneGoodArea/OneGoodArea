@@ -97,3 +97,7 @@ apps/api/dist/
 
 # Personal narrative / story doc (keep private)
 STORY.md
+
+# git worktrees for parallel plan implementation (Plan 047) — live inside the
+# project at .worktrees/<slug>; never commit a worktree.
+.worktrees/
