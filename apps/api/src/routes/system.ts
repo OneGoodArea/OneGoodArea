@@ -33,7 +33,16 @@ export function registerSystemRoutes(app: FastifyInstance): void {
       intents: INTENTS,
     }));
 
-    app.get("/cron/rescore", async (request, reply) => {
+    app.get("/cron/rescore",
+      {
+        schema: {
+          tags: ["Cron"],
+          summary: "Rescore cron",
+          description: "Trigger rescore of pending areas. Internal cron endpoint.",
+          "x-internal": true,
+        },
+      },
+      async (request, reply) => {
       const config = getConfig();
       const expected = config.cronSecret;
       if (!expected) {
@@ -60,7 +69,16 @@ export function registerSystemRoutes(app: FastifyInstance): void {
     /* AR-377: nightly retention purge for training tables. Same auth
        pattern as /cron/rescore — Bearer CRON_SECRET. Caller should
        schedule via Render cron jobs (or equivalent) once daily. */
-    app.get("/cron/training-retention", async (request, reply) => {
+    app.get("/cron/training-retention",
+      {
+        schema: {
+          tags: ["Cron"],
+          summary: "Training retention cron",
+          description: "Nightly retention purge for training tables. Internal cron endpoint.",
+          "x-internal": true,
+        },
+      },
+      async (request, reply) => {
       const config = getConfig();
       const expected = config.cronSecret;
       if (!expected) {

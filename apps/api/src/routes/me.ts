@@ -23,6 +23,7 @@ import type { Country } from "../modules/signals/peers";
 import type { PlanId } from "../modules/billing/plans";
 import { getOrgIfMember, getRoleInOrg, updateOrg, hasAtLeastRole } from "../modules/orgs";
 import { UpdateOrgRequestSchema, type OrgRole } from "@onegoodarea/contracts";
+import { zodToJsonSchema } from "../infrastructure/utils/zod-to-json-schema";
 import {
   createWebhookSubscription,
   listWebhookSubscriptions,
@@ -40,7 +41,15 @@ export function registerMeRoutes(app: FastifyInstance): void {
                 "Reports"
             ],
             "summary": "My activity log",
-            "description": "Recent API activity for the authenticated user."
+            "description": "Recent API activity for the authenticated user.",
+            "security": [{ "sessionCookie": [] }],
+            "querystring": {
+              "type": "object",
+              "properties": {
+                "page": { "type": "integer", "default": 1 },
+                "page_size": { "type": "integer", "default": 20 }
+              }
+            }
         },
       }, async (request, reply) => {
       const userId = await authenticateSession(request, reply);
@@ -68,6 +77,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "Is the caller a superuser?",
           description: "Returns { is_superuser: boolean }. Session-authed; 401 if not signed in.",
+          security: [{ "sessionCookie": [] }],
         },
       },
       async (request, reply) => {
@@ -85,7 +95,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
        Replaces the apps/web /api/me/webhooks family direct SQL. */
     app.get("/me/webhooks",
       {
-        schema: { tags: ["Me"], summary: "List my webhook subscriptions", description: "Returns the caller's webhook subscriptions (no secret)." },
+        schema: { tags: ["Me"], summary: "List my webhook subscriptions", description: "Returns the caller's webhook subscriptions (no secret).", security: [{ "sessionCookie": [] }] },
       },
       async (request, reply) => {
         const userId = await authenticateSession(request, reply);
@@ -96,7 +106,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
 
     app.post("/me/webhooks",
       {
-        schema: { tags: ["Me"], summary: "Create a webhook subscription", description: "Register a new webhook URL. Returns the signing secret ONCE." },
+        schema: { tags: ["Me"], summary: "Create a webhook subscription", description: "Register a new webhook URL. Returns the signing secret ONCE.", security: [{ "sessionCookie": [] }], body: { type: "object", required: ["url", "events"], properties: { url: { type: "string" }, events: { type: "array", items: { type: "string" } } } } },
       },
       async (request, reply) => {
         const userId = await authenticateSession(request, reply);
@@ -121,7 +131,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
 
     app.delete<{ Params: { id: string } }>("/me/webhooks/:id",
       {
-        schema: { tags: ["Me"], summary: "Delete a webhook subscription", description: "Revoke a webhook subscription owned by the caller." },
+        schema: { tags: ["Me"], summary: "Delete a webhook subscription", description: "Revoke a webhook subscription owned by the caller.", security: [{ "sessionCookie": [] }], params: { type: "object", required: ["id"], properties: { id: { type: "string" } } } },
       },
       async (request, reply) => {
         const userId = await authenticateSession(request, reply);
@@ -133,7 +143,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
 
     app.post<{ Params: { id: string } }>("/me/webhooks/:id/rotate-secret",
       {
-        schema: { tags: ["Me"], summary: "Rotate webhook signing secret", description: "Generate a new HMAC signing secret. Returns it ONCE; the old secret is invalidated immediately." },
+        schema: { tags: ["Me"], summary: "Rotate webhook signing secret", description: "Generate a new HMAC signing secret. Returns it ONCE; the old secret is invalidated immediately.", security: [{ "sessionCookie": [] }], params: { type: "object", required: ["id"], properties: { id: { type: "string" } } } },
       },
       async (request, reply) => {
         const userId = await authenticateSession(request, reply);
@@ -154,6 +164,15 @@ export function registerMeRoutes(app: FastifyInstance): void {
           tags: ["Me"],
           summary: "List my portfolios (paginated, searchable)",
           description: "Paginated portfolios for the caller. Query: ?page=1&page_size=20&q=<substring>. Inline-joins areas for the page rows.",
+          security: [{ "sessionCookie": [] }],
+          querystring: {
+            type: "object",
+            properties: {
+              page: { type: "integer", default: 1 },
+              page_size: { type: "integer", default: 20 },
+              q: { type: "string" },
+            },
+          },
         },
       },
       async (request, reply) => {
@@ -242,6 +261,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           tags: ["Me"],
           summary: "30-day score-call usage by preset",
           description: "Counts api.score.computed events over the last 30 days, grouped by preset.",
+          security: [{ "sessionCookie": [] }],
         },
       },
       async (request, reply) => {
@@ -289,6 +309,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           tags: ["Me"],
           summary: "Get my primary org + role",
           description: "Returns { org, caller_role } for the caller's primary org (owner-first, then oldest membership), or { org: null, caller_role: null } if the caller has no org.",
+          security: [{ "sessionCookie": [] }],
         },
       },
       async (request, reply) => {
@@ -321,6 +342,8 @@ export function registerMeRoutes(app: FastifyInstance): void {
           tags: ["Me"],
           summary: "Update my primary org",
           description: "Partial update of the caller's primary org. Owner or admin only. Returns the updated org + caller_role.",
+          security: [{ "sessionCookie": [] }],
+          body: zodToJsonSchema(UpdateOrgRequestSchema),
         },
       },
       async (request, reply) => {
@@ -373,6 +396,13 @@ export function registerMeRoutes(app: FastifyInstance): void {
           tags: ["Me"],
           summary: "Update my profile",
           description: "Partial update of the caller's user profile. Today: `intent` only.",
+          security: [{ "sessionCookie": [] }],
+          body: {
+            type: "object",
+            properties: {
+              intents: { type: "array", items: { type: "string" } },
+            },
+          },
         },
       },
       async (request, reply) => {
@@ -410,7 +440,8 @@ export function registerMeRoutes(app: FastifyInstance): void {
                 "Reports"
             ],
             "summary": "Current user profile",
-            "description": "Returns the authenticated user's profile and usage stats."
+            "description": "Returns the authenticated user's profile and usage stats.",
+            "security": [{ "bearerAuth": [] }]
         },
       }, async (request, reply) => {
       const authHeader = headerString(request.headers.authorization);
@@ -529,7 +560,16 @@ export function registerMeRoutes(app: FastifyInstance): void {
       };
     });
 
-    app.get("/usage", async (request, reply) => {
+    app.get("/usage",
+      {
+        schema: {
+          tags: ["Usage"],
+          summary: "Check usage",
+          description: "Check current API usage and limits.",
+          security: [{ "sessionCookie": [] }],
+        },
+      },
+      async (request, reply) => {
       try {
         const userId = await authenticateSession(request, reply);
         if (!userId) return reply; // 401 already sent
@@ -542,7 +582,16 @@ export function registerMeRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.get("/dashboard", async (request, reply) => {
+    app.get("/dashboard",
+      {
+        schema: {
+          tags: ["Dashboard"],
+          summary: "Dashboard data",
+          description: "Composite dashboard data for the authenticated user.",
+          security: [{ "sessionCookie": [] }],
+        },
+      },
+      async (request, reply) => {
       try {
         const userId = await authenticateSession(request, reply);
         if (!userId) return reply; // 401 already sent
@@ -621,7 +670,16 @@ export function registerMeRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.get("/settings/subscription", async (request, reply) => {
+    app.get("/settings/subscription",
+      {
+        schema: {
+          tags: ["Settings"],
+          summary: "Subscription info",
+          description: "Get current subscription plan and status.",
+          security: [{ "sessionCookie": [] }],
+        },
+      },
+      async (request, reply) => {
       try {
         const userId = await authenticateSession(request, reply);
         if (!userId) return reply; // 401 already sent
@@ -659,7 +717,25 @@ export function registerMeRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.post("/track", async (request, reply) => {
+    app.post("/track",
+      {
+        schema: {
+          tags: ["Tracking"],
+          summary: "Track pageview",
+          description: "Record a pageview event.",
+          security: [{ "sessionCookie": [] }],
+          body: {
+            type: "object",
+            required: ["path"],
+            properties: {
+              path: { type: "string" },
+              referrer: { type: "string" },
+              sessionId: { type: "string" },
+            },
+          },
+        },
+      },
+      async (request, reply) => {
       try {
         const { path, referrer, sessionId } = (request.body ?? {}) as {
           path?: unknown;
@@ -706,7 +782,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
     });
 
     app.get("/watchlist", {
-      schema: { tags: ["Watchlist"], summary: "Get watchlist", description: "Get the authenticated user's saved areas watchlist." },
+      schema: { tags: ["Watchlist"], summary: "Get watchlist", description: "Get the authenticated user's saved areas watchlist.", security: [{ "sessionCookie": [] }] },
     }, async (request, reply) => {
       try {
         const userId = await authenticateSession(request, reply);
@@ -726,7 +802,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
     });
 
     app.post("/watchlist", {
-      schema: { tags: ["Watchlist"], summary: "Add to watchlist", description: "Add an area to the user's watchlist." },
+      schema: { tags: ["Watchlist"], summary: "Add to watchlist", description: "Add an area to the user's watchlist.", security: [{ "sessionCookie": [] }], body: { type: "object", required: ["postcode"], properties: { postcode: { type: "string" }, label: { type: "string" }, intent: { type: "string" } } } },
     }, async (request, reply) => {
       try {
         const userId = await authenticateSession(request, reply);
@@ -758,7 +834,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
     });
 
     app.delete<{ Params: { id: string } }>("/watchlist/:id", {
-      schema: { tags: ["Watchlist"], summary: "Remove from watchlist", description: "Remove an area from the user's watchlist." },
+      schema: { tags: ["Watchlist"], summary: "Remove from watchlist", description: "Remove an area from the user's watchlist.", security: [{ "sessionCookie": [] }], params: { type: "object", required: ["id"], properties: { id: { type: "string" } } } },
     }, async (request, reply) => {
       try {
         const userId = await authenticateSession(request, reply);

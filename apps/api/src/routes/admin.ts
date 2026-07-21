@@ -7,7 +7,17 @@ import { getAnalytics, getTrafficAnalytics, getAudienceStats, getUsageStats, get
 
 /** admin route handlers — extracted from app.ts per AR-286. */
 export function registerAdminRoutes(app: FastifyInstance): void {
-    app.get("/admin/analytics", async (request, reply) => {
+    app.get("/admin/analytics",
+      {
+        schema: {
+          tags: ["Admin"],
+          summary: "Analytics overview",
+          description: "High-level admin analytics.",
+          security: [{ "sessionCookie": [] }],
+          "x-internal": true,
+        },
+      },
+      async (request, reply) => {
       try {
         const userId = await authenticateSession(request, reply);
         if (!userId) return reply;
@@ -22,7 +32,17 @@ export function registerAdminRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.get("/admin/traffic-analytics", async (request, reply) => {
+    app.get("/admin/traffic-analytics",
+      {
+        schema: {
+          tags: ["Admin"],
+          summary: "Traffic analytics",
+          description: "Traffic analytics data.",
+          security: [{ "sessionCookie": [] }],
+          "x-internal": true,
+        },
+      },
+      async (request, reply) => {
       try {
         const userId = await authenticateSession(request, reply);
         if (!userId) return reply;
@@ -47,6 +67,8 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "Audience stats (superuser only)",
           description: "Composite stats for the Audience tab: total/active users, signup curve, orgs by size + activity, top countries, churn signal.",
+          security: [{ "sessionCookie": [] }],
+          "x-internal": true,
         },
       },
       async (request, reply) => {
@@ -73,6 +95,8 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "Usage stats (superuser only)",
           description: "Composite stats for the Usage tab: per-product call counts + endpoint heatmap.",
+          security: [{ "sessionCookie": [] }],
+          "x-internal": true,
         },
       },
       async (request, reply) => {
@@ -99,6 +123,8 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "Revenue extras (superuser only)",
           description: "ARR + MCP add-on uptake + active add-on counts.",
+          security: [{ "sessionCookie": [] }],
+          "x-internal": true,
         },
       },
       async (request, reply) => {
@@ -126,6 +152,8 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "MCP adoption stats (superuser only)",
           description: "Aggregate MCP usage last 30 days: total events, unique orgs/users, top orgs, breakdown by client app. No raw metadata.",
+          security: [{ "sessionCookie": [] }],
+          "x-internal": true,
         },
       },
       async (request, reply) => {
@@ -151,6 +179,8 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "Training corpus stats (superuser only)",
           description: "Aggregate planner-pair counts (30d + total + last_seen) plus opt-out denominator over active API keys. No raw training data.",
+          security: [{ "sessionCookie": [] }],
+          "x-internal": true,
         },
       },
       async (request, reply) => {

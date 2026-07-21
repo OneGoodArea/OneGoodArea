@@ -16,7 +16,14 @@ import { logger } from "../modules/tracking/structured-logger";
 import { trackEvent } from "../modules/tracking/activity";
 /** auth route handlers — extracted from app.ts per AR-286. */
 export function registerAuthRoutes(app: FastifyInstance): void {
-    app.delete("/settings/delete-account", async (request, reply) => {
+    app.delete("/settings/delete-account", {
+      schema: {
+        tags: ["Settings"],
+        summary: "Delete account",
+        description: "Permanently delete the authenticated user and all associated data.",
+        "x-internal": true,
+      },
+    }, async (request, reply) => {
       try {
         const userId = await authenticateSession(request, reply);
         if (!userId) return reply; // 401 already sent
@@ -41,7 +48,14 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.post("/auth/register", async (request, reply) => {
+    app.post("/auth/register", {
+      schema: {
+        tags: ["Auth"],
+        summary: "Register",
+        description: "Create a new account with email and password.",
+        "x-internal": true,
+      },
+    }, async (request, reply) => {
       try {
         const ip = headerString(request.headers["x-forwarded-for"])?.split(",")[0]?.trim() || "unknown";
         const rl = await rateLimit(`register:${ip}`, RATE_LIMITS.authRegister);
@@ -129,7 +143,14 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.post("/auth/resend-verification", async (request, reply) => {
+    app.post("/auth/resend-verification", {
+      schema: {
+        tags: ["Auth"],
+        summary: "Resend verification email",
+        description: "Resend the email verification link.",
+        "x-internal": true,
+      },
+    }, async (request, reply) => {
       try {
         const { email } = (request.body ?? {}) as { email?: unknown };
         if (!email || typeof email !== "string") {
@@ -174,7 +195,14 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.post("/auth/forgot-password", async (request, reply) => {
+    app.post("/auth/forgot-password", {
+      schema: {
+        tags: ["Auth"],
+        summary: "Forgot password",
+        description: "Send a password reset email.",
+        "x-internal": true,
+      },
+    }, async (request, reply) => {
       try {
         const { email } = (request.body ?? {}) as { email?: unknown };
         if (!email || typeof email !== "string") {
@@ -221,7 +249,14 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.post("/auth/reset-password", async (request, reply) => {
+    app.post("/auth/reset-password", {
+      schema: {
+        tags: ["Auth"],
+        summary: "Reset password",
+        description: "Reset password using a token from the email link.",
+        "x-internal": true,
+      },
+    }, async (request, reply) => {
       try {
         const { token, password } = (request.body ?? {}) as { token?: unknown; password?: unknown };
         if (!token || typeof token !== "string") {
@@ -260,7 +295,14 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.post("/auth/login", async (request, reply) => {
+    app.post("/auth/login", {
+      schema: {
+        tags: ["Auth"],
+        summary: "Login",
+        description: "Authenticate with email and password.",
+        "x-internal": true,
+      },
+    }, async (request, reply) => {
       try {
         const ip = headerString(request.headers["x-forwarded-for"])?.split(",")[0]?.trim() || "unknown";
         const rl = await rateLimit(`login:${ip}`, {
@@ -312,7 +354,14 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.post("/auth/magic-link/request", async (request, reply) => {
+    app.post("/auth/magic-link/request", {
+      schema: {
+        tags: ["Auth"],
+        summary: "Request magic link",
+        description: "Send a magic login link to the user's email.",
+        "x-internal": true,
+      },
+    }, async (request, reply) => {
       try {
         const ip = headerString(request.headers["x-forwarded-for"])?.split(",")[0]?.trim() || "unknown";
         const rl = await rateLimit(`magic-link-request:${ip}`, {
@@ -359,7 +408,14 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.get("/auth/check-email", async (request, reply) => {
+    app.get("/auth/check-email", {
+      schema: {
+        tags: ["Auth"],
+        summary: "Check email existence (GET)",
+        description: "Check if an email address is already registered.",
+        "x-internal": true,
+      },
+    }, async (request, reply) => {
       try {
         const ip = headerString(request.headers["x-forwarded-for"])?.split(",")[0]?.trim() || "unknown";
         const rl = await rateLimit(`check-email:${ip}`, {
@@ -395,7 +451,14 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.post("/auth/check-email", async (request, reply) => {
+    app.post("/auth/check-email", {
+      schema: {
+        tags: ["Auth"],
+        summary: "Check email existence (POST)",
+        description: "Check if an email address is already registered.",
+        "x-internal": true,
+      },
+    }, async (request, reply) => {
       try {
         const ip = headerString(request.headers["x-forwarded-for"])?.split(",")[0]?.trim() || "unknown";
         const rl = await rateLimit(`check-email:${ip}`, {
@@ -431,7 +494,14 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.post("/auth/oauth-callback", async (request, reply) => {
+    app.post("/auth/oauth-callback", {
+      schema: {
+        tags: ["Auth"],
+        summary: "OAuth callback",
+        description: "Handle OAuth provider callback (Google).",
+        "x-internal": true,
+      },
+    }, async (request, reply) => {
       try {
         const { email, name, image, provider } = (request.body ?? {}) as {
           email?: unknown;
@@ -478,7 +548,14 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.post("/settings/password", async (request, reply) => {
+    app.post("/settings/password", {
+      schema: {
+        tags: ["Settings"],
+        summary: "Change password",
+        description: "Change the authenticated user's password.",
+        "x-internal": true,
+      },
+    }, async (request, reply) => {
       try {
         const userId = await authenticateSession(request, reply);
         if (!userId) return reply; // 401 already sent

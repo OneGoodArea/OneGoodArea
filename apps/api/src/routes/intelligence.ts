@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import { QueryRequestSchema, PeersRequestSchema, InsightsRequestSchema, FindForecastPlanSchema } from "@onegoodarea/contracts";
 import { requireApiAccessWithOrg } from "../shared/auth-api";
 import { canMakeNlCall } from "../modules/usage";
 import { PLANS } from "../modules/billing/plans";
@@ -23,6 +24,7 @@ import { sql } from "../infrastructure/db/client";
 import { getCohort } from "../modules/orgs/cohorts";
 import { METHODOLOGY_VERSION } from "../modules/engine/methodology";
 import type { Country } from "../modules/signals/peers";
+import { zodToJsonSchema } from "../infrastructure/utils/zod-to-json-schema";
 /** intelligence route handlers — extracted from app.ts per AR-286. */
 export function registerIntelligenceRoutes(app: FastifyInstance): void {
   const guardSignalsCtx = async (
@@ -41,7 +43,16 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
             ],
             "summary": "Query intelligence",
             "description": "Run a query plan or natural-language question against the intelligence moat. Supports rank_areas, get_area, score_area, compare_areas, find_peers, find_insights, and find_forecast.",
-            "body": { "type": "object", "properties": { "question": { "type": "string" } }, "example": { "question": "best areas for families in London" } }
+            "security": [{ "bearerAuth": [] }],
+            "body": {
+              "oneOf": [
+                { ...zodToJsonSchema(QueryRequestSchema), "description": "Natural language question or programmatic plan." },
+                { "type": "object", "properties": { "question": { "type": "string", "minLength": 1 } }, "required": ["question"], "example": { "question": "best areas for families in London" } },
+                { "type": "object", "properties": { "plan": { "type": "object" } }, "required": ["plan"] },
+              ],
+              "description": "Natural language question or a programmatic plan object.",
+            },
+            "querystring": { "type": "object", "properties": { "bundle": { "type": "string", "description": "Optional bundle ID to scope available signals." } } },
         },
       }, async (request, reply) => {
       try {
@@ -204,7 +215,30 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
             ],
             "summary": "Find peers",
             "description": "Find k-nearest-neighbour peers for an area by normalized signal values.",
-            "body": { "type": "object", "properties": { "area": { "type": "string" }, "k": { "type": "number" } }, "example": { "area": "SW1A 1AA", "k": 10 } }
+            "security": [{ "bearerAuth": [] }],
+            "body": {
+              "type": "object",
+              "required": ["target"],
+              "properties": {
+                "target": {
+                  "type": "object",
+                  "required": [],
+                  "properties": {
+                    "geo_code": { "type": "string", "minLength": 1 },
+                    "postcode": { "type": "string", "minLength": 1 },
+                    "area": { "type": "string", "minLength": 1 },
+                  },
+                  "description": "Exactly one of geo_code, postcode, or area must be set.",
+                },
+                "signals": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "maxItems": 20, "description": "Subset of signal dimensions to compare on." },
+                "country": { "type": "string", "enum": ["England", "Wales", "Scotland"] },
+                "lad": { "type": "string" },
+                "k": { "type": "integer", "exclusiveMinimum": 0, "maximum": 200 },
+                "min_signals": { "type": "integer", "exclusiveMinimum": 0, "maximum": 20 },
+                "cohort_id": { "type": "string", "description": "Scope candidates to this org cohort." },
+              },
+              "example": { "target": { "postcode": "SW1A 1AA" }, "k": 10 },
+            },
         },
       }, async (request, reply) => {
       try {
@@ -308,7 +342,19 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
             ],
             "summary": "Find insights",
             "description": "Rank areas by anomaly (ABS peer-relative z-score) on a chosen signal.",
-            "body": { "type": "object", "properties": { "signal_key": { "type": "string" }, "country": { "type": "string" }, "k": { "type": "number" } }, "example": { "signal_key": "crime.total_12m", "country": "England", "k": 20 } }
+            "security": [{ "bearerAuth": [] }],
+            "body": {
+              "type": "object",
+              "required": ["signal_key"],
+              "properties": {
+                "signal_key": { "type": "string", "minLength": 1, "description": "Peer-relative-z derived signal key (e.g. 'crime.total_12m_peer_relative_z')." },
+                "country": { "type": "string", "enum": ["England", "Wales", "Scotland"] },
+                "lad": { "type": "string" },
+                "min_abs_z": { "type": "number", "minimum": 0 },
+                "k": { "type": "integer", "exclusiveMinimum": 0, "maximum": 500 },
+              },
+              "example": { "signal_key": "crime.total_12m_peer_relative_z", "country": "England", "k": 20 },
+            },
         },
       }, async (request, reply) => {
       try {
@@ -373,7 +419,27 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
                 "Intelligence"
             ],
             "summary": "Forecast signal",
-            "description": "Project a signal forward in time using linear regression over the trailing window."
+            "description": "Project a signal forward in time using linear regression over the trailing window.",
+            "security": [{ "bearerAuth": [] }],
+            "body": {
+              "type": "object",
+              "required": ["target"],
+              "properties": {
+                "target": {
+                  "type": "object",
+                  "properties": {
+                    "geo_code": { "type": "string", "minLength": 1 },
+                    "postcode": { "type": "string", "minLength": 1 },
+                    "area": { "type": "string", "minLength": 1 },
+                  },
+                  "description": "Exactly one of geo_code, postcode, or area must be set.",
+                },
+                "signal_key": { "type": "string", "minLength": 1 },
+                "window_months": { "type": "integer", "minimum": 6, "maximum": 120 },
+                "horizon_months": { "type": "integer", "exclusiveMinimum": 0, "maximum": 60 },
+              },
+              "example": { "target": { "postcode": "SW1A 1AA" }, "signal_key": "crime.total_12m", "window_months": 24, "horizon_months": 12 },
+            },
         },
       }, async (request, reply) => {
       try {

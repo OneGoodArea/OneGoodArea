@@ -32,7 +32,15 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
             ],
             "summary": "Create portfolio",
             "description": "Create a new portfolio to track a book of areas.",
-            "body": { "type": "object", "properties": { "name": { "type": "string" } }, "example": { "name": "London investments" } }
+            "security": [{ "bearerAuth": [] }],
+            "body": {
+              "type": "object",
+              "required": ["name"],
+              "properties": {
+                "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+              },
+              "example": { "name": "London investments" },
+            },
         },
       }, async (request, reply) => {
       try {
@@ -59,7 +67,8 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
                 "Portfolios"
             ],
             "summary": "List portfolios",
-            "description": "List all portfolios for the authenticated user."
+            "description": "List all portfolios for the authenticated user.",
+            "security": [{ "bearerAuth": [] }],
         },
       }, async (request, reply) => {
       try {
@@ -80,7 +89,9 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
                 "Portfolios"
             ],
             "summary": "Get portfolio",
-            "description": "Get a portfolio with its tracked areas."
+            "description": "Get a portfolio with its tracked areas.",
+            "security": [{ "bearerAuth": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
         },
       }, async (request, reply) => {
       try {
@@ -104,7 +115,9 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
                 "Portfolios"
             ],
             "summary": "Delete portfolio",
-            "description": "Delete a portfolio and its tracked areas."
+            "description": "Delete a portfolio and its tracked areas.",
+            "security": [{ "bearerAuth": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
         },
       }, async (request, reply) => {
       try {
@@ -128,7 +141,27 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
                 "Portfolios"
             ],
             "summary": "Add areas to portfolio",
-            "description": "Add one or more areas to a portfolio."
+            "description": "Add one or more areas to a portfolio.",
+            "security": [{ "bearerAuth": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            "body": {
+              "type": "object",
+              "required": ["areas"],
+              "properties": {
+                "areas": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["area"],
+                    "properties": {
+                      "area": { "type": "string", "minLength": 1 },
+                      "label": { "type": "string", "nullable": true },
+                    },
+                  },
+                  "minItems": 1,
+                },
+              },
+            },
         },
       }, async (request, reply) => {
       try {
@@ -174,7 +207,15 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
                 "Portfolios"
             ],
             "summary": "Enrich portfolio",
-            "description": "Bulk-score every area in the portfolio."
+            "description": "Bulk-score every area in the portfolio.",
+            "security": [{ "bearerAuth": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            "body": {
+              "type": "object",
+              "properties": {
+                "preset": { "type": "string", "enum": ["moving", "business", "investing", "research"] },
+              },
+            },
         },
       }, async (request, reply) => {
       try {
@@ -205,7 +246,18 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
                 "Portfolios"
             ],
             "summary": "Detect portfolio changes",
-            "description": "Detect material signal changes for tracked areas between periods."
+            "description": "Detect material signal changes for tracked areas between periods.",
+            "security": [{ "bearerAuth": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            "body": {
+              "type": "object",
+              "properties": {
+                "baseline": { "type": "string", "enum": ["previous", "first"] },
+                "threshold_pct": { "type": "number", "minimum": 0 },
+                "min_transactions": { "type": "number", "minimum": 0 },
+                "emit": { "type": "boolean" },
+              },
+            },
         },
       }, async (request, reply) => {
       try {
@@ -262,7 +314,9 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
                 "Portfolios"
             ],
             "summary": "Probe portfolio changes (read-only)",
-            "description": "Read-only variant of POST /changes. Detects material signal changes for tracked areas without triggering webhooks. Use this for dashboards and previews; use POST when you want the side-effects."
+            "description": "Read-only variant of POST /changes. Detects material signal changes for tracked areas without triggering webhooks. Use this for dashboards and previews; use POST when you want the side-effects.",
+            "security": [{ "bearerAuth": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
         },
       }, async (request, reply) => {
       try {

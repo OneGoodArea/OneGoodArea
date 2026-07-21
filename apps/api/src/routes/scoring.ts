@@ -20,7 +20,27 @@ export function registerScoringRoutes(app: FastifyInstance): void {
             ],
             "summary": "Score an area",
             "description": "Deterministic composite score for an area by preset or custom weights. Returns component dimensions + confidence.",
-            "body": { "type": "object", "properties": { "area": { "type": "string" }, "preset": { "type": "string" } }, "example": { "area": "M1 1AE", "preset": "business" } }
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "body": {
+              "type": "object",
+              "required": ["area"],
+              "properties": {
+                "area": { "type": "string", "minLength": 1, "description": "UK postcode or place name." },
+                "preset": { "type": "string", "enum": ["moving", "business", "investing", "research"] },
+                "weights": { "type": "object", "additionalProperties": { "type": "number", "exclusiveMinimum": 0 }, "description": "Custom dimension weights (keys depend on preset)." },
+                "preset_id": { "type": "string", "description": "Org-saved preset ID. Mutually exclusive with preset/weights." },
+                "explain": { "type": "boolean" },
+                "bundle": { "type": "string", "description": "Optional bundle ID to scope available signals." },
+              },
+              "example": { "area": "M1 1AE", "preset": "business" },
+            },
+            "querystring": {
+              "type": "object",
+              "properties": {
+                "bundle": { "type": "string" },
+                "explain": { "type": "string", "enum": ["true", "false"] },
+              },
+            },
         },
       }, async (request, reply) => {
       try {

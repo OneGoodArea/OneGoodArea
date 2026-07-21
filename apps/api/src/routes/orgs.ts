@@ -5,6 +5,7 @@ import { isAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { createOrgWithOwner, listOrgsForUser, getOrgIfMember, updateOrg, getRoleInOrg, hasAtLeastRole, deleteOrg } from "../modules/orgs";
 import { trackEvent } from "../modules/tracking/activity";
+import { zodToJsonSchema } from "../infrastructure/utils/zod-to-json-schema";
 
 /** orgs route handlers — extracted from app.ts per AR-286. */
 export function registerOrgsRoutes(app: FastifyInstance): void {
@@ -16,7 +17,8 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
             ],
             "summary": "Create organization",
             "description": "Creates a new organization. The caller becomes the owner.",
-            "body": { "type": "object", "properties": { "name": { "type": "string" }, "slug": { "type": "string" } }, "example": { "name": "Acme Corp", "slug": "acme-corp" } }
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "body": zodToJsonSchema(CreateOrgRequestSchema),
         },
       }, async (request, reply) => {
       try {
@@ -52,7 +54,8 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
                 "Orgs"
             ],
             "summary": "List organizations",
-            "description": "List organizations the caller is a member of, with their role."
+            "description": "List organizations the caller is a member of, with their role.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
         },
       }, async (request, reply) => {
       try {
@@ -74,7 +77,9 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
                 "Orgs"
             ],
             "summary": "Get organization",
-            "description": "Get organization details by ID."
+            "description": "Get organization details by ID.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
         },
       }, async (request, reply) => {
       try {
@@ -101,7 +106,9 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
                 "Orgs"
             ],
             "summary": "Delete organization",
-            "description": "Delete an organization and every row that references it (members, presets, bundles, cohorts, methodology pins, invitations). Owner-only. Personal orgs cannot be deleted."
+            "description": "Delete an organization and every row that references it (members, presets, bundles, cohorts, methodology pins, invitations). Owner-only. Personal orgs cannot be deleted.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
         },
       }, async (request, reply) => {
       try {
@@ -133,7 +140,10 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
                 "Orgs"
             ],
             "summary": "Update organization",
-            "description": "Update organization name, slug, or white-label settings."
+            "description": "Update organization name, slug, or white-label settings.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            "body": zodToJsonSchema(UpdateOrgRequestSchema),
         },
       }, async (request, reply) => {
       try {

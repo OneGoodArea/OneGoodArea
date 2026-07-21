@@ -81,6 +81,12 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
             scheme: "bearer",
             description: "Bridge token minted by the web BFF. Internal use only.",
           },
+          sessionCookie: {
+            type: "apiKey",
+            in: "cookie",
+            name: "session",
+            description: "Session cookie (browser login). Use for dashboard routes.",
+          },
         },
       },
     },

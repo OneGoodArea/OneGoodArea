@@ -7,6 +7,7 @@ import { getOrgIfMember, hasAtLeastRole } from "../modules/orgs";
 import { getMethodologyPin, setMethodologyPin, clearMethodologyPin } from "../modules/orgs/methodology";
 import { getSupportedEngineVersions } from "../modules/engine/version";
 import { trackEvent } from "../modules/tracking/activity";
+import { zodToJsonSchema } from "../infrastructure/utils/zod-to-json-schema";
 
 import { getRoleInOrg } from "../modules/orgs";
 /** org-methodology route handlers — extracted from app.ts per AR-286. */
@@ -18,7 +19,9 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
                 "Methodology"
             ],
             "summary": "Get methodology pin",
-            "description": "Get the engine version pin for an organization."
+            "description": "Get the engine version pin for an organization.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
         },
       }, async (request, reply) => {
       try {
@@ -43,7 +46,10 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
                 "Methodology"
             ],
             "summary": "Set methodology pin",
-            "description": "Pin a specific engine version for the organization."
+            "description": "Pin a specific engine version for the organization.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            "body": zodToJsonSchema(SetMethodologyPinRequestSchema),
         },
       }, async (request, reply) => {
       try {
@@ -85,7 +91,9 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
                 "Methodology"
             ],
             "summary": "Clear methodology pin",
-            "description": "Remove the engine version pin (revert to latest)."
+            "description": "Remove the engine version pin (revert to latest).",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
         },
       }, async (request, reply) => {
       try {

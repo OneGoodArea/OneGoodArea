@@ -7,6 +7,7 @@ import { getOrgIfMember, hasAtLeastRole } from "../modules/orgs";
 import { requireLeversAccess } from "../shared/require-levers";
 import { listPresets, getPreset, createPreset, updatePreset, deletePreset, findUnknownWeightKeys } from "../modules/orgs/presets";
 import { trackEvent } from "../modules/tracking/activity";
+import { zodToJsonSchema } from "../infrastructure/utils/zod-to-json-schema";
 
 import { getRoleInOrg } from "../modules/orgs";
 /** org-presets route handlers — extracted from app.ts per AR-286. */
@@ -18,7 +19,10 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
                 "Presets"
             ],
             "summary": "Create preset",
-            "description": "Create a scoring preset for an organization."
+            "description": "Create a scoring preset for an organization.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            "body": zodToJsonSchema(CreatePresetRequestSchema),
         },
       }, async (request, reply) => {
       try {
@@ -69,7 +73,9 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
                 "Presets"
             ],
             "summary": "List presets",
-            "description": "List scoring presets for an organization."
+            "description": "List scoring presets for an organization.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
         },
       }, async (request, reply) => {
       try {
@@ -95,7 +101,13 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
                 "Presets"
             ],
             "summary": "Get preset",
-            "description": "Get a scoring preset by ID."
+            "description": "Get a scoring preset by ID.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": {
+              "type": "object",
+              "required": ["id", "presetId"],
+              "properties": { "id": { "type": "string" }, "presetId": { "type": "string" } },
+            },
         },
       }, async (request, reply) => {
       try {
@@ -121,7 +133,14 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
                 "Presets"
             ],
             "summary": "Update preset",
-            "description": "Update a scoring preset's name, base preset, or weights."
+            "description": "Update a scoring preset's name, base preset, or weights.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": {
+              "type": "object",
+              "required": ["id", "presetId"],
+              "properties": { "id": { "type": "string" }, "presetId": { "type": "string" } },
+            },
+            "body": zodToJsonSchema(UpdatePresetRequestSchema),
         },
       }, async (request, reply) => {
       try {
@@ -179,7 +198,13 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
                 "Presets"
             ],
             "summary": "Delete preset",
-            "description": "Delete a scoring preset."
+            "description": "Delete a scoring preset.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": {
+              "type": "object",
+              "required": ["id", "presetId"],
+              "properties": { "id": { "type": "string" }, "presetId": { "type": "string" } },
+            },
         },
       }, async (request, reply) => {
       try {
