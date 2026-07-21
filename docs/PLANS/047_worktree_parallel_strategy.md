@@ -37,7 +37,7 @@ merged into `main` — minimizing context-switching and merge friction.
 | 043 Branded /playground surface | AR-498 | AR-505..AR-508 |
 | 044 EPIC B (tiers + demo-key quota) | AR-499 | AR-510..AR-515 |
 | 045 User tier flags | AR-500 | AR-516..AR-519 |
-| 046 OpenAPI spec sync | AR-501 | AR-520..AR-524 |
+| 046 OpenAPI spec sync | AR-501 | AR-520..AR-524, AR-541 |
 | 048 Single-source Zod | AR-502 | AR-525..AR-529 |
 | 049 Scalar branding lockdown | AR-503 | AR-530..AR-534 |
 | 050 Retire proxy + /playground module | AR-504 | AR-535..AR-540 |
@@ -61,6 +61,9 @@ branch gets its own worktree. Branch naming: `feat/<JIRA-KEY>-<slug>`.
 ### Parallel waves
 - **Wave 1 (fully parallel, no shared code):** 046 and 045.
   - 046 touches only `apps/api` route `.schema` + a spec test. No dependency on 045.
+    Internally, 046 splits into Wave 1 (46.2a: public v1 API-key routes, AR-521)
+    and Wave 2 (46.2b: session/dashboard routes + internal marking, AR-541) — both
+    commits on the same branch, sequential.
   - 045 touches only `users` schema + gated write + self-scoped read. No dependency on 046.
   - Both worked simultaneously in separate worktrees; each opens its own PR.
 - **Wave 1b (after 046, no shared code with Wave 1):** 050 and 048.
@@ -174,6 +177,9 @@ git worktree prune
 - Worktrees share the same `.git` but separate working dirs + node_modules per
   workspace — run `npm install` inside each worktree after add (or symlink
   node_modules to avoid re-install).
+- 046 has internal waves (46.2a Wave 1 → 46.2b Wave 2) — both are commits on the
+  same branch, not separate worktrees. The overall wave sequencing (046 ‖ 045 in
+  Wave 1) still applies at the plan level.
 - Stripe mock + Neon test DB: each worktree's tests need their own env; the
   existing `local:test:*` Make targets assume one tree — run tests serially per
   worktree or point each at an isolated DB (the ephemeral `compose.test.yml`
