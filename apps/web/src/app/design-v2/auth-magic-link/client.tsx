@@ -11,7 +11,7 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   AuthShell,
   AuthTitle,
@@ -36,7 +36,6 @@ export default function MagicLinkClient() {
 type ViewState = "signing-in" | "failure";
 
 function MagicLinkInner() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"));
@@ -64,10 +63,9 @@ function MagicLinkInner() {
           setView("failure");
           return;
         }
-        /* Success — router push and refresh so the session populates
-           before the new page renders. */
-        router.push(callbackUrl);
-        router.refresh();
+        /* Success — hard navigation so the browser sends the newly-set
+           session cookie and the destination's server auth() sees it. */
+        window.location.assign(callbackUrl);
       } catch {
         if (!cancelled) setView("failure");
       }
@@ -75,7 +73,7 @@ function MagicLinkInner() {
     return () => {
       cancelled = true;
     };
-  }, [token, callbackUrl, router]);
+  }, [token, callbackUrl]);
 
   if (view === "failure") {
     return (
