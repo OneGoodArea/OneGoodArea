@@ -16,6 +16,10 @@ export interface UserRow {
      that SELECT a narrower set of columns still typecheck — only
      isSuperuser actually reads this field. */
   is_superuser?: boolean;
+  /* AR-500 (Plan 045): user tier for EPIC B tier/quota/LLM-routing.
+     Optional so existing callers that SELECT narrower columns still typecheck.
+     Values: anonymous | logged_in | basic | high_tier | engineering | superuser */
+  tier?: string;
 }
 
 export interface ReportRow {
