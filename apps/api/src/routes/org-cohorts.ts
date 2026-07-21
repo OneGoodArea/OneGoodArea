@@ -1,4 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { ZodTypeProvider } from "@fastify/type-provider-zod";
+import { z } from "zod";
 import { CreateCohortRequestSchema, UpdateCohortRequestSchema } from "@onegoodarea/contracts";
 import { authenticateEither } from "../shared/auth-either";
 import { isAppError } from "../shared/errors";
@@ -7,12 +9,14 @@ import { getOrgIfMember, hasAtLeastRole } from "../modules/orgs";
 import { requireLeversAccess } from "../shared/require-levers";
 import { listCohorts, getCohort, createCohort, updateCohort, deleteCohort } from "../modules/orgs/cohorts";
 import { trackEvent } from "../modules/tracking/activity";
-import { zodToJsonSchema } from "../infrastructure/utils/zod-to-json-schema";
 
 import { getRoleInOrg } from "../modules/orgs";
 /** org-cohorts route handlers — extracted from app.ts per AR-286. */
+const IdParamsSchema = z.object({ id: z.string() });
+
 export function registerOrgCohortsRoutes(app: FastifyInstance): void {
-    app.post("/v1/orgs/:id/cohorts",
+    const typed = app.withTypeProvider<ZodTypeProvider>();
+    typed.post("/v1/orgs/:id/cohorts",
       {
       schema: {
             "tags": [
@@ -21,8 +25,8 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
             "summary": "Create cohort",
             "description": "Create an area cohort for an organization.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
-            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
-            "body": zodToJsonSchema(CreateCohortRequestSchema),
+            "params": IdParamsSchema,
+            "body": CreateCohortRequestSchema,
         },
       }, async (request, reply) => {
       try {
@@ -35,15 +39,11 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
           return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
         }
         if (!(await requireLeversAccess(userId, reply))) return reply;
-        const parsed = CreateCohortRequestSchema.safeParse(request.body ?? {});
-        if (!parsed.success) {
-          return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
-        }
         const cohort = await createCohort({
           orgId,
-          name: parsed.data.name,
-          slug: parsed.data.slug,
-          geoCodes: parsed.data.geo_codes,
+          name: request.body.name,
+          slug: request.body.slug,
+          geoCodes: request.body.geo_codes,
         });
         trackEvent("api.cohort.created", userId, { orgId, cohortId: cohort.id, size: cohort.geo_codes.length }, orgId);
         return reply.code(201).send(cohort);
@@ -58,7 +58,7 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.get("/v1/orgs/:id/cohorts",
+    typed.get("/v1/orgs/:id/cohorts",
       {
       schema: {
             "tags": [
@@ -67,7 +67,7 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
             "summary": "List cohorts",
             "description": "List area cohorts for an organization.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
-            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            "params": IdParamsSchema,
         },
       }, async (request, reply) => {
       try {
@@ -86,7 +86,7 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.get("/v1/orgs/:id/cohorts/:cohortId",
+    typed.get("/v1/orgs/:id/cohorts/:cohortId",
       {
       schema: {
             "tags": [
@@ -118,7 +118,7 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.patch("/v1/orgs/:id/cohorts/:cohortId",
+    typed.patch("/v1/orgs/:id/cohorts/:cohortId",
       {
       schema: {
             "tags": [
@@ -132,7 +132,7 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
               "required": ["id", "cohortId"],
               "properties": { "id": { "type": "string" }, "cohortId": { "type": "string" } },
             },
-            "body": zodToJsonSchema(UpdateCohortRequestSchema),
+            "body": UpdateCohortRequestSchema,
         },
       }, async (request, reply) => {
       try {
@@ -144,14 +144,10 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
         if (!hasAtLeastRole(role, "admin")) {
           return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
         }
-        const parsed = UpdateCohortRequestSchema.safeParse(request.body ?? {});
-        if (!parsed.success) {
-          return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
-        }
         const updated = await updateCohort(orgId, cohortId, {
-          name: parsed.data.name,
-          slug: parsed.data.slug,
-          geoCodes: parsed.data.geo_codes,
+          name: request.body.name,
+          slug: request.body.slug,
+          geoCodes: request.body.geo_codes,
         });
         if (!updated) return reply.code(404).send({ error: "Cohort not found" });
         trackEvent("api.cohort.updated", userId, { orgId, cohortId }, orgId);
@@ -167,7 +163,7 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.delete("/v1/orgs/:id/cohorts/:cohortId",
+    typed.delete("/v1/orgs/:id/cohorts/:cohortId",
       {
       schema: {
             "tags": [

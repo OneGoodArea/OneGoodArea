@@ -1,4 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { ZodTypeProvider } from "@fastify/type-provider-zod";
+import { z } from "zod";
 import { SetMethodologyPinRequestSchema } from "@onegoodarea/contracts";
 import { authenticateEither } from "../shared/auth-either";
 import { isAppError } from "../shared/errors";
@@ -7,12 +9,14 @@ import { getOrgIfMember, hasAtLeastRole } from "../modules/orgs";
 import { getMethodologyPin, setMethodologyPin, clearMethodologyPin } from "../modules/orgs/methodology";
 import { getSupportedEngineVersions } from "../modules/engine/version";
 import { trackEvent } from "../modules/tracking/activity";
-import { zodToJsonSchema } from "../infrastructure/utils/zod-to-json-schema";
 
 import { getRoleInOrg } from "../modules/orgs";
 /** org-methodology route handlers — extracted from app.ts per AR-286. */
+const IdParamsSchema = z.object({ id: z.string() });
+
 export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
-    app.get("/v1/orgs/:id/methodology",
+    const typed = app.withTypeProvider<ZodTypeProvider>();
+    typed.get("/v1/orgs/:id/methodology",
       {
       schema: {
             "tags": [
@@ -21,7 +25,7 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
             "summary": "Get methodology pin",
             "description": "Get the engine version pin for an organization.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
-            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            "params": IdParamsSchema,
         },
       }, async (request, reply) => {
       try {
@@ -39,7 +43,7 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.put("/v1/orgs/:id/methodology",
+    typed.put("/v1/orgs/:id/methodology",
       {
       schema: {
             "tags": [
@@ -48,8 +52,8 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
             "summary": "Set methodology pin",
             "description": "Pin a specific engine version for the organization.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
-            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
-            "body": zodToJsonSchema(SetMethodologyPinRequestSchema),
+            "params": IdParamsSchema,
+            "body": SetMethodologyPinRequestSchema,
         },
       }, async (request, reply) => {
       try {
@@ -62,21 +66,17 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
         if (!hasAtLeastRole(role, "owner")) {
           return reply.code(403).send({ error: "Owner-only operation.", code: "owner_required" });
         }
-        const parsed = SetMethodologyPinRequestSchema.safeParse(request.body ?? {});
-        if (!parsed.success) {
-          return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
-        }
         const supported = getSupportedEngineVersions();
-        if (!supported.includes(parsed.data.engine_version)) {
+        if (!supported.includes(request.body.engine_version)) {
           return reply.code(400).send({
-            error: `Unsupported engine_version "${parsed.data.engine_version}". Supported: ${supported.join(", ")}.`,
+            error: `Unsupported engine_version "${request.body.engine_version}". Supported: ${supported.join(", ")}.`,
             code: "unsupported_engine_version",
             supported_versions: supported,
           });
         }
-        await setMethodologyPin(orgId, parsed.data.engine_version);
-        trackEvent("api.methodology.pinned", userId, { orgId, engineVersion: parsed.data.engine_version }, orgId);
-        return reply.code(200).send({ engine_version: parsed.data.engine_version, pinned: true });
+        await setMethodologyPin(orgId, request.body.engine_version);
+        trackEvent("api.methodology.pinned", userId, { orgId, engineVersion: request.body.engine_version }, orgId);
+        return reply.code(200).send({ engine_version: request.body.engine_version, pinned: true });
       } catch (error) {
         if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id/methodology] set error:", error);
@@ -84,7 +84,7 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.delete("/v1/orgs/:id/methodology",
+    typed.delete("/v1/orgs/:id/methodology",
       {
       schema: {
             "tags": [
@@ -93,7 +93,7 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
             "summary": "Clear methodology pin",
             "description": "Remove the engine version pin (revert to latest).",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
-            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            "params": IdParamsSchema,
         },
       }, async (request, reply) => {
       try {

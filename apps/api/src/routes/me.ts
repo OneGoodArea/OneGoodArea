@@ -1,4 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { ZodTypeProvider } from "@fastify/type-provider-zod";
+import { z } from "zod";
 import { authenticate } from "../shared/auth-api";
 import { authenticateSession } from "../shared/auth-session";
 import { headerString, clientIpOf } from "../shared/http";
@@ -23,7 +25,6 @@ import type { Country } from "../modules/signals/peers";
 import type { PlanId } from "../modules/billing/plans";
 import { getOrgIfMember, getRoleInOrg, updateOrg, hasAtLeastRole } from "../modules/orgs";
 import { UpdateOrgRequestSchema, type OrgRole } from "@onegoodarea/contracts";
-import { zodToJsonSchema } from "../infrastructure/utils/zod-to-json-schema";
 import {
   createWebhookSubscription,
   listWebhookSubscriptions,
@@ -32,9 +33,13 @@ import {
   validateWebhookUrl,
   validateEventTypes,
 } from "../modules/webhooks";
+
+const IdParamsSchema = z.object({ id: z.string() });
+
 /** me route handlers — extracted from app.ts per AR-286. */
 export function registerMeRoutes(app: FastifyInstance): void {
-    app.get("/me/activity",
+    const typed = app.withTypeProvider<ZodTypeProvider>();
+    typed.get("/me/activity",
       {
       schema: {
             "tags": [
@@ -43,22 +48,17 @@ export function registerMeRoutes(app: FastifyInstance): void {
             "summary": "My activity log",
             "description": "Recent API activity for the authenticated user.",
             "security": [{ "sessionCookie": [] }],
-            "querystring": {
-              "type": "object",
-              "properties": {
-                "page": { "type": "integer", "default": 1 },
-                "page_size": { "type": "integer", "default": 20 }
-              }
-            }
+            "querystring": z.object({
+              page: z.coerce.number().int().default(1),
+              page_size: z.coerce.number().int().default(20),
+            }),
         },
       }, async (request, reply) => {
       const userId = await authenticateSession(request, reply);
       if (!userId) return reply;
 
-      const query = request.query as { page?: string; page_size?: string };
-      const rawPage = Number.parseInt(query.page ?? "1", 10);
+      const { page: rawPage, page_size: rawSize } = request.query;
       const page = Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
-      const rawSize = Number.parseInt(query.page_size ?? "20", 10);
       const pageSize =
         Number.isFinite(rawSize) ? Math.min(100, Math.max(1, rawSize)) : 20;
 
@@ -71,7 +71,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
       });
     });
 
-    app.get("/me/is-superuser",
+    typed.get("/me/is-superuser",
       {
         schema: {
           tags: ["Admin"],
@@ -93,7 +93,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
        All four handlers wrap the same module helpers as /v1/webhooks
        so the underlying CRUD + signing logic is single-source.
        Replaces the apps/web /api/me/webhooks family direct SQL. */
-    app.get("/me/webhooks",
+    typed.get("/me/webhooks",
       {
         schema: { tags: ["Me"], summary: "List my webhook subscriptions", description: "Returns the caller's webhook subscriptions (no secret).", security: [{ "sessionCookie": [] }] },
       },
@@ -104,19 +104,15 @@ export function registerMeRoutes(app: FastifyInstance): void {
         return reply.code(200).send({ subscriptions });
       });
 
-    app.post("/me/webhooks",
+    typed.post("/me/webhooks",
       {
-        schema: { tags: ["Me"], summary: "Create a webhook subscription", description: "Register a new webhook URL. Returns the signing secret ONCE.", security: [{ "sessionCookie": [] }], body: { type: "object", required: ["url", "events"], properties: { url: { type: "string" }, events: { type: "array", items: { type: "string" } } } } },
+        schema: { tags: ["Me"], summary: "Create a webhook subscription", description: "Register a new webhook URL. Returns the signing secret ONCE.", security: [{ "sessionCookie": [] }], body: z.object({ url: z.string(), events: z.array(z.string()) }) },
       },
       async (request, reply) => {
         const userId = await authenticateSession(request, reply);
         if (!userId) return reply;
 
-        const body = request.body;
-        if (typeof body !== "object" || body === null) {
-          return reply.code(400).send({ error: "Request body must be { url, events: [...] }" });
-        }
-        const { url, events } = body as { url?: unknown; events?: unknown };
+        const { url, events } = request.body;
         const urlCheck = validateWebhookUrl(url);
         if (!urlCheck.valid) {
           return reply.code(400).send({ error: urlCheck.error });
@@ -129,9 +125,9 @@ export function registerMeRoutes(app: FastifyInstance): void {
         return reply.code(201).send(created);
       });
 
-    app.delete<{ Params: { id: string } }>("/me/webhooks/:id",
+    typed.delete("/me/webhooks/:id",
       {
-        schema: { tags: ["Me"], summary: "Delete a webhook subscription", description: "Revoke a webhook subscription owned by the caller.", security: [{ "sessionCookie": [] }], params: { type: "object", required: ["id"], properties: { id: { type: "string" } } } },
+        schema: { tags: ["Me"], summary: "Delete a webhook subscription", description: "Revoke a webhook subscription owned by the caller.", security: [{ "sessionCookie": [] }], params: IdParamsSchema },
       },
       async (request, reply) => {
         const userId = await authenticateSession(request, reply);
@@ -141,9 +137,9 @@ export function registerMeRoutes(app: FastifyInstance): void {
         return reply.code(200).send({ ok: true });
       });
 
-    app.post<{ Params: { id: string } }>("/me/webhooks/:id/rotate-secret",
+    typed.post("/me/webhooks/:id/rotate-secret",
       {
-        schema: { tags: ["Me"], summary: "Rotate webhook signing secret", description: "Generate a new HMAC signing secret. Returns it ONCE; the old secret is invalidated immediately.", security: [{ "sessionCookie": [] }], params: { type: "object", required: ["id"], properties: { id: { type: "string" } } } },
+        schema: { tags: ["Me"], summary: "Rotate webhook signing secret", description: "Generate a new HMAC signing secret. Returns it ONCE; the old secret is invalidated immediately.", security: [{ "sessionCookie": [] }], params: IdParamsSchema },
       },
       async (request, reply) => {
         const userId = await authenticateSession(request, reply);
@@ -158,34 +154,31 @@ export function registerMeRoutes(app: FastifyInstance): void {
        authed, no pagination): this endpoint backs /dashboard with
        page + page_size + ?q search and inline-joins areas for the
        page rows. Replaces the apps/web /api/me/portfolios direct SQL. */
-    app.get("/me/portfolios",
+    typed.get("/me/portfolios",
       {
         schema: {
           tags: ["Me"],
           summary: "List my portfolios (paginated, searchable)",
           description: "Paginated portfolios for the caller. Query: ?page=1&page_size=20&q=<substring>. Inline-joins areas for the page rows.",
           security: [{ "sessionCookie": [] }],
-          querystring: {
-            type: "object",
-            properties: {
-              page: { type: "integer", default: 1 },
-              page_size: { type: "integer", default: 20 },
-              q: { type: "string" },
-            },
-          },
+          querystring: z.object({
+            page: z.coerce.number().int().default(1),
+            page_size: z.coerce.number().int().default(20),
+            q: z.string().optional(),
+          }),
         },
       },
       async (request, reply) => {
         const userId = await authenticateSession(request, reply);
         if (!userId) return reply;
 
-        const query = (request.query ?? {}) as { page?: string; page_size?: string; q?: string };
+        const query = request.query;
         const DEFAULT_PAGE_SIZE = 20;
         const MAX_PAGE_SIZE = 100;
 
-        const rawPage = Number.parseInt(query.page ?? "1", 10);
+        const rawPage = query.page;
         const page = Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
-        const rawSize = Number.parseInt(query.page_size ?? String(DEFAULT_PAGE_SIZE), 10);
+        const rawSize = query.page_size;
         const pageSize = Number.isFinite(rawSize)
           ? Math.min(MAX_PAGE_SIZE, Math.max(1, rawSize))
           : DEFAULT_PAGE_SIZE;
@@ -255,7 +248,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
        caller, grouped by preset. Session-authed. Used by /dashboard/scores
        to show per-preset call counts. Replaces the apps/web
        /api/me/score-usage direct SQL. */
-    app.get("/me/score-usage",
+    typed.get("/me/score-usage",
       {
         schema: {
           tags: ["Me"],
@@ -303,7 +296,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
        /v1/orgs and a separate role lookup.
 
        Replaces the apps/web /api/me/org direct SQL. */
-    app.get("/me/org",
+    typed.get("/me/org",
       {
         schema: {
           tags: ["Me"],
@@ -336,14 +329,14 @@ export function registerMeRoutes(app: FastifyInstance): void {
         return reply.code(200).send({ org, caller_role: primary.role });
       });
 
-    app.patch("/me/org",
+    typed.patch("/me/org",
       {
         schema: {
           tags: ["Me"],
           summary: "Update my primary org",
           description: "Partial update of the caller's primary org. Owner or admin only. Returns the updated org + caller_role.",
           security: [{ "sessionCookie": [] }],
-          body: zodToJsonSchema(UpdateOrgRequestSchema),
+          body: UpdateOrgRequestSchema,
         },
       },
       async (request, reply) => {
@@ -368,13 +361,8 @@ export function registerMeRoutes(app: FastifyInstance): void {
           return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
         }
 
-        const parsed = UpdateOrgRequestSchema.safeParse(request.body ?? {});
-        if (!parsed.success) {
-          return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
-        }
-
         try {
-          const updated = await updateOrg(primary.org_id, parsed.data);
+          const updated = await updateOrg(primary.org_id, request.body);
           if (!updated) return reply.code(404).send({ error: "Org not found" });
           return reply.code(200).send({ org: updated, caller_role: role });
         } catch (err) {
@@ -390,35 +378,29 @@ export function registerMeRoutes(app: FastifyInstance): void {
        Session-authed. Today only `intent` is settable (the four-slug
        set from AR-218). Future profile fields slot in here.
        Replaces the apps/web /api/onboarding/complete inline UPDATE. */
-    app.patch("/me/profile",
+    typed.patch("/me/profile",
       {
         schema: {
           tags: ["Me"],
           summary: "Update my profile",
           description: "Partial update of the caller's user profile. Today: `intent` only.",
           security: [{ "sessionCookie": [] }],
-          body: {
-            type: "object",
-            properties: {
-              intents: { type: "array", items: { type: "string" } },
-            },
-          },
+          body: z.object({
+            intents: z.array(z.string()).optional(),
+          }),
         },
       },
       async (request, reply) => {
         const userId = await authenticateSession(request, reply);
         if (!userId) return reply;
 
-        const body = (request.body ?? {}) as { intents?: unknown };
+        const { intents } = request.body;
         const ALLOWED_INTENTS = new Set(["moving", "business", "investing", "research"]);
 
-        if (body.intents !== undefined && body.intents !== null) {
-          if (!Array.isArray(body.intents)) {
-            return reply.code(400).send({ error: "intents must be an array." });
-          }
+        if (intents !== undefined && intents !== null) {
           const validated: string[] = [];
-          for (const slug of body.intents) {
-            if (typeof slug !== "string" || !ALLOWED_INTENTS.has(slug)) {
+          for (const slug of intents) {
+            if (!ALLOWED_INTENTS.has(slug)) {
               return reply.code(400).send({ error: `Invalid intent slug: ${String(slug)}` });
             }
             if (!validated.includes(slug)) validated.push(slug);
@@ -433,7 +415,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
         return reply.code(200).send({ ok: true });
       });
 
-    app.get("/v1/me",
+    typed.get("/v1/me",
       {
       schema: {
             "tags": [
@@ -560,7 +542,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
       };
     });
 
-    app.get("/usage",
+    typed.get("/usage",
       {
         schema: {
           tags: ["Usage"],
@@ -582,7 +564,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.get("/dashboard",
+    typed.get("/dashboard",
       {
         schema: {
           tags: ["Dashboard"],
@@ -670,7 +652,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.get("/settings/subscription",
+    typed.get("/settings/subscription",
       {
         schema: {
           tags: ["Settings"],
@@ -717,32 +699,24 @@ export function registerMeRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.post("/track",
+    typed.post("/track",
       {
         schema: {
           tags: ["Tracking"],
           summary: "Track pageview",
           description: "Record a pageview event.",
           security: [{ "sessionCookie": [] }],
-          body: {
-            type: "object",
-            required: ["path"],
-            properties: {
-              path: { type: "string" },
-              referrer: { type: "string" },
-              sessionId: { type: "string" },
-            },
-          },
+          body: z.object({
+            path: z.string(),
+            referrer: z.string().optional(),
+            sessionId: z.string().optional(),
+          }),
         },
       },
       async (request, reply) => {
       try {
-        const { path, referrer, sessionId } = (request.body ?? {}) as {
-          path?: unknown;
-          referrer?: unknown;
-          sessionId?: unknown;
-        };
-        if (!path || typeof path !== "string") {
+        const { path, referrer, sessionId } = request.body;
+        if (!path) {
           return reply.code(400).send({ ok: false });
         }
 
@@ -781,7 +755,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.get("/watchlist", {
+    typed.get("/watchlist", {
       schema: { tags: ["Watchlist"], summary: "Get watchlist", description: "Get the authenticated user's saved areas watchlist.", security: [{ "sessionCookie": [] }] },
     }, async (request, reply) => {
       try {
@@ -801,21 +775,17 @@ export function registerMeRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.post("/watchlist", {
-      schema: { tags: ["Watchlist"], summary: "Add to watchlist", description: "Add an area to the user's watchlist.", security: [{ "sessionCookie": [] }], body: { type: "object", required: ["postcode"], properties: { postcode: { type: "string" }, label: { type: "string" }, intent: { type: "string" } } } },
+    typed.post("/watchlist", {
+      schema: { tags: ["Watchlist"], summary: "Add to watchlist", description: "Add an area to the user's watchlist.", security: [{ "sessionCookie": [] }], body: z.object({ postcode: z.string(), label: z.string().optional(), intent: z.string().optional() }) },
     }, async (request, reply) => {
       try {
         const userId = await authenticateSession(request, reply);
         if (!userId) return reply; // 401 already sent
 
-        const body = (request.body ?? {}) as { postcode?: unknown; label?: unknown; intent?: unknown };
-        const postcode = (typeof body.postcode === "string" ? body.postcode : "").trim().toUpperCase();
-        const label = (typeof body.label === "string" ? body.label : "").trim();
-        const intent = (body.intent as string | undefined) || null;
-
-        if (!postcode) {
-          return reply.code(400).send({ error: "Postcode is required" });
-        }
+        const { postcode: rawPostcode, label: rawLabel, intent: rawIntent } = request.body;
+        const postcode = rawPostcode.trim().toUpperCase();
+        const label = (rawLabel ?? "").trim();
+        const intent = rawIntent || null;
 
         const result = await sql`
           INSERT INTO saved_areas (user_id, postcode, label, intent)
@@ -833,8 +803,8 @@ export function registerMeRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.delete<{ Params: { id: string } }>("/watchlist/:id", {
-      schema: { tags: ["Watchlist"], summary: "Remove from watchlist", description: "Remove an area from the user's watchlist.", security: [{ "sessionCookie": [] }], params: { type: "object", required: ["id"], properties: { id: { type: "string" } } } },
+    typed.delete("/watchlist/:id", {
+      schema: { tags: ["Watchlist"], summary: "Remove from watchlist", description: "Remove an area from the user's watchlist.", security: [{ "sessionCookie": [] }], params: IdParamsSchema },
     }, async (request, reply) => {
       try {
         const userId = await authenticateSession(request, reply);

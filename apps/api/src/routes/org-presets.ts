@@ -1,4 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { ZodTypeProvider } from "@fastify/type-provider-zod";
+import { z } from "zod";
 import { CreatePresetRequestSchema, UpdatePresetRequestSchema } from "@onegoodarea/contracts";
 import { authenticateEither } from "../shared/auth-either";
 import { isAppError } from "../shared/errors";
@@ -7,12 +9,14 @@ import { getOrgIfMember, hasAtLeastRole } from "../modules/orgs";
 import { requireLeversAccess } from "../shared/require-levers";
 import { listPresets, getPreset, createPreset, updatePreset, deletePreset, findUnknownWeightKeys } from "../modules/orgs/presets";
 import { trackEvent } from "../modules/tracking/activity";
-import { zodToJsonSchema } from "../infrastructure/utils/zod-to-json-schema";
 
 import { getRoleInOrg } from "../modules/orgs";
 /** org-presets route handlers — extracted from app.ts per AR-286. */
+const IdParamsSchema = z.object({ id: z.string() });
+
 export function registerOrgPresetsRoutes(app: FastifyInstance): void {
-    app.post("/v1/orgs/:id/presets",
+    const typed = app.withTypeProvider<ZodTypeProvider>();
+    typed.post("/v1/orgs/:id/presets",
       {
       schema: {
             "tags": [
@@ -21,8 +25,8 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
             "summary": "Create preset",
             "description": "Create a scoring preset for an organization.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
-            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
-            "body": zodToJsonSchema(CreatePresetRequestSchema),
+            "params": IdParamsSchema,
+            "body": CreatePresetRequestSchema,
         },
       }, async (request, reply) => {
       try {
@@ -35,23 +39,19 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
           return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
         }
         if (!(await requireLeversAccess(userId, reply))) return reply;
-        const parsed = CreatePresetRequestSchema.safeParse(request.body ?? {});
-        if (!parsed.success) {
-          return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
-        }
-        const unknown = findUnknownWeightKeys(parsed.data.base_preset, parsed.data.weights);
+        const unknown = findUnknownWeightKeys(request.body.base_preset, request.body.weights);
         if (unknown.length > 0) {
           return reply.code(400).send({
-            error: `Unknown dimension keys for base_preset '${parsed.data.base_preset}': ${unknown.join(", ")}.`,
+            error: `Unknown dimension keys for base_preset '${request.body.base_preset}': ${unknown.join(", ")}.`,
             code: "unknown_weight_keys",
           });
         }
         const preset = await createPreset({
           orgId,
-          name: parsed.data.name,
-          slug: parsed.data.slug,
-          basePreset: parsed.data.base_preset,
-          weights: parsed.data.weights,
+          name: request.body.name,
+          slug: request.body.slug,
+          basePreset: request.body.base_preset,
+          weights: request.body.weights,
         });
         trackEvent("api.preset.created", userId, { orgId, presetId: preset.id, basePreset: preset.base_preset }, orgId);
         return reply.code(201).send(preset);
@@ -66,7 +66,7 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.get("/v1/orgs/:id/presets",
+    typed.get("/v1/orgs/:id/presets",
       {
       schema: {
             "tags": [
@@ -75,7 +75,7 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
             "summary": "List presets",
             "description": "List scoring presets for an organization.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
-            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            "params": IdParamsSchema,
         },
       }, async (request, reply) => {
       try {
@@ -94,7 +94,7 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.get("/v1/orgs/:id/presets/:presetId",
+    typed.get("/v1/orgs/:id/presets/:presetId",
       {
       schema: {
             "tags": [
@@ -126,7 +126,7 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.patch("/v1/orgs/:id/presets/:presetId",
+    typed.patch("/v1/orgs/:id/presets/:presetId",
       {
       schema: {
             "tags": [
@@ -140,7 +140,7 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
               "required": ["id", "presetId"],
               "properties": { "id": { "type": "string" }, "presetId": { "type": "string" } },
             },
-            "body": zodToJsonSchema(UpdatePresetRequestSchema),
+            "body": UpdatePresetRequestSchema,
         },
       }, async (request, reply) => {
       try {
@@ -152,18 +152,14 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
         if (!hasAtLeastRole(role, "admin")) {
           return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
         }
-        const parsed = UpdatePresetRequestSchema.safeParse(request.body ?? {});
-        if (!parsed.success) {
-          return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
-        }
         // Weights are validated against the EFFECTIVE base_preset after the
         // patch. If the caller only patches weights, we need the existing
         // base_preset; if they patch base_preset too, we use the new one.
         // Fetch once to resolve the effective values.
         const existing = await getPreset(orgId, presetId);
         if (!existing) return reply.code(404).send({ error: "Preset not found" });
-        const effectiveBase = parsed.data.base_preset ?? existing.base_preset;
-        const effectiveWeights = parsed.data.weights ?? existing.weights;
+        const effectiveBase = request.body.base_preset ?? existing.base_preset;
+        const effectiveWeights = request.body.weights ?? existing.weights;
         const unknown = findUnknownWeightKeys(effectiveBase, effectiveWeights);
         if (unknown.length > 0) {
           return reply.code(400).send({
@@ -172,10 +168,10 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
           });
         }
         const updated = await updatePreset(orgId, presetId, {
-          name: parsed.data.name,
-          slug: parsed.data.slug,
-          basePreset: parsed.data.base_preset,
-          weights: parsed.data.weights,
+          name: request.body.name,
+          slug: request.body.slug,
+          basePreset: request.body.base_preset,
+          weights: request.body.weights,
         });
         if (!updated) return reply.code(404).send({ error: "Preset not found" });
         trackEvent("api.preset.updated", userId, { orgId, presetId }, orgId);
@@ -191,7 +187,7 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.delete("/v1/orgs/:id/presets/:presetId",
+    typed.delete("/v1/orgs/:id/presets/:presetId",
       {
       schema: {
             "tags": [
