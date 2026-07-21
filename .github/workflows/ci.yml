@@ -90,3 +90,12 @@ jobs:
       - run: npm install --no-audit --no-fund
       - name: npm audit (high+critical only, production deps)
         run: npm audit --audit-level=high --omit=dev
+
+  deploy:
+    name: Deploy to Render
+    needs: [lint, typecheck]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Trigger Render Deploy Hook
+        run: curl -s ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
