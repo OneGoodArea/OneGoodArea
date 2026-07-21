@@ -9,6 +9,7 @@ import { listPendingInvitations, createInvitation, revokeInvitation, acceptInvit
 import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
 import { RATE_LIMITS } from "../infrastructure/config";
 import { trackEvent } from "../modules/tracking/activity";
+import { zodToJsonSchema } from "../infrastructure/utils/zod-to-json-schema";
 
 import { getRoleInOrg } from "../modules/orgs";
 import { getUserEmail } from "../modules/usage";
@@ -21,7 +22,9 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
                 "Orgs"
             ],
             "summary": "List members",
-            "description": "List all members of an organization."
+            "description": "List all members of an organization.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
         },
       }, async (request, reply) => {
       try {
@@ -52,7 +55,10 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
                 "Orgs"
             ],
             "summary": "Add member",
-            "description": "Add an existing user to the organization."
+            "description": "Add an existing user to the organization.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            "body": zodToJsonSchema(AddMemberRequestSchema),
         },
       }, async (request, reply) => {
       try {
@@ -108,7 +114,17 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
                 "Orgs"
             ],
             "summary": "Update member role",
-            "description": "Change a member's role in the organization."
+            "description": "Change a member's role in the organization.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": {
+              "type": "object",
+              "required": ["id", "userId"],
+              "properties": {
+                "id": { "type": "string" },
+                "userId": { "type": "string" },
+              },
+            },
+            "body": zodToJsonSchema(UpdateMemberRoleRequestSchema),
         },
       }, async (request, reply) => {
       try {
@@ -177,7 +193,16 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
                 "Orgs"
             ],
             "summary": "Remove member",
-            "description": "Remove a member from the organization."
+            "description": "Remove a member from the organization.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": {
+              "type": "object",
+              "required": ["id", "userId"],
+              "properties": {
+                "id": { "type": "string" },
+                "userId": { "type": "string" },
+              },
+            },
         },
       }, async (request, reply) => {
       try {
@@ -235,7 +260,10 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
                 "Invitations"
             ],
             "summary": "Create invitation",
-            "description": "Create an invitation to join the organization."
+            "description": "Create an invitation to join the organization.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            "body": zodToJsonSchema(CreateInvitationRequestSchema),
         },
       }, async (request, reply) => {
       try {
@@ -282,7 +310,9 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
                 "Invitations"
             ],
             "summary": "List invitations",
-            "description": "List pending invitations for the organization."
+            "description": "List pending invitations for the organization.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
         },
       }, async (request, reply) => {
       try {
@@ -307,7 +337,16 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
                 "Invitations"
             ],
             "summary": "Revoke invitation",
-            "description": "Revoke a pending invitation."
+            "description": "Revoke a pending invitation.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": {
+              "type": "object",
+              "required": ["id", "invitationId"],
+              "properties": {
+                "id": { "type": "string" },
+                "invitationId": { "type": "string" },
+              },
+            },
         },
       }, async (request, reply) => {
       try {
@@ -337,7 +376,9 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
                 "Invitations"
             ],
             "summary": "Accept invitation",
-            "description": "Accept an organization invitation by token."
+            "description": "Accept an organization invitation by token.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": { "type": "object", "required": ["token"], "properties": { "token": { "type": "string" } } },
         },
       }, async (request, reply) => {
       try {

@@ -6,6 +6,7 @@ import { logger } from "../modules/tracking/structured-logger";
 import { getOrgIfMember, hasAtLeastRole } from "../modules/orgs";
 import { listCohorts, getCohort, createCohort, updateCohort, deleteCohort } from "../modules/orgs/cohorts";
 import { trackEvent } from "../modules/tracking/activity";
+import { zodToJsonSchema } from "../infrastructure/utils/zod-to-json-schema";
 
 import { getRoleInOrg } from "../modules/orgs";
 /** org-cohorts route handlers — extracted from app.ts per AR-286. */
@@ -17,7 +18,10 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
                 "Cohorts"
             ],
             "summary": "Create cohort",
-            "description": "Create an area cohort for an organization."
+            "description": "Create an area cohort for an organization.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            "body": zodToJsonSchema(CreateCohortRequestSchema),
         },
       }, async (request, reply) => {
       try {
@@ -59,7 +63,9 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
                 "Cohorts"
             ],
             "summary": "List cohorts",
-            "description": "List area cohorts for an organization."
+            "description": "List area cohorts for an organization.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
         },
       }, async (request, reply) => {
       try {
@@ -85,7 +91,13 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
                 "Cohorts"
             ],
             "summary": "Get cohort",
-            "description": "Get an area cohort by ID."
+            "description": "Get an area cohort by ID.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": {
+              "type": "object",
+              "required": ["id", "cohortId"],
+              "properties": { "id": { "type": "string" }, "cohortId": { "type": "string" } },
+            },
         },
       }, async (request, reply) => {
       try {
@@ -111,7 +123,14 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
                 "Cohorts"
             ],
             "summary": "Update cohort",
-            "description": "Update an area cohort."
+            "description": "Update an area cohort.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": {
+              "type": "object",
+              "required": ["id", "cohortId"],
+              "properties": { "id": { "type": "string" }, "cohortId": { "type": "string" } },
+            },
+            "body": zodToJsonSchema(UpdateCohortRequestSchema),
         },
       }, async (request, reply) => {
       try {
@@ -153,7 +172,13 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
                 "Cohorts"
             ],
             "summary": "Delete cohort",
-            "description": "Delete an area cohort."
+            "description": "Delete an area cohort.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": {
+              "type": "object",
+              "required": ["id", "cohortId"],
+              "properties": { "id": { "type": "string" }, "cohortId": { "type": "string" } },
+            },
         },
       }, async (request, reply) => {
       try {

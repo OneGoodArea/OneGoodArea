@@ -15,7 +15,16 @@ export function registerWebhooksRoutes(app: FastifyInstance): void {
             ],
             "summary": "Create webhook",
             "description": "Register a webhook endpoint for event notifications.",
-            "body": { "type": "object", "properties": { "url": { "type": "string" }, "events": { "type": "array", "items": { "type": "string" } } }, "example": { "url": "https://example.com/hooks", "events": ["signal.changed"] } }
+            "security": [{ "bearerAuth": [] }],
+            "body": {
+              "type": "object",
+              "required": ["url", "events"],
+              "properties": {
+                "url": { "type": "string", "format": "uri", "minLength": 1, "description": "HTTPS webhook endpoint URL." },
+                "events": { "type": "array", "items": { "type": "string", "enum": ["signal.changed"] }, "minItems": 1 },
+              },
+              "example": { "url": "https://example.com/hooks", "events": ["signal.changed"] },
+            },
         },
       }, async (request, reply) => {
       try {
@@ -58,7 +67,8 @@ export function registerWebhooksRoutes(app: FastifyInstance): void {
                 "Webhooks"
             ],
             "summary": "List webhooks",
-            "description": "List registered webhooks."
+            "description": "List registered webhooks.",
+            "security": [{ "bearerAuth": [] }],
         },
       }, async (request, reply) => {
       try {
@@ -77,7 +87,7 @@ export function registerWebhooksRoutes(app: FastifyInstance): void {
     });
 
     app.delete<{ Params: { id: string } }>("/v1/webhooks/:id", {
-      schema: { tags: ["Webhooks"], summary: "Delete webhook", description: "Delete a registered webhook." },
+      schema: { tags: ["Webhooks"], summary: "Delete webhook", description: "Delete a registered webhook.", security: [{ bearerAuth: [] }], params: { type: "object", required: ["id"], properties: { id: { type: "string" } } } },
     }, async (request, reply) => {
       try {
         const userId = await requireApiAccess(request, reply);
@@ -99,7 +109,7 @@ export function registerWebhooksRoutes(app: FastifyInstance): void {
     });
 
     app.post<{ Params: { id: string } }>("/v1/webhooks/:id/rotate-secret", {
-      schema: { tags: ["Webhooks"], summary: "Rotate webhook secret", description: "Rotate the signing secret for a webhook." },
+      schema: { tags: ["Webhooks"], summary: "Rotate webhook secret", description: "Rotate the signing secret for a webhook.", security: [{ bearerAuth: [] }], params: { type: "object", required: ["id"], properties: { id: { type: "string" } } } },
     }, async (request, reply) => {
       try {
         const userId = await requireApiAccess(request, reply);

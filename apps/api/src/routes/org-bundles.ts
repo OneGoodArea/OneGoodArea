@@ -6,6 +6,7 @@ import { logger } from "../modules/tracking/structured-logger";
 import { getOrgIfMember, hasAtLeastRole } from "../modules/orgs";
 import { listBundles, getBundle, createBundle, updateBundle, deleteBundle, findUnknownSignalKeys } from "../modules/orgs/bundles";
 import { trackEvent } from "../modules/tracking/activity";
+import { zodToJsonSchema } from "../infrastructure/utils/zod-to-json-schema";
 
 import { getRoleInOrg } from "../modules/orgs";
 /** org-bundles route handlers — extracted from app.ts per AR-286. */
@@ -17,7 +18,10 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
                 "Bundles"
             ],
             "summary": "Create bundle",
-            "description": "Create a signal bundle for an organization."
+            "description": "Create a signal bundle for an organization.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            "body": zodToJsonSchema(CreateBundleRequestSchema),
         },
       }, async (request, reply) => {
       try {
@@ -66,7 +70,9 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
                 "Bundles"
             ],
             "summary": "List bundles",
-            "description": "List signal bundles for an organization."
+            "description": "List signal bundles for an organization.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
         },
       }, async (request, reply) => {
       try {
@@ -93,7 +99,13 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
                 "Bundles"
             ],
             "summary": "Get bundle",
-            "description": "Get a signal bundle by ID."
+            "description": "Get a signal bundle by ID.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": {
+              "type": "object",
+              "required": ["id", "bundleId"],
+              "properties": { "id": { "type": "string" }, "bundleId": { "type": "string" } },
+            },
         },
       }, async (request, reply) => {
       try {
@@ -119,7 +131,14 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
                 "Bundles"
             ],
             "summary": "Update bundle",
-            "description": "Update a signal bundle's name or signal keys."
+            "description": "Update a signal bundle's name or signal keys.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": {
+              "type": "object",
+              "required": ["id", "bundleId"],
+              "properties": { "id": { "type": "string" }, "bundleId": { "type": "string" } },
+            },
+            "body": zodToJsonSchema(UpdateBundleRequestSchema),
         },
       }, async (request, reply) => {
       try {
@@ -170,7 +189,13 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
                 "Bundles"
             ],
             "summary": "Delete bundle",
-            "description": "Delete a signal bundle."
+            "description": "Delete a signal bundle.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": {
+              "type": "object",
+              "required": ["id", "bundleId"],
+              "properties": { "id": { "type": "string" }, "bundleId": { "type": "string" } },
+            },
         },
       }, async (request, reply) => {
       try {

@@ -21,7 +21,16 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
             ],
             "summary": "Get area profile",
             "description": "Full signal profile for a UK postcode or place name. Returns geo metadata plus all signal categories with sources.",
-            "querystring": { "type": "object", "properties": { "area": { "type": "string", "example": "SW1A 1AA" }, "postcode": { "type": "string" } } }
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "querystring": {
+              "type": "object",
+              "properties": {
+                "area": { "type": "string", "description": "UK place name (e.g. 'Manchester')." },
+                "postcode": { "type": "string", "description": "UK postcode (e.g. 'SW1A 1AA')." },
+                "bundle": { "type": "string", "description": "Optional bundle ID to scope available signals." },
+              },
+              "example": { "area": "SW1A 1AA" },
+            },
         },
       }, async (request, reply) => {
       try {
@@ -92,7 +101,22 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
                 "Signals"
             ],
             "summary": "Get signals by category",
-            "description": "Returns all signals for a specific category (crime, deprivation, property, schools, amenities, transport, environment)."
+            "description": "Returns all signals for a specific category (crime, deprivation, property, schools, amenities, transport, environment).",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "params": {
+              "type": "object",
+              "required": ["category"],
+              "properties": {
+                "category": { "type": "string", "description": "Signal category name." },
+              },
+            },
+            "querystring": {
+              "type": "object",
+              "properties": {
+                "area": { "type": "string" },
+                "postcode": { "type": "string" },
+              },
+            },
         },
       }, async (request, reply) => {
       try {
@@ -151,7 +175,22 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
                 "Signals"
             ],
             "summary": "Query areas by signal",
-            "description": "Rank areas by a signal value. Supports country/LAD scoping, percentile and value filters, and compound multi-signal queries."
+            "description": "Rank areas by a signal value. Supports country/LAD scoping, percentile and value filters, and compound multi-signal queries.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "querystring": {
+              "type": "object",
+              "properties": {
+                "signal": { "type": "string", "description": "Signal key to rank by (e.g. 'crime.total_12m')." },
+                "country": { "type": "string", "enum": ["England", "Wales", "Scotland"] },
+                "lad": { "type": "string", "description": "Local authority district code." },
+                "percentile_min": { "type": "number", "minimum": 0, "maximum": 100 },
+                "percentile_max": { "type": "number", "minimum": 0, "maximum": 100 },
+                "value_min": { "type": "number" },
+                "value_max": { "type": "number" },
+                "bundle": { "type": "string", "description": "Optional bundle ID to scope available signals." },
+              },
+              "required": ["signal"],
+            },
         },
       }, async (request, reply) => {
       try {
