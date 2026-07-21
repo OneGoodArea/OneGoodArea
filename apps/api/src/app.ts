@@ -1,7 +1,8 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
-import { validatorCompiler, jsonSchemaTransform, type ZodTypeProvider } from "@fastify/type-provider-zod";
+import { validatorCompiler, type ZodTypeProvider } from "@fastify/type-provider-zod";
+import { zodSafeJsonSchemaTransform } from "./infrastructure/utils/zod-safe-json-schema-transform";
 import { openApiConfig } from "./modules/developer-surface/openapi-config";
 
 import { registerSystemRoutes } from "./routes/system";
@@ -40,11 +41,13 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(validatorCompiler as any);
 
-  // OpenAPI/Swagger documentation — /docs (Swagger UI) and /openapi.json (raw spec).
+  // OpenAPI/Swagger documentation — /docs (Swagger UI) and /docs/json (raw spec).
   // Config owned by modules/developer-surface/openapi-config.ts.
+  // zodSafeJsonSchemaTransform handles both Zod v4 schemas (via .toJSONSchema())
+  // and plain JSON Schema objects (intelligence routes) without crashing.
   await app.register(fastifySwagger, {
     openapi: openApiConfig,
-    transform: jsonSchemaTransform,
+    transform: zodSafeJsonSchemaTransform,
   });
 
   await app.register(fastifySwaggerUi, {

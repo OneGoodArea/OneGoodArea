@@ -45,9 +45,8 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
             "security": [{ "bearerAuth": [] }],
             "body": {
               "oneOf": [
-                { ...QueryRequestSchema.toJSONSchema(), "description": "Natural language question or programmatic plan." },
-                { "type": "object", "properties": { "question": { "type": "string", "minLength": 1 } }, "required": ["question"], "example": { "question": "best areas for families in London" } },
-                { "type": "object", "properties": { "plan": { "type": "object" } }, "required": ["plan"] },
+                { "type": "object", "properties": { "question": { "type": "string", "minLength": 1 } }, "required": ["question"], "description": "Natural language question.", "example": { "question": "best areas for families in London" } },
+                { "type": "object", "properties": { "plan": { "type": "object" } }, "required": ["plan"], "description": "Programmatic plan object." },
               ],
               "description": "Natural language question or a programmatic plan object.",
             },
