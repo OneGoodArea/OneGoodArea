@@ -3,23 +3,30 @@
 ## Purpose (one sentence)
 
 Fix the drift between the Fastify route `.schema` definitions and the actual
-live endpoints so `/openapi.json` (and every renderer built on it — Swagger UI
-at API `/docs`, Scalar at web `/openapi`, the `/developers` surface) is an
+live endpoints so `/openapi.json` (and every renderer built on it — Scalar at
+web `/playground`, the `/developers` surface, Plan 048 single-source) is an
 accurate, always-current representation of the real API.
 
 ## JIRA
 
-Single story (no parent epic). Key `AR-YYY` (created at implementation time).
-Planning branch: `plan/openapi-schema-sync`.
+- Epic parent: **AR-441** (Playground → /playground Scalar surface).
+- Story: **AR-501** — "OpenAPI spec <-> route schema sync". One branch
+  `feat/AR-501-openapi-schema-sync`. Planning branch: `plan/openapi-schema-sync`.
+- This plan is ONE story (no parent epic beyond AR-441). Steps are subtasks of
+  AR-501, each a commit on the branch (see Plan 047):
 
-**This plan = one JIRA = one branch:** `feat/AR-YYY-openapi-schema-sync` (own
-worktree, see Plan 047). Implementation is step-by-step across sub-steps
-(46.1–46.5) within this single branch; each sub-step is a commit.
+| Step | Subtask | Maps to | Branch |
+|---|---|---|---|
+| 46.1 | AR-520 | Audit drift (per-route gap list) | `feat/AR-501-openapi-schema-sync` |
+| 46.2 | AR-521 | Backfill request/response schemas | `feat/AR-501-openapi-schema-sync` |
+| 46.3 | AR-522 | CI guard (route coverage) | `feat/AR-501-openapi-schema-sync` |
+| 46.4 | AR-523 | Preserve renderers (/playground Scalar + raw spec) | `feat/AR-501-openapi-schema-sync` |
+| 46.5 | AR-524 | Tests | `feat/AR-501-openapi-schema-sync` |
 
 ## Execution
 
-Develop in a git worktree (see Plan 047). Wave 1 — runs in parallel with Plan
-045. Branch `feat/AR-YYY-openapi-schema-sync` off `main`; own PR; CI green
+Develop in a git worktree (Plan 047). Wave 1 — runs in parallel with Plan
+045. Branch `feat/AR-501-openapi-schema-sync` off `main`; own PR; CI green
 independently.
 
 ---
@@ -33,8 +40,10 @@ independently.
 - Plan 019 (DONE) noted "Minimal for routes without existing Zod schemas (tags +
   summaries + param descriptions only)" — i.e. many routes have thin/no
   request/response schemas, so the spec under-describes reality.
-- Two renderers depend on the spec: Fastify Swagger UI (`/docs`) and Scalar
-  (`/openapi`, web) — both must stay accurate after the fix.
+- Renderers: web `/openapi` (Scalar) is the primary renderer today; Plan 050 moves
+  it to `/playground` and RETIRES the API `/docs` Swagger UI (Scalar-only
+  decision). This plan must keep the spec accurate for whatever renderer consumes
+  it (Scalar at `/playground`, the `/developers` surface, Plan 048).
 - Contract types live in `@onegoodarea/contracts` (shared, browser-safe).
 - Test stack already exists: `compose/compose.test.yml` spins ephemeral
   `postgres-test` / `neon-proxy-test` / `stripe-mock-test` / `api-test` /
@@ -45,12 +54,12 @@ independently.
 
 ## Steps
 
-### 46.1 — Audit drift
+### 46.1 — Audit drift (AR-520)
 - Enumerate every registered route; diff its `.schema` (params/body/response)
   vs the real handler validation (Zod in `@onegoodarea/contracts` or manual
   `request.body` casts). Produce a per-route gap list, grouped by tag.
 
-### 46.2 — Backfill request/response schemas
+### 46.2 — Backfill request/response schemas (AR-521)
 - For routes with only tags/summary, add full `body` / `querystring` / `params`
   / `response` schemas sourced from existing `@onegoodarea/contracts` Zod schemas
   where they exist; otherwise author minimal accurate schemas.
@@ -58,18 +67,20 @@ independently.
   `app.ts`) is attached to every protected route so renderers show the lock
   icon + "Authorize".
 
-### 46.3 — CI guard (prevent re-drift)
+### 46.3 — CI guard (route coverage) (AR-522)
 - Add a test that boots the app and asserts `/openapi.json` parses and that
   every registered route path appears in `paths`.
 - Optional: schema-lint that fails on routes missing `tags` / `summary` or a
   defined success `response`.
 
-### 46.4 — Preserve renderers
-- Keep API `/docs` (Swagger UI) and web `/openapi` (Scalar) and the
-  `/api/openapi-spec` BFF. After sync, both must render the fuller spec.
-- No change to `/docs` / `/openapi` routes themselves (preservation requirement).
+### 46.4 — Preserve renderers (AR-523)
+- Keep the raw OpenAPI spec (api raw spec route + web `/api/openapi-spec` BFF) and
+  the Scalar renderer that will live at `/playground` (Plan 050). After sync, the
+  spec must be accurate for Scalar + the `/developers` surface.
+- Swagger UI (`/docs`) is RETIRED by Plan 050 and the `/openapi` page route is
+  DELETED — do NOT assert they must keep rendering here.
 
-### 46.5 — Tests (see Test Gates below)
+### 46.5 — Tests (AR-524, see Test Gates below)
 
 ---
 
@@ -77,15 +88,15 @@ independently.
 
 **Where code may be written**
 - `main`: ❌ never edited directly. Repo CI is PR-only (`on: pull_request:
-  branches: [main]`). Implementation happens on `feat/AR-YYY-openapi-schema-sync`
+  branches: [main]`). Implementation happens on `feat/AR-501-openapi-schema-sync`
   inside a git worktree.
 - Worktree branch: ✅ the only place.
 
-**Branch protection (via GitHub MCP)**
-- Before the first PR, verify via GitHub MCP that `main` requires PR review
-  approval + green CI status checks (`lint`, `typecheck`, `test`).
-- Use `mcp__github__get_branch_protection` (or equivalent) on
-  `OneGoodArea/OneGoodArea@main`; if missing, stop and report before proceeding.
+**Branch protection**
+- Before the first PR, verify via GitHub MCP (or `gh` CLI / web UI if the
+  `get_branch_protection` MCP capability is unavailable) that `main` requires PR
+  review approval + green CI status checks (`lint`, `typecheck`, `test`).
+- If protection/checks are missing, stop and report before proceeding.
 - Each worktree branch opens its own PR; CI must be green before merge.
 
 **Pre-implementation checks (must all pass before coding)**
@@ -123,7 +134,7 @@ independently.
 - **Unit:** new spec-coverage test asserts every registered route path ∈
   `paths` AND every protected route declares `bearerAuth`.
 - **E2E:** `curl <api-test>:8080/docs/json` returns valid JSON; Scalar
-  (`/openapi`) + Swagger (`/docs`) both render the fuller spec.
+  (`/playground`, post-Plan 050) renders the fuller spec.
 - **Diff gate:** handler source (`src/**` excluding `.schema`) unchanged versus
   baseline — this plan only edits `schema` blocks.
 
@@ -135,6 +146,7 @@ independently.
   spec or mark internal.
 
 ## Out of scope
-- Embedding Swagger in `/developers` shell (EPIC A) — this plan only fixes the
-  spec; EPIC A consumes the fixed spec.
-- Tier/quota logic (EPIC B).
+- Embedding Scalar in `/developers` shell (043/050) — this plan only fixes the
+  spec; 043/050 consume the fixed spec.
+- Single-source Zod type provider (Plan 048).
+- Tier/quota logic (Plan 044).
