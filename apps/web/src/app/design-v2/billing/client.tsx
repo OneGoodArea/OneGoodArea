@@ -1,16 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import type { PlanId } from "@/lib/stripe";
 import { AppShell, AppCard } from "../_shared/app-shell";
-import {
-  DISPLAY_PLANS,
-  PLAN_VIZ,
-  type DisplayPlan,
-} from "../_shared/plan-grid";
-import { McpAddOnSection, type McpStatus } from "../_shared/mcp-addon-section";
+import { BookDemo } from "../_shared/book-demo";
+import type { McpStatus } from "../_shared/mcp-addon-section";
 import "./billing.css";
 
 /* /dashboard/billing — AR-280 rebuild.
@@ -63,69 +57,8 @@ function BillingMark() {
   );
 }
 
-function Body({ plan, planName, used, limit, mcp }: Props) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const requestedPlan = searchParams.get("plan") as PlanId | null;
-
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+function Body({ plan, planName, used, limit }: Props) {
   const [portalLoading, setPortalLoading] = useState(false);
-
-  /* If the URL plan matches what the user already has, drop the
-     query so the confirm panel doesn't pretend they need to switch
-     to their own plan. */
-  useEffect(() => {
-    if (requestedPlan && requestedPlan === plan) {
-      router.replace("/dashboard/billing");
-    }
-  }, [requestedPlan, plan, router]);
-
-  const requestedDisplayPlan = requestedPlan
-    ? DISPLAY_PLANS.find((p) => p.id === requestedPlan) ?? null
-    : null;
-  const showConfirmPanel = !!requestedDisplayPlan && requestedPlan !== plan;
-
-  async function continueToCheckout(planId: PlanId) {
-    if (planId === "sandbox") {
-      router.push("/dashboard");
-      return;
-    }
-    setCheckoutLoading(true);
-    setCheckoutError(null);
-    try {
-      const res = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: planId }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setCheckoutError(data.error || "Could not start checkout. Try again.");
-        setCheckoutLoading(false);
-        return;
-      }
-      if (data.url) {
-        window.location.href = data.url;
-        return;
-      }
-      setCheckoutError("Could not start checkout. Try again.");
-      setCheckoutLoading(false);
-    } catch {
-      setCheckoutError("Network error. Try again.");
-      setCheckoutLoading(false);
-    }
-  }
-
-  function handlePlanSelect(planId: PlanId) {
-    if (planId === plan) return;
-    router.push(`/dashboard/billing?plan=${encodeURIComponent(planId)}`);
-  }
-
-  function dismissConfirm() {
-    setCheckoutError(null);
-    router.replace("/dashboard/billing");
-  }
 
   async function openPortal() {
     setPortalLoading(true);
@@ -159,16 +92,6 @@ function Body({ plan, planName, used, limit, mcp }: Props) {
         </div>
       </header>
 
-      {showConfirmPanel && requestedDisplayPlan ? (
-        <ConfirmPanel
-          plan={requestedDisplayPlan}
-          loading={checkoutLoading}
-          error={checkoutError}
-          onContinue={() => continueToCheckout(requestedDisplayPlan.id)}
-          onDismiss={dismissConfirm}
-        />
-      ) : null}
-
       <AppCard title="Current plan" noPad>
         <CurrentPlanContent
           planName={planName}
@@ -180,26 +103,13 @@ function Body({ plan, planName, used, limit, mcp }: Props) {
         />
       </AppCard>
 
-      <AppCard title="Switch plan" noPad>
-        <PlanList
-          plans={DISPLAY_PLANS}
-          currentPlan={plan}
-          onSelect={handlePlanSelect}
-        />
-        <div className="oga-billing__compare-foot">
-          Need the full feature comparison?{" "}
-          <Link
-            href="/pricing"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="oga-billing__compare-link"
-          >
-            Open pricing page <span aria-hidden>↗</span>
-          </Link>
-        </div>
+      <AppCard title="Change plan">
+        <p className="oga-billing__compare-foot">
+          OneGoodArea is sold through a demo and an annual contract. To change
+          your plan or discuss a package,{" "}
+          <BookDemo className="oga-billing__compare-link">book a demo</BookDemo>.
+        </p>
       </AppCard>
-
-      <McpAddOnSection mcp={mcp} />
     </div>
   );
 }
@@ -281,102 +191,3 @@ function CurrentPlanContent({
   );
 }
 
-/* ============================================================
-   Plan list (compact rows — replaces the marketing PlanGrid)
-   ============================================================ */
-function PlanList({
-  plans,
-  currentPlan,
-  onSelect,
-}: {
-  plans: DisplayPlan[];
-  currentPlan: string | null;
-  onSelect: (id: PlanId) => void;
-}) {
-  return (
-    <ul className="oga-billing__plans">
-      {plans.map((p) => {
-        const isCurrent = currentPlan === p.id;
-        const Viz = PLAN_VIZ[p.id];
-        return (
-          <li key={p.id} className="oga-billing__plan-row" data-current={isCurrent}>
-            <span className="oga-billing__plan-glyph" aria-hidden>
-              {Viz ? <Viz /> : null}
-            </span>
-            <div className="oga-billing__plan-meta">
-              <span className="oga-billing__plan-name">{p.name}</span>
-              <span className="oga-billing__plan-tagline">{p.blurb}</span>
-            </div>
-            <span className="oga-billing__plan-price">{p.price}</span>
-            {isCurrent ? (
-              <span className="oga-billing__plan-current-chip">Current</span>
-            ) : p.disabled ? (
-              <span className="oga-billing__plan-disabled">Contact sales</span>
-            ) : (
-              <button
-                type="button"
-                onClick={() => onSelect(p.id)}
-                className="oga-billing__btn-ghost"
-              >
-                Switch
-              </button>
-            )}
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-/* ============================================================
-   Confirm panel (shown when ?plan=<id> is in the URL)
-   ============================================================ */
-function ConfirmPanel({
-  plan,
-  loading,
-  error,
-  onContinue,
-  onDismiss,
-}: {
-  plan: DisplayPlan;
-  loading: boolean;
-  error: string | null;
-  onContinue: () => void;
-  onDismiss: () => void;
-}) {
-  return (
-    <div className="oga-billing__confirm" role="status">
-      <div className="oga-billing__confirm-head">
-        <span className="oga-billing__row-label">Switching to</span>
-        <span className="oga-billing__confirm-plan">{plan.name}</span>
-        <span className="oga-billing__confirm-price">{plan.price}</span>
-      </div>
-      <p className="oga-billing__confirm-body">
-        We&apos;ll redirect you to Stripe&apos;s hosted checkout to enter
-        card details and confirm. You&apos;ll come back to the dashboard
-        when payment succeeds.
-      </p>
-      {error ? (
-        <p className="oga-billing__confirm-error" role="alert">{error}</p>
-      ) : null}
-      <div className="oga-billing__confirm-actions">
-        <button
-          type="button"
-          onClick={onContinue}
-          disabled={loading}
-          className="oga-billing__btn-primary"
-        >
-          {loading ? "Opening…" : "Continue to Stripe"}
-        </button>
-        <button
-          type="button"
-          onClick={onDismiss}
-          disabled={loading}
-          className="oga-billing__btn-ghost"
-        >
-          Choose a different plan
-        </button>
-      </div>
-    </div>
-  );
-}
