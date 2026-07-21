@@ -84,6 +84,18 @@ export async function hasMcpAccess(userId: string): Promise<boolean> {
   return hasAddon(userId, "mcp");
 }
 
+/* AR-542: Levers (organization configuration: signal bundles, area cohorts,
+   scoring presets, members and invitations, white-label, methodology pinning)
+   is a paid capability. Every user is auto-given a personal org and is its
+   owner, so an org-role check alone does not gate it; this adds the plan
+   entitlement. Free tiers (sandbox, v1 free) are excluded; every paid plan and
+   superuser (reported as 'business') are entitled. Later this can route through
+   the EPIC B tier authority (plans 044/045). */
+export async function hasLeversAccess(userId: string): Promise<boolean> {
+  const plan = await getUserPlan(userId);
+  return plan !== "sandbox" && plan !== "free";
+}
+
 function currentPeriod(): string {
   const now = new Date();
   return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
