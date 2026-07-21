@@ -197,4 +197,52 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           return reply.code(500).send({ error: "Failed to fetch training corpus stats" });
         }
       });
+
+    /* AR-500 (Plan 045): superuser-only endpoint to set a user's tier.
+       Validates against the allowed tier taxonomy. Self-signup never touches
+       this endpoint — the tier column defaults to 'basic' on INSERT. */
+    app.post("/admin/users/:id/tier",
+      {
+        schema: {
+          tags: ["Admin"],
+          summary: "Set user tier (superuser only)",
+          description: "Privileged endpoint to set a user's tier. Validates against allowed values.",
+          security: [{ "sessionCookie": [] }],
+          "x-internal": true,
+          params: {
+            type: "object",
+            properties: { id: { type: "string" } },
+            required: ["id"],
+          },
+          body: {
+            type: "object",
+            properties: { tier: { type: "string", enum: ["anonymous", "logged_in", "basic", "high_tier", "engineering", "superuser"] } },
+            required: ["tier"],
+          },
+        },
+      },
+      async (request, reply) => {
+        try {
+          const userId = await authenticateSession(request, reply);
+          if (!userId) return reply;
+          if (!(await isSuperuser(userId))) {
+            return reply.code(403).send({ error: "Forbidden" });
+          }
+
+          const { id } = request.params as { id: string };
+          const { tier } = (request.body ?? {}) as { tier?: string };
+
+          if (!tier || !["anonymous", "logged_in", "basic", "high_tier", "engineering", "superuser"].includes(tier)) {
+            return reply.code(400).send({ error: "Invalid tier. Must be one of: anonymous, logged_in, basic, high_tier, engineering, superuser" });
+          }
+
+          const { setUserTier } = await import("../modules/usage");
+          await setUserTier(id, tier as "anonymous" | "logged_in" | "basic" | "high_tier" | "engineering" | "superuser");
+
+          return reply.send({ ok: true, tier });
+        } catch (error) {
+          logger.error("Admin set tier error:", error);
+          return reply.code(500).send({ error: "Failed to set user tier" });
+        }
+      });
 }
