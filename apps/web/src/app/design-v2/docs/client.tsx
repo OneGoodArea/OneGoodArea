@@ -18,7 +18,7 @@ import "./docs.css";
 
    Index page for the documentation surface. Four-product TOC plus
    the Levers control plane plus pointers at /methodology and the
-   live interactive reference at /openapi.
+    live interactive reference at /playground.
 
    AR-361 (2026-06-26): killed the per-product "Docs / Soon" tiles,
    the "Levers guide / Soon" button, and the "Webhooks reference"
@@ -394,7 +394,7 @@ const REFERENCES: RefTile[] = [
     body:
       "OpenAPI 3.0 spec auto-generated from the live Fastify schemas. Try requests in browser. Stays in step with the backend on every deploy.",
     status: "live",
-    href: "/openapi",
+    href: "/playground",
     cta: "Open reference",
   },
 ];
