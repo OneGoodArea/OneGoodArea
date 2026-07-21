@@ -14,7 +14,17 @@ import { APP_URL } from "../infrastructure/config";
 import { trackEvent } from "../modules/tracking/activity";
 /** stripe route handlers — extracted from app.ts per AR-286. */
 export function registerStripeRoutes(app: FastifyInstance): void {
-    app.post("/stripe/webhook", async (request, reply) => {
+    app.post("/stripe/webhook",
+      {
+        schema: {
+          tags: ["Stripe"],
+          summary: "Stripe webhook",
+          description: "Receive Stripe webhook events. Signature verified in handler.",
+          security: [],
+          "x-internal": true,
+        },
+      },
+      async (request, reply) => {
       const result = await handleStripeWebhook(
         request.rawBody ?? "",
         headerString(request.headers["stripe-signature"]),
@@ -22,7 +32,17 @@ export function registerStripeRoutes(app: FastifyInstance): void {
       return reply.code(result.status).send(result.body);
     });
 
-    app.post("/stripe/portal", async (request, reply) => {
+    app.post("/stripe/portal",
+      {
+        schema: {
+          tags: ["Stripe"],
+          summary: "Billing portal",
+          description: "Create a Stripe billing portal session.",
+          security: [{ sessionCookie: [] }],
+          "x-internal": true,
+        },
+      },
+      async (request, reply) => {
       try {
         const userId = await authenticateSession(request, reply);
         if (!userId) return reply; // 401 already sent
@@ -44,7 +64,17 @@ export function registerStripeRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.post("/stripe/cancel", async (request, reply) => {
+    app.post("/stripe/cancel",
+      {
+        schema: {
+          tags: ["Stripe"],
+          summary: "Cancel subscription",
+          description: "Schedule subscription cancellation at end of billing period.",
+          security: [{ sessionCookie: [] }],
+          "x-internal": true,
+        },
+      },
+      async (request, reply) => {
       try {
         const userId = await authenticateSession(request, reply);
         if (!userId) return reply; // 401 already sent
@@ -93,7 +123,17 @@ export function registerStripeRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.post("/stripe/checkout", async (request, reply) => {
+    app.post("/stripe/checkout",
+      {
+        schema: {
+          tags: ["Stripe"],
+          summary: "Checkout",
+          description: "Create a Stripe checkout session. Currently disabled (demo-led sales).",
+          security: [{ sessionCookie: [] }],
+          "x-internal": true,
+        },
+      },
+      async (request, reply) => {
       // AR-489: OneGoodArea is demo-led (AR-456) and no longer sells any tier
       // self-serve. Checkout is disabled. Existing subscribers still manage and
       // cancel via /stripe/portal and /stripe/cancel (both untouched).
@@ -105,7 +145,17 @@ export function registerStripeRoutes(app: FastifyInstance): void {
       });
     });
 
-    app.post("/stripe/addon-checkout", async (request, reply) => {
+    app.post("/stripe/addon-checkout",
+      {
+        schema: {
+          tags: ["Stripe"],
+          summary: "Add-on checkout",
+          description: "Create a Stripe add-on checkout session. Currently retired (MCP included free).",
+          security: [{ sessionCookie: [] }],
+          "x-internal": true,
+        },
+      },
+      async (request, reply) => {
       // AR-489: the MCP add-on is retired. MCP is included on the free Developer
       // tier (AR-487) and every package; the standalone add-on is no longer sold.
       // Existing add-on subscribers keep access (hasAddon still grants it) and

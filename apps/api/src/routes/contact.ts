@@ -38,7 +38,28 @@ const ContactSchema = z.object({
 });
 
 export function registerContactRoutes(app: FastifyInstance): void {
-  app.post("/contact", async (request, reply) => {
+  app.post("/contact",
+    {
+      schema: {
+        tags: ["Contact"],
+        summary: "Submit contact form",
+        description: "Send a contact enquiry. Public endpoint, no auth required.",
+        security: [],
+        body: {
+          type: "object",
+          required: ["name", "email", "message"],
+          properties: {
+            name: { type: "string" },
+            email: { type: "string" },
+            company: { type: "string" },
+            role: { type: "string" },
+            message: { type: "string" },
+            website: { type: "string" },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
     const ip = headerString(request.headers["x-forwarded-for"])?.split(",")[0]?.trim() || "unknown";
 
     const rl = await rateLimit(`contact:${ip}`, RATE_LIMITS.contact);

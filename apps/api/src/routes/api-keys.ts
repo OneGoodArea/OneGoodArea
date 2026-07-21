@@ -15,7 +15,22 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
   // API-key usage dashboard: request totals, a 30-day daily series, and the
   // caller's active keys. Session-authed + requires plan API access. Migrated
   // from /api/keys/usage.
-  app.get("/keys/usage", async (request, reply) => {
+  app.get("/keys/usage",
+    {
+      schema: {
+        tags: ["Keys"],
+        summary: "API key usage",
+        description: "Request totals, 30-day daily series, and active keys.",
+        security: [{ "sessionCookie": [] }],
+        querystring: {
+          type: "object",
+          properties: {
+            org: { type: "string" },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
     const userId = await authenticateSession(request, reply);
     if (!userId) return reply; // 401 already sent
 
@@ -177,7 +192,16 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
 
   // List the caller's API keys (dashboard). Session-authed. Migrated from
   // /api/keys (the legacy withAuth wrapper == authenticateSession + try/catch).
-  app.get("/keys", async (request, reply) => {
+  app.get("/keys",
+    {
+      schema: {
+        tags: ["Keys"],
+        summary: "List API keys",
+        description: "List the caller's API keys.",
+        security: [{ "sessionCookie": [] }],
+      },
+    },
+    async (request, reply) => {
     try {
       const userId = await authenticateSession(request, reply);
       if (!userId) return reply; // 401 already sent
@@ -191,7 +215,22 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
 
   // Create a new API key. Requires plan API access. Session-authed. Migrated
   // from /api/keys. Returns the key once.
-  app.post("/keys", async (request, reply) => {
+  app.post("/keys",
+    {
+      schema: {
+        tags: ["Keys"],
+        summary: "Create API key",
+        description: "Create a new API key. Returns the key once.",
+        security: [{ "sessionCookie": [] }],
+        body: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
     try {
       const userId = await authenticateSession(request, reply);
       if (!userId) return reply; // 401 already sent
@@ -210,7 +249,23 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
   });
 
   // Revoke an API key. Session-authed. Migrated from /api/keys/[id].
-  app.delete<{ Params: { id: string } }>("/keys/:id", async (request, reply) => {
+  app.delete<{ Params: { id: string } }>("/keys/:id",
+    {
+      schema: {
+        tags: ["Keys"],
+        summary: "Revoke API key",
+        description: "Revoke an API key.",
+        security: [{ "sessionCookie": [] }],
+        params: {
+          type: "object",
+          required: ["id"],
+          properties: {
+            id: { type: "string" },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
     try {
       const userId = await authenticateSession(request, reply);
       if (!userId) return reply; // 401 already sent
@@ -234,7 +289,30 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
 
      Body shape: { training_optout: boolean }. Only one field for now;
      if/when more per-key settings exist we can broaden the validation. */
-  app.patch<{ Params: { id: string }; Body: unknown }>("/keys/:id", async (request, reply) => {
+  app.patch<{ Params: { id: string }; Body: unknown }>("/keys/:id",
+    {
+      schema: {
+        tags: ["Keys"],
+        summary: "Update API key",
+        description: "Update per-key settings (e.g. training_optout).",
+        security: [{ "sessionCookie": [] }],
+        params: {
+          type: "object",
+          required: ["id"],
+          properties: {
+            id: { type: "string" },
+          },
+        },
+        body: {
+          type: "object",
+          required: ["training_optout"],
+          properties: {
+            training_optout: { type: "boolean" },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
     try {
       const userId = await authenticateSession(request, reply);
       if (!userId) return reply; // 401 already sent
