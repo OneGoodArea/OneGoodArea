@@ -3,7 +3,7 @@
 import { Suspense, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   AuthShell,
   AuthTitle,
@@ -26,7 +26,6 @@ export default function SignInClient() {
 }
 
 function SignInForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"));
 
@@ -50,8 +49,9 @@ function SignInForm() {
         setLoading(false);
         return;
       }
-      router.push(callbackUrl);
-      router.refresh();
+      // Hard navigation so the browser sends the just-set session cookie and
+      // the destination's server-side auth() sees it (avoids the bounce loop).
+      window.location.assign(callbackUrl);
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);

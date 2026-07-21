@@ -30,7 +30,7 @@ import {
 } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   AuthShell,
   AuthTitle,
@@ -73,7 +73,6 @@ type Step = "email" | "credentials";
 type Mode = "signin" | "signup";
 
 function GetStartedForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"));
 
@@ -170,8 +169,8 @@ function GetStartedForm() {
         setLoading(false);
         return;
       }
-      router.push(callbackUrl);
-      router.refresh();
+      // Hard navigation so the just-set session cookie reaches the server.
+      window.location.assign(callbackUrl);
     } catch {
       setError("We couldn't reach the server. Retry, or contact support if this persists.");
       setLoading(false);
@@ -247,8 +246,8 @@ function GetStartedForm() {
         setLoading(false);
         return;
       }
-      router.push("/welcome");
-      router.refresh();
+      // Hard navigation so the just-set session cookie reaches the server.
+      window.location.assign("/welcome");
     } catch {
       setError("We couldn't reach the server. Retry, or contact support if this persists.");
       setLoading(false);
