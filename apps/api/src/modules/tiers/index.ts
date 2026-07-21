@@ -9,8 +9,8 @@
 
 import { sql } from "../../infrastructure/db/client";
 import { row, type UserRow } from "../../infrastructure/db/types";
-import { isSuperuser } from "../usage";
-import { getUserPlan, type PlanId } from "../billing/plans";
+import { isSuperuser, getUserPlan } from "../usage";
+import type { PlanId } from "../billing/plans";
 
 /** The tier taxonomy. Grows/collapses via the CHECK constraint on users.tier. */
 export type Tier =
