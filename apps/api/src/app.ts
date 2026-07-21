@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
+import { validatorCompiler, jsonSchemaTransform, type ZodTypeProvider } from "@fastify/type-provider-zod";
 import { openApiConfig } from "./modules/developer-surface/openapi-config";
 
 import { registerSystemRoutes } from "./routes/system";
@@ -35,9 +36,16 @@ declare module "fastify" {
 export async function buildApp(opts: { logger?: boolean } = {}): Promise<FastifyInstance> {
   const app = Fastify({ logger: opts.logger ?? false, ajv: { customOptions: { keywords: ["example"] } } });
 
+  // Zod type provider — validates request/response against Zod schemas directly.
+  app.setValidatorCompiler(validatorCompiler);
+  app.setSerializerCompiler(validatorCompiler as any);
+
   // OpenAPI/Swagger documentation — /docs (Swagger UI) and /openapi.json (raw spec).
   // Config owned by modules/developer-surface/openapi-config.ts.
-  await app.register(fastifySwagger, { openapi: openApiConfig });
+  await app.register(fastifySwagger, {
+    openapi: openApiConfig,
+    transform: jsonSchemaTransform,
+  });
 
   await app.register(fastifySwaggerUi, {
     routePrefix: "/docs",
