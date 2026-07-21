@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
 
 import { sql } from "@/infrastructure/db/client";
-import { getUserPlan, hasApiAccess, canMakeApiCall, canMakeNlCall, hasMcpAccess } from "@/modules/usage/index";
+import { getUserPlan, hasApiAccess, canMakeApiCall, canMakeNlCall, hasMcpAccess, hasLeversAccess } from "@/modules/usage/index";
 
 const mockSql = vi.mocked(sql);
 
@@ -151,5 +151,26 @@ describe("canMakeNlCall", () => {
     const r = await canMakeNlCall("u1");
     expect(r.limit).toBe(Infinity);
     expect(r.allowed).toBe(true);
+  });
+});
+
+describe("hasLeversAccess (AR-542)", () => {
+  it("is false on the free sandbox tier", async () => {
+    expect(await hasLeversAccess("u1")).toBe(false);
+  });
+
+  it("is false on a v1 free tier", async () => {
+    db.subscriptionPlan = "free";
+    expect(await hasLeversAccess("u1")).toBe(false);
+  });
+
+  it("is true on a paid plan", async () => {
+    db.subscriptionPlan = "build";
+    expect(await hasLeversAccess("u1")).toBe(true);
+  });
+
+  it("is true for a superuser (reported as business)", async () => {
+    db.isSuperuser = true;
+    expect(await hasLeversAccess("u1")).toBe(true);
   });
 });

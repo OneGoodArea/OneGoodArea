@@ -5,6 +5,7 @@ import { headerString } from "../shared/http";
 import { isAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { getOrgIfMember, listMembers, addMember, removeMember, changeMemberRole, countOwners, hasAtLeastRole } from "../modules/orgs";
+import { requireLeversAccess } from "../shared/require-levers";
 import { listPendingInvitations, createInvitation, revokeInvitation, acceptInvitation } from "../modules/orgs/invitations";
 import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
 import { RATE_LIMITS } from "../infrastructure/config";
@@ -64,6 +65,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
         if (!hasAtLeastRole(role, "admin")) {
           return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
         }
+        if (!(await requireLeversAccess(userId, reply))) return reply;
         const parsed = AddMemberRequestSchema.safeParse(request.body ?? {});
         if (!parsed.success) {
           return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
@@ -247,6 +249,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
         if (!hasAtLeastRole(role, "admin")) {
           return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
         }
+        if (!(await requireLeversAccess(callerId, reply))) return reply;
         const parsed = CreateInvitationRequestSchema.safeParse(request.body ?? {});
         if (!parsed.success) {
           return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });

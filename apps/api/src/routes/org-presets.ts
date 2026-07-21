@@ -4,6 +4,7 @@ import { authenticateEither } from "../shared/auth-either";
 import { isAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { getOrgIfMember, hasAtLeastRole } from "../modules/orgs";
+import { requireLeversAccess } from "../shared/require-levers";
 import { listPresets, getPreset, createPreset, updatePreset, deletePreset, findUnknownWeightKeys } from "../modules/orgs/presets";
 import { trackEvent } from "../modules/tracking/activity";
 
@@ -29,6 +30,7 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
         if (!hasAtLeastRole(role, "admin")) {
           return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
         }
+        if (!(await requireLeversAccess(userId, reply))) return reply;
         const parsed = CreatePresetRequestSchema.safeParse(request.body ?? {});
         if (!parsed.success) {
           return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
