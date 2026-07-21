@@ -1,5 +1,7 @@
 # Plan 048: Single-Source-of-Truth OpenAPI (Zod type provider)
 
+## Status: DONE ✅
+
 ## Purpose (one sentence)
 
 Eliminate the residual spec/behavior drift that Plan 046's hand-backfill can't

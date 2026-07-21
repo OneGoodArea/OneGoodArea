@@ -9,7 +9,7 @@ afterAll(async () => {
 
 describe("OpenAPI renderer verification (46.4)", () => {
   it("spec is valid OpenAPI 3.0 with required fields", async () => {
-    const res = await app.inject({ method: "GET", url: "/openapi.json" });
+    const res = await app.inject({ method: "GET", url: "/docs/json" });
     expect(res.statusCode).toBe(200);
     expect(res.headers["content-type"]).toContain("application/json");
 
@@ -36,7 +36,7 @@ describe("OpenAPI renderer verification (46.4)", () => {
   });
 
   it("every path has at least one operation with tags and summary", async () => {
-    const res = await app.inject({ method: "GET", url: "/openapi.json" });
+    const res = await app.inject({ method: "GET", url: "/docs/json" });
     const spec = res.json();
     const issues: string[] = [];
 
@@ -65,7 +65,7 @@ describe("OpenAPI renderer verification (46.4)", () => {
 
   it("Scalar renderer path exists at /playground", async () => {
     // Verify the spec can be fetched at the endpoint the renderer consumes.
-    const res = await app.inject({ method: "GET", url: "/openapi.json" });
+    const res = await app.inject({ method: "GET", url: "/docs/json" });
     expect(res.statusCode).toBe(200);
 
     const spec = res.json();
@@ -77,7 +77,7 @@ describe("OpenAPI renderer verification (46.4)", () => {
   });
 
   it("every protected route declares bearerAuth or sessionCookie security", async () => {
-    const res = await app.inject({ method: "GET", url: "/openapi.json" });
+    const res = await app.inject({ method: "GET", url: "/docs/json" });
     const spec = res.json();
 
     const knownPublic = ["/health", "/v1/meta", "/contact"];

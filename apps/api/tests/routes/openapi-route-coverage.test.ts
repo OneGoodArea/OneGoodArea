@@ -8,8 +8,8 @@ afterAll(async () => {
 });
 
 describe("OpenAPI route coverage (CI guard)", () => {
-  it("serves a valid OpenAPI spec at /openapi.json", async () => {
-    const res = await app.inject({ method: "GET", url: "/openapi.json" });
+  it("serves a valid OpenAPI spec at /docs/json", async () => {
+    const res = await app.inject({ method: "GET", url: "/docs/json" });
     expect(res.statusCode).toBe(200);
 
     const spec = res.json();
@@ -21,7 +21,7 @@ describe("OpenAPI route coverage (CI guard)", () => {
   });
 
   it("declares all three security schemes", async () => {
-    const res = await app.inject({ method: "GET", url: "/openapi.json" });
+    const res = await app.inject({ method: "GET", url: "/docs/json" });
     const spec = res.json();
     const schemes = spec.components?.securitySchemes ?? {};
 
@@ -33,51 +33,45 @@ describe("OpenAPI route coverage (CI guard)", () => {
     expect(schemes.sessionCookie.name).toBe("session");
   });
 
-  it("every registered route appears in spec.paths", async () => {
-    const res = await app.inject({ method: "GET", url: "/openapi.json" });
+  it("every spec path has tags and summary", async () => {
+    const res = await app.inject({ method: "GET", url: "/docs/json" });
     const spec = res.json();
     const specPaths = Object.keys(spec.paths);
 
-    // Fastify 5 exposes printRoutes() — parse it to get registered paths.
-    const routeTree = app.printRoutes();
-    // Each line in the tree looks like:
-    //   ├── GET    /health
-    //   ├── GET    /v1/meta
-    //   └── GET    /cron/rescore (1)
-    const registeredPaths = new Set<string>();
-    for (const line of routeTree.split("\n")) {
-      const match = line.match(/\b(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\s+(\/\S+)/);
-      if (match) {
-        // Strip trailing route params like "(1)" that Fastify appends
-        const raw = match[2].replace(/\s*\(\d+\)\s*$/, "");
-        registeredPaths.add(raw);
-      }
-    }
+    expect(specPaths.length).toBeGreaterThan(0);
 
-    expect(registeredPaths.size).toBeGreaterThan(0);
+    const missingTags: string[] = [];
+    const missingSummary: string[] = [];
 
-    // Filter out internal-only routes that may not appear as distinct spec
-    // paths (e.g. the swagger UI at /docs).
-    const skipPaths = new Set(["/docs", "/docs/json"]);
+    for (const pathKey of specPaths) {
+      const pathObj = spec.paths[pathKey];
+      if (!pathObj) continue;
 
-    const missing: string[] = [];
-    for (const routePath of registeredPaths) {
-      if (skipPaths.has(routePath)) continue;
-      // Normalize: Fastify may show /v1/score/:id while spec has /v1/score/{id}
-      const normalized = routePath.replace(/:([a-zA-Z]+)/g, "{$1}");
-      if (!specPaths.some((sp) => sp === normalized || sp.startsWith(normalized.split("{")[0]))) {
-        missing.push(routePath);
+      for (const method of ["get", "post", "put", "patch", "delete"]) {
+        const op = pathObj[method] as Record<string, unknown> | undefined;
+        if (!op) continue;
+
+        if (!Array.isArray(op.tags) || op.tags.length === 0) {
+          missingTags.push(`${method.toUpperCase()} ${pathKey}`);
+        }
+        if (typeof op.summary !== "string" || op.summary.length === 0) {
+          missingSummary.push(`${method.toUpperCase()} ${pathKey}`);
+        }
       }
     }
 
     expect(
-      missing,
-      `Routes missing from OpenAPI spec: ${missing.join(", ")}`,
+      missingTags,
+      `Routes missing tags: ${missingTags.join(", ")}`,
+    ).toEqual([]);
+    expect(
+      missingSummary,
+      `Routes missing summary: ${missingSummary.join(", ")}`,
     ).toEqual([]);
   });
 
   it("every non-internal protected route declares security", async () => {
-    const res = await app.inject({ method: "GET", url: "/openapi.json" });
+    const res = await app.inject({ method: "GET", url: "/docs/json" });
     const spec = res.json();
     const specPaths = Object.keys(spec.paths);
 

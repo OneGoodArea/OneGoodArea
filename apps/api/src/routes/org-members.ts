@@ -1,4 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { ZodTypeProvider } from "@fastify/type-provider-zod";
+import { z } from "zod";
 import { AddMemberRequestSchema, UpdateMemberRoleRequestSchema, CreateInvitationRequestSchema } from "@onegoodarea/contracts";
 import { authenticateEither } from "../shared/auth-either";
 import { headerString } from "../shared/http";
@@ -10,13 +12,16 @@ import { listPendingInvitations, createInvitation, revokeInvitation, acceptInvit
 import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
 import { RATE_LIMITS } from "../infrastructure/config";
 import { trackEvent } from "../modules/tracking/activity";
-import { zodToJsonSchema } from "../infrastructure/utils/zod-to-json-schema";
 
 import { getRoleInOrg } from "../modules/orgs";
 import { getUserEmail } from "../modules/usage";
 /** org-members route handlers — extracted from app.ts per AR-286. */
+const IdParamsSchema = z.object({ id: z.string() });
+const TokenParamsSchema = z.object({ token: z.string() });
+
 export function registerOrgMembersRoutes(app: FastifyInstance): void {
-    app.get("/v1/orgs/:id/members",
+    const typed = app.withTypeProvider<ZodTypeProvider>();
+    typed.get("/v1/orgs/:id/members",
       {
       schema: {
             "tags": [
@@ -25,13 +30,13 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
             "summary": "List members",
             "description": "List all members of an organization.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
-            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            "params": IdParamsSchema,
         },
       }, async (request, reply) => {
       try {
         const userId = await authenticateEither(request, reply);
         if (!userId) return reply;
-        const { id } = request.params as { id: string };
+        const { id } = request.params;
         const role = await getRoleInOrg(id, userId);
         if (!role) return reply.code(404).send({ error: "Org not found" });
         const members = await listMembers(id);
@@ -49,7 +54,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.post("/v1/orgs/:id/members",
+    typed.post("/v1/orgs/:id/members",
       {
       schema: {
             "tags": [
@@ -58,27 +63,23 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
             "summary": "Add member",
             "description": "Add an existing user to the organization.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
-            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
-            "body": zodToJsonSchema(AddMemberRequestSchema),
+            "params": IdParamsSchema,
+            "body": AddMemberRequestSchema,
         },
       }, async (request, reply) => {
       try {
         const userId = await authenticateEither(request, reply);
         if (!userId) return reply;
-        const { id } = request.params as { id: string };
+        const { id } = request.params;
         const role = await getRoleInOrg(id, userId);
         if (!role) return reply.code(404).send({ error: "Org not found" });
         if (!hasAtLeastRole(role, "admin")) {
           return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
         }
         if (!(await requireLeversAccess(userId, reply))) return reply;
-        const parsed = AddMemberRequestSchema.safeParse(request.body ?? {});
-        if (!parsed.success) {
-          return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
-        }
         // Levers AR-199: admin can add admin/member but NOT owner. Granting
         // ownership is the chain-of-authority move that stays owner-only.
-        const targetRole = parsed.data.role ?? "member";
+        const targetRole = request.body.role ?? "member";
         if (targetRole === "owner" && !hasAtLeastRole(role, "owner")) {
           return reply.code(403).send({
             error: "Only an owner can grant the owner role.",
@@ -91,7 +92,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
            org_members with rows pointing at fake user IDs. */
         const added = await addMember({
           orgId: id,
-          userId: parsed.data.user_id,
+          userId: request.body.user_id,
           role: targetRole,
         });
         if (!added) {
@@ -100,7 +101,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
             code: "user_not_found",
           });
         }
-        trackEvent("api.org.member_added", userId, { orgId: id, addedUserId: parsed.data.user_id }, id);
+        trackEvent("api.org.member_added", userId, { orgId: id, addedUserId: request.body.user_id }, id);
         return reply.code(201).send({ ok: true });
       } catch (error) {
         if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
@@ -109,7 +110,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.patch("/v1/orgs/:id/members/:userId",
+    typed.patch("/v1/orgs/:id/members/:userId",
       {
       schema: {
             "tags": [
@@ -126,7 +127,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
                 "userId": { "type": "string" },
               },
             },
-            "body": zodToJsonSchema(UpdateMemberRoleRequestSchema),
+            "body": UpdateMemberRoleRequestSchema,
         },
       }, async (request, reply) => {
       try {
@@ -138,11 +139,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
         if (!hasAtLeastRole(callerRole, "admin")) {
           return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
         }
-        const parsed = UpdateMemberRoleRequestSchema.safeParse(request.body ?? {});
-        if (!parsed.success) {
-          return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
-        }
-        const targetRole = parsed.data.role;
+        const targetRole = request.body.role;
         if (targetRole === "owner" && !hasAtLeastRole(callerRole, "owner")) {
           return reply.code(403).send({
             error: "Only an owner can grant the owner role.",
@@ -188,7 +185,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.delete("/v1/orgs/:id/members/:userId",
+    typed.delete("/v1/orgs/:id/members/:userId",
       {
       schema: {
             "tags": [
@@ -255,7 +252,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.post("/v1/orgs/:id/invitations",
+    typed.post("/v1/orgs/:id/invitations",
       {
       schema: {
             "tags": [
@@ -264,8 +261,8 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
             "summary": "Create invitation",
             "description": "Create an invitation to join the organization.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
-            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
-            "body": zodToJsonSchema(CreateInvitationRequestSchema),
+            "params": IdParamsSchema,
+            "body": CreateInvitationRequestSchema,
         },
       }, async (request, reply) => {
       try {
@@ -278,15 +275,11 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
           return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
         }
         if (!(await requireLeversAccess(callerId, reply))) return reply;
-        const parsed = CreateInvitationRequestSchema.safeParse(request.body ?? {});
-        if (!parsed.success) {
-          return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
-        }
         const result = await createInvitation({
           orgId,
           invitedByUserId: callerId,
-          email: parsed.data.email,
-          role: parsed.data.role,
+          email: request.body.email,
+          role: request.body.role,
         });
         if (!result.ok) {
           // 409 covers both "already pending" and "already a member" — same
@@ -306,7 +299,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.get("/v1/orgs/:id/invitations",
+    typed.get("/v1/orgs/:id/invitations",
       {
       schema: {
             "tags": [
@@ -315,7 +308,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
             "summary": "List invitations",
             "description": "List pending invitations for the organization.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
-            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            "params": IdParamsSchema,
         },
       }, async (request, reply) => {
       try {
@@ -333,7 +326,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.delete("/v1/orgs/:id/invitations/:invitationId",
+    typed.delete("/v1/orgs/:id/invitations/:invitationId",
       {
       schema: {
             "tags": [
@@ -372,7 +365,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.post("/v1/invitations/:token/accept",
+    typed.post("/v1/invitations/:token/accept",
       {
       schema: {
             "tags": [
@@ -381,7 +374,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
             "summary": "Accept invitation",
             "description": "Accept an organization invitation by token.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
-            "params": { "type": "object", "required": ["token"], "properties": { "token": { "type": "string" } } },
+            "params": TokenParamsSchema,
         },
       }, async (request, reply) => {
       try {

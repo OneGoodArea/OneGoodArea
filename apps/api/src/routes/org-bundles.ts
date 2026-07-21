@@ -1,4 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { ZodTypeProvider } from "@fastify/type-provider-zod";
+import { z } from "zod";
 import { CreateBundleRequestSchema, UpdateBundleRequestSchema } from "@onegoodarea/contracts";
 import { authenticateEither } from "../shared/auth-either";
 import { isAppError } from "../shared/errors";
@@ -7,12 +9,14 @@ import { getOrgIfMember, hasAtLeastRole } from "../modules/orgs";
 import { requireLeversAccess } from "../shared/require-levers";
 import { listBundles, getBundle, createBundle, updateBundle, deleteBundle, findUnknownSignalKeys } from "../modules/orgs/bundles";
 import { trackEvent } from "../modules/tracking/activity";
-import { zodToJsonSchema } from "../infrastructure/utils/zod-to-json-schema";
 
 import { getRoleInOrg } from "../modules/orgs";
 /** org-bundles route handlers — extracted from app.ts per AR-286. */
+const IdParamsSchema = z.object({ id: z.string() });
+
 export function registerOrgBundlesRoutes(app: FastifyInstance): void {
-    app.post("/v1/orgs/:id/bundles",
+    const typed = app.withTypeProvider<ZodTypeProvider>();
+    typed.post("/v1/orgs/:id/bundles",
       {
       schema: {
             "tags": [
@@ -21,8 +25,8 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
             "summary": "Create bundle",
             "description": "Create a signal bundle for an organization.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
-            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
-            "body": zodToJsonSchema(CreateBundleRequestSchema),
+            "params": IdParamsSchema,
+            "body": CreateBundleRequestSchema,
         },
       }, async (request, reply) => {
       try {
@@ -35,11 +39,7 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
           return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
         }
         if (!(await requireLeversAccess(userId, reply))) return reply;
-        const parsed = CreateBundleRequestSchema.safeParse(request.body ?? {});
-        if (!parsed.success) {
-          return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
-        }
-        const unknown = findUnknownSignalKeys(parsed.data.signal_keys);
+        const unknown = findUnknownSignalKeys(request.body.signal_keys);
         if (unknown.length > 0) {
           return reply.code(400).send({
             error: `Unknown signal keys: ${unknown.join(", ")}. See /docs/api-reference for the active taxonomy.`,
@@ -48,9 +48,9 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
         }
         const bundle = await createBundle({
           orgId,
-          name: parsed.data.name,
-          slug: parsed.data.slug,
-          signalKeys: parsed.data.signal_keys,
+          name: request.body.name,
+          slug: request.body.slug,
+          signalKeys: request.body.signal_keys,
         });
         trackEvent("api.bundle.created", userId, { orgId, bundleId: bundle.id, count: bundle.signal_keys.length }, orgId);
         return reply.code(201).send(bundle);
@@ -65,7 +65,7 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.get("/v1/orgs/:id/bundles",
+    typed.get("/v1/orgs/:id/bundles",
       {
       schema: {
             "tags": [
@@ -74,7 +74,7 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
             "summary": "List bundles",
             "description": "List signal bundles for an organization.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
-            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            "params": IdParamsSchema,
         },
       }, async (request, reply) => {
       try {
@@ -94,7 +94,7 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.get("/v1/orgs/:id/bundles/:bundleId",
+    typed.get("/v1/orgs/:id/bundles/:bundleId",
       {
       schema: {
             "tags": [
@@ -126,7 +126,7 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.patch("/v1/orgs/:id/bundles/:bundleId",
+    typed.patch("/v1/orgs/:id/bundles/:bundleId",
       {
       schema: {
             "tags": [
@@ -140,7 +140,7 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
               "required": ["id", "bundleId"],
               "properties": { "id": { "type": "string" }, "bundleId": { "type": "string" } },
             },
-            "body": zodToJsonSchema(UpdateBundleRequestSchema),
+            "body": UpdateBundleRequestSchema,
         },
       }, async (request, reply) => {
       try {
@@ -152,12 +152,8 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
         if (!hasAtLeastRole(role, "admin")) {
           return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
         }
-        const parsed = UpdateBundleRequestSchema.safeParse(request.body ?? {});
-        if (!parsed.success) {
-          return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
-        }
-        if (parsed.data.signal_keys) {
-          const unknown = findUnknownSignalKeys(parsed.data.signal_keys);
+        if (request.body.signal_keys) {
+          const unknown = findUnknownSignalKeys(request.body.signal_keys);
           if (unknown.length > 0) {
             return reply.code(400).send({
               error: `Unknown signal keys: ${unknown.join(", ")}.`,
@@ -166,9 +162,9 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
           }
         }
         const updated = await updateBundle(orgId, bundleId, {
-          name: parsed.data.name,
-          slug: parsed.data.slug,
-          signalKeys: parsed.data.signal_keys,
+          name: request.body.name,
+          slug: request.body.slug,
+          signalKeys: request.body.signal_keys,
         });
         if (!updated) return reply.code(404).send({ error: "Bundle not found" });
         trackEvent("api.bundle.updated", userId, { orgId, bundleId }, orgId);
@@ -184,7 +180,7 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.delete("/v1/orgs/:id/bundles/:bundleId",
+    typed.delete("/v1/orgs/:id/bundles/:bundleId",
       {
       schema: {
             "tags": [

@@ -1,15 +1,19 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { ZodTypeProvider } from "@fastify/type-provider-zod";
+import { z } from "zod";
 import { CreateOrgRequestSchema, UpdateOrgRequestSchema } from "@onegoodarea/contracts";
 import { authenticateEither } from "../shared/auth-either";
 import { isAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { createOrgWithOwner, listOrgsForUser, getOrgIfMember, updateOrg, getRoleInOrg, hasAtLeastRole, deleteOrg } from "../modules/orgs";
 import { trackEvent } from "../modules/tracking/activity";
-import { zodToJsonSchema } from "../infrastructure/utils/zod-to-json-schema";
+
+const IdParamsSchema = z.object({ id: z.string() });
 
 /** orgs route handlers — extracted from app.ts per AR-286. */
 export function registerOrgsRoutes(app: FastifyInstance): void {
-    app.post("/v1/orgs",
+    const typed = app.withTypeProvider<ZodTypeProvider>();
+    typed.post("/v1/orgs",
       {
       schema: {
             "tags": [
@@ -18,19 +22,15 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
             "summary": "Create organization",
             "description": "Creates a new organization. The caller becomes the owner.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
-            "body": zodToJsonSchema(CreateOrgRequestSchema),
+            "body": CreateOrgRequestSchema,
         },
       }, async (request, reply) => {
       try {
         const userId = await authenticateEither(request, reply);
         if (!userId) return reply;
-        const parsed = CreateOrgRequestSchema.safeParse(request.body ?? {});
-        if (!parsed.success) {
-          return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
-        }
         const org = await createOrgWithOwner({
-          name: parsed.data.name,
-          slug: parsed.data.slug,
+          name: request.body.name,
+          slug: request.body.slug,
           userId,
         });
         trackEvent("api.org.created", userId, { orgId: org.id }, org.id);
@@ -47,7 +47,7 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.get("/v1/orgs",
+    typed.get("/v1/orgs",
       {
       schema: {
             "tags": [
@@ -70,7 +70,7 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.get("/v1/orgs/:id",
+    typed.get("/v1/orgs/:id",
       {
       schema: {
             "tags": [
@@ -79,13 +79,13 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
             "summary": "Get organization",
             "description": "Get organization details by ID.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
-            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            "params": IdParamsSchema,
         },
       }, async (request, reply) => {
       try {
         const userId = await authenticateEither(request, reply);
         if (!userId) return reply;
-        const { id } = request.params as { id: string };
+        const { id } = request.params;
         const org = await getOrgIfMember(id, userId);
         if (!org) return reply.code(404).send({ error: "Org not found" });
         return reply.code(200).send(org);
@@ -99,7 +99,7 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
     /* AR-399: DELETE /v1/orgs/:id. Owner-only. Rejects personal orgs
        (deleting them would orphan the user). Cascades to every
        per-org child table; see OrgRepository.deleteOrgEntirely. */
-    app.delete("/v1/orgs/:id",
+    typed.delete("/v1/orgs/:id",
       {
       schema: {
             "tags": [
@@ -108,13 +108,13 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
             "summary": "Delete organization",
             "description": "Delete an organization and every row that references it (members, presets, bundles, cohorts, methodology pins, invitations). Owner-only. Personal orgs cannot be deleted.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
-            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            "params": IdParamsSchema,
         },
       }, async (request, reply) => {
       try {
         const userId = await authenticateEither(request, reply);
         if (!userId) return reply;
-        const { id } = request.params as { id: string };
+        const { id } = request.params;
         const outcome = await deleteOrg(id, userId);
         if (outcome === "not_found") return reply.code(404).send({ error: "Org not found" });
         if (outcome === "forbidden") return reply.code(403).send({ error: "Owner required.", code: "owner_required" });
@@ -133,7 +133,7 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
       }
     });
 
-    app.patch("/v1/orgs/:id",
+    typed.patch("/v1/orgs/:id",
       {
       schema: {
             "tags": [
@@ -142,24 +142,20 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
             "summary": "Update organization",
             "description": "Update organization name, slug, or white-label settings.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
-            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
-            "body": zodToJsonSchema(UpdateOrgRequestSchema),
+            "params": IdParamsSchema,
+            "body": UpdateOrgRequestSchema,
         },
       }, async (request, reply) => {
       try {
         const userId = await authenticateEither(request, reply);
         if (!userId) return reply;
-        const { id } = request.params as { id: string };
+        const { id } = request.params;
         const role = await getRoleInOrg(id, userId);
         if (!role) return reply.code(404).send({ error: "Org not found" });
         if (!hasAtLeastRole(role, "admin")) {
           return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
         }
-        const parsed = UpdateOrgRequestSchema.safeParse(request.body ?? {});
-        if (!parsed.success) {
-          return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid request body." });
-        }
-        const updated = await updateOrg(id, parsed.data);
+        const updated = await updateOrg(id, request.body);
         if (!updated) return reply.code(404).send({ error: "Org not found" });
         trackEvent("api.org.updated", userId, { orgId: id }, id);
         return reply.code(200).send(updated);

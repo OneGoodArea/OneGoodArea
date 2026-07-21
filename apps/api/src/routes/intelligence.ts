@@ -24,7 +24,6 @@ import { sql } from "../infrastructure/db/client";
 import { getCohort } from "../modules/orgs/cohorts";
 import { METHODOLOGY_VERSION } from "../modules/engine/methodology";
 import type { Country } from "../modules/signals/peers";
-import { zodToJsonSchema } from "../infrastructure/utils/zod-to-json-schema";
 /** intelligence route handlers — extracted from app.ts per AR-286. */
 export function registerIntelligenceRoutes(app: FastifyInstance): void {
   const guardSignalsCtx = async (
@@ -46,9 +45,8 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
             "security": [{ "bearerAuth": [] }],
             "body": {
               "oneOf": [
-                { ...zodToJsonSchema(QueryRequestSchema), "description": "Natural language question or programmatic plan." },
-                { "type": "object", "properties": { "question": { "type": "string", "minLength": 1 } }, "required": ["question"], "example": { "question": "best areas for families in London" } },
-                { "type": "object", "properties": { "plan": { "type": "object" } }, "required": ["plan"] },
+                { "type": "object", "properties": { "question": { "type": "string", "minLength": 1 } }, "required": ["question"], "description": "Natural language question.", "example": { "question": "best areas for families in London" } },
+                { "type": "object", "properties": { "plan": { "type": "object" } }, "required": ["plan"], "description": "Programmatic plan object." },
               ],
               "description": "Natural language question or a programmatic plan object.",
             },
