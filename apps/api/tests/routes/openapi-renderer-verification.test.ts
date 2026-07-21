@@ -63,9 +63,8 @@ describe("OpenAPI renderer verification (46.4)", () => {
     ).toBeLessThanOrEqual(10);
   });
 
-  it("Scalar renderer path exists (pre-Plan 050 at /openapi)", async () => {
-    // After Plan 050 this moves to /playground. For now, verify the spec
-    // can be fetched at the endpoint the renderer would consume.
+  it("Scalar renderer path exists at /playground", async () => {
+    // Verify the spec can be fetched at the endpoint the renderer consumes.
     const res = await app.inject({ method: "GET", url: "/openapi.json" });
     expect(res.statusCode).toBe(200);
 

@@ -18,7 +18,7 @@ import "./api-reference.css";
    previous "honest interim while we rebuild" theatre, which was
    pre-customer dress-up for a regeneration story that's already
    shipped (@fastify/swagger is wired in apps/api/src/app.ts:35 and
-   the live Scalar reference at /openapi consumes it).
+    the live Scalar reference at /playground consumes it).
 
    Page layout:
      - Hero: direct framing, no "interim" language
@@ -26,8 +26,8 @@ import "./api-reference.css";
        the marketing /products pages)
      - Levers: visually subordinate single card on a quiet surface,
        because Levers is the control plane, not a 5th product
-     - Resources: pointer to /methodology + /openapi (the live
-       interactive reference)
+      - Resources: pointer to /methodology + /playground (the live
+        interactive reference)
      - No roadmap section. The work it described is done. */
 
 type Product = {
@@ -149,7 +149,7 @@ function Hero() {
             Read the methodology
             <span aria-hidden>→</span>
           </Link>
-          <Link href="/openapi" className="oga-btn oga-btn-secondary">
+          <Link href="/playground" className="oga-btn oga-btn-secondary">
             Open the reference
             <span aria-hidden>→</span>
           </Link>
@@ -246,7 +246,7 @@ function SectionLevers() {
           </ul>
           <p className="oga-apiref-levers__foot">
             Full request shapes on the{" "}
-            <Link href="/openapi" className="oga-apiref-levers__foot-link">
+            <Link href="/playground" className="oga-apiref-levers__foot-link">
               interactive reference <span aria-hidden>→</span>
             </Link>
             . Methodology rationale on the{" "}
@@ -291,7 +291,7 @@ function SectionResources() {
             </span>
           </Link>
 
-          <Link href="/openapi" className="oga-apiref-resources__item">
+          <Link href="/playground" className="oga-apiref-resources__item">
             <span className="oga-apiref-resources__item-num">03.2</span>
             <h3 className="oga-apiref-resources__item-name">Interactive reference</h3>
             <p className="oga-apiref-resources__item-desc">

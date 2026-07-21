@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
+import { openApiConfig } from "./modules/developer-surface/openapi-config";
 
 import { registerSystemRoutes } from "./routes/system";
 import { registerAuthRoutes } from "./routes/auth";
@@ -19,7 +20,6 @@ import { registerOrgPresetsRoutes } from "./routes/org-presets";
 import { registerOrgCohortsRoutes } from "./routes/org-cohorts";
 import { registerOrgMethodologyRoutes } from "./routes/org-methodology";
 import { registerIntelligenceRoutes } from "./routes/intelligence";
-import { registerPlaygroundRoutes } from "./routes/playground";
 import { registerContactRoutes } from "./routes/contact";
 import { classifyClientApp } from "./shared/http";
 import { runWithRequestContext } from "./shared/request-context";
@@ -36,61 +36,8 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
   const app = Fastify({ logger: opts.logger ?? false, ajv: { customOptions: { keywords: ["example"] } } });
 
   // OpenAPI/Swagger documentation — /docs (Swagger UI) and /openapi.json (raw spec).
-  await app.register(fastifySwagger, {
-    openapi: {
-      info: {
-        title: "OneGoodArea API",
-        version: "1.0.0",
-        description: "Area intelligence API — scores, signals, reports, and org management.",
-      },
-      servers: [{ url: process.env.API_PUBLIC_URL || "http://localhost:4000" }],
-      tags: [
-        { name: "Meta", description: "Health and version endpoints" },
-        { name: "Reports", description: "Generate and retrieve area reports" },
-        { name: "Signals", description: "Signal-first area profiles" },
-        { name: "Scores", description: "Scoring engine" },
-        { name: "Portfolios", description: "Portfolio management" },
-        { name: "Orgs", description: "Organization and member management" },
-        { name: "Invitations", description: "Org invitations" },
-        { name: "Bundles", description: "Signal bundles" },
-        { name: "Presets", description: "Scoring presets" },
-        { name: "Methodology", description: "Engine version pins" },
-        { name: "Cohorts", description: "Area cohorts" },
-        { name: "Intelligence", description: "Query, peers, insights, forecast" },
-        { name: "Webhooks", description: "Outbound webhook subscriptions" },
-        { name: "Usage", description: "Plan and quota endpoints" },
-        { name: "Keys", description: "API key management" },
-        { name: "Auth", description: "Authentication endpoints" },
-        { name: "Stripe", description: "Billing and subscriptions" },
-        { name: "Settings", description: "Account settings" },
-        { name: "Dashboard", description: "Dashboard composite data" },
-        { name: "Tracking", description: "Analytics and pageview tracking" },
-        { name: "Watchlist", description: "Saved areas watchlist" },
-        { name: "Admin", description: "Admin analytics (superuser only)" },
-        { name: "Cron", description: "Scheduled jobs" },
-      ],
-      components: {
-        securitySchemes: {
-          bearerAuth: {
-            type: "http",
-            scheme: "bearer",
-            description: "API key from /keys. Header: Authorization: Bearer oga_live_...",
-          },
-          bridgeToken: {
-            type: "http",
-            scheme: "bearer",
-            description: "Bridge token minted by the web BFF. Internal use only.",
-          },
-          sessionCookie: {
-            type: "apiKey",
-            in: "cookie",
-            name: "session",
-            description: "Session cookie (browser login). Use for dashboard routes.",
-          },
-        },
-      },
-    },
-  });
+  // Config owned by modules/developer-surface/openapi-config.ts.
+  await app.register(fastifySwagger, { openapi: openApiConfig });
 
   await app.register(fastifySwaggerUi, {
     routePrefix: "/docs",
@@ -152,7 +99,6 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
   registerOrgCohortsRoutes(app);
   registerOrgMethodologyRoutes(app);
   registerIntelligenceRoutes(app);
-  registerPlaygroundRoutes(app);
   registerContactRoutes(app);
 
   return app;

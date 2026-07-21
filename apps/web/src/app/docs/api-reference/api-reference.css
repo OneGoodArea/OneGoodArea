@@ -4,10 +4,10 @@
    "honest interim while we rebuild" framing. The OpenAPI regen
    work that wrapper was holding the space for has shipped:
    @fastify/swagger is wired in apps/api/src/app.ts and the live
-   Scalar reference at /openapi consumes it. So we lead with what's
+    Scalar reference at /playground consumes it. So we lead with what's
    real: four bespoke product tiles with their canonical icons,
    Levers as a subordinate control-plane card, and pointers to
-   /methodology + /openapi. No customer migration theatre. */
+    /methodology + /playground. No customer migration theatre. */
 
 /* ============================================================
    Page container

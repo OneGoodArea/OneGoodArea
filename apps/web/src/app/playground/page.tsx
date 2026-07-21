@@ -1,30 +1,23 @@
-import type { Metadata } from "next";
-import PlaygroundClient from "@/app/design-v2/playground/client";
+import { DeveloperSurface } from "@/modules/developer-surface"
 
-/* /playground - Public interactive surface. Pre-signup demo where
-   anyone can run real /v1/* queries against live prod, with bounded
-   rate limits + Turnstile bot mitigation. See plan/032. */
-
-export const metadata: Metadata = {
-  title: "Playground | OneGoodArea",
-  description:
-    "Try OneGoodArea end-to-end. Real signals, real scores, real intelligence queries against live prod, no signup required.",
+export const metadata = {
+  title: "API Playground | OneGoodArea",
+  description: "Interactive API playground — try OneGoodArea endpoints with a demo key.",
   openGraph: {
-    title: "Playground | OneGoodArea",
-    description:
-      "Interactive demo of the OneGoodArea API. Run real queries against live UK property, crime, deprivation and schools data.",
+    title: "API Playground | OneGoodArea",
+    description: "Interactive API playground — try OneGoodArea endpoints with a demo key.",
+    url: "https://onegoodarea.com/playground",
+    siteName: "OneGoodArea",
     type: "website",
-    url: "https://www.onegoodarea.com/playground",
-    images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Playground | OneGoodArea",
-    description: "Run real API queries. No signup required.",
+    title: "API Playground | OneGoodArea",
+    description: "Interactive API playground — try OneGoodArea endpoints with a demo key.",
   },
-  alternates: { canonical: "https://www.onegoodarea.com/playground" },
-};
+  alternates: { canonical: "https://onegoodarea.com/playground" },
+}
 
 export default function PlaygroundPage() {
-  return <PlaygroundClient />;
+  return <DeveloperSurface />
 }
