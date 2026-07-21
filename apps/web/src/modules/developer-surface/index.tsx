@@ -7,7 +7,7 @@ export interface DeveloperSurfaceProps {
   /** URL to the OpenAPI spec JSON. Defaults to /api/openapi-spec */
   specUrl?: string
   /** Scalar theme. Defaults to "default" */
-  theme?: "default" | "alternate" | "purple" | "green" | "yellow"
+  theme?: "default" | "none" | "purple" | "alternate" | "moon" | "solarized" | "bluePlanet" | "deepSpace" | "saturn" | "kepler" | "elysiajs" | "fastify" | "mars" | "laserwave"
 }
 
 /**
