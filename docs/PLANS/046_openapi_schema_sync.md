@@ -18,7 +18,8 @@ accurate, always-current representation of the real API.
 | Step | Subtask | Maps to | Branch |
 |---|---|---|---|
 | 46.1 | AR-520 | Audit drift (per-route gap list) | `feat/AR-501-openapi-schema-sync` |
-| 46.2 | AR-521 | Backfill request/response schemas | `feat/AR-501-openapi-schema-sync` |
+| 46.2a | AR-521 | Backfill Wave 1 (public v1 API-key routes) | `feat/AR-501-openapi-schema-sync` |
+| 46.2b | AR-541 | Backfill Wave 2 (session/dashboard routes) | `feat/AR-501-openapi-schema-sync` |
 | 46.3 | AR-522 | CI guard (route coverage) | `feat/AR-501-openapi-schema-sync` |
 | 46.4 | AR-523 | Preserve renderers (/playground Scalar + raw spec) | `feat/AR-501-openapi-schema-sync` |
 | 46.5 | AR-524 | Tests | `feat/AR-501-openapi-schema-sync` |
@@ -52,20 +53,64 @@ independently.
 
 ---
 
+## Decisions (locked)
+
+1. **Session routes**: Add a `sessionCookie` securityScheme to the OpenAPI spec.
+   Session-protected routes (dashboard, me, watchlist, settings) will show a
+   "session cookie required" lock so playground users know "logged in required."
+2. **Internal routes**: Auth, admin, cron, and Stripe webhook routes are
+   internal-only. Mark them with `x-internal: true` in the spec (visible in
+   Swagger UI/Scalar but flagged as internal). Do NOT exclude them entirely.
+3. **Wave phasing**: Split 46.2 into two waves:
+   - **Wave 1 (AR-521)**: Public v1 API-key routes (Intelligence, Signals, Scores,
+     Portfolios, Webhooks, Orgs entity family). These are the highest external
+     value and the biggest drift.
+   - **Wave 2 (AR-541)**: Session/dashboard routes (me, watchlist, settings,
+     api-keys, stripe, contact, track, admin). Add sessionCookie scheme. Mark
+     internal routes.
+
+---
+
 ## Steps
 
-### 46.1 — Audit drift (AR-520)
+### 46.1 — Audit drift (AR-520) ✅ DONE
 - Enumerate every registered route; diff its `.schema` (params/body/response)
   vs the real handler validation (Zod in `@onegoodarea/contracts` or manual
   `request.body` casts). Produce a per-route gap list, grouped by tag.
+- **Result**: 105 routes audited. 0/105 declare `response`. 52/52 protected
+  routes omit `bearerAuth`. Only 2/38 body routes are faithful. Full audit at
+  `docs/PLANS/046_audit_drift.md`.
 
-### 46.2 — Backfill request/response schemas (AR-521)
-- For routes with only tags/summary, add full `body` / `querystring` / `params`
-  / `response` schemas sourced from existing `@onegoodarea/contracts` Zod schemas
-  where they exist; otherwise author minimal accurate schemas.
-- Ensure `bearerAuth` (the `securitySchemes.bearerAuth` already declared in
-  `app.ts`) is attached to every protected route so renderers show the lock
-  icon + "Authorize".
+### 46.2a — Backfill Wave 1: public v1 API-key routes (AR-521)
+Backfill real schemas for the public API-key surface. For each route:
+- **body**: use `zodToJsonSchema(ZodSchema)` if Zod exists, otherwise manual
+  JSON Schema from `parse*` function input shape.
+- **querystring**: if route reads `request.query`, add querystring schema.
+- **params**: if route has `:id` or path params, add params schema.
+- **response**: add minimal `200` response from handler's `reply.send(...)` payload.
+- **security**: add `security: [{ bearerAuth: [] }]` for pure API-key routes,
+  or `security: [{ bearerAuth: [] }, { bridgeToken: [] }]` for dual routes
+  (`authenticateEither`).
+
+**Routes (Wave 1):**
+- Intelligence: `POST /v1/query`, `/v1/peers`, `/v1/insights`, `/v1/forecast`
+- Signals: `GET /v1/signals/:category`, `GET /v1/areas`
+- Scores: `POST /v1/score`
+- Portfolios: all 8 portfolio routes
+- Webhooks: POST/GET/DELETE/rotate webhook routes
+- Orgs entity family: orgs, members, invitations, bundles, cohorts, presets,
+  methodology (31 routes using `authenticateEither` → dual security)
+
+### 46.2b — Backfill Wave 2: session/dashboard routes + internal marking (AR-541)
+Backfill session/dashboard routes and add infrastructure to the spec:
+- **sessionCookie scheme**: Add `sessionCookie` securityScheme to `app.ts`
+  OpenAPI components (type: "apiKey", in: "cookie", name: "session").
+- **Session routes**: Attach `security: [{ sessionCookie: [] }]` to all
+  session-protected routes (me, watchlist, settings, admin dashboard, etc.).
+- **Internal marking**: Add `x-internal: true` to auth routes (`/auth/*`,
+  `/settings/password`), admin routes (`/admin/*`), cron routes (`/cron/*`),
+  and Stripe webhook (`POST /stripe/webhook`).
+- **Body/querystring/params/response**: backfill as in Wave 1.
 
 ### 46.3 — CI guard (route coverage) (AR-522)
 - Add a test that boots the app and asserts `/openapi.json` parses and that
@@ -132,7 +177,7 @@ independently.
 
 **AFTER coding (must pass in container)**
 - **Unit:** new spec-coverage test asserts every registered route path ∈
-  `paths` AND every protected route declares `bearerAuth`.
+  `paths` AND every protected route declares `bearerAuth` or `sessionCookie`.
 - **E2E:** `curl <api-test>:8080/docs/json` returns valid JSON; Scalar
   (`/playground`, post-Plan 050) renders the fuller spec.
 - **Diff gate:** handler source (`src/**` excluding `.schema`) unchanged versus
@@ -141,9 +186,12 @@ independently.
 ---
 
 ## Risks
-- Large route count (~85) — phase by tag (public v1 first, then auth/admin).
-- Over-specifying could leak internals — keep non-public routes out of published
-  spec or mark internal.
+- Large route count (105) — phased into Wave 1 (public v1) and Wave 2
+  (session/dashboard) to manage complexity.
+- Session-cookie routes add a new securityScheme — verify Scalar renders the
+  session lock correctly.
+- Internal routes use `x-internal` extension — verify renderers handle it
+  (Scalar: may need custom CSS to hide/fade internal routes).
 
 ## Out of scope
 - Embedding Scalar in `/developers` shell (043/050) — this plan only fixes the
