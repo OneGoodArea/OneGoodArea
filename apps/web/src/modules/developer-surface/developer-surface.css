@@ -1,0 +1,79 @@
+/* ============================================================
+   Developer Surface — Scalar Branding Lockdown (Plan 049)
+   Maps Scalar CSS vars to OneGoodArea brand tokens.
+   ============================================================ */
+
+.developer-surface {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* 49.1 — Branded header */
+.developer-surface__header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--oga-border);
+  background: var(--oga-bg);
+  flex-shrink: 0;
+}
+
+.developer-surface__home {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: var(--oga-fg);
+  font-family: var(--oga-font-sans);
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: opacity 0.15s;
+}
+
+.developer-surface__home:hover {
+  opacity: 0.7;
+}
+
+.developer-surface__label {
+  font-family: var(--oga-font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+}
+
+/* 49.2 — Scalar CSS var overrides → brand tokens */
+.developer-surface__scalar {
+  flex: 1;
+  overflow: hidden;
+
+  /* Map Scalar CSS vars to brand tokens */
+  --scalar-background-1: var(--oga-bg);
+  --scalar-background-2: var(--oga-canvas);
+  --scalar-background-3: var(--oga-canvas);
+  --scalar-color-1: var(--oga-fg);
+  --scalar-color-2: var(--oga-fg-subtle);
+  --scalar-color-3: var(--oga-fg-muted);
+  --scalar-color-accent: var(--oga-accent);
+  --scalar-border-color: var(--oga-border);
+  --scalar-color-green: var(--oga-status-green);
+  --scalar-color-red: var(--oga-status-red);
+  --scalar-color-yellow: var(--oga-status-yellow);
+  --scalar-color-blue: #3B82F6;
+  --scalar-font: var(--oga-font-sans);
+  --scalar-font-code: var(--oga-font-mono);
+
+  /* Kill Scalar hover/focus ring that doesn't match brand */
+  --scalar-border-color-hover: var(--oga-ink-30);
+}
+
+/* 49.3 — Hide any remaining Scalar CTAs via CSS as defense-in-depth */
+.developer-surface__scalar [class*="scalar-api-reference"] a[href*="scalar.com"],
+.developer-surface__scalar a[href*="scalar.com"],
+.developer-surface__scalar .scalar-decoration,
+.developer-surface__scalar [class*="powered-by"] {
+  display: none !important;
+}
