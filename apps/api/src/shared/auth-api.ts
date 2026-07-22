@@ -2,9 +2,10 @@ import type { FastifyRequest, FastifyReply } from "fastify";
 import { validateApiKey } from "../modules/api-keys";
 import { hasApiAccess, canMakeApiCall } from "../modules/usage";
 import { PLANS } from "../modules/billing/plans";
-import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
+import { rateLimitHeaders } from "../infrastructure/rate-limit";
 import { RATE_LIMITS } from "../infrastructure/config";
 import { clientIpOf } from "./http";
+import { resolveTier, checkQuota } from "../modules/tiers";
 
 /** Bearer-token auth. Resolves the userId, or sends a 401/403 and
    resolves null. Shared by every Bearer-authenticated route.
@@ -36,9 +37,7 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
 }
 
 /** Auth + per-key rate-limit + plan API-access gate. Bearer auth ->
-   rate-limit `api:<key>` against the apiReport budget (named for
-   historical reasons; AR-324 retired /v1/report but the budget is
-   still the shared per-key cap for /v1/* writes) -> hasApiAccess. On
+   resolve tier -> checkQuota (tier-based rate limit) -> hasApiAccess. On
    any failure it sends the response and resolves null; on success it
    resolves the userId with rate-limit headers already on the reply. */
 export async function requireApiAccess(request: FastifyRequest, reply: FastifyReply): Promise<string | null> {
@@ -46,13 +45,16 @@ export async function requireApiAccess(request: FastifyRequest, reply: FastifyRe
   if (!userId) return null; // 401 already sent
   const apiKey = (request.headers.authorization ?? "").slice(7);
 
-  const rl = await rateLimit(`api:${apiKey}`, {
-    max: RATE_LIMITS.apiReport.max,
-    windowSeconds: RATE_LIMITS.apiReport.windowSeconds,
-  });
-  reply.headers(rateLimitHeaders(RATE_LIMITS.apiReport.max, rl));
-  if (!rl.success) {
-    reply.code(429).send({ error: "Too many requests. Rate limit: 30 requests per minute." });
+  // AR-499: resolve tier and use tier-based quota
+  const tier = await resolveTier({ userId, hasApiKey: true });
+  const quota = await checkQuota(tier, `api:${apiKey}`);
+  reply.headers(rateLimitHeaders(RATE_LIMITS.apiReport.max, {
+    success: quota.allowed,
+    remaining: quota.remaining ?? RATE_LIMITS.apiReport.max,
+    reset: quota.reset ?? 0,
+  }));
+  if (!quota.allowed) {
+    reply.code(429).send({ error: quota.reason ?? "Too many requests." });
     return null;
   }
 
@@ -66,10 +68,10 @@ export async function requireApiAccess(request: FastifyRequest, reply: FastifyRe
      (build / scale / growth) are allowed to exceed and bill the overage;
      superuser has an Infinity limit so it never trips. Before this the
      quota was display-only and the free tier was unbounded production. */
-  const quota = await canMakeApiCall(userId);
-  if (!quota.allowed && PLANS[quota.plan].overageMode === "hard") {
+  const monthlyQuota = await canMakeApiCall(userId);
+  if (!monthlyQuota.allowed && PLANS[monthlyQuota.plan].overageMode === "hard") {
     reply.code(429).send({
-      error: `Monthly call limit reached (${quota.limit} calls on the ${PLANS[quota.plan].name} plan). It resets at the start of next month. Upgrade at /pricing.`,
+      error: `Monthly call limit reached (${monthlyQuota.limit} calls on the ${PLANS[monthlyQuota.plan].name} plan). It resets at the start of next month. Upgrade at /pricing.`,
       code: "monthly_quota_exceeded",
     });
     return null;
