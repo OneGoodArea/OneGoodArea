@@ -1,7 +1,6 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
-import { type ZodTypeProvider } from "@fastify/type-provider-zod";
 import { zodSafeJsonSchemaTransform } from "./infrastructure/utils/zod-safe-json-schema-transform";
 import { hybridValidatorCompiler } from "./infrastructure/utils/hybrid-validator-compiler";
 import { openApiConfig } from "./modules/developer-surface/openapi-config";
