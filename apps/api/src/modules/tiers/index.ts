@@ -1,16 +1,15 @@
-/* AR-500 (Plan 045) + AR-499 (Plan 044): Tier resolution.
+/* AR-500 (Plan 045) + AR-499 (Plan 044): Tier resolution + quota + LLM routing.
 
    resolveTier() is the SINGLE SOURCE OF TRUTH for determining a caller's
-   tier. It reads the users.tier column (set by privileged/internal path),
-   falls back to plan-based mapping, and superuser overrides everything.
-
-   Callers (API gate, LLM engine, future modules) MUST use resolveTier() and
-   obey its verdict — no module computes its own tier logic. */
+   tier. checkQuota() is the ONLY quota gate. decideLlm() is the ONLY LLM
+   router. Callers query these and obey their verdicts — no module computes
+   its own limits or model selection. */
 
 import { sql } from "../../infrastructure/db/client";
 import { row, type UserRow } from "../../infrastructure/db/types";
 import { isSuperuser, getUserPlan } from "../usage";
 import type { PlanId } from "../billing/plans";
+import { rateLimit } from "../../infrastructure/rate-limit";
 
 /** The tier taxonomy. Grows/collapses via the CHECK constraint on users.tier. */
 export type Tier =
@@ -21,6 +20,24 @@ export type Tier =
   | "engineering"
   | "superuser";
 
+/** Quota configuration per tier. max=null means unlimited. */
+export interface TierQuota {
+  max: number | null;
+  windowSeconds: number;
+}
+
+/** LLM routing configuration per tier. */
+export interface TierLlm {
+  provider: string;
+  model: string;
+}
+
+/** Full tier config: quota + LLM routing. */
+export interface TierConfig {
+  quota: TierQuota;
+  llm: TierLlm;
+}
+
 /** Context needed to resolve a caller's tier. */
 export interface TierContext {
   /** The authenticated user's ID, or null for anonymous callers. */
@@ -28,6 +45,18 @@ export interface TierContext {
   /** Whether the caller has a valid API key (vs session-only). */
   hasApiKey: boolean;
 }
+
+/** The tier catalog. Quotas are per-minute sliding windows.
+    LLM models are the default routing until provider-level overrides land.
+    Config-based deployment (Plan 044 B.5) can overlay these via env/JSON. */
+export const TIERS: Record<Tier, TierConfig> = {
+  anonymous:   { quota: { max: 5,    windowSeconds: 60 }, llm: { provider: "anthropic", model: "claude-haiku-4-5" } },
+  logged_in:   { quota: { max: 30,   windowSeconds: 60 }, llm: { provider: "anthropic", model: "claude-sonnet-4-5" } },
+  basic:       { quota: { max: 30,   windowSeconds: 60 }, llm: { provider: "anthropic", model: "claude-haiku-4-5" } },
+  high_tier:   { quota: { max: 120,  windowSeconds: 60 }, llm: { provider: "anthropic", model: "claude-sonnet-4-5" } },
+  engineering: { quota: { max: null, windowSeconds: 0 },  llm: { provider: "anthropic", model: "claude-opus-4-6" } },
+  superuser:   { quota: { max: null, windowSeconds: 0 },  llm: { provider: "anthropic", model: "claude-opus-4-6" } },
+};
 
 /**
  * Resolve the caller's tier. Priority order (highest wins):
@@ -97,4 +126,63 @@ function planToTier(plan: PlanId): Tier | null {
     default:
       return null;
   }
+}
+
+/** Quota verdict returned by checkQuota. */
+export interface QuotaVerdict {
+  allowed: boolean;
+  tier: Tier;
+  remaining: number | null;
+  reset: number | null;
+  reason: string | null;
+}
+
+/**
+ * THE ONLY quota gate. Callers MUST use this and obey its verdict.
+ * Returns whether the request is allowed under the tier's quota.
+ * Unlimited tiers (engineering/superuser) always return allowed=true.
+ */
+export async function checkQuota(
+  tier: Tier,
+  identifier: string,
+): Promise<QuotaVerdict> {
+  const config = TIERS[tier];
+
+  // Unlimited tier
+  if (config.quota.max === null) {
+    return { allowed: true, tier, remaining: null, reset: null, reason: null };
+  }
+
+  const result = await rateLimit(identifier, {
+    max: config.quota.max,
+    windowSeconds: config.quota.windowSeconds,
+  });
+
+  return {
+    allowed: result.success,
+    tier,
+    remaining: result.remaining,
+    reset: result.reset,
+    reason: result.success ? null : `Rate limit: ${config.quota.max} requests per ${config.quota.windowSeconds}s for ${tier} tier`,
+  };
+}
+
+/** LLM routing verdict returned by decideLlm. */
+export interface LlmRoute {
+  provider: string;
+  model: string;
+  tier: Tier;
+}
+
+/**
+ * THE ONLY LLM router. Returns the provider+model for the given tier.
+ * Callers MUST use this instead of hardcoding model selection.
+ */
+export function decideLlm(tier: Tier): LlmRoute {
+  const config = TIERS[tier];
+  return {
+    provider: config.llm.provider,
+    model: config.llm.model,
+    tier,
+  };
 }
