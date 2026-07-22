@@ -10,7 +10,6 @@
 /src/lib/methodology-versions.ts        @ptengelmann
 /src/lib/generate-report.ts             @ptengelmann
 /src/lib/data-sources/                  @ptengelmann
-/public/openapi.json                    @ptengelmann
 
 # Payments + billing
 /src/lib/stripe.ts                      @ptengelmann

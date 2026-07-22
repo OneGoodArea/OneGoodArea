@@ -117,4 +117,63 @@ describe("OpenAPI renderer verification (46.4)", () => {
       `Routes with missing security: ${issues.join("; ")}`,
     ).toEqual([]);
   });
+
+  it("Preset enum includes all four presets", async () => {
+    const res = await app.inject({ method: "GET", url: "/docs/json" });
+    const spec = res.json();
+    const presets: string[] = spec.components?.schemas?.Preset?.enum ?? [];
+    expect(presets).toContain("moving");
+    expect(presets).toContain("business");
+    expect(presets).toContain("investing");
+    expect(presets).toContain("research");
+  });
+
+  it("SignalCategory enum has the seven categories", async () => {
+    const res = await app.inject({ method: "GET", url: "/docs/json" });
+    const spec = res.json();
+    const cats: string[] = spec.components?.schemas?.SignalCategory?.enum ?? [];
+    expect(cats).toHaveLength(7);
+    expect(cats).toContain("crime");
+    expect(cats).toContain("environment");
+  });
+
+  it("ScoreResult schema documents confidence + engine_version", async () => {
+    const res = await app.inject({ method: "GET", url: "/docs/json" });
+    const spec = res.json();
+    const props = spec.components?.schemas?.ScoreResult?.properties ?? {};
+    expect(props.confidence).toBeDefined();
+    expect(props.engine_version).toBeDefined();
+  });
+
+  it("ScoreResult dimensions minItems/maxItems is exactly 5", async () => {
+    const res = await app.inject({ method: "GET", url: "/docs/json" });
+    const spec = res.json();
+    const dims = spec.components?.schemas?.ScoreResult?.properties?.dimensions ?? {};
+    expect(dims.minItems).toBe(5);
+    expect(dims.maxItems).toBe(5);
+  });
+
+  it("Dimension schema documents per-dimension confidence + reason", async () => {
+    const res = await app.inject({ method: "GET", url: "/docs/json" });
+    const spec = res.json();
+    const props = spec.components?.schemas?.Dimension?.properties ?? {};
+    expect(props.confidence).toBeDefined();
+    expect(props.confidence_reason).toBeDefined();
+  });
+
+  it("documents 401, 403, 429 responses on POST /v1/score", async () => {
+    const res = await app.inject({ method: "GET", url: "/docs/json" });
+    const spec = res.json();
+    const responses = spec.paths?.["/v1/score"]?.post?.responses ?? {};
+    expect(responses["401"]).toBeDefined();
+    expect(responses["403"]).toBeDefined();
+    expect(responses["429"]).toBeDefined();
+  });
+
+  it("no longer documents the removed reports API", async () => {
+    const res = await app.inject({ method: "GET", url: "/docs/json" });
+    const spec = res.json();
+    expect(spec.paths?.["/api/v1/report"]).toBeUndefined();
+    expect(spec.paths?.["/api/v1/batch"]).toBeUndefined();
+  });
 });

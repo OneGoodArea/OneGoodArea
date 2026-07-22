@@ -54,6 +54,8 @@ const nextConfig: NextConfig = {
       // notes surface ships under a future epic.
       { source: "/blog", destination: "/", permanent: true },
       { source: "/blog/:slug", destination: "/", permanent: true },
+      // AR-568: static openapi.json deleted — redirect to live BFF endpoint
+      { source: "/openapi.json", destination: "/api/openapi-spec", permanent: true },
     ];
   },
 };
