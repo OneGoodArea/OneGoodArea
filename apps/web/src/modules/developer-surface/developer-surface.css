@@ -8,11 +8,10 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  overflow: hidden;
 }
 
 .playground-layout {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
@@ -56,7 +55,12 @@
 .developer-surface__scalar {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+
+  /* Nav (design-v2/_shared/nav.css .oga-nav__row) is sticky at 52px above
+     this surface — feed it to Scalar's supported custom-header-height hook
+     so its internal sticky sidebar/example panels offset correctly instead
+     of overlapping Nav. */
+  --scalar-custom-header-height: 52px;
 
   /* Map Scalar CSS vars to brand tokens */
   --scalar-background-1: var(--oga-bg);
