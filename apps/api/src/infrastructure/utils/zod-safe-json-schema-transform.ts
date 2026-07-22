@@ -26,15 +26,6 @@ function transformSchema(schema: unknown): unknown {
   return schema;
 }
 
-type RouteSchema = {
-  body?: unknown;
-  params?: unknown;
-  querystring?: unknown;
-  headers?: unknown;
-  response?: Record<string, unknown>;
-  [key: string]: unknown;
-};
-
 export const zodSafeJsonSchemaTransform: FastifyDynamicSwaggerOptions["transform"] = (document) => {
   const { schema, url } = document;
   if (!schema) return { schema, url };
