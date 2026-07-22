@@ -14,6 +14,11 @@ vi.mock("@/modules/usage", () => ({
   isSuperuser: vi.fn(),
   getUserTier: vi.fn(),
 }));
+/* AR-547: see signals.test.ts — stub tier resolution, keep checkQuota real. */
+vi.mock("@/modules/tiers", async (orig) => ({
+  ...(await orig() as object),
+  resolveTier: vi.fn(async () => "basic"),
+}));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
 vi.mock("@/modules/orgs", async (orig) => {
   const actual = await orig() as object;

@@ -3,6 +3,14 @@ import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
 vi.mock("@/modules/api-keys", () => ({ validateApiKey: vi.fn() }));
 vi.mock("@/infrastructure/rate-limit", () => ({ rateLimit: vi.fn(), rateLimitHeaders: () => ({}) }));
 vi.mock("@/modules/usage", () => ({ hasApiAccess: vi.fn(), canMakeApiCall: vi.fn() }));
+/* AR-547: requireApiAccess resolves the caller's tier (AR-499), and resolveTier
+   reads isSuperuser/getUserPlan from the fully-replaced usage mock above. Stub
+   the resolution only, keeping checkQuota real so the rateLimit mock still
+   drives the 429 assertions. */
+vi.mock("@/modules/tiers", async (orig) => ({
+  ...(await orig() as object),
+  resolveTier: vi.fn(async () => "basic"),
+}));
 vi.mock("@/modules/tracking/activity", () => ({ trackEvent: vi.fn() }));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn(), query: vi.fn() }));
 // Partial mock: keep real exports (e.g. parseAreasQuery) but stub DB-touching functions.

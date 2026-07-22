@@ -54,5 +54,10 @@ export const zodSafeJsonSchemaTransform: FastifyDynamicSwaggerOptions["transform
     }
   }
 
-  return { schema: transformed as any, url };
+  /* The transformed shape is structurally a route schema again, but its values
+     are now JSON Schema rather than Zod, which the parameter type does not
+     describe. Cast through the declared return type instead of `any`. */
+  return { schema: transformed, url } as ReturnType<
+    NonNullable<FastifyDynamicSwaggerOptions["transform"]>
+  >;
 };

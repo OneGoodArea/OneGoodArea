@@ -3,6 +3,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("@/modules/api-keys", () => ({ validateApiKey: vi.fn() }));
 vi.mock("@/infrastructure/rate-limit", () => ({ rateLimit: vi.fn(), rateLimitHeaders: () => ({}) }));
 vi.mock("@/modules/usage", () => ({ hasApiAccess: vi.fn(), canMakeApiCall: vi.fn() }));
+/* AR-547: see signals.test.ts — stub tier resolution, keep checkQuota real. */
+vi.mock("@/modules/tiers", async (orig) => ({
+  ...(await orig() as object),
+  resolveTier: vi.fn(async () => "basic"),
+}));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
 // Partial mock: keep the pure validators (validateWebhookUrl / validateEventTypes)
 // real so the 400 paths exercise the genuine logic; only the DB-touching CRUD
