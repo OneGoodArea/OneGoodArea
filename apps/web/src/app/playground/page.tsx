@@ -21,9 +21,9 @@ export const metadata = {
 
 export default function PlaygroundPage() {
   return (
-    <>
+    <div className="playground-layout">
       <Nav />
       <DeveloperSurface />
-    </>
+    </div>
   )
 }
