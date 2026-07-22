@@ -15,7 +15,9 @@ export class AnthropicAiProvider implements AiProvider {
   private readonly client: Anthropic;
   private readonly model: string;
 
-  constructor() {
+  /** AR-499: optional model override for tier-based routing.
+      When provided, uses this instead of the default from config. */
+  constructor(modelOverride?: string) {
     const config = getConfig();
     const apiKey = config.anthropicApiKey;
 
@@ -24,7 +26,7 @@ export class AnthropicAiProvider implements AiProvider {
     }
 
     this.client = new Anthropic({ apiKey });
-    this.model = config.anthropicModel;
+    this.model = modelOverride ?? config.anthropicModel;
   }
 
   async generateNarrative(prompt: string): Promise<string> {
