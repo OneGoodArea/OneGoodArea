@@ -93,7 +93,12 @@ jobs:
 
   deploy:
     name: Deploy to Render
-    needs: [lint, typecheck]
+    # AR-549: `test` is in this list deliberately. It was absent during the
+    # AR-546 incident, so a build whose suite was failing deployed itself to
+    # production and 500'd every request-validated route. Lint and typecheck
+    # cannot catch a runtime regression. `security-audit` stays out: it is
+    # continue-on-error and informational, so it must not gate a release.
+    needs: [lint, typecheck, test]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
