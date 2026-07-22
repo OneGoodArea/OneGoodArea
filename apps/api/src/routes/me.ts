@@ -11,7 +11,7 @@ import { rows, row, type ReportRow, type SubscriptionRow, type ApiKeyRow, type A
 import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
 import { RATE_LIMITS } from "../infrastructure/config";
 import { validateApiKey } from "../modules/api-keys";
-import { getUserPlan, hasApiAccess, hasMcpAccess, canMakeApiCall, listAddons, getMcpUsageThisMonth, isSuperuser } from "../modules/usage";
+import { getUserPlan, hasApiAccess, hasMcpAccess, canMakeApiCall, listAddons, getMcpUsageThisMonth, isSuperuser, getUserTier } from "../modules/usage";
 import { PLANS } from "../modules/billing/plans";
 import { METHODOLOGY_VERSION } from "../modules/engine/methodology";
 import { listForUser as listActivityForUser } from "../modules/activity";
@@ -85,6 +85,24 @@ export function registerMeRoutes(app: FastifyInstance): void {
         if (!userId) return reply;
         const is_superuser = await isSuperuser(userId);
         return reply.code(200).send({ is_superuser });
+      });
+
+    /* AR-500 (Plan 045): self-scoped tier read. Mirrors /me/is-superuser pattern.
+       Returns the caller's own tier only — never leaked to other callers. */
+    typed.get("/me/tier",
+      {
+        schema: {
+          tags: ["Me"],
+          summary: "My tier",
+          description: "Returns { tier: string }. Session-authed; 401 if not signed in. The tier determines rate limits and LLM routing (EPIC B).",
+          security: [{ "sessionCookie": [] }],
+        },
+      },
+      async (request, reply) => {
+        const userId = await authenticateSession(request, reply);
+        if (!userId) return reply;
+        const tier = await getUserTier(userId);
+        return reply.code(200).send({ tier });
       });
 
     /* AR-350 (epic AR-343): session-authed webhook subscription CRUD

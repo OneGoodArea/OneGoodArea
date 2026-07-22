@@ -60,6 +60,13 @@ export const MIGRATIONS: Migration[] = [
       `UPDATE users SET is_superuser = TRUE
          WHERE email = 'ptengelmann@gmail.com'
            AND NOT EXISTS (SELECT 1 FROM users WHERE is_superuser = TRUE)`,
+      // AR-500 (Plan 045): user tier column for EPIC B tier/quota/LLM-routing.
+      // TEXT with CHECK constraint (not an enum) so the taxonomy can grow/collapse
+      // without DDL changes. Default 'basic' — self-signup gets the lowest non-
+      // anonymous tier; privileged/internal path escalates via UPDATE.
+      // The 'anonymous' tier is reserved for unauthenticated callers (no user row).
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS tier TEXT NOT NULL DEFAULT 'basic'
+         CHECK (tier IN ('anonymous','logged_in','basic','high_tier','engineering','superuser'))`,
     ],
   },
   {

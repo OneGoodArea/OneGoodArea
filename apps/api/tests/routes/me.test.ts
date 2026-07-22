@@ -11,6 +11,8 @@ vi.mock("@/modules/usage", () => ({
   listAddons: vi.fn(),
   getMcpUsageThisMonth: vi.fn(),
   trackMcpCall: vi.fn(),
+  isSuperuser: vi.fn(),
+  getUserTier: vi.fn(),
 }));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
 vi.mock("@/modules/orgs", async (orig) => {
@@ -44,6 +46,8 @@ import {
   canMakeApiCall,
   listAddons,
   getMcpUsageThisMonth,
+  isSuperuser,
+  getUserTier,
 } from "@/modules/usage";
 import { sql } from "@/infrastructure/db/client";
 import { METHODOLOGY_VERSION } from "@/modules/engine/methodology";
@@ -74,6 +78,7 @@ const mockCreateWebhook = vi.mocked(createWebhookSubscription);
 const mockListWebhooks = vi.mocked(listWebhookSubscriptions);
 const mockRevokeWebhook = vi.mocked(revokeWebhookSubscription);
 const mockRotateWebhook = vi.mocked(rotateWebhookSecret);
+const mockGetUserTier = vi.mocked(getUserTier);
 
 const JSON_HEADERS = { "content-type": "application/json" };
 const SESSION_AUTH = { authorization: "Bearer session.jwt" };
@@ -796,5 +801,37 @@ describe("PATCH /me/profile", () => {
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ ok: true });
     expect(mockSql).not.toHaveBeenCalled();
+  });
+});
+
+describe("GET /me/tier", () => {
+  it("401s when the session token is missing", async () => {
+    const res = await app.inject({ method: "GET", url: "/me/tier" });
+    expect(res.statusCode).toBe(401);
+    expect(mockGetUserTier).not.toHaveBeenCalled();
+  });
+
+  it("returns the caller's tier", async () => {
+    mockSessionVerify.mockResolvedValue({ userId: "user_1" });
+    mockGetUserTier.mockResolvedValue("high_tier");
+    const res = await app.inject({
+      method: "GET",
+      url: "/me/tier",
+      headers: { authorization: "Bearer good-token" },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ tier: "high_tier" });
+  });
+
+  it("defaults to basic for new users", async () => {
+    mockSessionVerify.mockResolvedValue({ userId: "user_1" });
+    mockGetUserTier.mockResolvedValue("basic");
+    const res = await app.inject({
+      method: "GET",
+      url: "/me/tier",
+      headers: { authorization: "Bearer good-token" },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ tier: "basic" });
   });
 });

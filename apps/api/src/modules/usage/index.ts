@@ -27,6 +27,28 @@ export async function isSuperuser(userId: string): Promise<boolean> {
   return SUPERUSER_EMAILS.includes(user.email);
 }
 
+/* AR-500 (Plan 045): read the user's tier from the DB column.
+   Falls back to 'basic' if the column is missing or the user doesn't exist. */
+export async function getUserTier(userId: string): Promise<string> {
+  const rows = await sql`SELECT tier FROM users WHERE id = ${userId}`;
+  if (rows.length === 0) return "basic";
+  const t = row<Pick<UserRow, "tier">>(rows[0]);
+  return t.tier ?? "basic";
+}
+
+/* AR-500 (Plan 045): privileged path to set a user's tier.
+   Validates against the allowed tier taxonomy; throws on invalid values.
+   Only callable from admin/superuser paths — never from self-signup. */
+const VALID_TIERS = ["anonymous", "logged_in", "basic", "high_tier", "engineering", "superuser"] as const;
+export type Tier = (typeof VALID_TIERS)[number];
+
+export async function setUserTier(userId: string, tier: Tier): Promise<void> {
+  if (!VALID_TIERS.includes(tier)) {
+    throw new Error(`Invalid tier: ${tier}. Must be one of: ${VALID_TIERS.join(", ")}`);
+  }
+  await sql`UPDATE users SET tier = ${tier} WHERE id = ${userId}`;
+}
+
 export async function getUserPlan(userId: string): Promise<PlanId> {
   if (await isSuperuser(userId)) return "business";
 
