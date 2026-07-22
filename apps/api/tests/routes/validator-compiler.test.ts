@@ -49,17 +49,34 @@ describe("validator compiler dispatch (AR-546)", () => {
   });
 
   /* Validation must still REJECT bad input, not merely stop crashing.
-     Route handlers authenticate inside the handler, so schema validation
-     runs first and a malformed request is a 400 even unauthenticated. */
+     AR-548 puts the credential guard ahead of validation, so these send a
+     bearer token to get past it. The token is never verified before
+     validation runs, so a malformed request is still a 400. */
   describe("validation is still enforced", () => {
-    it("AJV path: POST /v1/portfolios rejects a body missing the required name", async () => {
-      const res = await app.inject({ method: "POST", url: "/v1/portfolios", payload: {} });
+    const AUTH = { authorization: "Bearer test-token-not-verified-before-validation" };
+
+    it("AJV path: POST /v1/portfolios/:id/areas rejects a body missing the required areas", async () => {
+      const res = await app.inject({ method: "POST", url: "/v1/portfolios/pf_1/areas", payload: {}, headers: AUTH });
       expect(res.statusCode).toBe(400);
     });
 
-    it("Zod path: GET /me/activity rejects a non-numeric page", async () => {
-      const res = await app.inject({ method: "GET", url: "/me/activity?page=not-a-number" });
+    it("Zod path: POST /me/webhooks rejects a body missing url and events", async () => {
+      const res = await app.inject({ method: "POST", url: "/me/webhooks", payload: {}, headers: AUTH });
       expect(res.statusCode).toBe(400);
+    });
+  });
+
+  /* AR-548: the guard itself. An anonymous caller must get 401, never a 400
+     describing the body it failed to send. */
+  describe("credential guard runs before validation (AR-548)", () => {
+    it("401s an anonymous POST /v1/portfolios with an invalid body", async () => {
+      const res = await app.inject({ method: "POST", url: "/v1/portfolios", payload: {} });
+      expect(res.statusCode).toBe(401);
+    });
+
+    it("leaves public routes reachable without a credential", async () => {
+      const res = await app.inject({ method: "GET", url: "/health" });
+      expect(res.statusCode).toBe(200);
     });
   });
 });

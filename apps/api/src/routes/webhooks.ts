@@ -16,12 +16,17 @@ export function registerWebhooksRoutes(app: FastifyInstance): void {
             "summary": "Create webhook",
             "description": "Register a webhook endpoint for event notifications.",
             "security": [{ "bearerAuth": [] }],
+            /* AR-548: documented but not schema-enforced. The handler owns this
+               contract: validateWebhookUrl rejects a bad URL, and
+               validateEventTypes filters unsupported types and de-duplicates
+               the rest (AR-328). An `enum` here rejected the whole request
+               instead, so a list containing one unsupported type failed rather
+               than being filtered. */
             "body": {
               "type": "object",
-              "required": ["url", "events"],
               "properties": {
-                "url": { "type": "string", "format": "uri", "minLength": 1, "description": "HTTPS webhook endpoint URL." },
-                "events": { "type": "array", "items": { "type": "string", "enum": ["signal.changed"] }, "minItems": 1 },
+                "url": { "type": "string", "format": "uri", "minLength": 1, "description": "Required. HTTPS webhook endpoint URL." },
+                "events": { "type": "array", "items": { "type": "string" }, "description": "Required. Supported: 'signal.changed'. Unsupported entries are filtered out and duplicates collapsed." },
               },
               "example": { "url": "https://example.com/hooks", "events": ["signal.changed"] },
             },

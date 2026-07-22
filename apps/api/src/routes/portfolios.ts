@@ -33,11 +33,15 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
             "summary": "Create portfolio",
             "description": "Create a new portfolio to track a book of areas.",
             "security": [{ "bearerAuth": [] }],
+            /* AR-548: `name` is documented but not schema-required. The handler
+               already rejects a missing or over-long name with its own 400, and
+               the feature-flag check runs before it: making the schema reject
+               first turned the flag-off 404 into a 400, which leaks that the
+               route exists. */
             "body": {
               "type": "object",
-              "required": ["name"],
               "properties": {
-                "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+                "name": { "type": "string", "minLength": 1, "maxLength": 200, "description": "Required. Rejected by the handler when missing." },
               },
               "example": { "name": "London investments" },
             },
