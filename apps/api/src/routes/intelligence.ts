@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import { QueryRequestSchema, PeersRequestSchema, InsightsRequestSchema, FindForecastPlanSchema } from "@onegoodarea/contracts";
+import { FindForecastPlanSchema } from "@onegoodarea/contracts";
 import { requireApiAccessWithOrg } from "../shared/auth-api";
 import { canMakeNlCall } from "../modules/usage";
 import { PLANS } from "../modules/billing/plans";

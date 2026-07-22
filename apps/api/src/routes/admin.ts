@@ -1,6 +1,5 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { authenticateSession } from "../shared/auth-session";
-import { isAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { isSuperuser } from "../modules/usage";
 import { getAnalytics, getTrafficAnalytics, getAudienceStats, getUsageStats, getRevenueExtras, getMcpAdoption, getTrainingCorpusStats } from "../modules/admin";

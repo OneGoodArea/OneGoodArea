@@ -1,11 +1,11 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { hashPassword, verifyPassword, generateToken } from "../modules/auth/crypto";
 import { normalizeSignupSource } from "../modules/auth/signup-source";
 import { sendVerificationEmail, sendPasswordResetEmail, sendMagicLinkEmail } from "../infrastructure/email/senders";
 import { sql } from "../infrastructure/db/client";
 import { row, type UserRow, type PasswordResetTokenRow } from "../infrastructure/db/types";
 import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
-import { RATE_LIMITS, APP_URL } from "../infrastructure/config";
+import { RATE_LIMITS } from "../infrastructure/config";
 import { generateId } from "../infrastructure/utils/id";
 import { createPersonalOrgForUser } from "../modules/orgs";
 import { authenticateSession } from "../shared/auth-session";
