@@ -58,14 +58,9 @@ export function DeveloperSurface({
             telemetry: false,
             persistAuth: false,
             isEditable: false,
-            customCss: `
-              /* 49.4 — Defense-in-depth: hide Scalar branding links */
-              a[href*="scalar.com"],
-              a[href*="github.com/scalar"],
-              .references-renderer-footer,
-              .references-footer,
-              [class*="info-block"] a { display: none !important; }
-            `,
+            showSidebar: false,
+            layout: "classic",
+            customCss: `\n              /* 49.4 — Defense-in-depth: hide Scalar branding links + fix scrolling */\n              a[href*="scalar.com"],\n              a[href*="github.com/scalar"],\n              .references-renderer-footer,\n              .references-footer,\n              [class*="info-block"] a { display: none !important; }\n\n              /* Fix right panel scrolling - Scalar's internal grid rows are auto */\n              .references-layout {\n                min-height: 0 !important;\n                height: 100% !important;\n              }\n              .references-rendered {\n                overflow-y: auto !important;\n              }\n            `,
           }}
         />
       </div>
