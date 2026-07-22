@@ -48,8 +48,8 @@ export interface TierContext {
 
 /** The tier catalog. Quotas are per-minute sliding windows.
     LLM models are the default routing until provider-level overrides land.
-    Config-based deployment (Plan 044 B.5) can overlay these via env/JSON. */
-export const TIERS: Record<Tier, TierConfig> = {
+    Config-based deployment (Plan 044 B.5): env vars override defaults. */
+const DEFAULT_TIERS: Record<Tier, TierConfig> = {
   anonymous:   { quota: { max: 5,    windowSeconds: 60 }, llm: { provider: "anthropic", model: "claude-haiku-4-5" } },
   logged_in:   { quota: { max: 30,   windowSeconds: 60 }, llm: { provider: "anthropic", model: "claude-sonnet-4-5" } },
   basic:       { quota: { max: 30,   windowSeconds: 60 }, llm: { provider: "anthropic", model: "claude-haiku-4-5" } },
@@ -57,6 +57,51 @@ export const TIERS: Record<Tier, TierConfig> = {
   engineering: { quota: { max: null, windowSeconds: 0 },  llm: { provider: "anthropic", model: "claude-opus-4-6" } },
   superuser:   { quota: { max: null, windowSeconds: 0 },  llm: { provider: "anthropic", model: "claude-opus-4-6" } },
 };
+
+/**
+ * Load tier config with env-var overrides. Each tier's quota max and LLM
+ * model can be overridden via env vars:
+ *   TIER_<TIER>_QUOTA_MAX      — e.g. TIER_ANONYMOUS_QUOTA_MAX=10
+ *   TIER_<TIER>_LLM_MODEL      — e.g. TIER_HIGH_TIER_LLM_MODEL=claude-opus-4-6
+ *   TIER_<TIER>_LLM_PROVIDER   — e.g. TIER_BASIC_LLM_PROVIDER=openai
+ *
+ * null means unlimited quota. Invalid env values are silently ignored.
+ */
+function loadTiersWithOverrides(): Record<Tier, TierConfig> {
+  const tiers = { ...DEFAULT_TIERS };
+  const tierNames = Object.keys(DEFAULT_TIERS) as Tier[];
+
+  for (const name of tierNames) {
+    const prefix = `TIER_${name.toUpperCase()}`;
+
+    const quotaMaxEnv = process.env[`${prefix}_QUOTA_MAX`];
+    if (quotaMaxEnv !== undefined) {
+      const val = quotaMaxEnv.toLowerCase();
+      tiers[name] = {
+        ...tiers[name],
+        quota: {
+          ...tiers[name].quota,
+          max: val === "null" || val === "unlimited" ? null : Number(quotaMaxEnv) || tiers[name].quota.max,
+        },
+      };
+    }
+
+    const llmModel = process.env[`${prefix}_LLM_MODEL`];
+    if (llmModel) {
+      tiers[name] = { ...tiers[name], llm: { ...tiers[name].llm, model: llmModel } };
+    }
+
+    const llmProvider = process.env[`${prefix}_LLM_PROVIDER`];
+    if (llmProvider) {
+      tiers[name] = { ...tiers[name], llm: { ...tiers[name].llm, provider: llmProvider } };
+    }
+  }
+
+  return tiers;
+}
+
+/** The resolved tier catalog (loaded once at startup). */
+export const TIERS: Record<Tier, TierConfig> = loadTiersWithOverrides();
 
 /**
  * Resolve the caller's tier. Priority order (highest wins):
