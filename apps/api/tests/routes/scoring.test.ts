@@ -11,6 +11,11 @@ vi.mock("@/modules/usage", () => ({
   listAddons: vi.fn(),
   getMcpUsageThisMonth: vi.fn(),
 }));
+/* AR-547: see signals.test.ts — stub tier resolution, keep checkQuota real. */
+vi.mock("@/modules/tiers", async (orig) => ({
+  ...(await orig() as object),
+  resolveTier: vi.fn(async () => "basic"),
+}));
 vi.mock("@/modules/tracking/activity", () => ({ trackEvent: vi.fn() }));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn(), query: vi.fn() }));
 // Partial mock: keep real parseScoreBody etc, stub scoreArea.
