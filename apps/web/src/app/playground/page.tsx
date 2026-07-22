@@ -1,4 +1,5 @@
 import { DeveloperSurface } from "@/modules/developer-surface"
+import { Nav } from "@/app/design-v2/_shared/nav"
 
 export const metadata = {
   title: "API Playground | OneGoodArea",
@@ -19,5 +20,10 @@ export const metadata = {
 }
 
 export default function PlaygroundPage() {
-  return <DeveloperSurface />
+  return (
+    <>
+      <Nav />
+      <DeveloperSurface />
+    </>
+  )
 }
