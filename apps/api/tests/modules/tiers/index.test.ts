@@ -5,14 +5,19 @@ vi.mock("@/modules/usage", () => ({
   isSuperuser: vi.fn(),
   getUserPlan: vi.fn(),
 }));
+vi.mock("@/infrastructure/rate-limit", () => ({
+  rateLimit: vi.fn(),
+}));
 
 import { sql } from "@/infrastructure/db/client";
 import { isSuperuser, getUserPlan } from "@/modules/usage";
-import { resolveTier } from "@/modules/tiers/index";
+import { rateLimit } from "@/infrastructure/rate-limit";
+import { resolveTier, checkQuota, decideLlm, TIERS } from "@/modules/tiers/index";
 
 const mockSql = vi.mocked(sql);
 const mockIsSuperuser = vi.mocked(isSuperuser);
 const mockGetUserPlan = vi.mocked(getUserPlan);
+const mockRateLimit = vi.mocked(rateLimit);
 
 function routeQuery(strings: TemplateStringsArray): Promise<unknown[]> {
   const q = strings.join(" ");
@@ -38,6 +43,8 @@ beforeEach(() => {
   mockIsSuperuser.mockResolvedValue(false);
   mockGetUserPlan.mockReset();
   mockGetUserPlan.mockResolvedValue("sandbox");
+  mockRateLimit.mockReset();
+  mockRateLimit.mockResolvedValue({ success: true, remaining: 29, reset: Date.now() + 60000 });
 });
 
 describe("resolveTier", () => {
@@ -92,5 +99,72 @@ describe("resolveTier", () => {
     mockGetUserPlan.mockResolvedValue("sandbox");
     const tier = await resolveTier({ userId: "u1", hasApiKey: false });
     expect(tier).toBe("basic");
+  });
+});
+
+describe("checkQuota", () => {
+  it("allows requests within quota", async () => {
+    const verdict = await checkQuota("basic", "api:test-key");
+    expect(verdict.allowed).toBe(true);
+    expect(verdict.tier).toBe("basic");
+    expect(verdict.reason).toBeNull();
+  });
+
+  it("denies requests past quota", async () => {
+    mockRateLimit.mockResolvedValue({ success: false, remaining: 0, reset: Date.now() + 60000 });
+    const verdict = await checkQuota("basic", "api:test-key");
+    expect(verdict.allowed).toBe(false);
+    expect(verdict.reason).toContain("Rate limit");
+  });
+
+  it("always allows unlimited tiers (engineering)", async () => {
+    const verdict = await checkQuota("engineering", "api:test-key");
+    expect(verdict.allowed).toBe(true);
+    expect(verdict.remaining).toBeNull();
+    expect(mockRateLimit).not.toHaveBeenCalled();
+  });
+
+  it("always allows unlimited tiers (superuser)", async () => {
+    const verdict = await checkQuota("superuser", "api:test-key");
+    expect(verdict.allowed).toBe(true);
+    expect(verdict.remaining).toBeNull();
+    expect(mockRateLimit).not.toHaveBeenCalled();
+  });
+
+  it("passes correct config to rateLimit", async () => {
+    await checkQuota("anonymous", "api:anon-key");
+    expect(mockRateLimit).toHaveBeenCalledWith("api:anon-key", { max: 5, windowSeconds: 60 });
+  });
+});
+
+describe("decideLlm", () => {
+  it("returns correct provider and model for each tier", () => {
+    expect(decideLlm("anonymous")).toEqual({ provider: "anthropic", model: "claude-haiku-4-5", tier: "anonymous" });
+    expect(decideLlm("logged_in")).toEqual({ provider: "anthropic", model: "claude-sonnet-4-5", tier: "logged_in" });
+    expect(decideLlm("basic")).toEqual({ provider: "anthropic", model: "claude-haiku-4-5", tier: "basic" });
+    expect(decideLlm("high_tier")).toEqual({ provider: "anthropic", model: "claude-sonnet-4-5", tier: "high_tier" });
+    expect(decideLlm("engineering")).toEqual({ provider: "anthropic", model: "claude-opus-4-6", tier: "engineering" });
+    expect(decideLlm("superuser")).toEqual({ provider: "anthropic", model: "claude-opus-4-6", tier: "superuser" });
+  });
+});
+
+describe("TIERS catalog", () => {
+  it("has entries for all tier types", () => {
+    expect(Object.keys(TIERS)).toHaveLength(6);
+    for (const tier of ["anonymous", "logged_in", "basic", "high_tier", "engineering", "superuser"]) {
+      expect(TIERS[tier as keyof typeof TIERS]).toBeDefined();
+      expect(TIERS[tier as keyof typeof TIERS].quota).toBeDefined();
+      expect(TIERS[tier as keyof typeof TIERS].llm).toBeDefined();
+    }
+  });
+
+  it("has unlimited quota for engineering and superuser", () => {
+    expect(TIERS.engineering.quota.max).toBeNull();
+    expect(TIERS.superuser.quota.max).toBeNull();
+  });
+
+  it("has limited quota for anonymous and basic", () => {
+    expect(TIERS.anonymous.quota.max).toBe(5);
+    expect(TIERS.basic.quota.max).toBe(30);
   });
 });
