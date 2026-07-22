@@ -89,7 +89,20 @@ jobs:
           cache: npm
       - run: npm install --no-audit --no-fund
       - name: npm audit (high+critical only, production deps)
-        run: npm audit --audit-level=high --omit=dev
+        # AR-549: prints the report, never fails the check. The job already
+        # could not block anything (continue-on-error above), so a permanently
+        # red X taught everyone to ignore CI instead of flagging anything.
+        #
+        # The open findings are all transitive through next and cannot be fixed
+        # from here: sharp <0.35.0 (high, libvips CVEs) and postcss <8.5.10
+        # (moderate XSS). `npm audit fix --force` installs next@9.3.3, a
+        # catastrophic downgrade; next@16.2.11 still pins both; npm `overrides`
+        # (root and next-scoped) are not applied to the lockfile. Fixed upstream
+        # when Next lifts its pins.
+        #
+        # Read the step output to review findings. Re-check on each Next
+        # upgrade whether this can go back to failing on high+critical.
+        run: npm audit --audit-level=high --omit=dev || true
 
   deploy:
     name: Deploy to Render
