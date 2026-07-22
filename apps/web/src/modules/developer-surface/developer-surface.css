@@ -89,3 +89,18 @@
 .developer-surface__scalar [class*="powered-by"] {
   display: none !important;
 }
+
+/* 56.3 — Hide Scalar MCP / code-generation button */
+.developer-surface__scalar [class*="mcp"],
+.developer-surface__scalar [class*="generate-mcp"],
+.developer-surface__scalar [class*="code-mcp"] {
+  display: none !important;
+}
+
+/* 56.4 — Hide Scalar sidebar branding */
+.developer-surface__scalar [class*="sidebar"] a[href*="scalar.com"],
+.developer-surface__scalar [class*="sidebar"] [class*="footer"],
+.developer-surface__scalar [class*="sidebar"] [class*="branding"],
+.developer-surface__scalar [class*="sidebar"] [class*="logo"] {
+  display: none !important;
+}
