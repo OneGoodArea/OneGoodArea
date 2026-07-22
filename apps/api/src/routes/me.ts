@@ -48,9 +48,13 @@ export function registerMeRoutes(app: FastifyInstance): void {
             "summary": "My activity log",
             "description": "Recent API activity for the authenticated user.",
             "security": [{ "sessionCookie": [] }],
+            /* AR-548: `.catch` not `.default`. This endpoint has always
+               normalised unparseable paging params to the defaults rather than
+               rejecting; `.default` only covers a missing value, so garbage
+               like ?page=abc became a 400. */
             "querystring": z.object({
-              page: z.coerce.number().int().default(1),
-              page_size: z.coerce.number().int().default(20),
+              page: z.coerce.number().int().catch(1),
+              page_size: z.coerce.number().int().catch(20),
             }),
         },
       }, async (request, reply) => {
@@ -179,9 +183,10 @@ export function registerMeRoutes(app: FastifyInstance): void {
           summary: "List my portfolios (paginated, searchable)",
           description: "Paginated portfolios for the caller. Query: ?page=1&page_size=20&q=<substring>. Inline-joins areas for the page rows.",
           security: [{ "sessionCookie": [] }],
+          /* AR-548: see /me/activity — normalise bad paging, do not reject. */
           querystring: z.object({
-            page: z.coerce.number().int().default(1),
-            page_size: z.coerce.number().int().default(20),
+            page: z.coerce.number().int().catch(1),
+            page_size: z.coerce.number().int().catch(20),
             q: z.string().optional(),
           }),
         },
@@ -403,8 +408,12 @@ export function registerMeRoutes(app: FastifyInstance): void {
           summary: "Update my profile",
           description: "Partial update of the caller's user profile. Today: `intent` only.",
           security: [{ "sessionCookie": [] }],
+          /* AR-548: `.nullable()` as well as `.optional()`. The welcome flow is
+             skippable and posts intents=null to mean "no change", which the
+             handler already no-ops on; `.optional()` alone permits undefined
+             but not null, so skipping onboarding returned a 400. */
           body: z.object({
-            intents: z.array(z.string()).optional(),
+            intents: z.array(z.string()).nullable().optional(),
           }),
         },
       },
@@ -723,9 +732,17 @@ export function registerMeRoutes(app: FastifyInstance): void {
           tags: ["Tracking"],
           summary: "Track pageview",
           description: "Record a pageview event.",
-          security: [{ "sessionCookie": [] }],
+          /* AR-548: `security: []` marks this operation explicitly public, the
+             OpenAPI way to say "no auth". The handler performs no auth, so the
+             previous `sessionCookie` declaration mis-documented it and made the
+             preValidation credential guard reject anonymous pageviews.
+
+             `path` stays optional in the schema so a missing path reaches the
+             handler and returns its documented `{ok:false}` body rather than a
+             framework validation error. */
+          security: [],
           body: z.object({
-            path: z.string(),
+            path: z.string().optional(),
             referrer: z.string().optional(),
             sessionId: z.string().optional(),
           }),

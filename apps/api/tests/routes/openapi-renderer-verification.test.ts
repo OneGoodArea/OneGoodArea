@@ -92,6 +92,11 @@ describe("OpenAPI renderer verification (46.4)", () => {
 
         // Skip internal and explicitly public routes
         if (op["x-internal"]) continue;
+        /* AR-548: `security: []` is the OpenAPI way to mark an operation
+           explicitly public, as opposed to omitting the field and leaving it
+           ambiguous. openapi-route-coverage.test.ts already honours it; this
+           guard now agrees, so a deliberate public route passes both. */
+        if (Array.isArray(op.security) && op.security.length === 0) continue;
         if (knownPublic.some((p) => pathKey.startsWith(p))) continue;
 
         const security = op.security as Array<Record<string, string[]>> | undefined;

@@ -24,6 +24,7 @@ import { registerOrgMethodologyRoutes } from "./routes/org-methodology";
 import { registerIntelligenceRoutes } from "./routes/intelligence";
 import { registerContactRoutes } from "./routes/contact";
 import { classifyClientApp } from "./shared/http";
+import { requireCredential } from "./shared/require-credential";
 import { runWithRequestContext } from "./shared/request-context";
 declare module "fastify" {
   interface FastifyRequest {
@@ -77,6 +78,11 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
     const ctx = classifyClientApp(ua);
     runWithRequestContext(ctx, () => done());
   });
+
+  /* AR-548: 401 before 400. Runs ahead of schema validation so an anonymous
+     caller never gets a validation error describing the route's body. Opt-in
+     per route via `security` in the schema; handlers still do the real auth. */
+  app.addHook("preValidation", requireCredential);
 
   app.addContentTypeParser("application/json", { parseAs: "string" }, (request, body, done) => {
     // parseAs:"string" guarantees a string at runtime; Fastify still types it as
