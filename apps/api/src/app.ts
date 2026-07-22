@@ -1,8 +1,9 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
-import { validatorCompiler, type ZodTypeProvider } from "@fastify/type-provider-zod";
+import { type ZodTypeProvider } from "@fastify/type-provider-zod";
 import { zodSafeJsonSchemaTransform } from "./infrastructure/utils/zod-safe-json-schema-transform";
+import { hybridValidatorCompiler } from "./infrastructure/utils/hybrid-validator-compiler";
 import { openApiConfig } from "./modules/developer-surface/openapi-config";
 
 import { registerSystemRoutes } from "./routes/system";
@@ -37,9 +38,15 @@ declare module "fastify" {
 export async function buildApp(opts: { logger?: boolean } = {}): Promise<FastifyInstance> {
   const app = Fastify({ logger: opts.logger ?? false, ajv: { customOptions: { keywords: ["example"] } } });
 
-  // Zod type provider — validates request/response against Zod schemas directly.
-  app.setValidatorCompiler(validatorCompiler);
-  app.setSerializerCompiler(validatorCompiler as any);
+  /* AR-546: route schemas exist in both Zod and plain JSON Schema form, so the
+     validator dispatches per route (Zod -> Zod compiler, otherwise -> AJV).
+     Setting the Zod compiler globally 500s every JSON Schema route.
+
+     No serializer compiler is set: no route declares a response schema, and
+     the previous `setSerializerCompiler(validatorCompiler)` passed a VALIDATOR
+     where a serializer was expected, which would have failed the moment one
+     was added. Fastify's default serializer applies until then. */
+  app.setValidatorCompiler(hybridValidatorCompiler);
 
   // OpenAPI/Swagger documentation — /docs (Swagger UI) and /docs/json (raw spec).
   // Config owned by modules/developer-surface/openapi-config.ts.
