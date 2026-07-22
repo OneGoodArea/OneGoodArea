@@ -48,6 +48,7 @@
 /* 49.2 — Scalar CSS var overrides → brand tokens */
 .developer-surface__scalar {
   flex: 1;
+  min-height: 0;
   overflow: hidden;
 
   /* Map Scalar CSS vars to brand tokens */
