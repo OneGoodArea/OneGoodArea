@@ -52,11 +52,10 @@ export const openApiConfig: FastifyDynamicSwaggerOptions["openapi"] = {
         scheme: "bearer",
         description: "Bridge token minted by the web BFF. Internal use only.",
       },
-      sessionCookie: {
-        type: "apiKey",
-        in: "cookie",
-        name: "session",
-        description: "Session cookie (browser login). Use for dashboard routes.",
+      bearerToken: {
+        type: "http",
+        scheme: "bearer",
+        description: "JWT session token. Browser login. Authorization: Bearer <jwt>.",
       },
     },
   },

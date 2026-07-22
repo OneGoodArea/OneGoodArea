@@ -42,7 +42,7 @@ export function registerStripeRoutes(app: FastifyInstance): void {
           tags: ["Stripe"],
           summary: "Billing portal",
           description: "Create a Stripe billing portal session.",
-          security: [{ sessionCookie: [] }],
+          security: [{ bearerToken: [] }],
           "x-internal": true,
           response: {
             200: z.object({ url: z.string() }),
@@ -79,7 +79,7 @@ export function registerStripeRoutes(app: FastifyInstance): void {
           tags: ["Stripe"],
           summary: "Cancel subscription",
           description: "Schedule subscription cancellation at end of billing period.",
-          security: [{ sessionCookie: [] }],
+          security: [{ bearerToken: [] }],
           "x-internal": true,
           response: {
             200: z.object({ success: z.literal(true), cancel_at: z.string(), message: z.string() }),
@@ -144,7 +144,7 @@ export function registerStripeRoutes(app: FastifyInstance): void {
           tags: ["Stripe"],
           summary: "Checkout",
           description: "Create a Stripe checkout session. Currently disabled (demo-led sales).",
-          security: [{ sessionCookie: [] }],
+          security: [{ bearerToken: [] }],
           "x-internal": true,
           response: {
             403: z.object({ error: z.string(), code: z.string() }),
@@ -169,7 +169,7 @@ export function registerStripeRoutes(app: FastifyInstance): void {
           tags: ["Stripe"],
           summary: "Add-on checkout",
           description: "Create a Stripe add-on checkout session. Currently retired (MCP included free).",
-          security: [{ sessionCookie: [] }],
+          security: [{ bearerToken: [] }],
           "x-internal": true,
           response: {
             403: z.object({ error: z.string(), code: z.string() }),

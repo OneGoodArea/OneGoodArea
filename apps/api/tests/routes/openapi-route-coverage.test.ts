@@ -27,10 +27,9 @@ describe("OpenAPI route coverage (CI guard)", () => {
 
     expect(schemes.bearerAuth).toBeDefined();
     expect(schemes.bridgeToken).toBeDefined();
-    expect(schemes.sessionCookie).toBeDefined();
-    expect(schemes.sessionCookie.type).toBe("apiKey");
-    expect(schemes.sessionCookie.in).toBe("cookie");
-    expect(schemes.sessionCookie.name).toBe("session");
+    expect(schemes.bearerToken).toBeDefined();
+    expect(schemes.bearerToken.type).toBe("http");
+    expect(schemes.bearerToken.scheme).toBe("bearer");
   });
 
   it("every spec path has tags and summary", async () => {
