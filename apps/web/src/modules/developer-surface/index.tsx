@@ -60,7 +60,7 @@ export function DeveloperSurface({
             isEditable: false,
             showSidebar: false,
             layout: "classic",
-            customCss: `\n              /* 49.4 — Defense-in-depth: hide Scalar branding links + fix scrolling */\n              a[href*="scalar.com"],\n              a[href*="github.com/scalar"],\n              .references-renderer-footer,\n              .references-footer,\n              [class*="info-block"] a { display: none !important; }\n\n              /* Fix right panel scrolling - Scalar's internal grid rows are auto */\n              .references-layout {\n                min-height: 0 !important;\n                height: 100% !important;\n              }\n              .references-rendered {\n                overflow-y: auto !important;\n              }\n            `,
+            customCss: `\n              /* 49.4 — Defense-in-depth: hide Scalar branding links + fix scrolling */\n              a[href*="scalar.com"],\n              a[href*="github.com/scalar"],\n              .references-renderer-footer,\n              .references-footer,\n              [class*="info-block"] a { display: none !important; }\n\n              /* Fix right panel scrolling - target embedded Scalar container */\n              .developer-surface__scalar .scalar-app.scalar-api-reference {\n                height: 100% !important;\n                min-height: auto !important;\n              }\n              .developer-surface__scalar .references-rendered {\n                overflow-y: auto !important;\n              }\n            `,
           }}
         />
       </div>
