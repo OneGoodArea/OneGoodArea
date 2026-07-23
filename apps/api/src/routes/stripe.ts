@@ -1,8 +1,8 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { authenticateSession } from "../shared/auth-session";
 import { headerString } from "../shared/http";
-import { isAppError } from "../shared/errors";
+import { sendAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { sql } from "../infrastructure/db/client";
 import { row, type SubscriptionRow } from "../infrastructure/db/types";
@@ -33,7 +33,8 @@ export function registerStripeRoutes(app: FastifyInstance): void {
         request.rawBody ?? "",
         headerString(request.headers["stripe-signature"]),
       );
-      return reply.code(result.status as any).send(result.body);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+return reply.code(result.status as any).send(result.body);
     });
 
     app.post("/stripe/portal",
@@ -130,9 +131,7 @@ export function registerStripeRoutes(app: FastifyInstance): void {
           message: "Subscription will be cancelled at the end of the billing period",
         });
       } catch (error) {
-        if (isAppError(error)) {
-          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
-        }
+      if (sendAppError(reply, error)) return;
         logger.error("Cancel subscription error:", error);
         return reply.code(500).send({ error: "Failed to cancel subscription" });
       }

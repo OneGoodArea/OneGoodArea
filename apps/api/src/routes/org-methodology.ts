@@ -1,11 +1,11 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "@fastify/type-provider-zod";
 import { z } from "zod";
 import { SetMethodologyPinRequestSchema } from "@onegoodarea/contracts";
 import { authenticateEither } from "../shared/auth-either";
-import { isAppError } from "../shared/errors";
+import { sendAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
-import { getOrgIfMember, hasAtLeastRole } from "../modules/orgs";
+import { hasAtLeastRole } from "../modules/orgs";
 import { getMethodologyPin, setMethodologyPin, clearMethodologyPin } from "../modules/orgs/methodology";
 import { getSupportedEngineVersions } from "../modules/engine/version";
 import { trackEvent } from "../modules/tracking/activity";
@@ -42,7 +42,7 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
         const pin = await getMethodologyPin(orgId);
         return reply.code(200).send({ engine_version: pin, pinned: pin !== null });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/methodology] get error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -61,7 +61,7 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
             "body": SetMethodologyPinRequestSchema,
             "response": {
                 200: z.object({ engine_version: z.string(), pinned: z.literal(true) }),
-                400: z.object({ error: z.string(), code: z.string().optional(), supported_versions: z.array(z.string()) }),
+                400: z.object({ error: z.string(), code: z.string().optional(), supported_versions: z.array(z.string()).readonly() }),
                 403: z.object({ error: z.string(), code: z.string() }),
                 404: z.object({ error: z.string() }),
                 500: z.object({ error: z.string() }),
@@ -90,7 +90,7 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
         trackEvent("api.methodology.pinned", userId, { orgId, engineVersion: request.body.engine_version }, orgId);
         return reply.code(200).send({ engine_version: request.body.engine_version, pinned: true });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/methodology] set error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -130,7 +130,7 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
         }
         return reply.code(200).send({ engine_version: null, pinned: false });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/methodology] clear error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }

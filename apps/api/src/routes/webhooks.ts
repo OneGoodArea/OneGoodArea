@@ -1,6 +1,5 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { requireApiAccess } from "../shared/auth-api";
-import { headerString } from "../shared/http";
 import { isAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { createWebhookSubscription, listWebhookSubscriptions, revokeWebhookSubscription, rotateWebhookSecret, validateWebhookUrl, validateEventTypes } from "../modules/webhooks";

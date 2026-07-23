@@ -1,11 +1,11 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "@fastify/type-provider-zod";
 import { z } from "zod";
 import { CreatePresetRequestSchema, UpdatePresetRequestSchema } from "@onegoodarea/contracts";
 import { authenticateEither } from "../shared/auth-either";
-import { isAppError } from "../shared/errors";
+import { sendAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
-import { getOrgIfMember, hasAtLeastRole } from "../modules/orgs";
+import { hasAtLeastRole } from "../modules/orgs";
 import { requireLeversAccess } from "../shared/require-levers";
 import { listPresets, getPreset, createPreset, updatePreset, deletePreset, findUnknownWeightKeys } from "../modules/orgs/presets";
 import { trackEvent } from "../modules/tracking/activity";
@@ -64,7 +64,7 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
         trackEvent("api.preset.created", userId, { orgId, presetId: preset.id, basePreset: preset.base_preset }, orgId);
         return reply.code(201).send(preset);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/presets] create error:", error);
         const msg = error instanceof Error ? error.message : "";
         if (/duplicate key|unique constraint/i.test(msg)) {
@@ -101,7 +101,7 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
         /* AR-311: include org_id + caller_role for client gating. */
         return reply.code(200).send({ presets, org_id: orgId, caller_role: role });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/presets] list error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -138,7 +138,7 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
         if (!preset) return reply.code(404).send({ error: "Preset not found" });
         return reply.code(200).send(preset);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/presets/:presetId] get error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -203,7 +203,7 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
         trackEvent("api.preset.updated", userId, { orgId, presetId }, orgId);
         return reply.code(200).send(updated);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/presets/:presetId] update error:", error);
         const msg = error instanceof Error ? error.message : "";
         if (/duplicate key|unique constraint/i.test(msg)) {
@@ -249,7 +249,7 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
         trackEvent("api.preset.deleted", userId, { orgId, presetId }, orgId);
         return reply.code(200).send({ deleted: true });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/presets/:presetId] delete error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }

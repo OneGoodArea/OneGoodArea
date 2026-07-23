@@ -1,16 +1,14 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "@fastify/type-provider-zod";
 import { z } from "zod";
 import { AddMemberRequestSchema, UpdateMemberRoleRequestSchema, CreateInvitationRequestSchema } from "@onegoodarea/contracts";
 import { authenticateEither } from "../shared/auth-either";
-import { headerString } from "../shared/http";
-import { isAppError } from "../shared/errors";
+import { sendAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { getOrgIfMember, listMembers, addMember, removeMember, changeMemberRole, countOwners, hasAtLeastRole } from "../modules/orgs";
 import { requireLeversAccess } from "../shared/require-levers";
 import { listPendingInvitations, createInvitation, revokeInvitation, acceptInvitation } from "../modules/orgs/invitations";
-import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
-import { RATE_LIMITS } from "../infrastructure/config";
+
 import { trackEvent } from "../modules/tracking/activity";
 
 import { getRoleInOrg } from "../modules/orgs";
@@ -53,7 +51,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
            rendered for owners. Pedro spotted it as a missing UI control. */
         return reply.code(200).send({ members, org_id: id, caller_role: role });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/members] list error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -115,7 +113,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
         trackEvent("api.org.member_added", userId, { orgId: id, addedUserId: request.body.user_id }, id);
         return reply.code(201).send({ ok: true });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/members] add error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -197,7 +195,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
         }, orgId);
         return reply.code(200).send({ ok: true });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/members/:userId] patch error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -271,7 +269,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
         trackEvent("api.org.member_removed", callerId, { orgId: id, removedUserId: targetId }, id);
         return reply.code(200).send({ deleted: true });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/members/:userId] delete error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -325,7 +323,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
         }, orgId);
         return reply.code(201).send({ invitation: result.invitation });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/invitations] create error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -357,7 +355,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
         const invitations = await listPendingInvitations(orgId);
         return reply.code(200).send({ invitations });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/invitations] list error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -402,7 +400,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
         trackEvent("api.org.invitation_revoked", callerId, { orgId, invitationId }, orgId);
         return reply.code(200).send({ revoked: true });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/invitations/:invitationId] delete error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -474,7 +472,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
           role: result.role,
         });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/invitations/:token/accept] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }

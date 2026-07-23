@@ -1,11 +1,11 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "@fastify/type-provider-zod";
 import { z } from "zod";
 import { CreateBundleRequestSchema, UpdateBundleRequestSchema } from "@onegoodarea/contracts";
 import { authenticateEither } from "../shared/auth-either";
-import { isAppError } from "../shared/errors";
+import { sendAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
-import { getOrgIfMember, hasAtLeastRole } from "../modules/orgs";
+import { hasAtLeastRole } from "../modules/orgs";
 import { requireLeversAccess } from "../shared/require-levers";
 import { listBundles, getBundle, createBundle, updateBundle, deleteBundle, findUnknownSignalKeys } from "../modules/orgs/bundles";
 import { trackEvent } from "../modules/tracking/activity";
@@ -63,7 +63,7 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
         trackEvent("api.bundle.created", userId, { orgId, bundleId: bundle.id, count: bundle.signal_keys.length }, orgId);
         return reply.code(201).send(bundle);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/bundles] create error:", error);
         const msg = error instanceof Error ? error.message : "";
         if (/duplicate key|unique constraint/i.test(msg)) {
@@ -101,7 +101,7 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
            gate the Create button + show the slug-derived save target. */
         return reply.code(200).send({ bundles, org_id: orgId, caller_role: role });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/bundles] list error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -138,7 +138,7 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
         if (!bundle) return reply.code(404).send({ error: "Bundle not found" });
         return reply.code(200).send(bundle);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/bundles/:bundleId] get error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -196,7 +196,7 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
         trackEvent("api.bundle.updated", userId, { orgId, bundleId }, orgId);
         return reply.code(200).send(updated);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/bundles/:bundleId] update error:", error);
         const msg = error instanceof Error ? error.message : "";
         if (/duplicate key|unique constraint/i.test(msg)) {
@@ -242,7 +242,7 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
         trackEvent("api.bundle.deleted", userId, { orgId, bundleId }, orgId);
         return reply.code(200).send({ deleted: true });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/bundles/:bundleId] delete error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
