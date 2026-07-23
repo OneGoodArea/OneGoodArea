@@ -12,6 +12,7 @@ vi.mock("@/infrastructure/rate-limit", () => ({
 import { sql } from "@/infrastructure/db/client";
 import { isSuperuser, getUserPlan } from "@/modules/usage";
 import { rateLimit } from "@/infrastructure/rate-limit";
+import { RATE_LIMITS } from "@/infrastructure/config";
 import { resolveTier, checkQuota, decideLlm, TIERS } from "@/modules/tiers/index";
 
 const mockSql = vi.mocked(sql);
@@ -134,6 +135,45 @@ describe("checkQuota", () => {
   it("passes correct config to rateLimit", async () => {
     await checkQuota("anonymous", "api:anon-key");
     expect(mockRateLimit).toHaveBeenCalledWith("api:anon-key", { max: 5, windowSeconds: 60 });
+  });
+});
+
+describe("checkQuota — free-tier global backstop (AR-593, Plan 059.1)", () => {
+  it.each(["anonymous", "logged_in", "basic"] as const)(
+    "also checks the shared global bucket for %s tier",
+    async (tier) => {
+      await checkQuota(tier, "api:some-key");
+      expect(mockRateLimit).toHaveBeenCalledWith("global:free-tier-daily", RATE_LIMITS.freeTierGlobal);
+    },
+  );
+
+  it.each(["high_tier", "engineering", "superuser"] as const)(
+    "does not check the shared global bucket for %s tier",
+    async (tier) => {
+      await checkQuota(tier, "api:some-key");
+      expect(mockRateLimit).not.toHaveBeenCalledWith("global:free-tier-daily", RATE_LIMITS.freeTierGlobal);
+    },
+  );
+
+  it("denies the request when the global bucket is exhausted, even if the per-identifier quota passed", async () => {
+    mockRateLimit.mockImplementation(async (identifier) => {
+      if (identifier === "global:free-tier-daily") {
+        return { success: false, remaining: 0, reset: Date.now() + 86400000 };
+      }
+      return { success: true, remaining: 29, reset: Date.now() + 60000 };
+    });
+
+    const verdict = await checkQuota("basic", "api:some-key");
+    expect(verdict.allowed).toBe(false);
+    expect(verdict.reason).toContain("Free-tier global daily limit");
+  });
+
+  it("does not touch the global bucket when the per-identifier quota already failed", async () => {
+    mockRateLimit.mockResolvedValue({ success: false, remaining: 0, reset: Date.now() + 60000 });
+
+    await checkQuota("basic", "api:some-key");
+    expect(mockRateLimit).toHaveBeenCalledTimes(1);
+    expect(mockRateLimit).not.toHaveBeenCalledWith("global:free-tier-daily", RATE_LIMITS.freeTierGlobal);
   });
 });
 

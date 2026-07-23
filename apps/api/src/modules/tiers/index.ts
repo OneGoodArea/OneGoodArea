@@ -10,6 +10,7 @@ import { row, type UserRow } from "../../infrastructure/db/types";
 import { isSuperuser, getUserPlan } from "../usage";
 import type { PlanId } from "../billing/plans";
 import { rateLimit } from "../../infrastructure/rate-limit";
+import { RATE_LIMITS } from "../../infrastructure/config";
 
 /** The tier taxonomy. Grows/collapses via the CHECK constraint on users.tier. */
 export type Tier =
@@ -182,10 +183,22 @@ export interface QuotaVerdict {
   reason: string | null;
 }
 
+/** Identifier for the shared free-tier global daily bucket (AR-593, Plan 059.1). */
+const FREE_TIER_GLOBAL_IDENTIFIER = "global:free-tier-daily";
+
+/** Tiers subject to the shared free-tier global daily ceiling. */
+const FREE_TIERS: ReadonlySet<Tier> = new Set(["anonymous", "logged_in", "basic"]);
+
 /**
  * THE ONLY quota gate. Callers MUST use this and obey its verdict.
  * Returns whether the request is allowed under the tier's quota.
  * Unlimited tiers (engineering/superuser) always return allowed=true.
+ *
+ * Free tiers (anonymous/logged_in/basic) are additionally subject to a
+ * shared global daily ceiling (AR-593, Plan 059.1) — a cost backstop on
+ * top of, not instead of, the per-identifier quota above. It's only
+ * checked once the per-identifier quota already passed, so requests
+ * already rejected there don't consume the shared budget.
  */
 export async function checkQuota(
   tier: Tier,
@@ -203,13 +216,30 @@ export async function checkQuota(
     windowSeconds: config.quota.windowSeconds,
   });
 
-  return {
-    allowed: result.success,
-    tier,
-    remaining: result.remaining,
-    reset: result.reset,
-    reason: result.success ? null : `Rate limit: ${config.quota.max} requests per ${config.quota.windowSeconds}s for ${tier} tier`,
-  };
+  if (!result.success) {
+    return {
+      allowed: false,
+      tier,
+      remaining: result.remaining,
+      reset: result.reset,
+      reason: `Rate limit: ${config.quota.max} requests per ${config.quota.windowSeconds}s for ${tier} tier`,
+    };
+  }
+
+  if (FREE_TIERS.has(tier)) {
+    const globalResult = await rateLimit(FREE_TIER_GLOBAL_IDENTIFIER, RATE_LIMITS.freeTierGlobal);
+    if (!globalResult.success) {
+      return {
+        allowed: false,
+        tier,
+        remaining: globalResult.remaining,
+        reset: globalResult.reset,
+        reason: `Free-tier global daily limit reached (${RATE_LIMITS.freeTierGlobal.max}/day across all anonymous and non-paying traffic)`,
+      };
+    }
+  }
+
+  return { allowed: true, tier, remaining: result.remaining, reset: result.reset, reason: null };
 }
 
 /** LLM routing verdict returned by decideLlm. */

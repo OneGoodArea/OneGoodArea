@@ -184,6 +184,15 @@ export const RATE_LIMITS = {
   authSignIn: { max: 10, windowSeconds: 60 },
   // Public contact form (AR-451): 5 submissions per IP per hour.
   contact: { max: 5, windowSeconds: 3600 },
+  // AR-593 (Plan 059.1): shared daily ceiling across anonymous + logged_in/
+  // basic (non-paying) tiers combined, on top of their per-identifier tier
+  // quota in modules/tiers. A cost backstop, not the primary limiter —
+  // high_tier/engineering/superuser are exempt (bounded by their own
+  // per-account quota instead).
+  freeTierGlobal: {
+    max: Number(process.env.RATE_LIMIT_FREE_TIER_GLOBAL_MAX) || 5000,
+    windowSeconds: Number(process.env.RATE_LIMIT_FREE_TIER_GLOBAL_WINDOW_SECONDS) || 86400,
+  },
 } as const;
 
 // Bulk endpoint hard cap. Larger workloads should use the async pattern (roadmap).
