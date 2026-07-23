@@ -145,6 +145,15 @@ export const MIGRATIONS: Migration[] = [
       // training-table inserts skip silently — adoption tracking via
       // activity_events still happens. Documented in docs/DATA_POLICY.md.
       `ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS training_optout BOOLEAN NOT NULL DEFAULT FALSE`,
+      // AR-595 (Plan 059.3): keys the system auto-provisions for a logged-in
+      // playground visitor with no key of their own. auto_generated=TRUE
+      // marks these so sensitive routes (AR-596, Plan 059.4) can reject
+      // them regardless of expiry. expires_at is NULL for every
+      // human-created key (never expires); auto-generated keys get an
+      // end-of-day UTC timestamp. validateApiKey treats a past expires_at
+      // like a revoked key.
+      `ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS auto_generated BOOLEAN NOT NULL DEFAULT FALSE`,
+      `ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ`,
       `CREATE UNIQUE INDEX IF NOT EXISTS api_keys_key_hash_idx ON api_keys (key_hash)`,
       `CREATE INDEX IF NOT EXISTS api_keys_org_idx ON api_keys (org_id)`,
     ],

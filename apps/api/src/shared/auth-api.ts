@@ -5,7 +5,7 @@ import { PLANS } from "../modules/billing/plans";
 import { rateLimitHeaders } from "../infrastructure/rate-limit";
 import { RATE_LIMITS } from "../infrastructure/config";
 import { clientIpOf } from "./http";
-import { resolveTier, checkQuota } from "../modules/tiers";
+import { resolveTier, checkQuota, TIERS, type Tier } from "../modules/tiers";
 
 /** Bearer-token auth. Resolves the userId, or sends a 401/403 and
    resolves null. Shared by every Bearer-authenticated route.
@@ -116,4 +116,51 @@ export async function requireApiAccessWithOrg(
     orgId: result.orgId ?? null,
     trainingOptout: ("trainingOptout" in result ? result.trainingOptout : false) ?? false,
   };
+}
+
+/** Caller context that also carries the resolved tier, for routes that
+    accept anonymous callers (AR-594, Plan 059.2). */
+export interface CallerOrAnonymousContext {
+  userId: string | null;
+  orgId: string | null;
+  trainingOptout: boolean;
+  tier: Tier;
+}
+
+/** Variant of `requireApiAccessWithOrg` that also accepts callers with no
+   Authorization header at all, resolving them to the `anonymous` tier
+   keyed by request IP instead of 401ing (AR-594, Plan 059.2).
+
+   Only routes explicitly allow-listed in `shared/require-credential.ts`
+   ever reach this function with no header — every other route still
+   401s in that preValidation hook before the handler runs. Callers who
+   DO send a Bearer header get the exact same checks as
+   `requireApiAccessWithOrg` (auth, tier quota, plan API access, monthly
+   quota) — this never weakens auth for real callers. */
+export async function requireApiAccessWithOrgOrAnonymous(
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<CallerOrAnonymousContext | null> {
+  const header = request.headers.authorization;
+  if (header && header.startsWith("Bearer ")) {
+    const ctx = await requireApiAccessWithOrg(request, reply);
+    if (!ctx) return null; // response already sent
+    const tier = await resolveTier({ userId: ctx.userId, hasApiKey: true });
+    return { ...ctx, tier };
+  }
+
+  const tier = await resolveTier({ userId: null, hasApiKey: false }); // always "anonymous"
+  const quota = await checkQuota(tier, `anon-ip:${clientIpOf(request)}`);
+  const limit = TIERS[tier].quota.max ?? 0;
+  reply.headers(rateLimitHeaders(limit, {
+    success: quota.allowed,
+    remaining: quota.remaining ?? limit,
+    reset: quota.reset ?? 0,
+  }));
+  if (!quota.allowed) {
+    reply.code(429).send({ error: quota.reason ?? "Too many requests.", code: "anonymous_quota_exceeded" });
+    return null;
+  }
+
+  return { userId: null, orgId: null, trainingOptout: false, tier };
 }

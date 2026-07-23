@@ -54,6 +54,14 @@ export interface ApiKeyRow {
   created_at: string;
   last_used_at: string | null;
   revoked: boolean;
+  /** AR-595 (Plan 059.3) — TRUE for keys the system auto-provisioned for a
+      logged-in playground visitor with no key of their own. Sensitive
+      routes (AR-596, Plan 059.4) reject these regardless of expiry. */
+  auto_generated: boolean;
+  /** AR-595 (Plan 059.3) — NULL for every human-created key (never
+      expires). Auto-generated keys get an end-of-day UTC timestamp;
+      validateApiKey treats a past value like a revoked key. */
+  expires_at: string | null;
 }
 
 /** Levers (AR-193) — per-org tenancy primitives. White-label fields

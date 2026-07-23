@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { authenticateSession } from "../shared/auth-session";
+import { authenticateSessionOrApiKey } from "../shared/auth-session";
 import { logger } from "../modules/tracking/structured-logger";
 import { isSuperuser } from "../modules/usage";
 import { getAnalytics, getTrafficAnalytics, getAudienceStats, getUsageStats, getRevenueExtras, getMcpAdoption, getTrainingCorpusStats } from "../modules/admin";
@@ -13,18 +13,18 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "Analytics overview",
           description: "High-level admin analytics.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           "x-internal": true,
           response: {
             200: z.object({}).passthrough(),
-            403: z.object({ error: z.string() }),
+            403: z.object({ error: z.string(), code: z.string().optional() }),
             500: z.object({ error: z.string() }),
           },
         },
       },
       async (request, reply) => {
       try {
-        const userId = await authenticateSession(request, reply);
+        const userId = await authenticateSessionOrApiKey(request, reply);
         if (!userId) return reply;
         if (!(await isSuperuser(userId))) {
           return reply.code(403).send({ error: "Forbidden" });
@@ -43,11 +43,11 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "Traffic analytics",
           description: "Traffic analytics data.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           "x-internal": true,
           response: {
             200: z.object({}).passthrough(),
-            403: z.object({ error: z.string() }),
+            403: z.object({ error: z.string(), code: z.string().optional() }),
             500: z.object({ error: z.string() }),
             503: z.object({ error: z.string() }),
           },
@@ -55,7 +55,7 @@ export function registerAdminRoutes(app: FastifyInstance): void {
       },
       async (request, reply) => {
       try {
-        const userId = await authenticateSession(request, reply);
+        const userId = await authenticateSessionOrApiKey(request, reply);
         if (!userId) return reply;
         if (!(await isSuperuser(userId))) {
           return reply.code(403).send({ error: "Forbidden" });
@@ -78,18 +78,18 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "Audience stats (superuser only)",
           description: "Composite stats for the Audience tab: total/active users, signup curve, orgs by size + activity, top countries, churn signal.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           "x-internal": true,
           response: {
             200: z.object({}).passthrough(),
-            403: z.object({ error: z.string() }),
+            403: z.object({ error: z.string(), code: z.string().optional() }),
             500: z.object({ error: z.string() }),
           },
         },
       },
       async (request, reply) => {
         try {
-          const userId = await authenticateSession(request, reply);
+          const userId = await authenticateSessionOrApiKey(request, reply);
           if (!userId) return reply;
           if (!(await isSuperuser(userId))) {
             return reply.code(403).send({ error: "Forbidden" });
@@ -111,18 +111,18 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "Usage stats (superuser only)",
           description: "Composite stats for the Usage tab: per-product call counts + endpoint heatmap.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           "x-internal": true,
           response: {
             200: z.object({}).passthrough(),
-            403: z.object({ error: z.string() }),
+            403: z.object({ error: z.string(), code: z.string().optional() }),
             500: z.object({ error: z.string() }),
           },
         },
       },
       async (request, reply) => {
         try {
-          const userId = await authenticateSession(request, reply);
+          const userId = await authenticateSessionOrApiKey(request, reply);
           if (!userId) return reply;
           if (!(await isSuperuser(userId))) {
             return reply.code(403).send({ error: "Forbidden" });
@@ -144,18 +144,18 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "Revenue extras (superuser only)",
           description: "ARR + MCP add-on uptake + active add-on counts.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           "x-internal": true,
           response: {
             200: z.object({}).passthrough(),
-            403: z.object({ error: z.string() }),
+            403: z.object({ error: z.string(), code: z.string().optional() }),
             500: z.object({ error: z.string() }),
           },
         },
       },
       async (request, reply) => {
         try {
-          const userId = await authenticateSession(request, reply);
+          const userId = await authenticateSessionOrApiKey(request, reply);
           if (!userId) return reply;
           if (!(await isSuperuser(userId))) {
             return reply.code(403).send({ error: "Forbidden" });
@@ -178,18 +178,18 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "MCP adoption stats (superuser only)",
           description: "Aggregate MCP usage last 30 days: total events, unique orgs/users, top orgs, breakdown by client app. No raw metadata.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           "x-internal": true,
           response: {
             200: z.object({}).passthrough(),
-            403: z.object({ error: z.string() }),
+            403: z.object({ error: z.string(), code: z.string().optional() }),
             500: z.object({ error: z.string() }),
           },
         },
       },
       async (request, reply) => {
         try {
-          const userId = await authenticateSession(request, reply);
+          const userId = await authenticateSessionOrApiKey(request, reply);
           if (!userId) return reply;
           if (!(await isSuperuser(userId))) {
             return reply.code(403).send({ error: "Forbidden" });
@@ -210,18 +210,18 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "Training corpus stats (superuser only)",
           description: "Aggregate planner-pair counts (30d + total + last_seen) plus opt-out denominator over active API keys. No raw training data.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           "x-internal": true,
           response: {
             200: z.object({}).passthrough(),
-            403: z.object({ error: z.string() }),
+            403: z.object({ error: z.string(), code: z.string().optional() }),
             500: z.object({ error: z.string() }),
           },
         },
       },
       async (request, reply) => {
         try {
-          const userId = await authenticateSession(request, reply);
+          const userId = await authenticateSessionOrApiKey(request, reply);
           if (!userId) return reply;
           if (!(await isSuperuser(userId))) {
             return reply.code(403).send({ error: "Forbidden" });
@@ -243,7 +243,7 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "Set user tier (superuser only)",
           description: "Privileged endpoint to set a user's tier. Validates against allowed values.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           "x-internal": true,
           params: {
             type: "object",
@@ -258,14 +258,14 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           response: {
             200: z.object({ ok: z.literal(true), tier: z.string() }),
             400: z.object({ error: z.string() }),
-            403: z.object({ error: z.string() }),
+            403: z.object({ error: z.string(), code: z.string().optional() }),
             500: z.object({ error: z.string() }),
           },
         },
       },
       async (request, reply) => {
         try {
-          const userId = await authenticateSession(request, reply);
+          const userId = await authenticateSessionOrApiKey(request, reply);
           if (!userId) return reply;
           if (!(await isSuperuser(userId))) {
             return reply.code(403).send({ error: "Forbidden" });

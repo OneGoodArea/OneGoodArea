@@ -3,14 +3,17 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("@/modules/signals/query", () => ({ queryAreas: vi.fn(), queryAreasCompound: vi.fn() }));
 vi.mock("@/modules/signals", () => ({ getAreaProfile: vi.fn() }));
 vi.mock("@/modules/scoring", () => ({ scoreArea: vi.fn() }));
+vi.mock("@/modules/engine/ai", () => ({ getAiProvider: vi.fn(), getAiProviderForTier: vi.fn() }));
 
 import { runQuery, parseQueryRequest } from "@/modules/intelligence/index";
 import { queryAreas } from "@/modules/signals/query";
 import { getAreaProfile } from "@/modules/signals";
-import type { AiProvider } from "@/modules/engine/ai";
+import { getAiProvider, getAiProviderForTier, type AiProvider } from "@/modules/engine/ai";
 
 const mockQueryAreas = vi.mocked(queryAreas);
 const mockGetAreaProfile = vi.mocked(getAreaProfile);
+const mockGetAiProvider = vi.mocked(getAiProvider);
+const mockGetAiProviderForTier = vi.mocked(getAiProviderForTier);
 
 beforeEach(() => { vi.clearAllMocks(); });
 
@@ -108,5 +111,44 @@ describe("runQuery — NL mode ({question}) plans then executes", () => {
     expect(out.ok).toBe(true);
     expect(vi.mocked(queryAreasCompound)).toHaveBeenCalledOnce();
     if (out.ok) expect(out.response.plan_source).toBe("nl");
+  });
+});
+
+describe("runQuery — default provider selection (AR-597, Plan 059.5)", () => {
+  const providerStub: AiProvider = { generateNarrative: async () => '{"op":"get_area","params":{"area":"M1 1AE"}}' };
+
+  beforeEach(() => {
+    mockGetAreaProfile.mockResolvedValue(null);
+    mockGetAiProvider.mockReturnValue(providerStub);
+    mockGetAiProviderForTier.mockReturnValue(providerStub);
+  });
+
+  it("routes to getAiProviderForTier(tier) when no explicit aiProvider is passed", async () => {
+    const out = await runQuery({ question: "tell me about M1 1AE" }, undefined, "high_tier");
+    expect(out.ok).toBe(true);
+    expect(mockGetAiProviderForTier).toHaveBeenCalledWith("high_tier");
+    expect(mockGetAiProvider).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the untiered getAiProvider() when neither aiProvider nor tier is given", async () => {
+    const out = await runQuery({ question: "tell me about M1 1AE" });
+    expect(out.ok).toBe(true);
+    expect(mockGetAiProvider).toHaveBeenCalledOnce();
+    expect(mockGetAiProviderForTier).not.toHaveBeenCalled();
+  });
+
+  it("an explicit aiProvider always wins over tier", async () => {
+    const explicit: AiProvider = { generateNarrative: async () => '{"op":"get_area","params":{"area":"M1 1AE"}}' };
+    const out = await runQuery({ question: "tell me about M1 1AE" }, explicit, "anonymous");
+    expect(out.ok).toBe(true);
+    expect(mockGetAiProvider).not.toHaveBeenCalled();
+    expect(mockGetAiProviderForTier).not.toHaveBeenCalled();
+  });
+
+  it("surfaces a provider-construction failure for the given tier as llm_error", async () => {
+    mockGetAiProviderForTier.mockImplementation(() => { throw new Error("ANTHROPIC_API_KEY missing"); });
+    const out = await runQuery({ question: "tell me about M1 1AE" }, undefined, "anonymous");
+    expect(out.ok).toBe(false);
+    if (!out.ok) expect(out.error.code).toBe("llm_error");
   });
 });

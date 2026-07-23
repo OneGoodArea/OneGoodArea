@@ -1,12 +1,14 @@
 # Endpoints by Product
 
-Complete catalog of the HTTP surface, about **104 handler registrations**
+Complete catalog of the HTTP surface, about **106 handler registrations**
 across the route modules in `apps/api/src/routes/`, grouped by the four
 products plus cross-cutting Levers, webhooks, Stripe, auth, account and
 platform.
 
 **Auth modes:** **API** (Bearer token), **Session** (JWT cookie),
-**Public** (none), **CRON** (Bearer `CRON_SECRET`).
+**Public** (none), **CRON** (Bearer `CRON_SECRET`), **API/Anon** (Bearer
+token OR no header at all — resolves to the `anonymous` tier, IP-rate-
+limited; AR-594, Plan 059.2).
 
 **Dark flag:** the four product families (Signals, Scores, Monitor,
 Intelligence) sit behind `signalsApiEnabled` (env `OGA_SIGNALS_API`) and
@@ -57,7 +59,7 @@ return 404 when disabled.
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| POST | `/v1/query` | API | Typed query plane (programmatic OR natural language) |
+| POST | `/v1/query` | API/Anon | Typed query plane (programmatic OR natural language) |
 | POST | `/v1/peers` | API | k-NN over normalized signals; default k=20 |
 | POST | `/v1/insights` | API | Anomaly screening by peer-relative z-score |
 | POST | `/v1/forecast` | API | Linear projection for one (signal, area) |
@@ -138,21 +140,27 @@ peer candidate sets (admin+ to mutate).
 
 ---
 
-## API Keys (5)
+## API Keys (6)
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| GET | `/keys` | Session | List caller's API keys |
-| GET | `/keys/usage` | Session | Detailed key usage analytics |
-| POST | `/keys` | Session | Create a key (requires API plan access) |
-| DELETE | `/keys/:id` | Session | Revoke a key |
-| PATCH | `/keys/:id` | Session | Toggle `training_optout` |
+| GET | `/keys` | Session/API | List caller's API keys |
+| GET | `/keys/usage` | Session/API | Detailed key usage analytics |
+| POST | `/keys` | Session/API | Create a key (requires API plan access) |
+| POST | `/keys/playground` | Session | Auto-provision an end-of-day playground key (AR-595, Plan 059.3) — session-only, not callable with an API key |
+| DELETE | `/keys/:id` | Session/API | Revoke a key |
+| PATCH | `/keys/:id` | Session/API | Toggle `training_optout` |
+
+Since AR-596 (Plan 059.4): "Session/API" routes accept either the
+session JWT or a real API key (self-service). An auto-generated
+playground key is rejected on all of them regardless of which auth path
+validated it — see [`AUTHENTICATION.md`](./AUTHENTICATION.md).
 
 ---
 
 ## Account Dashboard (17)
 
-Session-authenticated user account management.
+Session or API-key authenticated (AR-596, Plan 059.4) user account management.
 
 | Method | Path | Notes |
 |---|---|---|
@@ -197,13 +205,14 @@ rate-limited where public.
 
 ---
 
-## Admin (7)
+## Admin (8)
 
-Superuser-only analytics (session).
+Superuser-only analytics. Session or API-key authenticated (AR-596, Plan
+059.4) — either way, the caller must be flagged superuser.
 
 `GET /admin/analytics`, `/admin/traffic-analytics`, `/admin/audience`,
 `/admin/usage`, `/admin/revenue`, `/admin/mcp-adoption`,
-`/admin/training-corpus`.
+`/admin/training-corpus`, `POST /admin/users/:id/tier`.
 
 ---
 
@@ -212,10 +221,12 @@ Superuser-only analytics (session).
 | Method | Path | Auth | Notes |
 |---|---|---|---|
 | POST | `/stripe/webhook` | Public | Signature-verified webhook |
-| POST | `/stripe/portal` | Session | Redirect to customer portal |
-| POST | `/stripe/checkout` | Session | New subscription or plan swap |
-| POST | `/stripe/cancel` | Session | Cancel at period end |
-| POST | `/stripe/addon-checkout` | Session | MCP add-on purchase |
+| POST | `/stripe/portal` | Session/API | Redirect to customer portal |
+| POST | `/stripe/checkout` | Session/API | New subscription or plan swap |
+| POST | `/stripe/cancel` | Session/API | Cancel at period end |
+| POST | `/stripe/addon-checkout` | Session/API | MCP add-on purchase |
+
+"Session/API" per AR-596 (Plan 059.4) — see [API Keys](#api-keys) above.
 
 ---
 
@@ -263,13 +274,13 @@ Anonymous demo tunnel, deliberately not under `/v1`.
 | Webhooks | 4 |
 | Levers (Orgs) | 31 |
 | Entitlement | 1 |
-| API Keys | 5 |
+| API Keys | 6 |
 | Account Dashboard | 17 |
 | Auth | 11 |
-| Admin | 7 |
+| Admin | 8 |
 | Stripe | 5 |
 | System, Health & Tracking | 5 |
 | Playground | 2 |
-| **TOTAL** | **104** |
+| **TOTAL** | **106** |
 
-**Last updated:** July 8, 2026 | Verified against `apps/api/src/routes/*.ts` on branch `docs/fix-doc-drift`.
+**Last updated:** July 23, 2026 | Verified against `apps/api/src/routes/*.ts` on branch `feat/AR-441-tiered-playground-access` (Plan 059).

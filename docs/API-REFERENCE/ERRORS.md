@@ -38,10 +38,24 @@ For business-rule violations (422) the body may also include extra context:
 | 422 | `preset_id_conflict` | `preset_id` passed alongside explicit `preset` / `weights` (mutually exclusive) |
 | 422 | `unknown_weight_keys` | Saved-preset weights reference dimension keys not in the chosen `base_preset`'s dim set |
 | 422 | `unsupported_engine_version` | Methodology pin PUT with an engine version outside the supported window |
-| 422 | `no_org_context` | Caller has no resolvable org for an org-scoped feature |
+| 422 | `no_org_context` | Caller has no resolvable org for an org-scoped feature; also returned to an anonymous caller who passes `?bundle=` on `/v1/query` — bundles require an account (AR-594, Plan 059.2) |
 | 422 | `llm_error` | Anthropic provider construction / call failed during NL planning |
-| 429 | (no code) | Per-key rate limit — 30/min by default |
+| 403 | `auto_generated_key_not_allowed` | `/me`, `/keys`, `/admin`, `/stripe` reject an auto-provisioned playground key (AR-595/596, Plan 059.3/4) — create a real one at `/keys` |
+| 429 | (no code) | Tier quota exceeded (see [Tier quotas](#tier-quotas) below); `X-RateLimit-*` + `Retry-After` headers are set |
 | 500 | (none) | Genuine server error — Sentry should capture |
+
+## Tier quotas
+
+Rate limits are per-tier, not a flat per-key number (AR-593/594, Plan 059). Every 401/429-eligible request resolves to one tier and is checked against that tier's quota:
+
+| Tier | Quota | Who |
+|---|---|---|
+| `anonymous` | 5 req / 60s, per IP | No `Authorization` header at all — only on the routes that allow it (currently `POST /v1/query`) |
+| `logged_in` / `basic` | 30 req / 60s, per key | Signed-in, no paid plan |
+| `high_tier` | 120 req / 60s, per key | Paid plan |
+| `engineering` / `superuser` | Unlimited | Staff |
+
+**Global free-tier backstop:** `anonymous` and `logged_in`/`basic` traffic additionally shares one daily ceiling (`5000/day` by default) across *all* callers in those tiers combined — a cost backstop, checked only after a request's own per-identifier quota already passed. `high_tier`/`engineering`/`superuser` never touch it. A 429 here looks identical to a normal quota 429 (no distinct code), but the `error` message says "Free-tier global daily limit reached".
 
 ## Validation errors
 

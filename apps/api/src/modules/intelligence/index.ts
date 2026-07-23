@@ -14,7 +14,8 @@
 
 import type { QueryRequest, QueryResponse, PlannerError } from "@onegoodarea/contracts";
 import { QueryRequestSchema } from "@onegoodarea/contracts";
-import { getAiProvider, type AiProvider } from "../engine/ai";
+import { getAiProvider, getAiProviderForTier, type AiProvider } from "../engine/ai";
+import type { Tier } from "../tiers";
 import { plan as planFromNl } from "./planner";
 import { executePlan } from "./executor";
 
@@ -39,10 +40,14 @@ export function parseQueryRequest(body: unknown): { ok: true; req: QueryRequest 
 
 /** Either programmatic-mode (plan executed directly) OR NL-mode (plan first
     translated via the AiProvider, then executed). AiProvider is injected in
-    tests; in prod it defaults to the configured Anthropic/Mock provider. */
+    tests; in prod it defaults to the configured Anthropic/Mock provider,
+    or — when `tier` is given (AR-597, Plan 059.5) — to the model/provider
+    that tier maps to. `aiProvider` (when passed) always wins, so existing
+    test call sites that inject a mock provider directly are unaffected. */
 export async function runQuery(
   req: QueryRequest,
   aiProvider: AiProvider | undefined = undefined,
+  tier: Tier | undefined = undefined,
 ): Promise<{ ok: true; response: QueryResponse } | { ok: false; error: PlannerError }> {
   if ("plan" in req && req.plan) {
     const response = await executePlan(req.plan, { planSource: "client" });
@@ -56,7 +61,7 @@ export async function runQuery(
   if (aiProvider) {
     provider = aiProvider;
   } else {
-    try { provider = getAiProvider(); }
+    try { provider = tier ? getAiProviderForTier(tier) : getAiProvider(); }
     catch (err) {
       return { ok: false, error: { code: "llm_error", message: err instanceof Error ? err.message : String(err) } };
     }

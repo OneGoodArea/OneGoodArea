@@ -17,6 +17,11 @@ import { server } from "../msw-server";
  * mock. */
 
 vi.mock("@/modules/auth/session-token", () => ({ verifySessionToken: vi.fn() }));
+/* AR-596 (Plan 059.4): these routes now also accept a real API key
+   (bearerAuth) as a fallback when the session JWT doesn't verify. Mock it
+   so that fallback resolves deterministically instead of hitting the real
+   DB-backed implementation. */
+vi.mock("@/modules/api-keys", () => ({ validateApiKey: vi.fn() }));
 vi.mock("@/modules/usage", () => ({
   getUserEmail: vi.fn(),
   hasAddon: vi.fn(),
@@ -30,6 +35,7 @@ vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
 
 import { buildApp } from "@/app";
 import { verifySessionToken } from "@/modules/auth/session-token";
+import { validateApiKey } from "@/modules/api-keys";
 import { getUserEmail, hasAddon, getUserPlan, getStripeCustomerId } from "@/modules/usage";
 import { trackEvent } from "@/modules/tracking/activity";
 import { sql } from "@/infrastructure/db/client";
@@ -41,6 +47,7 @@ afterAll(() => server.listen({ onUnhandledRequest: "error" }));
 const app = await buildApp();
 
 const mockVerify = vi.mocked(verifySessionToken);
+const mockValidateKey = vi.mocked(validateApiKey);
 const mockEmail = vi.mocked(getUserEmail);
 const mockHasAddon = vi.mocked(hasAddon);
 const mockGetPlan = vi.mocked(getUserPlan);
@@ -53,6 +60,7 @@ beforeEach(async () => {
   vi.clearAllMocks();
   await mockReset();
   mockVerify.mockResolvedValue({ userId: "user_1" });
+  mockValidateKey.mockResolvedValue(null); // AR-596: no session -> OR-auth falls back to this
   mockEmail.mockResolvedValue("user@example.com");
   mockSql.mockResolvedValue([] as never);
 });

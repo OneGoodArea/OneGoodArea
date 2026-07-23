@@ -24,6 +24,22 @@ interface RouteSecurity {
   security?: Array<Record<string, unknown>>;
 }
 
+/** AR-594 (Plan 059.2): routes where a caller with no Authorization header
+    at all is let through this gate instead of 401ing. The caller still
+    resolves to the `anonymous` tier and is subject to its quota (including
+    the AR-593 global free-tier backstop) inside the route's own handler —
+    this only lifts the outer "credential must be present" guard. Keyed as
+    "METHOD /path-pattern" (Fastify's route pattern, e.g. "/v1/signals/:category",
+    not the resolved URL). Sensitive routes (/me, /keys, /admin, /stripe) are
+    never added here. */
+const ANONYMOUS_ALLOWED_ROUTES = new Set<string>([
+  "POST /v1/query",
+]);
+
+function routeKey(request: FastifyRequest): string {
+  return `${request.method} ${request.routeOptions?.url ?? request.url}`;
+}
+
 /** Every auth path in this service reads `Authorization: Bearer <token>`:
     api keys via authenticate(), the apps/web JWT bridge via
     authenticateSession(), and the cron secret. The scheme names differ in the
@@ -35,6 +51,8 @@ export async function requireCredential(request: FastifyRequest, reply: FastifyR
 
   const header = request.headers.authorization;
   if (header && header.startsWith("Bearer ")) return;
+
+  if (ANONYMOUS_ALLOWED_ROUTES.has(routeKey(request))) return;
 
   /* Keep each family's existing 401 body so API consumers see the same
      actionable message they did before this hook existed. */

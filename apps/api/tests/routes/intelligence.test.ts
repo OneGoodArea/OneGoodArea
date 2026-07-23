@@ -33,6 +33,7 @@ import { validateApiKey } from "@/modules/api-keys";
 import { rateLimit } from "@/infrastructure/rate-limit";
 import { hasApiAccess, canMakeApiCall, canMakeNlCall } from "@/modules/usage";
 import { runQuery, AmbiguousLocationError } from "@/modules/intelligence";
+import { trackEvent } from "@/modules/tracking/activity";
 
 const app = await buildApp();
 afterAll(() => {
@@ -64,6 +65,15 @@ function post(body: unknown) {
   });
 }
 
+function postAnonymous(body: unknown, query = "") {
+  return app.inject({
+    method: "POST",
+    url: `/v1/query${query}`,
+    headers: { "content-type": "application/json" },
+    payload: JSON.stringify(body),
+  });
+}
+
 describe("POST /v1/query — AR-267 ambiguous_location", () => {
   it("returns 422 with the candidate list when the area is ambiguous", async () => {
     const candidates = [
@@ -81,6 +91,12 @@ describe("POST /v1/query — AR-267 ambiguous_location", () => {
     expect(body.error).toContain("Brixton");
   });
 
+  it("passes the caller's resolved tier through to runQuery (AR-597, Plan 059.5)", async () => {
+    mockRunQuery.mockResolvedValueOnce({ ok: true, response: { plan: { op: "get_area" }, plan_source: "nl" } } as never);
+    await post({ question: "tell me about M1 1AE" });
+    expect(mockRunQuery).toHaveBeenCalledWith(expect.anything(), undefined, "basic");
+  });
+
   it("does NOT 200 with arbitrarily-picked data when ambiguous (contract guarantee)", async () => {
     mockRunQuery.mockRejectedValueOnce(
       new AmbiguousLocationError("Brixton", [
@@ -96,5 +112,48 @@ describe("POST /v1/query — AR-267 ambiguous_location", () => {
     mockRunQuery.mockRejectedValueOnce(new Error("DB connection lost"));
     const res = await post({ question: "anything" });
     expect(res.statusCode).toBe(500);
+  });
+});
+
+describe("POST /v1/query — anonymous access (AR-594, Plan 059.2)", () => {
+  it("allows a caller with no Authorization header, within the anonymous tier quota", async () => {
+    mockRunQuery.mockResolvedValueOnce({
+      ok: true,
+      response: { plan: { op: "get_area" }, plan_source: "client" },
+    } as never);
+
+    const res = await postAnonymous({ plan: { op: "get_area", params: { area: "M1 1AE" } } });
+    expect(res.statusCode).toBe(200);
+    expect(vi.mocked(trackEvent)).toHaveBeenCalledWith(
+      "api.query.executed",
+      null,
+      expect.objectContaining({ op: "get_area" }),
+      null,
+    );
+  });
+
+  it("does not consult the monthly NL cap for an anonymous NL question (tier quota governs instead)", async () => {
+    vi.mocked(canMakeNlCall).mockResolvedValue({ allowed: false, plan: "sandbox", used: 99, limit: 1 } as never);
+    mockRunQuery.mockResolvedValueOnce({
+      ok: true,
+      response: { plan: { op: "rank_areas" }, plan_source: "llm" },
+    } as never);
+
+    const res = await postAnonymous({ question: "best areas for families" });
+    expect(res.statusCode).toBe(200);
+    expect(vi.mocked(canMakeNlCall)).not.toHaveBeenCalled();
+  });
+
+  it("429s an anonymous caller once the anonymous tier quota is exhausted", async () => {
+    mockRate.mockResolvedValueOnce({ success: false, remaining: 0, reset: 0 });
+    const res = await postAnonymous({ plan: { op: "get_area", params: { area: "M1 1AE" } } });
+    expect(res.statusCode).toBe(429);
+    expect(mockRunQuery).not.toHaveBeenCalled();
+  });
+
+  it("422s an anonymous caller who passes ?bundle=", async () => {
+    const res = await postAnonymous({ plan: { op: "get_area", params: { area: "M1 1AE" } } }, "?bundle=some-bundle");
+    expect(res.statusCode).toBe(422);
+    expect(res.json().code).toBe("no_org_context");
   });
 });
