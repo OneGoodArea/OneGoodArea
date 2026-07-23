@@ -125,9 +125,14 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
             : null;
         const t0 = Date.now();
 
+        // AR-597 (Plan 059.5): NL calls route to the model/provider the
+        // caller's tier maps to, instead of the single global default.
+        // Programmatic {plan} calls never touch the LLM — passing the
+        // tier through is harmless either way since runQuery only
+        // constructs a provider on the NL path.
         let result: Awaited<ReturnType<typeof runQuery>>;
         try {
-          result = await runQuery(parsed.req);
+          result = await runQuery(parsed.req, undefined, ctx.tier);
         } catch (err) {
           // AR-267: typed surface for ambiguous place names. Don't 500 —
           // tell the caller which candidates to disambiguate between.

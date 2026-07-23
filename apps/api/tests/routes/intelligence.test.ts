@@ -91,6 +91,12 @@ describe("POST /v1/query — AR-267 ambiguous_location", () => {
     expect(body.error).toContain("Brixton");
   });
 
+  it("passes the caller's resolved tier through to runQuery (AR-597, Plan 059.5)", async () => {
+    mockRunQuery.mockResolvedValueOnce({ ok: true, response: { plan: { op: "get_area" }, plan_source: "nl" } } as never);
+    await post({ question: "tell me about M1 1AE" });
+    expect(mockRunQuery).toHaveBeenCalledWith(expect.anything(), undefined, "basic");
+  });
+
   it("does NOT 200 with arbitrarily-picked data when ambiguous (contract guarantee)", async () => {
     mockRunQuery.mockRejectedValueOnce(
       new AmbiguousLocationError("Brixton", [
