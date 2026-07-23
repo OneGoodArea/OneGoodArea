@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import { requireApiAccessWithOrg } from "../shared/auth-api";
+import { requireApiAccessWithOrg, requireApiAccessWithOrgOrAnonymous } from "../shared/auth-api";
 import { canMakeNlCall } from "../modules/usage";
 import { PLANS } from "../modules/billing/plans";
 import { effectiveEngineVersionForCaller } from "../shared/bundles";
@@ -39,8 +39,8 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
                 "Intelligence"
             ],
             "summary": "Query intelligence",
-            "description": "Run a query plan or natural-language question against the intelligence moat. Supports rank_areas, get_area, score_area, compare_areas, find_peers, find_insights, and find_forecast.",
-            "security": [{ "bearerAuth": [] }],
+            "description": "Run a query plan or natural-language question against the intelligence moat. Supports rank_areas, get_area, score_area, compare_areas, find_peers, find_insights, and find_forecast. Callable without an API key at the anonymous tier's quota (AR-594, Plan 059.2).",
+            "security": [{ "bearerAuth": [] }, {}],
             "body": {
               "oneOf": [
                 { "type": "object", "properties": { "question": { "type": "string", "minLength": 1 } }, "required": ["question"], "description": "Natural language question.", "example": { "question": "best areas for families in London" } },
@@ -63,7 +63,7 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
         if (!getConfig().signalsApiEnabled) {
           return reply.code(404).send({ error: "Not found" });
         }
-        const ctx = await requireApiAccessWithOrg(request, reply);
+        const ctx = await requireApiAccessWithOrgOrAnonymous(request, reply);
         if (!ctx) return reply;
         const parsed = parseQueryRequest(request.body);
         if (!parsed.ok) return reply.code(400).send({ error: parsed.error });
@@ -71,11 +71,14 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
         /* AR-488: the NL path invokes the Anthropic-backed planner (real
            marginal cost). Enforce the per-plan monthly NL sub-cap before we
            touch the LLM. Programmatic {plan} calls carry no `question` and
-           are unaffected. */
+           are unaffected. Anonymous callers (AR-594, Plan 059.2) have no
+           plan to sub-cap — their tier quota (checked inside
+           requireApiAccessWithOrgOrAnonymous, including the AR-593 global
+           free-tier backstop) is the only limiter that applies to them. */
         const isNlCall =
           "question" in parsed.req &&
           typeof (parsed.req as { question?: unknown }).question === "string";
-        if (isNlCall) {
+        if (isNlCall && ctx.userId) {
           const nlQuota = await canMakeNlCall(ctx.userId);
           if (!nlQuota.allowed) {
             return reply.code(429).send({
@@ -89,12 +92,23 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
         // bundle's whitelist for the caller's org. The plan is then
         // gated AFTER planning — the executed plan (whether programmatic
         // or NL-derived) must only reference signals in the bundle.
+        // Bundles are an org feature; anonymous callers (no account) can't
+        // have one, so a bundle param from them is a clear 422 instead of
+        // an org lookup on a null user.
         const rawQuery = (request.query ?? {}) as { bundle?: unknown };
         const rawBody = (request.body ?? {}) as { bundle?: unknown };
         const bundleId =
           typeof rawQuery.bundle === "string" ? rawQuery.bundle :
           typeof rawBody.bundle === "string" ? rawBody.bundle : undefined;
-        const resolved = await resolveBundleForCaller(bundleId, ctx.orgId, ctx.userId, reply);
+        if (bundleId && !ctx.userId) {
+          return reply.code(422).send({
+            error: "Bundle filtering requires an account. Sign in or use an API key.",
+            code: "no_org_context",
+          });
+        }
+        const resolved = ctx.userId
+          ? await resolveBundleForCaller(bundleId, ctx.orgId, ctx.userId, reply)
+          : { ok: true as const, allowed: undefined };
         if (!resolved.ok) return reply;
 
         /* AR-376: capture the NL question for planner training (only
@@ -102,8 +116,11 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
            {plan} calls aren't training data). Latency is measured
            around runQuery; the insert happens AFTER the response is
            sent so it never adds to user-visible time. */
+        // Anonymous callers (AR-594, Plan 059.2) have no account, so their
+        // questions are never captured as training data — same rule as
+        // programmatic {plan} calls above.
         const trainingQuestion: string | null =
-          "question" in parsed.req && typeof parsed.req.question === "string"
+          ctx.userId && "question" in parsed.req && typeof parsed.req.question === "string"
             ? parsed.req.question
             : null;
         const t0 = Date.now();
@@ -115,7 +132,7 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
           // AR-267: typed surface for ambiguous place names. Don't 500 —
           // tell the caller which candidates to disambiguate between.
           if (err instanceof AmbiguousLocationError) {
-            if (trainingQuestion !== null) {
+            if (trainingQuestion !== null && ctx.userId) {
               insertPlannerLog(
                 {
                   userId: ctx.userId,
@@ -140,7 +157,7 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
         }
         const latencyMs = Date.now() - t0;
         if (!result.ok) {
-          if (trainingQuestion !== null) {
+          if (trainingQuestion !== null && ctx.userId) {
             insertPlannerLog(
               {
                 userId: ctx.userId,
@@ -160,7 +177,7 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
         if (resolved.allowed) {
           const outside = planSignalsOutsideBundle(result.response.plan, resolved.allowed);
           if (outside.length > 0) {
-            if (trainingQuestion !== null) {
+            if (trainingQuestion !== null && ctx.userId) {
               insertPlannerLog(
                 {
                   userId: ctx.userId,
@@ -187,7 +204,7 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
           plan_source: result.response.plan_source,
           bundle: bundleId ?? null,
         }, ctx.orgId);
-        if (trainingQuestion !== null) {
+        if (trainingQuestion !== null && ctx.userId) {
           insertPlannerLog(
             {
               userId: ctx.userId,
@@ -202,7 +219,12 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
             ctx.trainingOptout,
           );
         }
-        reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(ctx.orgId, ctx.userId));
+        // Methodology pinning is an org (Levers) feature; anonymous callers
+        // have no org, so they always get the latest engine version.
+        reply.header(
+          "X-Engine-Version",
+          ctx.userId ? await effectiveEngineVersionForCaller(ctx.orgId, ctx.userId) : METHODOLOGY_VERSION,
+        );
         return reply.code(200).send(result.response);
       } catch (error) {
         if (sendAppError(reply, error)) return;
