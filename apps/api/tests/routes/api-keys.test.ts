@@ -7,13 +7,14 @@ vi.mock("@/modules/api-keys", () => ({
   listApiKeys: vi.fn(),
   revokeApiKey: vi.fn(),
   setApiKeyTrainingOptout: vi.fn(),
+  provisionPlaygroundApiKey: vi.fn(),
 }));
 vi.mock("@/modules/usage", () => ({ hasApiAccess: vi.fn() }));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
 
 import { buildApp } from "@/app";
 import { verifySessionToken } from "@/modules/auth/session-token";
-import { createApiKey, listApiKeys, revokeApiKey, setApiKeyTrainingOptout } from "@/modules/api-keys";
+import { createApiKey, listApiKeys, revokeApiKey, setApiKeyTrainingOptout, provisionPlaygroundApiKey } from "@/modules/api-keys";
 import { hasApiAccess } from "@/modules/usage";
 
 const app = await buildApp();
@@ -24,6 +25,7 @@ const mockList = vi.mocked(listApiKeys);
 const mockRevoke = vi.mocked(revokeApiKey);
 const mockSetOptout = vi.mocked(setApiKeyTrainingOptout);
 const mockApiAccess = vi.mocked(hasApiAccess);
+const mockProvisionPlayground = vi.mocked(provisionPlaygroundApiKey);
 
 const AUTH = { authorization: "Bearer session.jwt", "content-type": "application/json" };
 
@@ -72,6 +74,29 @@ describe("POST /keys", () => {
     mockCreate.mockResolvedValue({ id: "key_2", key: "oga_x", name: "Default" } as never);
     await app.inject({ method: "POST", url: "/keys", headers: AUTH, payload: "{}" });
     expect(mockCreate).toHaveBeenCalledWith("user_1", "Default");
+  });
+});
+
+describe("POST /keys/playground (AR-595, Plan 059.3)", () => {
+  it("401s without a session token", async () => {
+    const res = await app.inject({ method: "POST", url: "/keys/playground" });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("returns a freshly provisioned key when the caller has none", async () => {
+    const expiresAt = new Date("2026-07-23T23:59:59.999Z");
+    mockProvisionPlayground.mockResolvedValue({ key: "oga_freshkey", expiresAt } as never);
+    const res = await app.inject({ method: "POST", url: "/keys/playground", headers: AUTH });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ key: "oga_freshkey", expires_at: "2026-07-23T23:59:59.999Z" });
+    expect(mockProvisionPlayground).toHaveBeenCalledWith("user_1");
+  });
+
+  it("returns key: null when the caller already has an active key", async () => {
+    mockProvisionPlayground.mockResolvedValue(null);
+    const res = await app.inject({ method: "POST", url: "/keys/playground", headers: AUTH });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ key: null, expires_at: null });
   });
 });
 

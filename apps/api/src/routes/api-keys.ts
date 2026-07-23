@@ -4,7 +4,7 @@ import { authenticateSession } from "../shared/auth-session";
 import { logger } from "../modules/tracking/structured-logger";
 import { sql } from "../infrastructure/db/client";
 import { rows, row, type ApiKeyRow, type ActivityEventRow } from "../infrastructure/db/types";
-import { createApiKey, listApiKeys, revokeApiKey, setApiKeyTrainingOptout } from "../modules/api-keys";
+import { createApiKey, listApiKeys, revokeApiKey, setApiKeyTrainingOptout, provisionPlaygroundApiKey } from "../modules/api-keys";
 import { hasApiAccess, getUserPlan } from "../modules/usage";
 import { PLANS, type PlanId } from "../modules/billing/plans";
 
@@ -259,6 +259,44 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
       return reply.send({ key });
     } catch (error) {
       logger.error("POST /keys failed:", error);
+      return reply.code(500).send({ error: "Something went wrong. Please try again." });
+    }
+  });
+
+  // AR-595 (Plan 059.3): server-to-server call from the web app's own docs
+  // page, on behalf of the CURRENT logged-in session, to get a working
+  // playground key without the visitor leaving the page. bearerToken
+  // (session JWT) is correct here — this is exactly the web->api,
+  // on-behalf-of-the-signed-in-user case that scheme was built for,
+  // distinct from AR-596's self-service bearerAuth routes. Returns
+  // key: null when the user already has an active key of their own —
+  // its plaintext can't be retrieved, so the caller falls back to
+  // telling the user to use their own key.
+  app.post("/keys/playground",
+    {
+        schema: {
+          tags: ["Keys"],
+          summary: "Provision a playground API key",
+          description: "Auto-provisions an end-of-day API key for the signed-in caller's Scalar Try-It session, if they don't already have an active key.",
+          security: [{ "bearerToken": [] }],
+          response: {
+            200: z.object({ key: z.string().nullable(), expires_at: z.string().nullable() }),
+            500: z.object({ error: z.string() }),
+          },
+        },
+    },
+    async (request, reply) => {
+    try {
+      const userId = await authenticateSession(request, reply);
+      if (!userId) return reply; // 401 already sent
+
+      const provisioned = await provisionPlaygroundApiKey(userId);
+      if (!provisioned) {
+        return reply.send({ key: null, expires_at: null });
+      }
+      return reply.send({ key: provisioned.key, expires_at: provisioned.expiresAt.toISOString() });
+    } catch (error) {
+      logger.error("POST /keys/playground failed:", error);
       return reply.code(500).send({ error: "Something went wrong. Please try again." });
     }
   });
