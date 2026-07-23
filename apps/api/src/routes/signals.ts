@@ -1,8 +1,8 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { isSignalCategory, SIGNAL_CATEGORIES } from "@onegoodarea/contracts";
 import { requireApiAccessWithOrg } from "../shared/auth-api";
 import { resolveBundleForCaller, effectiveEngineVersionForCaller } from "../shared/bundles";
-import { isAppError } from "../shared/errors";
+import { sendAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { getConfig } from "../infrastructure/config";
 import { validateLocationInput } from "../infrastructure/validation/validator";
@@ -10,7 +10,6 @@ import { getAreaProfile, queryAreas, parseAreasQuery } from "../modules/signals"
 import { filterSignalsByBundle } from "../modules/orgs/bundles";
 import { trackEvent } from "../modules/tracking/activity";
 
-import type { Intent } from "@onegoodarea/contracts";
 import { z } from "zod";
 /** signals route handlers — extracted from app.ts per AR-286. */
 export function registerSignalsRoutes(app: FastifyInstance): void {
@@ -93,9 +92,7 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
           meta: { ...profile.meta, sources: filteredSources },
         });
       } catch (error) {
-        if (isAppError(error)) {
-          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
-        }
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/area] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -173,9 +170,7 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
         reply.header("X-Engine-Version", profile.meta.engine_version);
         return reply.code(200).send({ geo: profile.geo, signals, meta: { ...profile.meta, sources } });
       } catch (error) {
-        if (isAppError(error)) {
-          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
-        }
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/signals] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -251,9 +246,7 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
         reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(ctx.orgId, ctx.userId));
         return reply.code(200).send({ signal: parsed.query.signal, count: areas.length, areas });
       } catch (error) {
-        if (isAppError(error)) {
-          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
-        }
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/areas] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }

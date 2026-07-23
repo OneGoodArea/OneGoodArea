@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireApiAccessWithOrg } from "../shared/auth-api";
 import { resolveBundleForCaller, effectiveEngineVersionForCaller } from "../shared/bundles";
-import { isAppError } from "../shared/errors";
+import { sendAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { sql } from "../infrastructure/db/client";
 import { rows } from "../infrastructure/db/types";
@@ -186,9 +186,7 @@ export function registerScoringRoutes(app: FastifyInstance): void {
         if (bundleId) reply.header("X-Bundle-Applied", bundleId);
         return reply.code(200).send(result);
       } catch (error) {
-        if (isAppError(error)) {
-          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
-        }
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/score] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }

@@ -1,18 +1,16 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import { FindForecastPlanSchema } from "@onegoodarea/contracts";
 import { requireApiAccessWithOrg } from "../shared/auth-api";
 import { canMakeNlCall } from "../modules/usage";
 import { PLANS } from "../modules/billing/plans";
-import { headerString } from "../shared/http";
 import { effectiveEngineVersionForCaller } from "../shared/bundles";
-import { isAppError } from "../shared/errors";
+import { sendAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { getConfig } from "../infrastructure/config";
-import { validateLocationInput } from "../infrastructure/validation/validator";
+
 import { runQuery, parseQueryRequest, AmbiguousLocationError } from "../modules/intelligence";
-import { findPeers, parsePeersInput, PEERS_DEFAULT_K, PEERS_DEFAULT_MIN_SIGNALS, type Country as PeersCountry } from "../modules/signals/peers";
-import { findInsights, parseInsightsInput, INSIGHTS_DEFAULT_K } from "../modules/signals/insights";
-import { runForecast, parseForecastInput, FORECAST_DEFAULT_WINDOW, FORECAST_DEFAULT_HORIZON } from "../modules/signals/forecast";
+import { findPeers, parsePeersInput } from "../modules/signals/peers";
+import { findInsights, parseInsightsInput } from "../modules/signals/insights";
+import { runForecast, parseForecastInput } from "../modules/signals/forecast";
 import { trackEvent } from "../modules/tracking/activity";
 import { insertPlannerLog } from "../modules/training/planner-logs";
 
@@ -23,7 +21,6 @@ import { rows } from "../infrastructure/db/types";
 import { sql } from "../infrastructure/db/client";
 import { getCohort } from "../modules/orgs/cohorts";
 import { METHODOLOGY_VERSION } from "../modules/engine/methodology";
-import type { Country } from "../modules/signals/peers";
 import { z } from "zod";
 /** intelligence route handlers — extracted from app.ts per AR-286. */
 export function registerIntelligenceRoutes(app: FastifyInstance): void {
@@ -208,7 +205,7 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
         reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(ctx.orgId, ctx.userId));
         return reply.code(200).send(result.response);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/query] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -342,7 +339,7 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
           meta: { generated_at: new Date().toISOString(), scope: scopeLabel },
         });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/peers] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -426,7 +423,7 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
           },
         });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/insights] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -554,7 +551,7 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
           },
         });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/forecast] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }

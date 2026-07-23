@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { isIntent } from "@onegoodarea/contracts";
 import { requireApiAccess, requireApiAccessWithOrg } from "../shared/auth-api";
 import { effectiveEngineVersionForCaller } from "../shared/bundles";
-import { isAppError } from "../shared/errors";
+import { sendAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { getConfig } from "../infrastructure/config";
 import { createPortfolio, listPortfolios, getPortfolio, deletePortfolio, addAreas, enrichPortfolio, detectPortfolioChanges, PORTFOLIO_ADD_MAX, type Baseline } from "../modules/monitor";
@@ -65,7 +65,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
         trackEvent("api.portfolio.created", userId, { portfolioId: portfolio.id }, ctx.orgId);
         return reply.code(201).send(portfolio);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/portfolios] create error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -92,7 +92,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
         if (!userId) return reply;
         return reply.code(200).send({ portfolios: await listPortfolios(userId) });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/portfolios] list error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -123,7 +123,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
         if (!portfolio) return reply.code(404).send({ error: "Portfolio not found" });
         return reply.code(200).send(portfolio);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/portfolios/:id] get error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -154,7 +154,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
         if (!ok) return reply.code(404).send({ error: "Portfolio not found" });
         return reply.code(200).send({ deleted: true });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/portfolios/:id] delete error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -226,7 +226,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
         const portfolio = await getPortfolio(userId, id);
         return reply.code(200).send({ added: result.added, portfolio });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/portfolios/:id/areas] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -271,7 +271,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
         reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(null, userId));
         return reply.code(200).send({ count: items.length, results: items });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/portfolios/:id/enrich] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -340,7 +340,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
         reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(null, userId));
         return reply.code(200).send(report);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/portfolios/:id/changes] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -378,7 +378,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
         reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(null, userId));
         return reply.code(200).send(report);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/portfolios/:id/changes] GET error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }

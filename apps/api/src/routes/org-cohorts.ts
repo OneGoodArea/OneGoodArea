@@ -1,11 +1,11 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "@fastify/type-provider-zod";
 import { z } from "zod";
 import { CreateCohortRequestSchema, UpdateCohortRequestSchema } from "@onegoodarea/contracts";
 import { authenticateEither } from "../shared/auth-either";
-import { isAppError } from "../shared/errors";
+import { sendAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
-import { getOrgIfMember, hasAtLeastRole } from "../modules/orgs";
+import { hasAtLeastRole } from "../modules/orgs";
 import { requireLeversAccess } from "../shared/require-levers";
 import { listCohorts, getCohort, createCohort, updateCohort, deleteCohort } from "../modules/orgs/cohorts";
 import { trackEvent } from "../modules/tracking/activity";
@@ -55,7 +55,7 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
         trackEvent("api.cohort.created", userId, { orgId, cohortId: cohort.id, size: cohort.geo_codes.length }, orgId);
         return reply.code(201).send(cohort);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/cohorts] create error:", error);
         const msg = error instanceof Error ? error.message : "";
         if (/duplicate key|unique constraint/i.test(msg)) {
@@ -92,7 +92,7 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
         /* AR-311: include org_id + caller_role for client gating. */
         return reply.code(200).send({ cohorts, org_id: orgId, caller_role: role });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/cohorts] list error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -129,7 +129,7 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
         if (!cohort) return reply.code(404).send({ error: "Cohort not found" });
         return reply.code(200).send(cohort);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/cohorts/:cohortId] get error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -177,7 +177,7 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
         trackEvent("api.cohort.updated", userId, { orgId, cohortId }, orgId);
         return reply.code(200).send(updated);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/cohorts/:cohortId] update error:", error);
         const msg = error instanceof Error ? error.message : "";
         if (/duplicate key|unique constraint/i.test(msg)) {
@@ -223,7 +223,7 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
         trackEvent("api.cohort.deleted", userId, { orgId, cohortId }, orgId);
         return reply.code(200).send({ deleted: true });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (sendAppError(reply, error)) return;
         logger.error("[v1/orgs/:id/cohorts/:cohortId] delete error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }

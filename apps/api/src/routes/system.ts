@@ -58,6 +58,7 @@ export function registerSystemRoutes(app: FastifyInstance): void {
           response: {
             200: z.object({}).passthrough(),
             401: ErrorResponse,
+            500: ErrorResponse,
             503: ErrorResponse,
           },
         },
@@ -82,7 +83,7 @@ export function registerSystemRoutes(app: FastifyInstance): void {
         return reply.send(summary);
       } catch (err) {
         logger.error("[cron/rescore] fatal", err);
-        return reply.code(500 as any).send({ error: err instanceof Error ? err.message : "Cron failed" });
+        return reply.code(500).send({ error: err instanceof Error ? err.message : "Cron failed" });
       }
     });
 
@@ -99,6 +100,7 @@ export function registerSystemRoutes(app: FastifyInstance): void {
           response: {
             200: z.object({}).passthrough(),
             401: ErrorResponse,
+            500: ErrorResponse,
             503: ErrorResponse,
           },
         },
@@ -122,7 +124,7 @@ export function registerSystemRoutes(app: FastifyInstance): void {
         return reply.send(summary);
       } catch (err) {
         logger.error("[cron/training-retention] fatal", err);
-        return reply.code(500 as any).send({ error: err instanceof Error ? err.message : "Cron failed" });
+        return reply.code(500).send({ error: err instanceof Error ? err.message : "Cron failed" });
       }
     });
 }

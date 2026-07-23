@@ -11,7 +11,7 @@ import { generateId } from "../infrastructure/utils/id";
 import { createPersonalOrgForUser } from "../modules/orgs";
 import { authenticateSession } from "../shared/auth-session";
 import { headerString } from "../shared/http";
-import { isAppError } from "../shared/errors";
+import { sendAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 
 import { trackEvent } from "../modules/tracking/activity";
@@ -47,9 +47,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         return reply.send({ success: true });
       } catch (error) {
         logger.error("Account deletion error:", error);
-        if (isAppError(error)) {
-          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
-        }
+        if (sendAppError(reply, error)) return;
         return reply.code(500).send({ error: "Failed to delete account" });
       }
     });
@@ -149,9 +147,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         return reply.send({ ok: true });
       } catch (error) {
         logger.error("Register error:", error);
-        if (isAppError(error)) {
-          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
-        }
+        if (sendAppError(reply, error)) return;
         return reply.code(500).send({ error: "server_error", message: "Something went wrong. Please try again." });
       }
     });
@@ -266,9 +262,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         return reply.send({ ok: true });
       } catch (error) {
         logger.error("[forgot-password] Error:", error);
-        if (isAppError(error)) {
-          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
-        }
+        if (sendAppError(reply, error)) return;
         return reply.code(500).send({ error: "Something went wrong" });
       }
     });
@@ -317,9 +311,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         return reply.send({ ok: true });
       } catch (error) {
         logger.error("[reset-password] Error:", error);
-        if (isAppError(error)) {
-          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
-        }
+        if (sendAppError(reply, error)) return;
         return reply.code(500).send({ error: "Something went wrong" });
       }
     });
@@ -657,9 +649,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         return reply.send({ success: true });
       } catch (error) {
         logger.error("Password change error:", error);
-        if (isAppError(error)) {
-          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
-        }
+        if (sendAppError(reply, error)) return;
         return reply.code(500).send({ error: "Failed to change password" });
       }
     });
