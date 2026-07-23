@@ -1,9 +1,12 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import fastifySwagger from "@fastify/swagger";
-import fastifySwaggerUi from "@fastify/swagger-ui";
 import { zodSafeJsonSchemaTransform } from "./infrastructure/utils/zod-safe-json-schema-transform";
 import { hybridValidatorCompiler } from "./infrastructure/utils/hybrid-validator-compiler";
 import { openApiConfig } from "./modules/developer-surface/openapi-config";
+
+function isZodSchema(v: unknown): v is { toJSONSchema(): Record<string, unknown> } {
+  return v !== null && typeof v === "object" && "_zod" in (v as Record<string, unknown>);
+}
 
 import { registerSystemRoutes } from "./routes/system";
 import { registerAuthRoutes } from "./routes/auth";
@@ -57,10 +60,23 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
     transform: zodSafeJsonSchemaTransform,
   });
 
-  await app.register(fastifySwaggerUi, {
-    routePrefix: "/docs",
-    uiConfig: { docExpansion: "list", deepLinking: true },
-  });
+  /* Convert Zod response schemas to plain JSON Schema so fast-json-stringify
+     can build serializers without choking on Zod internals (e.g. "data/required
+     must be array"). hybridValidatorCompiler still handles Zod at validation
+     time; this only touches the response schemas used by the serializer. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const routeAny = app as any;
+  for (const m of ["get", "post", "put", "patch", "delete", "head", "options"]) {
+    const orig = routeAny[m].bind(app);
+    routeAny[m] = (p: string, o: any, h: any) => {
+      if (o?.schema?.response) {
+        for (const [code, s] of Object.entries(o.schema.response)) {
+          if (isZodSchema(s)) o.schema.response[code] = s.toJSONSchema();
+        }
+      }
+      return orig(p, o, h);
+    };
+  }
 
   // JSON parser that also stashes the raw body string on the request. Routes
   // still receive a parsed `request.body` (identical to Fastify's default); the
