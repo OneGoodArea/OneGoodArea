@@ -32,7 +32,7 @@ Phrase-search map. Find your question on the left; the doc on the right has the 
 | How do I authenticate? | [`API-REFERENCE/AUTHENTICATION.md`](../API-REFERENCE/AUTHENTICATION.md) |
 | What error codes can I program against? | [`API-REFERENCE/ERRORS.md`](../API-REFERENCE/ERRORS.md) |
 | Show me a curl example | [`API-REFERENCE/EXAMPLES.md`](../API-REFERENCE/EXAMPLES.md) |
-| What's the live OpenAPI spec URL? | [/openapi.json](https://www.onegoodarea.com/openapi.json) |
+| What's the live OpenAPI spec URL? | [/api/openapi-spec](https://onegoodarea.onrender.com/api/openapi-spec) |
 | Where's the interactive API reference? | [/docs/api-reference](https://www.onegoodarea.com/docs/api-reference) |
 
 ## Code + contribution

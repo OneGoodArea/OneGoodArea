@@ -15,7 +15,7 @@ The OneGoodArea public API — REST + JSON. Organised by product surface (Signal
 
 Two sources, deliberate:
 
-1. **Live interactive reference** at [`/docs/api-reference`](https://www.onegoodarea.com/docs/api-reference) — renders `apps/web/public/openapi.json` via Scalar. This is the **customer-facing** surface. Always reflects what's actually deployed; deliberately omits the dark-flagged surfaces (`OGA_SIGNALS_API`-gated) until they leave the flag.
+1. **Live interactive reference** at [`/docs/api-reference`](https://www.onegoodarea.com/docs/api-reference) — renders the OpenAPI spec (served live by the API at `/api/openapi-spec`) via Scalar. This is the **customer-facing** surface. Always reflects what's actually deployed; deliberately omits the dark-flagged surfaces (`OGA_SIGNALS_API`-gated) until they leave the flag.
 2. **Markdown in this folder** — the operator + developer surface. Includes dark-flagged + Levers endpoints, deeper context, error-code rationale.
 
 If they disagree, the OpenAPI spec wins for customer behaviour; this folder wins for operator + reviewer clarity.

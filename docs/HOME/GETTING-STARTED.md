@@ -54,4 +54,4 @@ Plus **Levers** cross-cutting: per-org custom bundles, scoring presets, methodol
 - **Site:** [onegoodarea.com](https://www.onegoodarea.com)
 - **API:** `https://onegoodarea.onrender.com`
 - **Interactive API ref:** [/docs/api-reference](https://www.onegoodarea.com/docs/api-reference)
-- **OpenAPI spec:** [/openapi.json](https://www.onegoodarea.com/openapi.json)
+- **OpenAPI spec:** [/api/openapi-spec](https://onegoodarea.onrender.com/api/openapi-spec)
