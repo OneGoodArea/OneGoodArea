@@ -61,8 +61,8 @@ rm apps/web/public/openapi.json
 
 ## Validation
 
-- [ ] `apps/web/public/openapi.json` deleted
-- [ ] `openapi.test.ts` rewritten and passing without the static file
-- [ ] Zero references to `public/openapi.json` in repository
-- [ ] `npm test` passes
-- [ ] `/playground` still works (fetches spec from backend)
+- [x] `apps/web/public/openapi.json` deleted
+- [x] `openapi.test.ts` rewritten and passing without the static file
+- [x] Zero references to `public/openapi.json` in repository
+- [x] `npm test` passes
+- [x] `/playground` still works (fetches spec from backend)
