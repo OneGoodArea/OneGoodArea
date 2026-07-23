@@ -45,6 +45,16 @@ services:
         value: production
       - key: NEXTAUTH_URL # the public frontend origin (Stripe redirects, APP_URL)
         value: https://www.onegoodarea.com
+      # AR-602: this service's own public URL. Without it, openapi-config.ts
+      # falls back to http://localhost:4000 for the OpenAPI `servers` field,
+      # which is what the deployed spec had — every Scalar "Try it" request
+      # tried to hit localhost from the visitor's browser. If this service
+      # already exists on Render, this value must also be set (or confirmed
+      # synced) in the dashboard — env var changes here don't apply to an
+      # existing service without a Blueprint sync + redeploy (autoDeploy is
+      # off above).
+      - key: API_PUBLIC_URL
+        value: https://onegoodarea.onrender.com
       # --- signal-first feature flags (the whole point of this deploy) ---
       - key: OGA_SIGNALS_API
         value: "true"

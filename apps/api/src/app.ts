@@ -1,4 +1,5 @@
 import Fastify, { type FastifyInstance } from "fastify";
+import fastifyCors from "@fastify/cors";
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
 import { zodSafeJsonSchemaTransform } from "./infrastructure/utils/zod-safe-json-schema-transform";
@@ -49,6 +50,21 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
      to read raw Zod objects as JSON Schema and crashed at boot. */
   app.setValidatorCompiler(hybridValidatorCompiler);
   app.setSerializerCompiler(hybridSerializerCompiler);
+
+  /* AR-602: apps/api had no CORS support at all, so every browser-based
+     call — including Scalar's "Try it" in the playground — was silently
+     blocked regardless of auth (confirmed: no Access-Control-Allow-Origin
+     header, OPTIONS preflight 404s). Allow-list the production web app's
+     origins; also allow the local web dev server outside production so
+     Try-It works against a local apps/api during development. Registered
+     before every other plugin/route so it applies universally. */
+  await app.register(fastifyCors, {
+    origin: [
+      "https://www.onegoodarea.com",
+      "https://onegoodarea.com",
+      ...(process.env.NODE_ENV === "production" ? [] : ["http://localhost:3000"]),
+    ],
+  });
 
   // OpenAPI/Swagger documentation — /docs (Swagger UI) and /docs/json (raw spec).
   // Config owned by modules/developer-surface/openapi-config.ts.
