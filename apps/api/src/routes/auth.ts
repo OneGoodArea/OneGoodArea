@@ -48,7 +48,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       } catch (error) {
         logger.error("Account deletion error:", error);
         if (isAppError(error)) {
-          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+          return reply.code(error.statusCode as 200 | 400 | 500).send({ error: error.message, code: error.code });
         }
         return reply.code(500).send({ error: "Failed to delete account" });
       }
@@ -150,7 +150,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       } catch (error) {
         logger.error("Register error:", error);
         if (isAppError(error)) {
-          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+          return reply.code(error.statusCode as 200 | 400 | 409 | 429 | 500).send({ error: error.message, code: error.code });
         }
         return reply.code(500).send({ error: "server_error", message: "Something went wrong. Please try again." });
       }
@@ -267,7 +267,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       } catch (error) {
         logger.error("[forgot-password] Error:", error);
         if (isAppError(error)) {
-          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+          return reply.code(error.statusCode as 200 | 400 | 500).send({ error: error.message, code: error.code });
         }
         return reply.code(500).send({ error: "Something went wrong" });
       }
@@ -318,7 +318,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       } catch (error) {
         logger.error("[reset-password] Error:", error);
         if (isAppError(error)) {
-          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+          return reply.code(error.statusCode as 200 | 400 | 500).send({ error: error.message, code: error.code });
         }
         return reply.code(500).send({ error: "Something went wrong" });
       }
@@ -658,7 +658,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       } catch (error) {
         logger.error("Password change error:", error);
         if (isAppError(error)) {
-          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+          return reply.code(error.statusCode as 200 | 400 | 403 | 404 | 500).send({ error: error.message, code: error.code });
         }
         return reply.code(500).send({ error: "Failed to change password" });
       }

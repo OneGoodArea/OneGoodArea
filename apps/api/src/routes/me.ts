@@ -1,13 +1,12 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "@fastify/type-provider-zod";
 import { z } from "zod";
-import { authenticate } from "../shared/auth-api";
 import { authenticateSession } from "../shared/auth-session";
 import { headerString, clientIpOf } from "../shared/http";
 import { isAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { sql } from "../infrastructure/db/client";
-import { rows, row, type ReportRow, type SubscriptionRow, type ApiKeyRow, type ActivityEventRow } from "../infrastructure/db/types";
+import { rows, row, type SubscriptionRow } from "../infrastructure/db/types";
 import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
 import { RATE_LIMITS } from "../infrastructure/config";
 import { validateApiKey } from "../modules/api-keys";
@@ -15,8 +14,6 @@ import { getUserPlan, hasApiAccess, hasMcpAccess, canMakeApiCall, listAddons, ge
 import { PLANS } from "../modules/billing/plans";
 import { METHODOLOGY_VERSION } from "../modules/engine/methodology";
 import { listForUser as listActivityForUser } from "../modules/activity";
-import { trackEvent } from "../modules/tracking/activity";
-import { generateId } from "../infrastructure/utils/id";
 
 import { getMonthlyApiCallCount, hasAddon } from "../modules/usage";
 import { asSubscription } from "../modules/billing/stripe-types";
@@ -137,7 +134,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
 
     typed.post("/me/webhooks",
       {
-        schema: { tags: ["Me"], summary: "Create a webhook subscription", description: "Register a new webhook URL. Returns the signing secret ONCE.", security: [{ "sessionCookie": [] }], body: z.object({ url: z.string(), events: z.array(z.string()) }), response: { 200: z.object({}).passthrough(), 400: z.object({ error: z.string() }) } },
+        schema: { tags: ["Me"], summary: "Create a webhook subscription", description: "Register a new webhook URL. Returns the signing secret ONCE.", security: [{ "sessionCookie": [] }], body: z.object({ url: z.string(), events: z.array(z.string()) }), response: { 201: z.object({}).passthrough(), 400: z.object({ error: z.string() }) } },
       },
       async (request, reply) => {
         const userId = await authenticateSession(request, reply);
@@ -153,7 +150,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           return reply.code(400).send({ error: "events must be a non-empty array of supported types: 'signal.changed'" });
         }
         const created = await createWebhookSubscription(userId, urlCheck.sanitized, eventList);
-        return reply.code(201 as any).send(created);
+        return reply.code(201).send(created);
       });
 
     typed.delete("/me/webhooks/:id",
@@ -409,7 +406,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
         }
 
         try {
-          const updated = await updateOrg(primary.org_id, request.body as any);
+          const updated = await updateOrg(primary.org_id, request.body as z.infer<typeof UpdateOrgRequestSchema>);
           if (!updated) return reply.code(404).send({ error: "Org not found" });
           return reply.code(200).send({ org: updated, caller_role: role });
         } catch (err) {
@@ -766,7 +763,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
       } catch (error) {
         logger.error("Subscription info error:", error);
         if (isAppError(error)) {
-          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+          return reply.code(error.statusCode as 200 | 500).send({ error: error.message, code: error.code });
         }
         return reply.code(500).send({ error: "Failed to fetch subscription info" });
       }

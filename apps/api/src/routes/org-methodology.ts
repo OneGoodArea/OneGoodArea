@@ -42,7 +42,7 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
         const pin = await getMethodologyPin(orgId);
         return reply.code(200).send({ engine_version: pin, pinned: pin !== null });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as 200 | 404 | 500).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id/methodology] get error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -83,14 +83,14 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
           return reply.code(400).send({
             error: `Unsupported engine_version "${request.body.engine_version}". Supported: ${supported.join(", ")}.`,
             code: "unsupported_engine_version",
-            supported_versions: supported,
+            supported_versions: [...supported],
           });
         }
         await setMethodologyPin(orgId, request.body.engine_version);
         trackEvent("api.methodology.pinned", userId, { orgId, engineVersion: request.body.engine_version }, orgId);
         return reply.code(200).send({ engine_version: request.body.engine_version, pinned: true });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as 200 | 400 | 403 | 404 | 500).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id/methodology] set error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -130,7 +130,7 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
         }
         return reply.code(200).send({ engine_version: null, pinned: false });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as 200 | 403 | 404 | 500).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id/methodology] clear error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }

@@ -10,12 +10,12 @@ vi.mock("@/modules/tiers", async (orig) => ({
 }));
 vi.mock("@/modules/tracking/activity", () => ({ trackEvent: vi.fn() }));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
-vi.mock("@/modules/orgs/bundles", () => ({
+vi.mock("@/shared/bundles", () => ({
   resolveBundleForCaller: vi.fn().mockResolvedValue({ ok: true, allowed: null }),
-  planSignalsOutsideBundle: vi.fn().mockReturnValue([]),
-}));
-vi.mock("@/modules/orgs/engine-version", () => ({
   effectiveEngineVersionForCaller: vi.fn().mockResolvedValue("1.0.0"),
+}));
+vi.mock("@/modules/orgs/bundles", () => ({
+  planSignalsOutsideBundle: vi.fn().mockReturnValue([]),
 }));
 
 /* Partial mock: keep parseQueryRequest real (so body validation runs) but
