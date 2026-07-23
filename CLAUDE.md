@@ -11,13 +11,13 @@ You operate in a strict **Specification-Driven Development** environment. Planni
 
 ---
 
-## Modular Rules Index
+## Modular Skills Index
 
-When executing specific tasks, refer to and strictly follow these rule files:
+When executing specific tasks, refer to and strictly follow these skill files:
 
-* Read tool selection order in [Tool Priority Rules](.claude/rules/tool-priority.md)
-* Read interactive spec protocol in [Planning Workflow](.claude/rules/planning-workflow.md)
-* Read ticket creation & PR formatting in [Jira & GitHub Lifecycle](.claude/rules/jira-github-lifecycle.md)
-* Read isolation strategy in [Worktree Selection Guide](.claude/rules/worktree-selection.md)
-* Read branch naming & commit rules in [Git & Change Management](.claude/rules/git-standards.md)
-* Read containerized test requirements in [Containerized Local Testing](.claude/rules/containerized-testing.md)
+* Read tool selection order in [Tool Priority Rules](.claude/skills/tool-priority.md)
+* Read interactive spec protocol in [Planning Workflow](.claude/skills/planning-workflow.md)
+* Read ticket creation & PR formatting in [Jira & GitHub Lifecycle](.claude/skills/jira-github-lifecycle.md)
+* Read isolation strategy in [Worktree Selection Guide](.claude/skills/worktree-selection.md)
+* Read branch naming & commit rules in [Git & Change Management](.claude/skills/git-standards.md)
+* Read containerized test requirements in [Containerized Local Testing](.claude/skills/containerized-testing.md)
