@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { z } from "zod";
 import { authenticateSession } from "../shared/auth-session";
 import { logger } from "../modules/tracking/structured-logger";
 import { sql } from "../infrastructure/db/client";
@@ -17,18 +18,23 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
   // from /api/keys/usage.
   app.get("/keys/usage",
     {
-      schema: {
-        tags: ["Keys"],
-        summary: "API key usage",
-        description: "Request totals, 30-day daily series, and active keys.",
-        security: [{ "sessionCookie": [] }],
-        querystring: {
-          type: "object",
-          properties: {
-            org: { type: "string" },
+        schema: {
+          tags: ["Keys"],
+          summary: "API key usage",
+          description: "Request totals, 30-day daily series, and active keys.",
+          security: [{ "sessionCookie": [] }],
+          querystring: {
+            type: "object",
+            properties: {
+              org: { type: "string" },
+            },
+          },
+          response: {
+            200: z.object({}).passthrough(),
+            403: z.object({ error: z.string() }),
+            500: z.object({ error: z.string() }),
           },
         },
-      },
     },
     async (request, reply) => {
     const userId = await authenticateSession(request, reply);
@@ -194,12 +200,16 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
   // /api/keys (the legacy withAuth wrapper == authenticateSession + try/catch).
   app.get("/keys",
     {
-      schema: {
-        tags: ["Keys"],
-        summary: "List API keys",
-        description: "List the caller's API keys.",
-        security: [{ "sessionCookie": [] }],
-      },
+        schema: {
+          tags: ["Keys"],
+          summary: "List API keys",
+          description: "List the caller's API keys.",
+          security: [{ "sessionCookie": [] }],
+          response: {
+            200: z.object({ keys: z.array(z.object({}).passthrough()) }),
+            500: z.object({ error: z.string() }),
+          },
+        },
     },
     async (request, reply) => {
     try {
@@ -217,18 +227,23 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
   // from /api/keys. Returns the key once.
   app.post("/keys",
     {
-      schema: {
-        tags: ["Keys"],
-        summary: "Create API key",
-        description: "Create a new API key. Returns the key once.",
-        security: [{ "sessionCookie": [] }],
-        body: {
-          type: "object",
-          properties: {
-            name: { type: "string" },
+        schema: {
+          tags: ["Keys"],
+          summary: "Create API key",
+          description: "Create a new API key. Returns the key once.",
+          security: [{ "sessionCookie": [] }],
+          body: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+            },
+          },
+          response: {
+            200: z.object({ key: z.object({}).passthrough() }),
+            403: z.object({ error: z.string() }),
+            500: z.object({ error: z.string() }),
           },
         },
-      },
     },
     async (request, reply) => {
     try {
@@ -251,19 +266,24 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
   // Revoke an API key. Session-authed. Migrated from /api/keys/[id].
   app.delete<{ Params: { id: string } }>("/keys/:id",
     {
-      schema: {
-        tags: ["Keys"],
-        summary: "Revoke API key",
-        description: "Revoke an API key.",
-        security: [{ "sessionCookie": [] }],
-        params: {
-          type: "object",
-          required: ["id"],
-          properties: {
-            id: { type: "string" },
+        schema: {
+          tags: ["Keys"],
+          summary: "Revoke API key",
+          description: "Revoke an API key.",
+          security: [{ "sessionCookie": [] }],
+          params: {
+            type: "object",
+            required: ["id"],
+            properties: {
+              id: { type: "string" },
+            },
+          },
+          response: {
+            200: z.object({ success: z.literal(true) }),
+            404: z.object({ error: z.string() }),
+            500: z.object({ error: z.string() }),
           },
         },
-      },
     },
     async (request, reply) => {
     try {
@@ -291,26 +311,32 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
      if/when more per-key settings exist we can broaden the validation. */
   app.patch<{ Params: { id: string }; Body: unknown }>("/keys/:id",
     {
-      schema: {
-        tags: ["Keys"],
-        summary: "Update API key",
-        description: "Update per-key settings (e.g. training_optout).",
-        security: [{ "sessionCookie": [] }],
-        params: {
-          type: "object",
-          required: ["id"],
-          properties: {
-            id: { type: "string" },
+        schema: {
+          tags: ["Keys"],
+          summary: "Update API key",
+          description: "Update per-key settings (e.g. training_optout).",
+          security: [{ "sessionCookie": [] }],
+          params: {
+            type: "object",
+            required: ["id"],
+            properties: {
+              id: { type: "string" },
+            },
+          },
+          body: {
+            type: "object",
+            required: ["training_optout"],
+            properties: {
+              training_optout: { type: "boolean" },
+            },
+          },
+          response: {
+            200: z.object({ id: z.string(), training_optout: z.boolean() }),
+            400: z.object({ error: z.string() }),
+            404: z.object({ error: z.string() }),
+            500: z.object({ error: z.string() }),
           },
         },
-        body: {
-          type: "object",
-          required: ["training_optout"],
-          properties: {
-            training_optout: { type: "boolean" },
-          },
-        },
-      },
     },
     async (request, reply) => {
     try {
