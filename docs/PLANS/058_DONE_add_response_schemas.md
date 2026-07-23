@@ -97,8 +97,8 @@ For each module:
 
 ## Validation
 
-- [ ] Every route in `/api/openapi-spec` has non-empty `responses` for at least 200
-- [ ] `npm run typecheck -w @onegoodarea/api` passes
-- [ ] `npm test` passes (no regressions)
-- [ ] Scalar shows response body schemas for every operation at `/playground`
-- [ ] CI guard (from Plan 046) updated to assert response schemas exist
+- [x] Every route in `/api/openapi-spec` has non-empty `responses` for at least 200
+- [x] `npm run typecheck -w @onegoodarea/api` passes
+- [x] `npm test` passes (no regressions)
+- [x] Scalar shows response body schemas for every operation at `/playground`
+- [x] CI guard (from Plan 046) updated to assert response schemas exist

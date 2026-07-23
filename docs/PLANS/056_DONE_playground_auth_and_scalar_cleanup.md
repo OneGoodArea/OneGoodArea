@@ -80,11 +80,11 @@ Scalar's native auth panel works automatically when the spec declares `securityS
 
 ## Validation
 
-- [ ] `/playground` shows "Try it" button on all operations
-- [ ] API key auth works via Scalar auth panel → successful 200 response
-- [ ] Session auth works via Scalar auth panel → successful 200 response
-- [ ] No MCP button visible
-- [ ] No Scalar branding visible in sidebar
-- [ ] `npm run typecheck -w @onegoodarea/api` passes
-- [ ] `npm run typecheck -w @onegoodarea/web` passes
-- [ ] `npm test` passes (no regressions)
+- [x] `/playground` shows "Try it" button on all operations
+- [x] API key auth works via Scalar auth panel → successful 200 response
+- [x] Session auth works via Scalar auth panel → successful 200 response
+- [x] No MCP button visible
+- [x] No Scalar branding visible in sidebar
+- [x] `npm run typecheck -w @onegoodarea/api` passes
+- [x] `npm run typecheck -w @onegoodarea/web` passes
+- [x] `npm test` passes (no regressions)
