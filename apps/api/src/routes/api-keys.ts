@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { authenticateSession } from "../shared/auth-session";
+import { authenticateSession, authenticateSessionOrApiKey } from "../shared/auth-session";
 import { logger } from "../modules/tracking/structured-logger";
 import { sql } from "../infrastructure/db/client";
 import { rows, row, type ApiKeyRow, type ActivityEventRow } from "../infrastructure/db/types";
@@ -22,7 +22,7 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
           tags: ["Keys"],
           summary: "API key usage",
           description: "Request totals, 30-day daily series, and active keys.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           querystring: {
             type: "object",
             properties: {
@@ -31,13 +31,13 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
           },
           response: {
             200: z.object({}).passthrough(),
-            403: z.object({ error: z.string() }),
+            403: z.object({ error: z.string(), code: z.string().optional() }),
             500: z.object({ error: z.string() }),
           },
         },
     },
     async (request, reply) => {
-    const userId = await authenticateSession(request, reply);
+    const userId = await authenticateSessionOrApiKey(request, reply);
     if (!userId) return reply; // 401 already sent
 
     const apiAllowed = await hasApiAccess(userId);
@@ -204,7 +204,7 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
           tags: ["Keys"],
           summary: "List API keys",
           description: "List the caller's API keys.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           response: {
             200: z.object({ keys: z.array(z.object({}).passthrough()) }),
             500: z.object({ error: z.string() }),
@@ -213,7 +213,7 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
     },
     async (request, reply) => {
     try {
-      const userId = await authenticateSession(request, reply);
+      const userId = await authenticateSessionOrApiKey(request, reply);
       if (!userId) return reply; // 401 already sent
       const keys = await listApiKeys(userId);
       return reply.send({ keys });
@@ -231,7 +231,7 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
           tags: ["Keys"],
           summary: "Create API key",
           description: "Create a new API key. Returns the key once.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           body: {
             type: "object",
             properties: {
@@ -240,14 +240,14 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
           },
           response: {
             200: z.object({ key: z.object({}).passthrough() }),
-            403: z.object({ error: z.string() }),
+            403: z.object({ error: z.string(), code: z.string().optional() }),
             500: z.object({ error: z.string() }),
           },
         },
     },
     async (request, reply) => {
     try {
-      const userId = await authenticateSession(request, reply);
+      const userId = await authenticateSessionOrApiKey(request, reply);
       if (!userId) return reply; // 401 already sent
 
       if (!(await hasApiAccess(userId))) {
@@ -308,7 +308,7 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
           tags: ["Keys"],
           summary: "Revoke API key",
           description: "Revoke an API key.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           params: {
             type: "object",
             required: ["id"],
@@ -325,7 +325,7 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
     },
     async (request, reply) => {
     try {
-      const userId = await authenticateSession(request, reply);
+      const userId = await authenticateSessionOrApiKey(request, reply);
       if (!userId) return reply; // 401 already sent
 
       const revoked = await revokeApiKey(userId, request.params.id);
@@ -353,7 +353,7 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
           tags: ["Keys"],
           summary: "Update API key",
           description: "Update per-key settings (e.g. training_optout).",
-          security: [{ "bearerToken": [] }],
+          security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           params: {
             type: "object",
             required: ["id"],
@@ -378,7 +378,7 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
     },
     async (request, reply) => {
     try {
-      const userId = await authenticateSession(request, reply);
+      const userId = await authenticateSessionOrApiKey(request, reply);
       if (!userId) return reply; // 401 already sent
 
       const body = (request.body ?? {}) as Record<string, unknown>;

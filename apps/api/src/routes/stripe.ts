@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { authenticateSession } from "../shared/auth-session";
+import { authenticateSessionOrApiKey } from "../shared/auth-session";
 import { headerString } from "../shared/http";
 import { sendAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
@@ -43,7 +43,7 @@ return reply.code(result.status as any).send(result.body);
           tags: ["Stripe"],
           summary: "Billing portal",
           description: "Create a Stripe billing portal session.",
-          security: [{ bearerToken: [] }],
+          security: [{ bearerToken: [] }, { bearerAuth: [] }],
           "x-internal": true,
           response: {
             200: z.object({ url: z.string() }),
@@ -54,7 +54,7 @@ return reply.code(result.status as any).send(result.body);
       },
       async (request, reply) => {
       try {
-        const userId = await authenticateSession(request, reply);
+        const userId = await authenticateSessionOrApiKey(request, reply);
         if (!userId) return reply; // 401 already sent
 
         const customerId = await getStripeCustomerId(userId);
@@ -80,7 +80,7 @@ return reply.code(result.status as any).send(result.body);
           tags: ["Stripe"],
           summary: "Cancel subscription",
           description: "Schedule subscription cancellation at end of billing period.",
-          security: [{ bearerToken: [] }],
+          security: [{ bearerToken: [] }, { bearerAuth: [] }],
           "x-internal": true,
           response: {
             200: z.object({ success: z.literal(true), cancel_at: z.string(), message: z.string() }),
@@ -92,7 +92,7 @@ return reply.code(result.status as any).send(result.body);
       },
       async (request, reply) => {
       try {
-        const userId = await authenticateSession(request, reply);
+        const userId = await authenticateSessionOrApiKey(request, reply);
         if (!userId) return reply; // 401 already sent
 
         // Look up the user's active Stripe subscription.
@@ -143,7 +143,7 @@ return reply.code(result.status as any).send(result.body);
           tags: ["Stripe"],
           summary: "Checkout",
           description: "Create a Stripe checkout session. Currently disabled (demo-led sales).",
-          security: [{ bearerToken: [] }],
+          security: [{ bearerToken: [] }, { bearerAuth: [] }],
           "x-internal": true,
           response: {
             403: z.object({ error: z.string(), code: z.string() }),
@@ -154,7 +154,7 @@ return reply.code(result.status as any).send(result.body);
       // AR-489: OneGoodArea is demo-led (AR-456) and no longer sells any tier
       // self-serve. Checkout is disabled. Existing subscribers still manage and
       // cancel via /stripe/portal and /stripe/cancel (both untouched).
-      const userId = await authenticateSession(request, reply);
+      const userId = await authenticateSessionOrApiKey(request, reply);
       if (!userId) return reply; // 401 already sent
       return reply.code(403).send({
         error: "Self-serve checkout is not available. OneGoodArea is sold through a demo and annual contract. Book a demo to get started.",
@@ -168,7 +168,7 @@ return reply.code(result.status as any).send(result.body);
           tags: ["Stripe"],
           summary: "Add-on checkout",
           description: "Create a Stripe add-on checkout session. Currently retired (MCP included free).",
-          security: [{ bearerToken: [] }],
+          security: [{ bearerToken: [] }, { bearerAuth: [] }],
           "x-internal": true,
           response: {
             403: z.object({ error: z.string(), code: z.string() }),
@@ -180,7 +180,7 @@ return reply.code(result.status as any).send(result.body);
       // tier (AR-487) and every package; the standalone add-on is no longer sold.
       // Existing add-on subscribers keep access (hasAddon still grants it) and
       // can cancel via the billing portal.
-      const userId = await authenticateSession(request, reply);
+      const userId = await authenticateSessionOrApiKey(request, reply);
       if (!userId) return reply; // 401 already sent
       return reply.code(403).send({
         error: "The MCP add-on is no longer sold separately. MCP is included on the free Developer tier and every package. Book a demo to get started.",
