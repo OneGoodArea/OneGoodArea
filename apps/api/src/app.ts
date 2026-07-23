@@ -3,6 +3,7 @@ import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
 import { zodSafeJsonSchemaTransform } from "./infrastructure/utils/zod-safe-json-schema-transform";
 import { hybridValidatorCompiler } from "./infrastructure/utils/hybrid-validator-compiler";
+import { hybridSerializerCompiler } from "./infrastructure/utils/hybrid-serializer-compiler";
 import { openApiConfig } from "./modules/developer-surface/openapi-config";
 
 import { registerSystemRoutes } from "./routes/system";
@@ -42,11 +43,12 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
      validator dispatches per route (Zod -> Zod compiler, otherwise -> AJV).
      Setting the Zod compiler globally 500s every JSON Schema route.
 
-     No serializer compiler is set: no route declares a response schema, and
-     the previous `setSerializerCompiler(validatorCompiler)` passed a VALIDATOR
-     where a serializer was expected, which would have failed the moment one
-     was added. Fastify's default serializer applies until then. */
+     AR-592: same mix exists on `response` schemas (added by AR-562), so the
+     serializer dispatches the same way (Zod -> Zod's own encoder, otherwise
+     -> fast-json-stringify). Without this, Fastify's default serializer tried
+     to read raw Zod objects as JSON Schema and crashed at boot. */
   app.setValidatorCompiler(hybridValidatorCompiler);
+  app.setSerializerCompiler(hybridSerializerCompiler);
 
   // OpenAPI/Swagger documentation — /docs (Swagger UI) and /docs/json (raw spec).
   // Config owned by modules/developer-surface/openapi-config.ts.
