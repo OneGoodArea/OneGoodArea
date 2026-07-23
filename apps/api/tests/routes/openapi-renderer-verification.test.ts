@@ -76,7 +76,7 @@ describe("OpenAPI renderer verification (46.4)", () => {
     expect(spec.components?.securitySchemes).toBeDefined();
   });
 
-  it("every protected route declares bearerAuth or sessionCookie security", async () => {
+  it("every protected route declares bearerAuth or bearerToken security", async () => {
     const res = await app.inject({ method: "GET", url: "/docs/json" });
     const spec = res.json();
 
@@ -104,9 +104,9 @@ describe("OpenAPI renderer verification (46.4)", () => {
           issues.push(`${method.toUpperCase()} ${pathKey}: no security declared`);
         } else {
           const hasBearer = security.some((s) => s.bearerAuth !== undefined);
-          const hasSession = security.some((s) => s.sessionCookie !== undefined);
+          const hasSession = security.some((s) => s.bearerToken !== undefined);
           if (!hasBearer && !hasSession) {
-            issues.push(`${method.toUpperCase()} ${pathKey}: security present but no bearerAuth or sessionCookie`);
+            issues.push(`${method.toUpperCase()} ${pathKey}: security present but no bearerAuth or bearerToken`);
           }
         }
       }

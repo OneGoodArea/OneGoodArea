@@ -48,7 +48,7 @@ export function DeveloperSurface({
             theme: "none",
             withDefaultFonts: false,
             hideClientButton: true,
-            hideTestRequestButton: true,
+            hideTestRequestButton: false,
             hideSearch: true,
             hideDownloadButton: true,
             hideModels: true,

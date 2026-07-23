@@ -13,7 +13,7 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "Analytics overview",
           description: "High-level admin analytics.",
-          security: [{ "sessionCookie": [] }],
+          security: [{ "bearerToken": [] }],
           "x-internal": true,
           response: {
             200: z.object({}).passthrough(),
@@ -43,7 +43,7 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "Traffic analytics",
           description: "Traffic analytics data.",
-          security: [{ "sessionCookie": [] }],
+          security: [{ "bearerToken": [] }],
           "x-internal": true,
           response: {
             200: z.object({}).passthrough(),
@@ -78,7 +78,7 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "Audience stats (superuser only)",
           description: "Composite stats for the Audience tab: total/active users, signup curve, orgs by size + activity, top countries, churn signal.",
-          security: [{ "sessionCookie": [] }],
+          security: [{ "bearerToken": [] }],
           "x-internal": true,
           response: {
             200: z.object({}).passthrough(),
@@ -111,7 +111,7 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "Usage stats (superuser only)",
           description: "Composite stats for the Usage tab: per-product call counts + endpoint heatmap.",
-          security: [{ "sessionCookie": [] }],
+          security: [{ "bearerToken": [] }],
           "x-internal": true,
           response: {
             200: z.object({}).passthrough(),
@@ -144,7 +144,7 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "Revenue extras (superuser only)",
           description: "ARR + MCP add-on uptake + active add-on counts.",
-          security: [{ "sessionCookie": [] }],
+          security: [{ "bearerToken": [] }],
           "x-internal": true,
           response: {
             200: z.object({}).passthrough(),
@@ -178,7 +178,7 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "MCP adoption stats (superuser only)",
           description: "Aggregate MCP usage last 30 days: total events, unique orgs/users, top orgs, breakdown by client app. No raw metadata.",
-          security: [{ "sessionCookie": [] }],
+          security: [{ "bearerToken": [] }],
           "x-internal": true,
           response: {
             200: z.object({}).passthrough(),
@@ -210,7 +210,7 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "Training corpus stats (superuser only)",
           description: "Aggregate planner-pair counts (30d + total + last_seen) plus opt-out denominator over active API keys. No raw training data.",
-          security: [{ "sessionCookie": [] }],
+          security: [{ "bearerToken": [] }],
           "x-internal": true,
           response: {
             200: z.object({}).passthrough(),
@@ -243,7 +243,7 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "Set user tier (superuser only)",
           description: "Privileged endpoint to set a user's tier. Validates against allowed values.",
-          security: [{ "sessionCookie": [] }],
+          security: [{ "bearerToken": [] }],
           "x-internal": true,
           params: {
             type: "object",
