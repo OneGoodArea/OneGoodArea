@@ -41,6 +41,46 @@ export const openApiConfig: FastifyDynamicSwaggerOptions["openapi"] = {
     { name: "Cron", description: "Scheduled jobs" },
   ],
   components: {
+    schemas: {
+      Preset: {
+        type: "string",
+        enum: ["moving", "business", "investing", "research"],
+      },
+      SignalCategory: {
+        type: "string",
+        enum: ["crime", "deprivation", "property", "schools", "amenities", "transport", "environment"],
+      },
+      Dimension: {
+        type: "object",
+        properties: {
+          key: { type: "string" },
+          label: { type: "string" },
+          score: { type: "number" },
+          weight: { type: "number" },
+          confidence: { type: "number", minimum: 0, maximum: 1 },
+          reasoning: { type: "string" },
+          confidence_reason: { type: "string" },
+        },
+        required: ["key", "label", "score", "weight", "confidence", "reasoning", "confidence_reason"],
+      },
+      ScoreResult: {
+        type: "object",
+        properties: {
+          area: { type: "string" },
+          preset: { type: "string" },
+          score: { type: "number" },
+          area_type: { type: "string", enum: ["urban", "suburban", "rural"] },
+          dimensions: { type: "array", items: { $ref: "#/components/schemas/Dimension" }, minItems: 5, maxItems: 5 },
+          confidence: { type: "number", minimum: 0, maximum: 1 },
+          weights_source: { type: "string", enum: ["preset", "custom"] },
+          engine_version: { type: "string" },
+          summary: { type: "string" },
+          recommendations: { type: "array", items: { type: "string" } },
+          data_sources: { type: "array", items: { type: "string" } },
+        },
+        required: ["area", "preset", "score", "area_type", "dimensions", "confidence", "weights_source", "engine_version"],
+      },
+    },
     securitySchemes: {
       bearerAuth: {
         type: "http",

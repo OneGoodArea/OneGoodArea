@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { ScoreResultSchema } from "@onegoodarea/contracts";
 import { requireApiAccessWithOrg } from "../shared/auth-api";
 import { resolveBundleForCaller, effectiveEngineVersionForCaller } from "../shared/bundles";
 import { sendAppError } from "../shared/errors";
@@ -43,10 +44,13 @@ export function registerScoringRoutes(app: FastifyInstance): void {
               },
             },
             response: {
-              200: z.object({}).passthrough(),
+              200: ScoreResultSchema,
               400: z.object({ error: z.string() }),
+              401: z.object({ error: z.string() }),
+              403: z.object({ error: z.string() }),
               404: z.object({ error: z.string() }),
               422: z.object({ error: z.string(), code: z.string() }),
+              429: z.object({ error: z.string() }),
               500: z.object({ error: z.string() }),
             },
         },
