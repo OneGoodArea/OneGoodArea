@@ -44,7 +44,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
             ],
             "summary": "My activity log",
             "description": "Recent API activity for the authenticated user.",
-            "security": [{ "bearerToken": [] }],
+            "security": [{ "sessionCookie": [] }],
             /* AR-548: `.catch` not `.default`. This endpoint has always
                normalised unparseable paging params to the defaults rather than
                rejecting; `.default` only covers a missing value, so garbage
@@ -81,7 +81,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           tags: ["Admin"],
           summary: "Is the caller a superuser?",
           description: "Returns { is_superuser: boolean }. Session-authed; 401 if not signed in.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "sessionCookie": [] }],
           response: {
             200: z.object({ is_superuser: z.boolean() }),
           },
@@ -102,7 +102,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           tags: ["Me"],
           summary: "My tier",
           description: "Returns { tier: string }. Session-authed; 401 if not signed in. The tier determines rate limits and LLM routing (EPIC B).",
-          security: [{ "bearerToken": [] }],
+          security: [{ "sessionCookie": [] }],
           response: {
             200: z.object({ tier: z.string() }),
           },
@@ -123,7 +123,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
        Replaces the apps/web /api/me/webhooks family direct SQL. */
     typed.get("/me/webhooks",
       {
-        schema: { tags: ["Me"], summary: "List my webhook subscriptions", description: "Returns the caller's webhook subscriptions (no secret).", security: [{ "bearerToken": [] }], response: { 200: z.object({}).passthrough() } },
+        schema: { tags: ["Me"], summary: "List my webhook subscriptions", description: "Returns the caller's webhook subscriptions (no secret).", security: [{ "sessionCookie": [] }], response: { 200: z.object({}).passthrough() } },
       },
       async (request, reply) => {
         const userId = await authenticateSession(request, reply);
@@ -134,7 +134,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
 
     typed.post("/me/webhooks",
       {
-        schema: { tags: ["Me"], summary: "Create a webhook subscription", description: "Register a new webhook URL. Returns the signing secret ONCE.", security: [{ "bearerToken": [] }], body: z.object({ url: z.string(), events: z.array(z.string()) }), response: { 200: z.object({}).passthrough(), 201: z.object({}).passthrough(), 400: z.object({ error: z.string() }) } },
+        schema: { tags: ["Me"], summary: "Create a webhook subscription", description: "Register a new webhook URL. Returns the signing secret ONCE.", security: [{ "sessionCookie": [] }], body: z.object({ url: z.string(), events: z.array(z.string()) }), response: { 200: z.object({}).passthrough(), 201: z.object({}).passthrough(), 400: z.object({ error: z.string() }) } },
       },
       async (request, reply) => {
         const userId = await authenticateSession(request, reply);
@@ -155,7 +155,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
 
     typed.delete("/me/webhooks/:id",
       {
-        schema: { tags: ["Me"], summary: "Delete a webhook subscription", description: "Revoke a webhook subscription owned by the caller.", security: [{ "bearerToken": [] }], params: IdParamsSchema, response: { 200: z.object({ ok: z.literal(true) }), 404: z.object({ error: z.string() }) } },
+        schema: { tags: ["Me"], summary: "Delete a webhook subscription", description: "Revoke a webhook subscription owned by the caller.", security: [{ "sessionCookie": [] }], params: IdParamsSchema, response: { 200: z.object({ ok: z.literal(true) }), 404: z.object({ error: z.string() }) } },
       },
       async (request, reply) => {
         const userId = await authenticateSession(request, reply);
@@ -167,7 +167,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
 
     typed.post("/me/webhooks/:id/rotate-secret",
       {
-        schema: { tags: ["Me"], summary: "Rotate webhook signing secret", description: "Generate a new HMAC signing secret. Returns it ONCE; the old secret is invalidated immediately.", security: [{ "bearerToken": [] }], params: IdParamsSchema, response: { 200: z.object({ secret: z.string() }), 404: z.object({ error: z.string() }) } },
+        schema: { tags: ["Me"], summary: "Rotate webhook signing secret", description: "Generate a new HMAC signing secret. Returns it ONCE; the old secret is invalidated immediately.", security: [{ "sessionCookie": [] }], params: IdParamsSchema, response: { 200: z.object({ secret: z.string() }), 404: z.object({ error: z.string() }) } },
       },
       async (request, reply) => {
         const userId = await authenticateSession(request, reply);
@@ -188,7 +188,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           tags: ["Me"],
           summary: "List my portfolios (paginated, searchable)",
           description: "Paginated portfolios for the caller. Query: ?page=1&page_size=20&q=<substring>. Inline-joins areas for the page rows.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "sessionCookie": [] }],
           /* AR-548: see /me/activity — normalise bad paging, do not reject. */
           querystring: z.object({
             page: z.coerce.number().int().catch(1),
@@ -286,7 +286,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           tags: ["Me"],
           summary: "30-day score-call usage by preset",
           description: "Counts api.score.computed events over the last 30 days, grouped by preset.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "sessionCookie": [] }],
           response: {
             200: z.object({}).passthrough(),
           },
@@ -337,7 +337,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           tags: ["Me"],
           summary: "Get my primary org + role",
           description: "Returns { org, caller_role } for the caller's primary org (owner-first, then oldest membership), or { org: null, caller_role: null } if the caller has no org.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "sessionCookie": [] }],
           response: {
             200: z.object({}).passthrough(),
           },
@@ -373,7 +373,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           tags: ["Me"],
           summary: "Update my primary org",
           description: "Partial update of the caller's primary org. Owner or admin only. Returns the updated org + caller_role.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "sessionCookie": [] }],
           body: UpdateOrgRequestSchema,
           response: {
             200: z.object({}).passthrough(),
@@ -428,7 +428,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           tags: ["Me"],
           summary: "Update my profile",
           description: "Partial update of the caller's user profile. Today: `intent` only.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "sessionCookie": [] }],
           /* AR-548: `.nullable()` as well as `.optional()`. The welcome flow is
              skippable and posts intents=null to mean "no change", which the
              handler already no-ops on; `.optional()` alone permits undefined
@@ -606,7 +606,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           tags: ["Usage"],
           summary: "Check usage",
           description: "Check current API usage and limits.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "sessionCookie": [] }],
           response: {
             200: z.object({}).passthrough(),
             500: z.object({ error: z.string() }),
@@ -632,7 +632,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           tags: ["Dashboard"],
           summary: "Dashboard data",
           description: "Composite dashboard data for the authenticated user.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "sessionCookie": [] }],
           response: {
             200: z.object({}).passthrough(),
             500: z.object({ error: z.string() }),
@@ -724,7 +724,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           tags: ["Settings"],
           summary: "Subscription info",
           description: "Get current subscription plan and status.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "sessionCookie": [] }],
           response: {
             200: z.object({}).passthrough(),
             500: z.object({ error: z.string() }),
@@ -775,7 +775,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           description: "Record a pageview event.",
           /* AR-548: `security: []` marks this operation explicitly public, the
              OpenAPI way to say "no auth". The handler performs no auth, so the
-             previous `bearerToken` declaration mis-documented it and made the
+             previous `sessionCookie` declaration mis-documented it and made the
              preValidation credential guard reject anonymous pageviews.
 
              `path` stays optional in the schema so a missing path reaches the
@@ -836,7 +836,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
     });
 
     typed.get("/watchlist", {
-      schema: { tags: ["Watchlist"], summary: "Get watchlist", description: "Get the authenticated user's saved areas watchlist.", security: [{ "bearerToken": [] }], response: { 200: z.object({}).passthrough(), 500: z.object({ error: z.string() }) } },
+      schema: { tags: ["Watchlist"], summary: "Get watchlist", description: "Get the authenticated user's saved areas watchlist.", security: [{ "sessionCookie": [] }], response: { 200: z.object({}).passthrough(), 500: z.object({ error: z.string() }) } },
     }, async (request, reply) => {
       try {
         const userId = await authenticateSession(request, reply);
@@ -856,7 +856,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
     });
 
     typed.post("/watchlist", {
-      schema: { tags: ["Watchlist"], summary: "Add to watchlist", description: "Add an area to the user's watchlist.", security: [{ "bearerToken": [] }], body: z.object({ postcode: z.string(), label: z.string().optional(), intent: z.string().optional() }), response: { 201: z.object({ area: z.object({}).passthrough() }), 409: z.object({ error: z.string() }), 500: z.object({ error: z.string() }) } },
+      schema: { tags: ["Watchlist"], summary: "Add to watchlist", description: "Add an area to the user's watchlist.", security: [{ "sessionCookie": [] }], body: z.object({ postcode: z.string(), label: z.string().optional(), intent: z.string().optional() }), response: { 201: z.object({ area: z.object({}).passthrough() }), 409: z.object({ error: z.string() }), 500: z.object({ error: z.string() }) } },
     }, async (request, reply) => {
       try {
         const userId = await authenticateSession(request, reply);
@@ -884,7 +884,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
     });
 
     typed.delete("/watchlist/:id", {
-      schema: { tags: ["Watchlist"], summary: "Remove from watchlist", description: "Remove an area from the user's watchlist.", security: [{ "bearerToken": [] }], params: IdParamsSchema, response: { 200: z.object({ ok: z.literal(true) }), 404: z.object({ error: z.string() }), 500: z.object({ error: z.string() }) } },
+      schema: { tags: ["Watchlist"], summary: "Remove from watchlist", description: "Remove an area from the user's watchlist.", security: [{ "sessionCookie": [] }], params: IdParamsSchema, response: { 200: z.object({ ok: z.literal(true) }), 404: z.object({ error: z.string() }), 500: z.object({ error: z.string() }) } },
     }, async (request, reply) => {
       try {
         const userId = await authenticateSession(request, reply);

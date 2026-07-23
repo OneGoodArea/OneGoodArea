@@ -22,7 +22,7 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
           tags: ["Keys"],
           summary: "API key usage",
           description: "Request totals, 30-day daily series, and active keys.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "sessionCookie": [] }],
           querystring: {
             type: "object",
             properties: {
@@ -204,7 +204,7 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
           tags: ["Keys"],
           summary: "List API keys",
           description: "List the caller's API keys.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "sessionCookie": [] }],
           response: {
             200: z.object({ keys: z.array(z.object({}).passthrough()) }),
             500: z.object({ error: z.string() }),
@@ -231,7 +231,7 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
           tags: ["Keys"],
           summary: "Create API key",
           description: "Create a new API key. Returns the key once.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "sessionCookie": [] }],
           body: {
             type: "object",
             properties: {
@@ -270,7 +270,7 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
           tags: ["Keys"],
           summary: "Revoke API key",
           description: "Revoke an API key.",
-          security: [{ "bearerToken": [] }],
+          security: [{ "sessionCookie": [] }],
           params: {
             type: "object",
             required: ["id"],
@@ -315,7 +315,7 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
           tags: ["Keys"],
           summary: "Update API key",
           description: "Update per-key settings (e.g. training_optout).",
-          security: [{ "bearerToken": [] }],
+          security: [{ "sessionCookie": [] }],
           params: {
             type: "object",
             required: ["id"],

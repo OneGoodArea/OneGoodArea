@@ -13,11 +13,10 @@ You operate in a strict **Specification-Driven Development** environment. Planni
 
 ## Modular Rules Index
 
-When executing specific tasks, refer to and strictly follow these rule files:
+Refer to and enforce the detailed guidelines in `.claude/rules/` based on the active task phase:
 
-* Read tool selection order in [Tool Priority Rules](.claude/rules/tool-priority.md)
-* Read interactive spec protocol in [Planning Workflow](.claude/rules/planning-workflow.md)
-* Read ticket creation & PR formatting in [Jira & GitHub Lifecycle](.claude/rules/jira-github-lifecycle.md)
-* Read isolation strategy in [Worktree Selection Guide](.claude/rules/worktree-selection.md)
-* Read branch naming & commit rules in [Git & Change Management](.claude/rules/git-standards.md)
-* Read containerized test requirements in [Containerized Local Testing](.claude/rules/containerized-testing.md)
+- `.claude/rules/tool-priority.md` — Enforces tool usage order (MCPs over native/custom implementations).
+- `.claude/rules/planning-workflow.md` — How to interview, build, and save plan files in `docs/PLAN/`.
+- `.claude/rules/jira-github-lifecycle.md` — Managing Jira creation, transitions, sprint assignment, and branch linking.
+- `.claude/rules/worktree-selection.md` — Guidelines for deciding between Git Worktrees vs. standard branches.
+- `.claude/rules/git-standards.md` — Branch naming conventions, commit granularity, and branch protection rules.
