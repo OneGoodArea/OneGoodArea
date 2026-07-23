@@ -26,6 +26,11 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
             "description": "Get the engine version pin for an organization.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             "params": IdParamsSchema,
+            "response": {
+                200: z.object({ engine_version: z.string().nullable(), pinned: z.boolean() }),
+                404: z.object({ error: z.string() }),
+                500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -37,7 +42,7 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
         const pin = await getMethodologyPin(orgId);
         return reply.code(200).send({ engine_version: pin, pinned: pin !== null });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id/methodology] get error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -54,6 +59,13 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             "params": IdParamsSchema,
             "body": SetMethodologyPinRequestSchema,
+            "response": {
+                200: z.object({ engine_version: z.string(), pinned: z.literal(true) }),
+                400: z.object({ error: z.string(), code: z.string().optional(), supported_versions: z.array(z.string()) }),
+                403: z.object({ error: z.string(), code: z.string() }),
+                404: z.object({ error: z.string() }),
+                500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -78,7 +90,7 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
         trackEvent("api.methodology.pinned", userId, { orgId, engineVersion: request.body.engine_version }, orgId);
         return reply.code(200).send({ engine_version: request.body.engine_version, pinned: true });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id/methodology] set error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -94,6 +106,12 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
             "description": "Remove the engine version pin (revert to latest).",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             "params": IdParamsSchema,
+            "response": {
+                200: z.object({ engine_version: z.null(), pinned: z.literal(false) }),
+                403: z.object({ error: z.string(), code: z.string() }),
+                404: z.object({ error: z.string() }),
+                500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -112,7 +130,7 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
         }
         return reply.code(200).send({ engine_version: null, pinned: false });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id/methodology] clear error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }

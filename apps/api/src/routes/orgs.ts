@@ -9,6 +9,7 @@ import { createOrgWithOwner, listOrgsForUser, getOrgIfMember, updateOrg, getRole
 import { trackEvent } from "../modules/tracking/activity";
 
 const IdParamsSchema = z.object({ id: z.string() });
+const PassthroughResponse = z.object({}).passthrough();
 
 /** orgs route handlers — extracted from app.ts per AR-286. */
 export function registerOrgsRoutes(app: FastifyInstance): void {
@@ -23,6 +24,12 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
             "description": "Creates a new organization. The caller becomes the owner.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             "body": CreateOrgRequestSchema,
+            response: {
+              201: PassthroughResponse,
+              400: z.object({ error: z.string() }),
+              409: z.object({ error: z.string() }),
+              500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -36,9 +43,8 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
         trackEvent("api.org.created", userId, { orgId: org.id }, org.id);
         return reply.code(201).send(org);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs] create error:", error);
-        // Most likely a slug collision (UNIQUE on orgs.slug). Surface a 409.
         const msg = error instanceof Error ? error.message : "";
         if (/duplicate key|unique constraint/i.test(msg)) {
           return reply.code(409).send({ error: "Slug already in use. Pick a different slug." });
@@ -56,6 +62,10 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
             "summary": "List organizations",
             "description": "List organizations the caller is a member of, with their role.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            response: {
+              200: z.object({ orgs: z.array(PassthroughResponse) }),
+              500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -64,7 +74,7 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
         const orgs = await listOrgsForUser(userId);
         return reply.code(200).send({ orgs });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs] list error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -80,6 +90,11 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
             "description": "Get organization details by ID.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             "params": IdParamsSchema,
+            response: {
+              200: PassthroughResponse,
+              404: z.object({ error: z.string() }),
+              500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -90,7 +105,7 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
         if (!org) return reply.code(404).send({ error: "Org not found" });
         return reply.code(200).send(org);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id] get error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -109,6 +124,13 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
             "description": "Delete an organization and every row that references it (members, presets, bundles, cohorts, methodology pins, invitations). Owner-only. Personal orgs cannot be deleted.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             "params": IdParamsSchema,
+            response: {
+              200: z.object({ deleted: z.literal(true) }),
+              403: z.object({ error: z.string(), code: z.string() }),
+              404: z.object({ error: z.string() }),
+              409: z.object({ error: z.string(), code: z.string() }),
+              500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -127,7 +149,7 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
         trackEvent("api.org.deleted", userId, { orgId: id }, id);
         return reply.code(200).send({ deleted: true });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id] delete error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -144,6 +166,13 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             "params": IdParamsSchema,
             "body": UpdateOrgRequestSchema,
+            response: {
+              200: PassthroughResponse,
+              403: z.object({ error: z.string(), code: z.string() }),
+              404: z.object({ error: z.string() }),
+              409: z.object({ error: z.string() }),
+              500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -155,12 +184,12 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
         if (!hasAtLeastRole(role, "admin")) {
           return reply.code(403).send({ error: "Admin or owner required.", code: "admin_required" });
         }
-        const updated = await updateOrg(id, request.body);
+        const updated = await updateOrg(id, request.body as any);
         if (!updated) return reply.code(404).send({ error: "Org not found" });
         trackEvent("api.org.updated", userId, { orgId: id }, id);
         return reply.code(200).send(updated);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id] update error:", error);
         const msg = error instanceof Error ? error.message : "";
         if (/duplicate key|unique constraint/i.test(msg)) {

@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import { z } from "zod";
 import { authenticateSession } from "../shared/auth-session";
 import { headerString } from "../shared/http";
 import { isAppError } from "../shared/errors";
@@ -22,6 +23,9 @@ export function registerStripeRoutes(app: FastifyInstance): void {
           description: "Receive Stripe webhook events. Signature verified in handler.",
           security: [],
           "x-internal": true,
+          response: {
+            200: z.object({}).passthrough(),
+          },
         },
       },
       async (request, reply) => {
@@ -29,7 +33,7 @@ export function registerStripeRoutes(app: FastifyInstance): void {
         request.rawBody ?? "",
         headerString(request.headers["stripe-signature"]),
       );
-      return reply.code(result.status).send(result.body);
+      return reply.code(result.status as any).send(result.body);
     });
 
     app.post("/stripe/portal",
@@ -40,6 +44,11 @@ export function registerStripeRoutes(app: FastifyInstance): void {
           description: "Create a Stripe billing portal session.",
           security: [{ sessionCookie: [] }],
           "x-internal": true,
+          response: {
+            200: z.object({ url: z.string() }),
+            400: z.object({ error: z.string() }),
+            500: z.object({ error: z.string() }),
+          },
         },
       },
       async (request, reply) => {
@@ -72,6 +81,12 @@ export function registerStripeRoutes(app: FastifyInstance): void {
           description: "Schedule subscription cancellation at end of billing period.",
           security: [{ sessionCookie: [] }],
           "x-internal": true,
+          response: {
+            200: z.object({ success: z.literal(true), cancel_at: z.string(), message: z.string() }),
+            404: z.object({ error: z.string() }),
+            409: z.object({ error: z.string(), cancel_at: z.string() }),
+            500: z.object({ error: z.string() }),
+          },
         },
       },
       async (request, reply) => {
@@ -116,7 +131,7 @@ export function registerStripeRoutes(app: FastifyInstance): void {
         });
       } catch (error) {
         if (isAppError(error)) {
-          return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         }
         logger.error("Cancel subscription error:", error);
         return reply.code(500).send({ error: "Failed to cancel subscription" });
@@ -131,6 +146,9 @@ export function registerStripeRoutes(app: FastifyInstance): void {
           description: "Create a Stripe checkout session. Currently disabled (demo-led sales).",
           security: [{ sessionCookie: [] }],
           "x-internal": true,
+          response: {
+            403: z.object({ error: z.string(), code: z.string() }),
+          },
         },
       },
       async (request, reply) => {
@@ -153,6 +171,9 @@ export function registerStripeRoutes(app: FastifyInstance): void {
           description: "Create a Stripe add-on checkout session. Currently retired (MCP included free).",
           security: [{ sessionCookie: [] }],
           "x-internal": true,
+          response: {
+            403: z.object({ error: z.string(), code: z.string() }),
+          },
         },
       },
       async (request, reply) => {

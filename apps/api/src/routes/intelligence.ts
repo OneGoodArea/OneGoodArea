@@ -24,6 +24,7 @@ import { sql } from "../infrastructure/db/client";
 import { getCohort } from "../modules/orgs/cohorts";
 import { METHODOLOGY_VERSION } from "../modules/engine/methodology";
 import type { Country } from "../modules/signals/peers";
+import { z } from "zod";
 /** intelligence route handlers — extracted from app.ts per AR-286. */
 export function registerIntelligenceRoutes(app: FastifyInstance): void {
   const guardSignalsCtx = async (
@@ -51,6 +52,14 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
               "description": "Natural language question or a programmatic plan object.",
             },
             "querystring": { "type": "object", "properties": { "bundle": { "type": "string", "description": "Optional bundle ID to scope available signals." } } },
+            response: {
+              200: z.object({}).passthrough(),
+              400: z.object({ error: z.string() }),
+              404: z.object({ error: z.string() }),
+              422: z.object({}).passthrough(),
+              429: z.object({ error: z.string(), code: z.string() }),
+              500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -199,7 +208,7 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
         reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(ctx.orgId, ctx.userId));
         return reply.code(200).send(result.response);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/query] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -236,6 +245,13 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
                 "cohort_id": { "type": "string", "description": "Scope candidates to this org cohort." },
               },
               "example": { "target": { "postcode": "SW1A 1AA" }, "k": 10 },
+            },
+            response: {
+              200: z.object({ target: z.object({ geo_code: z.string(), signals_used: z.array(z.string()) }), peers: z.array(z.object({}).passthrough()), meta: z.object({ generated_at: z.string(), scope: z.string() }) }),
+              400: z.object({ error: z.string() }),
+              404: z.object({ error: z.string() }),
+              422: z.object({ error: z.string(), code: z.string() }),
+              500: z.object({ error: z.string() }),
             },
         },
       }, async (request, reply) => {
@@ -326,7 +342,7 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
           meta: { generated_at: new Date().toISOString(), scope: scopeLabel },
         });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/peers] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -352,6 +368,12 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
                 "k": { "type": "integer", "exclusiveMinimum": 0, "maximum": 500 },
               },
               "example": { "signal_key": "crime.total_12m_peer_relative_z", "country": "England", "k": 20 },
+            },
+            response: {
+              200: z.object({ signal_key: z.string(), insights: z.array(z.object({}).passthrough()), meta: z.object({ generated_at: z.string(), scope: z.string(), threshold: z.nullable(z.number()) }) }),
+              400: z.object({ error: z.string(), code: z.string().optional() }),
+              404: z.object({ error: z.string() }),
+              500: z.object({ error: z.string() }),
             },
         },
       }, async (request, reply) => {
@@ -404,7 +426,7 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
           },
         });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/insights] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -437,6 +459,28 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
                 "horizon_months": { "type": "integer", "exclusiveMinimum": 0, "maximum": 60 },
               },
               "example": { "target": { "postcode": "SW1A 1AA" }, "signal_key": "crime.total_12m", "window_months": 24, "horizon_months": 12 },
+            },
+            response: {
+              200: z.object({
+                target: z.object({ geo_code: z.string() }),
+                signal_key: z.string(),
+                points: z.array(z.object({}).passthrough()),
+                meta: z.object({
+                  generated_at: z.string(),
+                  scope: z.string(),
+                  window_months: z.number(),
+                  horizon_months: z.number(),
+                  n_observations: z.number(),
+                  r2: z.number(),
+                  slope_per_month: z.number(),
+                  intercept: z.number(),
+                  residual_stderr: z.number(),
+                  latest_observed_period: z.string(),
+                }),
+              }),
+              400: z.object({ error: z.string() }),
+              404: z.object({ error: z.string() }),
+              500: z.object({ error: z.string() }),
             },
         },
       }, async (request, reply) => {
@@ -510,7 +554,7 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
           },
         });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/forecast] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }

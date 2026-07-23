@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { z } from "zod";
 import { requireApiAccessWithOrg } from "../shared/auth-api";
 import { resolveBundleForCaller, effectiveEngineVersionForCaller } from "../shared/bundles";
 import { isAppError } from "../shared/errors";
@@ -40,6 +41,13 @@ export function registerScoringRoutes(app: FastifyInstance): void {
                 "bundle": { "type": "string" },
                 "explain": { "type": "string", "enum": ["true", "false"] },
               },
+            },
+            response: {
+              200: z.object({}).passthrough(),
+              400: z.object({ error: z.string() }),
+              404: z.object({ error: z.string() }),
+              422: z.object({ error: z.string(), code: z.string() }),
+              500: z.object({ error: z.string() }),
             },
         },
       }, async (request, reply) => {
@@ -179,7 +187,7 @@ export function registerScoringRoutes(app: FastifyInstance): void {
         return reply.code(200).send(result);
       } catch (error) {
         if (isAppError(error)) {
-          return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         }
         logger.error("[v1/score] error:", error);
         return reply.code(500).send({ error: "Internal server error" });

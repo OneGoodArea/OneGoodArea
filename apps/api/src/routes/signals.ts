@@ -11,6 +11,7 @@ import { filterSignalsByBundle } from "../modules/orgs/bundles";
 import { trackEvent } from "../modules/tracking/activity";
 
 import type { Intent } from "@onegoodarea/contracts";
+import { z } from "zod";
 /** signals route handlers — extracted from app.ts per AR-286. */
 export function registerSignalsRoutes(app: FastifyInstance): void {
     app.get("/v1/area",
@@ -30,6 +31,12 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
                 "bundle": { "type": "string", "description": "Optional bundle ID to scope available signals." },
               },
               "example": { "area": "SW1A 1AA" },
+            },
+            response: {
+              200: z.object({}).passthrough(),
+              400: z.object({ error: z.string() }),
+              404: z.object({ error: z.string() }),
+              500: z.object({ error: z.string() }),
             },
         },
       }, async (request, reply) => {
@@ -87,7 +94,7 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
         });
       } catch (error) {
         if (isAppError(error)) {
-          return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         }
         logger.error("[v1/area] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
@@ -116,6 +123,12 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
                 "area": { "type": "string" },
                 "postcode": { "type": "string" },
               },
+            },
+            response: {
+              200: z.object({}).passthrough(),
+              400: z.object({ error: z.string() }),
+              404: z.object({ error: z.string() }),
+              500: z.object({ error: z.string() }),
             },
         },
       }, async (request, reply) => {
@@ -161,7 +174,7 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
         return reply.code(200).send({ geo: profile.geo, signals, meta: { ...profile.meta, sources } });
       } catch (error) {
         if (isAppError(error)) {
-          return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         }
         logger.error("[v1/signals] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
@@ -190,6 +203,13 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
                 "bundle": { "type": "string", "description": "Optional bundle ID to scope available signals." },
               },
               "required": ["signal"],
+            },
+            response: {
+              200: z.object({ signal: z.string(), count: z.number(), areas: z.array(z.object({}).passthrough()) }),
+              400: z.object({ error: z.string() }),
+              404: z.object({ error: z.string() }),
+              422: z.object({ error: z.string(), code: z.string() }),
+              500: z.object({ error: z.string() }),
             },
         },
       }, async (request, reply) => {
@@ -232,7 +252,7 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
         return reply.code(200).send({ signal: parsed.query.signal, count: areas.length, areas });
       } catch (error) {
         if (isAppError(error)) {
-          return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         }
         logger.error("[v1/areas] error:", error);
         return reply.code(500).send({ error: "Internal server error" });

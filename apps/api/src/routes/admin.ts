@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { z } from "zod";
 import { authenticateSession } from "../shared/auth-session";
 import { logger } from "../modules/tracking/structured-logger";
 import { isSuperuser } from "../modules/usage";
@@ -14,6 +15,11 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           description: "High-level admin analytics.",
           security: [{ "sessionCookie": [] }],
           "x-internal": true,
+          response: {
+            200: z.object({}).passthrough(),
+            403: z.object({ error: z.string() }),
+            500: z.object({ error: z.string() }),
+          },
         },
       },
       async (request, reply) => {
@@ -39,6 +45,12 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           description: "Traffic analytics data.",
           security: [{ "sessionCookie": [] }],
           "x-internal": true,
+          response: {
+            200: z.object({}).passthrough(),
+            403: z.object({ error: z.string() }),
+            500: z.object({ error: z.string() }),
+            503: z.object({ error: z.string() }),
+          },
         },
       },
       async (request, reply) => {
@@ -68,6 +80,11 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           description: "Composite stats for the Audience tab: total/active users, signup curve, orgs by size + activity, top countries, churn signal.",
           security: [{ "sessionCookie": [] }],
           "x-internal": true,
+          response: {
+            200: z.object({}).passthrough(),
+            403: z.object({ error: z.string() }),
+            500: z.object({ error: z.string() }),
+          },
         },
       },
       async (request, reply) => {
@@ -96,6 +113,11 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           description: "Composite stats for the Usage tab: per-product call counts + endpoint heatmap.",
           security: [{ "sessionCookie": [] }],
           "x-internal": true,
+          response: {
+            200: z.object({}).passthrough(),
+            403: z.object({ error: z.string() }),
+            500: z.object({ error: z.string() }),
+          },
         },
       },
       async (request, reply) => {
@@ -124,6 +146,11 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           description: "ARR + MCP add-on uptake + active add-on counts.",
           security: [{ "sessionCookie": [] }],
           "x-internal": true,
+          response: {
+            200: z.object({}).passthrough(),
+            403: z.object({ error: z.string() }),
+            500: z.object({ error: z.string() }),
+          },
         },
       },
       async (request, reply) => {
@@ -153,6 +180,11 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           description: "Aggregate MCP usage last 30 days: total events, unique orgs/users, top orgs, breakdown by client app. No raw metadata.",
           security: [{ "sessionCookie": [] }],
           "x-internal": true,
+          response: {
+            200: z.object({}).passthrough(),
+            403: z.object({ error: z.string() }),
+            500: z.object({ error: z.string() }),
+          },
         },
       },
       async (request, reply) => {
@@ -180,6 +212,11 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           description: "Aggregate planner-pair counts (30d + total + last_seen) plus opt-out denominator over active API keys. No raw training data.",
           security: [{ "sessionCookie": [] }],
           "x-internal": true,
+          response: {
+            200: z.object({}).passthrough(),
+            403: z.object({ error: z.string() }),
+            500: z.object({ error: z.string() }),
+          },
         },
       },
       async (request, reply) => {
@@ -217,6 +254,12 @@ export function registerAdminRoutes(app: FastifyInstance): void {
             type: "object",
             properties: { tier: { type: "string", enum: ["anonymous", "logged_in", "basic", "high_tier", "engineering", "superuser"] } },
             required: ["tier"],
+          },
+          response: {
+            200: z.object({ ok: z.literal(true), tier: z.string() }),
+            400: z.object({ error: z.string() }),
+            403: z.object({ error: z.string() }),
+            500: z.object({ error: z.string() }),
           },
         },
       },

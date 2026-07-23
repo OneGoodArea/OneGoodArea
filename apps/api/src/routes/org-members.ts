@@ -31,6 +31,11 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
             "description": "List all members of an organization.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             "params": IdParamsSchema,
+            "response": {
+                200: z.object({ members: z.array(z.object({}).passthrough()), org_id: z.string(), caller_role: z.string() }).passthrough(),
+                404: z.object({ error: z.string() }),
+                500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -48,7 +53,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
            rendered for owners. Pedro spotted it as a missing UI control. */
         return reply.code(200).send({ members, org_id: id, caller_role: role });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id/members] list error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -65,6 +70,12 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             "params": IdParamsSchema,
             "body": AddMemberRequestSchema,
+            "response": {
+                201: z.object({ ok: z.literal(true) }),
+                403: z.object({ error: z.string(), code: z.string() }),
+                404: z.object({ error: z.string(), code: z.string().optional() }),
+                500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -104,7 +115,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
         trackEvent("api.org.member_added", userId, { orgId: id, addedUserId: request.body.user_id }, id);
         return reply.code(201).send({ ok: true });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id/members] add error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -128,6 +139,13 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
               },
             },
             "body": UpdateMemberRoleRequestSchema,
+            "response": {
+                200: z.object({ ok: z.literal(true) }),
+                403: z.object({ error: z.string(), code: z.string() }),
+                404: z.object({ error: z.string() }),
+                409: z.object({ error: z.string(), code: z.string() }),
+                500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -179,7 +197,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
         }, orgId);
         return reply.code(200).send({ ok: true });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id/members/:userId] patch error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -201,6 +219,13 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
                 "id": { "type": "string" },
                 "userId": { "type": "string" },
               },
+            },
+            "response": {
+                200: z.object({ deleted: z.literal(true) }),
+                403: z.object({ error: z.string(), code: z.string() }),
+                404: z.object({ error: z.string() }),
+                409: z.object({ error: z.string() }),
+                500: z.object({ error: z.string() }),
             },
         },
       }, async (request, reply) => {
@@ -246,7 +271,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
         trackEvent("api.org.member_removed", callerId, { orgId: id, removedUserId: targetId }, id);
         return reply.code(200).send({ deleted: true });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id/members/:userId] delete error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -263,6 +288,13 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             "params": IdParamsSchema,
             "body": CreateInvitationRequestSchema,
+            "response": {
+                201: z.object({ invitation: z.object({}).passthrough() }),
+                403: z.object({ error: z.string(), code: z.string() }),
+                404: z.object({ error: z.string() }),
+                409: z.object({ error: z.string(), code: z.string() }),
+                500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -293,7 +325,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
         }, orgId);
         return reply.code(201).send({ invitation: result.invitation });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id/invitations] create error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -309,6 +341,11 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
             "description": "List pending invitations for the organization.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             "params": IdParamsSchema,
+            "response": {
+                200: z.object({ invitations: z.array(z.object({}).passthrough()) }).passthrough(),
+                404: z.object({ error: z.string() }),
+                500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -320,7 +357,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
         const invitations = await listPendingInvitations(orgId);
         return reply.code(200).send({ invitations });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id/invitations] list error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -343,6 +380,12 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
                 "invitationId": { "type": "string" },
               },
             },
+            "response": {
+                200: z.object({ revoked: z.literal(true) }),
+                403: z.object({ error: z.string(), code: z.string() }),
+                404: z.object({ error: z.string() }),
+                500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -359,7 +402,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
         trackEvent("api.org.invitation_revoked", callerId, { orgId, invitationId }, orgId);
         return reply.code(200).send({ revoked: true });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id/invitations/:invitationId] delete error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -375,6 +418,13 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
             "description": "Accept an organization invitation by token.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             "params": TokenParamsSchema,
+            "response": {
+                200: z.object({ org_id: z.string(), org_slug: z.string(), org_name: z.string(), role: z.string() }),
+                403: z.object({ error: z.string(), code: z.string().optional() }),
+                404: z.object({ error: z.string(), code: z.string() }),
+                410: z.object({ error: z.string(), code: z.string() }),
+                500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -424,7 +474,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
           role: result.role,
         });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/invitations/:token/accept] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }

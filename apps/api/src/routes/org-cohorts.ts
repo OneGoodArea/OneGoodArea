@@ -27,6 +27,13 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             "params": IdParamsSchema,
             "body": CreateCohortRequestSchema,
+            "response": {
+                201: z.object({}).passthrough(),
+                403: z.object({ error: z.string(), code: z.string() }),
+                404: z.object({ error: z.string() }),
+                409: z.object({ error: z.string() }),
+                500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -48,7 +55,7 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
         trackEvent("api.cohort.created", userId, { orgId, cohortId: cohort.id, size: cohort.geo_codes.length }, orgId);
         return reply.code(201).send(cohort);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id/cohorts] create error:", error);
         const msg = error instanceof Error ? error.message : "";
         if (/duplicate key|unique constraint/i.test(msg)) {
@@ -68,6 +75,11 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
             "description": "List area cohorts for an organization.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             "params": IdParamsSchema,
+            "response": {
+                200: z.object({ cohorts: z.array(z.object({}).passthrough()), org_id: z.string(), caller_role: z.string() }).passthrough(),
+                404: z.object({ error: z.string() }),
+                500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -80,7 +92,7 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
         /* AR-311: include org_id + caller_role for client gating. */
         return reply.code(200).send({ cohorts, org_id: orgId, caller_role: role });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id/cohorts] list error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -100,6 +112,11 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
               "required": ["id", "cohortId"],
               "properties": { "id": { "type": "string" }, "cohortId": { "type": "string" } },
             },
+            "response": {
+                200: z.object({}).passthrough(),
+                404: z.object({ error: z.string() }),
+                500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -112,7 +129,7 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
         if (!cohort) return reply.code(404).send({ error: "Cohort not found" });
         return reply.code(200).send(cohort);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id/cohorts/:cohortId] get error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -133,6 +150,13 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
               "properties": { "id": { "type": "string" }, "cohortId": { "type": "string" } },
             },
             "body": UpdateCohortRequestSchema,
+            "response": {
+                200: z.object({}).passthrough(),
+                403: z.object({ error: z.string(), code: z.string() }),
+                404: z.object({ error: z.string() }),
+                409: z.object({ error: z.string() }),
+                500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -153,7 +177,7 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
         trackEvent("api.cohort.updated", userId, { orgId, cohortId }, orgId);
         return reply.code(200).send(updated);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id/cohorts/:cohortId] update error:", error);
         const msg = error instanceof Error ? error.message : "";
         if (/duplicate key|unique constraint/i.test(msg)) {
@@ -177,6 +201,12 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
               "required": ["id", "cohortId"],
               "properties": { "id": { "type": "string" }, "cohortId": { "type": "string" } },
             },
+            "response": {
+                200: z.object({ deleted: z.literal(true) }),
+                403: z.object({ error: z.string(), code: z.string() }),
+                404: z.object({ error: z.string() }),
+                500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -193,7 +223,7 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
         trackEvent("api.cohort.deleted", userId, { orgId, cohortId }, orgId);
         return reply.code(200).send({ deleted: true });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/orgs/:id/cohorts/:cohortId] delete error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }

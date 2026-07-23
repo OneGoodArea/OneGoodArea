@@ -9,6 +9,7 @@ import { createPortfolio, listPortfolios, getPortfolio, deletePortfolio, addArea
 import { trackEvent } from "../modules/tracking/activity";
 
 import type { Intent } from "@onegoodarea/contracts";
+import { z } from "zod";
 /** portfolios route handlers — extracted from app.ts per AR-286. */
 export function registerPortfoliosRoutes(app: FastifyInstance): void {
   const guardSignals = async (request: FastifyRequest, reply: FastifyReply): Promise<string | null> => {
@@ -45,6 +46,12 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
               },
               "example": { "name": "London investments" },
             },
+            response: {
+              201: z.object({}).passthrough(),
+              400: z.object({ error: z.string() }),
+              404: z.object({ error: z.string() }),
+              500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -58,7 +65,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
         trackEvent("api.portfolio.created", userId, { portfolioId: portfolio.id }, ctx.orgId);
         return reply.code(201).send(portfolio);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/portfolios] create error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -73,6 +80,11 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
             "summary": "List portfolios",
             "description": "List all portfolios for the authenticated user.",
             "security": [{ "bearerAuth": [] }],
+            response: {
+              200: z.object({ portfolios: z.array(z.object({}).passthrough()) }),
+              404: z.object({ error: z.string() }),
+              500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -80,7 +92,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
         if (!userId) return reply;
         return reply.code(200).send({ portfolios: await listPortfolios(userId) });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/portfolios] list error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -96,6 +108,11 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
             "description": "Get a portfolio with its tracked areas.",
             "security": [{ "bearerAuth": [] }],
             "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            response: {
+              200: z.object({}).passthrough(),
+              404: z.object({ error: z.string() }),
+              500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -106,7 +123,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
         if (!portfolio) return reply.code(404).send({ error: "Portfolio not found" });
         return reply.code(200).send(portfolio);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/portfolios/:id] get error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -122,6 +139,11 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
             "description": "Delete a portfolio and its tracked areas.",
             "security": [{ "bearerAuth": [] }],
             "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            response: {
+              200: z.object({ deleted: z.literal(true) }),
+              404: z.object({ error: z.string() }),
+              500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -132,7 +154,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
         if (!ok) return reply.code(404).send({ error: "Portfolio not found" });
         return reply.code(200).send({ deleted: true });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/portfolios/:id] delete error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -166,6 +188,12 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
                 },
               },
             },
+            response: {
+              200: z.object({ added: z.number(), portfolio: z.object({}).passthrough() }),
+              400: z.object({ error: z.string() }),
+              404: z.object({ error: z.string() }),
+              500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -198,7 +226,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
         const portfolio = await getPortfolio(userId, id);
         return reply.code(200).send({ added: result.added, portfolio });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/portfolios/:id/areas] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -220,6 +248,12 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
                 "preset": { "type": "string", "enum": ["moving", "business", "investing", "research"] },
               },
             },
+            response: {
+              200: z.object({ count: z.number(), results: z.array(z.object({}).passthrough()) }),
+              400: z.object({ error: z.string() }),
+              404: z.object({ error: z.string() }),
+              500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -237,7 +271,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
         reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(null, userId));
         return reply.code(200).send({ count: items.length, results: items });
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/portfolios/:id/enrich] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -261,6 +295,12 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
                 "min_transactions": { "type": "number", "minimum": 0 },
                 "emit": { "type": "boolean" },
               },
+            },
+            response: {
+              200: z.object({}).passthrough(),
+              400: z.object({ error: z.string() }),
+              404: z.object({ error: z.string() }),
+              500: z.object({ error: z.string() }),
             },
         },
       }, async (request, reply) => {
@@ -300,7 +340,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
         reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(null, userId));
         return reply.code(200).send(report);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/portfolios/:id/changes] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
@@ -321,6 +361,11 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
             "description": "Read-only variant of POST /changes. Detects material signal changes for tracked areas without triggering webhooks. Use this for dashboards and previews; use POST when you want the side-effects.",
             "security": [{ "bearerAuth": [] }],
             "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            response: {
+              200: z.object({}).passthrough(),
+              404: z.object({ error: z.string() }),
+              500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -333,7 +378,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
         reply.header("X-Engine-Version", await effectiveEngineVersionForCaller(null, userId));
         return reply.code(200).send(report);
       } catch (error) {
-        if (isAppError(error)) return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+        if (isAppError(error)) return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         logger.error("[v1/portfolios/:id/changes] GET error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }

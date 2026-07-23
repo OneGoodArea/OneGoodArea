@@ -1,9 +1,18 @@
 import type { FastifyInstance } from "fastify";
+import { z } from "zod";
 import { INTENTS } from "@onegoodarea/contracts";
 import { getConfig } from "../infrastructure/config";
 import { runRescoreCron } from "../modules/engine/rescore";
 import { runTrainingRetentionCron } from "../modules/training/retention";
 import { logger } from "../modules/tracking/structured-logger";
+
+const HealthResponse = z.object({ status: z.literal("ok") });
+const MetaResponse = z.object({
+  service: z.string(),
+  phase: z.string(),
+  intents: z.array(z.string()),
+});
+const ErrorResponse = z.object({ error: z.string() });
 
 /** system route handlers — extracted from app.ts per AR-286. */
 export function registerSystemRoutes(app: FastifyInstance): void {
@@ -14,7 +23,10 @@ export function registerSystemRoutes(app: FastifyInstance): void {
                 "Meta"
             ],
             "summary": "Health check",
-            "description": "Liveness probe for container hosts."
+            "description": "Liveness probe for container hosts.",
+            response: {
+              200: HealthResponse,
+            },
         },
       }, async () => ({ status: "ok" }));
 
@@ -25,7 +37,10 @@ export function registerSystemRoutes(app: FastifyInstance): void {
                 "Meta"
             ],
             "summary": "API metadata",
-            "description": "Returns supported intents, signal categories, and engine version."
+            "description": "Returns supported intents, signal categories, and engine version.",
+            response: {
+              200: MetaResponse,
+            },
         },
       }, async () => ({
       service: "onegoodarea-api",
@@ -40,6 +55,11 @@ export function registerSystemRoutes(app: FastifyInstance): void {
           summary: "Rescore cron",
           description: "Trigger rescore of pending areas. Internal cron endpoint.",
           "x-internal": true,
+          response: {
+            200: z.object({}).passthrough(),
+            401: ErrorResponse,
+            503: ErrorResponse,
+          },
         },
       },
       async (request, reply) => {
@@ -62,7 +82,7 @@ export function registerSystemRoutes(app: FastifyInstance): void {
         return reply.send(summary);
       } catch (err) {
         logger.error("[cron/rescore] fatal", err);
-        return reply.code(500).send({ error: err instanceof Error ? err.message : "Cron failed" });
+        return reply.code(500 as any).send({ error: err instanceof Error ? err.message : "Cron failed" });
       }
     });
 
@@ -76,6 +96,11 @@ export function registerSystemRoutes(app: FastifyInstance): void {
           summary: "Training retention cron",
           description: "Nightly retention purge for training tables. Internal cron endpoint.",
           "x-internal": true,
+          response: {
+            200: z.object({}).passthrough(),
+            401: ErrorResponse,
+            503: ErrorResponse,
+          },
         },
       },
       async (request, reply) => {
@@ -97,7 +122,7 @@ export function registerSystemRoutes(app: FastifyInstance): void {
         return reply.send(summary);
       } catch (err) {
         logger.error("[cron/training-retention] fatal", err);
-        return reply.code(500).send({ error: err instanceof Error ? err.message : "Cron failed" });
+        return reply.code(500 as any).send({ error: err instanceof Error ? err.message : "Cron failed" });
       }
     });
 }

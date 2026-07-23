@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { z } from "zod";
 import { hashPassword, verifyPassword, generateToken } from "../modules/auth/crypto";
 import { normalizeSignupSource } from "../modules/auth/signup-source";
 import { sendVerificationEmail, sendPasswordResetEmail, sendMagicLinkEmail } from "../infrastructure/email/senders";
@@ -22,6 +23,11 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         summary: "Delete account",
         description: "Permanently delete the authenticated user and all associated data.",
         "x-internal": true,
+        response: {
+          200: z.object({ success: z.literal(true) }),
+          400: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
       },
     }, async (request, reply) => {
       try {
@@ -42,7 +48,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       } catch (error) {
         logger.error("Account deletion error:", error);
         if (isAppError(error)) {
-          return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         }
         return reply.code(500).send({ error: "Failed to delete account" });
       }
@@ -54,6 +60,13 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         summary: "Register",
         description: "Create a new account with email and password.",
         "x-internal": true,
+        response: {
+          200: z.object({ ok: z.literal(true) }),
+          400: z.object({ error: z.string() }),
+          409: z.object({ error: z.string(), message: z.string() }),
+          429: z.object({ error: z.string() }),
+          500: z.object({ error: z.string(), message: z.string().optional() }),
+        },
       },
     }, async (request, reply) => {
       try {
@@ -137,7 +150,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       } catch (error) {
         logger.error("Register error:", error);
         if (isAppError(error)) {
-          return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         }
         return reply.code(500).send({ error: "server_error", message: "Something went wrong. Please try again." });
       }
@@ -149,6 +162,12 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         summary: "Resend verification email",
         description: "Resend the email verification link.",
         "x-internal": true,
+        response: {
+          200: z.object({ ok: z.literal(true) }),
+          400: z.object({ error: z.string() }),
+          429: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
       },
     }, async (request, reply) => {
       try {
@@ -201,6 +220,11 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         summary: "Forgot password",
         description: "Send a password reset email.",
         "x-internal": true,
+        response: {
+          200: z.object({ ok: z.literal(true) }),
+          400: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
       },
     }, async (request, reply) => {
       try {
@@ -243,7 +267,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       } catch (error) {
         logger.error("[forgot-password] Error:", error);
         if (isAppError(error)) {
-          return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         }
         return reply.code(500).send({ error: "Something went wrong" });
       }
@@ -255,6 +279,11 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         summary: "Reset password",
         description: "Reset password using a token from the email link.",
         "x-internal": true,
+        response: {
+          200: z.object({ ok: z.literal(true) }),
+          400: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
       },
     }, async (request, reply) => {
       try {
@@ -289,7 +318,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       } catch (error) {
         logger.error("[reset-password] Error:", error);
         if (isAppError(error)) {
-          return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         }
         return reply.code(500).send({ error: "Something went wrong" });
       }
@@ -301,6 +330,13 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         summary: "Login",
         description: "Authenticate with email and password.",
         "x-internal": true,
+        response: {
+          200: z.object({ id: z.string().optional(), email: z.string().optional(), name: z.string().optional() }),
+          400: z.object({ error: z.string() }),
+          401: z.object({ error: z.string() }),
+          429: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
       },
     }, async (request, reply) => {
       try {
@@ -360,6 +396,10 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         summary: "Request magic link",
         description: "Send a magic login link to the user's email.",
         "x-internal": true,
+        response: {
+          200: z.object({ ok: z.literal(true) }),
+          429: z.object({ error: z.string() }),
+        },
       },
     }, async (request, reply) => {
       try {
@@ -414,6 +454,12 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         summary: "Check email existence (GET)",
         description: "Check if an email address is already registered.",
         "x-internal": true,
+        response: {
+          200: z.object({ exists: z.boolean(), provider: z.string().optional() }),
+          400: z.object({ error: z.string() }),
+          429: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
       },
     }, async (request, reply) => {
       try {
@@ -457,6 +503,12 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         summary: "Check email existence (POST)",
         description: "Check if an email address is already registered.",
         "x-internal": true,
+        response: {
+          200: z.object({ exists: z.boolean(), provider: z.string().optional() }),
+          400: z.object({ error: z.string() }),
+          429: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
       },
     }, async (request, reply) => {
       try {
@@ -500,6 +552,11 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         summary: "OAuth callback",
         description: "Handle OAuth provider callback (Google).",
         "x-internal": true,
+        response: {
+          200: z.object({ id: z.string().optional() }),
+          400: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
       },
     }, async (request, reply) => {
       try {
@@ -554,6 +611,13 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         summary: "Change password",
         description: "Change the authenticated user's password.",
         "x-internal": true,
+        response: {
+          200: z.object({ success: z.literal(true) }),
+          400: z.object({ error: z.string() }),
+          403: z.object({ error: z.string() }),
+          404: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
       },
     }, async (request, reply) => {
       try {
@@ -594,7 +658,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       } catch (error) {
         logger.error("Password change error:", error);
         if (isAppError(error)) {
-          return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+          return reply.code(error.statusCode as any).send({ error: error.message, code: error.code });
         }
         return reply.code(500).send({ error: "Failed to change password" });
       }

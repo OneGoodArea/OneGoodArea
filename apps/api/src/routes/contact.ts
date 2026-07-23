@@ -6,6 +6,9 @@ import { RATE_LIMITS } from "../infrastructure/config";
 import { headerString } from "../shared/http";
 import { logger } from "../modules/tracking/structured-logger";
 
+const ContactOkResponse = z.object({ ok: z.literal(true) });
+const ContactErrorResponse = z.object({ error: z.string() });
+
 /* Public contact-form endpoint (AR-451). No auth. Spam defence is
    layered and dependency-free (Turnstile was intentionally left off
    here; verifyTurnstile is available to bolt on later if organic spam
@@ -56,6 +59,12 @@ export function registerContactRoutes(app: FastifyInstance): void {
             message: { type: "string" },
             website: { type: "string" },
           },
+        },
+        response: {
+          200: ContactOkResponse,
+          400: ContactErrorResponse,
+          429: ContactErrorResponse,
+          502: ContactErrorResponse,
         },
       },
     },
