@@ -2,13 +2,9 @@
 
 To keep work isolated and prevent context-switching friction, evaluate change scope and parallelism.
 
-## Decision Matrix
+## Decision Process
 
-| Factor | Standard Branch (`git checkout -b`) | Git Worktree (`git worktree add`) |
-| :--- | :--- | :--- |
-| **Change Size** | Small/Medium fixes or isolated steps. | Large refactors or multi-file architectural changes. |
-| **Parallel Tasks** | Sequential work; single task focus. | Concurrent tasks (e.g., implementing while reviewing PRs). |
-| **Context Switch** | Stash/commit required before switching. | Zero friction; instant folder switch. |
+Always suggest worktrees, unless it is a really small change, then you ask if worktree or branches. NEVER IN MAIN, EVER!
 
 ## Mandatory Protocol
 **Always ask the user for confirmation before creating a worktree or branch:**
