@@ -22,6 +22,7 @@ export interface DeveloperSurfaceProps {
  * - showDeveloperTools: "never"
  * - telemetry: false, persistAuth: false, isEditable: false
  * - customCss: hides Scalar branding links as defense-in-depth
+ * - authentication: enables API key input in Try It panel (Plan 056)
  */
 export function DeveloperSurface({
   specUrl = "/api/openapi-spec",
@@ -60,6 +61,9 @@ export function DeveloperSurface({
             isEditable: false,
             showSidebar: true,
             layout: "modern",
+            authentication: {
+              preferredSecurityScheme: "bearerAuth",
+            },
             customCss: `
               /* 49.4 — Defense-in-depth: hide Scalar branding links */
               a[href*="scalar.com"],
