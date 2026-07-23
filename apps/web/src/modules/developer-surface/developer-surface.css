@@ -97,10 +97,19 @@
   display: none !important;
 }
 
-/* 56.4 — Hide Scalar sidebar branding */
-.developer-surface__scalar [class*="sidebar"] a[href*="scalar.com"],
-.developer-surface__scalar [class*="sidebar"] [class*="footer"],
-.developer-surface__scalar [class*="sidebar"] [class*="branding"],
-.developer-surface__scalar [class*="sidebar"] [class*="logo"] {
+/* 56.4 — Hide Scalar sidebar branding.
+   AR-604: was scoped to any [class*="sidebar"] ancestor, which ALSO matches
+   Scalar's app-root layout-mode class ("references-sidebar" on the
+   top-level wrapper — it means "this layout has a sidebar", not "this IS
+   the sidebar"). That made the descendant [class*="footer"] selector match
+   the *entire app*, including the legitimate `request-card-footer` that
+   holds the Test Request button on every operation — hiding "Try it"
+   everywhere. Scope to the real nav element instead: Scalar renders it as
+   `<aside class="... t-doc__sidebar ...">`, confirmed via live DOM
+   inspection — the tag + substring together only match the actual nav. */
+.developer-surface__scalar aside[class*="sidebar"] a[href*="scalar.com"],
+.developer-surface__scalar aside[class*="sidebar"] [class*="footer"],
+.developer-surface__scalar aside[class*="sidebar"] [class*="branding"],
+.developer-surface__scalar aside[class*="sidebar"] [class*="logo"] {
   display: none !important;
 }
