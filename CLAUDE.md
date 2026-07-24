@@ -17,7 +17,7 @@ When executing specific tasks, refer to and strictly follow these skill files:
 
 * Read tool selection order in [Tool Priority Rules](.claude/skills/tool-priority.md)
 * Read interactive spec protocol in [Planning Workflow](.claude/skills/planning-workflow.md)
-* Read ticket creation & PR formatting in [Jira & GitHub Lifecycle](.claude/skills/jira-github-lifecycle.md)
+* Read JIRA ticket creation & PR formatting in [Jira & GitHub Lifecycle](.claude/skills/jira-github-lifecycle.md)
 * Read isolation strategy in [Worktree Selection Guide](.claude/skills/worktree-selection.md)
 * Read branch naming & commit rules in [Git & Change Management](.claude/skills/git-standards.md)
-* Read containerized test requirements in [Containerized Local Testing](.claude/skills/containerized-testing.md)
+* Read test requirements in [Software Testing](.claude/skills/software-testing.md)

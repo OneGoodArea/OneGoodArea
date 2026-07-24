@@ -6,8 +6,7 @@
 - **Sprint Rule:** Every in-progress Jira **MUST** be assigned to the current active Sprint.
 
 ## 2. Branch & Jira Linking
-- **Planning Branch:** `plan/<slug>` (No Jira key in branch name — planning is spec work).
-- **Implementation Branch:** `feat/<JIRA-KEY>-<slug>` or `fix/<JIRA-KEY>-<slug>` (Always includes Jira key) or whatever prefix makes sense, including no prefix/namespace
+- **Implementation Branch:** PLANS cannot be changed, created in the main branch. They can live in the implementation branch. They must be kept updataded and once totally implemented they must be delat with in JIRA and their name must add _DONE_ as you can see in the local docs/PLAN directory
 
 ## 3. Status Transitions
 - When planning starts → Jira status: `TO DO`.
@@ -20,7 +19,7 @@
 
 ### Required Output Format:
 
-**PR Title:** `feat(scope): AR-XXX brief summary`
+**PR Title:** `AR-XXX brief summary`
 
 ```markdown
 ## Summary
@@ -30,7 +29,7 @@
 - **Jira:** AR-XXX
 - **Related PRs:** N/A
 
-## Test Plan
+## Test Plan (Obviously the checkmarks below are examples)
 - [x] `npm run lint` cleaned locally
 - [x] `npm run typecheck` cleaned locally
 - [x] `npm test` passed locally
@@ -52,4 +51,4 @@
 ## Risk & Rollout
 - **Risk Level:** Low
 - **Rollout Strategy:** Immediate merge
-- **Rollback Plan:** `git revert`
+- **Rollback Plan:** `git revert` (tell the exact command whenever possible)
