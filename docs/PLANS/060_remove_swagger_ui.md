@@ -9,8 +9,8 @@ need the Swagger UI playground at `/docs`.
 ## JIRA
 
 - Epic parent: **AR-441** (Playground → /playground Scalar surface).
-- Story: **AR-XXX** — "Remove Swagger UI / @fastify/swagger-ui".
-  Branch: `feat/AR-XXX-remove-swagger-ui`.
+- Story: **AR-608** — "Remove Swagger UI / @fastify/swagger-ui".
+  Branch: `feat/AR-608-remove-swagger-ui`.
   Planning branch: `plan/060-remove-swagger-ui`.
 
 ## Background
