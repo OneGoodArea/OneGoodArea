@@ -19,7 +19,11 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: https: blob:",
       "font-src 'self' data: https://fonts.gstatic.com",
-      "connect-src 'self' https://api.stripe.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://*.ingest.de.sentry.io https://challenges.cloudflare.com",
+      /* onegoodarea.onrender.com: apps/api. Scalar's "Try it" in /playground
+         sends requests directly from the browser to the live API (AR-605) —
+         without this, the browser blocks the fetch before it's even sent,
+         independent of apps/api's own CORS headers (AR-602). */
+      "connect-src 'self' https://onegoodarea.onrender.com https://api.stripe.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://*.ingest.de.sentry.io https://challenges.cloudflare.com",
       "frame-src https://js.stripe.com https://hooks.stripe.com https://challenges.cloudflare.com",
       "object-src 'none'",
       "base-uri 'self'",
