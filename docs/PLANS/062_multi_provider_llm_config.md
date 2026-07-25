@@ -35,26 +35,53 @@ decideLlm(tier) → { strategy, providers[], retryCount }
 ```
 
 **Key decisions:**
-- Config is hardcoded in `modules/ai/config.ts` — no env var
+- Config values (models, strategies, retry counts) are hardcoded in `modules/ai/config.ts`
+- API keys are **env vars** (secrets): `ANTHROPIC_API_KEY`, `DEEPSEEK_API_KEY`, `OPENROUTER_API_KEY`, `OPENCODE_API_KEY`
 - `decideLlm()` in `tiers/index.ts` returns full strategy config (replaces `LlmRoute`)
 - `DEFAULT_TIERS.llm` field removed — strategy config replaces it
 - LLM rate limits stay in `tiers/index.ts` as `quota: { max, windowSeconds }` per tier (request-level only for now)
 - Zod schemas in `modules/ai/config.ts` — API only, not exposed to web/playground
 - OpenRouter handles intra-provider load balancing natively; our strategy engine handles inter-provider routing
 
+### Environment Variables
+
+| Env Var | Provider | Required | Notes |
+|---------|----------|----------|-------|
+| `ANTHROPIC_API_KEY` | anthropic | Yes | Already exists in `infrastructure/config` |
+| `DEEPSEEK_API_KEY` | deepseek | Yes | New |
+| `OPENROUTER_API_KEY` | openrouter | Yes | New |
+| `OPENCODE_API_KEY` | opencode | Yes | New |
+
+Provider factory reads API keys from `process.env` directly (not from `getConfig()`). Each provider throws on instantiation if its key is missing. The config in `modules/ai/config.ts` does NOT contain secrets.
+
 ## Providers
 
-| Provider | SDK | API Endpoint | Env Var | Notes |
-|----------|-----|-------------|---------|-------|
-| `anthropic` | `@anthropic-ai/sdk` | `api.anthropic.com` | `ANTHROPIC_API_KEY` | Already implemented |
-| `deepseek` | OpenAI-compatible | `api.deepseek.com` | `DEEPSEEK_API_KEY` | Use `deepseek-v4-flash`, `deepseek-v4-pro` |
-| `openrouter` | OpenAI-compatible | `openrouter.ai/api/v1` | `OPENROUTER_API_KEY` | Built-in load balancing + fallback |
-| `opencode` | OpenAI-compatible | `opencode.ai/zen/v1/chat/completions` | `OPENCODE_API_KEY` | Free models available |
-| `mock` | Built-in | — | — | Test/local only |
+| Provider | SDK | API Endpoint | Env Var | Status |
+|----------|-----|-------------|---------|--------|
+| `anthropic` | `@anthropic-ai/sdk` | `api.anthropic.com` | `ANTHROPIC_API_KEY` | Existing |
+| `deepseek` | OpenAI-compatible | `api.deepseek.com` | `DEEPSEEK_API_KEY` | **New** |
+| `openrouter` | OpenAI-compatible | `openrouter.ai/api/v1` | `OPENROUTER_API_KEY` | **New** |
+| `opencode` | OpenAI-compatible | `opencode.ai/zen/v1/chat/completions` | `OPENCODE_API_KEY` | **New** |
+| `mock` | Built-in | — | — | Test only |
 
 **OpenCode Zen free models:** `deepseek-v4-flash-free`, `mimo-v2.5-free`, `laguna-s-2.1-free`, `ling-3.0-flash-free`, `north-mini-code-free`, `nemotron-3-ultra-free`, `big-pickle`
 
 **DeepSeek models (avoid deprecated):** `deepseek-v4-flash`, `deepseek-v4-pro` (NOT `deepseek-chat` or `deepseek-reasoner`)
+
+## Container & Deployment
+
+**No Containerfile changes needed** — env vars are injected at runtime by the orchestrator (Render, Cloud Run, Koyeb).
+
+**Local compose (`compose/compose.yml`):**
+- Uses `OGA_AI_PROVIDER: mock` → will be removed in S4 (cleanup)
+- Mock provider doesn't need API keys, so no new env vars needed in compose for local dev
+- Production: API keys set via hosting platform's env var dashboard
+
+**Env files:**
+- `.env.local` — remove `OGA_AI_PROVIDER=mock` in S4
+- `.env.local.test.secrets.example` — add `DEEPSEEK_API_KEY`, `OPENROUTER_API_KEY`, `OPENCODE_API_KEY` placeholders in S4
+- `.env.test.local` — add mock key values for test suite in S4
+- `compose/compose.test.yml` — remove `OGA_AI_PROVIDER: mock` in S4
 
 ## Config Template (hardcoded, no env var)
 
