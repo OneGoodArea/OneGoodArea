@@ -47,6 +47,14 @@ import {
 
 const IdParamsSchema = z.object({ id: z.string() });
 
+interface SavedAreaRow {
+  id: string;
+  postcode: string;
+  label: string | null;
+  intent: string | null;
+  created_at: string;
+}
+
 /** me route handlers — extracted from app.ts per AR-286. */
 export function registerMeRoutes(app: FastifyInstance): void {
     const typed = app.withTypeProvider<ZodTypeProvider>();
@@ -165,7 +173,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           return reply.code(400).send({ error: "events must be a non-empty array of supported types: 'signal.changed'" });
         }
         const created = await createWebhookSubscription(userId, urlCheck.sanitized, eventList);
-        return reply.code(201).send(created as any);
+        return reply.code(201).send(created);
       });
 
     typed.delete("/me/webhooks/:id",
@@ -863,7 +871,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           WHERE user_id = ${userId}
           ORDER BY created_at DESC
         `;
-        return reply.send({ areas: areas as any });
+        return reply.send({ areas: areas as unknown as SavedAreaRow[] });
       } catch (error) {
         logger.error("Watchlist fetch error:", error);
         return reply.code(500).send({ error: "Failed to fetch watchlist" });
@@ -891,7 +899,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
         if (result.length === 0) {
           return reply.code(409).send({ error: "Area already saved" });
         }
-        return reply.code(201).send({ area: result[0] as any });
+        return reply.code(201).send({ area: result[0] as unknown as SavedAreaRow });
       } catch (error) {
         logger.error("Watchlist add error:", error);
         return reply.code(500).send({ error: "Failed to save area" });

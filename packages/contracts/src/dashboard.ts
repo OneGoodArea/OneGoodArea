@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { OrgSchema, OrgRoleSchema } from "./orgs";
-import { WebhookSubscriptionSchema, CreatedWebhookSchema } from "./webhooks";
 
 export { ListWebhooksResponseSchema, CreatedWebhookSchema } from "./webhooks";
 
