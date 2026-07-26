@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "@fastify/type-provider-zod";
 import { z } from "zod";
-import { CreateOrgRequestSchema, UpdateOrgRequestSchema } from "@onegoodarea/contracts";
+import { CreateOrgRequestSchema, UpdateOrgRequestSchema, OrgSchema, ListOrgsResponseSchema } from "@onegoodarea/contracts";
 import { authenticateEither } from "../shared/auth-either";
 import { sendAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
@@ -9,7 +9,6 @@ import { createOrgWithOwner, listOrgsForUser, getOrgIfMember, updateOrg, getRole
 import { trackEvent } from "../modules/tracking/activity";
 
 const IdParamsSchema = z.object({ id: z.string() });
-const PassthroughResponse = z.object({}).passthrough();
 
 /** orgs route handlers — extracted from app.ts per AR-286. */
 export function registerOrgsRoutes(app: FastifyInstance): void {
@@ -25,7 +24,7 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             "body": CreateOrgRequestSchema,
             response: {
-              201: PassthroughResponse,
+              201: OrgSchema,
               400: z.object({ error: z.string() }),
               409: z.object({ error: z.string() }),
               500: z.object({ error: z.string() }),
@@ -63,7 +62,7 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
             "description": "List organizations the caller is a member of, with their role.",
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             response: {
-              200: z.object({ orgs: z.array(PassthroughResponse) }),
+              200: z.object({ orgs: ListOrgsResponseSchema }),
               500: z.object({ error: z.string() }),
             },
         },
@@ -91,7 +90,7 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             "params": IdParamsSchema,
             response: {
-              200: PassthroughResponse,
+              200: OrgSchema,
               404: z.object({ error: z.string() }),
               500: z.object({ error: z.string() }),
             },
@@ -167,7 +166,7 @@ export function registerOrgsRoutes(app: FastifyInstance): void {
             "params": IdParamsSchema,
             "body": UpdateOrgRequestSchema,
             response: {
-              200: PassthroughResponse,
+              200: OrgSchema,
               403: z.object({ error: z.string(), code: z.string() }),
               404: z.object({ error: z.string() }),
               409: z.object({ error: z.string() }),
