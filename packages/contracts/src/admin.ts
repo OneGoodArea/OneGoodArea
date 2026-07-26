@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 const DayCountSchema = z.object({ day: z.string(), count: z.number() });
-const CountSchema = z.object({ count: z.number() });
 
 export const AdminAnalyticsResponseSchema = z.object({
   totalUsers: z.number(),
