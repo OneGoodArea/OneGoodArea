@@ -27,6 +27,7 @@ export * from "./errors";
 export * from "./api-keys";
 export * from "./usage";
 export * from "./webhooks";
+export * from "./training";
 export * from "./admin";
 import type { AreaType } from "./signals";
 
