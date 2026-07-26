@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "@fastify/type-provider-zod";
 import { z } from "zod";
-import { CreatePresetRequestSchema, UpdatePresetRequestSchema } from "@onegoodarea/contracts";
+import { CreatePresetRequestSchema, UpdatePresetRequestSchema, ScoringPresetSchema } from "@onegoodarea/contracts";
 import { authenticateEither } from "../shared/auth-either";
 import { sendAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
@@ -28,8 +28,9 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
             "params": IdParamsSchema,
             "body": CreatePresetRequestSchema,
             "response": {
-                201: z.object({}).passthrough(),
+                201: ScoringPresetSchema,
                 400: z.object({ error: z.string(), code: z.string() }),
+                401: z.object({ error: z.string() }),
                 403: z.object({ error: z.string(), code: z.string() }),
                 404: z.object({ error: z.string() }),
                 409: z.object({ error: z.string() }),
@@ -85,7 +86,9 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             "params": IdParamsSchema,
             "response": {
-                200: z.object({ presets: z.array(z.object({}).passthrough()), org_id: z.string(), caller_role: z.string() }).passthrough(),
+                200: z.object({ presets: z.array(ScoringPresetSchema), org_id: z.string(), caller_role: z.string() }),
+                401: z.object({ error: z.string() }),
+                403: z.object({ error: z.string() }),
                 404: z.object({ error: z.string() }),
                 500: z.object({ error: z.string() }),
             },
@@ -122,7 +125,9 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
               "properties": { "id": { "type": "string" }, "presetId": { "type": "string" } },
             },
             "response": {
-                200: z.object({}).passthrough(),
+                200: ScoringPresetSchema,
+                401: z.object({ error: z.string() }),
+                403: z.object({ error: z.string() }),
                 404: z.object({ error: z.string() }),
                 500: z.object({ error: z.string() }),
             },
@@ -160,8 +165,9 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
             },
             "body": UpdatePresetRequestSchema,
             "response": {
-                200: z.object({}).passthrough(),
+                200: ScoringPresetSchema,
                 400: z.object({ error: z.string(), code: z.string() }),
+                401: z.object({ error: z.string() }),
                 403: z.object({ error: z.string(), code: z.string() }),
                 404: z.object({ error: z.string() }),
                 409: z.object({ error: z.string() }),
@@ -229,6 +235,7 @@ export function registerOrgPresetsRoutes(app: FastifyInstance): void {
             },
             "response": {
                 200: z.object({ deleted: z.literal(true) }),
+                401: z.object({ error: z.string() }),
                 403: z.object({ error: z.string(), code: z.string() }),
                 404: z.object({ error: z.string() }),
                 500: z.object({ error: z.string() }),

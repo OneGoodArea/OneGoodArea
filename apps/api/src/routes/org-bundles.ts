@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "@fastify/type-provider-zod";
 import { z } from "zod";
-import { CreateBundleRequestSchema, UpdateBundleRequestSchema } from "@onegoodarea/contracts";
+import { CreateBundleRequestSchema, UpdateBundleRequestSchema, SignalBundleSchema } from "@onegoodarea/contracts";
 import { authenticateEither } from "../shared/auth-either";
 import { sendAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
@@ -28,8 +28,9 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
             "params": IdParamsSchema,
             "body": CreateBundleRequestSchema,
             "response": {
-                201: z.object({}).passthrough(),
+                201: SignalBundleSchema,
                 400: z.object({ error: z.string(), code: z.string() }),
+                401: z.object({ error: z.string() }),
                 403: z.object({ error: z.string(), code: z.string() }),
                 404: z.object({ error: z.string() }),
                 409: z.object({ error: z.string() }),
@@ -84,7 +85,9 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             "params": IdParamsSchema,
             "response": {
-                200: z.object({ bundles: z.array(z.object({}).passthrough()), org_id: z.string(), caller_role: z.string() }).passthrough(),
+                200: z.object({ bundles: z.array(SignalBundleSchema), org_id: z.string(), caller_role: z.string() }),
+                401: z.object({ error: z.string() }),
+                403: z.object({ error: z.string() }),
                 404: z.object({ error: z.string() }),
                 500: z.object({ error: z.string() }),
             },
@@ -122,7 +125,9 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
               "properties": { "id": { "type": "string" }, "bundleId": { "type": "string" } },
             },
             "response": {
-                200: z.object({}).passthrough(),
+                200: SignalBundleSchema,
+                401: z.object({ error: z.string() }),
+                403: z.object({ error: z.string() }),
                 404: z.object({ error: z.string() }),
                 500: z.object({ error: z.string() }),
             },
@@ -160,8 +165,9 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
             },
             "body": UpdateBundleRequestSchema,
             "response": {
-                200: z.object({}).passthrough(),
+                200: SignalBundleSchema,
                 400: z.object({ error: z.string(), code: z.string() }),
+                401: z.object({ error: z.string() }),
                 403: z.object({ error: z.string(), code: z.string() }),
                 404: z.object({ error: z.string() }),
                 409: z.object({ error: z.string() }),
@@ -222,6 +228,7 @@ export function registerOrgBundlesRoutes(app: FastifyInstance): void {
             },
             "response": {
                 200: z.object({ deleted: z.literal(true) }),
+                401: z.object({ error: z.string() }),
                 403: z.object({ error: z.string(), code: z.string() }),
                 404: z.object({ error: z.string() }),
                 500: z.object({ error: z.string() }),
