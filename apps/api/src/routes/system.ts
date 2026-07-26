@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { INTENTS } from "@onegoodarea/contracts";
+import { INTENTS, TrainingRetentionResponseSchema } from "@onegoodarea/contracts";
 import { getConfig } from "../infrastructure/config";
 import { runRescoreCron } from "../modules/engine/rescore";
 import { runTrainingRetentionCron } from "../modules/training/retention";
@@ -98,7 +98,7 @@ export function registerSystemRoutes(app: FastifyInstance): void {
           description: "Nightly retention purge for training tables. Internal cron endpoint.",
           "x-internal": true,
           response: {
-            200: z.object({}).passthrough(),
+            200: TrainingRetentionResponseSchema,
             401: ErrorResponse,
             500: ErrorResponse,
             503: ErrorResponse,
