@@ -7,6 +7,7 @@ import { rows, row, type ApiKeyRow, type ActivityEventRow } from "../infrastruct
 import { createApiKey, listApiKeys, revokeApiKey, setApiKeyTrainingOptout, provisionPlaygroundApiKey } from "../modules/api-keys";
 import { hasApiAccess, getUserPlan } from "../modules/usage";
 import { PLANS, type PlanId } from "../modules/billing/plans";
+import { ApiKeyUsageResponseSchema, ListApiKeysResponseSchema, CreateApiKeyResponseSchema } from "@onegoodarea/contracts";
 
 interface CountRow { count: number; }
 interface DayCountRow { day: string; count: number; }
@@ -30,7 +31,7 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
             },
           },
           response: {
-            200: z.object({}).passthrough(),
+            200: ApiKeyUsageResponseSchema,
             403: z.object({ error: z.string(), code: z.string().optional() }),
             500: z.object({ error: z.string() }),
           },
@@ -206,7 +207,7 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
           description: "List the caller's API keys.",
           security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           response: {
-            200: z.object({ keys: z.array(z.object({}).passthrough()) }),
+            200: ListApiKeysResponseSchema,
             500: z.object({ error: z.string() }),
           },
         },
@@ -239,7 +240,7 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
             },
           },
           response: {
-            200: z.object({ key: z.object({}).passthrough() }),
+            200: CreateApiKeyResponseSchema,
             403: z.object({ error: z.string(), code: z.string().optional() }),
             500: z.object({ error: z.string() }),
           },
