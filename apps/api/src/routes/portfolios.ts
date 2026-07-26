@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import { isIntent } from "@onegoodarea/contracts";
+import { isIntent, PortfolioSchema, PortfolioDetailSchema, PortfolioEnrichItemSchema, ChangeReportSchema } from "@onegoodarea/contracts";
 import { requireApiAccess, requireApiAccessWithOrg } from "../shared/auth-api";
 import { effectiveEngineVersionForCaller } from "../shared/bundles";
 import { sendAppError } from "../shared/errors";
@@ -47,7 +47,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
               "example": { "name": "London investments" },
             },
             response: {
-              201: z.object({}).passthrough(),
+              201: PortfolioSchema,
               400: z.object({ error: z.string() }),
               404: z.object({ error: z.string() }),
               500: z.object({ error: z.string() }),
@@ -81,7 +81,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
             "description": "List all portfolios for the authenticated user.",
             "security": [{ "bearerAuth": [] }],
             response: {
-              200: z.object({ portfolios: z.array(z.object({}).passthrough()) }),
+              200: z.object({ portfolios: z.array(PortfolioSchema) }),
               404: z.object({ error: z.string() }),
               500: z.object({ error: z.string() }),
             },
@@ -109,7 +109,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
             "security": [{ "bearerAuth": [] }],
             "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
             response: {
-              200: z.object({}).passthrough(),
+              200: PortfolioDetailSchema,
               404: z.object({ error: z.string() }),
               500: z.object({ error: z.string() }),
             },
@@ -189,7 +189,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
               },
             },
             response: {
-              200: z.object({ added: z.number(), portfolio: z.object({}).passthrough() }),
+              200: z.object({ added: z.number(), portfolio: PortfolioDetailSchema }),
               400: z.object({ error: z.string() }),
               404: z.object({ error: z.string() }),
               500: z.object({ error: z.string() }),
@@ -249,7 +249,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
               },
             },
             response: {
-              200: z.object({ count: z.number(), results: z.array(z.object({}).passthrough()) }),
+              200: z.object({ count: z.number(), results: z.array(PortfolioEnrichItemSchema) }),
               400: z.object({ error: z.string() }),
               404: z.object({ error: z.string() }),
               500: z.object({ error: z.string() }),
@@ -297,7 +297,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
               },
             },
             response: {
-              200: z.object({}).passthrough(),
+              200: ChangeReportSchema,
               400: z.object({ error: z.string() }),
               404: z.object({ error: z.string() }),
               500: z.object({ error: z.string() }),
@@ -362,7 +362,7 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
             "security": [{ "bearerAuth": [] }],
             "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
             response: {
-              200: z.object({}).passthrough(),
+              200: ChangeReportSchema,
               404: z.object({ error: z.string() }),
               500: z.object({ error: z.string() }),
             },

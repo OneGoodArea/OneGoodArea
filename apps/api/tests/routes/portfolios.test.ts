@@ -13,6 +13,7 @@ vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn(), query: vi.fn() }));
 vi.mock("@/modules/monitor", () => ({
   createPortfolio: vi.fn(), listPortfolios: vi.fn(), getPortfolio: vi.fn(),
   deletePortfolio: vi.fn(), addAreas: vi.fn(), enrichPortfolio: vi.fn(),
+  detectPortfolioChanges: vi.fn(),
   PORTFOLIO_ADD_MAX: 200, PORTFOLIO_ENRICH_MAX: 50,
 }));
 
@@ -144,5 +145,69 @@ describe("portfolio areas + enrich", () => {
     const ok = await app.inject({ method: "POST", url: "/v1/portfolios/pf_1/enrich", headers: { ...auth, "content-type": "application/json" }, payload: JSON.stringify({ preset: "moving" }) });
     expect(ok.statusCode).toBe(200);
     expect(ok.json().count).toBe(1);
+  });
+});
+
+const mockChangeReport = {
+  portfolio_id: "pf_1",
+  baseline: "previous" as const,
+  threshold_pct: 10,
+  min_transactions: 2,
+  areas_checked: 3,
+  material_count: 1,
+  changes: [
+    {
+      signal_key: "price_index",
+      label: "House Price Index",
+      area: "M1 1AE",
+      geo_code: "E01000001",
+      period_from: "2026-Q1",
+      period_to: "2026-Q2",
+      value_from: 200000,
+      value_to: 230000,
+      delta: 30000,
+      pct_change: 15,
+      direction: "up" as const,
+      material: true,
+    },
+  ],
+  generated_at: "2026-07-26T12:00:00.000Z",
+};
+
+describe("portfolio changes", () => {
+  it("POST /changes: 404 when not owned, 200 with ChangeReport", async () => {
+    vi.mocked(monitor.detectPortfolioChanges).mockResolvedValue(null);
+    const notOwned = await app.inject({ method: "POST", url: "/v1/portfolios/pf_x/changes", headers: { ...auth, "content-type": "application/json" }, payload: "{}" });
+    expect(notOwned.statusCode).toBe(404);
+
+    vi.mocked(monitor.detectPortfolioChanges).mockResolvedValue(mockChangeReport);
+    const ok = await app.inject({ method: "POST", url: "/v1/portfolios/pf_1/changes", headers: { ...auth, "content-type": "application/json" }, payload: "{}" });
+    expect(ok.statusCode).toBe(200);
+    expect(ok.json().portfolio_id).toBe("pf_1");
+    expect(ok.json().material_count).toBe(1);
+    expect(ok.json().changes).toHaveLength(1);
+  });
+
+  it("POST /changes: validates body params (bad baseline → 400)", async () => {
+    const bad = await app.inject({ method: "POST", url: "/v1/portfolios/pf_1/changes", headers: { ...auth, "content-type": "application/json" }, payload: JSON.stringify({ baseline: "invalid" }) });
+    expect(bad.statusCode).toBe(400);
+  });
+
+  it("GET /changes: 404 when not owned, 200 with ChangeReport (no webhooks)", async () => {
+    vi.mocked(monitor.detectPortfolioChanges).mockResolvedValue(null);
+    const notOwned = await app.inject({ method: "GET", url: "/v1/portfolios/pf_x/changes", headers: auth });
+    expect(notOwned.statusCode).toBe(404);
+
+    vi.mocked(monitor.detectPortfolioChanges).mockResolvedValue(mockChangeReport);
+    const ok = await app.inject({ method: "GET", url: "/v1/portfolios/pf_1/changes", headers: auth });
+    expect(ok.statusCode).toBe(200);
+    expect(ok.json().portfolio_id).toBe("pf_1");
+    expect(ok.json().changes[0].direction).toBe("up");
+  });
+
+  it("GET /changes: passes emit: false to detectPortfolioChanges", async () => {
+    vi.mocked(monitor.detectPortfolioChanges).mockResolvedValue(mockChangeReport);
+    await app.inject({ method: "GET", url: "/v1/portfolios/pf_1/changes", headers: auth });
+    expect(monitor.detectPortfolioChanges).toHaveBeenCalledWith("user_1", "pf_1", { emit: false });
   });
 });
