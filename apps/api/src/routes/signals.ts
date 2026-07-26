@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { isSignalCategory, SIGNAL_CATEGORIES } from "@onegoodarea/contracts";
+import { isSignalCategory, SIGNAL_CATEGORIES, AreaProfileSchema } from "@onegoodarea/contracts";
 import { requireApiAccessWithOrg } from "../shared/auth-api";
 import { resolveBundleForCaller, effectiveEngineVersionForCaller } from "../shared/bundles";
 import { sendAppError } from "../shared/errors";
@@ -11,6 +11,15 @@ import { filterSignalsByBundle } from "../modules/orgs/bundles";
 import { trackEvent } from "../modules/tracking/activity";
 
 import { z } from "zod";
+
+const AreaResultSchema = z.object({
+  geo_type: z.string(),
+  geo_code: z.string(),
+  value: z.number().nullable(),
+  normalized_value: z.number().nullable(),
+  percentile: z.number().nullable(),
+});
+
 /** signals route handlers — extracted from app.ts per AR-286. */
 export function registerSignalsRoutes(app: FastifyInstance): void {
     app.get("/v1/area",
@@ -32,9 +41,12 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
               "example": { "area": "SW1A 1AA" },
             },
             response: {
-              200: z.object({}).passthrough(),
+              200: AreaProfileSchema,
               400: z.object({ error: z.string() }),
+              401: z.object({ error: z.string() }),
+              403: z.object({ error: z.string() }),
               404: z.object({ error: z.string() }),
+              429: z.object({ error: z.string() }),
               500: z.object({ error: z.string() }),
             },
         },
@@ -122,9 +134,12 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
               },
             },
             response: {
-              200: z.object({}).passthrough(),
+              200: AreaProfileSchema,
               400: z.object({ error: z.string() }),
+              401: z.object({ error: z.string() }),
+              403: z.object({ error: z.string() }),
               404: z.object({ error: z.string() }),
+              429: z.object({ error: z.string() }),
               500: z.object({ error: z.string() }),
             },
         },
@@ -200,10 +215,13 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
               "required": ["signal"],
             },
             response: {
-              200: z.object({ signal: z.string(), count: z.number(), areas: z.array(z.object({}).passthrough()) }),
+              200: z.object({ signal: z.string(), count: z.number(), areas: z.array(AreaResultSchema) }),
               400: z.object({ error: z.string() }),
+              401: z.object({ error: z.string() }),
+              403: z.object({ error: z.string() }),
               404: z.object({ error: z.string() }),
               422: z.object({ error: z.string(), code: z.string() }),
+              429: z.object({ error: z.string() }),
               500: z.object({ error: z.string() }),
             },
         },
