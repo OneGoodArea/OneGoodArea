@@ -22,6 +22,11 @@ import { sql } from "../infrastructure/db/client";
 import { getCohort } from "../modules/orgs/cohorts";
 import { METHODOLOGY_VERSION } from "../modules/engine/methodology";
 import { z } from "zod";
+import {
+  PeersResponseSchema,
+  InsightsResponseSchema,
+  ForecastResponseSchema,
+} from "@onegoodarea/contracts";
 /** intelligence route handlers — extracted from app.ts per AR-286. */
 export function registerIntelligenceRoutes(app: FastifyInstance): void {
   const guardSignalsCtx = async (
@@ -50,10 +55,20 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
             },
             "querystring": { "type": "object", "properties": { "bundle": { "type": "string", "description": "Optional bundle ID to scope available signals." } } },
             response: {
-              200: z.object({}).passthrough(),
+              200: z.object({
+                plan: z.record(z.string(), z.unknown()),
+                plan_source: z.enum(["client", "nl"]),
+                results: z.union([z.array(z.record(z.string(), z.unknown())), z.record(z.string(), z.unknown()), z.null()]).optional(),
+                meta: z.object({ generated_at: z.string() }).optional(),
+              }),
               400: z.object({ error: z.string() }),
               404: z.object({ error: z.string() }),
-              422: z.object({}).passthrough(),
+              422: z.object({
+                error: z.string(),
+                code: z.string(),
+                raw: z.string().optional(),
+                candidates: z.array(z.object({ label: z.string(), postcode: z.string(), district: z.string(), country: z.string() }).strict()).optional(),
+              }),
               429: z.object({ error: z.string(), code: z.string() }),
               500: z.object({ error: z.string() }),
             },
@@ -271,7 +286,7 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
               "example": { "target": { "postcode": "SW1A 1AA" }, "k": 10 },
             },
             response: {
-              200: z.object({ target: z.object({ geo_code: z.string(), signals_used: z.array(z.string()) }), peers: z.array(z.object({}).passthrough()), meta: z.object({ generated_at: z.string(), scope: z.string() }) }),
+              200: PeersResponseSchema,
               400: z.object({ error: z.string() }),
               404: z.object({ error: z.string() }),
               422: z.object({ error: z.string(), code: z.string() }),
@@ -394,7 +409,7 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
               "example": { "signal_key": "crime.total_12m_peer_relative_z", "country": "England", "k": 20 },
             },
             response: {
-              200: z.object({ signal_key: z.string(), insights: z.array(z.object({}).passthrough()), meta: z.object({ generated_at: z.string(), scope: z.string(), threshold: z.nullable(z.number()) }) }),
+              200: InsightsResponseSchema,
               400: z.object({ error: z.string(), code: z.string().optional() }),
               404: z.object({ error: z.string() }),
               500: z.object({ error: z.string() }),
@@ -485,23 +500,7 @@ export function registerIntelligenceRoutes(app: FastifyInstance): void {
               "example": { "target": { "postcode": "SW1A 1AA" }, "signal_key": "crime.total_12m", "window_months": 24, "horizon_months": 12 },
             },
             response: {
-              200: z.object({
-                target: z.object({ geo_code: z.string() }),
-                signal_key: z.string(),
-                points: z.array(z.object({}).passthrough()),
-                meta: z.object({
-                  generated_at: z.string(),
-                  scope: z.string(),
-                  window_months: z.number(),
-                  horizon_months: z.number(),
-                  n_observations: z.number(),
-                  r2: z.number(),
-                  slope_per_month: z.number(),
-                  intercept: z.number(),
-                  residual_stderr: z.number(),
-                  latest_observed_period: z.string(),
-                }),
-              }),
+              200: ForecastResponseSchema,
               400: z.object({ error: z.string() }),
               404: z.object({ error: z.string() }),
               500: z.object({ error: z.string() }),

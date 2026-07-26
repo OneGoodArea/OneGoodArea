@@ -1,5 +1,6 @@
 import { getConfig } from "../../../infrastructure/config";
 import { AnthropicAiProvider } from "./anthropic-provider";
+import { DeepSeekAiProvider } from "./deepseek-provider";
 import { MockAiProvider } from "./mock-provider";
 import type { AiProvider } from "./types";
 import { decideLlm, type Tier } from "../../tiers";
@@ -10,7 +11,11 @@ import { decideLlm, type Tier } from "../../tiers";
 
    AR-499: getAiProviderForTier() selects provider+model from the TIERS
    catalog via decideLlm(). The model override is passed to the provider
-   constructor so each tier gets its designated model. */
+   constructor so each tier gets its designated model.
+
+   DeepSeek Flash: cheaper alternative to Anthropic for local dev, Docker
+   test stacks, and lower-value tiers. Set OGA_AI_PROVIDER=deepseek and
+   DEEPSEEK_API_KEY to activate. */
 
 export type { AiProvider } from "./types";
 
@@ -20,8 +25,11 @@ let cachedProvider: AiProvider | null = null;
     paths that don't have a tier context. Prefer getAiProviderForTier(). */
 export function getAiProvider(): AiProvider {
   if (!cachedProvider) {
+    const provider = getConfig().aiProvider;
     cachedProvider =
-      getConfig().aiProvider === "mock" ? new MockAiProvider() : new AnthropicAiProvider();
+      provider === "mock" ? new MockAiProvider() :
+      provider === "deepseek" ? new DeepSeekAiProvider() :
+      new AnthropicAiProvider();
   }
 
   return cachedProvider;
@@ -29,9 +37,11 @@ export function getAiProvider(): AiProvider {
 
 /** AR-499: tier-aware provider factory. Returns a provider configured with
     the model from the TIERS catalog for the given tier. The provider is
-    created fresh each call (cheap — Anthropic SDK is stateless). */
+    created fresh each call (cheap — SDKs are stateless). */
 export function getAiProviderForTier(tier: Tier): AiProvider {
-  if (getConfig().aiProvider === "mock") return new MockAiProvider();
+  const provider = getConfig().aiProvider;
+  if (provider === "mock") return new MockAiProvider();
+  if (provider === "deepseek") return new DeepSeekAiProvider();
   const route = decideLlm(tier);
   return new AnthropicAiProvider(route.model);
 }

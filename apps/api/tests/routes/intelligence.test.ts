@@ -136,7 +136,7 @@ describe("POST /v1/query — anonymous access (AR-594, Plan 059.2)", () => {
     vi.mocked(canMakeNlCall).mockResolvedValue({ allowed: false, plan: "sandbox", used: 99, limit: 1 } as never);
     mockRunQuery.mockResolvedValueOnce({
       ok: true,
-      response: { plan: { op: "rank_areas" }, plan_source: "llm" },
+      response: { plan: { op: "rank_areas" }, plan_source: "nl" },
     } as never);
 
     const res = await postAnonymous({ question: "best areas for families" });
