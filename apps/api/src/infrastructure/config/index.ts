@@ -22,10 +22,11 @@ export interface ApiConfig {
   // AI
   aiProvider: string;
   anthropicApiKey: string | undefined;
-  /* AR-383: model ID for the NL planner. Defaults to the current
-     Sonnet. Make env-configurable so future Anthropic model retirements
-     are a Render env-var change, not a code deploy. */
   anthropicModel: string;
+  deepseekApiKey: string | undefined;
+  deepseekBaseUrl: string;
+  deepseekModel: string;
+  deepseekMaxTokens: number;
 
   // Email
   emailProvider: string;
@@ -99,6 +100,10 @@ export function getConfig(): ApiConfig {
     aiProvider: process.env.OGA_AI_PROVIDER ?? "anthropic",
     anthropicApiKey: process.env.ANTHROPIC_API_KEY,
     anthropicModel: process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-6",
+    deepseekApiKey: process.env.DEEPSEEK_API_KEY,
+    deepseekBaseUrl: process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com/v1",
+    deepseekModel: process.env.DEEPSEEK_MODEL ?? "deepseek-chat",
+    deepseekMaxTokens: Number(process.env.DEEPSEEK_MAX_TOKENS ?? 4096),
 
     // Email
     emailProvider: process.env.OGA_EMAIL_PROVIDER ?? "resend",
