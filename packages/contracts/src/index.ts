@@ -25,6 +25,7 @@ export * from "./users";
 export * from "./activity";
 export * from "./errors";
 export * from "./api-keys";
+export * from "./usage";
 import type { AreaType } from "./signals";
 
 /** The four scoring intents the engine supports. Canonical source of truth. */
