@@ -22,6 +22,7 @@ import { stripe } from "../modules/billing/stripe-client";
 import type { PlanId } from "../modules/billing/plans";
 import { getOrgIfMember, getRoleInOrg, updateOrg, hasAtLeastRole } from "../modules/orgs";
 import { UpdateOrgRequestSchema, type OrgRole } from "@onegoodarea/contracts";
+import { UsageCheckResponseSchema } from "@onegoodarea/contracts";
 import {
   createWebhookSubscription,
   listWebhookSubscriptions,
@@ -53,9 +54,10 @@ export function registerMeRoutes(app: FastifyInstance): void {
               page: z.coerce.number().int().catch(1),
               page_size: z.coerce.number().int().catch(20),
             }),
-            response: {
-              200: z.object({}).passthrough(),
-            },
+          response: {
+            200: z.object({}).passthrough(),
+            500: z.object({ error: z.string() }),
+          },
         },
       }, async (request, reply) => {
       const userId = await authenticateSessionOrApiKey(request, reply);
@@ -608,7 +610,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           description: "Check current API usage and limits.",
           security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           response: {
-            200: z.object({}).passthrough(),
+            200: UsageCheckResponseSchema,
             500: z.object({ error: z.string() }),
           },
         },
