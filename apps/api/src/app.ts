@@ -1,7 +1,6 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import fastifyCors from "@fastify/cors";
 import fastifySwagger from "@fastify/swagger";
-import fastifySwaggerUi from "@fastify/swagger-ui";
 import { zodSafeJsonSchemaTransform } from "./infrastructure/utils/zod-safe-json-schema-transform";
 import { hybridValidatorCompiler } from "./infrastructure/utils/hybrid-validator-compiler";
 import { hybridSerializerCompiler } from "./infrastructure/utils/hybrid-serializer-compiler";
@@ -66,7 +65,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
     ],
   });
 
-  // OpenAPI/Swagger documentation — /docs (Swagger UI) and /docs/json (raw spec).
+  // OpenAPI/Swagger spec — the decorator app.swagger() builds the spec on demand.
   // Config owned by modules/developer-surface/openapi-config.ts.
   // zodSafeJsonSchemaTransform handles both Zod v4 schemas (via .toJSONSchema())
   // and plain JSON Schema objects (intelligence routes) without crashing.
@@ -75,10 +74,14 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
     transform: zodSafeJsonSchemaTransform,
   });
 
-  await app.register(fastifySwaggerUi, {
-    routePrefix: "/docs",
-    uiConfig: { docExpansion: "list", deepLinking: true },
-  });
+  // Serve the raw OpenAPI spec as JSON at /docs/json — consumed by Scalar at
+  // /playground and the web BFF (/api/openapi-spec). Replaces the old
+  // @fastify/swagger-ui /docs route which has been removed (Scalar-only).
+  app.get(
+    "/docs/json",
+    { schema: { tags: ["Meta"], summary: "OpenAPI spec (JSON)", security: [] } },
+    async () => app.swagger({ yaml: false }),
+  );
 
   // JSON parser that also stashes the raw body string on the request. Routes
   // still receive a parsed `request.body` (identical to Fastify's default); the
