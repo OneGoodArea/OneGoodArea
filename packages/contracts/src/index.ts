@@ -26,6 +26,7 @@ export * from "./activity";
 export * from "./errors";
 export * from "./api-keys";
 export * from "./usage";
+export * from "./webhooks";
 import type { AreaType } from "./signals";
 
 /** The four scoring intents the engine supports. Canonical source of truth. */

@@ -1,8 +1,10 @@
 import type { FastifyInstance } from "fastify";
+import { z } from "zod";
 import { requireApiAccess } from "../shared/auth-api";
 import { isAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { createWebhookSubscription, listWebhookSubscriptions, revokeWebhookSubscription, rotateWebhookSecret, validateWebhookUrl, validateEventTypes } from "../modules/webhooks";
+import { CreatedWebhookSchema, ListWebhooksResponseSchema, DeleteWebhookResponseSchema, RotateSecretResponseSchema } from "@onegoodarea/contracts";
 
 /** webhooks route handlers — extracted from app.ts per AR-286. */
 export function registerWebhooksRoutes(app: FastifyInstance): void {
@@ -28,6 +30,11 @@ export function registerWebhooksRoutes(app: FastifyInstance): void {
                 "events": { "type": "array", "items": { "type": "string" }, "description": "Required. Supported: 'signal.changed'. Unsupported entries are filtered out and duplicates collapsed." },
               },
               "example": { "url": "https://example.com/hooks", "events": ["signal.changed"] },
+            },
+            "response": {
+              201: CreatedWebhookSchema,
+              400: z.object({ error: z.string() }),
+              500: z.object({ error: z.string() }),
             },
         },
       }, async (request, reply) => {
@@ -57,7 +64,7 @@ export function registerWebhooksRoutes(app: FastifyInstance): void {
         return reply.code(201).send(created);
       } catch (error) {
         if (isAppError(error)) {
-          return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+          return reply.code(error.statusCode as 400).send({ error: error.message, code: error.code });
         }
         logger.error("[v1/webhooks POST] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
@@ -73,6 +80,10 @@ export function registerWebhooksRoutes(app: FastifyInstance): void {
             "summary": "List webhooks",
             "description": "List registered webhooks.",
             "security": [{ "bearerAuth": [] }],
+            "response": {
+              200: ListWebhooksResponseSchema,
+              500: z.object({ error: z.string() }),
+            },
         },
       }, async (request, reply) => {
       try {
@@ -83,7 +94,7 @@ export function registerWebhooksRoutes(app: FastifyInstance): void {
         return reply.send({ subscriptions });
       } catch (error) {
         if (isAppError(error)) {
-          return reply.code(error.statusCode).send({ error: error.message, code: error.code });
+          return reply.code(error.statusCode as 500).send({ error: error.message, code: error.code });
         }
         logger.error("[v1/webhooks GET] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
@@ -91,7 +102,7 @@ export function registerWebhooksRoutes(app: FastifyInstance): void {
     });
 
     app.delete<{ Params: { id: string } }>("/v1/webhooks/:id", {
-      schema: { tags: ["Webhooks"], summary: "Delete webhook", description: "Delete a registered webhook.", security: [{ bearerAuth: [] }], params: { type: "object", required: ["id"], properties: { id: { type: "string" } } } },
+      schema: { tags: ["Webhooks"], summary: "Delete webhook", description: "Delete a registered webhook.", security: [{ bearerAuth: [] }], params: { type: "object", required: ["id"], properties: { id: { type: "string" } } }, response: { 200: DeleteWebhookResponseSchema, 404: z.object({ error: z.string() }), 500: z.object({ error: z.string() }) } },
     }, async (request, reply) => {
       try {
         const userId = await requireApiAccess(request, reply);
@@ -113,7 +124,7 @@ export function registerWebhooksRoutes(app: FastifyInstance): void {
     });
 
     app.post<{ Params: { id: string } }>("/v1/webhooks/:id/rotate-secret", {
-      schema: { tags: ["Webhooks"], summary: "Rotate webhook secret", description: "Rotate the signing secret for a webhook.", security: [{ bearerAuth: [] }], params: { type: "object", required: ["id"], properties: { id: { type: "string" } } } },
+      schema: { tags: ["Webhooks"], summary: "Rotate webhook secret", description: "Rotate the signing secret for a webhook.", security: [{ bearerAuth: [] }], params: { type: "object", required: ["id"], properties: { id: { type: "string" } } }, response: { 200: RotateSecretResponseSchema, 404: z.object({ error: z.string() }), 500: z.object({ error: z.string() }) } },
     }, async (request, reply) => {
       try {
         const userId = await requireApiAccess(request, reply);
