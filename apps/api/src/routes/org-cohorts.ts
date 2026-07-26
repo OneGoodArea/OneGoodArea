@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "@fastify/type-provider-zod";
 import { z } from "zod";
-import { CreateCohortRequestSchema, UpdateCohortRequestSchema } from "@onegoodarea/contracts";
+import { CreateCohortRequestSchema, UpdateCohortRequestSchema, PeerCohortSchema, ListCohortsResponseSchema } from "@onegoodarea/contracts";
 import { authenticateEither } from "../shared/auth-either";
 import { sendAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
@@ -28,7 +28,7 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
             "params": IdParamsSchema,
             "body": CreateCohortRequestSchema,
             "response": {
-                201: z.object({}).passthrough(),
+                201: PeerCohortSchema,
                 403: z.object({ error: z.string(), code: z.string() }),
                 404: z.object({ error: z.string() }),
                 409: z.object({ error: z.string() }),
@@ -76,7 +76,7 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             "params": IdParamsSchema,
             "response": {
-                200: z.object({ cohorts: z.array(z.object({}).passthrough()), org_id: z.string(), caller_role: z.string() }).passthrough(),
+                200: z.object({ cohorts: ListCohortsResponseSchema, org_id: z.string(), caller_role: z.string() }),
                 404: z.object({ error: z.string() }),
                 500: z.object({ error: z.string() }),
             },
@@ -113,7 +113,7 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
               "properties": { "id": { "type": "string" }, "cohortId": { "type": "string" } },
             },
             "response": {
-                200: z.object({}).passthrough(),
+                200: PeerCohortSchema,
                 404: z.object({ error: z.string() }),
                 500: z.object({ error: z.string() }),
             },
@@ -151,7 +151,7 @@ export function registerOrgCohortsRoutes(app: FastifyInstance): void {
             },
             "body": UpdateCohortRequestSchema,
             "response": {
-                200: z.object({}).passthrough(),
+                200: PeerCohortSchema,
                 403: z.object({ error: z.string(), code: z.string() }),
                 404: z.object({ error: z.string() }),
                 409: z.object({ error: z.string() }),
