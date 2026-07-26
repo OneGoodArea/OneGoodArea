@@ -24,6 +24,19 @@ import { getOrgIfMember, getRoleInOrg, updateOrg, hasAtLeastRole } from "../modu
 import { UpdateOrgRequestSchema, type OrgRole } from "@onegoodarea/contracts";
 import { UsageCheckResponseSchema, MeActivityResponseSchema } from "@onegoodarea/contracts";
 import {
+  ListWebhooksResponseSchema,
+  CreatedWebhookSchema,
+  MePortfoliosResponseSchema,
+  ScoreUsageResponseSchema,
+  MeOrgResponseSchema,
+  UpdateMeOrgResponseSchema,
+  MeProfileResponseSchema,
+  DashboardResponseSchema,
+  SubscriptionInfoResponseSchema,
+  WatchlistResponseSchema,
+  AddToWatchlistResponseSchema,
+} from "@onegoodarea/contracts";
+import {
   createWebhookSubscription,
   listWebhookSubscriptions,
   revokeWebhookSubscription,
@@ -33,6 +46,14 @@ import {
 } from "../modules/webhooks";
 
 const IdParamsSchema = z.object({ id: z.string() });
+
+interface SavedAreaRow {
+  id: string;
+  postcode: string;
+  label: string | null;
+  intent: string | null;
+  created_at: string;
+}
 
 /** me route handlers — extracted from app.ts per AR-286. */
 export function registerMeRoutes(app: FastifyInstance): void {
@@ -125,7 +146,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
        Replaces the apps/web /api/me/webhooks family direct SQL. */
     typed.get("/me/webhooks",
       {
-        schema: { tags: ["Me"], summary: "List my webhook subscriptions", description: "Returns the caller's webhook subscriptions (no secret).", security: [{ "bearerToken": [] }, { "bearerAuth": [] }], response: { 200: z.object({}).passthrough() } },
+        schema: { tags: ["Me"], summary: "List my webhook subscriptions", description: "Returns the caller's webhook subscriptions (no secret).", security: [{ "bearerToken": [] }, { "bearerAuth": [] }], response: { 200: ListWebhooksResponseSchema } },
       },
       async (request, reply) => {
         const userId = await authenticateSessionOrApiKey(request, reply);
@@ -136,7 +157,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
 
     typed.post("/me/webhooks",
       {
-        schema: { tags: ["Me"], summary: "Create a webhook subscription", description: "Register a new webhook URL. Returns the signing secret ONCE.", security: [{ "bearerToken": [] }, { "bearerAuth": [] }], body: z.object({ url: z.string(), events: z.array(z.string()) }), response: { 200: z.object({}).passthrough(), 201: z.object({}).passthrough(), 400: z.object({ error: z.string() }) } },
+        schema: { tags: ["Me"], summary: "Create a webhook subscription", description: "Register a new webhook URL. Returns the signing secret ONCE.", security: [{ "bearerToken": [] }, { "bearerAuth": [] }], body: z.object({ url: z.string(), events: z.array(z.string()) }), response: { 200: CreatedWebhookSchema, 201: CreatedWebhookSchema, 400: z.object({ error: z.string() }) } },
       },
       async (request, reply) => {
         const userId = await authenticateSessionOrApiKey(request, reply);
@@ -152,7 +173,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           return reply.code(400).send({ error: "events must be a non-empty array of supported types: 'signal.changed'" });
         }
         const created = await createWebhookSubscription(userId, urlCheck.sanitized, eventList);
-        return reply.code(201).send(created as unknown as { [x: string]: unknown });
+        return reply.code(201).send(created);
       });
 
     typed.delete("/me/webhooks/:id",
@@ -198,7 +219,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
             q: z.string().optional(),
           }),
           response: {
-            200: z.object({}).passthrough(),
+            200: MePortfoliosResponseSchema,
           },
         },
       },
@@ -290,7 +311,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           description: "Counts api.score.computed events over the last 30 days, grouped by preset.",
           security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           response: {
-            200: z.object({}).passthrough(),
+            200: ScoreUsageResponseSchema,
           },
         },
       },
@@ -341,7 +362,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           description: "Returns { org, caller_role } for the caller's primary org (owner-first, then oldest membership), or { org: null, caller_role: null } if the caller has no org.",
           security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           response: {
-            200: z.object({}).passthrough(),
+            200: MeOrgResponseSchema,
           },
         },
       },
@@ -378,7 +399,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           body: UpdateOrgRequestSchema,
           response: {
-            200: z.object({}).passthrough(),
+            200: UpdateMeOrgResponseSchema,
             403: z.object({ error: z.string(), code: z.string() }),
             404: z.object({ error: z.string() }),
             409: z.object({ error: z.string(), code: z.string() }),
@@ -479,7 +500,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
             "description": "Returns the authenticated user's profile and usage stats.",
             "security": [{ "bearerAuth": [] }],
             response: {
-              200: z.object({}).passthrough(),
+              200: MeProfileResponseSchema,
               401: z.object({ error: z.string() }),
               403: z.object({ error: z.string(), code: z.string() }),
               429: z.object({ error: z.string() }),
@@ -636,7 +657,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           description: "Composite dashboard data for the authenticated user.",
           security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           response: {
-            200: z.object({}).passthrough(),
+            200: DashboardResponseSchema,
             500: z.object({ error: z.string() }),
           },
         },
@@ -728,7 +749,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           description: "Get current subscription plan and status.",
           security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           response: {
-            200: z.object({}).passthrough(),
+            200: SubscriptionInfoResponseSchema,
             500: z.object({ error: z.string() }),
           },
         },
@@ -838,7 +859,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
     });
 
     typed.get("/watchlist", {
-      schema: { tags: ["Watchlist"], summary: "Get watchlist", description: "Get the authenticated user's saved areas watchlist.", security: [{ "bearerToken": [] }, { "bearerAuth": [] }], response: { 200: z.object({}).passthrough(), 500: z.object({ error: z.string() }) } },
+      schema: { tags: ["Watchlist"], summary: "Get watchlist", description: "Get the authenticated user's saved areas watchlist.", security: [{ "bearerToken": [] }, { "bearerAuth": [] }], response: { 200: WatchlistResponseSchema, 500: z.object({ error: z.string() }) } },
     }, async (request, reply) => {
       try {
         const userId = await authenticateSessionOrApiKey(request, reply);
@@ -850,7 +871,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           WHERE user_id = ${userId}
           ORDER BY created_at DESC
         `;
-        return reply.send({ areas });
+        return reply.send({ areas: areas as unknown as SavedAreaRow[] });
       } catch (error) {
         logger.error("Watchlist fetch error:", error);
         return reply.code(500).send({ error: "Failed to fetch watchlist" });
@@ -858,7 +879,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
     });
 
     typed.post("/watchlist", {
-      schema: { tags: ["Watchlist"], summary: "Add to watchlist", description: "Add an area to the user's watchlist.", security: [{ "bearerToken": [] }, { "bearerAuth": [] }], body: z.object({ postcode: z.string(), label: z.string().optional(), intent: z.string().optional() }), response: { 201: z.object({ area: z.object({}).passthrough() }), 409: z.object({ error: z.string() }), 500: z.object({ error: z.string() }) } },
+      schema: { tags: ["Watchlist"], summary: "Add to watchlist", description: "Add an area to the user's watchlist.", security: [{ "bearerToken": [] }, { "bearerAuth": [] }], body: z.object({ postcode: z.string(), label: z.string().optional(), intent: z.string().optional() }), response: { 201: AddToWatchlistResponseSchema, 409: z.object({ error: z.string() }), 500: z.object({ error: z.string() }) } },
     }, async (request, reply) => {
       try {
         const userId = await authenticateSessionOrApiKey(request, reply);
@@ -878,7 +899,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
         if (result.length === 0) {
           return reply.code(409).send({ error: "Area already saved" });
         }
-        return reply.code(201).send({ area: result[0] });
+        return reply.code(201).send({ area: result[0] as unknown as SavedAreaRow });
       } catch (error) {
         logger.error("Watchlist add error:", error);
         return reply.code(500).send({ error: "Failed to save area" });
