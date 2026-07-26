@@ -17,15 +17,6 @@ vi.mock("@scalar/api-reference-react", () => ({
   },
 }));
 
-vi.mock("next/link", () => ({
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
-  ),
-}));
-
-// AR-598 (Plan 059.6): DeveloperSurface reads useSession() to decide whether
-// to fetch + preload a playground API key. Mock at the module level rather
-// than wrapping every render in a real <SessionProvider>.
 vi.mock("next-auth/react", () => ({
   useSession: () => ({ status: mockSessionStatus }),
 }));
@@ -112,5 +103,13 @@ describe("<DeveloperSurface> tier-aware auth (AR-598, Plan 059.6)", () => {
       expect(fetchMock).toHaveBeenCalled();
     });
     expect(capturedConfig?.authentication).toEqual({ preferredSecurityScheme: "bearerAuth" });
+  });
+});
+
+describe("<DeveloperSurface> AR-606 — home icon removed", () => {
+  it("does not render a home link in the header", () => {
+    const { container } = render(<DeveloperSurface />);
+    expect(container.querySelector(".developer-surface__home")).toBeNull();
+    expect(container.querySelector("header a")).toBeNull();
   });
 });

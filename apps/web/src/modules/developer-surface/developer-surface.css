@@ -27,22 +27,6 @@
   flex-shrink: 0;
 }
 
-.developer-surface__home {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  text-decoration: none;
-  color: var(--oga-fg);
-  font-family: var(--oga-font-sans);
-  font-weight: 500;
-  font-size: 0.875rem;
-  transition: opacity 0.15s;
-}
-
-.developer-surface__home:hover {
-  opacity: 0.7;
-}
-
 .developer-surface__label {
   font-family: var(--oga-font-mono);
   font-size: 0.75rem;
