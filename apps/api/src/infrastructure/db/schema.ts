@@ -101,15 +101,8 @@ export const MIGRATIONS: Migration[] = [
       `ALTER TABLE activity_events ADD COLUMN IF NOT EXISTS org_id TEXT`,
       `CREATE INDEX IF NOT EXISTS idx_activity_events_user_org_event_created
          ON activity_events (user_id, org_id, event, created_at)`,
-      // AR-289 backfill: copy org_id from api_keys for legacy rows.
-      // WHERE ae.org_id IS NULL makes this a no-op on subsequent runs
-      // (idempotent — matches the migrator's contract).
-      `UPDATE activity_events ae
-          SET org_id = ak.org_id
-         FROM api_keys ak
-        WHERE ae.org_id IS NULL
-          AND ae.user_id = ak.user_id
-          AND ak.org_id IS NOT NULL`,
+      // AR-289 backfill moved to api_keys migration — api_keys table must
+      // exist before this UPDATE ... FROM api_keys runs (idempotent).
     ],
   },
   {
@@ -156,6 +149,15 @@ export const MIGRATIONS: Migration[] = [
       `ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ`,
       `CREATE UNIQUE INDEX IF NOT EXISTS api_keys_key_hash_idx ON api_keys (key_hash)`,
       `CREATE INDEX IF NOT EXISTS api_keys_org_idx ON api_keys (org_id)`,
+      // AR-289 backfill: copy org_id from api_keys for legacy activity_events.
+      // WHERE ae.org_id IS NULL makes this a no-op on subsequent runs
+      // (idempotent — matches the migrator's contract).
+      `UPDATE activity_events ae
+          SET org_id = ak.org_id
+         FROM api_keys ak
+        WHERE ae.org_id IS NULL
+          AND ae.user_id = ak.user_id
+          AND ak.org_id IS NOT NULL`,
     ],
   },
   {
@@ -633,9 +635,8 @@ export const MIGRATIONS: Migration[] = [
          migration. Postcodes within one LSOA never span regions, so
          the DISTINCT lsoa_code -> region mapping is well-defined. */
       `ALTER TABLE geo_entities ADD COLUMN IF NOT EXISTS region TEXT`,
-      `UPDATE geo_entities ge SET region = gr.region
-         FROM (SELECT DISTINCT lsoa_code, region FROM geo_lookup WHERE region IS NOT NULL) gr
-        WHERE ge.geo_type = 'lsoa' AND ge.geo_code = gr.lsoa_code AND ge.region IS NULL`,
+      // AR-408 backfill moved to geo_lookup migration — geo_lookup table must
+      // exist before this UPDATE ... FROM geo_lookup runs (idempotent).
       `CREATE INDEX IF NOT EXISTS idx_geo_entities_region ON geo_entities (region)`,
     ],
   },
@@ -660,6 +661,12 @@ export const MIGRATIONS: Migration[] = [
       )`,
       `CREATE INDEX IF NOT EXISTS idx_geo_lookup_lsoa ON geo_lookup (lsoa_code)`,
       `CREATE INDEX IF NOT EXISTS idx_geo_lookup_lad ON geo_lookup (lad_code)`,
+      // AR-408 backfill: region from geo_lookup to geo_entities.
+      // WHERE ge.region IS NULL makes this a no-op on subsequent runs
+      // (idempotent — matches the migrator's contract).
+      `UPDATE geo_entities ge SET region = gr.region
+         FROM (SELECT DISTINCT lsoa_code, region FROM geo_lookup WHERE region IS NOT NULL) gr
+        WHERE ge.geo_type = 'lsoa' AND ge.geo_code = gr.lsoa_code AND ge.region IS NULL`,
     ],
   },
   {
