@@ -11,7 +11,20 @@ vi.mock("@/modules/auth/session-token", () => ({ verifySessionToken: vi.fn() }))
 vi.mock("@/modules/api-keys", () => ({ validateApiKey: vi.fn() }));
 vi.mock("@/modules/usage", () => ({ isSuperuser: vi.fn() }));
 vi.mock("@/modules/admin", () => ({
-  getAnalytics: vi.fn().mockResolvedValue({ ok: true }),
+  getAnalytics: vi.fn().mockResolvedValue({
+    totalUsers: 0,
+    totalApiCalls: 0,
+    apiCallsThisMonth: 0,
+    activeUsersThisMonth: 0,
+    apiCallsPerDay: [],
+    topAreas: [],
+    recentActivity: [],
+    userGrowth: [],
+    usersWithApiCalls: 0,
+    paidUsers: 0,
+    subscriptionsByPlan: [],
+    mrr: 0,
+  }),
   getTrafficAnalytics: vi.fn(),
   getAudienceStats: vi.fn(),
   getUsageStats: vi.fn(),
