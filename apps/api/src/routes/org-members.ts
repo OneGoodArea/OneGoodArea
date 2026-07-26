@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "@fastify/type-provider-zod";
 import { z } from "zod";
-import { AddMemberRequestSchema, UpdateMemberRoleRequestSchema, CreateInvitationRequestSchema } from "@onegoodarea/contracts";
+import { AddMemberRequestSchema, UpdateMemberRoleRequestSchema, CreateInvitationRequestSchema, ListMembersResponseSchema, OrgInvitationSchema } from "@onegoodarea/contracts";
 import { authenticateEither } from "../shared/auth-either";
 import { sendAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
@@ -30,7 +30,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             "params": IdParamsSchema,
             "response": {
-                200: z.object({ members: z.array(z.object({}).passthrough()), org_id: z.string(), caller_role: z.string() }).passthrough(),
+                200: z.object({ members: ListMembersResponseSchema, org_id: z.string(), caller_role: z.string() }),
                 404: z.object({ error: z.string() }),
                 500: z.object({ error: z.string() }),
             },
@@ -287,7 +287,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
             "params": IdParamsSchema,
             "body": CreateInvitationRequestSchema,
             "response": {
-                201: z.object({ invitation: z.object({}).passthrough() }),
+                201: z.object({ invitation: OrgInvitationSchema }),
                 403: z.object({ error: z.string(), code: z.string() }),
                 404: z.object({ error: z.string() }),
                 409: z.object({ error: z.string(), code: z.string() }),
@@ -340,7 +340,7 @@ export function registerOrgMembersRoutes(app: FastifyInstance): void {
             "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
             "params": IdParamsSchema,
             "response": {
-                200: z.object({ invitations: z.array(z.object({}).passthrough()) }).passthrough(),
+                200: z.object({ invitations: z.array(OrgInvitationSchema) }),
                 404: z.object({ error: z.string() }),
                 500: z.object({ error: z.string() }),
             },
