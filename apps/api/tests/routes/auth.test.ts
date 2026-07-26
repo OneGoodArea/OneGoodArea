@@ -340,7 +340,7 @@ describe("GET /keys/usage", () => {
       .mockResolvedValueOnce([{ day: new Date().toISOString(), count: 5 }] as never)
       .mockResolvedValueOnce([{ created_at: "2026-05-20T00:00:00.000Z" }] as never)
       .mockResolvedValueOnce([
-        { id: "key_1", key_preview: "oga_abcd", name: "Default", created_at: "2026-01-01", last_used_at: null },
+        { id: "key_1", key_preview: "oga_abcd", name: "Default", created_at: "2026-01-01", last_used_at: null, training_optout: false },
       ] as never);
 
     const res = await app.inject({ method: "GET", url: "/keys/usage", headers: AUTH });
@@ -351,7 +351,7 @@ describe("GET /keys/usage", () => {
     expect(body.monthlyLimit).toBe(6000);
     expect(body.dailyData).toHaveLength(30);
     expect(body.keys).toEqual([
-      { id: "key_1", key_preview: "oga_abcd", name: "Default", created_at: "2026-01-01", last_used_at: null },
+      { id: "key_1", key_preview: "oga_abcd", name: "Default", created_at: "2026-01-01", last_used_at: null, training_optout: false },
     ]);
   });
 
