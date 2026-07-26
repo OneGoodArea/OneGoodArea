@@ -4,6 +4,15 @@ import { authenticateSessionOrApiKey } from "../shared/auth-session";
 import { logger } from "../modules/tracking/structured-logger";
 import { isSuperuser } from "../modules/usage";
 import { getAnalytics, getTrafficAnalytics, getAudienceStats, getUsageStats, getRevenueExtras, getMcpAdoption, getTrainingCorpusStats } from "../modules/admin";
+import {
+  AdminAnalyticsResponseSchema,
+  AdminTrafficAnalyticsResponseSchema,
+  AdminAudienceResponseSchema,
+  AdminUsageResponseSchema,
+  AdminRevenueResponseSchema,
+  AdminMcpAdoptionResponseSchema,
+  AdminTrainingCorpusResponseSchema,
+} from "@onegoodarea/contracts";
 
 /** admin route handlers — extracted from app.ts per AR-286. */
 export function registerAdminRoutes(app: FastifyInstance): void {
@@ -16,7 +25,7 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           "x-internal": true,
           response: {
-            200: z.object({}).passthrough(),
+            200: AdminAnalyticsResponseSchema,
             403: z.object({ error: z.string(), code: z.string().optional() }),
             500: z.object({ error: z.string() }),
           },
@@ -46,7 +55,7 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           "x-internal": true,
           response: {
-            200: z.object({}).passthrough(),
+            200: AdminTrafficAnalyticsResponseSchema,
             403: z.object({ error: z.string(), code: z.string().optional() }),
             500: z.object({ error: z.string() }),
             503: z.object({ error: z.string() }),
@@ -81,7 +90,7 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           "x-internal": true,
           response: {
-            200: z.object({}).passthrough(),
+            200: AdminAudienceResponseSchema,
             403: z.object({ error: z.string(), code: z.string().optional() }),
             500: z.object({ error: z.string() }),
           },
@@ -114,7 +123,7 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           "x-internal": true,
           response: {
-            200: z.object({}).passthrough(),
+            200: AdminUsageResponseSchema,
             403: z.object({ error: z.string(), code: z.string().optional() }),
             500: z.object({ error: z.string() }),
           },
@@ -147,7 +156,7 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           "x-internal": true,
           response: {
-            200: z.object({}).passthrough(),
+            200: AdminRevenueResponseSchema,
             403: z.object({ error: z.string(), code: z.string().optional() }),
             500: z.object({ error: z.string() }),
           },
@@ -181,7 +190,7 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           "x-internal": true,
           response: {
-            200: z.object({}).passthrough(),
+            200: AdminMcpAdoptionResponseSchema,
             403: z.object({ error: z.string(), code: z.string().optional() }),
             500: z.object({ error: z.string() }),
           },
@@ -213,7 +222,7 @@ export function registerAdminRoutes(app: FastifyInstance): void {
           security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           "x-internal": true,
           response: {
-            200: z.object({}).passthrough(),
+            200: AdminTrainingCorpusResponseSchema,
             403: z.object({ error: z.string(), code: z.string().optional() }),
             500: z.object({ error: z.string() }),
           },
