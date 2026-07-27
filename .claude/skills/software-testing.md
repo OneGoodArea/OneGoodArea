@@ -7,7 +7,7 @@ Check for available local container runtimes before running tests:
 1. Prefer **Podman** if `podman` CLI is present.
 1. Fall back to **Docker** if `docker` CLI is present.
 1. Fall back to host execution (`npm test`) **ONLY** if neither container engine is available or explicitly requested by the user.
-1. You dont test against the real / live deployed system, UNLESS EXPLICETELY told to and even then you MUST confirm
+1. You dont test against the real / live deployed system, UNLESS EXPLICITELY told to and even then you MUST confirm
 
 ## 2. Test Execution Protocol
 - **Container Environment:** Use the project's default container definition (`Dockerfile`, `docker-compose.yml`, or `podman-compose.yml`).

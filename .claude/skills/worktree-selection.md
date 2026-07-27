@@ -4,7 +4,7 @@ To keep work isolated and prevent context-switching friction, evaluate change sc
 
 ## Decision Process
 
-Always suggest worktrees, unless it is a really small change, then you ask if worktree or branches. NEVER IN MAIN, EVER!
+Mostly suggest worktrees, unless it is a really small change, such as around 10 lines in no more than 3 files total, then you ask if worktree or branches. NEVER IN MAIN, EVER!
 
 ## Mandatory Protocol
 **Always ask the user for confirmation before creating a worktree or branch:**

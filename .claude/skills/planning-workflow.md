@@ -17,4 +17,4 @@ Always ask first: *"Do you want to brainstorm/plan or implement?"*
 1. When a story has more than 2 or 3 steps, I think each step should be a JIRA task and obviouslky a commit in the branch
 1. To be considered ready, a plan must address the GIT workflow, including worktree, commits to be done, where to wor andp ushes
 1. Also, a plan at the end, must consider JIRA. EPIC< Story, Task,Bugfix, etc.... In case of questions and dounts ask.
-1. PLans saved locally at docs/PLAN shoud follow the plan aneme patter NNN-meaningful-name
+1. Plans saved locally at docs/PLAN shoud follow the plan name pattern NNN-meaningful-name
