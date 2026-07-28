@@ -179,6 +179,30 @@ describe("GET /me/activity", () => {
     expect(body.page_size).toBe(20);
   });
 
+  /* AR-629: the Neon driver returns activity_events.created_at as a Date, not
+     a string. The event was passed through raw, so the Zod response serializer
+     (ActivityEventSchema.created_at is z.string()) rejected the Date and
+     /me/activity 500'd. The choke-point coercion (hybridSerializerCompiler)
+     converts Date -> ISO before validation. The earlier test masked this by
+     mocking created_at as a string. */
+  it("serialises a driver Date created_at to an ISO string (does not 500)", async () => {
+    const createdAt = new Date("2026-06-09T12:00:00.000Z");
+    mockSql
+      .mockResolvedValueOnce([
+        { id: "evt_1", user_id: "user_1", event: "api.score.computed", metadata: {}, created_at: createdAt },
+      ] as never)
+      .mockResolvedValueOnce([{ total: 1 }] as never);
+
+    const res = await app.inject({
+      method: "GET",
+      url: "/me/activity",
+      headers: { authorization: "Bearer good-token" },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json().events[0].created_at).toBe(createdAt.toISOString());
+  });
+
   it("honours page + page_size query params", async () => {
     mockSql
       .mockResolvedValueOnce([] as never)
