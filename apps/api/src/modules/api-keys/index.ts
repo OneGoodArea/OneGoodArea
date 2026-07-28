@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { generateId } from "../../infrastructure/utils/id";
+import { isoOrNull } from "../../infrastructure/utils/iso-date";
 import { ApiKeyRepository } from "../../infrastructure/db/dal";
 import { ipMatchesCidrs } from "../../infrastructure/utils/ip-cidr";
 import type { ApiKeyRow } from "../../infrastructure/db/types";
@@ -101,8 +102,8 @@ export async function listApiKeys(userId: string) {
     id: r.id,
     key_preview: r.key_preview,
     name: r.name,
-    created_at: r.created_at,
-    last_used_at: r.last_used_at,
+    created_at: isoOrNull(r.created_at) as string, // NOT NULL column
+    last_used_at: isoOrNull(r.last_used_at),
     training_optout: r.training_optout,
   }));
 }
