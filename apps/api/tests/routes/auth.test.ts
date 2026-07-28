@@ -355,6 +355,33 @@ describe("GET /keys/usage", () => {
     ]);
   });
 
+  /* AR-628: the Neon driver returns timestamptz columns as JS Date objects,
+     not strings. The 200 response schema (ApiKeyUsageResponseSchema) types
+     created_at / last_used_at / lastRequestAt as z.string(), so the Zod
+     serializer (AR-592) rejects a Date and throws OUTSIDE the handler's
+     try/catch, surfacing as a bare Fastify 500. The prior tests masked this
+     by mocking the date columns as strings. Mirror what the driver actually
+     returns. */
+  it("serialises Date columns from the driver to ISO strings (does not 500)", async () => {
+    const createdAt = new Date("2026-01-01T09:00:00.000Z");
+    const lastUsedAt = new Date("2026-05-20T14:30:00.000Z");
+    mockSql
+      .mockResolvedValueOnce([{ count: 42 }] as never)
+      .mockResolvedValueOnce([{ count: 7 }] as never)
+      .mockResolvedValueOnce([{ day: new Date("2026-05-20T00:00:00.000Z"), count: 5 }] as never)
+      .mockResolvedValueOnce([{ created_at: lastUsedAt }] as never)
+      .mockResolvedValueOnce([
+        { id: "key_1", key_preview: "oga_abcd", name: "Default", created_at: createdAt, last_used_at: lastUsedAt, training_optout: false },
+      ] as never);
+
+    const res = await app.inject({ method: "GET", url: "/keys/usage", headers: AUTH });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.lastRequestAt).toBe(lastUsedAt.toISOString());
+    expect(body.keys[0].created_at).toBe(createdAt.toISOString());
+    expect(body.keys[0].last_used_at).toBe(lastUsedAt.toISOString());
+  });
+
   describe("?org=<id> filter (AR-289)", () => {
     it("403s when the caller is not a member of the requested org", async () => {
       vi.mocked(sql).mockResolvedValueOnce([] as never);

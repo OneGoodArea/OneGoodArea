@@ -40,6 +40,30 @@ describe("getAnalytics", () => {
     // MRR = business(249)*2 + growth(499)*1 = 997
     expect(a.mrr).toBe(997);
   });
+
+  /* AR-628: the Neon driver returns activity_events.created_at as a Date, not
+     a string. recentActivity was passed through raw, so the Zod response
+     serializer (AR-592) rejected the Date and /admin/analytics 500'd. The
+     earlier test masked it by mocking created_at as a string. */
+  it("normalizes recentActivity.created_at (a driver Date) to an ISO string", async () => {
+    const createdAt = new Date("2026-05-01T12:34:56.000Z");
+    mockSql
+      .mockResolvedValueOnce([{ count: 1 }] as never)    // totalUsers
+      .mockResolvedValueOnce([{ count: 1 }] as never)    // totalApiCalls
+      .mockResolvedValueOnce([{ count: 1 }] as never)    // apiCallsThisMonth
+      .mockResolvedValueOnce([] as never)                // apiCallsPerDay
+      .mockResolvedValueOnce([] as never)                // topAreas
+      .mockResolvedValueOnce([{ event: "api.score.scored", user_id: "u1", metadata: {}, created_at: createdAt, name: "A", email: "a@b.com" }] as never) // recentActivity (Date!)
+      .mockResolvedValueOnce([] as never)                // userGrowth
+      .mockResolvedValueOnce([{ count: 0 }] as never)    // activeUsersThisMonth
+      .mockResolvedValueOnce([{ count: 0 }] as never)    // usersWithApiCalls
+      .mockResolvedValueOnce([{ count: 0 }] as never)    // paidUsers
+      .mockResolvedValueOnce([] as never);               // subscriptionsByPlan
+
+    const a = await getAnalytics();
+    expect(a.recentActivity[0].created_at).toBe(createdAt.toISOString());
+    expect(typeof a.recentActivity[0].created_at).toBe("string");
+  });
 });
 
 describe("getTrafficAnalytics", () => {
@@ -108,6 +132,20 @@ describe("getUsageStats", () => {
 
     expect(u.top_endpoints).toHaveLength(6);
     expect(u.top_endpoints[0]).toMatchObject({ event: "api.score.computed", count: 50 });
+  });
+
+  /* AR-628: MAX(created_at) comes back from the driver as a Date. Normalize
+     to an ISO string so the Zod response serializer accepts it. */
+  it("normalizes top_endpoints.last_seen (a driver Date) to an ISO string", async () => {
+    const lastSeen = new Date("2026-06-14T10:00:00.000Z");
+    mockSql
+      .mockResolvedValueOnce([{ count: 1 }] as never)
+      .mockResolvedValueOnce([{ count: 1 }] as never)
+      .mockResolvedValueOnce([{ event: "api.score.computed", count: 1, last_seen: lastSeen }] as never);
+
+    const u = await getUsageStats();
+    expect(u.top_endpoints[0].last_seen).toBe(lastSeen.toISOString());
+    expect(typeof u.top_endpoints[0].last_seen).toBe("string");
   });
 
   it("handles a zero-traffic period gracefully (every product at 0, no top picks)", async () => {
