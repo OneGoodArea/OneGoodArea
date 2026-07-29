@@ -4,7 +4,7 @@ import PricingClient from "@/app/design-v2/pricing/client";
 export const metadata: Metadata = {
   title: "Pricing | OneGoodArea",
   description:
-    "OneGoodArea is packaged around how your team uses UK area intelligence. Developer (free evaluation), Core API from £2,000/mo, Decision Intelligence from £5,000/mo, and Enterprise Monitor (custom). Annual contracts, paid pilots, demo-led.",
+    "OneGoodArea is packaged around how your team uses UK area intelligence. Developer (free, 30-day full-access evaluation), Core API from £2,000/mo, Decision Intelligence from £5,000/mo, and Enterprise Monitor (custom). Annual contracts, paid pilots, demo-led.",
   keywords: [
     "OneGoodArea pricing",
     "UK area intelligence pricing",
