@@ -15,7 +15,7 @@ export function getEmailProvider(): EmailProvider {
   if (!cachedProvider) {
     cachedProvider =
       getConfig().emailProvider === "mailhog"
-        ? new MailhogEmailProvider()
+        ? new MailhogEmailProvider(getConfig().emailHost, getConfig().emailPort)
         : new ResendEmailProvider();
   }
   return cachedProvider;

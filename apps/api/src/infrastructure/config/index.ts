@@ -30,6 +30,8 @@ export interface ApiConfig {
 
   // Email
   emailProvider: string;
+  emailHost: string;
+  emailPort: number;
   resendApiKey: string | undefined;
 
   // Stripe
@@ -107,6 +109,8 @@ export function getConfig(): ApiConfig {
 
     // Email
     emailProvider: process.env.OGA_EMAIL_PROVIDER ?? "resend",
+    emailHost: process.env.OGA_EMAIL_HOST ?? "127.0.0.1",
+    emailPort: Number(process.env.OGA_EMAIL_PORT ?? 1025),
     resendApiKey: process.env.RESEND_API_KEY,
 
     // Stripe

@@ -1,10 +1,10 @@
 import net from "node:net";
 import type { EmailMessage, EmailProvider } from "./types";
 
-/* Local-dev email provider: speaks minimal SMTP to MailHog on 127.0.0.1:1025.
-   Migrated VERBATIM from the legacy src/lib/email/providers/mailhog-provider.ts.
+/* Local-dev email provider: speaks minimal SMTP to MailHog.
    Selected via OGA_EMAIL_PROVIDER=mailhog (see ./index). The Resend provider is
-   the default for prod. */
+   the default for prod. Host/port configurable via OGA_EMAIL_HOST / OGA_EMAIL_PORT
+   (defaults: 127.0.0.1:1025). Inside Docker Compose, set OGA_EMAIL_HOST=mailhog. */
 
 function writeCommand(socket: net.Socket, command: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -24,8 +24,8 @@ function writeCommand(socket: net.Socket, command: string): Promise<string> {
   });
 }
 
-async function sendSmtpMessage(message: EmailMessage): Promise<void> {
-  const socket = net.createConnection({ host: "127.0.0.1", port: 1025 });
+async function sendSmtpMessage(message: EmailMessage, host: string, port: number): Promise<void> {
+  const socket = net.createConnection({ host, port });
 
   await new Promise<void>((resolve, reject) => {
     socket.once("connect", resolve);
@@ -54,7 +54,15 @@ async function sendSmtpMessage(message: EmailMessage): Promise<void> {
 }
 
 export class MailhogEmailProvider implements EmailProvider {
+  private host: string;
+  private port: number;
+
+  constructor(host = "127.0.0.1", port = 1025) {
+    this.host = host;
+    this.port = port;
+  }
+
   async send(message: EmailMessage): Promise<void> {
-    await sendSmtpMessage(message);
+    await sendSmtpMessage(message, this.host, this.port);
   }
 }
