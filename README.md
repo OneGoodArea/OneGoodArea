@@ -1,14 +1,14 @@
-![Build Status](https://github.com)
-[![Vercel Deployment](https://vercel.app)](https://onegoodarea.com)
-[![Render Deploy Status](https://render.com)](https://render.com)
-![GitHub commit activity](https://shields.io)
-![GitHub repo size](https://shields.io)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/OneGoodArea/OneGoodArea/ci.yml?branch=main&logo=github)](https://github.com/OneGoodArea/OneGoodArea/actions)
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-000?logo=vercel&logoColor=fff)](https://onegoodarea.com)
+[![Render Deploy Status](https://img.shields.io/badge/Render-46E3B7?logo=render&logoColor=fff)](https://render.com)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/OneGoodArea/OneGoodArea)
+![GitHub repo size](https://img.shields.io/github/repo-size/OneGoodArea/OneGoodArea)
 
 <!-- Ecosystem & Compliance -->
-![TypeScript](https://shields.io)
-![Fastify](https://shields.io)
-![MCP Server](https://shields.io)
-![Tests Passing](https://shields.io)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)
+![Fastify](https://img.shields.io/badge/Fastify-000?logo=fastify&logoColor=fff)
+![MCP Server](https://img.shields.io/badge/MCP%20Server-000?logo=modelcontextprotocol)
+![Tests](https://img.shields.io/badge/tests-868%20passing-2ea44f)
 
 
 # OneGoodArea
