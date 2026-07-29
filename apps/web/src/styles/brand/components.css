@@ -631,6 +631,117 @@ nav[data-oga-surface="dark"] {
 }
 .oga-hero-dark__link:hover { color: var(--oga-white); }
 
+/* Plan 064: split hero. Copy + capability chips + CTAs on the left, a live
+   request/response card on the right. Scoped to --split so the base centered
+   hero is untouched. Strictly two-color (ink + warm white) per brand; depth
+   comes from opacity, not accent colour. */
+.oga-hero-dark--split .oga-hero-dark__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.96fr);
+  align-items: center;
+  gap: clamp(28px, 5vw, 60px);
+  text-align: left;
+  max-width: 1120px;
+}
+.oga-hero-dark__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(15px, 2vh, 22px);
+}
+.oga-hero-dark__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.5);
+}
+.oga-hero-dark__eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(250, 248, 244, 0.85);
+}
+.oga-hero-dark--split .oga-hero-dark__title {
+  text-align: left;
+  max-width: 100%;
+  font-size: clamp(30px, 3.6vw, 50px);
+}
+.oga-hero-dark--split .oga-hero-dark__lead {
+  text-align: left;
+  max-width: 46ch;
+}
+.oga-hero-dark__caps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+.oga-hero-dark__caps span {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.62);
+  border: 1px solid rgba(250, 248, 244, 0.16);
+  border-radius: 999px;
+  padding: 4px 11px;
+}
+.oga-hero-dark--split .oga-hero-dark__cta {
+  justify-content: flex-start;
+  margin-top: 8px;
+}
+.oga-hero-dark__code {
+  width: 100%;
+  border: 1px solid rgba(250, 248, 244, 0.13);
+  border-radius: 12px;
+  background: rgba(9, 10, 11, 0.5);
+  box-shadow: 0 26px 60px -34px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+}
+.oga-hero-dark__code-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 15px;
+  border-bottom: 1px solid rgba(250, 248, 244, 0.1);
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: rgba(250, 248, 244, 0.55);
+}
+.oga-hero-dark__code-bar i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(250, 248, 244, 0.2);
+  display: inline-block;
+}
+.oga-hero-dark__code-bar span { margin-left: 8px; }
+.oga-hero-dark__code-pre {
+  margin: 0;
+  padding: 16px 18px;
+  font-family: var(--oga-font-mono);
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: rgba(250, 248, 244, 0.6);
+  overflow-x: auto;
+  white-space: pre;
+}
+.oga-hero-dark__code-pre b {
+  font-weight: 500;
+  color: rgba(250, 248, 244, 0.92);
+}
+@media (max-width: 860px) {
+  .oga-hero-dark--split .oga-hero-dark__inner {
+    grid-template-columns: 1fr;
+    gap: clamp(26px, 5vh, 40px);
+  }
+}
+
 /* Footer signal strip — small ambient sources list, not a chip */
 .oga-hero-dark__foot {
   position: relative;
