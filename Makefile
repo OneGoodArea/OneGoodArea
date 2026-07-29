@@ -1,7 +1,8 @@
 include build/container.mk
+include build/compose.mk
 include build/targets-app.mk
-include build/targets-compose.mk
-include build/targets-services.mk
+include build/stack.mk
+include build/test.mk
 include build/targets-scripts.mk
 include build/help.mk
 

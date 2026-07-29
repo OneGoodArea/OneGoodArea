@@ -1,11 +1,5 @@
 .PHONY: stack-up-min stack-up-full stack-down stack-logs stack-clean build-api-image build-web-image
 
-COMPOSE_FILE ?= compose/compose.yml
-COMPOSE_OVERRIDE_FILE ?= compose/compose.override.yml
-COMPOSE_FILES = -f $(COMPOSE_FILE) -f $(COMPOSE_OVERRIDE_FILE)
-CTR_COMPOSE_CMD = $(CTR_COMPOSE) $(COMPOSE_FILES)
-BUILD_FLAG ?= 
-
 stack-up-min: ## Boot minimal stack (postgres, neon-proxy, api, web)
 	$(CTR_COMPOSE_CMD) --profile minimal up -d $(BUILD_FLAG)
 
