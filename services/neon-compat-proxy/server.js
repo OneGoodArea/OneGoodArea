@@ -2,6 +2,7 @@ const http = require("http");
 const { Pool } = require("pg");
 
 const PORT = Number(process.env.PORT || 55433);
+const DEBUG = process.env.DEBUG === "true" || process.env.DEBUG === "1" || process.env.DEBUG === "sql";
 
 const pool = new Pool({
   user: process.env.POSTGRES_USER || "oga_user",
@@ -33,6 +34,7 @@ const server = http.createServer(async (req, res) => {
     });
 
     req.on("end", async () => {
+      const start = Date.now();
       try {
         const payload = raw ? JSON.parse(raw) : {};
         const text = payload.query;
@@ -42,6 +44,11 @@ const server = http.createServer(async (req, res) => {
           return json(res, 400, { error: "query must be a non-empty string" });
         }
 
+        if (DEBUG) {
+          console.log(`[neon-proxy] SQL: ${text.length > 200 ? text.slice(0, 200) + "..." : text}`);
+          if (values.length > 0) console.log(`[neon-proxy] params: ${JSON.stringify(values)}`);
+        }
+
         // rowMode: "array" returns rows as arrays of positional values
         // (e.g. [1, "x"]) matching Neon's HTTP protocol contract. The
         // @neondatabase/serverless driver expects this shape and converts
@@ -49,6 +56,7 @@ const server = http.createServer(async (req, res) => {
         // pg's default object rows (e.g. {col: 1}) trips the driver's
         // processQueryResult with "c.map is not a function". (AR-247)
         const result = await pool.query({ text, values, rowMode: "array" });
+        if (DEBUG) console.log(`[neon-proxy] rows: ${result.rowCount}, duration: ${Date.now() - start}ms`);
         return json(res, 200, {
           command: result.command,
           rowCount: result.rowCount,
@@ -56,7 +64,9 @@ const server = http.createServer(async (req, res) => {
           fields: result.fields.map((field) => ({ name: field.name, dataTypeID: field.dataTypeID })),
         });
       } catch (error) {
-        return json(res, 500, { error: error instanceof Error ? error.message : "query execution failed" });
+        const msg = error instanceof Error ? error.message : "query execution failed";
+        console.error(`[neon-proxy] SQL error after ${Date.now() - start}ms: ${msg}`);
+        return json(res, 500, { error: msg });
       }
     });
     return;
