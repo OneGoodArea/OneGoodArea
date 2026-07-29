@@ -28,6 +28,7 @@ services:
       POSTGRES_DB: oga_local
       POSTGRES_HOST: postgres
       POSTGRES_PORT: "5432"
+      DEBUG: "true"
     depends_on:
       postgres:
         condition: service_healthy
