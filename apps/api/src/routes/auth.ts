@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { hashPassword, verifyPassword, generateToken } from "../modules/auth/crypto";
 import { normalizeSignupSource } from "../modules/auth/signup-source";
-import { sendVerificationEmail, sendPasswordResetEmail, sendMagicLinkEmail } from "../infrastructure/email/senders";
+import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendMagicLinkEmail } from "../infrastructure/email/senders";
 import { sql } from "../infrastructure/db/client";
 import { row, type UserRow, type PasswordResetTokenRow } from "../infrastructure/db/types";
 import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
@@ -206,6 +206,60 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         return reply.send({ ok: true });
       } catch (error) {
         logger.error("[resend-verification] Error:", error);
+        return reply.code(500).send({ error: "Something went wrong" });
+      }
+    });
+
+    app.post("/auth/verify-email", {
+      schema: {
+        tags: ["Auth"],
+        summary: "Verify email",
+        description: "Verify an email address using a token from the verification email.",
+        "x-internal": true,
+        response: {
+          200: z.object({ ok: z.literal(true) }),
+          400: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
+      },
+    }, async (request, reply) => {
+      try {
+        const { token } = (request.body ?? {}) as { token?: unknown };
+        if (!token || typeof token !== "string") {
+          return reply.code(400).send({ error: "Token is required" });
+        }
+
+        const rows = await sql`
+          SELECT user_id, email, expires_at, used FROM email_verification_tokens
+          WHERE token = ${token}
+        `;
+
+        if (rows.length === 0) {
+          return reply.code(400).send({ error: "Invalid or expired verification link" });
+        }
+
+        const record = row<{ user_id: string; email: string; expires_at: string; used: boolean }>(rows[0]);
+        if (record.used) {
+          return reply.code(400).send({ error: "This verification link has already been used" });
+        }
+        if (new Date(record.expires_at) < new Date()) {
+          return reply.code(400).send({ error: "This verification link has expired" });
+        }
+
+        await sql`UPDATE email_verification_tokens SET used = TRUE WHERE token = ${token}`;
+        await sql`UPDATE users SET email_verified = TRUE WHERE id = ${record.user_id}`;
+
+        try {
+          const userRows = await sql`SELECT name FROM users WHERE id = ${record.user_id}`;
+          const name = (userRows.length > 0 ? String((userRows[0] as { name: string }).name) : null) || "there";
+          await sendWelcomeEmail(record.email, name);
+        } catch {
+          // Welcome email is best-effort
+        }
+
+        return reply.send({ ok: true });
+      } catch (error) {
+        logger.error("[verify-email] Error:", error);
         return reply.code(500).send({ error: "Something went wrong" });
       }
     });

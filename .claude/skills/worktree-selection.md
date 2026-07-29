@@ -2,6 +2,10 @@
 
 To keep work isolated and prevent context-switching friction, evaluate change scope and parallelism.
 
+## Worktree Location
+
+Worktrees go in `.worktrees/<jira-key>-<short-description>` under the repo root (e.g. `.worktrees/AR-644-verify-email-proxy`).
+
 ## Decision Process
 
 Mostly suggest worktrees, unless it is a really small change, such as around 10 lines in no more than 3 files total, then you ask if worktree or branches. NEVER IN MAIN, EVER!
