@@ -1,12 +1,14 @@
-[![CI](https://github.com)](https://github.com)
+![Build Status](https://github.com)
+[![Vercel Deployment](https://vercel.app)](https://onegoodarea.com)
+[![Render Deploy Status](https://render.com)](https://render.com)
 ![GitHub commit activity](https://shields.io)
-![Website](https://shields.io)
 ![GitHub repo size](https://shields.io)
-![Vercel](https://vercel.app)
-[![Render Status](https://render.com)](https://render.com)
-![MCP Server](https://shields.io)
-![Fastify](https://shields.io)
+
+<!-- Ecosystem & Compliance -->
 ![TypeScript](https://shields.io)
+![Fastify](https://shields.io)
+![MCP Server](https://shields.io)
+![Tests Passing](https://shields.io)
 
 
 # OneGoodArea
