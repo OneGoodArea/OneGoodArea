@@ -979,6 +979,101 @@ nav[data-oga-surface="dark"] {
 }
 
 /* ============================================================
+   HOW IT WORKS (01) — dark explainer, cohesive with the hero.
+   Three steps from postcode to product. Two-color. Plan 064.
+   ============================================================ */
+.oga-how {
+  position: relative;
+  background: var(--oga-ink);
+  color: var(--oga-white);
+  padding: clamp(64px, 9vh, 104px) clamp(20px, 4vw, 56px);
+  border-top: 1px solid rgba(250, 248, 244, 0.08);
+}
+.oga-how__inner {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+.oga-how__header {
+  margin-bottom: clamp(32px, 5vh, 52px);
+  max-width: 720px;
+}
+.oga-how__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.5);
+  margin-bottom: 16px;
+}
+.oga-how__eyebrow-num { color: var(--oga-white); }
+.oga-how__eyebrow-line { width: 36px; height: 1px; background: rgba(250, 248, 244, 0.2); }
+.oga-how__title {
+  font-family: var(--oga-font-sans);
+  font-size: clamp(30px, 4vw, 48px);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.028em;
+  color: var(--oga-white);
+  margin: 0;
+  text-wrap: balance;
+  max-width: 20ch;
+}
+.oga-how__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(20px, 3vw, 40px);
+}
+.oga-how__step {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(250, 248, 244, 0.14);
+}
+.oga-how__step-num {
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: rgba(250, 248, 244, 0.45);
+}
+.oga-how__step-title {
+  font-family: var(--oga-font-sans);
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--oga-white);
+  margin: 0;
+}
+.oga-how__step-body {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(250, 248, 244, 0.62);
+  margin: 0;
+}
+.oga-how__step-chip {
+  align-self: flex-start;
+  margin-top: 2px;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: rgba(250, 248, 244, 0.75);
+  border: 1px solid rgba(250, 248, 244, 0.16);
+  border-radius: 6px;
+  padding: 5px 10px;
+}
+@media (max-width: 820px) {
+  .oga-how__steps { grid-template-columns: 1fr; gap: 0; }
+  .oga-how__step { padding-top: 20px; padding-bottom: 20px; }
+}
+
+/* ============================================================
    BUILT-FOR SECTION v2 — Interactive tab + featured panel.
    Tab strip across top, one workflow visible at a time, bespoke
    per-workflow dot-mark visual that morphs between states.

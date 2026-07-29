@@ -3,6 +3,7 @@
 import { Nav } from "./_shared/nav";
 import { Footer } from "./_shared/footer";
 import { HeroPlotted } from "./_shared/hero-plotted";
+import { HowItWorksSection } from "./_shared/how-it-works-section";
 import { BuiltForSection } from "./_shared/built-for-section";
 import { ProductsSection } from "./_shared/products-section";
 import { IntegrationSection } from "./_shared/integration-section";
@@ -27,6 +28,7 @@ export default function DesignV2Client() {
     <div className="oga-root">
       <Nav />
       <HeroPlotted />
+      <HowItWorksSection />
       <BuiltForSection />
       <ProductsSection />
       <IntegrationSection />
