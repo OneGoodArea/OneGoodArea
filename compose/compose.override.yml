@@ -4,7 +4,7 @@ services:
       - "55432:5432"
     volumes:
       - oga-postgres-data:/var/lib/postgresql/data
-      - ../apps/web/tests/db/bootstrap:/docker-entrypoint-initdb.d:ro
+      - ../apps/web/tests/db/bootstrap:/docker-entrypoint-initdb.d:ro,z
 
   neon-proxy:
     ports:
