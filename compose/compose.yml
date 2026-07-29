@@ -58,6 +58,7 @@ services:
       NEXTAUTH_URL: http://localhost:3000
       OGA_AI_PROVIDER: mock
       OGA_EMAIL_PROVIDER: mailhog
+      OGA_EMAIL_HOST: mailhog
       OGA_SIGNALS_API: "true"
       OGA_SIGNALS_STORE_READ: "true"
       CRON_SECRET: replace-me
@@ -78,6 +79,7 @@ services:
       PORT: 3000
       HOSTNAME: 0.0.0.0
       AUTH_SECRET: replace-me
+      AUTH_TRUST_HOST: "true"
       NEXTAUTH_URL: http://localhost:3000
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       INTERNAL_API_URL: http://api:8080
