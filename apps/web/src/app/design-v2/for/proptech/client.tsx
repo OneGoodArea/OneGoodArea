@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Nav } from "../../_shared/nav";
 import { Footer } from "../../_shared/footer";
-import { DEMO_URL } from "../../_shared/book-demo";
 import "../_shared/icp-page.css";
 
 /* /for/proptech — AR-204 PR — per-ICP page #1.
@@ -56,12 +55,12 @@ function Hero() {
           Built for portals, valuation tools, agent CRMs, and search products.
         </p>
         <div className="oga-icp-hero__ctas">
-          <Link href={DEMO_URL} className="oga-btn oga-btn-primary">
-            Book a demo
+          <Link href="/playground" className="oga-btn oga-btn-primary">
+            Try in the playground
             <span aria-hidden>→</span>
           </Link>
-          <Link href="/products/signals" className="oga-btn oga-btn-secondary">
-            See Signals
+          <Link href="/docs" className="oga-btn oga-btn-secondary">
+            See the docs
           </Link>
         </div>
       </div>
@@ -458,8 +457,8 @@ function FinalCta() {
           dozen data integrations.
         </p>
         <div className="oga-icp-cta__ctas">
-          <Link href={DEMO_URL} className="oga-btn oga-btn-primary">
-            Book a demo
+          <Link href="/playground" className="oga-btn oga-btn-primary">
+            Try in the playground
             <span aria-hidden>→</span>
           </Link>
           <Link href="/methodology" className="oga-btn oga-btn-secondary">

@@ -59,11 +59,11 @@ function Hero() {
         </p>
         <div className="oga-icp-hero__ctas">
           <Link href={DEMO_URL} className="oga-btn oga-btn-primary">
-            Book a demo
+            Talk to sales
             <span aria-hidden>→</span>
           </Link>
-          <Link href="/products/scores" className="oga-btn oga-btn-secondary">
-            See Scores
+          <Link href="/methodology" className="oga-btn oga-btn-secondary">
+            Read the methodology
           </Link>
         </div>
       </div>
