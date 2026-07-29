@@ -33,11 +33,12 @@ const PACKAGES: Pkg[] = [
     id: "developer",
     name: "Developer",
     price: "Free",
-    priceNote: "Evaluation only",
-    tagline: "Evaluate the API and explore the MCP server. Not licensed for production use.",
+    priceNote: "30-day evaluation",
+    tagline: "Full access to all four products and the MCP server for 30 days, free. Evaluation only, not licensed for production use.",
     features: [
+      "Full access to all four products for 30 days",
       "MCP server access",
-      "Sample signals and demo scoring",
+      "50 natural-language queries included",
       "Full docs and OpenAPI spec",
       "No card required",
     ],
@@ -95,20 +96,32 @@ const PACKAGES: Pkg[] = [
 ];
 
 type Cell = string | boolean;
-const COLS = ["Developer", "Core API", "Decision Intelligence", "Enterprise Monitor"];
+const COLS: { name: string; sub?: string }[] = [
+  { name: "Developer", sub: "30-day trial" },
+  { name: "Core API" },
+  { name: "Decision Intelligence" },
+  { name: "Enterprise Monitor" },
+];
 const HIGHLIGHT_COL = 2;
 
+/* Developer column shows the 30-day evaluation as "Trial" tokens rather than
+   solid entitlements: every product is unlocked to try, but as time-boxed
+   evaluation access, not a permanent grant, so the free column never reads as
+   out-featuring the paid Core tier. MCP stays a solid tick (the tier's core).
+   Enterprise controls (presets, cohorts, pinning, allowlisting, SLA) are not
+   part of the products, so they stay excluded, and production use is never
+   granted. After 30 days Developer reverts to sample and demo. */
 const MATRIX: { label: string; values: Cell[] }[] = [
   { label: "MCP server", values: [true, true, true, true] },
-  { label: "Signals", values: ["Sample", true, true, true] },
-  { label: "Scores", values: ["Demo", "Basic", "Full", "Full"] },
-  { label: "Intelligence", values: [false, "Limited", "Full", "Full"] },
-  { label: "Ranked area search", values: [false, "Limited", true, true] },
-  { label: "Peer comparison", values: [false, "Limited", true, true] },
-  { label: "Insights and anomaly detection", values: [false, false, true, true] },
-  { label: "Forecasts", values: [false, false, true, true] },
-  { label: "Natural-language planner", values: [false, false, true, true] },
-  { label: "Monitor and webhooks", values: [false, false, "Add-on", true] },
+  { label: "Signals", values: ["Trial", true, true, true] },
+  { label: "Scores", values: ["Trial", "Basic", "Full", "Full"] },
+  { label: "Intelligence", values: ["Trial", "Limited", "Full", "Full"] },
+  { label: "Ranked area search", values: ["Trial", "Limited", true, true] },
+  { label: "Peer comparison", values: ["Trial", "Limited", true, true] },
+  { label: "Insights and anomaly detection", values: ["Trial", false, true, true] },
+  { label: "Forecasts", values: ["Trial", false, true, true] },
+  { label: "Natural-language planner", values: ["Trial", false, true, true] },
+  { label: "Monitor and webhooks", values: ["Trial", false, "Add-on", true] },
   { label: "Custom presets", values: [false, false, true, true] },
   { label: "Custom cohorts", values: [false, false, "Add-on", true] },
   { label: "Methodology pinning", values: [false, false, false, true] },
@@ -120,11 +133,11 @@ const MATRIX: { label: string; values: Cell[] }[] = [
 const FAQS: { q: string; a: string }[] = [
   {
     q: "How do I get started?",
-    a: "Book a demo. We look at your use case, then either run a paid pilot or move straight to an annual contract. Developer access is free if you just want to evaluate the API or explore the MCP server first.",
+    a: "Book a demo. We look at your use case, then either run a paid pilot or move straight to an annual contract. Developer access is free for 30 days if you just want to evaluate the API or explore the MCP server first.",
   },
   {
     q: "Is there a free trial?",
-    a: "Developer is free for evaluation, prototyping and MCP exploration. It is not licensed for production, customer-facing or revenue-generating use. For a production evaluation we run a fixed-scope paid pilot.",
+    a: "Yes. Developer gives you full access to all four products and the MCP server, free, for 30 days, including 50 natural-language queries. It is for evaluation, prototyping and MCP exploration, and is not licensed for production, customer-facing or revenue-generating use. For a production evaluation we run a fixed-scope paid pilot.",
   },
   {
     q: "What is a paid pilot?",
@@ -174,9 +187,10 @@ function Hero() {
           One engine, four ways to buy.
         </h1>
         <p className="oga-pricing-hero__lead">
-          Developer is free to evaluate. The three paid plans are annual
-          contracts, priced to the job: area data, decision workflows, or
-          portfolio monitoring. Run a paid pilot first if you want to prove it.
+          Developer is free, with 30 days of full access to every product. The
+          three paid plans are annual contracts, priced to the job: area data,
+          decision workflows, or portfolio monitoring. Run a paid pilot first
+          if you want to prove it.
         </p>
         <div className="oga-pricing-hero__stamps">
           <Stamp label="Engine" value="v1.0.0" />
@@ -204,7 +218,7 @@ const BUY_STEPS = [
   {
     n: "01",
     title: "Evaluate, free",
-    body: "Explore the API and the MCP server on the Developer tier, or book a demo and we will run it against a real workflow. No card, no commitment.",
+    body: "Get 30 days of full access to every product and the MCP server on the free Developer tier, or book a demo and we will run it against a real workflow. No card, no commitment.",
   },
   {
     n: "02",
@@ -356,7 +370,7 @@ function DeveloperBar() {
     <div className="oga-pricing-devbar">
       <div className="oga-pricing-devbar__lead">
         <span className="oga-pricing-devbar__name">{dev.name}</span>
-        <span className="oga-pricing-devbar__price">Free</span>
+        <span className="oga-pricing-devbar__price">Free · 30 days</span>
       </div>
       <p className="oga-pricing-devbar__tag">{dev.tagline}</p>
       <Link href="/docs" className="oga-btn oga-btn-secondary oga-pricing-devbar__cta">
@@ -383,7 +397,10 @@ function Comparison() {
           <p className="oga-pricing-table__lead">
             Every capability below ships in the product today. You buy the
             package that fits the job; it includes the signals and scores that
-            job needs.
+            job needs. In the Developer column, a Trial marker means the
+            capability is unlocked during the free 30-day evaluation only.
+            Developer then reverts to sample and demo, and is never licensed
+            for production use.
           </p>
         </header>
 
@@ -396,14 +413,17 @@ function Comparison() {
                 </th>
                 {COLS.map((c, i) => (
                   <th
-                    key={c}
+                    key={c.name}
                     className={
                       i === HIGHLIGHT_COL
                         ? "oga-pricing-table__th oga-pricing-table__th--highlight"
                         : "oga-pricing-table__th"
                     }
                   >
-                    {c}
+                    {c.name}
+                    {c.sub && (
+                      <span className="oga-pricing-table__th-sub">{c.sub}</span>
+                    )}
                   </th>
                 ))}
               </tr>
@@ -448,6 +468,13 @@ function CellValue({ value }: { value: Cell }) {
     return (
       <span className="oga-pricing-table__dash" aria-label="Not included">
         ·
+      </span>
+    );
+  }
+  if (value === "Trial") {
+    return (
+      <span className="oga-pricing-table__trial" aria-label="Available during the 30-day trial">
+        Trial
       </span>
     );
   }
