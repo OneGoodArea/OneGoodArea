@@ -85,7 +85,7 @@ function GlyphWebhooks(props: IconProps) {
    .oga-code-panel vocabulary (specimen-mount corner ticks, line
    numbers, token-coloured syntax — already in components.css).
 
-   The 3 surfaces are: REST · Query plane · Webhooks.
+   The 3 surfaces are: REST · Query API · Webhooks.
    MCP is intentionally NOT a tab — it has its own /docs/mcp page
    for buyers who care; the homepage doesn't promote it. */
 
@@ -113,7 +113,7 @@ const SURFACES: Surface[] = [
     tabMethod: "GET /v1/area",
     tabName: "REST API",
     panelName: "REST API",
-    panelBody: "One authenticated call returns a full area profile: every signal with source citation, normalized value, country-scoped percentile, and confidence. Versioned, documented, production-ready.",
+    panelBody: "One authenticated call returns a full area profile: every signal with its source, value, percentile and confidence. Versioned, documented, and production-ready.",
     ctaLabel: "See it on the reference",
     ctaHref: "/docs/api-reference#products",
     ready: true,
@@ -141,9 +141,9 @@ const SURFACES: Surface[] = [
     id: "query",
     Glyph: GlyphQuery,
     tabMethod: "POST /v1/query",
-    tabName: "Query plane",
-    panelName: "Query plane",
-    panelBody: "Ask in JSON or natural language. The AI emits the query plan; the database executes. Every response echoes the plan that ran, so any answer is reproducible and auditable.",
+    tabName: "Query API",
+    panelName: "Query API",
+    panelBody: "Ask in plain English or send a structured query. You get back the plan that ran, so every answer is reproducible and auditable.",
     ctaLabel: "See it on the reference",
     ctaHref: "/docs/api-reference#products",
     ready: true,
@@ -173,7 +173,7 @@ const SURFACES: Surface[] = [
     tabMethod: "signal.changed",
     tabName: "Webhooks",
     panelName: "Webhooks",
-    panelBody: "Subscribe once and we push. The signal.changed event fires the month a monitored area's signal moves past your configured threshold.",
+    panelBody: "Subscribe once and we push. We fire an event the month a monitored area moves past the threshold you set.",
     ctaLabel: "See it on the reference",
     ctaHref: "/docs/api-reference#levers",
     ready: true,
@@ -264,9 +264,9 @@ export function IntegrationSection() {
           </div>
           <h2 className="oga-int__title">Three ways into one engine.</h2>
           <p className="oga-int__sub">
-            Consume the engine however your stack works. Authenticated, versioned,
-            documented. Every response stamped with the engine version that
-            produced it.
+            Use the engine however your stack works: a REST API, queries, and
+            webhooks. Authenticated, versioned, and documented, with the engine
+            version stamped on every response.
           </p>
         </header>
 

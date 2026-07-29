@@ -17,9 +17,9 @@ import { WorldMap } from "./world-map";
 
 const STATS: Array<{ value: string; label: string }> = [
   { value: "1.8M",     label: "Postcodes resolved" },
-  { value: "43,916",   label: "LSOAs covered" },
+  { value: "43,916",   label: "Neighbourhoods covered" },
   { value: "Monthly",  label: "Snapshots" },
-  { value: "v1.0.0",   label: "Engine, pinnable" },
+  { value: "v1.0.0",   label: "Engine, versioned" },
 ];
 
 export function CoverageSection() {
@@ -36,9 +36,9 @@ export function CoverageSection() {
           </div>
           <h2 className="oga-coverage__title">Every UK area, measured monthly.</h2>
           <p className="oga-coverage__sub">
-            1.8 million postcodes resolved to 43,916 LSOAs across England, Wales,
-            and Scotland. Captured once a month, never re-captured. The time-series
-            corpus that compounds into the moat.
+            1.8 million postcodes resolved to 43,916 neighbourhoods (LSOAs) across
+            England, Wales, and Scotland. Captured once a month, so you can see how
+            any area is moving over time.
           </p>
         </header>
 
