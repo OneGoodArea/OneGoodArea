@@ -2,24 +2,22 @@
 
 import Link from "next/link";
 
-/* HeroPlotted, homepage hero (Plan 064 Phase 1, split layout).
+/* HeroPlotted, homepage hero (Plan 064, product-panel layout).
 
-   PropTech-shaped without labeling: copy speaks the buyer's vocabulary
-   (comparables, forecasts, signals) over one API, and a live request/response
-   card on the right shows the product is real and self-serve ("works in your
-   code"). Two-color only, per brand. The old five-ICP "Built for" rail is
-   gone; ICP discovery lives in the nav/footer + the /for/* pages. */
+   Anchored on a real OGA area panel (postcode -> score + percentile bars, the
+   product's actual output) rather than a generic code block or feature chips,
+   so the front door looks like the product, not a templated API landing page.
+   Copy left, panel right, a quiet public-sources strip below. Strictly
+   two-color per brand; depth via opacity, no accent colour. */
 
-const RESPONSE = `{
-  "area": "M1 1AE",
-  "country": "England",
-  "signals": [
-    { "key": "crime.total_12m",         "percentile": 92 },
-    { "key": "property.median_price",   "percentile": 64 },
-    { "key": "transport.station_count", "percentile": 81 }
-  ],
-  "engine_version": "1.0.0"
-}`;
+const SIGNALS: { label: string; pct: number }[] = [
+  { label: "Crime", pct: 92 },
+  { label: "Schools", pct: 78 },
+  { label: "Transport", pct: 81 },
+  { label: "Prices", pct: 64 },
+];
+
+const SOURCES = ["Police.uk", "HM Land Registry", "Ofsted", "ONS", "Environment Agency"];
 
 export function HeroPlotted() {
   return (
@@ -45,14 +43,6 @@ export function HeroPlotted() {
             Code.
           </p>
 
-          <div className="oga-hero-dark__caps" aria-hidden>
-            <span>Comparables</span>
-            <span>Forecasts</span>
-            <span>Scores</span>
-            <span>Monitoring</span>
-            <span>Signals</span>
-          </div>
-
           <div className="oga-hero-dark__cta">
             <Link href="/playground" className="oga-btn oga-btn-primary">
               Try in the playground
@@ -65,17 +55,48 @@ export function HeroPlotted() {
           </div>
         </div>
 
-        <div className="oga-hero-dark__code" aria-hidden>
-          <div className="oga-hero-dark__code-bar">
-            <i /><i /><i />
-            <span>GET /v1/area</span>
+        <div className="oga-hero-panel" aria-hidden>
+          <div className="oga-hero-panel__head">
+            <span className="oga-hero-panel__area">M1 1AE · Manchester</span>
+            <span className="oga-hero-panel__live">
+              <i />live
+            </span>
           </div>
-          <pre className="oga-hero-dark__code-pre">
-            <b>{"GET /v1/area?postcode=M1 1AE\nAuthorization: Bearer oga_live_..."}</b>
-            {"\n\n"}
-            {RESPONSE}
-          </pre>
+
+          <div className="oga-hero-panel__score">
+            <span className="oga-hero-panel__score-num">72</span>
+            <span className="oga-hero-panel__score-label">
+              Investing score
+              <em>out of 100</em>
+            </span>
+          </div>
+
+          <div className="oga-hero-panel__rows">
+            {SIGNALS.map((s) => (
+              <div className="oga-hero-panel__row" key={s.label}>
+                <span className="oga-hero-panel__row-label">{s.label}</span>
+                <span className={`oga-hero-panel__bar oga-hero-panel__bar--w${s.pct}`}>
+                  <span />
+                </span>
+                <span className="oga-hero-panel__row-pct">{s.pct}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="oga-hero-panel__foot">
+            <span>engine v1.0.0</span>
+            <span>source-backed</span>
+          </div>
         </div>
+      </div>
+
+      <div className="oga-hero-dark__sources">
+        <span className="oga-hero-dark__sources-label">Built on 7 UK public sources</span>
+        <span className="oga-hero-dark__sources-list">
+          {SOURCES.map((s) => (
+            <span key={s}>{s}</span>
+          ))}
+        </span>
       </div>
     </section>
   );
