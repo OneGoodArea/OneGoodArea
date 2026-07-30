@@ -360,11 +360,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         }
 
         const userHash = await sql`SELECT password_hash FROM users WHERE id = ${record.user_id}`;
-        const existingHash = row<Pick<UserRow, "password_hash">>(userHash[0]).password_hash;
-        if (!existingHash) {
-          return reply.code(400).send({ error: "Cannot reset password for this account" });
-        }
-        const { valid: isSame } = await verifyPassword(password, existingHash);
+        const { valid: isSame } = await verifyPassword(password, row<Pick<UserRow, "password_hash">>(userHash[0]).password_hash);
         if (isSame) {
           return reply.code(400).send({ error: "New password must be different from your current password" });
         }
