@@ -1,3 +1,8 @@
+---
+name: git-standards
+description: Use for commit rules and branch protection — defines branch protection rules and commit message format
+---
+
 # Git & Change Management Standards
 
 ## Branch Protection

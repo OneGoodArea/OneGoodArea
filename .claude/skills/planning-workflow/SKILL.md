@@ -1,3 +1,8 @@
+---
+name: planning-workflow
+description: Use when planning or implementing a task — enforces strict separation of planning and implementation phases
+---
+
 # Planning Workflow
 
 Planning and Implementation are distinct phases that **NEVER** mix.

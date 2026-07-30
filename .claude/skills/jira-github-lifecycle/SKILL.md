@@ -1,3 +1,8 @@
+---
+name: jira-github-lifecycle
+description: Use for Jira ticket management, branch linking, and PR generation — covers status transitions and PR draft formatting
+---
+
 # Jira & GitHub Lifecycle Management
 
 ## 1. Jira Linking Rules

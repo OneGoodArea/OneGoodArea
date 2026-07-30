@@ -15,9 +15,9 @@ You operate in a strict **Specification-Driven Development** environment. Planni
 
 When executing specific tasks, refer to and strictly follow these skill files:
 
-* Read tool selection order in [Tool Priority Rules](.claude/skills/tool-priority.md)
-* Read interactive spec protocol in [Planning Workflow](.claude/skills/planning-workflow.md)
-* Read JIRA ticket creation & PR formatting in [Jira & GitHub Lifecycle](.claude/skills/jira-github-lifecycle.md)
-* Read isolation strategy in [Worktree Selection Guide](.claude/skills/worktree-selection.md)
-* Read branch naming & commit rules in [Git & Change Management](.claude/skills/git-standards.md)
-* Read test requirements in [Software Testing](.claude/skills/software-testing.md)
+* Read tool selection order in [Tool Priority Rules](.claude/skills/tool-priority/SKILL.md)
+* Read interactive spec protocol in [Planning Workflow](.claude/skills/planning-workflow/SKILL.md)
+* Read JIRA ticket creation & PR formatting in [Jira & GitHub Lifecycle](.claude/skills/jira-github-lifecycle/SKILL.md)
+* Read isolation strategy in [Worktree Selection Guide](.claude/skills/worktree-selection/SKILL.md)
+* Read branch naming & commit rules in [Git & Change Management](.claude/skills/git-standards/SKILL.md)
+* Read test requirements in [Software Testing](.claude/skills/software-testing/SKILL.md)
