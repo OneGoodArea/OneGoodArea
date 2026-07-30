@@ -7,6 +7,7 @@ import { sql } from "../infrastructure/db/client";
 import { row, type UserRow, type PasswordResetTokenRow } from "../infrastructure/db/types";
 import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
 import { RATE_LIMITS } from "../infrastructure/config";
+import { AUTH_CONFIG } from "../modules/auth/config";
 import { generateId } from "../infrastructure/utils/id";
 import { createPersonalOrgForUser } from "../modules/orgs";
 import { authenticateSession } from "../shared/auth-session";
@@ -134,7 +135,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         try {
           const token = generateToken();
           const tokenId = generateId("evt");
-          const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+          const expiresAt = new Date(Date.now() + AUTH_CONFIG.VERIFICATION_TOKEN_TTL_MS).toISOString();
           await sql`
             INSERT INTO email_verification_tokens (id, user_id, email, token, expires_at)
             VALUES (${tokenId}, ${id}, ${sanitized}, ${token}, ${expiresAt})
@@ -196,7 +197,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
 
         const token = generateToken();
         const tokenId = generateId("evt");
-        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        const expiresAt = new Date(Date.now() + AUTH_CONFIG.VERIFICATION_TOKEN_TTL_MS).toISOString();
         await sql`
           INSERT INTO email_verification_tokens (id, user_id, email, token, expires_at)
           VALUES (${tokenId}, ${user.id}, ${sanitized}, ${token}, ${expiresAt})
@@ -306,7 +307,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
 
         const token = generateToken();
         const tokenId = generateId("prt");
-        const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+        const expiresAt = new Date(Date.now() + AUTH_CONFIG.PASSWORD_RESET_TOKEN_TTL_MS).toISOString();
         await sql`
           INSERT INTO password_reset_tokens (id, user_id, email, token, expires_at)
           VALUES (${tokenId}, ${user.id}, ${sanitized}, ${token}, ${expiresAt})
@@ -474,7 +475,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         const user = row<Pick<UserRow, "id" | "provider">>(users[0]);
         const token = generateToken();
         const tokenId = generateId("mlt");
-        const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+        const expiresAt = new Date(Date.now() + AUTH_CONFIG.MAGIC_LINK_TOKEN_TTL_MS).toISOString();
 
         await sql`
           INSERT INTO magic_link_tokens (id, user_id, email, token, expires_at)
