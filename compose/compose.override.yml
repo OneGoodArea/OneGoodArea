@@ -30,5 +30,3 @@ services:
   pgadmin:
     ports:
       - "8888:80"
-    volumes:
-      - ../data/pgadmin:/var/lib/pgadmin:z

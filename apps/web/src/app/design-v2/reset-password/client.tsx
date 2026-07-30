@@ -7,7 +7,7 @@ import {
   AuthShell,
   AuthTitle,
   FormField,
-  AuthInput,
+  PasswordInput,
   AuthError,
   AuthSubmit,
   AuthStatusIcon,
@@ -130,8 +130,7 @@ function ResetForm() {
 
       <form onSubmit={handleSubmit} noValidate>
         <FormField label="New password">
-          <AuthInput
-            type="password"
+          <PasswordInput
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -141,8 +140,7 @@ function ResetForm() {
         </FormField>
 
         <FormField label="Confirm password">
-          <AuthInput
-            type="password"
+          <PasswordInput
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             required

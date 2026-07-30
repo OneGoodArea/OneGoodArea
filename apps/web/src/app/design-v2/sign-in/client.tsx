@@ -9,6 +9,7 @@ import {
   AuthTitle,
   FormField,
   AuthInput,
+  PasswordInput,
   AuthError,
   AuthSubmit,
   Divider,
@@ -100,8 +101,7 @@ function SignInForm() {
             </Link>
           }
         >
-          <AuthInput
-            type="password"
+          <PasswordInput
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required

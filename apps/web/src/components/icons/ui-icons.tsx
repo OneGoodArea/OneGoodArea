@@ -70,3 +70,22 @@ export function Loader2(props: IconProps) {
     </svg>
   );
 }
+
+export function Eye(props: IconProps) {
+  return (
+    <svg {...svgProps(props)}>
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+export function EyeOff(props: IconProps) {
+  return (
+    <svg {...svgProps(props)}>
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+      <line x1="2" y1="2" x2="22" y2="22" />
+    </svg>
+  );
+}

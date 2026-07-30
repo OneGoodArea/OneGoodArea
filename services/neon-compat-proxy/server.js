@@ -80,10 +80,24 @@ const server = http.createServer(async (req, res) => {
           const resultStr = JSON.stringify(result.rows);
           console.log(`[neon-proxy] [${reqId}] rows: ${result.rowCount}, duration: ${Date.now() - start}ms, result: ${truncate(resultStr)}`);
         }
+        // Convert pg-native booleans (true/false) to "t"/"f" strings so the
+        // @neondatabase/serverless driver's pg-types parser gets the string
+        // format it expects. Without this, the parser receives a JS boolean,
+        // fails all its string comparisons, and returns undefined → falsy
+        // for any true value. (AR-653)
+        const BOOL_OID = 16;
+        const rows = result.rows.map((row) =>
+          row.map((val, i) => {
+            const field = result.fields[i];
+            return field && field.dataTypeID === BOOL_OID && typeof val === "boolean"
+              ? val ? "t" : "f"
+              : val;
+          }),
+        );
         return json(res, 200, {
           command: result.command,
           rowCount: result.rowCount,
-          rows: result.rows,
+          rows,
           fields: result.fields.map((field) => ({ name: field.name, dataTypeID: field.dataTypeID })),
         });
       } catch (error) {

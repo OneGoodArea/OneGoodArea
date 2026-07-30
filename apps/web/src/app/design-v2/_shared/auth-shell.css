@@ -260,6 +260,36 @@
   box-shadow: 0 0 0 3px rgba(26, 28, 31, 0.08);
 }
 
+/* Password input with visibility toggle */
+.oga-auth-pw {
+  position: relative;
+}
+.oga-auth-pw__input {
+  padding-right: 40px;
+}
+.oga-auth-pw__toggle {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--oga-fg-muted);
+  cursor: pointer;
+  transition: color 140ms ease, background 140ms ease;
+}
+.oga-auth-pw__toggle:hover {
+  color: var(--oga-fg);
+  background: rgba(26, 28, 31, 0.06);
+}
+
 /* ============================================================
    AuthError
    ============================================================ */

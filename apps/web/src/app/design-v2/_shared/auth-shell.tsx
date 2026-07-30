@@ -1,8 +1,9 @@
 "use client";
 
-import type { ReactNode, InputHTMLAttributes } from "react";
+import { useState, type ReactNode, type InputHTMLAttributes } from "react";
 import Link from "next/link";
 import { Wordmark } from "./wordmark";
+import { Eye, EyeOff } from "@/components/icons/ui-icons";
 import "./auth-shell.css";
 
 /* AuthShell — two-column auth layout (AR-204 close-out sweep 4/15).
@@ -122,6 +123,29 @@ export function FormField({
 
 export function AuthInput(props: InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className="oga-auth-input" />;
+}
+
+export function PasswordInput(props: InputHTMLAttributes<HTMLInputElement>) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="oga-auth-pw">
+      <input
+        {...props}
+        type={visible ? "text" : "password"}
+        className="oga-auth-input oga-auth-pw__input"
+      />
+      <button
+        type="button"
+        className="oga-auth-pw__toggle"
+        onClick={() => setVisible((v) => !v)}
+        aria-label={visible ? "Hide password" : "Show password"}
+        aria-pressed={visible}
+        tabIndex={-1}
+      >
+        {visible ? <EyeOff size={18} /> : <Eye size={18} />}
+      </button>
+    </div>
+  );
 }
 
 export function AuthError({ children }: { children: ReactNode }) {
