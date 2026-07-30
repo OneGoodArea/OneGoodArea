@@ -19,7 +19,10 @@ Check for available local container runtimes before running tests:
 - **Volume Mounts:** Mount the repository root into the container so test runs reflect local source edits in real time.
 - **Node/Dependency Isolation:** Run `npm run lint`, `npm run typecheck`, and `npm test` inside the containerized environment.
 
-## 3. Standard Commands
+## 3. Lint and TypeCheck and Tests
+- For lint, typoecheck and tests, always use containers when they exist.
+
+## 4. Standard Commands
 Run tests using the available engine via make.
 
 If there is no make availbale to perform the test, then you have to ask whether it should be created or no
