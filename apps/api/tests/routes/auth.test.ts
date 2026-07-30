@@ -188,6 +188,8 @@ describe("POST /auth/reset-password", () => {
     mockSql.mockResolvedValueOnce([
       { user_id: "u1", email: "a@b.com", expires_at: new Date(Date.now() + 3600000).toISOString(), used: false },
     ] as never);
+    mockSql.mockResolvedValueOnce([{ password_hash: "h" }] as never);
+    mockVerifyPw.mockResolvedValueOnce({ valid: false, needsRehash: false });
     const res = await postJson("/auth/reset-password", { token: "t", password: "longenough" });
     expect(res.statusCode).toBe(200);
     const updatedPw = mockSql.mock.calls.some((c) => (c[0] as unknown as string[]).join("?").includes("UPDATE users SET password_hash"));
@@ -255,6 +257,8 @@ describe("POST /settings/password", () => {
 
   it("updates the password when the current one verifies", async () => {
     mockSql.mockResolvedValueOnce([{ password_hash: "h", provider: "credentials" }] as never);
+    mockVerifyPw.mockResolvedValueOnce({ valid: true, needsRehash: false });
+    mockVerifyPw.mockResolvedValueOnce({ valid: false, needsRehash: false });
     const res = await postJson("/settings/password", { currentPassword: "old", newPassword: "longenough" });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ success: true });
