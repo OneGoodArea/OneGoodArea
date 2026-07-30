@@ -359,6 +359,12 @@ export function registerAuthRoutes(app: FastifyInstance): void {
           return reply.code(400).send({ error: "This reset link has expired. Please request a new one." });
         }
 
+        const userHash = await sql`SELECT password_hash FROM users WHERE id = ${record.user_id}`;
+        const { valid: isSame } = await verifyPassword(password, row<Pick<UserRow, "password_hash">>(userHash[0]).password_hash);
+        if (isSame) {
+          return reply.code(400).send({ error: "New password must be different from your current password" });
+        }
+
         const hash = await hashPassword(password);
         await sql`UPDATE users SET password_hash = ${hash} WHERE id = ${record.user_id}`;
         await sql`UPDATE password_reset_tokens SET used = TRUE WHERE token = ${token}`;
@@ -696,6 +702,11 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         const { valid } = await verifyPassword(currentPassword as string, userRecord.password_hash);
         if (!valid) {
           return reply.code(403).send({ error: "Current password is incorrect" });
+        }
+
+        const { valid: isSame } = await verifyPassword(newPassword, userRecord.password_hash);
+        if (isSame) {
+          return reply.code(400).send({ error: "New password must be different from your current password" });
         }
 
         const newHash = await hashPassword(newPassword);
