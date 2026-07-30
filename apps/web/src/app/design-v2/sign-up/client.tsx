@@ -8,6 +8,7 @@ import {
   AuthTitle,
   FormField,
   AuthInput,
+  PasswordInput,
   AuthError,
   AuthSubmit,
   Divider,
@@ -188,8 +189,7 @@ export default function SignUpClient() {
         </FormField>
 
         <FormField label="Password">
-          <AuthInput
-            type="password"
+          <PasswordInput
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
