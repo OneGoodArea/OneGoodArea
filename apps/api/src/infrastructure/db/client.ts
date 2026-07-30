@@ -1,4 +1,4 @@
-import { neon, neonConfig, type NeonQueryFunction } from "@neondatabase/serverless";
+import { neon, neonConfig, types, type NeonQueryFunction } from "@neondatabase/serverless";
 import { getConfig } from "./../../infrastructure/config";
 
 /* Backend DB client. Ported from the legacy src/lib/db.ts (behaviour-identical)
@@ -31,6 +31,7 @@ function getClient() {
   if (fetchEndpoint) {
     neonConfig.fetchEndpoint = fetchEndpoint;
   }
+  types.setTypeParser(1184, (val: string) => new Date(val));
   client = neon(url);
   return client;
 }
