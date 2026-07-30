@@ -1,3 +1,8 @@
+---
+name: worktree-selection
+description: Use when deciding between worktree or branch for isolated development — covers worktree creation protocol and location
+---
+
 # Git Worktree Selection Guide
 
 To keep work isolated and prevent context-switching friction, evaluate change scope and parallelism.

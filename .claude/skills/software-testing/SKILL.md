@@ -1,3 +1,8 @@
+---
+name: software-testing
+description: Use when running tests — covers container-based test execution, engine detection (Podman/Docker), and standard commands
+---
+
 # Testing Rules
 
 To avoid environment drift and ensure local testing mirrors production execution, test runs must run inside isolated containers whenever possible.

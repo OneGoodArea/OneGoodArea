@@ -1,3 +1,8 @@
+---
+name: tool-priority
+description: Use when selecting which tool to use for a task — defines tool hierarchy from MCP → Skills → CLI → Custom scripts
+---
+
 # Tooling Priority Rules
 
 When executing tasks, use tools in this exact hierarchy:
