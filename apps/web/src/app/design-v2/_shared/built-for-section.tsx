@@ -171,7 +171,7 @@ export function BuiltForSection() {
       <div className="oga-built__inner">
         <header className="oga-built__header">
           <div className="oga-built__eyebrow">
-            <span className="oga-built__eyebrow-num">02</span>
+            <span className="oga-built__eyebrow-num">04</span>
             <span className="oga-built__eyebrow-line" aria-hidden />
             <span>Built for</span>
           </div>

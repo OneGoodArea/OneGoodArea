@@ -29,9 +29,9 @@ export default function DesignV2Client() {
       <Nav />
       <HeroPlotted />
       <HowItWorksSection />
-      <BuiltForSection />
       <ProductsSection />
       <IntegrationSection />
+      <BuiltForSection />
       <CoverageSection />
       <CtaSection />
       <Footer />

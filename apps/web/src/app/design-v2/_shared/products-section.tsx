@@ -91,7 +91,7 @@ export function ProductsSection() {
       <div className="oga-products__inner">
         <div className="oga-products__header">
           <span className="oga-products__eyebrow">
-            <span className="oga-products__eyebrow-num">03</span>
+            <span className="oga-products__eyebrow-num">02</span>
             <span className="oga-products__eyebrow-line" aria-hidden />
             Products
           </span>

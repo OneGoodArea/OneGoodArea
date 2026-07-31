@@ -258,7 +258,7 @@ export function IntegrationSection() {
       <div className="oga-int__inner">
         <header className="oga-int__header">
           <div className="oga-int__eyebrow">
-            <span className="oga-int__eyebrow-num">04</span>
+            <span className="oga-int__eyebrow-num">03</span>
             <span className="oga-int__eyebrow-line" aria-hidden />
             <span>Integration</span>
           </div>
