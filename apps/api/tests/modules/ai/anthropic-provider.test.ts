@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, beforeEach } from "vitest";
-import { AnthropicAiProvider } from "@/modules/engine/ai/anthropic-provider";
+import { AnthropicAiProvider } from "@/modules/ai/anthropic-provider";
 import { getConfig } from "@/infrastructure/config";
 
 /* We never call the real API here; just lock the constructor guard

@@ -3,12 +3,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("@/modules/signals/query", () => ({ queryAreas: vi.fn(), queryAreasCompound: vi.fn() }));
 vi.mock("@/modules/signals", () => ({ getAreaProfile: vi.fn() }));
 vi.mock("@/modules/scoring", () => ({ scoreArea: vi.fn() }));
-vi.mock("@/modules/engine/ai", () => ({ getAiProvider: vi.fn(), getAiProviderForTier: vi.fn() }));
+vi.mock("@/modules/ai/provider-factory", () => ({ getAiProvider: vi.fn(), getAiProviderForTier: vi.fn() }));
 
 import { runQuery, parseQueryRequest } from "@/modules/intelligence/index";
 import { queryAreas } from "@/modules/signals/query";
 import { getAreaProfile } from "@/modules/signals";
-import { getAiProvider, getAiProviderForTier, type AiProvider } from "@/modules/engine/ai";
+import { getAiProvider, getAiProviderForTier, type AiProvider } from "@/modules/ai/provider-factory";
 
 const mockQueryAreas = vi.mocked(queryAreas);
 const mockGetAreaProfile = vi.mocked(getAreaProfile);
