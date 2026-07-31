@@ -17,7 +17,7 @@
 
 import { getConfig } from "../../../infrastructure/config";
 import { plan as planFromNl } from "../planner";
-import { getAiProvider, type AiProvider } from "../../ai/provider-factory";
+import { getAiProviderForTier, type AiProvider } from "../../ai/provider-factory";
 import { EVAL_CASES, type EvalCase } from "./cases";
 import { comparePlans } from "./compare";
 import { type CaseResult, summarize, renderReport, type ReportSummary } from "./report";
@@ -28,13 +28,13 @@ export interface RunResult {
 }
 
 /** Orchestrate the eval. AiProvider is injectable; tests pass a stub
-    that returns canned JSON, prod passes the configured Anthropic
-    provider via getAiProvider(). */
+    that returns canned JSON, prod runs the engineering-tier strategy
+    provider via getAiProviderForTier(). */
 export async function runEval(
   cases: EvalCase[] = EVAL_CASES,
   provider?: AiProvider,
 ): Promise<RunResult> {
-  const ai = provider ?? getAiProvider();
+  const ai = provider ?? getAiProviderForTier("engineering");
   const results: CaseResult[] = [];
   for (const c of cases) {
     const planned = await planFromNl(c.nl_question, ai);

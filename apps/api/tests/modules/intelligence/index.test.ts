@@ -3,16 +3,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("@/modules/signals/query", () => ({ queryAreas: vi.fn(), queryAreasCompound: vi.fn() }));
 vi.mock("@/modules/signals", () => ({ getAreaProfile: vi.fn() }));
 vi.mock("@/modules/scoring", () => ({ scoreArea: vi.fn() }));
-vi.mock("@/modules/ai/provider-factory", () => ({ getAiProvider: vi.fn(), getAiProviderForTier: vi.fn() }));
+vi.mock("@/modules/ai/provider-factory", () => ({ getAiProviderForTier: vi.fn() }));
 
 import { runQuery, parseQueryRequest } from "@/modules/intelligence/index";
 import { queryAreas } from "@/modules/signals/query";
 import { getAreaProfile } from "@/modules/signals";
-import { getAiProvider, getAiProviderForTier, type AiProvider } from "@/modules/ai/provider-factory";
+import { getAiProviderForTier, type AiProvider } from "@/modules/ai/provider-factory";
 
 const mockQueryAreas = vi.mocked(queryAreas);
 const mockGetAreaProfile = vi.mocked(getAreaProfile);
-const mockGetAiProvider = vi.mocked(getAiProvider);
 const mockGetAiProviderForTier = vi.mocked(getAiProviderForTier);
 
 beforeEach(() => { vi.clearAllMocks(); });
@@ -119,7 +118,6 @@ describe("runQuery — default provider selection (AR-597, Plan 059.5)", () => {
 
   beforeEach(() => {
     mockGetAreaProfile.mockResolvedValue(null);
-    mockGetAiProvider.mockReturnValue(providerStub);
     mockGetAiProviderForTier.mockReturnValue(providerStub);
   });
 
@@ -127,21 +125,18 @@ describe("runQuery — default provider selection (AR-597, Plan 059.5)", () => {
     const out = await runQuery({ question: "tell me about M1 1AE" }, undefined, "high_tier");
     expect(out.ok).toBe(true);
     expect(mockGetAiProviderForTier).toHaveBeenCalledWith("high_tier");
-    expect(mockGetAiProvider).not.toHaveBeenCalled();
   });
 
-  it("falls back to the untiered getAiProvider() when neither aiProvider nor tier is given", async () => {
+  it("falls back to the basic tier when neither aiProvider nor tier is given", async () => {
     const out = await runQuery({ question: "tell me about M1 1AE" });
     expect(out.ok).toBe(true);
-    expect(mockGetAiProvider).toHaveBeenCalledOnce();
-    expect(mockGetAiProviderForTier).not.toHaveBeenCalled();
+    expect(mockGetAiProviderForTier).toHaveBeenCalledWith("basic");
   });
 
   it("an explicit aiProvider always wins over tier", async () => {
     const explicit: AiProvider = { generateNarrative: async () => '{"op":"get_area","params":{"area":"M1 1AE"}}' };
     const out = await runQuery({ question: "tell me about M1 1AE" }, explicit, "anonymous");
     expect(out.ok).toBe(true);
-    expect(mockGetAiProvider).not.toHaveBeenCalled();
     expect(mockGetAiProviderForTier).not.toHaveBeenCalled();
   });
 

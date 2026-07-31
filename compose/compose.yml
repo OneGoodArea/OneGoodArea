@@ -57,7 +57,6 @@ services:
       NEON_FETCH_ENDPOINT: http://neon-proxy:55433/sql
       AUTH_SECRET: replace-me
       NEXTAUTH_URL: http://localhost:3000
-      OGA_AI_PROVIDER: mock
       OGA_EMAIL_PROVIDER: mailhog
       OGA_EMAIL_HOST: mailhog
       OGA_SIGNALS_API: "true"

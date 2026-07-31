@@ -23,7 +23,6 @@ beforeEach(() => {
   process.env.OPENCODE_API_KEY = "sk-opencode";
   process.env.OPENROUTER_API_KEY = "sk-openrouter";
   delete process.env.DEEPSEEK_API_KEY;
-  delete process.env.OGA_AI_PROVIDER;
 });
 
 afterEach(() => {
@@ -31,7 +30,6 @@ afterEach(() => {
     if (saved[key] === undefined) delete process.env[key];
     else process.env[key] = saved[key];
   }
-  delete process.env.OGA_AI_PROVIDER;
   vi.unstubAllGlobals();
 });
 
@@ -148,11 +146,5 @@ describe("getAiProviderForTier", () => {
     await provider.generateNarrative("hi");
 
     expect(calls[0]).toContain("opencode.ai");
-  });
-
-  it("still honours the mock env shortcut for test stacks", () => {
-    process.env.OGA_AI_PROVIDER = "mock";
-    const provider = getAiProviderForTier("anonymous");
-    expect(provider.constructor.name).toBe("MockAiProvider");
   });
 });
