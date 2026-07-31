@@ -14,13 +14,13 @@ Check for available local container runtimes before running tests:
 1. Fall back to host execution (`npm test`) **ONLY** if neither container engine is available or explicitly requested by the user.
 1. Do not test against the real / live deployed system, UNLESS explicitly told to and even then you MUST confirm.
 
-## 2. Lint and TypeCheck (static analysis — no container needed)
-Run lint and typecheck directly on the host via make targets:
+## 2. Lint and TypeCheck (MUST run in containers)
+Lint and typecheck run inside containers, exactly like tests — never bare on the host:
 ```
 make app-lint
 make app-typecheck
 ```
-These are static analysis tools that do not require a database or any container runtime. Running them inside containers is unnecessary overhead.
+If a container engine is unavailable, see the fallback rules in section 1 before running on the host.
 
 ## 3. Test Execution (requires container)
 - **Container Environment:** Use the project's compose test stack (`compose/compose.yml` + `compose/compose.test.yml`).
