@@ -1,50 +1,36 @@
-import type { ComponentType, SVGProps } from "react";
-import { ApiReferenceIcon, McpServerIcon } from "./docs-icons";
-import { SignalsIcon } from "./product-icons";
+import Link from "next/link";
 
-/* HowItWorksSection (01). The "what / how" explainer between the hero and the
-   products: a postcode goes in, area intelligence comes out, you build it into
-   your product. Light surface (clear break from the dark hero). The call strip
-   shows the breadth of the API (not just one endpoint) with real, verified
-   paths. Reuses existing brand icons; no invented assets. Plan 064. */
+/* HowItWorksSection (01). Encord-style showcase: a large featured card plus two
+   below, each pairing a crafted product surface with a heading and a link. Our
+   spin on the reference: two-color brand, and the "screenshots" are real UI
+   surfaces we build in markup (area report, portfolio monitor, NL query), so
+   it shows the breadth of the product and looks like software, not icons.
+   Plan 064. */
 
-const STEPS: {
-  num: string;
-  title: string;
-  body: string;
-  Icon: ComponentType<SVGProps<SVGSVGElement>>;
-}[] = [
-  {
-    num: "01",
-    title: "Send a postcode",
-    body: "One authenticated call with any UK postcode. No SDK, no data pipeline to build and maintain.",
-    Icon: ApiReferenceIcon,
-  },
-  {
-    num: "02",
-    title: "Get the area back",
-    body: "Signals, a 0-100 score, comparables and forecasts, all in one response. Source-backed, versioned, and confidence-rated.",
-    Icon: SignalsIcon,
-  },
-  {
-    num: "03",
-    title: "Build it in",
-    body: "Render it on a listing, score a portfolio, watch it for change, or ask questions in plain English.",
-    Icon: McpServerIcon,
-  },
+const CATS: { label: string; pct: number }[] = [
+  { label: "Schools", pct: 81 },
+  { label: "Crime", pct: 88 },
+  { label: "Prices", pct: 66 },
+  { label: "Transport", pct: 79 },
+  { label: "Green space", pct: 72 },
 ];
+const PEERS = ["M20 2NR", "M21 8AA", "SK4 3GN"];
 
-const CALLS: { verb: "GET" | "POST"; path: string; label: string }[] = [
-  { verb: "GET", path: "/v1/area", label: "Area signals" },
-  { verb: "POST", path: "/v1/score", label: "A 0-100 score" },
-  { verb: "POST", path: "/v1/peers", label: "Comparables" },
-  { verb: "POST", path: "/v1/query", label: "Ask in English" },
-  { verb: "POST", path: "/v1/portfolios", label: "Monitor a portfolio" },
+const MOVES: { area: string; signal: string; delta: string; dir: "up" | "down" }[] = [
+  { area: "M1 1AE", signal: "Prices", delta: "+8.6%", dir: "up" },
+  { area: "LS6 3HN", signal: "Crime", delta: "-4.2%", dir: "down" },
+  { area: "B15 2TT", signal: "Deprivation", delta: "+2.1%", dir: "up" },
+];
+const RANKED: { area: string; score: number }[] = [
+  { area: "M14 5 Fallowfield", score: 78 },
+  { area: "LS11 Beeston", score: 74 },
+  { area: "B29 6 Selly Oak", score: 71 },
 ];
 
 export function HowItWorksSection() {
   return (
     <section className="oga-how" data-oga-surface="light">
+      <div className="oga-how__field" aria-hidden />
       <div className="oga-how__inner">
         <header className="oga-how__header">
           <div className="oga-how__eyebrow">
@@ -52,40 +38,144 @@ export function HowItWorksSection() {
             <span className="oga-how__eyebrow-line" aria-hidden />
             <span>How it works</span>
           </div>
-          <h2 className="oga-how__title">From a postcode to your product.</h2>
+          <h2 className="oga-how__title">One call. The whole area.</h2>
+          <p className="oga-how__sub">
+            Send any UK postcode and get the neighbourhood back: signals, a score,
+            price trends and comparables. Then render it, score a portfolio,
+            monitor it for change, or ask in plain English.
+          </p>
         </header>
 
-        <ol className="oga-how__steps">
-          {STEPS.map((s) => {
-            const Icon = s.Icon;
-            return (
-              <li key={s.num} className="oga-how__step">
-                <div className="oga-how__step-top">
-                  <span className="oga-how__step-icon" aria-hidden>
-                    <Icon />
-                  </span>
-                  <span className="oga-how__step-num">{s.num}</span>
+        {/* Featured: area report */}
+        <article className="oga-how__feature">
+          <div className="oga-how__feature-viz">
+            <div className="oga-how__report" aria-hidden>
+              <div className="oga-how__report-head">
+                <div className="oga-how__report-place">
+                  <span className="oga-how__report-kicker">Area report</span>
+                  <span className="oga-how__report-name">Chorlton, Manchester</span>
                 </div>
-                <h3 className="oga-how__step-title">{s.title}</h3>
-                <p className="oga-how__step-body">{s.body}</p>
-              </li>
-            );
-          })}
-        </ol>
+                <span className="oga-how__report-pc">M21 9PN</span>
+              </div>
+              <div className="oga-how__report-score">
+                <span className="oga-how__report-score-num">74<em>/100</em></span>
+                <div className="oga-how__report-score-meta">
+                  <span className="oga-how__report-score-label">Investing score</span>
+                  <span className="oga-how__report-score-bar oga-how__bar--w74"><span /></span>
+                </div>
+              </div>
+              <ul className="oga-how__report-cats">
+                {CATS.map((c) => (
+                  <li key={c.label} className="oga-how__report-cat">
+                    <span className="oga-how__report-cat-label">{c.label}</span>
+                    <span className={`oga-how__report-cat-bar oga-how__bar--w${c.pct}`}><span /></span>
+                    <span className="oga-how__report-cat-pct">{c.pct}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="oga-how__report-split">
+                <div className="oga-how__report-block">
+                  <span className="oga-how__report-sub">Prices, 12 mo</span>
+                  <div className="oga-how__report-trend">
+                    <svg className="oga-how__spark" viewBox="0 0 120 36" preserveAspectRatio="none">
+                      <polyline points="0,30 20,28 40,24 60,23 80,16 100,11 120,6" />
+                    </svg>
+                    <span className="oga-how__report-trend-val">+6.4%</span>
+                  </div>
+                </div>
+                <div className="oga-how__report-block">
+                  <span className="oga-how__report-sub">Comparable areas</span>
+                  <div className="oga-how__report-peers">
+                    {PEERS.map((p) => (
+                      <span key={p} className="oga-how__report-peer">{p}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="oga-how__report-foot">
+                <span>engine v1.0.0 · source-backed</span>
+                <span className="oga-how__report-brand">OneGoodArea</span>
+              </div>
+            </div>
+          </div>
+          <div className="oga-how__feature-text">
+            <span className="oga-how__tag">Signals + Scores</span>
+            <h3 className="oga-how__feature-title">Score any UK neighbourhood</h3>
+            <p className="oga-how__feature-body">
+              Seven categories of signals compressed into a composite 0-100 score,
+              with price trends and comparable areas. Source-backed and versioned,
+              for any UK postcode.
+            </p>
+            <Link href="/products/scores" className="oga-how__feature-link">
+              Explore signals and scores
+              <span aria-hidden>→</span>
+            </Link>
+          </div>
+        </article>
 
-        <div className="oga-how__calls">
-          <span className="oga-how__calls-label">One key, every call</span>
-          <ul className="oga-how__calls-list">
-            {CALLS.map((c) => (
-              <li key={c.path} className="oga-how__call">
-                <span className="oga-how__call-endpoint">
-                  <span className={`oga-verb oga-verb--${c.verb.toLowerCase()}`}>{c.verb}</span>
-                  <span className="oga-how__call-path">{c.path}</span>
-                </span>
-                <span className="oga-how__call-label">{c.label}</span>
-              </li>
-            ))}
-          </ul>
+        {/* Two below: monitor + query */}
+        <div className="oga-how__grid">
+          <article className="oga-how__card">
+            <div className="oga-how__card-viz">
+              <div className="oga-how__mock oga-how__mock--monitor" aria-hidden>
+                <div className="oga-how__mock-bar">
+                  <span>Portfolio</span>
+                  <span className="oga-how__mock-tag">3 areas moved</span>
+                </div>
+                <ul className="oga-how__moves">
+                  {MOVES.map((m) => (
+                    <li key={m.area} className="oga-how__move">
+                      <span className="oga-how__move-area">{m.area}</span>
+                      <span className="oga-how__move-signal">{m.signal}</span>
+                      <span className={`oga-how__move-delta oga-how__move-delta--${m.dir}`}>
+                        {m.delta}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="oga-how__mock-foot">signal.changed → your webhook</div>
+              </div>
+            </div>
+            <span className="oga-how__tag">Monitor</span>
+            <h3 className="oga-how__card-title">Monitor a portfolio</h3>
+            <p className="oga-how__card-body">
+              Track a book of areas and get a signed webhook the month one moves
+              past the threshold you set.
+            </p>
+            <Link href="/products/monitor" className="oga-how__card-link">
+              Explore monitoring<span aria-hidden>→</span>
+            </Link>
+          </article>
+
+          <article className="oga-how__card">
+            <div className="oga-how__card-viz">
+              <div className="oga-how__mock oga-how__mock--query" aria-hidden>
+                <div className="oga-how__query-input">
+                  <span className="oga-how__query-caret">›</span>
+                  cheap areas with rising prices and low crime
+                </div>
+                <div className="oga-how__query-plan">rank_areas</div>
+                <ol className="oga-how__ranked">
+                  {RANKED.map((r, i) => (
+                    <li key={r.area} className="oga-how__rank">
+                      <span className="oga-how__rank-n">{i + 1}</span>
+                      <span className="oga-how__rank-area">{r.area}</span>
+                      <span className="oga-how__rank-score">{r.score}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </div>
+            <span className="oga-how__tag">Intelligence</span>
+            <h3 className="oga-how__card-title">Ask in plain English</h3>
+            <p className="oga-how__card-body">
+              Natural-language or structured queries return ranked areas, with the
+              plan that produced them so any answer is reproducible.
+            </p>
+            <Link href="/products/intelligence" className="oga-how__card-link">
+              Explore intelligence<span aria-hidden>→</span>
+            </Link>
+          </article>
         </div>
       </div>
     </section>
