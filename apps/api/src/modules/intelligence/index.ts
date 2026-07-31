@@ -14,7 +14,7 @@
 
 import type { QueryRequest, QueryResponse, PlannerError } from "@onegoodarea/contracts";
 import { QueryRequestSchema } from "@onegoodarea/contracts";
-import { getAiProvider, getAiProviderForTier, type AiProvider } from "../engine/ai";
+import { getAiProvider, getAiProviderForTier, type AiProvider } from "../ai/provider-factory";
 import type { Tier } from "../tiers";
 import { plan as planFromNl } from "./planner";
 import { executePlan } from "./executor";

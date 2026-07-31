@@ -1,9 +1,9 @@
-import { getConfig } from "../../../infrastructure/config";
+import { getConfig } from "../../infrastructure/config";
 import { AnthropicAiProvider } from "./anthropic-provider";
 import { DeepSeekAiProvider } from "./deepseek-provider";
 import { MockAiProvider } from "./mock-provider";
 import type { AiProvider } from "./types";
-import { decideLlm, type Tier } from "../../tiers";
+import { decideLlm, type Tier } from "../tiers";
 
 /* Migrated from legacy src/lib/ai/providers/index.ts. Change: provider
    selection reads the synchronous process.env config (getConfig) instead of
