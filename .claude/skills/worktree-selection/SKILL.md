@@ -14,8 +14,10 @@ Worktrees go in `.worktrees/<jira-key>-<short-description>` under the repo root 
 ## Decision Process
 
 - Mostly suggest worktrees, unless it is a really small change, such as around 10 lines in no more than 3 files total, then you ask if worktree or branches. NEVER IN MAIN, EVER!
+- Check `git branch --show-current` BEFORE editing any file. If it reports `main`, stop and set up isolation first — small changes still get a dedicated branch; `main` is never an option.
 - Worktrees MUST be internal to the project and located at .worktrees (ensure they are in .gitignore)
 
 ## Mandatory Protocol
-**Always ask the user for confirmation before creating a worktree or branch:**
+**Always ask the user for confirmation before creating a worktree or branch. Never edit files while on `main`:**
+
 > *"This change involves [large scope / parallel task]. Would you like me to set up a Git Worktree at `../<repo>-<jira-key>` or use a standard branch? If you already have parallel work going on I suggest a worktree"*
