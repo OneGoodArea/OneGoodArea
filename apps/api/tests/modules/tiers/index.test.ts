@@ -13,6 +13,7 @@ import { sql } from "@/infrastructure/db/client";
 import { isSuperuser, getUserPlan } from "@/modules/usage";
 import { rateLimit } from "@/infrastructure/rate-limit";
 import { RATE_LIMITS } from "@/infrastructure/config";
+import { getAiConfig } from "@/modules/ai/config";
 import { resolveTier, checkQuota, decideLlm, TIERS } from "@/modules/tiers/index";
 
 const mockSql = vi.mocked(sql);
@@ -178,13 +179,25 @@ describe("checkQuota — free-tier global backstop (AR-593, Plan 059.1)", () => 
 });
 
 describe("decideLlm", () => {
-  it("returns correct provider and model for each tier", () => {
-    expect(decideLlm("anonymous")).toEqual({ provider: "anthropic", model: "claude-haiku-4-5", tier: "anonymous" });
-    expect(decideLlm("logged_in")).toEqual({ provider: "anthropic", model: "claude-sonnet-4-5", tier: "logged_in" });
-    expect(decideLlm("basic")).toEqual({ provider: "anthropic", model: "claude-haiku-4-5", tier: "basic" });
-    expect(decideLlm("high_tier")).toEqual({ provider: "anthropic", model: "claude-sonnet-4-5", tier: "high_tier" });
-    expect(decideLlm("engineering")).toEqual({ provider: "anthropic", model: "claude-opus-4-6", tier: "engineering" });
-    expect(decideLlm("superuser")).toEqual({ provider: "anthropic", model: "claude-opus-4-6", tier: "superuser" });
+  it("returns the AI config strategy route for each tier", () => {
+    const config = getAiConfig();
+    for (const tier of ["anonymous", "logged_in", "basic", "high_tier", "engineering", "superuser"]) {
+      const route = decideLlm(tier as Parameters<typeof decideLlm>[0]);
+      expect(route.strategy).toBe(config.strategies[tier].strategy);
+      expect(route.providers).toEqual(config.strategies[tier].providers);
+      expect(route.retryCount).toBe(config.aiRetryCount);
+    }
+  });
+
+  it("resolves the anonymous tier to its fallback chain", () => {
+    expect(decideLlm("anonymous")).toEqual({
+      strategy: "fallback_chain",
+      providers: [
+        { provider: "opencode", model: "deepseek-v4-flash-free" },
+        { provider: "openrouter", model: "deepseek/deepseek-chat-v3-0324:free" },
+      ],
+      retryCount: getAiConfig().aiRetryCount,
+    });
   });
 });
 
@@ -194,7 +207,6 @@ describe("TIERS catalog", () => {
     for (const tier of ["anonymous", "logged_in", "basic", "high_tier", "engineering", "superuser"]) {
       expect(TIERS[tier as keyof typeof TIERS]).toBeDefined();
       expect(TIERS[tier as keyof typeof TIERS].quota).toBeDefined();
-      expect(TIERS[tier as keyof typeof TIERS].llm).toBeDefined();
     }
   });
 

@@ -19,3 +19,12 @@ export interface AiConfig {
   aiRetryCount: number;
   strategies: Record<string, AiStrategyConfig>;
 }
+
+/** A fully-resolved strategy route for one tier: the strategy, the provider
+    chain, and the retry budget (aiRetryCount). Returned by decideLlm() and
+    consumed by createStrategyProvider(). */
+export interface AiStrategyRoute {
+  strategy: AiStrategy;
+  providers: AiProviderEntry[];
+  retryCount: number;
+}

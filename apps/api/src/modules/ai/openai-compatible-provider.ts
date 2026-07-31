@@ -27,8 +27,9 @@ export class OpenAiCompatibleProvider implements AiProvider {
   private readonly model: string;
   private readonly maxTokens: number;
   private readonly name: string;
+  private readonly params: Record<string, unknown>;
 
-  constructor(config: OpenAiCompatibleProviderConfig, modelOverride?: string) {
+  constructor(config: OpenAiCompatibleProviderConfig, modelOverride?: string, params?: Record<string, unknown>) {
     const apiKey = process.env[`${config.envPrefix}_API_KEY`];
 
     if (!apiKey) {
@@ -40,6 +41,7 @@ export class OpenAiCompatibleProvider implements AiProvider {
     this.model = modelOverride ?? process.env[`${config.envPrefix}_MODEL`] ?? config.defaultModel;
     this.maxTokens = Number(process.env[`${config.envPrefix}_MAX_TOKENS`] ?? config.defaultMaxTokens);
     this.name = config.name;
+    this.params = params ?? {};
   }
 
   async generateNarrative(prompt: string): Promise<string> {
@@ -55,6 +57,7 @@ export class OpenAiCompatibleProvider implements AiProvider {
         model: this.model,
         max_tokens: this.maxTokens,
         messages: [{ role: "user", content: prompt }],
+        ...this.params,
       }),
     });
 

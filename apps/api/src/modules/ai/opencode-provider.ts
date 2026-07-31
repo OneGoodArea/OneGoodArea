@@ -15,5 +15,5 @@ export const openCodeProviderConfig: OpenAiCompatibleProviderConfig = {
   defaultMaxTokens: 4096,
 };
 
-export const createOpenCodeProvider = (modelOverride?: string) =>
-  new OpenAiCompatibleProvider(openCodeProviderConfig, modelOverride);
+export const createOpenCodeProvider = (modelOverride?: string, params?: Record<string, unknown>) =>
+  new OpenAiCompatibleProvider(openCodeProviderConfig, modelOverride, params);
