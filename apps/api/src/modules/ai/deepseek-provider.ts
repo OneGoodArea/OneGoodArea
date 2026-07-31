@@ -16,5 +16,5 @@ export const deepSeekProviderConfig: OpenAiCompatibleProviderConfig = {
   defaultMaxTokens: 4096,
 };
 
-export const createDeepSeekProvider = (modelOverride?: string) =>
-  new OpenAiCompatibleProvider(deepSeekProviderConfig, modelOverride);
+export const createDeepSeekProvider = (modelOverride?: string, params?: Record<string, unknown>) =>
+  new OpenAiCompatibleProvider(deepSeekProviderConfig, modelOverride, params);

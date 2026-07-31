@@ -15,5 +15,5 @@ export const openRouterProviderConfig: OpenAiCompatibleProviderConfig = {
   defaultMaxTokens: 4096,
 };
 
-export const createOpenRouterProvider = (modelOverride?: string) =>
-  new OpenAiCompatibleProvider(openRouterProviderConfig, modelOverride);
+export const createOpenRouterProvider = (modelOverride?: string, params?: Record<string, unknown>) =>
+  new OpenAiCompatibleProvider(openRouterProviderConfig, modelOverride, params);

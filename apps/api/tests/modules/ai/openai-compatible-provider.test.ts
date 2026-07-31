@@ -109,6 +109,28 @@ describe("OpenAiCompatibleProvider", () => {
     );
   });
 
+  it("spreads params into the request body", async () => {
+    process.env.TESTAI_API_KEY = "sk-test-not-real";
+    const provider = new OpenAiCompatibleProvider(config, undefined, { max_tokens: 8192, temperature: 0.2 });
+    const fetchMock = vi.fn().mockResolvedValue(okResponse("x"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await provider.generateNarrative("hi");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        body: expect.stringContaining('"max_tokens":8192'),
+      }),
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        body: expect.stringContaining('"temperature":0.2'),
+      }),
+    );
+  });
+
   it("surfaces non-ok responses with the provider name, status and body", async () => {
     process.env.TESTAI_API_KEY = "sk-test-not-real";
     const provider = new OpenAiCompatibleProvider(config);

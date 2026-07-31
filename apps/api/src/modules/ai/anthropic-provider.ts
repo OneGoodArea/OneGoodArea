@@ -14,10 +14,13 @@ import type { AiProvider } from "./types";
 export class AnthropicAiProvider implements AiProvider {
   private readonly client: Anthropic;
   private readonly model: string;
+  private readonly params: Partial<Anthropic.MessageCreateParamsNonStreaming>;
 
-  /** AR-499: optional model override for tier-based routing.
-      When provided, uses this instead of the default from config. */
-  constructor(modelOverride?: string) {
+  /** AR-499/AR-614: optional model override for tier-based routing.
+      When provided, uses this instead of the default from config.
+      params (from the AI config provider entry) are spread into every
+      messages.create call, so per-tier entries can set max_tokens etc. */
+  constructor(modelOverride?: string, params?: Record<string, unknown>) {
     const config = getConfig();
     const apiKey = config.anthropicApiKey;
 
@@ -27,14 +30,17 @@ export class AnthropicAiProvider implements AiProvider {
 
     this.client = new Anthropic({ apiKey });
     this.model = modelOverride ?? config.anthropicModel;
+    this.params = params as Partial<Anthropic.MessageCreateParamsNonStreaming>;
   }
 
   async generateNarrative(prompt: string): Promise<string> {
-    const response = await this.client.messages.create({
+    const args: Anthropic.MessageCreateParamsNonStreaming = {
       model: this.model,
       max_tokens: 4096,
       messages: [{ role: "user", content: prompt }],
-    });
+      ...this.params,
+    };
+    const response = await this.client.messages.create(args);
 
     const text = response.content.find((item) => item.type === "text");
     if (!text || text.type !== "text") {

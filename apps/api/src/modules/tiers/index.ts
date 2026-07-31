@@ -11,6 +11,8 @@ import { isSuperuser, getUserPlan } from "../usage";
 import type { PlanId } from "../billing/plans";
 import { rateLimit } from "../../infrastructure/rate-limit";
 import { RATE_LIMITS } from "../../infrastructure/config";
+import { getAiConfig } from "../ai/config";
+import type { AiProviderEntry, AiStrategyRoute } from "../ai/types";
 
 /** The tier taxonomy. Grows/collapses via the CHECK constraint on users.tier. */
 export type Tier =
@@ -27,16 +29,10 @@ export interface TierQuota {
   windowSeconds: number;
 }
 
-/** LLM routing configuration per tier. */
-export interface TierLlm {
-  provider: string;
-  model: string;
-}
-
-/** Full tier config: quota + LLM routing. */
+/** Full tier config: quota. LLM routing moved to the AI config (Plan 062)
+    — decideLlm() reads the tier's strategy from there. */
 export interface TierConfig {
   quota: TierQuota;
-  llm: TierLlm;
 }
 
 /** Context needed to resolve a caller's tier. */
@@ -48,23 +44,21 @@ export interface TierContext {
 }
 
 /** The tier catalog. Quotas are per-minute sliding windows.
-    LLM models are the default routing until provider-level overrides land.
-    Config-based deployment (Plan 044 B.5): env vars override defaults. */
+    Config-based deployment (Plan 044 B.5): env vars override defaults.
+    LLM routing lives in the AI config (modules/ai/config.ts), not here. */
 const DEFAULT_TIERS: Record<Tier, TierConfig> = {
-  anonymous:   { quota: { max: 5,    windowSeconds: 60 }, llm: { provider: "anthropic", model: "claude-haiku-4-5" } },
-  logged_in:   { quota: { max: 30,   windowSeconds: 60 }, llm: { provider: "anthropic", model: "claude-sonnet-4-5" } },
-  basic:       { quota: { max: 30,   windowSeconds: 60 }, llm: { provider: "anthropic", model: "claude-haiku-4-5" } },
-  high_tier:   { quota: { max: 120,  windowSeconds: 60 }, llm: { provider: "anthropic", model: "claude-sonnet-4-5" } },
-  engineering: { quota: { max: null, windowSeconds: 0 },  llm: { provider: "anthropic", model: "claude-opus-4-6" } },
-  superuser:   { quota: { max: null, windowSeconds: 0 },  llm: { provider: "anthropic", model: "claude-opus-4-6" } },
+  anonymous:   { quota: { max: 5,    windowSeconds: 60 } },
+  logged_in:   { quota: { max: 30,   windowSeconds: 60 } },
+  basic:       { quota: { max: 30,   windowSeconds: 60 } },
+  high_tier:   { quota: { max: 120,  windowSeconds: 60 } },
+  engineering: { quota: { max: null, windowSeconds: 0 } },
+  superuser:   { quota: { max: null, windowSeconds: 0 } },
 };
 
 /**
- * Load tier config with env-var overrides. Each tier's quota max and LLM
- * model can be overridden via env vars:
+ * Load tier config with env-var overrides. Each tier's quota max can be
+ * overridden via env vars:
  *   TIER_<TIER>_QUOTA_MAX      — e.g. TIER_ANONYMOUS_QUOTA_MAX=10
- *   TIER_<TIER>_LLM_MODEL      — e.g. TIER_HIGH_TIER_LLM_MODEL=claude-opus-4-6
- *   TIER_<TIER>_LLM_PROVIDER   — e.g. TIER_BASIC_LLM_PROVIDER=openai
  *
  * null means unlimited quota. Invalid env values are silently ignored.
  */
@@ -85,16 +79,6 @@ function loadTiersWithOverrides(): Record<Tier, TierConfig> {
           max: val === "null" || val === "unlimited" ? null : Number(quotaMaxEnv) || tiers[name].quota.max,
         },
       };
-    }
-
-    const llmModel = process.env[`${prefix}_LLM_MODEL`];
-    if (llmModel) {
-      tiers[name] = { ...tiers[name], llm: { ...tiers[name].llm, model: llmModel } };
-    }
-
-    const llmProvider = process.env[`${prefix}_LLM_PROVIDER`];
-    if (llmProvider) {
-      tiers[name] = { ...tiers[name], llm: { ...tiers[name].llm, provider: llmProvider } };
     }
   }
 
@@ -242,22 +226,25 @@ export async function checkQuota(
   return { allowed: true, tier, remaining: result.remaining, reset: result.reset, reason: null };
 }
 
-/** LLM routing verdict returned by decideLlm. */
-export interface LlmRoute {
-  provider: string;
-  model: string;
-  tier: Tier;
-}
+/** LLM routing verdict returned by decideLlm — a resolved strategy route
+    built from the AI config (AR-614, Plan 062 S3). */
+export type LlmRoute = AiStrategyRoute;
 
 /**
- * THE ONLY LLM router. Returns the provider+model for the given tier.
- * Callers MUST use this instead of hardcoding model selection.
+ * THE ONLY LLM router. Returns the resolved strategy route for the given
+ * tier: the strategy, the provider chain, and the retry budget from the
+ * AI config (modules/ai/config.ts). Callers MUST use this instead of
+ * hardcoding provider/model selection.
  */
 export function decideLlm(tier: Tier): LlmRoute {
-  const config = TIERS[tier];
+  const config = getAiConfig();
+  const strategy = config.strategies[tier];
+  if (!strategy) {
+    throw new Error(`No AI strategy configured for tier: ${tier}`);
+  }
   return {
-    provider: config.llm.provider,
-    model: config.llm.model,
-    tier,
+    strategy: strategy.strategy,
+    providers: strategy.providers as AiProviderEntry[],
+    retryCount: config.aiRetryCount,
   };
 }
