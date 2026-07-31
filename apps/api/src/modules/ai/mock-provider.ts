@@ -1,4 +1,4 @@
-import { getConfig } from "../../../infrastructure/config";
+import { getConfig } from "../../infrastructure/config";
 import type { AiProvider } from "./types";
 
 /* Migrated VERBATIM from legacy src/lib/ai/providers/mock-provider.ts.

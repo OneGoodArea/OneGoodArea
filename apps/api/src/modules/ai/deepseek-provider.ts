@@ -1,4 +1,4 @@
-import { getConfig } from "../../../infrastructure/config";
+import { getConfig } from "../../infrastructure/config";
 import type { AiProvider } from "./types";
 
 /* DeepSeek Flash provider — OpenAI-compatible API.
