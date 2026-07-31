@@ -14,4 +14,3 @@ description: Use for commit rules and branch protection — defines branch prote
 3. Message format: Short, imperative sentence describing intent.
    - **Good:** `Add validation for missing workspace config`
    - **Bad:** `fix stuff`, `wip updates`
-4. **Commit authorship is always the person driving the work.** A commit guided by a human MUST be authored by that human — never by an AI tool. Before committing, verify author/committer identity with `git config user.name` / `user.email`; if they resolve to an AI identity (e.g. "Claude", "Copilot", bot name), set them to the driving human first.
