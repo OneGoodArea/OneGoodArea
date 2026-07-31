@@ -1,6 +1,6 @@
 import { getConfig } from "../../infrastructure/config";
 import { AnthropicAiProvider } from "./anthropic-provider";
-import { DeepSeekAiProvider } from "./deepseek-provider";
+import { createDeepSeekProvider } from "./deepseek-provider";
 import { MockAiProvider } from "./mock-provider";
 import type { AiProvider } from "./types";
 import { decideLlm, type Tier } from "../tiers";
@@ -28,7 +28,7 @@ export function getAiProvider(): AiProvider {
     const provider = getConfig().aiProvider;
     cachedProvider =
       provider === "mock" ? new MockAiProvider() :
-      provider === "deepseek" ? new DeepSeekAiProvider() :
+      provider === "deepseek" ? createDeepSeekProvider() :
       new AnthropicAiProvider();
   }
 
@@ -41,7 +41,7 @@ export function getAiProvider(): AiProvider {
 export function getAiProviderForTier(tier: Tier): AiProvider {
   const provider = getConfig().aiProvider;
   if (provider === "mock") return new MockAiProvider();
-  if (provider === "deepseek") return new DeepSeekAiProvider();
+  if (provider === "deepseek") return createDeepSeekProvider();
   const route = decideLlm(tier);
   return new AnthropicAiProvider(route.model);
 }
