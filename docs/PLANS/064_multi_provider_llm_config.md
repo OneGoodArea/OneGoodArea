@@ -16,7 +16,7 @@ Replace the hardcoded single-provider (Anthropic) AI config with a multi-provide
 | S5 | Module promotion + new providers | AR-616 | `.worktrees/AR-616-promote-ai-module` | 2a |
 | S3 | Wire up config in code | AR-614 | `.worktrees/AR-614-honour-ai-config` | 2b | ✅ done |
 | S4 | Cleanup old config | AR-615 | `.worktrees/AR-615-cleanup-ai-config` | 3a | ✅ done |
-| S6 | Docker integration test | AR-617 | `.worktrees/AR-617-ai-config-docker-test` | 3b | |
+| S6 | Docker integration test | AR-617 | `.worktrees/AR-617-ai-config-docker-test` | 3b | ✅ done |
 
 ## Architecture
 
@@ -76,12 +76,21 @@ Commits:
 2. `chore(env): update env files — remove OGA_AI_PROVIDER, add new API key placeholders (AR-615)`
 3. `refactor(ai): remove legacy getAiProvider() from provider-factory (AR-615)`
 
-### Phase 3b — Worktree 5: AR-617 (Docker integration test)
+### Phase 3b — Worktree 5: AR-617 (Docker integration test) ✅ DONE
 **Branch:** `feat/AR-617-ai-config-docker-test`
 **Depends on:** Phase 2b merged (can run in parallel with Phase 3a)
 
+Added `apps/api/tests/modules/ai/config.integration.test.ts` (container integration test):
+- Loads the real config via `getAiConfig()` and validates every tier has a non-empty provider chain of known provider types (passes `AiConfigSchema`)
+- Verifies `decideLlm(tier)` returns a valid strategy route for every tier
+- Verifies strategy-wrapper instantiation for all three strategy types + `MockAiProvider` narration (keyless — no live API keys)
+- Runs inside `make api-test-container` (Docker-first)
+
+Verified: typecheck ✓, lint 0 errors ✓, `make api-test-container` 104 files / 1217 tests ✓ (incl. 4 new integration tests).
+
 Commits:
 1. `test(ai): add container integration test for multi-provider config (AR-617)`
+2. `docs(plans): mark AR-617 docker test phase done in plans 062/064`
 
 ## Providers
 

@@ -17,7 +17,7 @@ Replace the hardcoded single-provider (Anthropic) AI config with a multi-provide
 | S3 — Honour Config | AR-614 | `feat/AR-614-honour-ai-config` | `../OneGoodArea-AR-614-honour-ai-config` |
 | S4 — Cleanup | AR-615 | `feat/AR-615-cleanup-ai-config` | `../OneGoodArea-AR-615-cleanup-ai-config` | ✅ done |
 | S5 — Promote Module | AR-616 | `feat/AR-616-promote-ai-module` | `../OneGoodArea-AR-616-promote-ai-module` | ✅ done |
-| S6 — Docker Test | AR-617 | `feat/AR-617-ai-config-docker-test` | `../OneGoodArea-AR-617-ai-config-docker-test` |
+| S6 — Docker Test | AR-617 | `feat/AR-617-ai-config-docker-test` | `../OneGoodArea-AR-617-ai-config-docker-test` | ✅ done |
 
 ## Architecture
 
@@ -239,10 +239,16 @@ intelligence/index.ts        → "../ai/provider-factory"
 
 **Move tests:** `tests/modules/engine/ai/` → `tests/modules/ai/`
 
-### S6 — Docker Test
+### S6 — Docker Test ✅ DONE
 **Jira:** AR-617 | **Branch:** `feat/AR-617-ai-config-docker-test` | **Worktree:** `../OneGoodArea-AR-617-ai-config-docker-test`
 
-**Verification:**
-- `make test-unit` passes
-- `make test-e2e` passes with mock provider
-- Integration test with real provider (if API keys available)
+Added `apps/api/tests/modules/ai/config.integration.test.ts` (container integration test):
+- Loads the real config via `getAiConfig()` and validates every tier (`anonymous`, `logged_in`, `basic`, `high_tier`, `engineering`, `superuser`) has a non-empty provider chain of known provider types (passes `AiConfigSchema`)
+- Verifies `decideLlm(tier)` returns a valid strategy route for every tier (strategy ∈ round_robin/fallback_chain/list_pick, providers match config, retryCount = `aiRetryCount`)
+- Verifies strategy-wrapper instantiation (`createStrategyProvider`) for all three strategy types and `MockAiProvider` narration — keyless, no live API keys
+- Runs inside `make api-test-container` (Docker-first)
+
+**Verification (passed):**
+- `npm run typecheck -w @onegoodarea/api` passes
+- `npm run lint` — 0 errors (only pre-existing web warnings)
+- `make api-test-container` — 104 files / 1217 tests passed (incl. 4 new integration tests)
