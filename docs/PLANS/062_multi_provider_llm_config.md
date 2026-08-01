@@ -15,8 +15,8 @@ Replace the hardcoded single-provider (Anthropic) AI config with a multi-provide
 | S1 — Config Schema | AR-612 | `feat/AR-612-ai-config-schema` | `../OneGoodArea-AR-612-ai-config-schema` |
 | S2 — Config Values | AR-613 | `feat/AR-613-ai-config-values` | `../OneGoodArea-AR-613-ai-config-values` |
 | S3 — Honour Config | AR-614 | `feat/AR-614-honour-ai-config` | `../OneGoodArea-AR-614-honour-ai-config` |
-| S4 — Cleanup | AR-615 | `feat/AR-615-cleanup-ai-config` | `../OneGoodArea-AR-615-cleanup-ai-config` |
-| S5 — Promote Module | AR-616 | `feat/AR-616-promote-ai-module` | `../OneGoodArea-AR-616-promote-ai-module` |
+| S4 — Cleanup | AR-615 | `feat/AR-615-cleanup-ai-config` | `../OneGoodArea-AR-615-cleanup-ai-config` | ✅ done |
+| S5 — Promote Module | AR-616 | `feat/AR-616-promote-ai-module` | `../OneGoodArea-AR-616-promote-ai-module` | ✅ done |
 | S6 — Docker Test | AR-617 | `feat/AR-617-ai-config-docker-test` | `../OneGoodArea-AR-617-ai-config-docker-test` |
 
 ## Architecture
@@ -204,8 +204,8 @@ interface AiConfig {
 - `fallback_chain`: always starts at index 0, falls through on error
 - `list_pick`: always uses index 0, no fallback
 
-### S4 — Cleanup
-**Jira:** AR-615 | **Branch:** `feat/AR-615-cleanup-ai-config` | **Worktree:** `../OneGoodArea-AR-615-cleanup-ai-config`
+### S4 — Cleanup ✅ DONE
+**Jira:** AR-615 | **Branch:** `feat/AR-615-cleanup-ai-config` | **Worktree:** `../OneGoodArea-AR-615-cleanup-ai-config` (merged via PR #450)
 
 **Files:**
 - `infrastructure/config/index.ts` — remove `aiProvider`, `anthropicApiKey`, `anthropicModel`

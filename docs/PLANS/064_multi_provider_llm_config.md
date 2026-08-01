@@ -14,9 +14,9 @@ Replace the hardcoded single-provider (Anthropic) AI config with a multi-provide
 |---|-------|------|----------|-------|
 | S1+S2 | Config schema + values | AR-612, AR-613 | `.worktrees/AR-612-ai-config-schema-values` | 1 |
 | S5 | Module promotion + new providers | AR-616 | `.worktrees/AR-616-promote-ai-module` | 2a |
-| S3 | Wire up config in code | AR-614 | `.worktrees/AR-614-honour-ai-config` | 2b |
-| S4 | Cleanup old config | AR-615 | `.worktrees/AR-615-cleanup-ai-config` | 3a |
-| S6 | Docker integration test | AR-617 | `.worktrees/AR-617-ai-config-docker-test` | 3b |
+| S3 | Wire up config in code | AR-614 | `.worktrees/AR-614-honour-ai-config` | 2b | ✅ done |
+| S4 | Cleanup old config | AR-615 | `.worktrees/AR-615-cleanup-ai-config` | 3a | ✅ done |
+| S6 | Docker integration test | AR-617 | `.worktrees/AR-617-ai-config-docker-test` | 3b | |
 
 ## Architecture
 
@@ -67,8 +67,8 @@ Commits:
 3. `refactor(ai): pass provider params through to SDK instantiation (AR-614)`
 4. `test(ai): add provider-factory strategy tests (AR-614)`
 
-### Phase 3a — Worktree 4: AR-615 (Cleanup old config)
-**Branch:** `feat/AR-615-cleanup-ai-config`
+### Phase 3a — Worktree 4: AR-615 (Cleanup old config) ✅ DONE
+**Branch:** `feat/AR-615-cleanup-ai-config` (merged via PR #450)
 **Depends on:** Phase 2b merged
 
 Commits:
