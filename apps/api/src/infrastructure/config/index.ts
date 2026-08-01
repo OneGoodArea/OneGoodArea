@@ -19,15 +19,6 @@ export interface ApiConfig {
   authSecret: string | undefined;
   nextAuthUrl: string;
 
-  // AI
-  aiProvider: string;
-  anthropicApiKey: string | undefined;
-  anthropicModel: string;
-  deepseekApiKey: string | undefined;
-  deepseekBaseUrl: string;
-  deepseekModel: string;
-  deepseekMaxTokens: number;
-
   // Email
   emailProvider: string;
   emailHost: string;
@@ -97,15 +88,6 @@ export function getConfig(): ApiConfig {
     // Auth
     authSecret: process.env.AUTH_SECRET,
     nextAuthUrl: process.env.NEXTAUTH_URL || "https://www.onegoodarea.com",
-
-    // AI
-    aiProvider: process.env.OGA_AI_PROVIDER ?? "anthropic",
-    anthropicApiKey: process.env.ANTHROPIC_API_KEY,
-    anthropicModel: process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-6",
-    deepseekApiKey: process.env.DEEPSEEK_API_KEY,
-    deepseekBaseUrl: process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com/v1",
-    deepseekModel: process.env.DEEPSEEK_MODEL ?? "deepseek-chat",
-    deepseekMaxTokens: Number(process.env.DEEPSEEK_MAX_TOKENS ?? 4096),
 
     // Email
     emailProvider: process.env.OGA_EMAIL_PROVIDER ?? "resend",
