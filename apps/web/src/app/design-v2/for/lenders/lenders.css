@@ -1,0 +1,216 @@
+/* /for/lenders - bespoke bits only. Shared template classes (.oga-pt-*) come
+   from proptech.css; this file adds the audit-record money shot and the four
+   lender-specific capability illustrations (version pin, bulk-score run, drift
+   row, country-scoped percentiles). */
+
+/* Money shot: an audit / decision record. A scored area, the pinned engine
+   version, and a re-run-today match that proves the number is reproducible.
+   Reuses the shared showcase stage + ghost stack. */
+.oga-lnd-audit {
+  position: relative;
+  z-index: 1;
+  width: min(500px, 100%);
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  border-radius: 18px;
+  box-shadow: 0 50px 100px -50px rgba(26, 28, 31, 0.5), 0 2px 6px -2px rgba(26, 28, 31, 0.08);
+  padding: 20px;
+}
+.oga-lnd-audit__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--oga-border);
+}
+.oga-lnd-audit__head-label {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--oga-fg-subtle);
+}
+.oga-lnd-audit__head-date { font-family: var(--oga-font-mono); font-size: 11px; color: var(--oga-fg-muted); }
+.oga-lnd-audit__score { padding: 16px 0; }
+.oga-lnd-audit__area { font-family: var(--oga-font-mono); font-size: 12px; color: var(--oga-fg-muted); }
+.oga-lnd-audit__num { display: flex; align-items: baseline; gap: 7px; margin: 8px 0; }
+.oga-lnd-audit__num-val {
+  font-family: var(--oga-font-sans);
+  font-size: 44px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--oga-fg);
+}
+.oga-lnd-audit__num-max { font-family: var(--oga-font-mono); font-size: 13px; color: var(--oga-fg-subtle); }
+.oga-lnd-audit__dims { font-family: var(--oga-font-mono); font-size: 11px; color: var(--oga-fg-subtle); }
+
+.oga-lnd-audit__replay {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-top: 14px;
+  border-top: 1px solid var(--oga-border);
+}
+.oga-lnd-audit__pinchip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--oga-canvas);
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-fg);
+}
+.oga-lnd-audit__rrow {
+  display: grid;
+  grid-template-columns: 92px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-fg-muted);
+}
+.oga-lnd-audit__rrow--match {
+  border-color: var(--oga-border);
+  background: var(--oga-white);
+  color: var(--oga-fg);
+  box-shadow: 0 8px 20px -14px rgba(26, 28, 31, 0.4);
+}
+.oga-lnd-audit__rrow-src { color: var(--oga-fg-subtle); }
+.oga-lnd-audit__rrow-val { text-align: right; color: var(--oga-fg); }
+.oga-lnd-audit__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px solid var(--oga-border);
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--oga-fg-subtle);
+}
+
+/* capability 1: version pin (a key/value config with the pin highlighted) */
+.oga-lnd-pin { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.oga-lnd-pin__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--oga-border);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+}
+.oga-lnd-pin__row--on {
+  background: var(--oga-white);
+  box-shadow: 0 8px 20px -14px rgba(26, 28, 31, 0.4);
+}
+.oga-lnd-pin__k { color: var(--oga-fg-muted); }
+.oga-lnd-pin__v { color: var(--oga-fg); }
+
+/* capability 2: bulk-score run */
+.oga-lnd-bulk { width: 100%; display: flex; flex-direction: column; }
+.oga-lnd-bulk__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--oga-fg-subtle);
+}
+.oga-lnd-bulk__head span:first-child { color: var(--oga-fg); }
+.oga-lnd-bulk__rows { list-style: none; margin: 0; padding: 0; }
+.oga-lnd-bulk__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-top: 1px solid var(--oga-border);
+  font-family: var(--oga-font-mono);
+  font-size: 12.5px;
+  color: var(--oga-fg-muted);
+}
+.oga-lnd-bulk__score { color: var(--oga-fg); }
+.oga-lnd-bulk__more {
+  margin-top: 10px;
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: var(--oga-fg-subtle);
+}
+
+/* capability 3: a single drift move */
+.oga-lnd-drift {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  box-shadow: 0 10px 26px -18px rgba(26, 28, 31, 0.4);
+}
+.oga-lnd-drift__area { font-family: var(--oga-font-mono); font-size: 11px; letter-spacing: 0.03em; color: var(--oga-fg-muted); }
+.oga-lnd-drift__delta { font-family: var(--oga-font-sans); font-size: 20px; font-weight: 600; letter-spacing: -0.01em; color: var(--oga-fg); }
+.oga-lnd-drift__tag {
+  align-self: flex-start;
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--oga-white);
+  background: var(--oga-ink);
+  padding: 3px 8px;
+  border-radius: 5px;
+}
+
+/* capability 4: country-scoped percentiles (per-nation index, one active) */
+.oga-lnd-nations { width: 100%; display: flex; flex-direction: column; gap: 7px; }
+.oga-lnd-nations__row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--oga-border);
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  color: var(--oga-fg-muted);
+}
+.oga-lnd-nations__row--on { background: var(--oga-white); color: var(--oga-fg); box-shadow: 0 8px 20px -14px rgba(26, 28, 31, 0.4); }
+.oga-lnd-nations__name { color: inherit; }
+.oga-lnd-nations__idx {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--oga-fg-subtle);
+  background: var(--oga-ink-06);
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+.oga-lnd-nations__pct { font-family: var(--oga-font-mono); font-size: 12px; color: var(--oga-fg); min-width: 42px; text-align: right; }
+.oga-lnd-nations__note {
+  margin-top: 3px;
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: var(--oga-fg-subtle);
+}
+
+/* Money shot on the dark split band: strip the card frame, recolor the canvas
+   pin chip and the "match" highlight. Text and dividers adapt via the tokens. */
+.oga-pt-band .oga-lnd-audit { background: transparent; border: none; box-shadow: none; border-radius: 0; padding: 0; width: 100%; }
+.oga-pt-band .oga-lnd-audit__pinchip { background: rgba(250, 248, 244, 0.06); }
+.oga-pt-band .oga-lnd-audit__rrow--match { background: rgba(250, 248, 244, 0.09); border-color: rgba(250, 248, 244, 0.28); }

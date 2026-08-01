@@ -1,0 +1,193 @@
+/* /for/insurance - bespoke bits only. The shared template classes (.oga-pt-*)
+   come from proptech.css; this file adds the portfolio-monitoring money shot,
+   the weight-bar widths, and the webhook block used in the capability grid. */
+
+/* Money shot: a portfolio-monitoring card. A tracked book with one material
+   move surfaced as a signed, sample-size-gated alert, the rest steady. Reuses
+   the shared showcase stage + ghost stack for depth. */
+.oga-ins-book {
+  position: relative;
+  z-index: 1;
+  width: min(500px, 100%);
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  border-radius: 18px;
+  box-shadow: 0 50px 100px -50px rgba(26, 28, 31, 0.5), 0 2px 6px -2px rgba(26, 28, 31, 0.08);
+  padding: 20px;
+}
+.oga-ins-book__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.oga-ins-book__head-main { display: flex; flex-direction: column; gap: 3px; }
+.oga-ins-book__title { font-family: var(--oga-font-sans); font-size: 16px; font-weight: 600; color: var(--oga-fg); }
+.oga-ins-book__sub { font-family: var(--oga-font-mono); font-size: 11px; letter-spacing: 0.04em; color: var(--oga-fg-subtle); }
+.oga-ins-book__live {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  background: var(--oga-ink-06);
+  padding: 4px 9px;
+  border-radius: 6px;
+}
+
+/* the alert (the star of the card) */
+.oga-ins-book__alert {
+  background: var(--oga-canvas);
+  border: 1px solid var(--oga-border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.oga-ins-book__alert-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.oga-ins-book__alert-tag {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--oga-white);
+  background: var(--oga-ink);
+  padding: 3px 8px;
+  border-radius: 5px;
+}
+.oga-ins-book__alert-area { font-family: var(--oga-font-mono); font-size: 13px; color: var(--oga-fg); }
+.oga-ins-book__alert-body {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.oga-ins-book__alert-signal { font-family: var(--oga-font-sans); font-size: 14px; color: var(--oga-fg-muted); }
+.oga-ins-book__alert-delta { font-family: var(--oga-font-sans); font-size: 15px; font-weight: 600; color: var(--oga-fg); }
+.oga-ins-book__alert-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 11px;
+  border-top: 1px solid var(--oga-border);
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  color: var(--oga-fg-subtle);
+}
+
+/* steady tracked rows */
+.oga-ins-book__rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.oga-ins-book__row {
+  display: grid;
+  grid-template-columns: 74px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 2px;
+  border-top: 1px solid var(--oga-border);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-fg-muted);
+}
+.oga-ins-book__row-area { color: var(--oga-fg); }
+.oga-ins-book__row-signal { font-family: var(--oga-font-sans); font-size: 12.5px; color: var(--oga-fg-subtle); }
+.oga-ins-book__row-status { color: var(--oga-fg-subtle); }
+
+/* footer stamp */
+.oga-ins-book__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px solid var(--oga-border);
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--oga-fg-subtle);
+}
+
+/* capability grid: illustrations picked for what we actually do for insurers.
+   The composite the actuary owns (a saved preset + weight bars), sample-size
+   gating, peer-relative screening, and signed delivery. */
+
+/* the saved composite (preset + weights). Insurance labels (Demographics,
+   Environment) are longer than proptech's, so the label column needs room. */
+.oga-ins-preset { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+.oga-ins-preset__id {
+  align-self: flex-start;
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--oga-fg-muted);
+  background: var(--oga-ink-06);
+  padding: 4px 9px;
+  border-radius: 6px;
+}
+.oga-ins-weights .oga-pt-int__bar-row { grid-template-columns: 108px 1fr 26px; }
+.oga-pt-bar--w35 span { width: 35%; }
+.oga-pt-bar--w25 span { width: 25%; }
+.oga-pt-bar--w20 span { width: 20%; }
+.oga-pt-bar--w10 span { width: 10%; }
+
+/* sample-size gate: thin evidence stays quiet, enough evidence goes material */
+.oga-ins-gate { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.oga-ins-gate__row {
+  display: grid;
+  grid-template-columns: 62px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--oga-border);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+}
+.oga-ins-gate__row--gated { color: var(--oga-fg-subtle); opacity: 0.75; }
+.oga-ins-gate__row--material {
+  color: var(--oga-fg);
+  background: var(--oga-white);
+  box-shadow: 0 8px 20px -14px rgba(26, 28, 31, 0.4);
+}
+.oga-ins-gate__label { font-family: var(--oga-font-sans); font-size: 12.5px; color: var(--oga-fg-muted); }
+.oga-ins-gate__status { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
+.oga-ins-gate__note {
+  margin-top: 4px;
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: var(--oga-fg-subtle);
+}
+
+/* peer-relative screening: a cluster of peers and one outlier */
+.oga-ins-peer { width: 100%; }
+.oga-ins-peer__svg { width: 100%; height: auto; display: block; overflow: visible; }
+.oga-ins-peer__axis { stroke: var(--oga-ink-10); stroke-width: 1; }
+.oga-ins-peer__tick { stroke: var(--oga-ink-30); stroke-width: 1; }
+.oga-ins-peer__dot { fill: var(--oga-ink-30); }
+.oga-ins-peer__out { fill: var(--oga-fg); }
+.oga-ins-peer__z { font-family: var(--oga-font-mono); font-size: 9px; fill: var(--oga-fg); letter-spacing: 0.04em; }
+
+.oga-ins-hook {
+  width: 100%;
+  margin: 0;
+  padding: 13px 15px;
+  border: 1px solid var(--oga-border);
+  border-radius: 10px;
+  background: var(--oga-white);
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  line-height: 1.65;
+  color: var(--oga-fg-muted);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* Money shot on the dark split band: strip the card frame, recolor the ink and
+   canvas fills. Text and dividers adapt via the dark-surface tokens. */
+.oga-pt-band .oga-ins-book { background: transparent; border: none; box-shadow: none; border-radius: 0; padding: 0; width: 100%; }
+.oga-pt-band .oga-ins-book__live { background: rgba(250, 248, 244, 0.08); }
+.oga-pt-band .oga-ins-book__alert { background: rgba(250, 248, 244, 0.05); }
+.oga-pt-band .oga-ins-book__alert-tag { background: var(--oga-white); color: var(--oga-ink); }

@@ -4,27 +4,22 @@ import Link from "next/link";
 import { Nav } from "../../_shared/nav";
 import { Footer } from "../../_shared/footer";
 import "../_shared/icp-page.css";
+import "../_shared/icp-template.css";
+import "./proptech.css";
 
-/* /for/proptech — AR-204 PR — per-ICP page #1.
-
-   Buyer-centric page for PropTech platforms (listing portals,
-   valuation tools, agent CRMs, search products).
-
-   Sets the template for the next 4 ICP pages (lenders, insurance,
-   cre, public-sector). Same structural skeleton; per-ICP content +
-   FAQs diverge.
-
-   SEO-tuned via the production /for/proptech/page.tsx metadata. */
+/* /for/proptech - Plan 064 rebuild. PropTech-explicit, simpler and buyer-first:
+   the problem, what it looks like on a real listing (the money shot), how
+   little it takes to ship, why the numbers are defensible, a short FAQ. The
+   old 5-step curl wall and jargon are gone. */
 
 export default function ForProptechClient() {
   return (
     <div className="oga-root oga-icp">
       <Nav />
       <Hero />
-      <SectionProblem />
-      <SectionFlow />
-      <SectionProducts />
-      <SectionDefend />
+      <SectionShowcase />
+      <SectionIntegration />
+      <SectionTrust />
       <SectionFaqs />
       <FinalCta />
       <Footer />
@@ -32,27 +27,20 @@ export default function ForProptechClient() {
   );
 }
 
-/* ============================================================
-   Hero
-   ============================================================ */
-
+/* ---------- Hero ---------- */
 function Hero() {
   return (
-    <section className="oga-section-hero oga-icp-hero">
+    <section className="oga-section-quiet oga-icp-hero">
       <div className="oga-icp__wrap--narrow">
         <div className="oga-icp-hero__eyebrow">
           <span className="oga-icp-hero__eyebrow-mark" aria-hidden />
           <span>For PropTech</span>
           <span className="oga-icp-hero__eyebrow-mark" aria-hidden />
         </div>
-        <h1 className="oga-icp-hero__h1">
-          UK area data your listing pages can ship next week.
-        </h1>
+        <h1 className="oga-icp-hero__h1">Add area context to every listing.</h1>
         <p className="oga-icp-hero__lead">
-          One API key replaces a dozen government data integrations. LSOA-grain
-          signals across seven categories with country-scoped percentiles,
-          per-signal confidence, and source attribution on every response.
-          Built for portals, valuation tools, agent CRMs, and search products.
+          Schools, crime, prices, transport and a score you can stand behind, for
+          any UK postcode, from one API. No data team. Live in an afternoon.
         </p>
         <div className="oga-icp-hero__ctas">
           <Link href="/playground" className="oga-btn oga-btn-primary">
@@ -68,302 +56,276 @@ function Hero() {
   );
 }
 
-/* ============================================================
-   01 — The problem
-   ============================================================ */
-
-function SectionProblem() {
-  return (
-    <section className="oga-section-quiet" aria-labelledby="proptech-problem-title">
-      <div className="oga-icp__wrap">
-        <header className="oga-icp__header">
-          <div className="oga-icp__eyebrow">
-            <span className="oga-icp__eyebrow-mark" aria-hidden />
-            <span>The problem</span>
-            <span className="oga-icp__eyebrow-mark" aria-hidden />
-          </div>
-          <h2 id="proptech-problem-title" className="oga-icp__h2">
-            Your users want area context. You do not want a data team.
-          </h2>
-        </header>
-
-        <div className="oga-icp-problem__body">
-          <p>
-            A user on your property detail page has already decided they care
-            about this address. The next thing they want to know is what the
-            area is like. Schools. Crime. Prices in the neighbourhood. How it
-            compares to other areas they have looked at. How it has moved over
-            the last year.
-          </p>
-          <p>
-            Building that view yourself means integrating the police bulk
-            archive, HM Land Registry Price Paid, the IMD / WIMD / SIMD
-            deprivation indices, Ofsted, ONS NSPL for postcode resolution,
-            OpenStreetMap for amenity counts, and the Environment Agency for
-            flood. Then normalising mismatched deciles, reconciling 2011 versus
-            2021 boundaries, deciding what to do when Scotland prices fall back
-            to live because HM Land Registry is England and Wales only. Then
-            owning the refresh cadence forever.
-          </p>
-          <p>
-            That is a data team. Most PropTech teams already know they should
-            not be hiring one. The question is what to integrate against instead.
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ============================================================
-   02 — Workflow walkthrough (DARK)
-   ============================================================ */
-
-type FlowStep = {
-  num: string;
-  title: string;
-  text: string;
-  code: string;
-};
-
-const FLOW: FlowStep[] = [
-  {
-    num: "Step 01",
-    title: "Resolve the postcode",
-    text: "Drop GET /v1/area into your property detail render. We resolve the postcode to its LSOA via the ONS spine and return the seven-category catalog. No 12-step join across upstream APIs.",
-    code: `GET /v1/area?postcode=M1 1AE
-  -H "Authorization: Bearer oga_..."`,
-  },
-  {
-    num: "Step 02",
-    title: "Render the area panel",
-    text: "Each signal carries value, normalized_value, percentile (national within country), direction, source, observed_period and confidence. Render whichever fields fit the panel. Percentile bars work especially well.",
-    code: `{
-  "key": "crime.total_12m",
-  "value": 3712,
-  "percentile": 92.1,
-  "confidence": 0.9,
-  "direction": "lower_is_better"
-}`,
-  },
-  {
-    num: "Step 03",
-    title: "Compress to a headline score (optional)",
-    text: "If you want a single number per listing for your search filters or summary card, POST /v1/score with one of four scoring profiles. Deterministic engine, version stamped on every response, same input always returns the same number so cached UI states stay coherent.",
-    code: `POST /v1/score
-{ "area": "M1 1AE", "preset": "moving" }
--> { "score": 58, "engine_version": "1.0.0" }`,
-  },
-  {
-    num: "Step 04",
-    title: "Add similar-areas tiles (optional)",
-    text: "POST /v1/peers gives you the k-nearest LSOAs by Euclidean distance over normalized signal values. Powers an areas-like-this-one widget without you running a peer graph cache.",
-    code: `POST /v1/peers
-{ "target": { "postcode": "M1 1AE" },
-  "country": "England", "k": 20 }`,
-  },
-  {
-    num: "Step 05",
-    title: "Ship",
-    text: "Bearer token authentication, plain JSON over HTTPS, all paths under /v1/. No SDK required. 30 requests per minute per key on every product surface; cached responses do not count against quota.",
-    code: `# That is it. A handful of curl-equivalent calls.
-# Bearer header, JSON body, /v1/ paths.`,
-  },
+/* ---------- What your users see (the money shot) ---------- */
+const PANEL: { label: string; pct: number }[] = [
+  { label: "Schools", pct: 81 },
+  { label: "Crime", pct: 88 },
+  { label: "Prices", pct: 66 },
+  { label: "Transport", pct: 79 },
 ];
 
-function SectionFlow() {
+function SectionShowcase() {
   return (
-    <section
-      className="oga-section-dark oga-icp-flow"
-      data-oga-surface="dark"
-      aria-labelledby="proptech-flow-title"
-    >
-      <div className="oga-icp__wrap">
-        <header className="oga-icp-flow__head">
+    <section className="oga-section-dark oga-pt-band" data-oga-surface="dark" aria-labelledby="pt-showcase">
+      <div className="oga-pt-band__grid">
+        <div className="oga-pt-band__copy">
           <div className="oga-icp__eyebrow">
             <span className="oga-icp__eyebrow-mark" aria-hidden />
-            <span>How it fits</span>
-            <span className="oga-icp__eyebrow-mark" aria-hidden />
+            <span>What your users see</span>
           </div>
-          <h2 id="proptech-flow-title" className="oga-icp__h2">
-            Five steps from API key to richer listings.
+          <h2 id="pt-showcase" className="oga-icp__h2 oga-pt-showcase__h2">
+            Drop it straight onto your listings.
           </h2>
-          <p className="oga-icp__lead">
-            What a typical PropTech integration actually looks like. No magic.
-            One Bearer token, plain JSON, paths under /v1/.
+          <p className="oga-icp__lead oga-pt-showcase__lead">
+            Your listing, your design. The area score, the signals and the
+            comparison are ours, source-backed and rendered however fits your UI.
           </p>
-        </header>
+          <ul className="oga-pt-showcase__points">
+            <li className="oga-pt-showcase__point">
+              <span className="oga-pt-showcase__point-k">Your brand</span>
+              <span className="oga-pt-showcase__point-v">
+                Render the score, signals and comparison however fits your UI.
+                Our attribution is optional.
+              </span>
+            </li>
+            <li className="oga-pt-showcase__point">
+              <span className="oga-pt-showcase__point-k">Every listing</span>
+              <span className="oga-pt-showcase__point-v">
+                The same call covers any UK postcode, so it drops into your
+                listing template once.
+              </span>
+            </li>
+          </ul>
+          <Link href="/docs" className="oga-pt-showcase__link">
+            See it in the docs
+            <span aria-hidden>→</span>
+          </Link>
+        </div>
 
-        <div className="oga-icp-flow__steps">
-          {FLOW.map((s) => (
-            <article key={s.num} className="oga-icp-flow__step">
-              <span className="oga-icp-flow__step-num">{s.num}</span>
-              <div className="oga-icp-flow__step-body">
-                <h3 className="oga-icp-flow__step-title">{s.title}</h3>
-                <p className="oga-icp-flow__step-text">{s.text}</p>
+        <div className="oga-pt-band__panel">
+          <div className="oga-pt-band__panel-inner" aria-hidden>
+            <div className="oga-pt-out__listing">
+              <span className="oga-pt-out__addr">48 Wilbraham Road, Chorlton</span>
+              <span className="oga-pt-out__spec">£425,000 · 3 bed terraced · M21 9PN</span>
+            </div>
+            <div className="oga-pt-out__head">
+              <div className="oga-pt-out__heading">
+                <span className="oga-pt-out__label">Area intelligence</span>
+                <span className="oga-pt-out__by">by OneGoodArea</span>
               </div>
-              <pre className="oga-icp-flow__step-code">{s.code}</pre>
-            </article>
-          ))}
+              <div className="oga-pt-ring">
+                <svg className="oga-pt-ring__svg" viewBox="0 0 72 72" aria-hidden>
+                  <circle className="oga-pt-ring__track" cx="36" cy="36" r="30" />
+                  <circle className="oga-pt-ring__value" cx="36" cy="36" r="30" />
+                </svg>
+                <span className="oga-pt-ring__num">74</span>
+              </div>
+            </div>
+            <ul className="oga-pt-out__rows">
+              {PANEL.map((r) => (
+                <li key={r.label} className="oga-pt-out__row">
+                  <span className="oga-pt-out__row-label">{r.label}</span>
+                  <span className={`oga-pt-bar oga-pt-bar--w${r.pct}`}><span /></span>
+                  <span className="oga-pt-out__row-pct">{r.pct}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="oga-pt-out__foot">
+              <span>police.uk · Land Registry · Ofsted</span>
+              <span>Updated Jul 2026</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-/* ============================================================
-   03 — Products you reach for (cream)
-   ============================================================ */
-
-type ProductUse = {
-  num: string;
-  name: string;
-  slug: string;
-  use: string;
-  code: string;
-};
-
-const PRODUCTS: ProductUse[] = [
-  {
-    num: "01",
-    name: "Signals",
-    slug: "signals",
-    use: "The primary integration for PropTech. GET /v1/area returns the seven-category catalog at LSOA grain. Pin to the signal keys your product consumes (property.median_price, crime.total_12m, deprivation.imd_decile, transport.station_count) and the contract stays additive over time.",
-    code: `GET /v1/area?postcode=SW1A 1AA
-{
-  "geo":   { "lsoa": "E01000001", "country": "England" },
-  "signals": [ { "key": "...", "value": ..., "percentile": ... } ],
-  "meta":  { "engine_version": "1.0.0", "fetch_mode": "hybrid" }
-}`,
-  },
-  {
-    num: "02",
-    name: "Scores",
-    slug: "scores",
-    use: "When your UI needs a single 0-to-100 number per listing for search filters or a summary card. Four scoring profiles cover the four audiences your product sees (residential origination, commercial, investment, research baseline). Components plus weights plus confidence come back in every response so you can drill into the breakdown on demand.",
-    code: `POST /v1/score
-{ "area": "SW1A 1AA", "preset": "investing" }
--> { "score": 71, "area_type": "urban",
-     "dimensions": [...], "engine_version": "1.0.0" }`,
-  },
-  {
-    num: "03",
-    name: "Intelligence",
-    slug: "intelligence",
-    use: "When you want a similar-areas tile or natural-language area search baked into your product. POST /v1/peers powers areas-like-this-one in one call. POST /v1/query accepts free-text questions or programmatic plans and returns ranked results from deterministic SQL.",
-    code: `POST /v1/query
-{ "question": "cheap places to buy with rising prices and low crime" }
--> { "plan": { "op": "rank_areas", ... },
-     "plan_source": "nl",
-     "results": [ ... ] }`,
-  },
+/* ---------- Integration ---------- */
+const COMPARABLES: { pc: string; name: string; score: number; active?: boolean }[] = [
+  { pc: "M20 2NR", name: "Didsbury", score: 78 },
+  { pc: "M21 8AA", name: "Chorlton", score: 74, active: true },
+  { pc: "SK4 3GN", name: "Heaton Moor", score: 71 },
 ];
 
-function SectionProducts() {
+/* Score trend over eight monthly snapshots, drifting up. viewBox 240x64, y is
+   inverted so a lower number sits higher on the chart. */
+const SPARK_POINTS = "0,52 34,48 68,46 102,48 136,38 170,32 204,22 238,12";
+
+function SectionIntegration() {
   return (
-    <section className="oga-section-hero" aria-labelledby="proptech-products-title">
+    <section className="oga-section-quiet oga-pt-int" aria-labelledby="pt-int">
       <div className="oga-icp__wrap">
-        <header className="oga-icp-products__head">
+        <header className="oga-icp__header oga-pt-int__header">
           <div className="oga-icp__eyebrow">
             <span className="oga-icp__eyebrow-mark" aria-hidden />
-            <span>Products you reach for</span>
-            <span className="oga-icp__eyebrow-mark" aria-hidden />
+            <span>Integration</span>
           </div>
-          <h2 id="proptech-products-title" className="oga-icp__h2">
-            Three of the four products. One API key.
-          </h2>
+          <h2 id="pt-int" className="oga-icp__h2">One call returns the whole area.</h2>
           <p className="oga-icp__lead">
-            Monitor (portfolios plus change detection) is not the primary lift
-            for PropTech, but Signals, Scores, and Intelligence cover every
-            area-context surface a property product needs.
+            One authenticated GET, plain JSON, no SDK. Everything below comes back
+            in a single response, ready to render however fits your UI.
           </p>
+          <code className="oga-pt-int__endpoint">
+            <span className="oga-pt-int__endpoint-verb">GET</span>{" "}
+            /v1/area?postcode=M21 9PN
+          </code>
         </header>
 
-        <div className="oga-icp-products__grid">
-          {PRODUCTS.map((p) => (
-            <article key={p.slug} className="oga-icp-product">
-              <div>
-                <header className="oga-icp-product__head">
-                  <span className="oga-icp-product__num">{p.num}</span>
-                  <h3 className="oga-icp-product__name">{p.name}</h3>
-                  <Link
-                    href={`/products/${p.slug}`}
-                    className="oga-icp-product__name-link"
+        <div className="oga-pt-int__grid" aria-hidden>
+          <div className="oga-pt-int__cell">
+            <div className="oga-pt-int__viz oga-pt-int__viz--score">
+              <span className="oga-pt-int__score">74<em>/100</em></span>
+              <span className="oga-pt-int__score-label">Area score</span>
+            </div>
+            <h3 className="oga-pt-int__title">A score you can show</h3>
+            <p className="oga-pt-int__desc">
+              One headline number per postcode, country-scoped so it actually
+              means something.
+            </p>
+          </div>
+
+          <div className="oga-pt-int__cell">
+            <div className="oga-pt-int__viz">
+              <ul className="oga-pt-int__bars">
+                {PANEL.map((r) => (
+                  <li key={r.label} className="oga-pt-int__bar-row">
+                    <span className="oga-pt-int__bar-label">{r.label}</span>
+                    <span className={`oga-pt-bar oga-pt-bar--w${r.pct}`}><span /></span>
+                    <span className="oga-pt-int__bar-pct">{r.pct}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <h3 className="oga-pt-int__title">Seven signals, ranked</h3>
+            <p className="oga-pt-int__desc">
+              Every category as a percentile, each one carrying the source it
+              came from.
+            </p>
+          </div>
+
+          <div className="oga-pt-int__cell">
+            <div className="oga-pt-int__viz">
+              <svg className="oga-pt-int__spark" viewBox="0 0 240 64" aria-hidden>
+                <polyline className="oga-pt-int__spark-line" points={SPARK_POINTS} />
+                <circle className="oga-pt-int__spark-dot" cx="238" cy="12" r="4" />
+              </svg>
+              <div className="oga-pt-int__spark-axis">
+                <span>Jan</span>
+                <span>Aug</span>
+              </div>
+            </div>
+            <h3 className="oga-pt-int__title">How it is moving</h3>
+            <p className="oga-pt-int__desc">
+              Monthly snapshots, so you can show the direction of travel, not
+              just today.
+            </p>
+          </div>
+
+          <div className="oga-pt-int__cell">
+            <div className="oga-pt-int__viz">
+              <ul className="oga-pt-int__rank">
+                {COMPARABLES.map((c) => (
+                  <li
+                    key={c.pc}
+                    className={`oga-pt-int__rrow${c.active ? " oga-pt-int__rrow--active" : ""}`}
                   >
-                    See product →
-                  </Link>
-                </header>
-                <p className="oga-icp-product__use">{p.use}</p>
-              </div>
-              <pre className="oga-icp-product__code">{p.code}</pre>
-            </article>
-          ))}
+                    <span className="oga-pt-int__rrow-pc">{c.pc}</span>
+                    <span className="oga-pt-int__rrow-name">{c.name}</span>
+                    <span className="oga-pt-int__rrow-score">{c.score}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <h3 className="oga-pt-int__title">Compared to nearby</h3>
+            <p className="oga-pt-int__desc">
+              The closest similar areas, ranked, in the very same response.
+            </p>
+          </div>
+        </div>
+
+        <div className="oga-pt-int__cta-row">
+          <Link href="/docs" className="oga-pt-int__link">
+            Read the docs
+            <span aria-hidden>→</span>
+          </Link>
         </div>
       </div>
     </section>
   );
 }
 
-/* ============================================================
-   04 — What you can defend (cream-quiet)
-   ============================================================ */
+/* ---------- Why you can trust it ---------- */
+type TrustRow = { left: string; right: string; rank?: string; state?: "active" | "dim" | "faint" };
+type TrustCol = { title: string; body: string; rows: TrustRow[] };
 
-type DefendCard = {
-  num: string;
-  title: string;
-  body: string;
-};
-
-const DEFEND: DefendCard[] = [
+const TRUST: TrustCol[] = [
   {
-    num: "01",
-    title: "Engine version on every response",
-    body: "engine_version is stamped on the body and on the X-Engine-Version response header. If a score in your UI gets challenged, you can point at the exact methodology version that produced it.",
+    title: "Versioned",
+    body: "Every response is stamped with the exact model that produced it.",
+    rows: [
+      { left: "GET /v1/area", right: "v1.0.0" },
+      { left: "POST /v1/score", right: "v1.0.0", state: "active" },
+      { left: "POST /v1/query", right: "v1.0.0" },
+      { left: "POST /v1/peers", right: "v1.0.0", state: "dim" },
+      { left: "GET /v1/meta", right: "v1.0.0", state: "faint" },
+    ],
   },
   {
-    num: "02",
-    title: "Country-scoped percentiles, not invented ones",
-    body: "Percentiles are national-within-country. England's IMD, Wales's WIMD, and Scotland's SIMD are different methodologies. We refuse to manufacture a cross-border percentile that would be a lie.",
+    title: "Source-backed",
+    body: "Every value carries its source and the date it was captured.",
+    rows: [
+      { left: "crime", right: "police.uk · 2026-05" },
+      { left: "prices", right: "Land Registry · 2026-Q1", state: "active" },
+      { left: "schools", right: "Ofsted · 2025" },
+      { left: "deprivation", right: "IMD · 2025", state: "dim" },
+      { left: "flood", right: "Environment Agency", state: "faint" },
+    ],
   },
   {
-    num: "03",
-    title: "Provenance on the wire",
-    body: "Every signal carries source, observed_period, confidence, and a plain-language confidence_reason. fetch_mode is honestly live, store, or hybrid so you always know how each value was served.",
-  },
-  {
-    num: "04",
-    title: "Deterministic + stable for caching",
-    body: "Same postcode plus same scoring profile equals the same score across deploys. Cached UI states stay coherent. The engine is frozen and golden-tested; AI never sets the numbers.",
+    title: "No invented numbers",
+    body: "Percentiles ranked within each nation, never faked across borders.",
+    rows: [
+      { rank: "1", left: "M14 Fallowfield", right: "78" },
+      { rank: "2", left: "LS11 Beeston", right: "74", state: "active" },
+      { rank: "3", left: "B29 Selly Oak", right: "71" },
+      { rank: "4", left: "SW9 Brixton", right: "68", state: "dim" },
+      { rank: "5", left: "S2 Sheffield", right: "64", state: "faint" },
+    ],
   },
 ];
 
-function SectionDefend() {
+function SectionTrust() {
   return (
-    <section className="oga-section-quiet" aria-labelledby="proptech-defend-title">
+    <section className="oga-section-dark oga-pt-trust" data-oga-surface="dark" aria-labelledby="pt-trust">
       <div className="oga-icp__wrap">
-        <header className="oga-icp-defend__head">
+        <header className="oga-icp__header oga-pt-trust__header">
           <div className="oga-icp__eyebrow">
             <span className="oga-icp__eyebrow-mark" aria-hidden />
-            <span>What you can defend</span>
-            <span className="oga-icp__eyebrow-mark" aria-hidden />
+            <span>Why you can trust it</span>
           </div>
-          <h2 id="proptech-defend-title" className="oga-icp__h2">
-            Four properties your customer success and product teams will thank you for.
-          </h2>
+          <h2 id="pt-trust" className="oga-icp__h2">Every number comes with its receipts.</h2>
           <p className="oga-icp__lead">
-            None of these are unique pitches per ICP. They hold across the
-            platform, but they matter for PropTech because your end users
-            ask questions about every number you show.
+            Your users ask about every figure you show them. The provenance is
+            built into the response.
           </p>
         </header>
 
-        <div className="oga-icp-defend__grid">
-          {DEFEND.map((d) => (
-            <article key={d.num} className="oga-icp-defend-card">
-              <span className="oga-icp-defend-card__num">{d.num}</span>
-              <h3 className="oga-icp-defend-card__title">{d.title}</h3>
-              <p className="oga-icp-defend-card__body">{d.body}</p>
-            </article>
+        <div className="oga-pt-trust__cols">
+          {TRUST.map((c) => (
+            <div key={c.title} className="oga-pt-trust__col">
+              <div className="oga-pt-trust__viz" aria-hidden>
+                {c.rows.map((r) => (
+                  <div key={r.left} className={`oga-pt-trow${r.state ? ` oga-pt-trow--${r.state}` : ""}`}>
+                    {r.rank && <span className="oga-pt-trow__rank">{r.rank}</span>}
+                    <span className="oga-pt-trow__left">{r.left}</span>
+                    <span className="oga-pt-trow__right">{r.right}</span>
+                  </div>
+                ))}
+              </div>
+              <h3 className="oga-pt-trust__ctitle">{c.title}</h3>
+              <p className="oga-pt-trust__csub">{c.body}</p>
+            </div>
           ))}
         </div>
       </div>
@@ -371,58 +333,37 @@ function SectionDefend() {
   );
 }
 
-/* ============================================================
-   05 — FAQs (DARK)
-   ============================================================ */
-
-type Faq = { q: string; a: string };
-
-const FAQS: Faq[] = [
+/* ---------- FAQ ---------- */
+const FAQS: { q: string; a: string }[] = [
   {
-    q: "Does the API scale to listing-page traffic?",
-    a: "Bearer-token API at /v1/area is rate-limited at 30 requests per minute per key. For higher-throughput listing-page traffic the typical pattern is to cache the AreaProfile per postcode at your edge and serve the JSON yourself. Same postcode within a month is deterministic, so cache windows can be generous.",
+    q: "Does it scale to listing-page traffic?",
+    a: "Yes. Cache the area per postcode at your edge and serve it yourself. The same postcode within a month returns the same data, so cache windows can be generous.",
   },
   {
-    q: "What grain is the data at?",
-    a: "LSOA × month. There are about 42,000 LSOAs across England, Wales, and Scotland; postcodes resolve into LSOAs via the ONS NSPL spine. We do not offer per-postcode or per-address signals today; address-level (UPRN) is on the roadmap.",
+    q: "How fine-grained is the data?",
+    a: "Neighbourhood level (LSOA), refreshed monthly, for any UK postcode across England, Wales and Scotland. Address-level is on the roadmap.",
   },
   {
-    q: "Can I show your numbers without attribution?",
-    a: "Attribution is on you. Each signal carries a source string (e.g. police.uk, IMD 2025) so you can render it next to the value if your platform needs to. The OneGoodArea brand is not required on your listing pages unless your contract says so.",
+    q: "Do I have to show your branding?",
+    a: "No. It is your listing and your design. Each value carries its source so you can attribute the data if you want to, but the OneGoodArea brand is not required.",
   },
   {
-    q: "What happens when a postcode is in Scotland?",
-    a: "fetch_mode is honestly hybrid. Deprivation comes from SIMD (Scotland's index), crime from police.uk, transport and amenities from OpenStreetMap. Property median price falls back to live fetch because HM Land Registry covers England and Wales only. Your UI gets the value with a confidence dot reflecting that source.",
-  },
-  {
-    q: "Do you have customer logos I can show to procurement?",
-    a: "We are early. We would rather have a clean published methodology and a stamped engine version on every response than logos that imply social proof we have not earned. If procurement needs deeper assurance we are happy to do a call.",
-  },
-  {
-    q: "Is there a free tier for me to integrate against?",
-    a: "Yes. The free Developer tier lets you evaluate the /v1/area endpoint, the primary read for PropTech, with no card required. It is for evaluation, not production. For production, book a demo and we scope a paid pilot or an annual contract; pricing is published at /pricing.",
+    q: "Is there a free way to try it?",
+    a: "Yes. The free Developer tier gives you full access for 30 days, no card, to build and evaluate against. Pricing for production is at /pricing.",
   },
 ];
 
 function SectionFaqs() {
   return (
-    <section
-      className="oga-section-dark oga-icp-faqs"
-      data-oga-surface="dark"
-      aria-labelledby="proptech-faqs-title"
-    >
+    <section className="oga-section-quiet oga-icp-faqs oga-pt-faqs" aria-labelledby="pt-faqs">
       <div className="oga-icp__wrap">
         <header className="oga-icp-faqs__head">
           <div className="oga-icp__eyebrow">
             <span className="oga-icp__eyebrow-mark" aria-hidden />
             <span>Frequently asked</span>
-            <span className="oga-icp__eyebrow-mark" aria-hidden />
           </div>
-          <h2 id="proptech-faqs-title" className="oga-icp__h2">
-            Real questions PropTech buyers ask us.
-          </h2>
+          <h2 id="pt-faqs" className="oga-icp__h2">Questions PropTech teams ask us.</h2>
         </header>
-
         <div className="oga-icp-faqs__list">
           {FAQS.map((f) => (
             <article key={f.q} className="oga-icp-faq">
@@ -436,33 +377,23 @@ function SectionFaqs() {
   );
 }
 
-/* ============================================================
-   Final CTA (DARK)
-   ============================================================ */
-
+/* ---------- Final CTA ---------- */
 function FinalCta() {
   return (
-    <section
-      className="oga-section-dark oga-icp-cta"
-      data-oga-surface="dark"
-      aria-labelledby="proptech-cta-title"
-    >
+    <section className="oga-section-dark oga-icp-cta" data-oga-surface="dark" aria-labelledby="pt-cta">
       <div className="oga-icp__wrap--narrow">
-        <h2 id="proptech-cta-title" className="oga-icp-cta__h2">
-          Ship richer area context than your competitor&rsquo;s roadmap.
-        </h2>
+        <h2 id="pt-cta" className="oga-icp-cta__h2">See it on your own listings.</h2>
         <p className="oga-icp-cta__lead">
-          One endpoint, one API key, one engine version stamped on every
-          response. Drop /v1/area into your listing pages and replace a
-          dozen data integrations.
+          Try the API in the playground, no card required, or read the docs and
+          ship area context this week.
         </p>
         <div className="oga-icp-cta__ctas">
           <Link href="/playground" className="oga-btn oga-btn-primary">
             Try in the playground
             <span aria-hidden>→</span>
           </Link>
-          <Link href="/methodology" className="oga-btn oga-btn-secondary">
-            Read the methodology
+          <Link href="/docs" className="oga-btn oga-btn-secondary">
+            See the docs
           </Link>
         </div>
       </div>

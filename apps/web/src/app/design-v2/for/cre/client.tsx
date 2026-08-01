@@ -4,29 +4,24 @@ import Link from "next/link";
 import { Nav } from "../../_shared/nav";
 import { Footer } from "../../_shared/footer";
 import { DEMO_URL } from "../../_shared/book-demo";
-import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 import "../_shared/icp-page.css";
+import "../_shared/icp-template.css";
+import "./cre.css";
 
-/* /for/cre — AR-204 PR — per-ICP page #4.
-
-   Buyer-centric page for CRE + site selection (retail expansion teams,
-   CRE platforms, leasing analytics, asset managers).
-
-   Reuses the shared /for/<icp> skeleton + CSS. Heaviest pitch:
-   compound multi-signal rank via Intelligence /v1/query, single-signal
-   threshold rank via Signals /v1/areas, business-profile scoring via
-   Scores. find_peers gives "areas like our best-performing store" in
-   one call. */
+/* /for/cre - Plan 064 rebuild onto the proptech template. CRE is a ranking
+   problem at scale, so the money shot is a compound-query shortlist. The
+   capability illustrations are CRE-specific: peer-set finder, commercial-profile
+   radar, country/LAD scope, and plan replay. Demo-led. The old problem/flow/
+   products/defend structure is gone. */
 
 export default function ForCreClient() {
   return (
     <div className="oga-root oga-icp">
       <Nav />
       <Hero />
-      <SectionProblem />
-      <SectionFlow />
-      <SectionProducts />
-      <SectionDefend />
+      <SectionShowcase />
+      <SectionIntegration />
+      <SectionTrust />
       <SectionFaqs />
       <FinalCta />
       <Footer />
@@ -34,28 +29,22 @@ export default function ForCreClient() {
   );
 }
 
-/* ============================================================
-   Hero
-   ============================================================ */
-
+/* ---------- Hero ---------- */
 function Hero() {
   return (
-    <section className="oga-section-hero oga-icp-hero">
+    <section className="oga-section-quiet oga-icp-hero">
       <div className="oga-icp__wrap--narrow">
         <div className="oga-icp-hero__eyebrow">
           <span className="oga-icp-hero__eyebrow-mark" aria-hidden />
           <span>For CRE and site selection</span>
           <span className="oga-icp-hero__eyebrow-mark" aria-hidden />
         </div>
-        <h1 className="oga-icp-hero__h1">
-          Screen the whole UK against your site criteria in one typed call.
-        </h1>
+        <h1 className="oga-icp-hero__h1">Screen the whole UK against your site criteria in one call.</h1>
         <p className="oga-icp-hero__lead">
-          Compound multi-signal ranking across LSOAs, country or local
-          authority scope. Up to eight AND-joined filters with eleven
-          comparison operators. Find the peer set of your best-performing
-          catchment in one call. Replay any ranked shortlist as a
-          deterministic plan next quarter and get the same answer.
+          Compound, multi-signal ranking across every neighbourhood, scoped to a
+          country or a local authority. Find the areas most like your
+          best-performing site, and replay the same screen next quarter for a
+          comparable answer.
         </p>
         <div className="oga-icp-hero__ctas">
           <Link href={DEMO_URL} className="oga-btn oga-btn-primary">
@@ -71,346 +60,301 @@ function Hero() {
   );
 }
 
-/* ============================================================
-   01 — The problem
-   ============================================================ */
+/* ---------- The shortlist (the money shot) ---------- */
+const FILTERS = ["spending ≥ 80", "competition ≤ 30", "transport ≥ 70"];
+const SHORTLIST: { rank: string; area: string; name: string; score: number; top?: boolean }[] = [
+  { rank: "1", area: "EC1A 1BB", name: "Clerkenwell", score: 91, top: true },
+  { rank: "2", area: "M1 1AE", name: "Manchester", score: 88 },
+  { rank: "3", area: "LS6 3AA", name: "Headingley", score: 84 },
+  { rank: "4", area: "B29 6BN", name: "Selly Oak", score: 80 },
+];
 
-function SectionProblem() {
+function SectionShowcase() {
   return (
-    <section className="oga-section-quiet" aria-labelledby="cre-problem-title">
-      <div className="oga-icp__wrap">
-        <header className="oga-icp__header">
+    <section className="oga-section-dark oga-pt-band" data-oga-surface="dark" aria-labelledby="cre-showcase">
+      <div className="oga-pt-band__grid">
+        <div className="oga-pt-band__copy">
           <div className="oga-icp__eyebrow">
             <span className="oga-icp__eyebrow-mark" aria-hidden />
-            <span>The problem</span>
-            <span className="oga-icp__eyebrow-mark" aria-hidden />
+            <span>What site selection gets back</span>
           </div>
-          <h2 id="cre-problem-title" className="oga-icp__h2">
-            Site selection is a ranking problem at portfolio scale.
+          <h2 id="cre-showcase" className="oga-icp__h2 oga-pt-showcase__h2">
+            A ranked shortlist, not a spreadsheet join.
           </h2>
-        </header>
+          <p className="oga-icp__lead oga-pt-showcase__lead">
+            One typed query takes your compound criteria and ranks every
+            catchment in scope. No stitching ONS, Land Registry and a footfall
+            file by hand.
+          </p>
+          <ul className="oga-pt-showcase__points">
+            <li className="oga-pt-showcase__point">
+              <span className="oga-pt-showcase__point-k">Compound</span>
+              <span className="oga-pt-showcase__point-v">
+                Up to eight AND-joined filters with eleven operators, sorted by
+                any signal.
+              </span>
+            </li>
+            <li className="oga-pt-showcase__point">
+              <span className="oga-pt-showcase__point-k">One call</span>
+              <span className="oga-pt-showcase__point-v">
+                The whole country ranked in a single round trip, capped at a
+                thousand rows.
+              </span>
+            </li>
+          </ul>
+          <Link href="/products/intelligence" className="oga-pt-showcase__link">
+            See Intelligence
+            <span aria-hidden>→</span>
+          </Link>
+        </div>
 
-        <div className="oga-icp-problem__body">
-          <p>
-            Picking a site for a new store, a build-to-rent block, or a
-            tenant catchment is not a single-area decision. It is a ranking
-            problem at portfolio scale. Which areas in this country or
-            local authority meet our thresholds on footfall demand,
-            competition density, transport access, spending power and
-            commercial costs, sorted by which one is the closest match to
-            our best-performing locations?
-          </p>
-          <p>
-            The legacy answer is to stitch ONS Mid-Year Estimates, postcode
-            sector demographics, Land Registry, a footfall provider, and a
-            crime spreadsheet, then re-rank by hand in Excel. Each refresh
-            of the criteria means rebuilding the join. Adding a new
-            constraint means a new spreadsheet. The shortlist is not
-            reproducible next quarter because the data and the join logic
-            both change underneath you.
-          </p>
-          <p>
-            What CRE and site-selection teams actually want: a single typed
-            query that takes compound criteria, runs against a stable
-            LSOA-grain dataset, returns ranked rows, and lets you replay
-            the same query next quarter and get a comparable answer. Plus
-            a separate call that says &ldquo;here are the catchments most
-            like our top-performing store.&rdquo;
-          </p>
+        <div className="oga-pt-band__panel">
+          <div className="oga-pt-band__panel-inner">
+          <article className="oga-cre-shortlist" aria-hidden>
+            <div className="oga-cre-shortlist__head">
+              <span className="oga-cre-shortlist__title">Site shortlist</span>
+              <span className="oga-cre-shortlist__scope">England</span>
+            </div>
+
+            <div className="oga-cre-shortlist__filters">
+              {FILTERS.map((f) => (
+                <span key={f} className="oga-cre-shortlist__filter">{f}</span>
+              ))}
+            </div>
+
+            <ul className="oga-cre-shortlist__rows">
+              {SHORTLIST.map((r) => (
+                <li
+                  key={r.area}
+                  className={`oga-cre-shortlist__row${r.top ? " oga-cre-shortlist__row--top" : ""}`}
+                >
+                  <span className="oga-cre-shortlist__rank">{r.rank}</span>
+                  <span className="oga-cre-shortlist__area">{r.area}</span>
+                  <span className="oga-cre-shortlist__name">{r.name}</span>
+                  <span className="oga-cre-shortlist__score">{r.score}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="oga-cre-shortlist__foot">
+              <span>1,240 catchments ranked</span>
+              <span>one call</span>
+            </div>
+          </article>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-/* ============================================================
-   02 — How it fits (DARK)
-   ============================================================ */
-
-type FlowStep = {
-  num: string;
-  title: string;
-  text: string;
-  code: string;
-};
-
-const FLOW: FlowStep[] = [
-  {
-    num: "Step 01",
-    title: "Compound rank in one call",
-    text: "POST /v1/query with a rank_areas plan. Up to 8 AND-joined filters on stored signal keys, 11 comparison operators (eq, lt, lte, gt, gte, between, plus the five percentile variants). Sort by any signal, scope by country or local authority district, cap at 1000 rows. One round trip.",
-    code: `POST /v1/query
-{ "plan": { "op": "rank_areas", "params": {
-   "signals": [
-     { "key": "property.median_price", "filter": { "lte": 300000 } },
-     { "key": "crime.total_12m", "filter": { "percentile_lte": 25 } },
-     { "key": "property.price_change_pct_yoy",
-       "filter": { "gt": 0 } } ],
-   "sort_by": { "signal": "property.price_change_pct_yoy",
-                "direction": "desc" },
-   "country": "England", "limit": 50 } } }`,
-  },
-  {
-    num: "Step 02",
-    title: "Drill into shortlisted areas",
-    text: "Each rank_areas result row carries geo_code (the canonical LSOA). Pipe the shortlist into GET /v1/area for the full seven-category profile per area. Compose your own dashboard rows from the typed signals catalog.",
-    code: `# For each LSOA in the shortlist:
-GET /v1/area?postcode=M1 1AE
--> { "geo": { "lsoa": "E01005207", ... },
-     "signals": [ ... 7 categories ... ],
-     "meta": { "engine_version": "${METHODOLOGY_VERSION}" } }`,
-  },
-  {
-    num: "Step 03",
-    title: "Find areas like the best-performing one",
-    text: "POST /v1/peers takes a target LSOA (your top store) and returns k nearest neighbours by Euclidean distance over normalised signal values. Default k=20, min 3 overlapping dimensions. Materialised peer graph (~840k assignments across 42k LSOAs) so the call is cheap and stable.",
-    code: `POST /v1/peers
-{ "target": { "postcode": "EC1A 1BB" },
-  "country": "England",
-  "k": 20 }
--> { "peers": [
-     { "geo_code": "E01...", "distance": 0.045,
-       "n_dims_used": 7 } ] }`,
-  },
-  {
-    num: "Step 04",
-    title: "Score with the commercial profile",
-    text: "POST /v1/score with the business profile returns the 5 dimensions a site-selection analyst already uses: foot_traffic_demand, competition_density, transport_access, local_spending_power, commercial_costs. Custom weights or a saved org profile (preset_id) lets the team encode their own brand fit.",
-    code: `POST /v1/score
-{ "area": "EC1A 1BB", "preset": "business" }
--> { "score": 71, "area_type": "urban",
-     "dimensions": [ { "key": "foot_traffic_demand", ... } ],
-     "weights_source": "preset",
-     "engine_version": "${METHODOLOGY_VERSION}" }`,
-  },
-  {
-    num: "Step 05",
-    title: "Replay the screen next quarter",
-    text: "The /v1/query response echoes the executed plan plus plan_source. Save the plan JSON alongside the shortlist; next quarter, paste it back as the request body and get a comparable answer against refreshed data. The criteria become version-controlled JSON instead of a spreadsheet that lives on one analyst's laptop.",
-    code: `# Q3 query
-POST /v1/query { "plan": { ... } }
--> { "plan_source": "client",
-     "plan":   { /* echoed */ },
-     "results": [ ... ] }
-
-# Q4: same plan, refreshed data
-POST /v1/query { "plan": { /* paste */ } }`,
-  },
+/* ---------- What a site team leans on ---------- */
+const PEERS: { code: string; d: string }[] = [
+  { code: "E01000921", d: "0.045" },
+  { code: "E01004312", d: "0.052" },
+  { code: "E01002087", d: "0.061" },
 ];
 
-function SectionFlow() {
+/* radar geometry: pentagon in a 120 box, centre 60,60, outer radius ~42. */
+const RADAR_GRID = "60,18 99.9,47 84.7,94 35.3,94 20.05,47";
+const RADAR_AREA = "60,24.3 81.95,52.86 77.78,84.47 47.65,76.99 32.83,51.17";
+const RADAR_AXES: [number, number][] = [
+  [60, 18],
+  [99.9, 47],
+  [84.7, 94],
+  [35.3, 94],
+  [20.05, 47],
+];
+const RADAR_DOTS = RADAR_AREA.split(" ").map((p) => p.split(",").map(Number) as [number, number]);
+
+function SectionIntegration() {
   return (
-    <section
-      className="oga-section-dark oga-icp-flow"
-      data-oga-surface="dark"
-      aria-labelledby="cre-flow-title"
-    >
+    <section className="oga-section-quiet oga-pt-int" aria-labelledby="cre-int">
       <div className="oga-icp__wrap">
-        <header className="oga-icp-flow__head">
+        <header className="oga-icp__header oga-pt-int__header">
           <div className="oga-icp__eyebrow">
             <span className="oga-icp__eyebrow-mark" aria-hidden />
-            <span>How it fits</span>
-            <span className="oga-icp__eyebrow-mark" aria-hidden />
+            <span>What a site team leans on</span>
           </div>
-          <h2 id="cre-flow-title" className="oga-icp__h2">
-            Five integration points from screen to score to replay.
-          </h2>
+          <h2 id="cre-int" className="oga-icp__h2">Four moves the committee understands.</h2>
           <p className="oga-icp__lead">
-            What a typical CRE or site-selection integration looks like.
-            Compound query first, drill in second, peer set third, score
-            fourth, replay fifth.
+            Find the peers of your best site, score the commercial profile, screen
+            at any scope, and replay the whole thing next quarter.
           </p>
+          <code className="oga-pt-int__endpoint">
+            <span className="oga-pt-int__endpoint-verb">POST</span>{" "}
+            /v1/query
+          </code>
         </header>
 
-        <div className="oga-icp-flow__steps">
-          {FLOW.map((s) => (
-            <article key={s.num} className="oga-icp-flow__step">
-              <span className="oga-icp-flow__step-num">{s.num}</span>
-              <div className="oga-icp-flow__step-body">
-                <h3 className="oga-icp-flow__step-title">{s.title}</h3>
-                <p className="oga-icp-flow__step-text">{s.text}</p>
+        <div className="oga-pt-int__grid" aria-hidden>
+          <div className="oga-pt-int__cell">
+            <div className="oga-pt-int__viz">
+              <div className="oga-cre-peers">
+                <div className="oga-cre-peers__target">
+                  <span className="oga-cre-peers__target-tag">Top store</span>
+                  <span className="oga-cre-peers__target-code">EC1A 1BB</span>
+                </div>
+                <ul className="oga-cre-peers__rows">
+                  {PEERS.map((p) => (
+                    <li key={p.code} className="oga-cre-peers__row">
+                      <span className="oga-cre-peers__code">{p.code}</span>
+                      <span className="oga-cre-peers__d">{p.d}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <pre className="oga-icp-flow__step-code">{s.code}</pre>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ============================================================
-   03 — Products you reach for (cream)
-   ============================================================ */
-
-type ProductUse = {
-  num: string;
-  name: string;
-  slug: string;
-  use: string;
-  code: string;
-};
-
-const PRODUCTS: ProductUse[] = [
-  {
-    num: "01",
-    name: "Intelligence",
-    slug: "intelligence",
-    use: "Primary surface. /v1/query with rank_areas does compound screening across the UK in one call. /v1/peers gives the peer set of any target catchment in one call. /v1/insights ranks LSOAs by peer-relative anomaly when you want to find catchments that are unusual for their group. Every response echoes the executed plan for replay.",
-    code: `POST /v1/query
-{ "plan": { "op": "rank_areas", "params": {
-   "signals": [ { "key": "...", "filter": { ... } } ],
-   "sort_by": { ... },
-   "country": "England", "limit": 50 } } }
--> { "plan_source": "client",
-     "plan":   { /* echoed for replay */ },
-     "results": [ ... ] }`,
-  },
-  {
-    num: "02",
-    name: "Signals",
-    slug: "signals",
-    use: "Single-signal cross-area ranking via /v1/areas. When the screen is one dimension at a time (\"top 50 LSOAs by price_change_pct_yoy in the West Midlands\"), /v1/areas is the simpler surface. Same store, same percentiles, same LSOA grain. /v1/area drills into any shortlisted LSOA for the full seven-category profile.",
-    code: `GET /v1/areas?signal=property.price_change_pct_yoy
-       &country=England&min_percentile=80
-       &sort=value_desc&limit=50
--> { "signal": "property.price_change_pct_yoy",
-     "count": 50,
-     "areas": [
-       { "geo_type": "lsoa", "geo_code": "E01...",
-         "value": 18.4, "percentile": 92.1 } ] }`,
-  },
-  {
-    num: "03",
-    name: "Scores",
-    slug: "scores",
-    use: "The commercial profile returns the five dimensions a site-selection analyst already uses. Custom weights per portfolio class (food + bev vs convenience vs experiential), or a saved org profile (preset_id) for brand-specific fit. Deterministic engine, same score across deploys.",
-    code: `POST /v1/score
-{ "area": "EC1A 1BB", "preset": "business" }
--> { "score": 71, "area_type": "urban",
-     "dimensions": [
-       { "key": "foot_traffic_demand", ... },
-       { "key": "competition_density", ... },
-       { "key": "transport_access", ... },
-       { "key": "local_spending_power", ... },
-       { "key": "commercial_costs", ... } ] }`,
-  },
-];
-
-function SectionProducts() {
-  return (
-    <section className="oga-section-hero" aria-labelledby="cre-products-title">
-      <div className="oga-icp__wrap">
-        <header className="oga-icp-products__head">
-          <div className="oga-icp__eyebrow">
-            <span className="oga-icp__eyebrow-mark" aria-hidden />
-            <span>Products you reach for</span>
-            <span className="oga-icp__eyebrow-mark" aria-hidden />
+            </div>
+            <h3 className="oga-pt-int__title">Areas like your best store</h3>
+            <p className="oga-pt-int__desc">
+              Give it your top-performing catchment and get its nearest matches by
+              signal signature.
+            </p>
           </div>
-          <h2 id="cre-products-title" className="oga-icp__h2">
-            Intelligence leads. Signals handles single-signal scans. Scores is the brand-fit lens.
-          </h2>
-          <p className="oga-icp__lead">
-            Monitor (portfolio drift detection) is rarely the primary CRE
-            lift, but if you watch a leased portfolio it slots in the same
-            way it does for insurers.
-          </p>
-        </header>
 
-        <div className="oga-icp-products__grid">
-          {PRODUCTS.map((p) => (
-            <article key={p.slug} className="oga-icp-product">
-              <div>
-                <header className="oga-icp-product__head">
-                  <span className="oga-icp-product__num">{p.num}</span>
-                  <h3 className="oga-icp-product__name">{p.name}</h3>
-                  <Link
-                    href={`/products/${p.slug}`}
-                    className="oga-icp-product__name-link"
-                  >
-                    See product →
-                  </Link>
-                </header>
-                <p className="oga-icp-product__use">{p.use}</p>
+          <div className="oga-pt-int__cell">
+            <div className="oga-pt-int__viz">
+              <div className="oga-cre-radar">
+                <svg className="oga-cre-radar__svg" viewBox="0 0 120 120" aria-hidden>
+                  {RADAR_AXES.map(([x, y]) => (
+                    <line key={`${x}-${y}`} className="oga-cre-radar__axis" x1="60" y1="60" x2={x} y2={y} />
+                  ))}
+                  <polygon className="oga-cre-radar__grid" points={RADAR_GRID} />
+                  <polygon className="oga-cre-radar__area" points={RADAR_AREA} />
+                  {RADAR_DOTS.map(([x, y]) => (
+                    <circle key={`${x}-${y}`} className="oga-cre-radar__dot" cx={x} cy={y} r="2.4" />
+                  ))}
+                </svg>
               </div>
-              <pre className="oga-icp-product__code">{p.code}</pre>
-            </article>
-          ))}
+            </div>
+            <h3 className="oga-pt-int__title">The commercial profile</h3>
+            <p className="oga-pt-int__desc">
+              Five dimensions a site analyst already uses: footfall, competition,
+              transport, spending power and costs.
+            </p>
+          </div>
+
+          <div className="oga-pt-int__cell">
+            <div className="oga-pt-int__viz">
+              <div className="oga-cre-scope">
+                <div className="oga-cre-scope__row oga-cre-scope__row--on">
+                  <span className="oga-cre-scope__name">England</span>
+                  <span className="oga-cre-scope__tag">country</span>
+                </div>
+                <div className="oga-cre-scope__row">
+                  <span className="oga-cre-scope__name">Greater Manchester</span>
+                  <span className="oga-cre-scope__tag">LAD</span>
+                </div>
+                <div className="oga-cre-scope__row">
+                  <span className="oga-cre-scope__name">Leeds</span>
+                  <span className="oga-cre-scope__tag">LAD</span>
+                </div>
+              </div>
+            </div>
+            <h3 className="oga-pt-int__title">Screen at any scope</h3>
+            <p className="oga-pt-int__desc">
+              Rank across a whole country, or narrow to one local authority.
+              ONS-backed boundaries, no fake polygons.
+            </p>
+          </div>
+
+          <div className="oga-pt-int__cell">
+            <div className="oga-pt-int__viz">
+              <div className="oga-cre-replay">
+                <div className="oga-cre-replay__step">
+                  <span className="oga-cre-replay__q">Q3</span>
+                  <span className="oga-cre-replay__what">plan saved</span>
+                </div>
+                <span className="oga-cre-replay__arrow" aria-hidden>↓</span>
+                <div className="oga-cre-replay__step oga-cre-replay__step--on">
+                  <span className="oga-cre-replay__q">Q4</span>
+                  <span className="oga-cre-replay__what">same plan, fresh data</span>
+                </div>
+                <span className="oga-cre-replay__note">comparable shortlist</span>
+              </div>
+            </div>
+            <h3 className="oga-pt-int__title">Replay it next quarter</h3>
+            <p className="oga-pt-int__desc">
+              Every shortlist echoes its plan. Save it, run it again on refreshed
+              data, get a comparable answer.
+            </p>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-/* ============================================================
-   04 — What you can defend (cream-quiet)
-   ============================================================ */
+/* ---------- Why the shortlist survives committee ---------- */
+type TrustRow = { left: string; right: string; state?: "dim" | "faint" | "active" };
+type TrustCol = { title: string; body: string; rows: TrustRow[] };
 
-type DefendCard = {
-  num: string;
-  title: string;
-  body: string;
-};
-
-const DEFEND: DefendCard[] = [
+const TRUST: TrustCol[] = [
   {
-    num: "01",
-    title: "Compound queries in one round trip",
-    body: "rank_areas accepts up to 8 AND-joined signal filters with 11 comparison operators (raw value or percentile). One INNER JOIN per signal in the executor. AND semantics across all filters. No more spreadsheet joins; no more partial joins across data vendors.",
+    title: "Same shortlist next quarter",
+    body: "The same plan against the same data returns the same rows. The criteria live as JSON, not a spreadsheet.",
+    rows: [
+      { left: "run · Q3", right: "same rows" },
+      { left: "run · Q4", right: "same rows", state: "active" },
+      { left: "plan", right: "echoed" },
+      { left: "executor", right: "deterministic", state: "dim" },
+      { left: "AI", right: "plan only", state: "faint" },
+    ],
   },
   {
-    num: "02",
-    title: "Reproducible shortlists",
-    body: "Every /v1/query response echoes the executed plan plus plan_source. Save the plan JSON alongside the shortlist; replay it next quarter against refreshed data and get a comparable answer. Criteria become version-controlled JSON instead of an Excel file on a laptop.",
+    title: "One round trip",
+    body: "Compound screening is a single call, not a chain of vendor joins reconciled by hand.",
+    rows: [
+      { left: "filters", right: "up to 8" },
+      { left: "operators", right: "value · pct", state: "active" },
+      { left: "rows", right: "up to 1,000" },
+      { left: "joins", right: "prepared", state: "dim" },
+      { left: "scope", right: "country · LAD", state: "faint" },
+    ],
   },
   {
-    num: "03",
-    title: "Materialised peer graph",
-    body: "/v1/peers reads from a materialised k-NN graph (~840k assignments across 42k LSOAs, k=20 default). The peer math runs offline in the refresh:peers + derive:signals batch so query-time is cheap. Same definition of \"peer\" feeds find_peers, find_insights, and the peer-relative-z derived signals.",
-  },
-  {
-    num: "04",
-    title: "ONS-backed scope, no fake polygons",
-    body: "Country and LAD scoping use the official ONS NSPL spine. Region scope is on the roadmap; ad-hoc polygon overlays are not. Where the analyst wants a custom catchment, Levers peer cohorts persist an explicit list of LSOA codes per org and constrain /v1/peers to that universe.",
-  },
-  {
-    num: "05",
-    title: "Deterministic + stable",
-    body: "Same postcode plus same scoring profile gives the same score across deploys. Same plan gives the same shortlist across the same data state. The deterministic engine is frozen and golden-tested; AI never sets the numbers (AI translates NL into the typed plan; the database produces the rows).",
-  },
-  {
-    num: "06",
-    title: "Country-scoped percentiles",
-    body: "Normalisation runs national-within-country. England's IMD, Wales's WIMD, and Scotland's SIMD are different methodologies. A cross-border percentile would be a lie. If you operate across all three countries, you compare percentiles within each, not across.",
+    title: "Honest across borders",
+    body: "Percentiles are ranked within each nation. We never manufacture a cross-border rank that would not hold up.",
+    rows: [
+      { left: "England", right: "IMD", state: "active" },
+      { left: "Wales", right: "WIMD" },
+      { left: "Scotland", right: "SIMD" },
+      { left: "scope", right: "within nation", state: "dim" },
+      { left: "cross-border", right: "refused", state: "faint" },
+    ],
   },
 ];
 
-function SectionDefend() {
+function SectionTrust() {
   return (
-    <section className="oga-section-quiet" aria-labelledby="cre-defend-title">
+    <section className="oga-section-dark oga-pt-trust" data-oga-surface="dark" aria-labelledby="cre-trust">
       <div className="oga-icp__wrap">
-        <header className="oga-icp-defend__head">
+        <header className="oga-icp__header oga-pt-trust__header">
           <div className="oga-icp__eyebrow">
             <span className="oga-icp__eyebrow-mark" aria-hidden />
-            <span>What you can defend</span>
-            <span className="oga-icp__eyebrow-mark" aria-hidden />
+            <span>Why the shortlist survives committee</span>
           </div>
-          <h2 id="cre-defend-title" className="oga-icp__h2">
-            Six properties the property committee will sign off.
-          </h2>
+          <h2 id="cre-trust" className="oga-icp__h2">A shortlist you can put in front of the board.</h2>
           <p className="oga-icp__lead">
-            The shortlist needs to survive committee scrutiny. Each property
-            is documented on /methodology and stamped on every response.
+            The property committee asks how the list was made and whether it
+            holds next quarter. The answer is in the response.
           </p>
         </header>
 
-        <div className="oga-icp-defend__grid">
-          {DEFEND.map((d) => (
-            <article key={d.num} className="oga-icp-defend-card">
-              <span className="oga-icp-defend-card__num">{d.num}</span>
-              <h3 className="oga-icp-defend-card__title">{d.title}</h3>
-              <p className="oga-icp-defend-card__body">{d.body}</p>
-            </article>
+        <div className="oga-pt-trust__cols">
+          {TRUST.map((c) => (
+            <div key={c.title} className="oga-pt-trust__col">
+              <div className="oga-pt-trust__viz" aria-hidden>
+                {c.rows.map((r) => (
+                  <div key={r.left} className={`oga-pt-trow${r.state ? ` oga-pt-trow--${r.state}` : ""}`}>
+                    <span className="oga-pt-trow__left">{r.left}</span>
+                    <span className="oga-pt-trow__right">{r.right}</span>
+                  </div>
+                ))}
+              </div>
+              <h3 className="oga-pt-trust__ctitle">{c.title}</h3>
+              <p className="oga-pt-trust__csub">{c.body}</p>
+            </div>
           ))}
         </div>
       </div>
@@ -418,62 +362,37 @@ function SectionDefend() {
   );
 }
 
-/* ============================================================
-   05 — FAQs (DARK)
-   ============================================================ */
-
-type Faq = { q: string; a: string };
-
-const FAQS: Faq[] = [
+/* ---------- FAQ ---------- */
+const FAQS: { q: string; a: string }[] = [
   {
-    q: "What is the difference between /v1/areas and /v1/query?",
-    a: "/v1/areas (Signals product) is single-signal threshold-and-rank within a country or local authority. Faster to write, easier to cache, no plan grammar to learn. /v1/query (Intelligence product) is the compound version: up to 8 AND-joined signal filters, 11 comparison operators, plus the other five plan ops (get_area, score_area, find_peers, find_insights, find_forecast). Use /v1/areas when the screen is one dimension; use /v1/query when it is compound.",
+    q: "How many catchments can I screen at once?",
+    a: "One query ranks the whole country and returns up to 1,000 rows per call, with a default of 100. Each result row carries its area code, so you can pipe the shortlist into the area endpoint for a full profile on the ones that make the cut.",
   },
   {
-    q: "Can I screen hundreds of catchments at once?",
-    a: "Yes. /v1/query with rank_areas caps at 1000 rows per call. Default limit is 100. The executor runs one signal_values INNER JOIN per filter signal in the plan, all parameters bound through prepared statements so there is no SQL injection surface and the database can plan efficiently. For most CRE screens, one call returns the shortlist; pipe each result row's geo_code into /v1/area for full per-area profiles if you need them.",
+    q: "Can I use my own commercial weighting?",
+    a: "Yes, within the business profile's five dimensions: footfall demand, competition density, transport access, spending power and commercial costs. You re-weight them per request, or save a per-org profile and reference it by id. You re-weight, you do not redefine.",
   },
   {
-    q: "Can I customise the commercial dimensions?",
-    a: "Yes, but within the business profile's fixed 5-dimension set (foot_traffic_demand, competition_density, transport_access, local_spending_power, commercial_costs). You re-weight, you do not redefine. Custom weights per request OR save a per-org profile via POST /v1/orgs/:id/presets and reference it as preset_id on every call. Weight keys must match PRESET_DIMENSION_KEYS[business].",
+    q: "What about catchments that are not neighbourhood-shaped?",
+    a: "Approximate the catchment as a list of area codes and save it as a cohort, then constrain the peer search to that set. Or resolve a few representative postcodes inside the catchment and aggregate client-side. The neighbourhood-by-month grain is the floor; custom polygons are not on the roadmap.",
   },
   {
-    q: "How do you handle catchments that are not LSOA-shaped?",
-    a: "Two options. (a) Approximate the catchment as a list of LSOA codes and use Levers peer cohorts to persist it (POST /v1/orgs/:id/cohorts, up to 10000 LSOA codes per cohort). Pass cohort_id on /v1/peers to constrain the candidate set. (b) Resolve a few representative postcodes inside the catchment via /v1/area and aggregate signals client-side. Custom-polygon ingest is not on the roadmap; the LSOA × month grain is the floor.",
-  },
-  {
-    q: "Where does footfall data come from?",
-    a: "Today we surface the proxies (residential density, retail amenity counts within radii, transport-station counts) via the business scoring profile. We do not ingest mobile-device footfall feeds (Streetlytics, Mytraffic, etc.). Most CRE teams already have one of those; OneGoodArea is the deterministic area-context layer underneath, not a footfall vendor. If footfall ingest moves up the priority list, it will land as a new signal category, not a replacement.",
-  },
-  {
-    q: "How does the peer set actually get computed?",
-    a: "Euclidean distance over normalised signal values, dimension-mean-squared (distance = SQRT(AVG_i((t_i - c_i)^2)) over dimensions both the target and candidate have normalised). Symmetric, bounded in [0,1], robust to missing dimensions. Default k=20, min 3 overlapping dimensions. The graph is materialised in peer_assignments (~840k rows) by the refresh:peers batch; query-time is a single LATERAL join.",
-  },
-  {
-    q: "Can the team replay the same shortlist next quarter?",
-    a: "Yes, by design. Every /v1/query response carries plan_source and the executed plan. Save the plan JSON alongside the shortlist. Next quarter, paste the plan back as the request body and the same deterministic executor runs it against refreshed data. If the engine version moved between runs, the response header X-Engine-Version tells you so; org-level methodology pinning locks the version if you want byte-equivalent runs.",
+    q: "Where does footfall come from?",
+    a: "We surface the proxies (residential density, retail amenity counts, transport-station counts) through the business profile. We are not a mobile-footfall vendor. Most CRE teams already have one; OneGoodArea is the deterministic area-context layer underneath it.",
   },
 ];
 
 function SectionFaqs() {
   return (
-    <section
-      className="oga-section-dark oga-icp-faqs"
-      data-oga-surface="dark"
-      aria-labelledby="cre-faqs-title"
-    >
+    <section className="oga-section-quiet oga-icp-faqs oga-pt-faqs" aria-labelledby="cre-faqs">
       <div className="oga-icp__wrap">
         <header className="oga-icp-faqs__head">
           <div className="oga-icp__eyebrow">
             <span className="oga-icp__eyebrow-mark" aria-hidden />
             <span>Frequently asked</span>
-            <span className="oga-icp__eyebrow-mark" aria-hidden />
           </div>
-          <h2 id="cre-faqs-title" className="oga-icp__h2">
-            Questions a CRE analyst asks before integrating.
-          </h2>
+          <h2 id="cre-faqs" className="oga-icp__h2">Questions a site-selection analyst asks first.</h2>
         </header>
-
         <div className="oga-icp-faqs__list">
           {FAQS.map((f) => (
             <article key={f.q} className="oga-icp-faq">
@@ -487,25 +406,16 @@ function SectionFaqs() {
   );
 }
 
-/* ============================================================
-   Final CTA (DARK)
-   ============================================================ */
-
+/* ---------- Final CTA ---------- */
 function FinalCta() {
   return (
-    <section
-      className="oga-section-dark oga-icp-cta"
-      data-oga-surface="dark"
-      aria-labelledby="cre-cta-title"
-    >
+    <section className="oga-section-dark oga-icp-cta" data-oga-surface="dark" aria-labelledby="cre-cta">
       <div className="oga-icp__wrap--narrow">
-        <h2 id="cre-cta-title" className="oga-icp-cta__h2">
-          One typed query against the whole UK. Reproducible next quarter.
-        </h2>
+        <h2 id="cre-cta" className="oga-icp-cta__h2">One typed query against the whole UK.</h2>
         <p className="oga-icp-cta__lead">
-          Replace the spreadsheet join with a versioned plan. Get the peer
-          set of your best-performing catchment in one call. Score with
-          weights the property committee can sign off.
+          Replace the spreadsheet join with a versioned plan, find the peers of
+          your best-performing catchment, and score with weights the property
+          committee can sign off.
         </p>
         <div className="oga-icp-cta__ctas">
           <Link href={DEMO_URL} className="oga-btn oga-btn-primary">

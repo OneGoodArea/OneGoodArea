@@ -1,0 +1,194 @@
+/* /for/cre - bespoke bits only. Shared template classes (.oga-pt-*) come from
+   proptech.css; this file adds the ranked-shortlist money shot and the four
+   CRE-specific capability illustrations (peer finder, commercial-profile radar,
+   scope selector, plan replay). */
+
+/* Money shot: a compound-query result. Filter chips, a ranked catchment
+   shortlist with the top row lit, a scope + count footer. Reuses the shared
+   showcase stage + ghost stack. */
+.oga-cre-shortlist {
+  position: relative;
+  z-index: 1;
+  width: min(500px, 100%);
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  border-radius: 18px;
+  box-shadow: 0 50px 100px -50px rgba(26, 28, 31, 0.5), 0 2px 6px -2px rgba(26, 28, 31, 0.08);
+  padding: 20px;
+}
+.oga-cre-shortlist__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.oga-cre-shortlist__title { font-family: var(--oga-font-sans); font-size: 16px; font-weight: 600; color: var(--oga-fg); }
+.oga-cre-shortlist__scope {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  background: var(--oga-ink-06);
+  padding: 4px 9px;
+  border-radius: 6px;
+}
+.oga-cre-shortlist__filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.oga-cre-shortlist__filter {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-fg-muted);
+  background: var(--oga-canvas);
+  border: 1px solid var(--oga-border);
+  padding: 4px 9px;
+  border-radius: 6px;
+}
+.oga-cre-shortlist__rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.oga-cre-shortlist__row {
+  display: grid;
+  grid-template-columns: 18px 74px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  font-family: var(--oga-font-mono);
+  font-size: 12.5px;
+  color: var(--oga-fg-muted);
+}
+.oga-cre-shortlist__row--top {
+  border-color: var(--oga-border);
+  background: var(--oga-white);
+  color: var(--oga-fg);
+  box-shadow: 0 8px 20px -14px rgba(26, 28, 31, 0.4);
+}
+.oga-cre-shortlist__rank { color: var(--oga-fg-subtle); }
+.oga-cre-shortlist__area { color: var(--oga-fg); }
+.oga-cre-shortlist__name { font-family: var(--oga-font-sans); font-size: 12.5px; color: var(--oga-fg-subtle); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oga-cre-shortlist__score { font-weight: 500; color: var(--oga-fg); }
+.oga-cre-shortlist__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px solid var(--oga-border);
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--oga-fg-subtle);
+}
+
+/* capability 1: peer finder (a target + its nearest matches by distance) */
+.oga-cre-peers { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+.oga-cre-peers__target {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  box-shadow: 0 8px 20px -14px rgba(26, 28, 31, 0.4);
+}
+.oga-cre-peers__target-tag {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--oga-white);
+  background: var(--oga-ink);
+  padding: 3px 8px;
+  border-radius: 5px;
+}
+.oga-cre-peers__target-code { font-family: var(--oga-font-mono); font-size: 13px; color: var(--oga-fg); }
+.oga-cre-peers__rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.oga-cre-peers__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-top: 1px solid var(--oga-border);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-fg-muted);
+}
+.oga-cre-peers__d { color: var(--oga-fg-subtle); }
+
+/* capability 2: commercial-profile radar (5 dimensions) */
+.oga-cre-radar { width: 100%; display: flex; justify-content: center; }
+.oga-cre-radar__svg { width: 132px; height: 132px; }
+.oga-cre-radar__grid { fill: none; stroke: var(--oga-ink-10); stroke-width: 1; }
+.oga-cre-radar__axis { stroke: var(--oga-ink-10); stroke-width: 1; }
+.oga-cre-radar__area {
+  fill: rgba(26, 28, 31, 0.1);
+  stroke: var(--oga-fg);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+.oga-cre-radar__dot { fill: var(--oga-fg); }
+
+/* capability 3: scope selector (country or LAD) */
+.oga-cre-scope { width: 100%; display: flex; flex-direction: column; gap: 7px; }
+.oga-cre-scope__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--oga-border);
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  color: var(--oga-fg-muted);
+}
+.oga-cre-scope__row--on { background: var(--oga-white); color: var(--oga-fg); box-shadow: 0 8px 20px -14px rgba(26, 28, 31, 0.4); }
+.oga-cre-scope__tag {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--oga-fg-subtle);
+  background: var(--oga-ink-06);
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+
+/* capability 4: replay (save the plan, re-run next quarter) */
+.oga-cre-replay { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.oga-cre-replay__step {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--oga-border);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: var(--oga-fg-muted);
+}
+.oga-cre-replay__step--on { background: var(--oga-white); color: var(--oga-fg); box-shadow: 0 8px 20px -14px rgba(26, 28, 31, 0.4); }
+.oga-cre-replay__q {
+  font-weight: 600;
+  color: var(--oga-fg);
+  background: var(--oga-ink-06);
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+.oga-cre-replay__arrow { font-size: 13px; color: var(--oga-fg-subtle); line-height: 1; }
+.oga-cre-replay__note {
+  margin-top: 2px;
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: var(--oga-fg-subtle);
+}
+
+/* Money shot on the dark split band: strip the card frame, recolor the scope
+   chip, filter chips and the top-ranked row. Text and dividers adapt. */
+.oga-pt-band .oga-cre-shortlist { background: transparent; border: none; box-shadow: none; border-radius: 0; padding: 0; width: 100%; }
+.oga-pt-band .oga-cre-shortlist__scope { background: rgba(250, 248, 244, 0.08); }
+.oga-pt-band .oga-cre-shortlist__filter { background: rgba(250, 248, 244, 0.05); }
+.oga-pt-band .oga-cre-shortlist__row--top { background: rgba(250, 248, 244, 0.09); border-color: rgba(250, 248, 244, 0.28); }
