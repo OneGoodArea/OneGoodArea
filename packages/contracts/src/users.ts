@@ -67,6 +67,24 @@ export function isUserRolePreference(value: unknown): value is UserRolePreferenc
   return typeof value === "string" && (USER_ROLE_PREFERENCES as readonly string[]).includes(value);
 }
 
+/** The user-type taxonomy (AR-654). Persisted on `users.user_type`
+    (CHECK-constrained in the apps/api migration). Replaces the
+    is_superuser boolean: roles are escalation-only, and the tier resolver
+    (apps/api/src/modules/tiers) reads this column instead of a boolean +
+    email-allowlist. Canonical list — don't add a role here without
+    coordinating with the migration's CHECK constraint + the admin paths
+    that grant it. */
+export const USER_TYPES = ["user", "engineering", "admin", "superuser"] as const;
+export type UserType = (typeof USER_TYPES)[number];
+
+/** Schema for `users.user_type` — always a known role ('user' default). */
+export const UserTypeSchema = z.enum(USER_TYPES);
+
+/** Runtime guard for trust boundaries. */
+export function isUserType(value: unknown): value is UserType {
+  return typeof value === "string" && (USER_TYPES as readonly string[]).includes(value);
+}
+
 /** Read-shape for the users table. Mirrors apps/web/src/lib/db-types.ts
     UserRow + the apps/api migration. Used by any code that reads a
     user record from /v1/me or the BFF proxy. password_hash is server-

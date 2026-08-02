@@ -3,6 +3,8 @@
  * Use these instead of `as string` / `as number` casting.
  */
 
+import type { UserType } from "@onegoodarea/contracts";
+
 export interface UserRow {
   id: string;
   email: string;
@@ -16,6 +18,11 @@ export interface UserRow {
      that SELECT a narrower set of columns still typecheck — only
      isSuperuser actually reads this field. */
   is_superuser?: boolean;
+  /* AR-654: user_type replaces the is_superuser boolean (expand phase —
+     is_superuser stays until the contract phase removes its last reader).
+     Optional so existing callers that SELECT narrower columns still typecheck.
+     Values: user | engineering | admin | superuser */
+  user_type?: UserType;
   /* AR-500 (Plan 045): user tier for EPIC B tier/quota/LLM-routing.
      Optional so existing callers that SELECT narrower columns still typecheck.
      Values: anonymous | logged_in | basic | high_tier | engineering | superuser */
