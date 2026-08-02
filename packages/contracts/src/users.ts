@@ -85,6 +85,13 @@ export function isUserType(value: unknown): value is UserType {
   return typeof value === "string" && (USER_TYPES as readonly string[]).includes(value);
 }
 
+/** Response schema for GET /me/user-type — returns the caller's
+    userType so the web layer can gate admin surfaces without a
+    separate superuser boolean. */
+export const MeUserTypeResponseSchema = z.object({
+  user_type: UserTypeSchema,
+});
+
 /** Read-shape for the users table. Mirrors apps/web/src/lib/db-types.ts
     UserRow + the apps/api migration. Used by any code that reads a
     user record from /v1/me or the BFF proxy. password_hash is server-

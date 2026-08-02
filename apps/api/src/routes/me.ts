@@ -10,7 +10,7 @@ import { rows, row, type SubscriptionRow } from "../infrastructure/db/types";
 import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
 import { RATE_LIMITS } from "../infrastructure/config";
 import { validateApiKey } from "../modules/api-keys";
-import { getUserPlan, hasApiAccess, hasMcpAccess, canMakeApiCall, listAddons, getMcpUsageThisMonth, isSuperuser, getUserTier } from "../modules/usage";
+import { getUserPlan, hasApiAccess, hasMcpAccess, canMakeApiCall, listAddons, getMcpUsageThisMonth, isSuperuser, getUserTier, resolveUserType } from "../modules/usage";
 import { PLANS } from "../modules/billing/plans";
 import { METHODOLOGY_VERSION } from "../modules/engine/methodology";
 import { listForUser as listActivityForUser } from "../modules/activity";
@@ -35,6 +35,7 @@ import {
   SubscriptionInfoResponseSchema,
   WatchlistResponseSchema,
   AddToWatchlistResponseSchema,
+  MeUserTypeResponseSchema,
 } from "@onegoodarea/contracts";
 import {
   createWebhookSubscription,
@@ -98,23 +99,23 @@ export function registerMeRoutes(app: FastifyInstance): void {
       });
     });
 
-    typed.get("/me/is-superuser",
+    typed.get("/me/user-type",
       {
         schema: {
-          tags: ["Admin"],
-          summary: "Is the caller a superuser?",
-          description: "Returns { is_superuser: boolean }. Session-authed; 401 if not signed in.",
+          tags: ["Me"],
+          summary: "My user type",
+          description: "Returns { user_type: UserType }. Session-authed; 401 if not signed in. Replaces the deprecated /me/is-superuser endpoint.",
           security: [{ "bearerToken": [] }, { "bearerAuth": [] }],
           response: {
-            200: z.object({ is_superuser: z.boolean() }),
+            200: MeUserTypeResponseSchema,
           },
         },
       },
       async (request, reply) => {
         const userId = await authenticateSessionOrApiKey(request, reply);
         if (!userId) return reply;
-        const is_superuser = await isSuperuser(userId);
-        return reply.code(200).send({ is_superuser });
+        const user_type = await resolveUserType(userId);
+        return reply.code(200).send({ user_type });
       });
 
     /* AR-500 (Plan 045): self-scoped tier read. Mirrors /me/is-superuser pattern.

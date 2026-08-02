@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { SUPERUSER_EMAILS, RATE_LIMITS, PLAN_PRICES_GBP, EMAIL_FROM } from "@/lib/config";
+import { RATE_LIMITS, PLAN_PRICES_GBP, EMAIL_FROM } from "@/lib/config";
 
 // Mock Stripe SDK so importing stripe.ts doesn't require a real API key
 vi.mock("stripe", () => ({
@@ -11,18 +11,6 @@ vi.mock("stripe", () => ({
 import { PLANS } from "@/lib/stripe";
 
 describe("config", () => {
-  describe("SUPERUSER_EMAILS", () => {
-    it("contains at least one email", () => {
-      expect(SUPERUSER_EMAILS.length).toBeGreaterThan(0);
-    });
-
-    it("all entries are valid email format", () => {
-      for (const email of SUPERUSER_EMAILS) {
-        expect(email).toMatch(/@/);
-      }
-    });
-  });
-
   describe("RATE_LIMITS", () => {
     it("all limits have positive max and windowSeconds", () => {
       for (const [key, limit] of Object.entries(RATE_LIMITS)) {
