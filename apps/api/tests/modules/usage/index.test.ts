@@ -4,6 +4,7 @@ vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
 
 import { sql } from "@/infrastructure/db/client";
 import { getUserPlan, hasApiAccess, canMakeApiCall, canMakeNlCall, hasMcpAccess, hasLeversAccess } from "@/modules/usage/index";
+import type { UserType } from "@onegoodarea/contracts";
 
 const mockSql = vi.mocked(sql);
 
@@ -11,9 +12,7 @@ const mockSql = vi.mocked(sql);
    call order so tests are robust. Configure the fake DB per test. */
 let db: {
   email: string;
-  /* AR-312: DB-backed superuser flag. Default false; the "ptengelmann gets
-     business" tests set it TRUE to exercise the DB-column branch. */
-  isSuperuser: boolean;
+  userType: UserType;
   subscriptionPlan: string | null; // null = no active sub row
   reportCount: number;
   nlCount: number; // AR-488: monthly natural-language (plan_source='nl') call count
@@ -22,11 +21,10 @@ let db: {
 
 function routeQuery(strings: TemplateStringsArray): Promise<unknown[]> {
   const q = strings.join(" ");
-  /* AR-312: isSuperuser now SELECTS email + is_superuser. Match on the
-     unique "FROM users WHERE id" substring so the routing survives column
-     additions in the SELECT list. */
+  /* AR-654: isSuperuser now reads user_type via resolveUserType(). Match on
+     "FROM users WHERE id" so the routing survives column additions. */
   if (q.includes("FROM users WHERE id")) {
-    return Promise.resolve([{ email: db.email, is_superuser: db.isSuperuser }]);
+    return Promise.resolve([{ email: db.email, user_type: db.userType }]);
   }
   if (q.includes("FROM subscriptions")) {
     return Promise.resolve(db.subscriptionPlan ? [{ plan: db.subscriptionPlan }] : []);
@@ -50,7 +48,7 @@ function routeQuery(strings: TemplateStringsArray): Promise<unknown[]> {
 }
 
 beforeEach(() => {
-  db = { email: "user@example.com", isSuperuser: false, subscriptionPlan: null, reportCount: 0, nlCount: 0, addons: [] };
+  db = { email: "user@example.com", userType: "user", subscriptionPlan: null, reportCount: 0, nlCount: 0, addons: [] };
   mockSql.mockReset();
   mockSql.mockImplementation(routeQuery as never);
 });
@@ -66,9 +64,7 @@ describe("getUserPlan", () => {
   });
 
   it("returns business for a superuser regardless of subscription", async () => {
-    /* AR-312: DB column is the source of truth in prod. Test exercises
-       that path explicitly. Email match is no longer the gate. */
-    db.isSuperuser = true;
+    db.userType = "superuser";
     expect(await getUserPlan("u1")).toBe("business");
   });
 });
@@ -95,8 +91,7 @@ describe("canMakeApiCall", () => {
   });
 
   it("gives a superuser an unlimited quota", async () => {
-    /* AR-312: superuser via DB column, not email. */
-    db.isSuperuser = true;
+    db.userType = "superuser";
     db.reportCount = 999999;
     const r = await canMakeApiCall("u1");
     expect(r.allowed).toBe(true);
@@ -146,7 +141,7 @@ describe("canMakeNlCall", () => {
   });
 
   it("gives a superuser an unlimited NL quota", async () => {
-    db.isSuperuser = true;
+    db.userType = "superuser";
     db.nlCount = 999;
     const r = await canMakeNlCall("u1");
     expect(r.limit).toBe(Infinity);
@@ -170,7 +165,7 @@ describe("hasLeversAccess (AR-542)", () => {
   });
 
   it("is true for a superuser (reported as business)", async () => {
-    db.isSuperuser = true;
+    db.userType = "superuser";
     expect(await hasLeversAccess("u1")).toBe(true);
   });
 });
