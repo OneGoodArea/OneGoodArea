@@ -1,36 +1,31 @@
 import { sql } from "../../infrastructure/db/client";
 import { PLANS, type PlanId, API_PLANS, type AddonKey } from "../billing/plans";
 import { type UserRow, type SubscriptionRow, row } from "../../infrastructure/db/types";
-import { SUPERUSER_EMAILS, getConfig } from "../../infrastructure/config";
 import type { UserType } from "@onegoodarea/contracts";
 
 /* Plan entitlements + usage quotas. Migrated from legacy src/lib/usage.ts.
    Changes: plan catalog imported from ../billing/plans (split from the Stripe
-   SDK); SUPERUSER_EMAILS from infrastructure/config; the ensureSubscriptionAddonsTable
+   SDK); SUPERUSER_EMAILS removed (AR-654); the ensureSubscriptionAddonsTable
    / ensureMcpUsageTable self-creates are dropped (the migrator owns
    subscription_addons + mcp_usage). All gate logic is otherwise verbatim. */
 
 /** Aggregate count returned by COUNT(*)::int queries. */
 interface CountRow { count: number; }
 
-/* AR-312: superuser is now a DB column (users.is_superuser), not a hardcoded
-   list. Toggling a real customer is a single UPDATE — no deploy. The
-   hardcoded SUPERUSER_EMAILS list is kept ONLY as a local-dev convenience
-   so Pedro doesn't need to seed the column to test admin paths locally; in
-   prod (NODE_ENV === "production") the DB is the sole source of truth. */
+/** Privileged user types that receive superuser-level access. */
+const SUPERUSER_TYPES: ReadonlySet<UserType> = new Set(["superuser", "admin"]);
+
+/**
+ * AR-654 (AR-660): thin wrapper that delegates to resolveUserType().
+ * Kept for backward-compatible callers (routes, tests). Internal usage
+ * in this module calls resolveUserType() directly for clarity.
+ */
 export async function isSuperuser(userId: string): Promise<boolean> {
-  const rows = await sql`SELECT email, is_superuser FROM users WHERE id = ${userId}`;
-  if (rows.length === 0) return false;
-  const user = row<Pick<UserRow, "email" | "is_superuser">>(rows[0]);
-  if (user.is_superuser === true) return true;
-  const config = getConfig();
-  if (config.nodeEnv === "production") return false;
-  return SUPERUSER_EMAILS.includes(user.email);
+  return SUPERUSER_TYPES.has(await resolveUserType(userId));
 }
 
 /** AR-654 expand phase: resolve the user's type from the DB column.
- *  Falls back to 'user' if the row is missing or user_type is null/undefined.
- *  isSuperuser() is kept intact; resolveUserType() is additive only. */
+ *  Falls back to 'user' if the row is missing or user_type is null/undefined. */
 export async function resolveUserType(userId: string): Promise<UserType> {
   const rows = await sql`SELECT user_type FROM users WHERE id = ${userId}`;
   if (rows.length === 0) return "user";
@@ -61,7 +56,7 @@ export async function setUserTier(userId: string, tier: Tier): Promise<void> {
 }
 
 export async function getUserPlan(userId: string): Promise<PlanId> {
-  if (await isSuperuser(userId)) return "business";
+  if (SUPERUSER_TYPES.has(await resolveUserType(userId))) return "business";
 
   const rows = await sql`
     SELECT plan FROM subscriptions
@@ -77,7 +72,7 @@ export async function getUserPlan(userId: string): Promise<PlanId> {
 }
 
 export async function hasApiAccess(userId: string): Promise<boolean> {
-  if (await isSuperuser(userId)) return true;
+  if (SUPERUSER_TYPES.has(await resolveUserType(userId))) return true;
   const plan = await getUserPlan(userId);
   return API_PLANS.includes(plan);
 }
@@ -111,7 +106,7 @@ export async function listAddons(userId: string): Promise<string[]> {
  * Superuser gets MCP for testing.
  */
 export async function hasMcpAccess(userId: string): Promise<boolean> {
-  if (await isSuperuser(userId)) return true;
+  if (SUPERUSER_TYPES.has(await resolveUserType(userId))) return true;
   const plan = await getUserPlan(userId);
   if (PLANS[plan]?.mcpAccess === true) return true;
   return hasAddon(userId, "mcp");
@@ -181,13 +176,13 @@ export async function canMakeApiCall(userId: string): Promise<{
   const used = await getMonthlyApiCallCount(userId);
   const limit = PLANS[plan].apiCallsPerMonth;
 
-  const superuser = await isSuperuser(userId);
+  const su = SUPERUSER_TYPES.has(await resolveUserType(userId));
 
   return {
-    allowed: superuser || used < limit,
+    allowed: su || used < limit,
     plan,
     used,
-    limit: superuser ? Infinity : limit,
+    limit: su ? Infinity : limit,
   };
 }
 
@@ -218,11 +213,11 @@ export async function canMakeNlCall(userId: string): Promise<{
   limit: number;
 }> {
   const plan = await getUserPlan(userId);
-  const superuser = await isSuperuser(userId);
+  const su = SUPERUSER_TYPES.has(await resolveUserType(userId));
   const capped = NL_MONTHLY_LIMIT[plan];
   // Superuser and any plan without an NL sub-cap are unlimited; only the
   // capped free tier pays for the COUNT query.
-  const limit = superuser || capped === undefined ? Infinity : capped;
+  const limit = su || capped === undefined ? Infinity : capped;
   const used = limit === Infinity ? 0 : await getMonthlyNlCallCount(userId);
   return { allowed: used < limit, plan, used, limit };
 }
