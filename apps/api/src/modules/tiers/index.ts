@@ -7,12 +7,17 @@
 
 import { sql } from "../../infrastructure/db/client";
 import { row, type UserRow } from "../../infrastructure/db/types";
-import { isSuperuser, getUserPlan } from "../usage";
+import { resolveUserType } from "../usage";
+import { getUserPlan } from "../usage";
 import type { PlanId } from "../billing/plans";
 import { rateLimit } from "../../infrastructure/rate-limit";
 import { RATE_LIMITS } from "../../infrastructure/config";
 import { getAiConfig } from "../ai/config";
 import type { AiProviderEntry, AiStrategyRoute } from "../ai/types";
+import type { BillingStrategy } from "./billing-strategy";
+import { PlanBasedResolver } from "./strategies/plan-based";
+import { PromotionalResolver } from "./strategies/promotional";
+import { getEffectiveLimit } from "./config";
 
 /** The tier taxonomy. Grows/collapses via the CHECK constraint on users.tier. */
 export type Tier =
@@ -88,14 +93,23 @@ function loadTiersWithOverrides(): Record<Tier, TierConfig> {
 /** The resolved tier catalog (loaded once at startup). */
 export const TIERS: Record<Tier, TierConfig> = loadTiersWithOverrides();
 
+/** Default billing strategy: plan-based resolution with promotional overrides. */
+let billingStrategy: BillingStrategy = new PromotionalResolver(new PlanBasedResolver());
+
+/** Set the billing strategy (for testing or strategy swapping). */
+export function setBillingStrategy(strategy: BillingStrategy): void {
+  billingStrategy = strategy;
+}
+
 /**
  * Resolve the caller's tier. Priority order (highest wins):
  *
- * 1. Superuser (`is_superuser` DB column) → always "superuser"
- * 2. Engineering tier (users.tier column = "engineering")
- * 3. Plan-based mapping (billing subscription → tier)
- * 4. Logged-in with API key → "logged_in"
- * 5. Anonymous (no user) → "anonymous"
+ * 1. No user → "anonymous" (rate-limit bucket)
+ * 2. user_type = 'superuser' → always "superuser"
+ * 3. user_type = 'engineering' → always "engineering"
+ * 4. billingStrategy.resolve(ctx) → billing-driven tier
+ * 5. hasApiKey → "logged_in"
+ * 6. Default → "basic"
  *
  * This is the ONLY function that determines tier. All callers must use it.
  */
@@ -103,59 +117,18 @@ export async function resolveTier(ctx: TierContext): Promise<Tier> {
   // Anonymous: no user row
   if (!ctx.userId) return "anonymous";
 
-  // Superuser overrides everything
-  if (await isSuperuser(ctx.userId)) return "superuser";
+  // Resolve the user's type from the DB column.
+  // user_type = 'superuser' or 'engineering' overrides everything.
+  const userType = await resolveUserType(ctx.userId);
+  if (userType === "superuser") return "superuser";
+  if (userType === "engineering") return "engineering";
 
-  // Read the tier column (set by privileged path, default 'basic')
-  const rows = await sql`SELECT tier FROM users WHERE id = ${ctx.userId}`;
-  if (rows.length > 0) {
-    const userTier = row<Pick<UserRow, "tier">>(rows[0]).tier;
-    // If explicitly set to engineering or superuser (superuser handled above),
-    // honour it. Other values fall through to plan-based mapping.
-    if (userTier === "engineering") return "engineering";
-    if (userTier === "high_tier") return "high_tier";
-  }
-
-  // Plan-based mapping: billing subscription determines tier
-  const plan = await getUserPlan(ctx.userId);
-  const planTier = planToTier(plan);
-  if (planTier) return planTier;
-
-  // Logged-in with API key but no plan match → logged_in
-  if (ctx.hasApiKey) return "logged_in";
-
-  // Default for logged-in users without API access
-  return "basic";
-}
-
-/** Map a billing plan to a tier. Returns null if no mapping (caller falls through). */
-function planToTier(plan: PlanId): Tier | null {
-  switch (plan) {
-    // V2 paid plans → high_tier (they have API access + higher quotas)
-    case "starter_v2":
-    case "build":
-    case "scale":
-    case "growth_v2":
-    case "enterprise":
-      return "high_tier";
-    // V2 free tier → basic
-    case "sandbox":
-      return "basic";
-    // V1 legacy paid → logged_in (grandfathered, lower tier)
-    case "starter":
-    case "pro":
-      return "logged_in";
-    // V1 legacy high-tier → high_tier
-    case "developer":
-    case "business":
-    case "growth":
-      return "high_tier";
-    // V1 free → basic
-    case "free":
-      return "basic";
-    default:
-      return null;
-  }
+  // Delegate to the billing strategy for plan-based resolution.
+  return billingStrategy.resolve({
+    userId: ctx.userId,
+    userType,
+    hasApiKey: ctx.hasApiKey,
+  });
 }
 
 /** Quota verdict returned by checkQuota. */
@@ -188,16 +161,16 @@ export async function checkQuota(
   tier: Tier,
   identifier: string,
 ): Promise<QuotaVerdict> {
-  const config = TIERS[tier];
+  const effectiveMax = getEffectiveLimit(tier);
 
   // Unlimited tier
-  if (config.quota.max === null) {
+  if (effectiveMax === null) {
     return { allowed: true, tier, remaining: null, reset: null, reason: null };
   }
 
   const result = await rateLimit(identifier, {
-    max: config.quota.max,
-    windowSeconds: config.quota.windowSeconds,
+    max: effectiveMax,
+    windowSeconds: TIERS[tier].quota.windowSeconds,
   });
 
   if (!result.success) {
@@ -206,7 +179,7 @@ export async function checkQuota(
       tier,
       remaining: result.remaining,
       reset: result.reset,
-      reason: `Rate limit: ${config.quota.max} requests per ${config.quota.windowSeconds}s for ${tier} tier`,
+      reason: `Rate limit: ${effectiveMax} requests per ${TIERS[tier].quota.windowSeconds}s for ${tier} tier`,
     };
   }
 
