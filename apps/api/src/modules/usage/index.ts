@@ -2,6 +2,7 @@ import { sql } from "../../infrastructure/db/client";
 import { PLANS, type PlanId, API_PLANS, type AddonKey } from "../billing/plans";
 import { type UserRow, type SubscriptionRow, row } from "../../infrastructure/db/types";
 import { SUPERUSER_EMAILS, getConfig } from "../../infrastructure/config";
+import type { UserType } from "@onegoodarea/contracts";
 
 /* Plan entitlements + usage quotas. Migrated from legacy src/lib/usage.ts.
    Changes: plan catalog imported from ../billing/plans (split from the Stripe
@@ -25,6 +26,16 @@ export async function isSuperuser(userId: string): Promise<boolean> {
   const config = getConfig();
   if (config.nodeEnv === "production") return false;
   return SUPERUSER_EMAILS.includes(user.email);
+}
+
+/** AR-654 expand phase: resolve the user's type from the DB column.
+ *  Falls back to 'user' if the row is missing or user_type is null/undefined.
+ *  isSuperuser() is kept intact; resolveUserType() is additive only. */
+export async function resolveUserType(userId: string): Promise<UserType> {
+  const rows = await sql`SELECT user_type FROM users WHERE id = ${userId}`;
+  if (rows.length === 0) return "user";
+  const t = row<Pick<UserRow, "user_type">>(rows[0]).user_type;
+  return (t as UserType) ?? "user";
 }
 
 /* AR-500 (Plan 045): read the user's tier from the DB column.
