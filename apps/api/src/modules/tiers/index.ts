@@ -17,7 +17,8 @@ import type { AiProviderEntry, AiStrategyRoute } from "../ai/types";
 import type { BillingStrategy } from "./billing-strategy";
 import { PlanBasedResolver } from "./strategies/plan-based";
 import { PromotionalResolver } from "./strategies/promotional";
-import { getEffectiveLimit } from "./config";
+import type { UserType } from "@onegoodarea/contracts";
+import { USER_TYPE_MULTIPLIER } from "./config";
 
 /** The tier taxonomy. Grows/collapses via the CHECK constraint on users.tier. */
 export type Tier =
@@ -102,7 +103,27 @@ export function setBillingStrategy(strategy: BillingStrategy): void {
 }
 
 /**
- * Resolve the caller's tier. Priority order (highest wins):
+ * Return the effective quota max for a given tier + user type.
+ * Unlimited user types (engineering/superuser) always return null.
+ * Otherwise the tier's quota max is multiplied by the user-type
+ * multiplier (1 for user/admin, null for unlimited types).
+ */
+export function getEffectiveLimit(tier: Tier, userType?: UserType): number | null {
+  if (userType) {
+    if (userType === "engineering" || userType === "superuser") return null;
+    const multiplier = USER_TYPE_MULTIPLIER[userType];
+    if (multiplier === null) return null;
+  }
+  const base = TIERS[tier].quota.max;
+  if (base === null) return null;
+  if (userType) {
+    const multiplier = USER_TYPE_MULTIPLIER[userType];
+    return Math.floor(base * (multiplier ?? 1));
+  }
+  return base;
+}
+
+/** Resolve the caller's tier. Priority order (highest wins):
  *
  * 1. No user → "anonymous" (rate-limit bucket)
  * 2. user_type = 'superuser' → always "superuser"
