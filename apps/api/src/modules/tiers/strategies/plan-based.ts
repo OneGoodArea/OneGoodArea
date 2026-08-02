@@ -1,5 +1,5 @@
-import { sql } from "../../../../infrastructure/db/client";
-import { row, type UserRow } from "../../../../infrastructure/db/types";
+import { sql } from "../../../infrastructure/db/client";
+import { row, type UserRow } from "../../../infrastructure/db/types";
 import type { BillingStrategy } from "../billing-strategy";
 import type { UserType } from "@onegoodarea/contracts";
 import type { Tier } from "../index";
