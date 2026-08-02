@@ -148,8 +148,6 @@ export function getConfig(): ApiConfig {
 /* Static config constants (migrated verbatim from legacy src/lib/config.ts).
    Not env-derived, so they are plain exports rather than fields on getConfig(). */
 
-export const SUPERUSER_EMAILS = ["ptengelmann@gmail.com"];
-
 /* The PUBLIC frontend (apps/web) base URL. Used to build Stripe redirect URLs
    (checkout success/cancel, billing-portal return) which must point at the
    browser-facing site, NOT at this API origin. Read once at startup from the
