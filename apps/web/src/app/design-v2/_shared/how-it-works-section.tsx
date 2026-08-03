@@ -38,7 +38,7 @@ export function HowItWorksSection() {
             <span className="oga-how__eyebrow-line" aria-hidden />
             <span>How it works</span>
           </div>
-          <h2 className="oga-how__title">One call. The whole area.</h2>
+          <h2 className="oga-how__title">Get the full area context in a single call.</h2>
           <p className="oga-how__sub">
             Send any UK postcode and get the neighbourhood back: signals, a score,
             price trends and comparables. Then render it, score a portfolio,
@@ -102,7 +102,7 @@ export function HowItWorksSection() {
             <span className="oga-how__tag">Signals + Scores</span>
             <h3 className="oga-how__feature-title">Score any UK neighbourhood</h3>
             <p className="oga-how__feature-body">
-              Seven categories of signals compressed into a composite 0-100 score,
+              Multiple categories of public data turned into a single 0-100 score,
               with price trends and comparable areas. Source-backed and versioned,
               for any UK postcode.
             </p>
@@ -169,8 +169,8 @@ export function HowItWorksSection() {
             <span className="oga-how__tag">Intelligence</span>
             <h3 className="oga-how__card-title">Ask in plain English</h3>
             <p className="oga-how__card-body">
-              Natural-language or structured queries return ranked areas, with the
-              plan that produced them so any answer is reproducible.
+              Ask in plain English or in code and get ranked areas back, along with
+              the exact query, so you can check it and run it again.
             </p>
             <Link href="/products/intelligence" className="oga-how__card-link">
               Explore intelligence<span aria-hidden>→</span>

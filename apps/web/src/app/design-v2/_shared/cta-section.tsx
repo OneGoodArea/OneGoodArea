@@ -39,12 +39,12 @@ export function CtaSection() {
         </div>
 
         <h2 className="oga-cta__title">
-          Every UK neighbourhood, one API call away.
+          Understand any UK area, in one API call.
         </h2>
 
         <p className="oga-cta__sub">
-          An API and a dashboard. Every number is versioned, source-backed, and
-          repeatable, so you can stand behind what you ship.
+          An API and a dashboard. Every number is backed by a source and stays the
+          same when you check it again, so you can stand behind what you ship.
         </p>
 
         <div className="oga-cta__buttons">

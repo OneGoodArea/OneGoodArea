@@ -197,7 +197,7 @@ function SectionIntegration() {
                 ))}
               </ul>
             </div>
-            <h3 className="oga-pt-int__title">Seven signals, ranked</h3>
+            <h3 className="oga-pt-int__title">Area signals, ranked</h3>
             <p className="oga-pt-int__desc">
               Every category as a percentile, each one carrying the source it
               came from.

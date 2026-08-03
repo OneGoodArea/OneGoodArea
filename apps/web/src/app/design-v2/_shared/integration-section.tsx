@@ -262,11 +262,10 @@ export function IntegrationSection() {
             <span className="oga-int__eyebrow-line" aria-hidden />
             <span>Integration</span>
           </div>
-          <h2 className="oga-int__title">Three ways into one engine.</h2>
+          <h2 className="oga-int__title">Three simple ways to use the same engine.</h2>
           <p className="oga-int__sub">
-            Use the engine however your stack works: a REST API, queries, and
-            webhooks. Authenticated, versioned, and documented, with the engine
-            version stamped on every response.
+            Use it whichever way suits your stack: a REST API, plain-English or
+            code queries, and webhooks. Authenticated, versioned and documented.
           </p>
         </header>
 
@@ -355,8 +354,8 @@ export function IntegrationSection() {
 
         <div className="oga-int__foot">
           <p className="oga-int__foot-text">
-            Pin the engine version once and your integration stays reproducible.
-            <strong> Same plan → same result</strong>, regardless of when you replay it.
+            Lock the version once and it stays reliable:
+            <strong> the same request always gives the same answer</strong>, whenever you run it.
           </p>
         </div>
       </div>

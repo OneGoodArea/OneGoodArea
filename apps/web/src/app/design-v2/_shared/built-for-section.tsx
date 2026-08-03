@@ -40,7 +40,7 @@ const WORKFLOWS: Workflow[] = [
     id: "proptech",
     index: "01",
     title: "PropTech",
-    body: "Drop one endpoint into your property detail render and ship richer area context than a competitor's roadmap. LSOA-grain signals across seven categories with country-scoped percentiles, per-signal confidence, and source attribution on every response.",
+    body: "Add one endpoint to your listing pages and show real area context, crime, schools, prices and more, on every property, with the source behind each number.",
     endpointVerb: "GET",
     endpointPath: "/v1/area",
     usedBy: "Listing portals · valuation tools · agent CRMs",
@@ -175,7 +175,7 @@ export function BuiltForSection() {
             <span className="oga-built__eyebrow-line" aria-hidden />
             <span>Built for</span>
           </div>
-          <h2 className="oga-built__title">Five workflows. One engine.</h2>
+          <h2 className="oga-built__title">Use the same area intelligence across different workflows.</h2>
         </header>
 
         <nav className="oga-built__tabs" role="tablist" aria-label="Workflow">

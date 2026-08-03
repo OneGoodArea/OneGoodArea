@@ -17,13 +17,13 @@ export function HeroPlotted() {
 
       <div className="oga-hero-dark__inner">
         <h1 className="oga-hero-dark__title">
-          Every UK neighbourhood, one API.
+          Understand any UK area through one simple API.
         </h1>
 
         <p className="oga-hero-dark__lead">
           Neighbourhood-level data from UK public sources, with scoring and
-          monitoring built in. Versioned and replayable, so the numbers you
-          ship never move under you. Works in your code, and inside Claude Code.
+          monitoring built in. Source-backed and repeatable, so you can build on
+          every number. Works in your workflows and AI tools.
         </p>
 
         <div className="oga-hero-dark__cta">

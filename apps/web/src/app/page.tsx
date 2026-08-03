@@ -3,10 +3,10 @@ import DesignV2Client from "@/app/design-v2/client";
 
 export const metadata: Metadata = {
   title: "OneGoodArea | The UK area intelligence API",
-  description: "One API for UK area data: comparables, forecasts, scores, and monitoring across 7 public sources. Versioned and replayable, so the numbers never move under you. Works in your code and inside Claude Code. Free playground.",
+  description: "One API for UK area data: comparables, forecasts, scores, and monitoring across multiple public sources. Versioned and replayable, so the numbers never move under you. Works in your workflows and AI tools. Free playground.",
   openGraph: {
     title: "OneGoodArea | The UK area intelligence API",
-    description: "One API for UK area data: comparables, forecasts, scores, and monitoring. Versioned and replayable. Works in your code and inside Claude Code.",
+    description: "One API for UK area data: comparables, forecasts, scores, and monitoring. Versioned and replayable. Works in your workflows and AI tools.",
     type: "website",
     url: "https://www.onegoodarea.com",
     images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "OneGoodArea | The UK area intelligence API",
-    description: "One API for UK area comparables, forecasts, scores, and monitoring. Versioned, replayable, works inside Claude Code.",
+    description: "One API for UK area comparables, forecasts, scores, and monitoring. Versioned, replayable, works in your workflows and AI tools.",
   },
   alternates: { canonical: "https://www.onegoodarea.com" },
 };

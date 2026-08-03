@@ -358,7 +358,7 @@ function Foundation() {
             product team needs to build on UK area data without owning the pipeline.
           </p>
           <div className="oga-sig-found__band-foot">
-            <span className="oga-sig-found__band-note">One API · seven categories · three nations</span>
+            <span className="oga-sig-found__band-note">One API · every category · three nations</span>
             <BookDemo className="oga-btn oga-btn-primary">Book a demo</BookDemo>
           </div>
         </div>
@@ -575,7 +575,7 @@ function FinalCta() {
     <section className="oga-sig-cta" data-oga-surface="dark" aria-labelledby="sig-cta">
       <div className="oga-sig-cta__field" aria-hidden />
       <div className="oga-sig-cta__inner">
-        <h2 id="sig-cta" className="oga-sig-cta__h2">Use UK area data without building seven separate integrations.</h2>
+        <h2 id="sig-cta" className="oga-sig-cta__h2">Use UK area data without building and maintaining separate integrations.</h2>
         <p className="oga-sig-cta__lead">
           Bring sourced, comparable and confidence-rated area data into your
           product through one API.
