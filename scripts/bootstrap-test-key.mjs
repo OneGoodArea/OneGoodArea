@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { neon } from "@neondatabase/serverless";
+import { neon, neonConfig } from "@neondatabase/serverless";
 import { randomBytes, pbkdf2Sync, createHash } from "node:crypto";
 import { parseArgs } from "node:util";
 
@@ -81,6 +81,11 @@ async function main() {
   if (!url) {
     console.error("DATABASE_URL not set");
     process.exit(1);
+  }
+
+  const fetchEndpoint = process.env.NEON_FETCH_ENDPOINT;
+  if (fetchEndpoint) {
+    neonConfig.fetchEndpoint = fetchEndpoint;
   }
 
   const sql = neon(url);
