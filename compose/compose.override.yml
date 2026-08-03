@@ -18,6 +18,10 @@ services:
     ports:
       - "3000:3000"
 
+  showcase:
+    ports:
+      - "3001:3000"
+
   mailhog:
     ports:
       - "1025:1025"

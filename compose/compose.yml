@@ -82,6 +82,7 @@ services:
       AUTH_TRUST_HOST: "true"
       NEXTAUTH_URL: http://localhost:3000
       NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_SHOWCASE_URL: http://localhost:3001
       INTERNAL_API_URL: http://api:8080
     depends_on:
       api:
