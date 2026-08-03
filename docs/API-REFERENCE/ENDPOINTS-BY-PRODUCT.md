@@ -165,7 +165,7 @@ Session or API-key authenticated (AR-596, Plan 059.4) user account management.
 | Method | Path | Notes |
 |---|---|---|
 | GET | `/me/activity` | Recent activity feed |
-| GET | `/me/is-superuser` | Superuser check |
+| GET | `/me/user-type` | Returns user_type (user, admin, superuser) |
 | GET | `/me/webhooks` | List webhooks (dashboard) |
 | POST | `/me/webhooks` | Create webhook (dashboard) |
 | DELETE | `/me/webhooks/:id` | Delete webhook |
@@ -208,7 +208,7 @@ rate-limited where public.
 ## Admin (8)
 
 Superuser-only analytics. Session or API-key authenticated (AR-596, Plan
-059.4) — either way, the caller must be flagged superuser.
+059.4) — either way, the caller's user_type must be 'admin' or 'superuser'.
 
 `GET /admin/analytics`, `/admin/traffic-analytics`, `/admin/audience`,
 `/admin/usage`, `/admin/revenue`, `/admin/mcp-adoption`,

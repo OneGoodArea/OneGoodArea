@@ -51,7 +51,7 @@ Customer dashboard surfaces (`/dashboard/*`, `/settings/*`, `/keys/*`) use NextA
 
 The shared `AUTH_SECRET` env var must match between apps/web and apps/api.
 
-**Since AR-596 (Plan 059.4)**, `/me`, `/keys`, `/admin`, and `/stripe` also accept a normal API key (bearerAuth) as an alternative to the session JWT — self-service, scoped to the caller's own account, and what makes these routes testable from the Scalar playground. Session JWT is tried first; a Bearer value that isn't a valid session JWT is checked as an API key next. `/admin` additionally requires the caller to be flagged superuser either way. An auto-generated playground key is rejected on all four regardless of which auth path validated it (see above).
+**Since AR-596 (Plan 059.4)**, `/me`, `/keys`, `/admin`, and `/stripe` also accept a normal API key (bearerAuth) as an alternative to the session JWT — self-service, scoped to the caller's own account, and what makes these routes testable from the Scalar playground. Session JWT is tried first; a Bearer value that isn't a valid session JWT is checked as an API key next. `/admin` additionally requires the caller to be flagged as superuser (user_type ∈ {admin, superuser}) either way. An auto-generated playground key is rejected on all four regardless of which auth path validated it (see above).
 
 `POST /keys/playground` (the endpoint the playground itself calls to provision a key) is the one exception — it stays session-JWT-only. It's a server-to-server call the web app makes on behalf of the current browser session, not something an external API-key holder would call.
 

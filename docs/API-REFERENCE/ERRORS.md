@@ -53,9 +53,9 @@ Rate limits are per-tier, not a flat per-key number (AR-593/594, Plan 059). Ever
 | `anonymous` | 5 req / 60s, per IP | No `Authorization` header at all — only on the routes that allow it (currently `POST /v1/query`) |
 | `logged_in` / `basic` | 30 req / 60s, per key | Signed-in, no paid plan |
 | `high_tier` | 120 req / 60s, per key | Paid plan |
-| `engineering` / `superuser` | Unlimited | Staff |
+| `engineering` / `superuser` | Unlimited | Staff (user_type ∈ {engineering, superuser}) |
 
-**Global free-tier backstop:** `anonymous` and `logged_in`/`basic` traffic additionally shares one daily ceiling (`5000/day` by default) across *all* callers in those tiers combined — a cost backstop, checked only after a request's own per-identifier quota already passed. `high_tier`/`engineering`/`superuser` never touch it. A 429 here looks identical to a normal quota 429 (no distinct code), but the `error` message says "Free-tier global daily limit reached".
+**Global free-tier backstop:** `anonymous` and `logged_in`/`basic` traffic additionally shares one daily ceiling (`5000/day` by default) across *all* callers in those tiers combined — a cost backstop, checked only after a request's own per-identifier quota already passed. `high_tier`/`engineering`/`superuser` (via `user_type`) never touch it. A 429 here looks identical to a normal quota 429 (no distinct code), but the `error` message says "Free-tier global daily limit reached".
 
 ## Validation errors
 

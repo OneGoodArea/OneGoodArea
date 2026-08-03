@@ -59,7 +59,7 @@ Covers the session-authenticated API-key management surface (list / create / rev
 | **KEY-10** | Plaintext key returned only once | 1. Create a key, capture `key.key`<br>2. `GET /keys` and `GET /keys/usage` | The full plaintext key is never returned again — only `key_preview`. Server stores a SHA-256 hash, not the plaintext. |
 | **KEY-11** | Key prefix format | 1. Create a key<br>2. Inspect `key.key` | Format `oga_` + 48 lowercase hex chars (`crypto.randomBytes(24)`). |
 | **KEY-12** | Create key — plan without API access | 1. Authenticate as a user whose plan is **not** in `API_PLANS`<br>2. `POST /keys` | `403 { "error": "API keys are not available on your current plan. Upgrade at /pricing." }`. No key created. |
-| **KEY-13** | Create key — superuser override | 1. Authenticate as a superuser (`users.is_superuser = TRUE`)<br>2. `POST /keys` | `200`. `hasApiAccess` short-circuits `true` for superusers regardless of plan. |
+| **KEY-13** | Create key — superuser override | 1. Authenticate as a superuser (`user_type ∈ {admin, superuser}` via `resolveUserType()`)<br>2. `POST /keys` | `200`. `hasApiAccess` short-circuits `true` for superusers regardless of plan. |
 | **KEY-14** | Create key — unauthenticated | 1. `POST /keys` with no `Authorization` header | `401 { "error": "Unauthorized" }`. Plan gate never reached. |
 | **KEY-15** | Create key — server error handling | 1. Simulate a DB failure during `createApiKey` | `500 { "error": "Something went wrong. Please try again." }`. |
 
@@ -105,7 +105,7 @@ Covers the session-authenticated API-key management surface (list / create / rev
 |---|---|---|---|
 | **USAGE-14** | Usage check — happy path | 1. Authenticate with a session token<br>2. `GET /usage` | `200` with `{ allowed, plan, used, limit }` from `canMakeApiCall`. |
 | **USAGE-15** | `used` vs `limit` | 1. Inspect response | `used` = this-month `api.*` count; `limit` = `PLANS[plan].apiCallsPerMonth`; `allowed = used < limit`. |
-| **USAGE-16** | Superuser has unlimited quota | 1. Authenticate as a superuser<br>2. `GET /usage` | `allowed = true`, `limit = null` (Infinity serialized as `null` in this response is not applied here — `canMakeApiCall` returns `Infinity` for superusers; verify serialization). |
+| **USAGE-16** | Superuser has unlimited quota | 1. Authenticate as a superuser (user_type = 'superuser' via `resolveUserType()`)<br>2. `GET /usage` | `allowed = true`, `limit = null` (Infinity serialized as `null` in this response is not applied here — `canMakeApiCall` returns `Infinity` for superusers; verify serialization). |
 | **USAGE-17** | Usage check — unauthenticated | 1. `GET /usage` with no `Authorization` header | `401 { "error": "Unauthorized" }`. |
 | **USAGE-18** | Server error handling | 1. Simulate a DB failure during `canMakeApiCall` | `500 { "error": "Failed to check usage" }`. |
 
@@ -117,7 +117,7 @@ Covers the session-authenticated API-key management surface (list / create / rev
 |---|---|---|---|
 | **ME-01** | Profile — valid API key | 1. `GET /v1/me` with `Authorization: Bearer oga_...` | `200` with full profile: `plan`, `plan_name`, `generation`, `api_access`, `mcp_access`, `api_calls_per_month`, `used_this_month`, `limit_this_month`, `engine_version`, `addons`, `mcp_calls_this_month`, `org`, `key`. |
 | **ME-02** | Entitlement fields | 1. Inspect `api_access` / `mcp_access` | `api_access` = `hasApiAccess`, `mcp_access` = `hasMcpAccess` for the key's user. Booleans. |
-| **ME-03** | Quota fields | 1. Inspect `api_calls_per_month`, `used_this_month`, `limit_this_month` | `api_calls_per_month` = plan config; `used_this_month` = this-month `api.*` count; `limit_this_month` = numeric limit, or `null` for superusers (Infinity → null). |
+| **ME-03** | Quota fields | 1. Inspect `api_calls_per_month`, `used_this_month`, `limit_this_month` | `api_calls_per_month` = plan config; `used_this_month` = this-month `api.*` count; `limit_this_month` = numeric limit, or `null` for superusers (user_type = 'superuser', Infinity → null). |
 | **ME-04** | Plan metadata | 1. Inspect `plan`, `plan_name`, `generation` | `plan` = plan id; `plan_name` = `PLANS[plan].name`; `generation` = `"v1"` or `"v2"`. |
 | **ME-05** | Engine version | 1. Inspect `engine_version` | Equals `METHODOLOGY_VERSION` (canonical), not a hardcoded value. |
 | **ME-06** | Org branding exposed | 1. Use a key belonging to an org member<br>2. Inspect `org` | `{ id, slug, name, display_name, brand_url, role }`. Resolved from the key's `org_id`, or first-owner fallback for pre-AR-193 keys. |
@@ -139,7 +139,7 @@ Covers the session-authenticated API-key management surface (list / create / rev
 - **API service:** OneGoodArea API (Fastify), routes registered at root (no prefix) via `registerApiKeysRoutes` / `registerMeRoutes` in `apps/api/src/app.ts`.
 - **Session auth:** `authenticateSession` verifies a short-lived JWT the web app mints from the NextAuth session (`Authorization: Bearer <session-token>`). Failure → `401 { "error": "Unauthorized" }`.
 - **API-key auth:** `validateApiKey` hashes the presented `oga_...` key (SHA-256) and looks it up among non-revoked rows; enforces the per-key IP allowlist when non-empty.
-- **Plan gate:** `hasApiAccess(userId)` = superuser OR plan ∈ `API_PLANS`. Applied to `POST /keys` and `GET /keys/usage`.
+- **Plan gate:** `hasApiAccess(userId)` = superuser (user_type ∈ {admin, superuser} via `resolveUserType()`) OR plan ∈ `API_PLANS`. Applied to `POST /keys` and `GET /keys/usage`.
 - **Usage metering:** all quota/analytics counts derive from `activity_events` rows where `event LIKE 'api.%'`.
 - **Endpoints:**
   - `GET /keys` — list caller's keys (session)

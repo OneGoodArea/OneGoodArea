@@ -13,6 +13,7 @@ vi.mock("@/modules/usage", () => ({
   trackMcpCall: vi.fn(),
   isSuperuser: vi.fn(),
   getUserTier: vi.fn(),
+  resolveUserType: vi.fn(),
 }));
 /* AR-547: see signals.test.ts — stub tier resolution, keep checkQuota real. */
 vi.mock("@/modules/tiers", async (orig) => ({
@@ -53,6 +54,7 @@ import {
   getMcpUsageThisMonth,
   isSuperuser,
   getUserTier,
+  resolveUserType,
 } from "@/modules/usage";
 import { sql } from "@/infrastructure/db/client";
 import { METHODOLOGY_VERSION } from "@/modules/engine/methodology";
@@ -84,6 +86,7 @@ const mockListWebhooks = vi.mocked(listWebhookSubscriptions);
 const mockRevokeWebhook = vi.mocked(revokeWebhookSubscription);
 const mockRotateWebhook = vi.mocked(rotateWebhookSecret);
 const mockGetUserTier = vi.mocked(getUserTier);
+const mockResolveUserType = vi.mocked(resolveUserType);
 
 const JSON_HEADERS = { "content-type": "application/json" };
 const SESSION_AUTH = { authorization: "Bearer session.jwt" };
@@ -100,6 +103,7 @@ beforeEach(() => {
   mockQuota.mockResolvedValue({ allowed: true, plan: "sandbox", used: 3, limit: 200 } as never);
   mockAddons.mockResolvedValue([]);
   mockMcpUsage.mockResolvedValue(0);
+  mockResolveUserType.mockResolvedValue("user");
   // Defaults for track and watchlist:
   mockSql.mockResolvedValue([] as never);
   mockSessionVerify.mockResolvedValue({ userId: "user_1" });
@@ -879,5 +883,40 @@ describe("GET /me/tier", () => {
     });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ tier: "basic" });
+  });
+});
+
+// ── me-user-type.test.ts ──────────────────────────────────────────
+// AR-654: /me/user-type replaces the deprecated /me/is-superuser.
+
+describe("GET /me/user-type", () => {
+  it("401s when the session token is missing", async () => {
+    const res = await app.inject({ method: "GET", url: "/me/user-type" });
+    expect(res.statusCode).toBe(401);
+    expect(mockResolveUserType).not.toHaveBeenCalled();
+  });
+
+  it("returns the caller's user_type", async () => {
+    mockSessionVerify.mockResolvedValue({ userId: "user_1" });
+    mockResolveUserType.mockResolvedValue("superuser");
+    const res = await app.inject({
+      method: "GET",
+      url: "/me/user-type",
+      headers: { authorization: "Bearer good-token" },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ user_type: "superuser" });
+  });
+
+  it("returns 'user' for a normal user", async () => {
+    mockSessionVerify.mockResolvedValue({ userId: "user_1" });
+    mockResolveUserType.mockResolvedValue("user");
+    const res = await app.inject({
+      method: "GET",
+      url: "/me/user-type",
+      headers: { authorization: "Bearer good-token" },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ user_type: "user" });
   });
 });
