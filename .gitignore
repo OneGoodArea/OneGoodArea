@@ -105,3 +105,4 @@ STORY.md
 # project at .worktrees/<slug>; never commit a worktree.
 .worktrees/
 .opencode/
+demo/
