@@ -390,7 +390,7 @@ describe("GET /watchlist", () => {
 
   it("returns the caller's saved areas", async () => {
     mockSql.mockResolvedValue([
-      { id: "sa_1", postcode: "M1 1AE", label: "Home", intent: "moving", created_at: "2026-05-25" },
+      { id: "sa_1", postcode: "M1 1AE", label: "Home", intent: "moving", created_at: "2026-05-25T09:00:00.000Z" },
     ] as never);
     const res = await app.inject({ method: "GET", url: "/watchlist", headers: { ...SESSION_AUTH, "content-type": "application/json" } });
     expect(res.statusCode).toBe(200);
@@ -422,7 +422,7 @@ describe("POST /watchlist", () => {
 
   it("normalises the postcode and saves (201)", async () => {
     mockSql.mockResolvedValue([
-      { id: "sa_1", postcode: "M1 1AE", label: "Home", intent: "moving", created_at: "x" },
+      { id: "sa_1", postcode: "M1 1AE", label: "Home", intent: "moving", created_at: "2026-01-01T09:00:00.000Z" },
     ] as never);
     const res = await postWatchlist({ postcode: " m1 1ae ", label: " Home ", intent: "moving" });
     expect(res.statusCode).toBe(201);
@@ -732,13 +732,13 @@ describe("GET /me/portfolios", () => {
     mockSql
       .mockResolvedValueOnce([{ total: 2 }] as never)
       .mockResolvedValueOnce([
-        { id: "p_1", name: "London", created_at: "2026-01-01", updated_at: "2026-01-02" },
-        { id: "p_2", name: "Manchester", created_at: "2026-01-03", updated_at: "2026-01-03" },
+        { id: "p_1", name: "London", created_at: "2026-01-01T09:00:00.000Z", updated_at: "2026-01-02T09:00:00.000Z" },
+        { id: "p_2", name: "Manchester", created_at: "2026-01-03T09:00:00.000Z", updated_at: "2026-01-03T09:00:00.000Z" },
       ] as never)
       .mockResolvedValueOnce([
-        { id: "pa_1", portfolio_id: "p_1", area: "SW1A 1AA", label: "Westminster", created_at: "2026-01-01" },
-        { id: "pa_2", portfolio_id: "p_1", area: "EC1A 1BB", label: null, created_at: "2026-01-02" },
-        { id: "pa_3", portfolio_id: "p_2", area: "M1 1AA", label: "City", created_at: "2026-01-03" },
+        { id: "pa_1", portfolio_id: "p_1", area: "SW1A 1AA", label: "Westminster", created_at: "2026-01-01T09:00:00.000Z" },
+        { id: "pa_2", portfolio_id: "p_1", area: "EC1A 1BB", label: null, created_at: "2026-01-02T09:00:00.000Z" },
+        { id: "pa_3", portfolio_id: "p_2", area: "M1 1AA", label: "City", created_at: "2026-01-03T09:00:00.000Z" },
       ] as never);
     const res = await app.inject({ method: "GET", url: "/me/portfolios", headers: SESSION_AUTH });
     expect(res.statusCode).toBe(200);

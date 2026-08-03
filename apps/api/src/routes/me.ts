@@ -249,7 +249,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
           const total = (countRows[0] as { total: number } | undefined)?.total ?? 0;
 
           const portfolios = qLike
-            ? await sql`
+            ? rows<{ id: string; name: string; created_at: string; updated_at: string }>(await sql`
                 SELECT id, name, created_at, updated_at
                   FROM portfolios
                  WHERE user_id = ${userId}
@@ -257,34 +257,34 @@ export function registerMeRoutes(app: FastifyInstance): void {
                  ORDER BY created_at DESC
                  LIMIT ${pageSize}
                 OFFSET ${offset}
-              `
-            : await sql`
+              `)
+            : rows<{ id: string; name: string; created_at: string; updated_at: string }>(await sql`
                 SELECT id, name, created_at, updated_at
                   FROM portfolios
                  WHERE user_id = ${userId}
                  ORDER BY created_at DESC
                  LIMIT ${pageSize}
                 OFFSET ${offset}
-              `;
+              `);
 
           if (portfolios.length === 0) {
             return reply.code(200).send({ portfolios: [], total, page, page_size: pageSize });
           }
 
-          const portfolioIds = (portfolios as Array<{ id: string }>).map((p) => p.id);
-          const areas = (await sql`
+          const portfolioIds = portfolios.map((p) => p.id);
+          const areas = rows<{ id: string; portfolio_id: string; area: string; label: string | null; created_at: string }>(await sql`
             SELECT id, portfolio_id, area, label, created_at
               FROM portfolio_areas
              WHERE portfolio_id = ANY(${portfolioIds})
              ORDER BY created_at ASC
-          `) as Array<{ id: string; portfolio_id: string; area: string; label: string | null; created_at: string }>;
+          `);
 
           const areasByPortfolio: Record<string, typeof areas> = {};
           for (const a of areas) {
             (areasByPortfolio[a.portfolio_id] ||= []).push(a);
           }
 
-          const out = (portfolios as Array<{ id: string; name: string; created_at: string; updated_at: string }>).map((p) => ({
+          const out = portfolios.map((p) => ({
             id: p.id,
             name: p.name,
             created_at: p.created_at,
@@ -688,15 +688,15 @@ export function registerMeRoutes(app: FastifyInstance): void {
         // Primary API key (first non-revoked, created first).
         let primaryKey: { key_prefix: string | null; name: string; last_used_at: string | null } | null = null;
         try {
-          const keyRows = await sql`
+          const keyRows = rows<{ key_prefix: string | null; name: string; last_used_at: string | null }>(await sql`
             SELECT key_prefix, name, last_used_at
             FROM api_keys
             WHERE user_id = ${userId} AND revoked = FALSE
             ORDER BY created_at ASC
             LIMIT 1
-          `;
+          `);
           if (keyRows.length > 0) {
-            primaryKey = keyRows[0] as { key_prefix: string | null; name: string; last_used_at: string | null };
+            primaryKey = keyRows[0];
           }
         } catch {
           // Soft-fail: primary key is nice-to-have.
@@ -866,13 +866,13 @@ export function registerMeRoutes(app: FastifyInstance): void {
         const userId = await authenticateSessionOrApiKey(request, reply);
         if (!userId) return reply; // 401 already sent
 
-        const areas = await sql`
+        const areas = rows<SavedAreaRow>(await sql`
           SELECT id, postcode, label, intent, created_at
           FROM saved_areas
           WHERE user_id = ${userId}
           ORDER BY created_at DESC
-        `;
-        return reply.send({ areas: areas as unknown as SavedAreaRow[] });
+        `);
+        return reply.send({ areas });
       } catch (error) {
         logger.error("Watchlist fetch error:", error);
         return reply.code(500).send({ error: "Failed to fetch watchlist" });
@@ -891,16 +891,16 @@ export function registerMeRoutes(app: FastifyInstance): void {
         const label = (rawLabel ?? "").trim();
         const intent = rawIntent || null;
 
-        const result = await sql`
+        const result = rows<SavedAreaRow>(await sql`
           INSERT INTO saved_areas (user_id, postcode, label, intent)
           VALUES (${userId}, ${postcode}, ${label}, ${intent})
           ON CONFLICT (user_id, postcode) DO NOTHING
           RETURNING id, postcode, label, intent, created_at
-        `;
+        `);
         if (result.length === 0) {
           return reply.code(409).send({ error: "Area already saved" });
         }
-        return reply.code(201).send({ area: result[0] as unknown as SavedAreaRow });
+        return reply.code(201).send({ area: result[0] });
       } catch (error) {
         logger.error("Watchlist add error:", error);
         return reply.code(500).send({ error: "Failed to save area" });
