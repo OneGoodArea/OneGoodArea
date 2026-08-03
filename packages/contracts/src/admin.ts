@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { IsoDateTimeSchema } from "./common";
 
 const DayCountSchema = z.object({ day: z.string(), count: z.number() });
 
@@ -13,7 +14,7 @@ export const AdminAnalyticsResponseSchema = z.object({
     event: z.string(),
     user_id: z.string().nullable(),
     metadata: z.record(z.string(), z.unknown()),
-    created_at: z.string(),
+    created_at: IsoDateTimeSchema,
     name: z.string().nullable(),
     email: z.string().nullable(),
   })),
@@ -67,7 +68,7 @@ export const AdminUsageResponseSchema = z.object({
     product: z.enum(["Signals", "Scores", "Monitor", "Intelligence", "Org & Levers"]),
     calls_30d: z.number(),
   })),
-  top_endpoints: z.array(z.object({ event: z.string(), count: z.number(), last_seen: z.string() })),
+  top_endpoints: z.array(z.object({ event: z.string(), count: z.number(), last_seen: IsoDateTimeSchema })),
 });
 
 export const AdminRevenueResponseSchema = z.object({
@@ -88,7 +89,7 @@ export const AdminMcpAdoptionResponseSchema = z.object({
     org_id: z.string().nullable(),
     org_name: z.string().nullable(),
     event_count: z.number(),
-    last_seen: z.string(),
+    last_seen: IsoDateTimeSchema,
   })),
   by_client_app: z.array(z.object({ client_app: z.string(), event_count: z.number() })),
 });
@@ -96,10 +97,10 @@ export const AdminMcpAdoptionResponseSchema = z.object({
 export const AdminTrainingCorpusResponseSchema = z.object({
   planner_pairs_30d: z.number(),
   planner_pairs_total: z.number(),
-  planner_last_seen: z.string().nullable(),
+  planner_last_seen: IsoDateTimeSchema.nullable(),
   brief_pairs_30d: z.number(),
   brief_pairs_total: z.number(),
-  brief_last_seen: z.string().nullable(),
+  brief_last_seen: IsoDateTimeSchema.nullable(),
   keys_opted_out: z.number(),
   keys_total: z.number(),
 });

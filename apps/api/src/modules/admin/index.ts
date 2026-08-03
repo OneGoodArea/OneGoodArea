@@ -1,5 +1,4 @@
 import { sql } from "../../infrastructure/db/client";
-import { isoOrNull } from "../../infrastructure/utils/iso-date";
 import {
   row,
   rows as typedRows,
@@ -127,12 +126,9 @@ export async function getAnalytics() {
     activeUsersThisMonth: row<CountRow>(activeUsersThisMonth[0]).count,
     apiCallsPerDay: typedRows<DayCountRow>(apiCallsPerDay),
     topAreas: typedRows<AreaCountRow>(topAreas),
-    // AR-628: created_at arrives from the driver as a Date; the response
-    // contract types it as an ISO string. Normalize at the boundary.
-    recentActivity: typedRows<RecentActivityRow>(recentActivity).map((r) => ({
-      ...r,
-      created_at: isoOrNull(r.created_at) as string,
-    })),
+    // AR-634: row()/rows() normalize Date→ISO upstream (AR-664); no
+    // boundary coercion needed here.
+    recentActivity: typedRows<RecentActivityRow>(recentActivity),
     userGrowth: typedRows<DayCountRow>(userGrowth),
     // Conversion funnel
     usersWithApiCalls: row<CountRow>(usersWithApiCalls[0]).count,
@@ -475,7 +471,7 @@ export async function getUsageStats(): Promise<UsageStats> {
   const top_endpoints = allEndpoints.slice(0, 20).map((e) => ({
     event: e.event,
     count: e.count,
-    last_seen: isoOrNull(e.last_seen) as string, // AR-628: Date -> ISO string
+    last_seen: e.last_seen,
   }));
 
   const sortedByCalls = [...per_product].sort((a, b) => b.calls_30d - a.calls_30d);
@@ -615,13 +611,13 @@ export async function getMcpAdoption(): Promise<McpAdoptionStats> {
     total_events_30d: totals.total_events,
     unique_orgs_30d: totals.unique_orgs,
     unique_users_30d: totals.unique_users,
-    // AR-628: last_seen arrives as a Date; the contract types it as a string.
+    // AR-634: row()/rows() normalize Date→ISO upstream (AR-664).
     top_orgs: typedRows<{
       org_id: string | null;
       org_name: string | null;
       event_count: number;
       last_seen: string;
-    }>(topOrgsRows).map((o) => ({ ...o, last_seen: isoOrNull(o.last_seen) as string })),
+    }>(topOrgsRows),
     by_client_app: typedRows<{ client_app: string; event_count: number }>(byClientRows),
   };
 }
@@ -666,10 +662,10 @@ export async function getTrainingCorpusStats(): Promise<TrainingCorpusStats> {
   return {
     planner_pairs_30d: row<CountRow>(plannerPairs30dRows[0]).count,
     planner_pairs_total: row<CountRow>(plannerPairsTotalRows[0]).count,
-    planner_last_seen: isoOrNull(row<{ last_seen: string | null }>(plannerLastSeenRows[0]).last_seen),
+    planner_last_seen: row<{ last_seen: string | null }>(plannerLastSeenRows[0]).last_seen ?? null,
     brief_pairs_30d: row<CountRow>(briefPairs30dRows[0]).count,
     brief_pairs_total: row<CountRow>(briefPairsTotalRows[0]).count,
-    brief_last_seen: isoOrNull(row<{ last_seen: string | null }>(briefLastSeenRows[0]).last_seen),
+    brief_last_seen: row<{ last_seen: string | null }>(briefLastSeenRows[0]).last_seen ?? null,
     keys_opted_out: row<CountRow>(optoutRows[0]).count,
     keys_total: row<CountRow>(keysTotalRows[0]).count,
   };
