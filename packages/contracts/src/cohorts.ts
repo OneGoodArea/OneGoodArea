@@ -5,6 +5,7 @@
    filtered to the cohort's geo_codes universe. See ADR 0032. */
 
 import { z } from "zod";
+import { IsoDateTimeSchema } from "./common";
 
 /** Cap on cohort size — keeps the request body bounded + the SQL
     array param manageable. A real-world enterprise pilot footprint
@@ -25,8 +26,8 @@ export const PeerCohortSchema = z.object({
   slug: z.string().min(1),
   name: z.string().min(1),
   geo_codes: z.array(GeoCodeSchema),
-  created_at: z.string(),
-  updated_at: z.string(),
+  created_at: IsoDateTimeSchema,
+  updated_at: IsoDateTimeSchema,
 }).strict();
 export type PeerCohort = z.infer<typeof PeerCohortSchema>;
 

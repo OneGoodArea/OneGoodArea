@@ -9,6 +9,7 @@
    See ADR 0030. */
 
 import { z } from "zod";
+import { IsoDateTimeSchema } from "./common";
 
 /** The four base presets that select a dimension set. Mirrors the Intent
     enum in the report shape — keeping it duplicated here so this file
@@ -32,8 +33,8 @@ export const ScoringPresetSchema = z.object({
   name: z.string().min(1),
   base_preset: ScoringBasePresetSchema,
   weights: WeightsRecordSchema,
-  created_at: z.string(),
-  updated_at: z.string(),
+  created_at: IsoDateTimeSchema,
+  updated_at: IsoDateTimeSchema,
 }).strict();
 export type ScoringPreset = z.infer<typeof ScoringPresetSchema>;
 

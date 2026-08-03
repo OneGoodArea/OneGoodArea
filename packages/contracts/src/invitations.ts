@@ -10,6 +10,7 @@
    already-joined user. */
 
 import { z } from "zod";
+import { IsoDateTimeSchema } from "./common";
 
 /** Roles an invitation may grant. NOT a full OrgRoleSchema — owner is
     excluded by design: only an existing owner can promote another
@@ -26,8 +27,8 @@ export const OrgInvitationSchema = z.object({
   email: z.string().email(),
   role: InvitationRoleSchema,
   invited_by_user_id: z.string().min(1),
-  expires_at: z.string(),
-  created_at: z.string(),
+  expires_at: IsoDateTimeSchema,
+  created_at: IsoDateTimeSchema,
 }).strict();
 export type OrgInvitation = z.infer<typeof OrgInvitationSchema>;
 
