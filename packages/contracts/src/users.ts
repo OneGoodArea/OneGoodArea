@@ -20,6 +20,7 @@
    browser bundle. */
 
 import { z } from "zod";
+import { IsoDateTimeSchema } from "./common";
 
 /** The five ICPs the marketing site routes from. Mirrors the cards on
     /for/* and the Products mega-menu. Canonical list (don't add an ICP
@@ -103,7 +104,7 @@ export const UserSchema = z.object({
   image: z.string().nullable(),
   provider: z.string(),
   email_verified: z.boolean(),
-  created_at: z.string(),
+  created_at: IsoDateTimeSchema,
   intent: UserIntentSchema,
   signup_source: SignupSourceSchema,
   role_preference: UserRolePreferenceSchema,
