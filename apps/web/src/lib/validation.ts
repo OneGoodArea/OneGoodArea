@@ -1,4 +1,4 @@
-import { Intent } from "@/lib/types";
+import { Intent } from "@onegoodarea/contracts";
 
 const VALID_INTENTS: Intent[] = ["moving", "investing", "business", "research"];
 

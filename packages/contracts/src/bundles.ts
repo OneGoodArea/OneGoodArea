@@ -7,6 +7,7 @@
    See ADR 0029. */
 
 import { z } from "zod";
+import { IsoDateTimeSchema } from "./common";
 
 /** A bundle row as returned to the public API. `signal_keys` is the
     canonical whitelist — every key here is a real key from the active
@@ -18,8 +19,8 @@ export const SignalBundleSchema = z.object({
   slug: z.string().min(1),
   name: z.string().min(1),
   signal_keys: z.array(z.string().min(1)),
-  created_at: z.string(),
-  updated_at: z.string(),
+  created_at: IsoDateTimeSchema,
+  updated_at: IsoDateTimeSchema,
 }).strict();
 export type SignalBundle = z.infer<typeof SignalBundleSchema>;
 
