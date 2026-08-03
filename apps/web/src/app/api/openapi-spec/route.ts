@@ -6,7 +6,12 @@
 // returns afterward. `force-dynamic` + `no-store` opt this route out of
 // every caching layer Next.js has (build-time static generation, the fetch
 // Data Cache, and the response's own Cache-Control).
+//
+// AR-663: internal tags (Auth, Stripe, Admin, Contact, Cron) are filtered
+// from the spec before serving to the public playground. See config.ts.
 export const dynamic = 'force-dynamic'
+
+import { filterSpec } from "@/modules/developer-surface/filter"
 
 export async function GET() {
   try {
@@ -25,8 +30,9 @@ export async function GET() {
     }
 
     const spec = await response.json()
+    const filtered = filterSpec(spec)
 
-    return Response.json(spec, {
+    return Response.json(filtered, {
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-store',
