@@ -1,11 +1,12 @@
 import { z } from "zod";
+import { IsoDateTimeSchema } from "./common";
 
 export const ApiKeyPreviewSchema = z.object({
   id: z.string(),
   key_preview: z.string(),
   name: z.string(),
-  created_at: z.string(),
-  last_used_at: z.string().nullable(),
+  created_at: IsoDateTimeSchema,
+  last_used_at: IsoDateTimeSchema.nullable(),
   training_optout: z.boolean(),
 });
 
@@ -19,7 +20,7 @@ export const ApiKeyUsageResponseSchema = z.object({
   requestsThisMonth: z.number(),
   monthlyLimit: z.number(),
   dailyData: z.array(DailyCountSchema),
-  lastRequestAt: z.string().nullable(),
+  lastRequestAt: IsoDateTimeSchema.nullable(),
   keys: z.array(ApiKeyPreviewSchema),
 });
 
