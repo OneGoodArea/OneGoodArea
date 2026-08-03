@@ -1,4 +1,4 @@
-import type { Intent } from "@/lib/types";
+import type { Intent } from "@onegoodarea/contracts";
 
 /* AR-149: canonical intent → B2B workflow label mapping.
  *
