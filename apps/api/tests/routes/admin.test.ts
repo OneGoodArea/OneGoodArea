@@ -4,8 +4,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
    session JWT apps/web mints), which a browser-based Scalar "Try it"
    session can never obtain. It now also accepts a real API key
    (bearerAuth) via the same OR-auth helper as /me, /keys, /stripe — still
-   gated by isSuperuser() same as before. An auto-generated playground key
-   (AR-595) is rejected before that check ever runs. */
+   gated by isSuperuser() (which delegates to resolveUserType()) same as before.
+   An auto-generated playground key (AR-595) is rejected before that check
+   ever runs. */
 
 vi.mock("@/modules/auth/session-token", () => ({ verifySessionToken: vi.fn() }));
 vi.mock("@/modules/api-keys", () => ({ validateApiKey: vi.fn() }));

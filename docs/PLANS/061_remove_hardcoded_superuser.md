@@ -5,11 +5,15 @@
 **Risk:** Low
 **Worktree:** `../OneGoodArea-AR-607-remove-hardcoded-superuser`
 
+**Status:** DONE — `SUPERUSER_EMAILS` removed from all source. AR-654 (AR-661) closed this plan by replacing `GET /me/is-superuser` with `GET /me/user-type` and propagating `user_type` through the JWT session.
+
 ---
 
 ## Purpose
 
 Remove the hardcoded `ptengelmann@gmail.com` from all source code. Replace with a `SEED_SUPERUSER_EMAIL` Makefile variable that flows through compose into the API container, where `schema.ts` reads it at boot. DB column `is_superuser` remains the sole runtime truth.
+
+**Completed.** All steps executed. `SUPERUSER_EMAILS` deleted from `config/index.ts` and `config/constants.ts`. `isSuperuser()` now reads `user_type` via `resolveUserType()` (AR-654).
 
 ---
 

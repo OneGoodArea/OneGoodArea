@@ -27,7 +27,7 @@ function routeQuery(strings: TemplateStringsArray): Promise<unknown[]> {
     return Promise.resolve([{ tier: db.tier }]);
   }
   if (q.includes("FROM users WHERE id")) {
-    return Promise.resolve([{ email: "test@test.com", is_superuser: false, tier: db.tier }]);
+    return Promise.resolve([{ email: "test@test.com", tier: db.tier }]);
   }
   if (q.includes("FROM subscriptions")) {
     return Promise.resolve(db.plan ? [{ plan: db.plan }] : []);
