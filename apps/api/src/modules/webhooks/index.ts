@@ -42,9 +42,9 @@ export interface WebhookSubscriptionRow {
   secret: string;
   events: string[];
   status: string;
-  created_at: Date | string;
-  last_success_at: Date | string | null;
-  last_failure_at: Date | string | null;
+  created_at: string;
+  last_success_at: string | null;
+  last_failure_at: string | null;
 }
 
 /* ── Signing ── */
@@ -168,17 +168,9 @@ export async function listWebhookSubscriptions(userId: string): Promise<ListedWe
     url: r.url,
     events: r.events,
     status: r.status,
-    created_at: typeof r.created_at === "string" ? r.created_at : r.created_at.toISOString(),
-    last_success_at: r.last_success_at
-      ? typeof r.last_success_at === "string"
-        ? r.last_success_at
-        : r.last_success_at.toISOString()
-      : null,
-    last_failure_at: r.last_failure_at
-      ? typeof r.last_failure_at === "string"
-        ? r.last_failure_at
-        : r.last_failure_at.toISOString()
-      : null,
+    created_at: r.created_at,
+    last_success_at: r.last_success_at,
+    last_failure_at: r.last_failure_at,
   }));
 }
 
