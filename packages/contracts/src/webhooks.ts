@@ -1,13 +1,14 @@
 import { z } from "zod";
+import { IsoDateTimeSchema } from "./common";
 
 export const WebhookSubscriptionSchema = z.object({
   id: z.string(),
   url: z.string(),
   events: z.array(z.string()),
   status: z.string(),
-  created_at: z.string(),
-  last_success_at: z.string().nullable(),
-  last_failure_at: z.string().nullable(),
+  created_at: IsoDateTimeSchema,
+  last_success_at: IsoDateTimeSchema.nullable(),
+  last_failure_at: IsoDateTimeSchema.nullable(),
 });
 
 export const CreatedWebhookSchema = z.object({
@@ -15,7 +16,7 @@ export const CreatedWebhookSchema = z.object({
   url: z.string(),
   events: z.array(z.string()),
   secret: z.string(),
-  created_at: z.string(),
+  created_at: IsoDateTimeSchema,
 });
 
 export const ListWebhooksResponseSchema = z.object({

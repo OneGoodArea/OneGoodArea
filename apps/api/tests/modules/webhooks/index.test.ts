@@ -100,7 +100,7 @@ const SUB: WebhookSubscriptionRow = {
   secret: "whsec_test",
   events: ["signal.changed"],
   status: "active",
-  created_at: "2026-01-01",
+  created_at: "2026-01-01T00:00:00.000Z",
   last_success_at: null,
   last_failure_at: null,
 };
