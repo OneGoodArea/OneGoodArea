@@ -87,6 +87,21 @@ services:
       api:
         condition: service_started
 
+  showcase:
+    build:
+      context: ..
+      dockerfile: container/showcase/Containerfile
+    image: onegoodarea/showcase:local
+    profiles: ["minimal"]
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      NEXT_PUBLIC_API_URL: http://api:8080
+    depends_on:
+      api:
+        condition: service_started
+
   mailhog:
     image: mailhog/mailhog:v1.0.1
     profiles: ["full"]

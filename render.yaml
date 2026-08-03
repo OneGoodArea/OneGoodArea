@@ -60,3 +60,18 @@ services:
         value: "true"
       - key: OGA_SIGNALS_STORE_READ
         value: "true"
+
+  - type: web
+    name: onegoodarea-showcase
+    runtime: docker
+    dockerfilePath: ./container/showcase/Containerfile
+    dockerContext: .
+    plan: free
+    branch: main
+    healthCheckPath: /
+    autoDeploy: false
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://onegoodarea.onrender.com
+      - key: NODE_ENV
+        value: production
