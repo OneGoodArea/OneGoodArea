@@ -11,6 +11,7 @@
    public shape the data layer is built around. Re-exported here so consumers
    can import everything from "@onegoodarea/contracts". AreaType is also imported
    locally below because the report shape references it. */
+export * from "./common";
 export * from "./signals";
 export * from "./scores";
 export * from "./portfolios";
