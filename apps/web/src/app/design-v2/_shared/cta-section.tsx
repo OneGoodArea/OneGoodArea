@@ -4,9 +4,6 @@ import Link from "next/link";
 import { DEMO_URL } from "./book-demo";
 import { Mark } from "./mark";
 
-export const SHOWCASE_URL =
-  process.env.NEXT_PUBLIC_SHOWCASE_URL ?? "https://onegoodarea-showcase.onrender.com";
-
 /* CtaSection — the close (06).
    AR-204 PR 2 / commit 7.
 
@@ -60,15 +57,10 @@ export function CtaSection() {
             Read the methodology
             <span aria-hidden>→</span>
           </Link>
-          <a
-            href={SHOWCASE_URL}
-            className="oga-btn oga-btn-lg oga-btn-secondary"
-            target="_blank"
-            rel="noreferrer noopener"
-          >
+          <Link href="/showcase/proptech" className="oga-btn oga-btn-lg oga-btn-secondary">
             Explore workflows
             <span aria-hidden>→</span>
-          </a>
+          </Link>
         </div>
 
         <div className="oga-cta__foot" aria-hidden>

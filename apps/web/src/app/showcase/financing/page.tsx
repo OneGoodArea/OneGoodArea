@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { WorkflowCard } from "@/components/workflow-card";
+import { WorkflowCard } from "@/components/showcase/workflow-card";
 
 export default function FinancingPage() {
   return (

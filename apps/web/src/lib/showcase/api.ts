@@ -1,4 +1,4 @@
-import type { Signal, Score, Client } from "@/lib/types";
+import type { Signal, Score, Client } from "@/lib/showcase/types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 

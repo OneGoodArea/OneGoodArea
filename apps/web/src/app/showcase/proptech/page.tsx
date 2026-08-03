@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { WeightInput } from "@/components/weight-input";
-import { WorkflowCard } from "@/components/workflow-card";
-import { getSignals, getScores } from "@/lib/api";
+import { WeightInput } from "@/components/showcase/weight-input";
+import { WorkflowCard } from "@/components/showcase/workflow-card";
+import { getSignals, getScores } from "@/lib/showcase/api";
 
 export const dynamic = "force-dynamic";
 
