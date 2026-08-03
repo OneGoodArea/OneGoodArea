@@ -1,3 +1,5 @@
+import type { Signal, Score, Client } from "@/lib/types";
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
 async function apiFetch<T>(path: string): Promise<T> {

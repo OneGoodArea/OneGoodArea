@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { WeightInput } from "@/components/weight-input";
 import { WorkflowCard } from "@/components/workflow-card";
 import { getSignals, getScores } from "@/lib/api";
@@ -65,9 +66,9 @@ export default async function ProptechPage() {
         </div>
 
         <div className="mt-8 pt-6 border-t border-[#1c1c22]">
-          <a href="/" className="text-sm text-blue-400 hover:underline">
+          <Link href="/" className="text-sm text-blue-400 hover:underline">
             &larr; Back to homepage
-          </a>
+          </Link>
         </div>
       </section>
     </main>

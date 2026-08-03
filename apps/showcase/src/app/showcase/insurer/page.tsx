@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { WorkflowCard } from "@/components/workflow-card";
 
 export default function InsurerPage() {
@@ -16,9 +17,9 @@ export default function InsurerPage() {
           <p className="text-[#7a7a88] text-sm">No scores configured yet</p>
         </WorkflowCard>
         <div className="mt-8 pt-6 border-t border-[#1c1c22]">
-          <a href="/" className="text-sm text-blue-400 hover:underline">
+          <Link href="/" className="text-sm text-blue-400 hover:underline">
             &larr; Back to homepage
-          </a>
+          </Link>
         </div>
       </section>
     </main>
