@@ -292,16 +292,38 @@ export interface VerificationTokenRow {
 
 /**
  * Type-safe row accessor. Cast a Neon result row once at the boundary.
+ * Converts any Date instances to ISO strings so declared row types
+ * (e.g. created_at: string) are true at runtime.
  * Usage: const user = row<UserRow>(rows[0]);
  */
 export function row<T>(r: Record<string, unknown>): T {
-  return r as T;
+  return normalizeRow(r) as T;
 }
 
 /**
  * Type-safe rows accessor for arrays.
+ * Converts any Date instances to ISO strings in each row.
  * Usage: const users = rows<UserRow>(result);
  */
 export function rows<T>(r: Record<string, unknown>[]): T[] {
-  return r as T[];
+  return r.map(normalizeRow) as T[];
+}
+
+/**
+ * Scan a flat SQL row and convert any Date instance to its ISO string.
+ * Raw SQL rows are never nested, so no recursion is needed.
+ */
+function normalizeRow(r: Record<string, unknown>): Record<string, unknown> {
+  let changed = false;
+  const out: Record<string, unknown> = {};
+  for (const key of Object.keys(r)) {
+    const v = r[key];
+    if (v instanceof Date || (v !== null && typeof v === "object" && Object.prototype.toString.call(v) === "[object Date]")) {
+      out[key] = (v as Date).toISOString();
+      changed = true;
+    } else {
+      out[key] = v;
+    }
+  }
+  return changed ? out : r;
 }
