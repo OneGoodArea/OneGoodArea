@@ -1,25 +1,38 @@
-import type { Signal, Score, Client } from "@/lib/showcase/types";
+import type { Signal, Score } from "@/lib/showcase/types";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const BASE_URL = process.env.INTERNAL_API_URL ?? "https://onegoodarea.onrender.com";
 
 async function apiFetch<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { "Content-Type": "application/json" },
-  });
-  if (!res.ok) {
-    throw new Error(`API error: ${res.status} ${res.statusText}`);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+  try {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      throw new Error(`${res.status} ${res.statusText}`);
+    }
+    return res.json();
+  } finally {
+    clearTimeout(timeout);
   }
-  return res.json();
 }
 
 export async function getSignals(): Promise<Signal[]> {
-  return apiFetch<Signal[]>("/api/signals");
+  const data = await apiFetch<{ signals: Record<string, unknown> }>(
+    "/v1/area?postcode=M1+1AE"
+  );
+  return Object.entries(data.signals ?? {}).map(([key, v]: [string, unknown]) => ({
+    id: key,
+    name: key.replace(/_/g, " "),
+    description: "",
+    score: (v as { percentile?: number })?.percentile ?? 0,
+    category: "",
+  }));
 }
 
 export async function getScores(): Promise<Score[]> {
-  return apiFetch<Score[]>("/api/scores");
-}
-
-export async function getClient(id: string): Promise<Client> {
-  return apiFetch<Client>(`/api/clients/${id}`);
+  const data = await apiFetch<{ scores: Score[] }>("/v1/scores");
+  return data.scores ?? [];
 }
