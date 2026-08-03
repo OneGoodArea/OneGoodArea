@@ -55,27 +55,18 @@ describe("addMember (AR-388 FK validation)", () => {
   });
 });
 
-/* AR-389: row → DTO shapers emit ISO timestamps. The pg driver returns
-   TIMESTAMPTZ as JS Date objects; the previous String(date) leaked
-   Date.prototype.toString() output ("Wed May 27 2026 23:50:10 GMT...")
-   through the API surface. */
+/* AR-389: row → DTO shapers emit ISO timestamps. AR-636: row()/rows()
+   normalize Date→ISO upstream (AR-664), so the module receives already-ISO
+   strings from the DAL and passes them through verbatim. Date-object
+   coercion is tested in infrastructure/db-row-normalize.test.ts. */
 describe("listMembers row shaping (AR-389 ISO dates)", () => {
-  it("formats joined_at as ISO when the DB returns a Date object", async () => {
-    const date = new Date("2026-05-27T23:50:10.000Z");
-    orgRepoMock.listMembers.mockResolvedValue([
-      { org_id: "org_1", user_id: "u_1", role: "owner", joined_at: date, email: "x@x.com", name: "X" },
-    ]);
-    const out = await listMembers("org_1");
-    expect(out).toHaveLength(1);
-    expect(out[0].joined_at).toBe("2026-05-27T23:50:10.000Z");
-    expect(out[0].joined_at).not.toMatch(/GMT/); // not Date.toString()
-  });
-
   it("passes through an already-ISO string verbatim", async () => {
     orgRepoMock.listMembers.mockResolvedValue([
       { org_id: "org_1", user_id: "u_1", role: "member", joined_at: "2026-06-30T12:00:00.000Z", email: "y@y.com", name: null },
     ]);
     const out = await listMembers("org_1");
+    expect(out).toHaveLength(1);
     expect(out[0].joined_at).toBe("2026-06-30T12:00:00.000Z");
+    expect(out[0].joined_at).not.toMatch(/GMT/); // not Date.toString()
   });
 });
