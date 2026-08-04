@@ -197,22 +197,34 @@ describe("mirror cooldown (AR-679)", () => {
        Second call: primary is in cooldown so it's skipped entirely —
        only 2 fetches (kumi + .fr) fire, not 3. */
     let callCount = 0;
-    server.use(http.post(ENDPOINT, async ({ request }) => {
-      callCount += 1;
-      const url = request.url;
-      // Primary mirror fails
-      if (url === ENDPOINT) return HttpResponse.json({ error: "blocked" }, { status: 403 });
-      // Fallback mirrors succeed
-      const body = await request.text();
-      const cat = categoryForQuery(body);
-      return HttpResponse.json({ elements: cat ? [ELEMENT_BY_CATEGORY[cat]] : [] });
-    }));
 
-    await getNearbyAmenities(53.4, -2.2);
-    const firstCount = callCount; // 8 categories × 3 mirrors attempted = up to 24
+    async function handlerFor(primaryUrl: string) {
+      return http.post(primaryUrl, async ({ request }) => {
+        callCount += 1;
+        // Primary mirror fails
+        if (primaryUrl === ENDPOINT) return HttpResponse.json({ error: "blocked" }, { status: 403 });
+        // Fallback mirrors succeed
+        const body = await request.text();
+        const cat = categoryForQuery(body);
+        return HttpResponse.json({ elements: cat ? [ELEMENT_BY_CATEGORY[cat]] : [] });
+      });
+    }
 
+    server.use(
+      await handlerFor(ENDPOINT),
+      await handlerFor("https://overpass.kumi.systems/api/interpreter"),
+      await handlerFor("https://overpass.openstreetmap.fr/api/interpreter"),
+    );
+
+    const first = await getNearbyAmenities(53.4, -2.2);
+    expect(first).not.toBeNull(); // fallbacks served all 8 categories
+
+    // Clear the result cache so the second call actually hits the mirrors,
+    // but leave the mirror cooldown intact so we can test it.
+    clearOverpassCache();
     callCount = 0;
-    await getNearbyAmenities(53.4, -2.2);
+    const second = await getNearbyAmenities(53.4, -2.2);
+    expect(second).toEqual(first);
     // On the second call, the primary mirror is in cooldown and skipped.
     // Each category only tries 2 mirrors (kumi + .fr), not 3.
     expect(callCount).toBe(16); // 8 categories × 2 mirrors
