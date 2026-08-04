@@ -44,10 +44,10 @@ const mockScore = vi.mocked(scoreArea);
 const SCORE_RESULT = {
   area: "M1 1AE", preset: "research", score: 62, area_type: "urban",
   dimensions: [{
-    key: "safety_crime", label: "Safety & Crime", score: 70, weight: 20, confidence: 0.9,
+    key: "crime", label: "Crime", score: 70, weight: 20, confidence: 0.9,
     reasoning: "12 violent crimes per 1k residents", confidence_reason: "240 crimes across 12 months provides strong signal",
   }],
-  confidence: 0.8, weights_source: "preset", engine_version: "1.0.0",
+  confidence: 0.8, weights_source: "preset", engine_version: "1.1.0",
 } as never;
 
 beforeEach(() => {
@@ -111,11 +111,11 @@ describe("POST /v1/score", () => {
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.score).toBe(62);
-    expect(body.dimensions[0].key).toBe("safety_crime");
+    expect(body.dimensions[0].key).toBe("crime");
     expect(body.weights_source).toBe("preset");
     expect(mockScore).toHaveBeenCalledWith(expect.objectContaining({ area: "M1 1AE", preset: "research" }));
     expect(trackEvent).toHaveBeenCalledWith("api.score.computed", "user_1", expect.objectContaining({ preset: "research", score: 62 }), null);
-    expect(res.headers["x-engine-version"]).toBe("1.0.0");
+    expect(res.headers["x-engine-version"]).toBe("1.1.0");
   });
 });
 
@@ -133,7 +133,7 @@ describe("POST /v1/score — Levers preset_id (AR-196)", () => {
     vi.mocked(sql).mockResolvedValueOnce([{
       id: "spr_x", org_id: "org_acme", slug: "underwriting", name: "Underwriting v1",
       base_preset: "moving",
-      weights: { safety_crime: 0.5, schools_education: 0.2, transport_commute: 0.1, daily_amenities: 0.1, cost_of_living: 0.1 },
+      weights: { crime: 0.5, schools: 0.2, transport: 0.1, amenities: 0.1, deprivation: 0.1 },
       created_at: "2026-05-28", updated_at: "2026-05-28",
     }] as never);
 
@@ -142,7 +142,7 @@ describe("POST /v1/score — Levers preset_id (AR-196)", () => {
     expect(mockScore).toHaveBeenCalledWith(expect.objectContaining({
       area: "M1 1AE",
       preset: "moving",
-      weights: expect.objectContaining({ safety_crime: 0.5 }),
+      weights: expect.objectContaining({ crime: 0.5 }),
     }));
     expect(trackEvent).toHaveBeenCalledWith(
       "api.score.computed",
@@ -200,7 +200,7 @@ describe("POST /v1/score — Levers methodology pin (AR-197)", () => {
     vi.mocked(sql).mockResolvedValueOnce([] as never);
     const res = await postScore({ area: "M1 1AE", preset: "research" });
     expect(res.statusCode).toBe(200);
-    expect(res.headers["x-engine-version"]).toBe("1.0.0");
+    expect(res.headers["x-engine-version"]).toBe("1.1.0");
   });
 });
 

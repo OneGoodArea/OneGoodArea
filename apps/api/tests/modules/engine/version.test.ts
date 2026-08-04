@@ -30,7 +30,7 @@ describe("resolveEngineVersion", () => {
   });
 
   describe("valid versions (supported window)", () => {
-    it.each(["1.0.0"])(
+    it.each(["1.0.0", "1.1.0"])(
       "accepts %s, resolves to current engine",
       (version) => {
         const r = resolveEngineVersion(version);
@@ -50,7 +50,7 @@ describe("resolveEngineVersion", () => {
   });
 
   describe("unknown versions (not in the registry)", () => {
-    it.each(["2.0.0", "1.1.0", "9.9.9"])(
+    it.each(["2.0.0", "9.9.9"])(
       "rejects %s with engine_version_unknown",
       (version) => {
         const r = resolveEngineVersion(version);
