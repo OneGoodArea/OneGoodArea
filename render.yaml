@@ -40,6 +40,8 @@ services:
         sync: false
       - key: RESEND_API_KEY
         sync: false
+      - key: SEED_SHOWCASE_API_KEY # seeds the showcase user + API key on boot; MUST equal web's SHOWCASE_API_KEY (same plaintext)
+        sync: false
       # --- non-secret config ---
       - key: NODE_ENV
         value: production

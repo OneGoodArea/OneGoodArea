@@ -65,6 +65,11 @@ export function clearOverpassCache(): void {
   cache.clear();
 }
 
+/** Reset mirror cooldowns (test helper for AR-679). */
+export function clearMirrorCooldown(): void {
+  mirrorCooldownUntil.clear();
+}
+
 function cacheKey(lat: number, lng: number): string {
   const rLat = Math.round(lat * OVERPASS_COORD_PRECISION) / OVERPASS_COORD_PRECISION;
   const rLng = Math.round(lng * OVERPASS_COORD_PRECISION) / OVERPASS_COORD_PRECISION;
@@ -127,6 +132,13 @@ const CATEGORIES: CategorySpec[] = [
    normal queue. */
 const OVERPASS_USER_AGENT = "OneGoodArea/1.0 (+https://www.onegoodarea.com)";
 
+/* AR-679: Per-mirror cooldown. After a mirror fails (HTTP error / throw),
+   skip it for OVERPASS_COOLDOWN_MS so subsequent requests don't hammer a
+   known-bad endpoint. The map is module-scoped and shared across all
+   category fetches within a single process lifetime. */
+const OVERPASS_COOLDOWN_MS = 60_000;
+const mirrorCooldownUntil = new Map<string, number>();
+
 /* AR-405: Render's egress IP range was blocked by the main
    overpass-api.de mirror (verified live 2026-07-01: all 8 category
    fetches threw "fetch failed" in 0-400ms, i.e. network-level reject).
@@ -152,6 +164,11 @@ async function tryMirror(
   lat: number,
   lng: number,
 ): Promise<OverpassElement[] | null> {
+  const cooldown = mirrorCooldownUntil.get(url);
+  if (cooldown && Date.now() < cooldown) {
+    logger.debug("[overpass] skipping mirror in cooldown", { mirror: url, category: spec.name });
+    return null;
+  }
   try {
     const res = await fetch(url, {
       method: "POST",
@@ -164,17 +181,20 @@ async function tryMirror(
       signal: AbortSignal.timeout(OVERPASS_FETCH_TIMEOUT_MS),
     });
     if (!res.ok) {
+      mirrorCooldownUntil.set(url, Date.now() + OVERPASS_COOLDOWN_MS);
       logger.warn("[overpass] mirror HTTP error", { mirror: url, category: spec.name, status: res.status });
       return null;
     }
     const data = (await res.json()) as { elements?: unknown; remark?: unknown };
     if (typeof data.remark === "string" && data.remark.length > 0) {
+      mirrorCooldownUntil.set(url, Date.now() + OVERPASS_COOLDOWN_MS);
       logger.warn("[overpass] mirror got remark", { mirror: url, category: spec.name, lat, lng, remark: data.remark });
       return null;
     }
     if (!Array.isArray(data.elements)) return null;
     return data.elements as OverpassElement[];
   } catch (err) {
+    mirrorCooldownUntil.set(url, Date.now() + OVERPASS_COOLDOWN_MS);
     logger.warn("[overpass] mirror fetch threw", {
       mirror: url,
       category: spec.name,

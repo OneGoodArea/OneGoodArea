@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "../../../msw-server";
-import { getPropertyPrices, formatPropertyDataForPrompt } from "@/modules/signals/data-sources/land-registry";
+import { getPropertyPrices, formatPropertyDataForPrompt, clearPropertyCache } from "@/modules/signals/data-sources/land-registry";
 import type { PropertyPriceData } from "@/modules/signals/inputs";
 
 /* MSW intercepts the Land Registry SPARQL endpoint. Dates are built relative
@@ -31,6 +31,8 @@ function sparql(bindings: ReturnType<typeof binding>[]) {
 }
 
 describe("getPropertyPrices", () => {
+  beforeEach(() => clearPropertyCache());
+
   it("computes median/mean, by-type, tenure and YoY change", async () => {
     const recent = isoMonthsAgo(2);
     const prior = isoMonthsAgo(18);
@@ -72,6 +74,43 @@ describe("getPropertyPrices", () => {
     const prior = isoMonthsAgo(18);
     server.use(http.post(ENDPOINT, () => sparql([binding(200000, prior, "detached", "freehold")])));
     expect(await getPropertyPrices("M1 1AE")).toBeNull();
+  });
+
+  it("caches result so second call for same outcode skips HTTP (AR-678)", async () => {
+    const recent = isoMonthsAgo(2);
+    let callCount = 0;
+    server.use(
+      http.post(ENDPOINT, () => {
+        callCount++;
+        return sparql([binding(300000, recent, "detached", "freehold")]);
+      })
+    );
+
+    const first = await getPropertyPrices("M1 1AE");
+    expect(first).not.toBeNull();
+    expect(callCount).toBe(1);
+
+    const second = await getPropertyPrices("M1 1AE");
+    expect(second).toEqual(first);
+    expect(callCount).toBe(1);
+  });
+
+  it("clearPropertyCache forces a fresh HTTP fetch", async () => {
+    const recent = isoMonthsAgo(2);
+    let callCount = 0;
+    server.use(
+      http.post(ENDPOINT, () => {
+        callCount++;
+        return sparql([binding(300000, recent, "detached", "freehold")]);
+      })
+    );
+
+    await getPropertyPrices("M1 1AE");
+    expect(callCount).toBe(1);
+
+    clearPropertyCache();
+    await getPropertyPrices("M1 1AE");
+    expect(callCount).toBe(2);
   });
 });
 

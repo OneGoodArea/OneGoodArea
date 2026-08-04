@@ -326,6 +326,16 @@ describe("POST /track", () => {
     expect(params[1]).toBeNull();
   });
 
+  it("accepts null referrer without 400/500 cascade (AR-677)", async () => {
+    const res = await postTrack({ path: "/area/m1", referrer: null, sessionId: null });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ ok: true });
+    expect(mockSql).toHaveBeenCalledTimes(1);
+    const params = mockSql.mock.calls[0].slice(1);
+    expect(params[1]).toBeNull();
+    expect(params[4]).toBeNull();
+  });
+
   it("never fails visibly: returns ok even if the insert throws", async () => {
     mockSql.mockRejectedValue(new Error("db down"));
     const res = await postTrack({ path: "/area/m1" });

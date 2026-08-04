@@ -62,6 +62,9 @@ services:
       OGA_SIGNALS_API: "true"
       OGA_SIGNALS_STORE_READ: "true"
       CRON_SECRET: replace-me
+      # Env-gated showcase seed (see schema.ts SEEDS). Unset -> skipped, so
+      # local dev stays clean unless SEED_SHOWCASE_API_KEY is exported.
+      SEED_SHOWCASE_API_KEY: ${SEED_SHOWCASE_API_KEY:-}
     depends_on:
       neon-proxy:
         condition: service_healthy
@@ -83,6 +86,8 @@ services:
       NEXTAUTH_URL: http://localhost:3000
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       INTERNAL_API_URL: http://api:8080
+      # Showcase bearer; must equal the api's SEED_SHOWCASE_API_KEY (same plaintext).
+      SHOWCASE_API_KEY: ${SHOWCASE_API_KEY:-}
     depends_on:
       api:
         condition: service_started

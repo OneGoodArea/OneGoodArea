@@ -807,13 +807,16 @@ export function registerMeRoutes(app: FastifyInstance): void {
              framework validation error. */
           security: [],
           body: z.object({
-            path: z.string().optional(),
-            referrer: z.string().optional(),
-            sessionId: z.string().optional(),
+            path: z.string().nullish(),
+            referrer: z.string().nullish(),
+            sessionId: z.string().nullish(),
           }),
           response: {
             200: z.object({ ok: z.literal(true) }),
-            400: z.object({ ok: z.literal(false) }),
+            400: z.union([
+              z.object({ ok: z.literal(false) }),
+              z.object({ statusCode: z.number(), error: z.string(), message: z.string() }),
+            ]),
           },
         },
       },

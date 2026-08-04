@@ -7,13 +7,15 @@ vi.mock("@/modules/tracking/structured-logger", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
-import { getNearbyAmenities, formatAmenitiesForPrompt, clearOverpassCache } from "@/modules/signals/data-sources/openstreetmap";
+import { getNearbyAmenities, formatAmenitiesForPrompt, clearOverpassCache, clearMirrorCooldown } from "@/modules/signals/data-sources/openstreetmap";
 import type { AmenitiesData } from "@/modules/signals/inputs";
 
 /* AR-397 added a module-level cache; reset between every test so cache
-   carry-over can't pre-warm the next one. */
+   carry-over can't pre-warm the next one. AR-679 added per-mirror
+   cooldowns; reset those too. */
 beforeEach(() => {
   clearOverpassCache();
+  clearMirrorCooldown();
 });
 
 /* AR-400 split the bundled 8-subquery into 8 parallel category fetches.
@@ -185,6 +187,47 @@ describe("getNearbyAmenities caching (AR-397, AR-400-compatible)", () => {
     const second = await getNearbyAmenities(53.4, -2.2);
     expect(second).toBeNull();
     expect(calls).toBe(8); // still 8: cached null
+  });
+});
+
+describe("mirror cooldown (AR-679)", () => {
+  it("skips a mirror that recently failed (cooldown)", async () => {
+    /* First call: primary mirror returns an HTTP error, forcing
+       cooldown. The other two mirrors succeed so the call still works.
+       Second call: primary is in cooldown so it's skipped entirely —
+       only 2 fetches (kumi + .fr) fire, not 3. */
+    let callCount = 0;
+
+    async function handlerFor(primaryUrl: string) {
+      return http.post(primaryUrl, async ({ request }) => {
+        callCount += 1;
+        // Primary mirror fails
+        if (primaryUrl === ENDPOINT) return HttpResponse.json({ error: "blocked" }, { status: 403 });
+        // Fallback mirrors succeed
+        const body = await request.text();
+        const cat = categoryForQuery(body);
+        return HttpResponse.json({ elements: cat ? [ELEMENT_BY_CATEGORY[cat]] : [] });
+      });
+    }
+
+    server.use(
+      await handlerFor(ENDPOINT),
+      await handlerFor("https://overpass.kumi.systems/api/interpreter"),
+      await handlerFor("https://overpass.openstreetmap.fr/api/interpreter"),
+    );
+
+    const first = await getNearbyAmenities(53.4, -2.2);
+    expect(first).not.toBeNull(); // fallbacks served all 8 categories
+
+    // Clear the result cache so the second call actually hits the mirrors,
+    // but leave the mirror cooldown intact so we can test it.
+    clearOverpassCache();
+    callCount = 0;
+    const second = await getNearbyAmenities(53.4, -2.2);
+    expect(second).toEqual(first);
+    // On the second call, the primary mirror is in cooldown and skipped.
+    // Each category only tries 2 mirrors (kumi + .fr), not 3.
+    expect(callCount).toBe(16); // 8 categories × 2 mirrors
   });
 });
 
