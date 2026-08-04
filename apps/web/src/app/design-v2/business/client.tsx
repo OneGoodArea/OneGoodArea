@@ -62,7 +62,7 @@ const ICPS: Icp[] = [
     problem:
       "Your product surfaces UK properties to users who immediately want to know what the area is like. Building that yourself means stitching crime, deprivation, prices, transport, amenities and schools across mismatched government APIs, normalising indices across England, Wales and Scotland, and reconciling 2011 versus 2021 boundaries. That is a data team you do not want to hire.",
     why:
-      "Signals is exactly that data layer, already stitched together. One typed request to /v1/area returns the seven-category catalog at LSOA grain with national-within-country percentiles, normalised positions, per-signal confidence, and source attribution. Scores compresses the catalog into a single 0-to-100 number per audience (one of four scoring profiles). Intelligence handles natural-language search and similar-areas tiles in one call.",
+      "Signals is exactly that data layer, already stitched together. One typed request to /v1/area returns the full signals catalog at LSOA grain with national-within-country percentiles, normalised positions, per-signal confidence, and source attribution. Scores compresses the catalog into a single 0-to-100 number per audience (one of four scoring profiles). Intelligence handles natural-language search and similar-areas tiles in one call.",
     value:
       "Weeks of integration replaced by one API key. Your area-detail screen ships with comparable percentiles instead of raw numbers that mean different things in Cardiff and Manchester. Same postcode plus profile gives the same score across deploys, so cached UI states stay coherent.",
     sales:
@@ -81,7 +81,7 @@ const ICPS: Icp[] = [
   ],
   "meta": { "engine_version": "${METHODOLOGY_VERSION}" }
 }`,
-      foot: "One API key. Seven categories. LSOA grain.",
+      foot: "One API key. Every category. LSOA grain.",
     },
   },
   {

@@ -1,27 +1,30 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import type { ComponentType, SVGProps } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Wordmark } from "./wordmark";
 import { SignalsIcon, ScoresIcon, MonitorIcon, IntelligenceIcon } from "./product-icons";
-import { DocsHomeIcon, ApiReferenceIcon, McpServerIcon, ChangelogIcon } from "./docs-icons";
+import { DocsHomeIcon, ApiReferenceIcon, McpServerIcon, ChangelogIcon, MethodologyIcon } from "./docs-icons";
+import { ProptechIcon, LendersIcon, InsuranceIcon, CreIcon, PublicSectorIcon } from "./icp-icons";
 import { McpLogo } from "./editor-icons";
 import { BookDemo } from "./book-demo";
 import "./nav.css";
 
-/* Marketing nav — Brand v3 Plotted (AR-204 PR 1).
+/* Marketing nav - Brand v3 Plotted (AR-204 PR 1).
 
    Structure:
-     [Wordmark] — — — Products▾  Methodology  Docs▾  Pricing — — — Sign in  Get started
-                  └─ mega-menu                  └─ list                  └─ when signed out
-                                                                          (Dashboard when signed in)
+     [Wordmark] - - - Products▾  Solutions▾  Methodology  Docs▾  Pricing - - - Sign in  Book a demo
+                  └─ mega-menu   └─ ICP pages              └─ list
+
+   Solutions dropdown surfaces the 5 buyer pages (/for/<slug>), PropTech
+   featured above a divider.
 
    Products dropdown surfaces the 4 composable products (Signals /
    Scores / Monitor / Intelligence) with dot-composed icons. Each
    product page lives at /products/<slug>; until those pages ship,
-   each row renders as a DISABLED button with a "Coming soon" pill —
+   each row renders as a DISABLED button with a "Coming soon" pill -
    per AR-204 rule: any not-yet-wired control is disabled with an
    explicit indicator, never a fake working state.
 
@@ -31,7 +34,7 @@ import "./nav.css";
    Methodology + Pricing are direct top-level links.
 
    Mobile drawer shows the same sections expanded. No inline styles
-   anywhere — all visual styling lives in ./nav.css. Marcos's rule. */
+   anywhere - all visual styling lives in ./nav.css. Marcos's rule. */
 
 type ProductSlug = "signals" | "scores" | "monitor" | "intelligence";
 
@@ -62,8 +65,29 @@ interface DocsLink {
 const DOCS: DocsLink[] = [
   { label: "Docs home",     href: "/docs",                              icon: DocsHomeIcon },
   { label: "API reference", href: "/docs/api-reference",                icon: ApiReferenceIcon },
+  { label: "Methodology",   href: "/methodology",                       icon: MethodologyIcon },
   { label: "MCP server",    href: "/docs/mcp",          badge: "NEW",   icon: McpServerIcon },
   { label: "Changelog",     href: "/changelog",                         icon: ChangelogIcon },
+];
+
+/* Solutions dropdown: the five buyer (ICP) pages under one menu, so the front
+   door stays minimal. PropTech is featured (self-serve, the primary ICP) and
+   sits above a divider; the rest are demo-led. Each row carries a bespoke ICP
+   icon from icp-icons.tsx (same Plotted vocabulary as the product/docs icons). */
+interface SolutionLink {
+  slug: string;
+  title: string;
+  sub: string;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  featured?: boolean;
+}
+
+const SOLUTIONS: SolutionLink[] = [
+  { slug: "proptech",      title: "For PropTech",      sub: "Area context on every listing",          icon: ProptechIcon,     featured: true },
+  { slug: "lenders",       title: "For Lenders",       sub: "Scoring your model risk team can defend", icon: LendersIcon },
+  { slug: "insurance",     title: "For Insurers",      sub: "Risk inputs and portfolio drift",         icon: InsuranceIcon },
+  { slug: "cre",           title: "For CRE",           sub: "Rank every catchment in one query",       icon: CreIcon },
+  { slug: "public-sector", title: "For Public Sector", sub: "Metrics that survive FOI",                icon: PublicSectorIcon },
 ];
 
 export function Nav() {
@@ -121,8 +145,13 @@ export function Nav() {
               <ProductsPanel />
             </NavDropdown>
 
-            <Link href="/methodology" className="oga-nav__link">
-              Methodology
+            <NavDropdown label="Solutions" panelKind="solutions">
+              <SolutionsPanel />
+            </NavDropdown>
+
+            <Link href="/playground" className="oga-nav__play">
+              <span className="oga-nav__play-dot" aria-hidden />
+              Playground
             </Link>
 
             <NavDropdown label="Docs" panelKind="docs">
@@ -198,12 +227,34 @@ export function Nav() {
         </div>
 
         <div className="oga-nav__drawer-section">
+          <div className="oga-nav__drawer-section-head">Solutions</div>
+          {SOLUTIONS.map((s) => {
+            const Icon = s.icon;
+            return (
+              <Link
+                key={s.slug}
+                href={`/for/${s.slug}`}
+                onClick={() => setDrawerOpen(false)}
+                className="oga-nav__drawer-link oga-nav__drawer-product"
+              >
+                <span className="oga-nav__drawer-product-icon"><Icon /></span>
+                <span className="oga-nav__drawer-product-text">
+                  <span className="oga-nav__drawer-product-title">{s.title}</span>
+                  <span className="oga-nav__drawer-product-sub">{s.sub}</span>
+                </span>
+                <span aria-hidden className="oga-nav__drawer-link-arrow">→</span>
+              </Link>
+            );
+          })}
+        </div>
+
+        <div className="oga-nav__drawer-section">
           <Link
-            href="/methodology"
+            href="/playground"
             onClick={() => setDrawerOpen(false)}
             className="oga-nav__drawer-link"
           >
-            Methodology
+            Playground
             <span aria-hidden className="oga-nav__drawer-link-arrow">→</span>
           </Link>
           <Link
@@ -278,7 +329,7 @@ export function Nav() {
 /* ---------- Announcement bar ---------- */
 
 /* Thin band above the nav. Whole bar is one link to /docs/mcp. Not
-   sticky — scrolls away as the user moves down the page, leaving the
+   sticky - scrolls away as the user moves down the page, leaving the
    regular nav stuck to top. Visible on every public page that mounts
    <Nav />. Copy points at the live MCP server (@oga-mcp/server@1.0.1
    on npm, e2e-proven via Claude Code, /docs/mcp documents all 11
@@ -313,7 +364,7 @@ function NavDropdown({
   children,
 }: {
   label: string;
-  panelKind: "products" | "docs";
+  panelKind: "products" | "docs" | "solutions";
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -385,7 +436,7 @@ function ProductsPanel() {
       {PRODUCTS.map((p) => {
         const Icon = p.icon;
         if (!p.ready) {
-          /* Coming soon — disabled button, explicit indicator, NEVER a
+          /* Coming soon - disabled button, explicit indicator, NEVER a
              fake link. AR-204 wiring rule. */
           return (
             <button
@@ -418,6 +469,34 @@ function ProductsPanel() {
               <span className="oga-nav__item-sub">{p.sub}</span>
             </span>
           </Link>
+        );
+      })}
+    </>
+  );
+}
+
+/* ---------- Solutions dropdown panel ---------- */
+
+function SolutionsPanel() {
+  return (
+    <>
+      {SOLUTIONS.map((s) => {
+        const Icon = s.icon;
+        return (
+          <Fragment key={s.slug}>
+            <Link
+              href={`/for/${s.slug}`}
+              role="menuitem"
+              className={`oga-nav__item oga-nav__item--solution${s.featured ? " oga-nav__item--featured" : ""}`}
+            >
+              <span className="oga-nav__item-icon"><Icon /></span>
+              <span className="oga-nav__item-text">
+                <span className="oga-nav__item-title">{s.title}</span>
+                <span className="oga-nav__item-sub">{s.sub}</span>
+              </span>
+            </Link>
+            {s.featured && <span className="oga-nav__dropdown-sep" aria-hidden />}
+          </Fragment>
         );
       })}
     </>

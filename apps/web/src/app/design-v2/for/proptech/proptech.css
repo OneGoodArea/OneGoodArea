@@ -1,0 +1,92 @@
+/* /for/proptech - money-shot panel content only. The band layout, capability
+   grid, trust grid and base .oga-pt-bar live in ../_shared/icp-template.css.
+   This file lays out the area-intelligence output inside the split-band panel:
+   a listing header, the score ring, the ranked signals, and a source stamp.
+   No card, no border, it sits directly on the panel. */
+
+.oga-pt-out__listing {
+  padding-bottom: 16px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--oga-border);
+}
+.oga-pt-out__addr { display: block; font-family: var(--oga-font-sans); font-size: 15px; font-weight: 600; color: var(--oga-fg); }
+.oga-pt-out__spec { display: block; margin-top: 3px; font-family: var(--oga-font-sans); font-size: 13px; color: var(--oga-fg-muted); }
+
+.oga-pt-out__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.oga-pt-out__heading { display: flex; flex-direction: column; gap: 4px; }
+.oga-pt-out__label {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--oga-fg);
+}
+.oga-pt-out__by { font-family: var(--oga-font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--oga-fg-subtle); }
+
+/* score ring */
+.oga-pt-ring { position: relative; width: 74px; height: 74px; flex: 0 0 auto; }
+.oga-pt-ring__svg { width: 74px; height: 74px; transform: rotate(-90deg); }
+.oga-pt-ring__track { fill: none; stroke: var(--oga-ink-10); stroke-width: 6; }
+.oga-pt-ring__value {
+  fill: none;
+  stroke: var(--oga-fg);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 139.5 188.5;
+}
+.oga-pt-ring__num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--oga-font-sans);
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--oga-fg);
+}
+
+/* ranked signals (bar width modifiers extend the shared base .oga-pt-bar) */
+.oga-pt-out__rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 15px; }
+.oga-pt-out__row { display: grid; grid-template-columns: 84px 1fr 28px; align-items: center; gap: 14px; }
+.oga-pt-out__row-label { font-family: var(--oga-font-sans); font-size: 13.5px; color: var(--oga-fg-muted); }
+.oga-pt-out__row-pct { font-family: var(--oga-font-mono); font-size: 13px; text-align: right; color: var(--oga-fg); }
+.oga-pt-bar--w81 span { width: 81%; }
+.oga-pt-bar--w88 span { width: 88%; }
+.oga-pt-bar--w66 span { width: 66%; }
+.oga-pt-bar--w79 span { width: 79%; }
+
+/* source stamp */
+.oga-pt-out__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 22px;
+  padding-top: 15px;
+  border-top: 1px solid var(--oga-border);
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--oga-fg-subtle);
+}
+
+/* proptech output on the dark band: light-on-dark text, dividers and bars */
+.oga-pt-band[data-oga-surface="dark"] .oga-pt-out__listing,
+.oga-pt-band[data-oga-surface="dark"] .oga-pt-out__foot { border-color: rgba(250, 248, 244, 0.14); }
+.oga-pt-band[data-oga-surface="dark"] .oga-pt-out__addr,
+.oga-pt-band[data-oga-surface="dark"] .oga-pt-out__label,
+.oga-pt-band[data-oga-surface="dark"] .oga-pt-out__row-pct,
+.oga-pt-band[data-oga-surface="dark"] .oga-pt-ring__num { color: var(--oga-white); }
+.oga-pt-band[data-oga-surface="dark"] .oga-pt-out__spec,
+.oga-pt-band[data-oga-surface="dark"] .oga-pt-out__row-label { color: rgba(250, 248, 244, 0.72); }
+.oga-pt-band[data-oga-surface="dark"] .oga-pt-out__by,
+.oga-pt-band[data-oga-surface="dark"] .oga-pt-out__foot { color: rgba(250, 248, 244, 0.5); }
+.oga-pt-band[data-oga-surface="dark"] .oga-pt-ring__track { stroke: rgba(250, 248, 244, 0.16); }

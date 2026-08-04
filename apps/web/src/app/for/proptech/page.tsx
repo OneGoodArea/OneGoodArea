@@ -5,7 +5,7 @@ import ForProptechClient from "@/app/design-v2/for/proptech/client";
 export const metadata: Metadata = {
   title: "OneGoodArea for PropTech: UK area data API for listing pages and property products",
   description:
-    "Replace a dozen UK area-data integrations with one API key. LSOA-grain signals across seven categories with country-scoped percentiles, per-signal confidence, and source attribution. Built for portals, valuation tools, agent CRMs, and search products.",
+    "Replace a dozen UK area-data integrations with one API key. LSOA-grain signals across multiple categories with country-scoped percentiles, per-signal confidence, and source attribution. Built for portals, valuation tools, agent CRMs, and search products.",
   keywords: [
     "PropTech API",
     "UK area data",

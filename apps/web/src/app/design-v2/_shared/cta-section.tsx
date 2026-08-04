@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { DEMO_URL } from "./book-demo";
 import { Mark } from "./mark";
 
 /* CtaSection — the close (06).
@@ -40,17 +39,17 @@ export function CtaSection() {
         </div>
 
         <h2 className="oga-cta__title">
-          Build on the data layer underneath UK property workflows.
+          Understand any UK area, in one API call.
         </h2>
 
         <p className="oga-cta__sub">
-          API plus a dashboard control plane. Deterministic, version-pinned,
-          source-attributed on every response.
+          An API and a dashboard. Every number is backed by a source and stays the
+          same when you check it again, so you can stand behind what you ship.
         </p>
 
         <div className="oga-cta__buttons">
-          <Link href={DEMO_URL} className="oga-btn oga-btn-lg oga-btn-primary">
-            Book a demo
+          <Link href="/playground" className="oga-btn oga-btn-lg oga-btn-primary">
+            Try in the playground
             <span aria-hidden>→</span>
           </Link>
           <Link href="/methodology" className="oga-btn oga-btn-lg oga-btn-secondary">
@@ -65,7 +64,7 @@ export function CtaSection() {
 
         <div className="oga-cta__foot" aria-hidden>
           <span className="oga-status-dot" />
-          Engine v1.0.0 · 1.8M postcodes · 43,916 LSOAs · monthly snapshots
+          Engine v1.0.0 · 1.8M postcodes · 43,916 neighbourhoods · monthly snapshots
         </div>
       </div>
     </section>

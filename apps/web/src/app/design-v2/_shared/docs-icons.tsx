@@ -1,12 +1,12 @@
-/* Docs icons — 4 bespoke dot-and-hairline diagrams in the Plotted
+/* Docs icons - 4 bespoke dot-and-hairline diagrams in the Plotted
    vocabulary, same approach as product-icons.tsx. Each icon is a
    miniature illustration of the doc's value prop:
 
-   - DocsHomeIcon: stacked index — 4 leading dots paired with
+   - DocsHomeIcon: stacked index - 4 leading dots paired with
      horizontal hairlines of varying widths. Reads "table of
      contents / index of docs." Added AR-355.
    - ApiReferenceIcon: paired braces ({ }) of dots with content dots
-     between — the SPEC. Reads "structured contract."
+     between - the SPEC. Reads "structured contract."
    - McpServerIcon: client cluster on the left, OGA endpoint on the
      right (enlarged + halo ring), thin protocol bridge between with
      a midpoint dot. Reads "client connects via MCP to our server."
@@ -15,7 +15,7 @@
      "release log over time."
 
    24x24 viewBox; nav docs dropdown sizes them at 18-20px.
-   currentColor everywhere — inverts on dark surfaces.
+   currentColor everywhere - inverts on dark surfaces.
    AR-204 PR 2, extended in AR-355. */
 
 import type { SVGProps } from "react";
@@ -30,7 +30,7 @@ const baseProps: IconProps = {
   "aria-hidden": true,
 };
 
-/* ---------- Docs home — stacked index ----------
+/* ---------- Docs home - stacked index ----------
    Four entry rows. Each row is a leading dot + a horizontal
    hairline of varying width. Reads as a table of contents.
    No vertical timeline (that's ChangelogIcon's vocabulary). */
@@ -53,7 +53,7 @@ export function DocsHomeIcon(props: IconProps) {
   );
 }
 
-/* ---------- API reference — { content } ----------
+/* ---------- API reference - { content } ----------
    Left + right braces composed of dots that curve in toward the
    middle. Three content dots between them, the center one
    highlighted (the "spec" focal point). */
@@ -82,7 +82,7 @@ export function ApiReferenceIcon(props: IconProps) {
   );
 }
 
-/* ---------- MCP server — client → protocol → endpoint ----------
+/* ---------- MCP server - client → protocol → endpoint ----------
    Left: cluster of 5 client dots (the AI tools using MCP).
    Middle: hairline bridge w/ a small midpoint dot (the protocol).
    Right: enlarged endpoint dot with a halo ring (our MCP server). */
@@ -100,7 +100,7 @@ export function McpServerIcon(props: IconProps) {
         <circle cx="6" cy="15" r="0.95" />
         {/* Protocol midpoint dot */}
         <circle cx="13.5" cy="12" r="1.0" />
-        {/* OGA endpoint (right) — enlarged + halo ring */}
+        {/* OGA endpoint (right) - enlarged + halo ring */}
         <circle cx="20" cy="12" r="2.0" />
         <circle cx="20" cy="12" r="3.2" fill="none" stroke="currentColor" strokeOpacity="0.42" strokeWidth="0.55" />
       </g>
@@ -108,7 +108,7 @@ export function McpServerIcon(props: IconProps) {
   );
 }
 
-/* ---------- Changelog — versioned timeline ----------
+/* ---------- Changelog - versioned timeline ----------
    Vertical hairline timeline w/ three entry dots (latest enlarged).
    Each entry has 2 horizontal hairlines to the right of varying
    widths representing the release description. */
@@ -140,9 +140,41 @@ export function ChangelogIcon(props: IconProps) {
   );
 }
 
+/* ---------- Methodology - a defined derivation ----------
+   Inputs drop onto one defined rule (the method), producing a single
+   result below. Reads "documented method: inputs, a defined formula,
+   one output." Added for the Docs dropdown. */
+export function MethodologyIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <g stroke="currentColor" strokeLinecap="round">
+        {/* Inputs drop to the rule */}
+        <g strokeWidth="0.8" strokeOpacity="0.5">
+          <line x1="5"  y1="6" x2="5"  y2="11" />
+          <line x1="12" y1="5" x2="12" y2="11" />
+          <line x1="19" y1="6" x2="19" y2="11" />
+        </g>
+        {/* The defined rule (the method) */}
+        <line x1="3" y1="12" x2="21" y2="12" strokeWidth="1.1" />
+        {/* Rule to result */}
+        <line x1="12" y1="13" x2="12" y2="16" strokeWidth="0.8" strokeOpacity="0.5" />
+      </g>
+      <g fill="currentColor">
+        <circle cx="5"  cy="5" r="1.0" />
+        <circle cx="12" cy="4" r="1.0" />
+        <circle cx="19" cy="5" r="1.0" />
+        {/* The defined result */}
+        <circle cx="12" cy="18.5" r="1.7" />
+        <circle cx="12" cy="18.5" r="3.0" fill="none" stroke="currentColor" strokeOpacity="0.4" strokeWidth="0.6" />
+      </g>
+    </svg>
+  );
+}
+
 export const DOCS_ICONS = {
   "docs-home": DocsHomeIcon,
   "api-reference": ApiReferenceIcon,
   "mcp": McpServerIcon,
   "changelog": ChangelogIcon,
+  "methodology": MethodologyIcon,
 } as const;

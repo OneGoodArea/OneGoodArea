@@ -1,0 +1,193 @@
+/* /for/public-sector - bespoke bits only. Shared template classes (.oga-pt-*)
+   come from proptech.css; this file adds the FOI evidence-record money shot and
+   the four PS-specific illustrations (cannot-tell honesty, per-nation scoping,
+   replayable analyst query, no personal data). */
+
+/* Money shot: an FOI-ready evidence record. One metric with its full lineage,
+   country-scoped, versioned, citable. Reuses the shared showcase stage + ghost
+   stack. */
+.oga-ps-record {
+  position: relative;
+  z-index: 1;
+  width: min(500px, 100%);
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  border-radius: 18px;
+  box-shadow: 0 50px 100px -50px rgba(26, 28, 31, 0.5), 0 2px 6px -2px rgba(26, 28, 31, 0.08);
+  padding: 20px;
+}
+.oga-ps-record__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--oga-border);
+}
+.oga-ps-record__label {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--oga-fg-subtle);
+}
+.oga-ps-record__ver { font-family: var(--oga-font-mono); font-size: 11px; color: var(--oga-fg-muted); }
+.oga-ps-record__meta { padding: 14px 0 4px; display: flex; flex-direction: column; gap: 8px; }
+.oga-ps-record__row,
+.oga-ps-record__prow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+}
+.oga-ps-record__row span:first-child,
+.oga-ps-record__prow span:first-child { color: var(--oga-fg-subtle); }
+.oga-ps-record__row span:last-child,
+.oga-ps-record__prow span:last-child { color: var(--oga-fg); text-align: right; }
+.oga-ps-record__value { padding: 12px 0 16px; }
+.oga-ps-record__value-num {
+  font-family: var(--oga-font-sans);
+  font-size: 40px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--oga-fg);
+}
+.oga-ps-record__value-pct {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-fg-subtle);
+}
+.oga-ps-record__prov {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 0;
+  border-top: 1px solid var(--oga-border);
+}
+.oga-ps-record__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 13px;
+  border-top: 1px solid var(--oga-border);
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--oga-fg-subtle);
+}
+
+/* capability 1: it says when it cannot tell */
+.oga-ps-tell { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.oga-ps-tell__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--oga-border);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+}
+.oga-ps-tell__k { color: var(--oga-fg-muted); }
+.oga-ps-tell__v { color: var(--oga-fg); }
+.oga-ps-tell__row--none { border-style: dashed; opacity: 0.75; }
+.oga-ps-tell__none { color: var(--oga-fg-subtle); font-style: italic; }
+
+/* capability 2: per-nation scoping (never merged) */
+.oga-ps-nations { width: 100%; display: flex; flex-direction: column; gap: 7px; }
+.oga-ps-nations__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--oga-border);
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  color: var(--oga-fg);
+}
+.oga-ps-nations__idx {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: var(--oga-fg-muted);
+  background: var(--oga-ink-06);
+  padding: 3px 8px;
+  border-radius: 5px;
+}
+.oga-ps-nations__never {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+  padding: 4px 2px;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-fg-subtle);
+}
+.oga-ps-nations__x {
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--oga-fg-muted);
+}
+
+/* capability 3: replayable analyst query (NL -> typed plan) */
+.oga-ps-query { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.oga-ps-query__nl {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--oga-border);
+  background: var(--oga-white);
+  box-shadow: 0 8px 20px -14px rgba(26, 28, 31, 0.4);
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  color: var(--oga-fg);
+}
+.oga-ps-query__arrow { font-size: 13px; color: var(--oga-fg-subtle); line-height: 1; }
+.oga-ps-query__plan {
+  width: 100%;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: var(--oga-canvas);
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--oga-fg-muted);
+  overflow-x: auto;
+  white-space: pre;
+}
+.oga-ps-query__note {
+  align-self: flex-start;
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: var(--oga-fg-subtle);
+}
+
+/* capability 4: no personal data (a plain spec) */
+.oga-ps-grain { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.oga-ps-grain__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--oga-border);
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+}
+.oga-ps-grain__row:last-child { border-bottom: none; padding-bottom: 0; }
+.oga-ps-grain__k { color: var(--oga-fg-subtle); }
+.oga-ps-grain__v { color: var(--oga-fg); text-align: right; }
+
+/* Money shot on the dark split band: strip the card frame. The evidence record
+   is all text + hairline dividers, which adapt via the dark-surface tokens. */
+.oga-pt-band .oga-ps-record { background: transparent; border: none; box-shadow: none; border-radius: 0; padding: 0; width: 100%; }

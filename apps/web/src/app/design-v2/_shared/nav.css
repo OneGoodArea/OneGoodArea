@@ -1,5 +1,5 @@
 /* ============================================================
-   OneGoodArea — Marketing nav (AR-204 PR 1)
+   OneGoodArea - Marketing nav (AR-204 PR 1)
    Co-located CSS for the design-v2/_shared/nav.tsx component.
    Brand v3 Plotted vocabulary; no inline styles in the TSX.
    ============================================================ */
@@ -265,6 +265,23 @@
   min-width: 380px;
 }
 
+/* Solutions dropdown: text-only ICP rows (title + sub), no icons. */
+.oga-nav__dropdown--solutions {
+  min-width: 300px;
+}
+.oga-nav__item--solution {
+  align-items: flex-start;
+}
+.oga-nav__item--featured .oga-nav__item-title {
+  font-weight: 600;
+}
+.oga-nav__dropdown-sep {
+  display: block;
+  height: 1px;
+  background: var(--oga-border);
+  margin: 6px 8px;
+}
+
 /* ---------- Dropdown items ---------- */
 
 .oga-nav__item {
@@ -294,7 +311,7 @@
   background: rgba(250, 248, 244, 0.08);
 }
 
-/* Disabled = "Coming soon" — clearly indicated, not silently broken */
+/* Disabled = "Coming soon" - clearly indicated, not silently broken */
 .oga-nav__item[aria-disabled="true"] {
   cursor: not-allowed;
   opacity: 0.62;
@@ -305,7 +322,7 @@
   align-items: flex-start;
 }
 
-/* Docs row — single-line label next to a small bespoke icon.
+/* Docs row - single-line label next to a small bespoke icon.
    Optional NEW pill on the right (e.g. MCP server). */
 .oga-nav__item--docs {
   align-items: center;
@@ -364,7 +381,7 @@
   /* Matches the announcement bar's NEW badge (.oga-announce__badge):
      solid ink fill on white text, square corners, tighter letter-spacing.
      Inverted relative to the bar because the dropdown sits on a light
-     surface — visual treatment matches, colors flip with context. */
+     surface - visual treatment matches, colors flip with context. */
   height: 18px;
   padding: 0 6px;
   display: inline-flex;
@@ -380,7 +397,7 @@
 }
 
 /* ============================================================
-   Direct nav links (Methodology, Pricing) — same hover treatment
+   Direct nav links (Methodology, Pricing) - same hover treatment
    as triggers, no caret.
    ============================================================ */
 
@@ -409,6 +426,60 @@
 [data-oga-surface="dark"] .oga-nav__link:hover,
 [data-oga-surface="dark"] .oga-nav__link[data-active="true"] {
   background: rgba(250, 248, 244, 0.08);
+}
+
+/* Playground - highlighted as a bordered pill with a live "ping" dot. It is
+   the self-serve entry point, so it stands out from the plain text links but
+   stays lighter than the Book-a-demo button. */
+.oga-nav__play {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px 5px 11px;
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-fg);
+  text-decoration: none;
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-pill);
+  line-height: 1;
+  transition:
+    background var(--oga-dur-fast) var(--oga-ease),
+    border-color var(--oga-dur-fast) var(--oga-ease);
+}
+.oga-nav__play:hover {
+  background: rgba(26, 28, 31, 0.06);
+  border-color: var(--oga-ink-30);
+}
+[data-oga-surface="dark"] .oga-nav__play:hover {
+  background: rgba(250, 248, 244, 0.08);
+  border-color: rgba(250, 248, 244, 0.34);
+}
+.oga-nav__play-dot {
+  position: relative;
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+}
+.oga-nav__play-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 currentColor;
+  animation: oga-nav-play-pulse 2.4s var(--oga-ease) infinite;
+}
+@keyframes oga-nav-play-pulse {
+  0%   { box-shadow: 0 0 0 0 currentColor; opacity: 0.5; }
+  70%  { box-shadow: 0 0 0 5px currentColor; opacity: 0; }
+  100% { box-shadow: 0 0 0 0 currentColor; opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .oga-nav__play-dot::after { animation: none; }
 }
 
 /* ============================================================
@@ -564,7 +635,7 @@
 }
 
 /* ============================================================
-   Responsive — hamburger appears at <=720px, desktop nav hides
+   Responsive - hamburger appears at <=720px, desktop nav hides
    ============================================================ */
 
 @media (min-width: 721px) {
@@ -587,7 +658,7 @@
     display: flex !important;
   }
   /* Backdrop visibility is driven by [data-open="true"] attribute,
-     not the breakpoint — see base rule above. The drawer itself
+     not the breakpoint - see base rule above. The drawer itself
      stays display:flex on mobile and slides off-screen via transform
      when closed, which keeps the slide animation smooth. */
   .oga-nav__row {

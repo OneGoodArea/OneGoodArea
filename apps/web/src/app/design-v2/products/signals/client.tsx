@@ -1,1011 +1,595 @@
 "use client";
 
-import { useState, type ReactElement } from "react";
 import Link from "next/link";
 import { Nav } from "../../_shared/nav";
 import { Footer } from "../../_shared/footer";
+import { BookDemo } from "../../_shared/book-demo";
 import { SignalsIcon } from "../../_shared/product-icons";
-import { ProductHero } from "../../_shared/product-hero";
-import { ProductEndpointPanel } from "../../_shared/product-endpoint-panel";
-import { ProductFinalCta } from "../../_shared/product-final-cta";
-import { ProductIcpGrid } from "../../_shared/product-icp-grid";
-import { DEMO_URL } from "../../_shared/book-demo";
-import {
-  METHODOLOGY_VERSION,
-  getCurrentMethodology,
-} from "@/lib/methodology-versions";
+import { CATEGORY_GLYPH } from "../../_shared/dashboard/category-glyphs";
+import type { SignalCategory } from "@onegoodarea/contracts";
 import "./signals.css";
 
-/* /products/signals — AR-204 product page #1 — REWRITE v2.
+/* /products/signals - BESPOKE, built section by section to Pedro's references:
+   a light hero with floating signal cards (hero1.png), a bento of the four
+   guarantees (section2.png), a two-up capability section with a proof band
+   (section3.png), the coverage grid, a workflows section and the anatomy of a
+   signal. */
 
-   Rewrite after Pedro's "too templated" feedback. New shape:
-     Hero               cream — centred, big icon, no side-card
-     01 Live specimen DARK  — prebaked AreaProfile visualised as
-                                a real product surface (geo rail +
-                                signal rows w/ percentile bars +
-                                meta footer + JSON toggle)
-     02 Anatomy       cream — single bespoke SVG diagram, one
-                                Signal exploded w/ hairlines
-     03 Categories    DARK  — 7-category constellation (SVG) +
-                                annotated list below
-     04 Endpoints     cream — single tabbed specimen panel for
-                                3 endpoints (not 3 stacked cards)
-     05 Built for     cream — 5 ICPs in EQUAL treatment, each
-                                with a bespoke dot-and-hairline
-                                micro-illustration
-     CTA                DARK
-
-   Source of truth: docs/DESIGN/AR-204-product-pages-spec-pack.md section 1.
-   No fake links; no aiq_; no em dashes; zero inline styles. */
-
-const current = getCurrentMethodology();
-
-/* ============================================================
-   Prebaked specimens — realistic AreaProfile-shaped data per
-   curated postcode. Values are illustrative (the page is up-front
-   that this is a "sample response"); shape matches contract.
-   ============================================================ */
-
-type PercentileSignal = {
-  key: string;
-  label: string;
-  value: string;
-  unit: string;
-  percentile: number;
-  direction: "higher_is_better" | "lower_is_better" | "neutral";
-  confidence: "high" | "med" | "low";
-  source: string;
-};
-
-type Specimen = {
-  postcode: string;
-  geo: { lsoa: string; admin_district: string; region: string; country: string };
-  area_type: "urban" | "suburban" | "rural";
-  signals: PercentileSignal[];
-  fetch_mode: "hybrid" | "live" | "store";
-  observed_period: string;
-};
-
-const SPECIMENS: Specimen[] = [
+/* ---------- Hero (light, centred, floating signal cards) ----------
+   Reference: Gem's product hero (hero1.png) - eyebrow pill, big centred
+   headline, centred lead, two CTAs, then a band of floating "product shot"
+   cards. Ours are real area readouts drawn from the demo data, using the
+   same category glyphs as the rest of the page. The hero paints its wash
+   behind the sticky nav (margin-top: -52px) so the nav blends at the top
+   and only takes its glass on scroll. */
+const HERO_CARDS: {
+  tag: string;
+  pc: string;
+  place: string;
+  rows: { cat: SignalCategory; label: string; value: string }[];
+}[] = [
   {
-    postcode: "M1 1AE",
-    geo: {
-      lsoa: "E01005207",
-      admin_district: "Manchester",
-      region: "North West",
-      country: "England",
-    },
-    area_type: "urban",
-    signals: [
-      { key: "deprivation.imd_decile", label: "IMD decile", value: "1", unit: "decile", percentile: 5.4, direction: "higher_is_better", confidence: "high", source: "IMD 2025" },
-      { key: "crime.total_12m", label: "Recorded crimes (12mo)", value: "3,712", unit: "count", percentile: 92.1, direction: "lower_is_better", confidence: "high", source: "police.uk" },
-      { key: "property.median_price", label: "Median sale price", value: "£182,500", unit: "GBP", percentile: 18.2, direction: "neutral", confidence: "med", source: "HM Land Registry" },
-      { key: "property.price_change_pct_yoy", label: "Price change YoY", value: "+4.1%", unit: "pct", percentile: 71.5, direction: "higher_is_better", confidence: "high", source: "derived" },
-      { key: "transport.station_count", label: "Stations within 1km", value: "5", unit: "count", percentile: 96.8, direction: "higher_is_better", confidence: "high", source: "OSM" },
+    tag: "Urban · England",
+    pc: "M1 1AE",
+    place: "Manchester",
+    rows: [
+      { cat: "crime", label: "Recorded crime", value: "92nd pct" },
+      { cat: "deprivation", label: "IMD decile", value: "1 of 10" },
     ],
-    fetch_mode: "hybrid",
-    observed_period: "Apr 2025 to Mar 2026",
   },
   {
-    postcode: "EC1A 1BB",
-    geo: {
-      lsoa: "E01000916",
-      admin_district: "City of London",
-      region: "London",
-      country: "England",
-    },
-    area_type: "urban",
-    signals: [
-      { key: "deprivation.imd_decile", label: "IMD decile", value: "8", unit: "decile", percentile: 78.4, direction: "higher_is_better", confidence: "high", source: "IMD 2025" },
-      { key: "crime.total_12m", label: "Recorded crimes (12mo)", value: "8,940", unit: "count", percentile: 98.6, direction: "lower_is_better", confidence: "high", source: "police.uk" },
-      { key: "property.median_price", label: "Median sale price", value: "£885,000", unit: "GBP", percentile: 96.4, direction: "neutral", confidence: "high", source: "HM Land Registry" },
-      { key: "property.price_change_pct_yoy", label: "Price change YoY", value: "-1.8%", unit: "pct", percentile: 22.1, direction: "higher_is_better", confidence: "med", source: "derived" },
-      { key: "transport.station_count", label: "Stations within 1km", value: "7", unit: "count", percentile: 99.2, direction: "higher_is_better", confidence: "high", source: "OSM" },
+    tag: "Urban · Scotland",
+    pc: "EH1 1YZ",
+    place: "Edinburgh",
+    rows: [
+      { cat: "deprivation", label: "SIMD decile", value: "6 of 10" },
+      { cat: "transport", label: "Stations < 1 km", value: "2" },
     ],
-    fetch_mode: "hybrid",
-    observed_period: "Apr 2025 to Mar 2026",
   },
   {
-    postcode: "B1 1AA",
-    geo: {
-      lsoa: "E01033620",
-      admin_district: "Birmingham",
-      region: "West Midlands",
-      country: "England",
-    },
-    area_type: "urban",
-    signals: [
-      { key: "deprivation.imd_decile", label: "IMD decile", value: "2", unit: "decile", percentile: 12.0, direction: "higher_is_better", confidence: "high", source: "IMD 2025" },
-      { key: "crime.total_12m", label: "Recorded crimes (12mo)", value: "4,108", unit: "count", percentile: 89.3, direction: "lower_is_better", confidence: "high", source: "police.uk" },
-      { key: "property.median_price", label: "Median sale price", value: "£165,000", unit: "GBP", percentile: 14.6, direction: "neutral", confidence: "high", source: "HM Land Registry" },
-      { key: "property.price_change_pct_yoy", label: "Price change YoY", value: "+6.8%", unit: "pct", percentile: 84.2, direction: "higher_is_better", confidence: "high", source: "derived" },
-      { key: "transport.station_count", label: "Stations within 1km", value: "3", unit: "count", percentile: 88.7, direction: "higher_is_better", confidence: "high", source: "OSM" },
+    tag: "Urban · Wales",
+    pc: "CF10 1EP",
+    place: "Cardiff",
+    rows: [
+      { cat: "property", label: "Median sale price", value: "£212k" },
+      { cat: "deprivation", label: "WIMD decile", value: "4 of 10" },
     ],
-    fetch_mode: "hybrid",
-    observed_period: "Apr 2025 to Mar 2026",
-  },
-  {
-    postcode: "EH1 1YZ",
-    geo: {
-      lsoa: "S01008677",
-      admin_district: "Edinburgh",
-      region: "Scotland",
-      country: "Scotland",
-    },
-    area_type: "urban",
-    signals: [
-      { key: "deprivation.simd_decile", label: "SIMD decile", value: "6", unit: "decile", percentile: 58.1, direction: "higher_is_better", confidence: "high", source: "SIMD 2020" },
-      { key: "crime.total_12m", label: "Recorded crimes (12mo)", value: "2,205", unit: "count", percentile: 81.3, direction: "lower_is_better", confidence: "high", source: "police.uk" },
-      { key: "property.median_price", label: "Median sale price", value: "Falls back to live", unit: "", percentile: 0, direction: "neutral", confidence: "low", source: "live (no store row)" },
-      { key: "property.price_change_pct_yoy", label: "Price change YoY", value: "Falls back to live", unit: "", percentile: 0, direction: "higher_is_better", confidence: "low", source: "live (no store row)" },
-      { key: "transport.station_count", label: "Stations within 1km", value: "2", unit: "count", percentile: 84.5, direction: "higher_is_better", confidence: "high", source: "OSM" },
-    ],
-    fetch_mode: "hybrid",
-    observed_period: "Apr 2025 to Mar 2026",
-  },
-  {
-    postcode: "CF10 1EP",
-    geo: {
-      lsoa: "W01001758",
-      admin_district: "Cardiff",
-      region: "Wales",
-      country: "Wales",
-    },
-    area_type: "urban",
-    signals: [
-      { key: "deprivation.wimd_decile", label: "WIMD decile", value: "4", unit: "decile", percentile: 38.7, direction: "higher_is_better", confidence: "high", source: "WIMD 2019" },
-      { key: "crime.total_12m", label: "Recorded crimes (12mo)", value: "2,856", unit: "count", percentile: 86.4, direction: "lower_is_better", confidence: "high", source: "police.uk" },
-      { key: "property.median_price", label: "Median sale price", value: "£212,000", unit: "GBP", percentile: 32.5, direction: "neutral", confidence: "med", source: "HM Land Registry" },
-      { key: "property.price_change_pct_yoy", label: "Price change YoY", value: "+2.4%", unit: "pct", percentile: 56.8, direction: "higher_is_better", confidence: "med", source: "derived" },
-      { key: "transport.station_count", label: "Stations within 1km", value: "2", unit: "count", percentile: 84.5, direction: "higher_is_better", confidence: "high", source: "OSM" },
-    ],
-    fetch_mode: "hybrid",
-    observed_period: "Apr 2025 to Mar 2026",
   },
 ];
+
+function SignalsHero() {
+  return (
+    <section className="oga-sig-hero">
+      <div className="oga-sig-hero__wash" aria-hidden />
+      <div className="oga-sig-hero__dots" aria-hidden />
+
+      <div className="oga-sig-hero__inner">
+        <span className="oga-sig-hero__eyebrow">
+          <SignalsIcon width={15} height={15} aria-hidden />
+          Signals
+        </span>
+        <h1 className="oga-sig-hero__title">UK area data your product can rely on.</h1>
+        <p className="oga-sig-hero__lead">
+          Bring crime, deprivation, property, schools, amenities, transport and
+          environmental data into your product through one API. Every signal is
+          returned in a consistent format, placed in national context,
+          confidence-rated and linked to its source.
+        </p>
+        <div className="oga-sig-hero__ctas">
+          <Link href="/playground" className="oga-btn oga-btn-primary">
+            Explore a live response
+            <span aria-hidden>→</span>
+          </Link>
+          <Link href="/docs" className="oga-btn oga-btn-secondary">
+            View the API docs
+          </Link>
+        </div>
+      </div>
+
+      <div className="oga-sig-hero__stage" aria-hidden>
+        <div className="oga-sig-hero__cards">
+          {HERO_CARDS.map((c) => (
+            <article key={c.pc} className="oga-sig-hcard">
+              <div className="oga-sig-hcard__top">
+                <span className="oga-sig-hcard__tag">{c.tag}</span>
+                <span className="oga-sig-hcard__conf">
+                  <span className="oga-sig-hcard__conf-dot" />
+                  High confidence
+                </span>
+              </div>
+              <div className="oga-sig-hcard__id">
+                <span className="oga-sig-hcard__pc">{c.pc}</span>
+                <span className="oga-sig-hcard__place">{c.place}</span>
+              </div>
+              <ul className="oga-sig-hcard__rows">
+                {c.rows.map((r) => (
+                  <li key={r.label} className="oga-sig-hcard__row">
+                    <span className="oga-sig-hcard__glyph">{CATEGORY_GLYPH[r.cat]()}</span>
+                    <span className="oga-sig-hcard__label">{r.label}</span>
+                    <span className="oga-sig-hcard__val">{r.value}</span>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function ProductSignalsClient() {
   return (
     <div className="oga-root oga-sig">
       <Nav />
-      <ProductHero
-        Icon={SignalsIcon}
-        h1="Signals: the typed UK area-data layer."
-        lead="One typed primitive over seven categories of public-record data, resolved to LSOA grain across England, Wales and Scotland. Value, normalised position, national-within-country percentile, per-signal confidence and source attribution on every response. Provenance is on the wire, not in a follow-up email."
-        primaryHref={DEMO_URL}
-        primaryLabel="Book a demo"
-        secondaryHref="/methodology"
-        secondaryLabel="Read the methodology"
-      />
-      <SectionSpecimen />
-      <SectionAnatomy />
-      <SectionCategories />
-      <ProductEndpointPanel
-        titleId="sig-ep-title"
-        title="Three endpoints. One contract. No SDK required."
-        sub="Plain JSON over HTTPS, Bearer-token auth with the oga_ prefix, all paths under /v1/. Single-signal ranking lives here; multi-signal compound filtering lives one product up under Intelligence."
-        endpoints={EPS}
-      />
-      <ProductIcpGrid
-        titleId="sig-icps-title"
-        title="Same primitive. Five different workflows."
-        sub="Each buyer reaches for Signals from a different angle. The data layer underneath is the same."
-        whyLabel="Why Signals"
-        icps={ICPS}
-      />
-      <ProductFinalCta
-        titleId="sig-cta-title"
-        title="Build on the typed UK area-data layer."
-        lead="One endpoint resolves any UK postcode to the seven-category Signal catalog at LSOA grain. Provenance on the wire, methodology version stamped on every response, percentiles country-scoped by design."
-        primaryHref={DEMO_URL}
-        primaryLabel="Book a demo"
-        secondaryHref="/methodology"
-        secondaryLabel="Read the methodology"
-      />
+      <SignalsHero />
+      <Properties />
+      <Foundation />
+      <Workflows />
+      <Faq />
+      <FinalCta />
       <Footer />
     </div>
   );
 }
 
-/* ============================================================
-   01 — Live specimen (DARK) — prebaked AreaProfile per postcode
-   ============================================================ */
-
-function SectionSpecimen() {
-  const [idx, setIdx] = useState(0);
-  const [view, setView] = useState<"rendered" | "json">("rendered");
-  const s = SPECIMENS[idx];
-
+/* ---------- Section 2: the four guarantees (reference section2.png) ----------
+   Centred header, four flat cards, each a property that holds for every
+   signal, each carrying a small bespoke mockup that shows that property in
+   our own product vocabulary. Closed by one centred CTA. */
+function Properties() {
   return (
-    <section
-      className="oga-section-dark oga-sig-spec"
-      data-oga-surface="dark"
-      aria-labelledby="sig-spec-title"
-    >
+    <section className="oga-sig-feat" data-oga-surface="dark" aria-labelledby="sig-feat-title">
       <div className="oga-sig__wrap">
-        <header className="oga-sig-spec__head">
-          <div className="oga-sig-spec__eyebrow">
-            <span className="oga-sig-spec__eyebrow-mark" aria-hidden />
-            <span>Sample response</span>
-            <span className="oga-sig-spec__eyebrow-mark" aria-hidden />
-          </div>
-          <h2 id="sig-spec-title" className="oga-sig-spec__title">
-            See it before you write a line of code.
-          </h2>
-          <p className="oga-sig-spec__sub">
-            Pick a postcode. We render the AreaProfile the same way the API
-            returns it. Same shape, same fields, same provenance footer.
+        <header className="oga-sig-feat__head">
+          <h2 id="sig-feat-title" className="oga-sig-feat__h2">Every signal, ready to build on.</h2>
+          <p className="oga-sig-feat__sub">
+            One consistent shape, national context, confidence and a source on
+            every value. The same four guarantees behind every number we return.
           </p>
         </header>
 
-        <div className="oga-sig-spec__chips" role="tablist" aria-label="Sample postcode">
-          {SPECIMENS.map((sp, i) => (
-            <button
-              key={sp.postcode}
-              type="button"
-              role="tab"
-              aria-selected={i === idx}
-              onClick={() => setIdx(i)}
-              className={`oga-sig-spec__chip${i === idx ? " oga-sig-spec__chip--active" : ""}`}
-            >
-              {sp.postcode}
-            </button>
-          ))}
-        </div>
-
-        <div className="oga-sig-spec__card">
-          <span className="oga-sig-spec__tick oga-sig-spec__tick--tl" aria-hidden />
-          <span className="oga-sig-spec__tick oga-sig-spec__tick--tr" aria-hidden />
-          <span className="oga-sig-spec__tick oga-sig-spec__tick--bl" aria-hidden />
-          <span className="oga-sig-spec__tick oga-sig-spec__tick--br" aria-hidden />
-
-          <div className="oga-sig-spec__resp">
-            <span className="oga-sig-spec__resp-method">
-              <span className="oga-sig-spec__resp-method-verb oga-verb oga-verb--get">GET</span>
-              /v1/area?postcode={encodeURIComponent(s.postcode)}
-            </span>
-            <button
-              type="button"
-              className="oga-sig-spec__resp-toggle"
-              onClick={() => setView(view === "rendered" ? "json" : "rendered")}
-              aria-pressed={view === "json"}
-            >
-              {view === "rendered" ? "View JSON" : "View rendered"}
-            </button>
-          </div>
-
-          {view === "rendered" ? <RenderedSpecimen s={s} /> : <JsonSpecimen s={s} />}
-        </div>
-
-        <div className="oga-sig-spec__legend">
-          <p className="oga-sig-spec__legend-title">Reading this view</p>
-          <dl className="oga-sig-spec__legend-rows">
-            <dt><code>fetch_mode</code></dt>
-            <dd>
-              How each signal reached the wire. <strong>store</strong> means
-              served from our persisted Postgres layer with a percentile and a
-              normalised position. <strong>live</strong> means fetched from the
-              upstream source on this request. <strong>hybrid</strong> means
-              both happened in one response, which is the common case.
-            </dd>
-            <dt>Falls back to live</dt>
-            <dd>
-              Rows marked this way have no persisted row for this LSOA, so the
-              service falls back to a live fetch from the upstream source. The
-              Scotland postcode above is the classic case: HM Land Registry
-              covers England and Wales only, so Scotland LSOAs have no
-              store-backed property values today.
-            </dd>
-          </dl>
-        </div>
-
-        <p className="oga-sig-spec__note">
-          Sample shape and realistic values. Signal counts and percentiles vary
-          per release of the underlying sources.
-        </p>
-      </div>
-    </section>
-  );
-}
-
-function RenderedSpecimen({ s }: { s: Specimen }) {
-  return (
-    <>
-      <div className="oga-sig-spec__geo">
-        <span className="oga-sig-spec__geo-step">
-          <span className="oga-sig-spec__geo-step-k">Postcode</span>
-          <span>{s.postcode}</span>
-        </span>
-        <span className="oga-sig-spec__geo-arrow" aria-hidden>→</span>
-        <span className="oga-sig-spec__geo-step">
-          <span className="oga-sig-spec__geo-step-k">LSOA</span>
-          <span>{s.geo.lsoa}</span>
-        </span>
-        <span className="oga-sig-spec__geo-arrow" aria-hidden>→</span>
-        <span className="oga-sig-spec__geo-step">
-          <span className="oga-sig-spec__geo-step-k">District</span>
-          <span>{s.geo.admin_district}</span>
-        </span>
-        <span className="oga-sig-spec__geo-arrow" aria-hidden>→</span>
-        <span className="oga-sig-spec__geo-step">
-          <span className="oga-sig-spec__geo-step-k">Country</span>
-          <span>{s.geo.country}</span>
-        </span>
-        <span className="oga-sig-spec__geo-area-type">{s.area_type}</span>
-      </div>
-
-      <div className="oga-sig-spec__rows">
-        {s.signals.map((sig) => {
-          const isFallback = sig.value === "Falls back to live";
-          return (
-            <div
-              key={sig.key}
-              className={`oga-sig-spec__row${isFallback ? " oga-sig-spec__row--fallback" : ""}`}
-            >
-              <div>
-                <code className="oga-sig-spec__row-key">{sig.key}</code>
+        <div className="oga-sig-feat__grid">
+          {/* Hero cell - consistent shape (tall, left) */}
+          <article className="oga-sig-feat__card oga-sig-feat__card--hero">
+            <div className="oga-sig-feat__card-body">
+              <h3 className="oga-sig-feat__card-title">One consistent shape.</h3>
+              <p className="oga-sig-feat__card-desc">
+                Every signal returns in the same structure, whatever source or
+                country it came from. Integrate once and read every category the
+                same way.
+              </p>
+            </div>
+            <div className="oga-sig-feat__mock">
+              <div className="oga-sig-feat__code">
+                <div className="oga-sig-feat__code-head">crime.total_12m</div>
+                <pre className="oga-sig-feat__code-body">{`{
+  "signal": "crime.total_12m",
+  "value": 3712,
+  "unit": "count",
+  "national_pct": 92,
+  "confidence": "high",
+  "source": "police.uk",
+  "observed": {
+    "from": "2025-04",
+    "to": "2026-03"
+  }
+}`}</pre>
               </div>
-              <div>
-                <span
-                  className={`oga-sig-spec__row-val${isFallback ? " oga-sig-spec__row-val--fallback" : ""}`}
-                >
-                  {sig.value}
-                </span>
-                {sig.unit && !isFallback && (
-                  <span className="oga-sig-spec__row-val-unit">{sig.unit}</span>
-                )}
+            </div>
+          </article>
+
+          {/* National context (top-right) */}
+          <article className="oga-sig-feat__card">
+            <div className="oga-sig-feat__card-body">
+              <h3 className="oga-sig-feat__card-title">Placed in national context.</h3>
+              <p className="oga-sig-feat__card-desc">
+                Every value ranked against comparable areas, so a number means
+                something on its own.
+              </p>
+            </div>
+            <div className="oga-sig-feat__mock">
+              <div className="oga-sig-feat__pct">
+                <div className="oga-sig-feat__pct-top">
+                  <span className="oga-sig-feat__pct-label">92nd percentile</span>
+                  <span className="oga-sig-feat__pct-nat">England</span>
+                </div>
+                <div className="oga-sig-feat__pct-track">
+                  <span className="oga-sig-feat__pct-fill" />
+                  <span className="oga-sig-feat__pct-dot" />
+                </div>
+                <div className="oga-sig-feat__pct-ends">
+                  <span>Lowest</span>
+                  <span>Highest</span>
+                </div>
               </div>
-              <div className="oga-sig-spec__bar-row">
-                {isFallback ? (
-                  <div className="oga-sig-spec__bar-empty" aria-hidden>
-                    <span className="oga-sig-spec__bar-empty-mark" />
-                    <span className="oga-sig-spec__bar-empty-mark" />
-                    <span className="oga-sig-spec__bar-empty-mark" />
-                  </div>
-                ) : (
-                  <div className="oga-sig-spec__bar" aria-hidden>
-                    <div
-                      className="oga-sig-spec__bar-fill"
-                      style={{ width: `${sig.percentile}%` }}
-                    />
-                  </div>
-                )}
-                <div className="oga-sig-spec__bar-meta">
-                  <span>
-                    {isFallback
-                      ? "live fetch only"
-                      : `${sig.percentile.toFixed(1)} percentile`}
+            </div>
+          </article>
+
+          {/* Confidence (bottom-right) */}
+          <article className="oga-sig-feat__card">
+            <div className="oga-sig-feat__card-body">
+              <h3 className="oga-sig-feat__card-title">Confidence on every value.</h3>
+              <p className="oga-sig-feat__card-desc">
+                Know how solid each number is before you ship it.
+              </p>
+            </div>
+            <div className="oga-sig-feat__mock">
+              <div className="oga-sig-feat__conf">
+                <div className="oga-sig-feat__conf-head">
+                  <span className="oga-sig-feat__conf-label">Recorded crime · M1 1AE</span>
+                  <span className="oga-sig-feat__conf-val">3,712</span>
+                </div>
+                <div className="oga-sig-feat__conf-row">
+                  <span className="oga-sig-feat__conf-chip">
+                    <span className="oga-sig-feat__conf-dot" />
+                    High confidence
                   </span>
-                  <span className="oga-sig-spec__bar-meta-dir">
-                    {sig.direction.replace(/_/g, " ")}
+                  <span className="oga-sig-feat__conf-bars" aria-hidden>
+                    <i className="on" /><i className="on" /><i className="on" />
                   </span>
                 </div>
               </div>
-              <div className="oga-sig-spec__row-conf">
-                <span
-                  className={`oga-sig-spec__conf-dot${
-                    sig.confidence === "med"
-                      ? " oga-sig-spec__conf-dot--med"
-                      : sig.confidence === "low"
-                      ? " oga-sig-spec__conf-dot--low"
-                      : ""
-                  }`}
-                  aria-label={`Confidence ${sig.confidence}`}
-                />
-                <span>{sig.source}</span>
+            </div>
+          </article>
+
+          {/* Source coverage (full-width strip) */}
+          <article className="oga-sig-feat__card oga-sig-feat__card--wide">
+            <div className="oga-sig-feat__card-body">
+              <h3 className="oga-sig-feat__card-title">Traceable to its source.</h3>
+              <p className="oga-sig-feat__card-desc">
+                Every number links back to the official dataset it came from,
+                ready to cite.
+              </p>
+            </div>
+            <div className="oga-sig-feat__mock">
+              <div className="oga-sig-feat__srcrow">
+                {([
+                  { cat: "crime", name: "Crime", from: "police.uk" },
+                  { cat: "deprivation", name: "Deprivation", from: "IMD, WIMD, SIMD" },
+                  { cat: "property", name: "Property", from: "Land Registry" },
+                  { cat: "schools", name: "Schools", from: "Ofsted, DfE" },
+                  { cat: "amenities", name: "Amenities", from: "OpenStreetMap" },
+                  { cat: "transport", name: "Transport", from: "OpenStreetMap" },
+                  { cat: "environment", name: "Environment", from: "Environment Agency" },
+                ] as { cat: SignalCategory; name: string; from: string }[]).map((s) => (
+                  <span key={s.name} className="oga-sig-feat__srcbadge">
+                    <span className="oga-sig-feat__srcbadge-glyph">{CATEGORY_GLYPH[s.cat]()}</span>
+                    <span className="oga-sig-feat__srcbadge-text">
+                      <span className="oga-sig-feat__srcbadge-name">{s.name}</span>
+                      <span className="oga-sig-feat__srcbadge-from">{s.from}</span>
+                    </span>
+                  </span>
+                ))}
               </div>
             </div>
-          );
-        })}
-      </div>
+          </article>
+        </div>
 
-      <div className="oga-sig-spec__meta-foot">
-        <span className="oga-sig-spec__meta-foot-item">
-          <span className="oga-sig-spec__meta-foot-k">fetch_mode</span>
-          <span className="oga-sig-spec__meta-foot-v">{s.fetch_mode}</span>
-        </span>
-        <span className="oga-sig-spec__meta-foot-item">
-          <span className="oga-sig-spec__meta-foot-k">engine_version</span>
-          <span className="oga-sig-spec__meta-foot-v">{METHODOLOGY_VERSION}</span>
-        </span>
-        <span className="oga-sig-spec__meta-foot-item">
-          <span className="oga-sig-spec__meta-foot-k">observed_period</span>
-          <span className="oga-sig-spec__meta-foot-v">{s.observed_period}</span>
-        </span>
+        <div className="oga-sig-feat__cta">
+          <Link href="/playground" className="oga-btn oga-btn-primary">
+            Try it in the playground
+            <span aria-hidden>→</span>
+          </Link>
+        </div>
       </div>
-    </>
+    </section>
   );
 }
 
-function JsonSpecimen({ s }: { s: Specimen }) {
-  const json = {
-    geo: {
-      postcode: s.postcode,
-      lsoa: s.geo.lsoa,
-      admin_district: s.geo.admin_district,
-      region: s.geo.region,
-      country: s.geo.country,
-      area_type: s.area_type,
-    },
-    signals: s.signals.map((sig) => ({
-      key: sig.key,
-      label: sig.label,
-      value: sig.value,
-      unit: sig.unit,
-      percentile: sig.percentile || null,
-      direction: sig.direction,
-      confidence: sig.confidence === "high" ? 0.9 : sig.confidence === "med" ? 0.65 : 0.35,
-      source: sig.source,
-      observed_period: s.observed_period,
-    })),
-    meta: {
-      engine_version: METHODOLOGY_VERSION,
-      generated_at: current.released_at + "T00:00:00.000Z",
-      fetch_mode: s.fetch_mode,
-    },
-  };
-  return <pre className="oga-sig-spec__json">{JSON.stringify(json, null, 2)}</pre>;
-}
+/* ---------- Section 3: coverage + reproducibility, with a proof band ----------
+   Reference: section3.png - left-aligned headline, two large cards each with a
+   product mockup and its title/description below, then a band on a tinted
+   panel. section3.png's band is a customer testimonial; we do NOT ship a
+   fabricated customer, so the band carries our own promise + a real CTA until a
+   genuine quote exists. */
+const FOUND_AREAS: { pc: string; place: string; nation: string }[] = [
+  { pc: "M1 1AE", place: "Manchester", nation: "England" },
+  { pc: "EH1 1YZ", place: "Edinburgh", nation: "Scotland" },
+  { pc: "CF10 1EP", place: "Cardiff", nation: "Wales" },
+  { pc: "B1 1AA", place: "Birmingham", nation: "England" },
+];
 
-/* ============================================================
-   02 — Anatomy of a Signal (cream) — bespoke SVG diagram
-   ============================================================ */
-
-function SectionAnatomy() {
+function Foundation() {
   return (
-    <section className="oga-section-quiet oga-sig-anatomy" aria-labelledby="sig-anatomy-title">
+    <section className="oga-sig-found" aria-labelledby="sig-found-title">
       <div className="oga-sig__wrap">
-        <header className="oga-sig-anatomy__head">
-          <div className="oga-sig-anatomy__eyebrow">
-            <span className="oga-sig-anatomy__eyebrow-mark" aria-hidden />
-            <span>Anatomy of a Signal</span>
-            <span className="oga-sig-anatomy__eyebrow-mark" aria-hidden />
+        <header className="oga-sig-found__head">
+          <h2 id="sig-found-title" className="oga-sig-found__h2">One source of truth for every UK area.</h2>
+        </header>
+
+        <div className="oga-sig-found__grid">
+          {/* Card 1 - national coverage */}
+          <div className="oga-sig-found__cell">
+            <div className="oga-sig-found__panel">
+              <div className="oga-sig-found__areas">
+                <div className="oga-sig-found__areas-head">
+                  <span className="oga-sig-found__areas-title">Areas</span>
+                  <span className="oga-sig-found__areas-pill">England · Wales · Scotland</span>
+                </div>
+                <ul className="oga-sig-found__arealist">
+                  {FOUND_AREAS.map((a) => (
+                    <li key={a.pc} className="oga-sig-found__arearow">
+                      <span className="oga-sig-found__area-pc">{a.pc}</span>
+                      <span className="oga-sig-found__area-place">{a.place}</span>
+                      <span className="oga-sig-found__area-nation">{a.nation}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <h3 className="oga-sig-found__cell-title">The same API across three nations.</h3>
+            <p className="oga-sig-found__cell-desc">
+              England, Wales and Scotland behind one endpoint, each signal reported
+              in its own country&apos;s official index. No separate integrations to build
+              or keep in sync.
+            </p>
           </div>
-          <h2 id="sig-anatomy-title" className="oga-sig-anatomy__title">
-            Every field load-bearing. None of it decoration.
-          </h2>
-          <p className="oga-sig-anatomy__sub">
-            One Signal exploded. The shape is a Zod schema shared between
-            apps/web and apps/api, so the runtime payload and the static types
-            cannot drift.
-          </p>
-        </header>
 
-        <div className="oga-sig-anatomy__diagram">
-          <SignalAnatomySvg />
+          {/* Card 2 - versioned + replayable */}
+          <div className="oga-sig-found__cell">
+            <div className="oga-sig-found__panel">
+              <div className="oga-sig-found__ver">
+                <div className="oga-sig-found__ver-head">
+                  <span className="oga-sig-found__ver-sig">crime.total_12m</span>
+                  <span className="oga-sig-found__ver-tag">engine v1.0.0</span>
+                </div>
+                <span className="oga-sig-found__ver-val">3,712</span>
+                <div className="oga-sig-found__ver-meta">Observed 2025-04 → 2026-03</div>
+                <div className="oga-sig-found__ver-replay">
+                  <span className="oga-sig-found__ver-check" aria-hidden>✓</span>
+                  Same request returns the same number
+                </div>
+              </div>
+            </div>
+            <h3 className="oga-sig-found__cell-title">Versioned, so numbers never move.</h3>
+            <p className="oga-sig-found__cell-desc">
+              Every response is stamped with the engine version that produced it.
+              Replay a call months later and you get the exact same figures, so what
+              you ship stays reproducible.
+            </p>
+          </div>
+        </div>
+
+        {/* Proof band - placeholder for a real quote; never fabricate a customer */}
+        <div className="oga-sig-found__band">
+          <p className="oga-sig-found__band-text">
+            Sourced, comparable, confidence-rated and versioned. Everything a
+            product team needs to build on UK area data without owning the pipeline.
+          </p>
+          <div className="oga-sig-found__band-foot">
+            <span className="oga-sig-found__band-note">One API · every category · three nations</span>
+            <BookDemo className="oga-btn oga-btn-primary">Book a demo</BookDemo>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-/* Bespoke anatomy SVG — central Signal pill with hairlines pulling
-   to 8 labelled callouts. Pure dot-and-hairline brand vocab. */
-function SignalAnatomySvg() {
+/* ---------- Section 4: real workflows (reference section4.png) ---------- */
+function Workflows() {
   return (
-    <svg
-      className="oga-sig-anatomy__svg"
-      viewBox="0 0 1080 580"
-      role="img"
-      aria-label="Anatomy of a Signal: fields and their meanings"
-    >
-      {/* central spec pill */}
-      <g transform="translate(540, 290)">
-        <rect x="-180" y="-50" width="360" height="100" rx="6"
-              fill="none" stroke="currentColor" strokeWidth="1" />
-        <text x="-160" y="-22" fontFamily="var(--oga-font-mono)" fontSize="11"
-              fill="currentColor" opacity="0.55" letterSpacing="2">SIGNAL</text>
-        <text x="-160" y="0" fontFamily="var(--oga-font-mono)" fontSize="14"
-              fill="currentColor" fontWeight="500">crime.total_12m</text>
-        <text x="-160" y="22" fontFamily="var(--oga-font-mono)" fontSize="13"
-              fill="currentColor" opacity="0.7">value: 1200</text>
-        {/* anchor dots */}
-        <circle cx="-180" cy="-50" r="3" fill="currentColor" />
-        <circle cx="180" cy="-50" r="3" fill="currentColor" />
-        <circle cx="-180" cy="50" r="3" fill="currentColor" />
-        <circle cx="180" cy="50" r="3" fill="currentColor" />
-      </g>
-
-      {/* TOP-LEFT — key */}
-      <g>
-        <line x1="200" y1="100" x2="360" y2="240" stroke="currentColor" strokeWidth="1" opacity="0.35" />
-        <circle cx="200" cy="100" r="4" fill="currentColor" />
-        <text x="200" y="80" fontFamily="var(--oga-font-mono)" fontSize="10"
-              fill="currentColor" opacity="0.6" letterSpacing="2">KEY</text>
-        <text x="200" y="60" fontFamily="var(--oga-font-sans)" fontSize="13"
-              fill="currentColor">Stable, category-namespaced.</text>
-        <text x="200" y="42" fontFamily="var(--oga-font-sans)" fontSize="13"
-              fill="currentColor" opacity="0.7">Pin against it forever.</text>
-      </g>
-
-      {/* TOP-CENTER — category */}
-      <g>
-        <line x1="540" y1="120" x2="540" y2="240" stroke="currentColor" strokeWidth="1" opacity="0.35" />
-        <circle cx="540" cy="120" r="4" fill="currentColor" />
-        <text x="540" y="100" textAnchor="middle" fontFamily="var(--oga-font-mono)" fontSize="10"
-              fill="currentColor" opacity="0.6" letterSpacing="2">CATEGORY</text>
-        <text x="540" y="80" textAnchor="middle" fontFamily="var(--oga-font-sans)" fontSize="13"
-              fill="currentColor">One of seven. Additive.</text>
-        <text x="540" y="62" textAnchor="middle" fontFamily="var(--oga-font-sans)" fontSize="13"
-              fill="currentColor" opacity="0.7">Categories never renamed.</text>
-      </g>
-
-      {/* TOP-RIGHT — observed_period */}
-      <g>
-        <line x1="880" y1="100" x2="720" y2="240" stroke="currentColor" strokeWidth="1" opacity="0.35" />
-        <circle cx="880" cy="100" r="4" fill="currentColor" />
-        <text x="880" y="80" textAnchor="end" fontFamily="var(--oga-font-mono)" fontSize="10"
-              fill="currentColor" opacity="0.6" letterSpacing="2">OBSERVED PERIOD</text>
-        <text x="880" y="60" textAnchor="end" fontFamily="var(--oga-font-sans)" fontSize="13"
-              fill="currentColor">Static, trailing-window,</text>
-        <text x="880" y="42" textAnchor="end" fontFamily="var(--oga-font-sans)" fontSize="13"
-              fill="currentColor" opacity="0.7">or monthly. Audit anchor.</text>
-      </g>
-
-      {/* MID-LEFT — normalized_value */}
-      <g>
-        <line x1="120" y1="290" x2="360" y2="290" stroke="currentColor" strokeWidth="1" opacity="0.35" />
-        <circle cx="120" cy="290" r="4" fill="currentColor" />
-        <text x="100" y="282" textAnchor="end" fontFamily="var(--oga-font-mono)" fontSize="10"
-              fill="currentColor" opacity="0.6" letterSpacing="2">NORMALIZED_VALUE</text>
-        <text x="100" y="304" textAnchor="end" fontFamily="var(--oga-font-sans)" fontSize="13"
-              fill="currentColor">0-1 position within country.</text>
-      </g>
-
-      {/* MID-RIGHT — percentile */}
-      <g>
-        <line x1="960" y1="290" x2="720" y2="290" stroke="currentColor" strokeWidth="1" opacity="0.35" />
-        <circle cx="960" cy="290" r="4" fill="currentColor" />
-        <text x="980" y="282" fontFamily="var(--oga-font-mono)" fontSize="10"
-              fill="currentColor" opacity="0.6" letterSpacing="2">PERCENTILE</text>
-        <text x="980" y="304" fontFamily="var(--oga-font-sans)" fontSize="13"
-              fill="currentColor">0-100. National-within-country.</text>
-      </g>
-
-      {/* BOTTOM-LEFT — confidence */}
-      <g>
-        <line x1="200" y1="480" x2="360" y2="340" stroke="currentColor" strokeWidth="1" opacity="0.35" />
-        <circle cx="200" cy="480" r="4" fill="currentColor" />
-        <text x="200" y="500" fontFamily="var(--oga-font-mono)" fontSize="10"
-              fill="currentColor" opacity="0.6" letterSpacing="2">CONFIDENCE</text>
-        <text x="200" y="520" fontFamily="var(--oga-font-sans)" fontSize="13"
-              fill="currentColor">Per-signal trust (0-1).</text>
-        <text x="200" y="538" fontFamily="var(--oga-font-sans)" fontSize="13"
-              fill="currentColor" opacity="0.7">With plain-language reason.</text>
-      </g>
-
-      {/* BOTTOM-CENTER — source */}
-      <g>
-        <line x1="540" y1="460" x2="540" y2="340" stroke="currentColor" strokeWidth="1" opacity="0.35" />
-        <circle cx="540" cy="460" r="4" fill="currentColor" />
-        <text x="540" y="480" textAnchor="middle" fontFamily="var(--oga-font-mono)" fontSize="10"
-              fill="currentColor" opacity="0.6" letterSpacing="2">SOURCE</text>
-        <text x="540" y="500" textAnchor="middle" fontFamily="var(--oga-font-sans)" fontSize="13"
-              fill="currentColor">Attribution per value.</text>
-        <text x="540" y="518" textAnchor="middle" fontFamily="var(--oga-font-sans)" fontSize="13"
-              fill="currentColor" opacity="0.7">Source catalog on methodology.</text>
-      </g>
-
-      {/* BOTTOM-RIGHT — direction */}
-      <g>
-        <line x1="880" y1="480" x2="720" y2="340" stroke="currentColor" strokeWidth="1" opacity="0.35" />
-        <circle cx="880" cy="480" r="4" fill="currentColor" />
-        <text x="880" y="500" textAnchor="end" fontFamily="var(--oga-font-mono)" fontSize="10"
-              fill="currentColor" opacity="0.6" letterSpacing="2">DIRECTION</text>
-        <text x="880" y="520" textAnchor="end" fontFamily="var(--oga-font-sans)" fontSize="13"
-              fill="currentColor">higher / lower / neutral.</text>
-        <text x="880" y="538" textAnchor="end" fontFamily="var(--oga-font-sans)" fontSize="13"
-              fill="currentColor" opacity="0.7">Orthogonal to position.</text>
-      </g>
-    </svg>
-  );
-}
-
-/* ============================================================
-   03 — The 7 categories (DARK) — constellation
-   ============================================================ */
-
-const CATEGORIES: { name: string; desc: string }[] = [
-  { name: "Crime", desc: "12-month and monthly counts, store-backed at LSOA × month." },
-  { name: "Deprivation", desc: "IMD 2025, WIMD 2019, SIMD 2020. Never cross-compared." },
-  { name: "Property", desc: "Median price + transaction count + monthly history. E & W only." },
-  { name: "Schools", desc: "Ofsted within 1.5km. Live fetch today." },
-  { name: "Amenities", desc: "Shops, food, parks within 0.5-2km. Live counts." },
-  { name: "Transport", desc: "Station + bus stop counts at radii. Live." },
-  { name: "Environment", desc: "Flood risk + active warnings. Live from EA." },
-];
-
-function SectionCategories() {
-  return (
-    <section
-      className="oga-section-dark oga-sig-cats"
-      data-oga-surface="dark"
-      aria-labelledby="sig-cats-title"
-    >
+    <section className="oga-sig-flow" data-oga-surface="dark" aria-labelledby="sig-flow-title">
       <div className="oga-sig__wrap">
-        <header className="oga-sig-cats__head">
-          <h2 id="sig-cats-title" className="oga-sig-cats__title">
-            Seven categories. One constellation.
-          </h2>
-          <p className="oga-sig-cats__sub">
-            Each category is a stable namespace under one Signal contract. New
-            signals land under existing namespaces. No category is ever renamed.
+        <header className="oga-sig-flow__head">
+          <h2 id="sig-flow-title" className="oga-sig-flow__h2">Built for the workflows you already run.</h2>
+          <p className="oga-sig-flow__sub">
+            The same consistent area data behind the features you ship, the
+            comparisons you make, the decisions you defend and the plumbing you
+            would rather not maintain.
           </p>
         </header>
 
-        <div className="oga-sig-cats__stage">
-          <CategoryConstellationSvg />
+        <div className="oga-sig-flow__grid">
+          {/* 1 - enrich a listing */}
+          <article className="oga-sig-flow__card">
+            <div className="oga-sig-flow__mock">
+              <div className="oga-sig-flow__panel oga-sig-flow__listing">
+                <div className="oga-sig-flow__listing-head">
+                  <span className="oga-sig-flow__listing-tag">Listing</span>
+                  <span className="oga-sig-flow__listing-pc">M21 9PN</span>
+                </div>
+                <ul className="oga-sig-flow__rows">
+                  <li className="oga-sig-flow__row">
+                    <span className="oga-sig-flow__row-glyph">{CATEGORY_GLYPH.crime()}</span>
+                    <span className="oga-sig-flow__row-k">Crime</span>
+                    <span className="oga-sig-flow__row-v">34th pct</span>
+                  </li>
+                  <li className="oga-sig-flow__row">
+                    <span className="oga-sig-flow__row-glyph">{CATEGORY_GLYPH.schools()}</span>
+                    <span className="oga-sig-flow__row-k">Schools</span>
+                    <span className="oga-sig-flow__row-v">4 nearby</span>
+                  </li>
+                  <li className="oga-sig-flow__row">
+                    <span className="oga-sig-flow__row-glyph">{CATEGORY_GLYPH.transport()}</span>
+                    <span className="oga-sig-flow__row-k">Transport</span>
+                    <span className="oga-sig-flow__row-v">3 stations</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <p className="oga-sig-flow__cap">Add local-area context to listings, applications, reports and customer journeys.</p>
+          </article>
+
+          {/* 2 - compare areas */}
+          <article className="oga-sig-flow__card">
+            <div className="oga-sig-flow__mock">
+              <div className="oga-sig-flow__panel oga-sig-flow__cmp">
+                <div className="oga-sig-flow__cmp-col">
+                  <span className="oga-sig-flow__cmp-pc">M1 1AE</span>
+                  <span className="oga-sig-flow__cmp-m">Crime <b>92nd</b></span>
+                  <span className="oga-sig-flow__cmp-m">IMD <b>1</b></span>
+                </div>
+                <span className="oga-sig-flow__cmp-vs">vs</span>
+                <div className="oga-sig-flow__cmp-col">
+                  <span className="oga-sig-flow__cmp-pc">CF10 1EP</span>
+                  <span className="oga-sig-flow__cmp-m">Crime <b>86th</b></span>
+                  <span className="oga-sig-flow__cmp-m">WIMD <b>4</b></span>
+                </div>
+              </div>
+            </div>
+            <p className="oga-sig-flow__cap">Compare any two areas on the same national scale, not isolated numbers.</p>
+          </article>
+
+          {/* 3 - support a decision */}
+          <article className="oga-sig-flow__card">
+            <div className="oga-sig-flow__mock">
+              <div className="oga-sig-flow__panel oga-sig-flow__decide">
+                <div className="oga-sig-flow__decide-head">
+                  <span>IMD decile</span>
+                  <b>1 / 10</b>
+                </div>
+                <div className="oga-sig-flow__decide-bar"><span className="oga-sig-flow__decide-fill" /></div>
+                <div className="oga-sig-flow__decide-flag">
+                  <span className="oga-sig-flow__decide-dot" />
+                  Below your threshold
+                </div>
+              </div>
+            </div>
+            <p className="oga-sig-flow__cap">Bring consistent evidence into research, underwriting, risk and site-selection.</p>
+          </article>
+
+          {/* 4 - cut data maintenance (wide) */}
+          <article className="oga-sig-flow__card oga-sig-flow__card--wide">
+            <div className="oga-sig-flow__mock">
+              <div className="oga-sig-flow__panel oga-sig-flow__consol">
+                <ul className="oga-sig-flow__consol-src">
+                  <li>police.uk</li>
+                  <li>Land Registry</li>
+                  <li>IMD · WIMD · SIMD</li>
+                  <li>Ofsted · DfE</li>
+                  <li>OpenStreetMap</li>
+                  <li>Environment Agency</li>
+                </ul>
+                <span className="oga-sig-flow__consol-arrow" aria-hidden>→</span>
+                <div className="oga-sig-flow__consol-api">
+                  <span className="oga-sig-flow__consol-api-label">One API</span>
+                  <span className="oga-sig-flow__consol-api-ep">GET /v1/area</span>
+                </div>
+              </div>
+            </div>
+            <p className="oga-sig-flow__cap">Work with one API instead of sourcing, cleaning and monitoring several public datasets.</p>
+          </article>
+
+          {/* 5 - call from code or Claude (wide) */}
+          <article className="oga-sig-flow__card oga-sig-flow__card--wide">
+            <div className="oga-sig-flow__mock">
+              <div className="oga-sig-flow__panel oga-sig-flow__code">
+                <div className="oga-sig-flow__code-tabs">
+                  <span className="oga-sig-flow__code-tab oga-sig-flow__code-tab--on">REST</span>
+                  <span className="oga-sig-flow__code-tab">MCP</span>
+                </div>
+                <pre className="oga-sig-flow__code-body">{`GET /v1/area/M1 1AE
+Authorization: Bearer oga_live_…
+
+200 · engine v1.0.0`}</pre>
+              </div>
+            </div>
+            <p className="oga-sig-flow__cap">Call it from your code, or ask in plain English through the MCP server.</p>
+          </article>
         </div>
 
-        <ul className="oga-sig-cats__list">
-          {CATEGORIES.map((c) => (
-            <li key={c.name} className="oga-sig-cats__item">
-              <span className="oga-sig-cats__item-name">{c.name}</span>
-              <p className="oga-sig-cats__item-desc">{c.desc}</p>
-            </li>
-          ))}
-        </ul>
+        <footer className="oga-sig-flow__foot">
+          <p className="oga-sig-flow__foot-text">
+            Less integration to build. Fewer datasets to babysit. More decisions
+            grounded in area data you can trust.
+          </p>
+          <div className="oga-sig-flow__foot-ctas">
+            <BookDemo className="oga-btn oga-btn-primary">Book a demo</BookDemo>
+            <Link href="/docs" className="oga-btn oga-btn-secondary">View the API docs</Link>
+          </div>
+        </footer>
       </div>
     </section>
   );
 }
 
-/* 7-category constellation — 7 emphasised dots over a 5×5 ambient
-   scatter, hairlines + labels around them. */
-function CategoryConstellationSvg() {
-  return (
-    <svg
-      className="oga-sig-cats__svg"
-      viewBox="0 0 1080 420"
-      role="img"
-      aria-label="The seven Signal categories as a constellation"
-    >
-      {/* ambient 9×5 dot scatter */}
-      <g fill="currentColor" opacity="0.18">
-        {Array.from({ length: 9 }).map((_, c) =>
-          Array.from({ length: 5 }).map((_, r) => (
-            <circle key={`${c}-${r}`} cx={120 + c * 105} cy={60 + r * 70} r="2" />
-          ))
-        )}
-      </g>
-
-      {/* emphasised category dots (7) — bespoke positions to read as a constellation */}
-      <g fill="currentColor">
-        {/* Crime */}
-        <circle cx="225" cy="200" r="6" />
-        <line x1="225" y1="200" x2="225" y2="155" stroke="currentColor" strokeWidth="1" opacity="0.5" />
-        <text x="225" y="145" textAnchor="middle" fontFamily="var(--oga-font-mono)" fontSize="11" letterSpacing="2">CRIME</text>
-
-        {/* Deprivation */}
-        <circle cx="435" cy="130" r="6" />
-        <line x1="435" y1="130" x2="435" y2="85" stroke="currentColor" strokeWidth="1" opacity="0.5" />
-        <text x="435" y="75" textAnchor="middle" fontFamily="var(--oga-font-mono)" fontSize="11" letterSpacing="2">DEPRIVATION</text>
-
-        {/* Property */}
-        <circle cx="645" cy="200" r="8" />
-        <line x1="645" y1="200" x2="645" y2="155" stroke="currentColor" strokeWidth="1" opacity="0.5" />
-        <text x="645" y="145" textAnchor="middle" fontFamily="var(--oga-font-mono)" fontSize="11" letterSpacing="2">PROPERTY</text>
-
-        {/* Schools */}
-        <circle cx="855" cy="130" r="6" />
-        <line x1="855" y1="130" x2="855" y2="85" stroke="currentColor" strokeWidth="1" opacity="0.5" />
-        <text x="855" y="75" textAnchor="middle" fontFamily="var(--oga-font-mono)" fontSize="11" letterSpacing="2">SCHOOLS</text>
-
-        {/* Amenities */}
-        <circle cx="225" cy="340" r="6" />
-        <line x1="225" y1="340" x2="225" y2="385" stroke="currentColor" strokeWidth="1" opacity="0.5" />
-        <text x="225" y="403" textAnchor="middle" fontFamily="var(--oga-font-mono)" fontSize="11" letterSpacing="2">AMENITIES</text>
-
-        {/* Transport */}
-        <circle cx="540" cy="340" r="6" />
-        <line x1="540" y1="340" x2="540" y2="385" stroke="currentColor" strokeWidth="1" opacity="0.5" />
-        <text x="540" y="403" textAnchor="middle" fontFamily="var(--oga-font-mono)" fontSize="11" letterSpacing="2">TRANSPORT</text>
-
-        {/* Environment */}
-        <circle cx="855" cy="340" r="6" />
-        <line x1="855" y1="340" x2="855" y2="385" stroke="currentColor" strokeWidth="1" opacity="0.5" />
-        <text x="855" y="403" textAnchor="middle" fontFamily="var(--oga-font-mono)" fontSize="11" letterSpacing="2">ENVIRONMENT</text>
-      </g>
-
-      {/* connecting hairlines between categories — subtle */}
-      <g stroke="currentColor" strokeWidth="1" opacity="0.18" fill="none">
-        <line x1="225" y1="200" x2="435" y2="130" />
-        <line x1="435" y1="130" x2="645" y2="200" />
-        <line x1="645" y1="200" x2="855" y2="130" />
-        <line x1="225" y1="200" x2="225" y2="340" />
-        <line x1="225" y1="340" x2="540" y2="340" />
-        <line x1="540" y1="340" x2="855" y2="340" />
-        <line x1="645" y1="200" x2="540" y2="340" />
-      </g>
-    </svg>
-  );
-}
-
-/* ============================================================
-   04 — Endpoints (cream, compact tabbed panel)
-   ============================================================ */
-
-type Param = { name: string; type: string; required: boolean; desc: string };
-type Endpoint = {
-  method: "GET";
-  path: string;
-  what: string;
-  params: Param[];
-  response: string;
-  codes: { code: string; meaning: string }[];
-};
-
-const EPS: Endpoint[] = [
+/* ---------- FAQ (Signals-specific, native details accordion) ---------- */
+const FAQ: { q: string; a: string }[] = [
   {
-    method: "GET",
-    path: "/v1/area",
-    what:
-      "Returns the full seven-category Signal catalog for one UK postcode or place name. No scoring, no AI. The primary read.",
-    params: [
-      { name: "area", type: "string", required: false, desc: "UK postcode or place name. One of area or postcode is required." },
-      { name: "postcode", type: "string", required: false, desc: "Alias for area. Same validation and resolution path." },
-      { name: "bundle", type: "string (Lever)", required: false, desc: "Bundle id from the caller's org. Filters response to the bundle whitelist." },
-    ],
-    response: "AreaProfile: { geo, signals[], meta }. Sets X-Engine-Version response header.",
-    codes: [
-      { code: "200", meaning: "OK." },
-      { code: "400", meaning: "Missing or invalid area / postcode." },
-      { code: "401", meaning: "Missing or invalid API key." },
-      { code: "403", meaning: "Plan has no API access, or IP-allowlist blocked." },
-      { code: "404", meaning: "Ungeocodable, or dark flag off." },
-      { code: "429", meaning: "Rate-limited (30 req / minute / key)." },
-    ],
+    q: "Which areas do you cover?",
+    a: "Every small area (LSOA and its equivalents) across England, Wales and Scotland. Send a postcode or an area code and you get the neighbourhood back.",
   },
   {
-    method: "GET",
-    path: "/v1/signals/:category",
-    what:
-      "Same AreaProfile shape, filtered to one of the seven categories. Useful when a panel only needs one slice.",
-    params: [
-      { name: "category", type: "path enum", required: true, desc: "One of: crime, deprivation, property, schools, amenities, transport, environment." },
-      { name: "area", type: "string", required: false, desc: "UK postcode or place name. One of area or postcode is required." },
-      { name: "postcode", type: "string", required: false, desc: "Alias for area." },
-    ],
-    response: "AreaProfile where signals[] is the subset of the requested category. Same X-Engine-Version header.",
-    codes: [
-      { code: "200", meaning: "OK." },
-      { code: "400", meaning: "Unknown category, or missing area." },
-      { code: "401", meaning: "Missing or invalid API key." },
-      { code: "404", meaning: "Area not geocodable, or dark flag off." },
-      { code: "429", meaning: "Rate-limited." },
-    ],
+    q: "Where does the data come from?",
+    a: "Official public sources: police.uk, HM Land Registry, the IMD, WIMD and SIMD deprivation indices, official education datasets, OpenStreetMap and the Environment Agency. Every value links back to the source it came from.",
   },
   {
-    method: "GET",
-    path: "/v1/areas",
-    what:
-      "Cross-area ranking. Find LSOAs in a country or LAD where one signal sits above or below a threshold or within a percentile band, sorted.",
-    params: [
-      { name: "signal", type: "string", required: true, desc: "Signal key to rank by." },
-      { name: "country", type: "enum", required: false, desc: "England, Wales, Scotland. Scoped by LSOA prefix." },
-      { name: "lad", type: "string", required: false, desc: "Local Authority District code via the ONS spine." },
-      { name: "min_percentile · max_percentile", type: "0-100", required: false, desc: "Percentile band." },
-      { name: "min_value · max_value", type: "number", required: false, desc: "Raw-value band." },
-      { name: "sort", type: "enum", required: false, desc: "percentile (default), percentile_desc, value, value_desc." },
-      { name: "limit", type: "integer", required: false, desc: "Default 100, max 1000." },
-    ],
-    response: "{ signal, count, areas: AreaResult[] } with geo_type, geo_code, value, normalized_value, percentile per row.",
-    codes: [
-      { code: "200", meaning: "OK." },
-      { code: "400", meaning: "Missing signal, invalid country, or out-of-range bounds." },
-      { code: "401", meaning: "Missing or invalid API key." },
-      { code: "404", meaning: "Dark flag off." },
-      { code: "422", meaning: "Requested signal is not in the requested bundle." },
-      { code: "429", meaning: "Rate-limited." },
-    ],
+    q: "How are England, Wales and Scotland handled?",
+    a: "Each country is reported in its own official index — IMD in England, WIMD in Wales and SIMD in Scotland — inside one consistent response shape, so you integrate once.",
+  },
+  {
+    q: "How often is the data updated?",
+    a: "Each category follows its own cycle: crime and property monthly, deprivation on official release, the rest as their sources publish. Every response says when each value was observed.",
+  },
+  {
+    q: "What does the confidence rating mean?",
+    a: "Every value carries a confidence level based on how complete and recent the underlying data is, so your team can decide how to use it.",
+  },
+  {
+    q: "Are the numbers stable over time?",
+    a: "Yes. Every response is stamped with the engine version that produced it, and replaying the same request returns the same figures.",
+  },
+  {
+    q: "How do I access it?",
+    a: "A REST API, or the MCP server so you can call it from your code or ask in plain English through Claude.",
   },
 ];
 
-/* SectionEndpoints + CodeRow extracted to shared
-   _shared/product-endpoint-panel.{tsx,css} in AR-211.
-   Per-product variation = title + sub + EPS data. */
-
-/* ============================================================
-   05 — Built for (cream, equal-weight ICPs w/ bespoke vizzes)
-   ============================================================ */
-
-type Icp = {
-  name: string;
-  Viz: () => ReactElement;
-  problem: string;
-  why: string;
-  value: string;
-  sales: string;
-};
-
-const ICPS: Icp[] = [
-  {
-    name: "PropTech",
-    Viz: VizProptech,
-    problem:
-      "Your product already has the buyer or renter on the page. They want decision-grade context about the area at the grain of the property. Building it yourself means stitching together a dozen government APIs and reconciling boundaries.",
-    why:
-      "One typed request to /v1/area returns the seven-category catalog with country-scoped percentiles and per-signal confidence. Pin to the signal keys your model consumes; the contract stays additive.",
-    value:
-      "Weeks of integration replaced by one API key. Comparable percentiles, not raw numbers that mean different things in Cardiff and Manchester.",
-    sales: "Drop one endpoint into your property detail page and ship richer area context than your competitor's roadmap.",
-  },
-  {
-    name: "Insurance and InsureTech",
-    Viz: VizInsurer,
-    problem:
-      "Underwriting needs deterministic, addressable, dated values you can pin a price to and re-derive on audit. Live one-API-per-source fan-outs and trust-our-score report APIs do not survive an actuarial review.",
-    why:
-      "Every Signal carries source_snapshot_id, engine_version, observed_period, and a confidence with a plain-language reason. Bundles let you lock the model to the exact signal keys your tariff uses.",
-    value:
-      "Reproducible inputs you can defend to a regulator. Smaller blast radius on data updates because bundles whitelist what reaches your model.",
-    sales: "Deterministic, dated, pinnable area inputs your actuarial team can sign off.",
-  },
-  {
-    name: "Lenders",
-    Viz: VizLender,
-    problem:
-      "Decisioning at scale needs comparable, percentile-normalised area inputs across the book. Most vendors give you raw numbers that are not comparable across home nations, with no audit trail of what the value was on the date you decisioned.",
-    why:
-      "/v1/area returns national-within-country percentiles; /v1/areas ranks the universe at LSOA grain across a country or LAD. Country scoping is by LSOA code prefix so cross-border methodology lies are structurally impossible.",
-    value:
-      "Concentration analysis and back-tests run against one consistent grain. Audit trail per decision because the wire payload carries lineage.",
-    sales: "Comparable, percentile-normalised, audited area inputs for decisioning at portfolio scale.",
-  },
-  {
-    name: "CRE and site selection",
-    Viz: VizCre,
-    problem:
-      "Picking a site is a ranking problem. Which areas in this LAD meet my thresholds on deprivation, prices and footfall proxies, sorted. You do not want a one-area-at-a-time report API; you want to query the universe.",
-    why:
-      "/v1/areas filters by country, by LAD, by percentile band or raw-value threshold on a chosen signal. Sort by percentile or value, capped at 1000 rows. Drill into the shortlist with /v1/area for the full profile.",
-    value:
-      "Shortlists generated against typed thresholds in one HTTP call instead of geocoding 1000 postcodes through a report API. Output is ready to merge with internal data.",
-    sales: "Threshold-and-rank the LSOA universe in one query, then drill into any area's full profile.",
-  },
-  {
-    name: "Public sector",
-    Viz: VizPublic,
-    problem:
-      "Public-sector analysts need defensible, sourced, dated metrics that will not be challenged in an FOI response or a council briefing. They need to compare like-with-like inside a country, not across a methodological border.",
-    why:
-      "Every Signal carries explicit source, observed_period, confidence and confidence_reason. Normalisation is country-scoped on purpose. We refuse to manufacture a cross-GB deprivation percentile.",
-    value:
-      "An evidence base that holds up under scrutiny. Country-scoped percentiles instead of false-precision cross-border comparisons.",
-    sales: "Defensible, sourced, dated area metrics with the methodology version stamped on every response.",
-  },
-];
-
-/* SectionIcps extracted to shared _shared/product-icp-grid.{tsx,css}
-   in AR-211. Per-product: ICPS data + bespoke Viz functions below. */
-
-/* Bespoke ICP micro-illustrations — each ~120px, dot-and-hairline only.
-   Currentcolor follows the surface; no inline styles. */
-
-function VizProptech() {
-  // listing card with signal overlay
+function Faq() {
   return (
-    <svg className="oga-product-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
-      <rect x="14" y="22" width="92" height="76" rx="2" fill="none" stroke="currentColor" strokeWidth="1" />
-      <line x1="14" y1="50" x2="106" y2="50" stroke="currentColor" strokeWidth="1" opacity="0.45" />
-      {/* signal overlay dots */}
-      <g fill="currentColor">
-        <circle cx="30" cy="64" r="2.2" />
-        <circle cx="44" cy="64" r="2.2" />
-        <circle cx="58" cy="64" r="2.2" />
-        <circle cx="72" cy="64" r="2.2" />
-        <circle cx="86" cy="64" r="2.2" />
-        <circle cx="30" cy="80" r="2.2" opacity="0.4" />
-        <circle cx="44" cy="80" r="2.2" />
-        <circle cx="58" cy="80" r="2.2" opacity="0.4" />
-        <circle cx="72" cy="80" r="2.2" />
-        <circle cx="86" cy="80" r="2.2" opacity="0.4" />
-      </g>
-      {/* corner dot — focal */}
-      <circle cx="14" cy="22" r="3" fill="currentColor" />
-    </svg>
+    <section className="oga-sig-faq" aria-labelledby="sig-faq-title">
+      <div className="oga-sig__wrap oga-sig-faq__grid">
+        <div className="oga-sig-faq__aside">
+          <div className="oga-sig__eyebrow">
+            <span className="oga-sig__eyebrow-mark" aria-hidden />
+            <span>FAQ</span>
+          </div>
+          <h2 id="sig-faq-title" className="oga-sig-faq__h2">Signals, answered.</h2>
+          <p className="oga-sig-faq__note">
+            Still have a question?{" "}
+            <Link href="/docs" className="oga-sig-faq__link">Read the documentation</Link>.
+          </p>
+        </div>
+
+        <div className="oga-sig-faq__list">
+          {FAQ.map((item) => (
+            <details key={item.q} className="oga-sig-faq__item">
+              <summary className="oga-sig-faq__q">
+                <span>{item.q}</span>
+                <span className="oga-sig-faq__icon" aria-hidden />
+              </summary>
+              <div className="oga-sig-faq__a">{item.a}</div>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
-function VizInsurer() {
-  // risk gradient — vertical bands of dot density
+/* ---------- Final CTA (dark) ---------- */
+function FinalCta() {
   return (
-    <svg className="oga-product-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
-      <g fill="currentColor">
-        {[28, 44, 60, 76, 92].map((x, i) => (
-          <g key={x}>
-            {Array.from({ length: 5 }).map((_, r) => (
-              <circle
-                key={r}
-                cx={x}
-                cy={28 + r * 16}
-                r={2 + i * 0.6}
-                opacity={0.2 + i * 0.15}
-              />
-            ))}
-          </g>
-        ))}
-      </g>
-      <line x1="14" y1="106" x2="106" y2="106" stroke="currentColor" strokeWidth="1" />
-    </svg>
+    <section className="oga-sig-cta" data-oga-surface="dark" aria-labelledby="sig-cta">
+      <div className="oga-sig-cta__field" aria-hidden />
+      <div className="oga-sig-cta__inner">
+        <h2 id="sig-cta" className="oga-sig-cta__h2">Use UK area data without building and maintaining separate integrations.</h2>
+        <p className="oga-sig-cta__lead">
+          Bring sourced, comparable and confidence-rated area data into your
+          product through one API.
+        </p>
+        <div className="oga-sig-cta__ctas">
+          <Link href="/playground" className="oga-btn oga-btn-primary">
+            Try in the playground
+            <span aria-hidden>→</span>
+          </Link>
+          <Link href="/docs" className="oga-btn oga-btn-secondary">
+            Read the documentation
+          </Link>
+        </div>
+      </div>
+    </section>
   );
 }
-
-function VizLender() {
-  // portfolio scatter w/ trend line
-  return (
-    <svg className="oga-product-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
-      <line x1="14" y1="100" x2="106" y2="100" stroke="currentColor" strokeWidth="1" />
-      <line x1="14" y1="100" x2="14" y2="20" stroke="currentColor" strokeWidth="1" />
-      {/* scatter */}
-      <g fill="currentColor">
-        <circle cx="26" cy="86" r="2" />
-        <circle cx="34" cy="78" r="2" />
-        <circle cx="42" cy="82" r="2" />
-        <circle cx="50" cy="68" r="2" />
-        <circle cx="58" cy="72" r="2" />
-        <circle cx="66" cy="58" r="2" />
-        <circle cx="74" cy="62" r="2" />
-        <circle cx="82" cy="48" r="2" />
-        <circle cx="90" cy="50" r="2" />
-        <circle cx="98" cy="38" r="2" />
-      </g>
-      {/* trend hairline */}
-      <line x1="22" y1="92" x2="100" y2="34" stroke="currentColor" strokeWidth="1" opacity="0.55" />
-    </svg>
-  );
-}
-
-function VizCre() {
-  // ranked stack
-  return (
-    <svg className="oga-product-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
-      <g fill="currentColor">
-        <circle cx="20" cy="32" r="3" />
-        <line x1="28" y1="32" x2="100" y2="32" stroke="currentColor" strokeWidth="1" />
-        <circle cx="20" cy="50" r="3" opacity="0.7" />
-        <line x1="28" y1="50" x2="84" y2="50" stroke="currentColor" strokeWidth="1" opacity="0.7" />
-        <circle cx="20" cy="68" r="3" opacity="0.55" />
-        <line x1="28" y1="68" x2="72" y2="68" stroke="currentColor" strokeWidth="1" opacity="0.55" />
-        <circle cx="20" cy="86" r="3" opacity="0.4" />
-        <line x1="28" y1="86" x2="58" y2="86" stroke="currentColor" strokeWidth="1" opacity="0.4" />
-        <circle cx="20" cy="104" r="3" opacity="0.3" />
-        <line x1="28" y1="104" x2="48" y2="104" stroke="currentColor" strokeWidth="1" opacity="0.3" />
-      </g>
-    </svg>
-  );
-}
-
-function VizPublic() {
-  // grid of LSOAs w/ one highlighted
-  return (
-    <svg className="oga-product-icp__viz-svg" viewBox="0 0 120 120" aria-hidden>
-      <g fill="currentColor">
-        {Array.from({ length: 6 }).map((_, c) =>
-          Array.from({ length: 6 }).map((_, r) => {
-            const focal = c === 2 && r === 3;
-            return (
-              <circle
-                key={`${c}-${r}`}
-                cx={20 + c * 16}
-                cy={20 + r * 16}
-                r={focal ? 4 : 1.8}
-                opacity={focal ? 1 : 0.45}
-              />
-            );
-          })
-        )}
-      </g>
-      {/* hairline cross through highlighted */}
-      <line x1="52" y1="68" x2="20" y2="68" stroke="currentColor" strokeWidth="1" opacity="0.45" />
-      <line x1="52" y1="68" x2="52" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.45" />
-    </svg>
-  );
-}
-
-/* ============================================================
-   Final CTA (DARK)
-   ============================================================ */
-
-/* FinalCta extracted to shared _shared/product-final-cta.{tsx,css}
-   in AR-211. */

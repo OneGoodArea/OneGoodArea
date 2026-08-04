@@ -29,12 +29,12 @@ const PRODUCTS: Product[] = [
     slug: "signals",
     number: "01",
     name: "Signals",
-    body: "Raw normalized data per area. Every signal carries source, observed period, confidence, normalized value, and country-scoped percentile.",
+    body: "The underlying data for any UK area: crime, prices, deprivation, transport and more. Every value carries its source, its date, and a confidence score.",
     endpoint: { verb: "GET", path: "/v1/area?postcode=…" },
     caps: [
-      "LSOA × month grain, postcode resolution via ONS spine",
-      "Deprivation, crime, property, derived YoY + momentum",
-      "Source lineage on every value",
+      "Neighbourhood-level (LSOA), refreshed monthly, from any UK postcode",
+      "Crime, prices, deprivation, transport, plus year-on-year trends",
+      "The source behind every number",
     ],
     icon: SignalsIcon,
     ready: true,
@@ -43,12 +43,12 @@ const PRODUCTS: Product[] = [
     slug: "scores",
     number: "02",
     name: "Scores",
-    body: "Composite 0-100 score per area. Presets or custom weights. Deterministic frozen engine; same input always returns the same number.",
+    body: "A single 0-100 score for any area, from ready-made presets or your own weights. Repeatable by design: the same area always returns the same score.",
     endpoint: { verb: "POST", path: "/v1/score" },
     caps: [
-      "Three presets or per-dimension custom weights",
-      "Engine version stamped on every response",
-      "Org-level methodology pinning for compliance",
+      "Ready-made presets, or set your own weights",
+      "Every response tells you which version produced it",
+      "Lock a version your team relies on",
     ],
     icon: ScoresIcon,
     ready: true,
@@ -57,12 +57,12 @@ const PRODUCTS: Product[] = [
     slug: "monitor",
     number: "03",
     name: "Monitor",
-    body: "Save a portfolio, enrich it, detect material change month over month. Webhook alerts when a signal moves past your configured threshold.",
+    body: "Track a portfolio of areas and get alerted when something moves. Detects material month-over-month change and calls your webhook the day it happens.",
     endpoint: { verb: "POST", path: "/v1/portfolios/:id/enrich" },
     caps: [
-      "Bulk enrichment for portfolios up to 200 areas",
-      "Monthly change detection with configurable threshold",
-      "signal.changed webhooks delivered to your endpoint",
+      "Enrich portfolios of up to 200 areas at once",
+      "Monthly change detection at a threshold you set",
+      "Signed webhooks when a tracked area moves",
     ],
     icon: MonitorIcon,
     ready: true,
@@ -71,12 +71,12 @@ const PRODUCTS: Product[] = [
     slug: "intelligence",
     number: "04",
     name: "Intelligence",
-    body: "Typed query plane over the store. Ask in JSON or natural language. AI emits the plan; the database answers. Every result is reproducible.",
+    body: "Ask questions in plain English, or send a structured query. You get back a plan you can audit, and the same answer every time.",
     endpoint: { verb: "POST", path: "/v1/query" },
     caps: [
-      "Compound filter + rank, find peers, insights, forecast",
-      "92.9% planner accuracy baseline (14-case corpus)",
-      "Plan echoed on every response for full auditability",
+      "Rank, compare, find similar areas, spot anomalies, forecast",
+      "Every answer comes with the plan that produced it",
+      "Reproducible: the same question returns the same answer",
     ],
     icon: IntelligenceIcon,
     ready: true,
@@ -91,15 +91,15 @@ export function ProductsSection() {
       <div className="oga-products__inner">
         <div className="oga-products__header">
           <span className="oga-products__eyebrow">
-            <span className="oga-products__eyebrow-num">03</span>
+            <span className="oga-products__eyebrow-num">02</span>
             <span className="oga-products__eyebrow-line" aria-hidden />
             Products
           </span>
-          <h2 className="oga-products__title">Four composable building blocks.</h2>
+          <h2 className="oga-products__title">Four products, one API.</h2>
           <p className="oga-products__lead">
-            Signals are the primitive. Scores compose them into a number. Monitor watches them
-            over time. Intelligence queries them in plan-form. Use one. Use all four. Same engine,
-            same lineage, same audit trail.
+            Pull the signals for any UK area, compress them into a score, track them
+            over time, or ask questions across every neighbourhood. Use one product or
+            all four, on the same versioned engine.
           </p>
         </div>
 
