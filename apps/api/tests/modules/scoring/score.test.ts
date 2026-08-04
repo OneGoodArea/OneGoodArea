@@ -32,15 +32,15 @@ describe("parseScoreBody", () => {
     expect(parseScoreBody({ area: "x", preset: "vibes" }).ok).toBe(false);
   });
   it("accepts valid weights over the preset's dimensions", () => {
-    const r = parseScoreBody({ area: "x", preset: "moving", weights: { safety_crime: 40, cost_of_living: 10 } });
-    expect(r.ok && r.query.weights).toEqual({ safety_crime: 40, cost_of_living: 10 });
+    const r = parseScoreBody({ area: "x", preset: "moving", weights: { crime: 40, schools: 10 } });
+    expect(r.ok && r.query.weights).toEqual({ crime: 40, schools: 10 });
   });
   it("rejects a weight key not in the preset's dimensions", () => {
     const r = parseScoreBody({ area: "x", preset: "moving", weights: { price_growth: 50 } });
-    expect(r.ok).toBe(false); // price_growth belongs to 'investing', not 'moving'
+    expect(r.ok).toBe(false); // price_growth is not one of the seven shared keys
   });
   it("rejects non-positive weights", () => {
-    expect(parseScoreBody({ area: "x", weights: { safety_crime: 0 } }).ok).toBe(false);
+    expect(parseScoreBody({ area: "x", weights: { crime: 0 } }).ok).toBe(false);
   });
 });
 

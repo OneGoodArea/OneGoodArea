@@ -9,9 +9,9 @@ import { METHODOLOGY_VERSION, METHODOLOGY_VERSIONS } from "./methodology";
 
    ## Today's contract
 
-   The supported window is the current engine only ("1.0.0"). Any valid
-   pin resolves to METHODOLOGY_VERSION and produces byte-identical SCORE
-   values; confidence metadata may refine between patch releases.
+   The supported window is ["1.0.0", "1.1.0"] (methodology 1.1.0 engine).
+   Any valid pin resolves to METHODOLOGY_VERSION and produces byte-identical
+   SCORE values; confidence metadata may refine between patch releases.
 
    When the next MAJOR ships (a bump that actually changes scoring math),
    the pattern becomes: freeze the current engine module, route the prior
@@ -37,7 +37,7 @@ import { METHODOLOGY_VERSION, METHODOLOGY_VERSIONS } from "./methodology";
    The orgPin is fetched once per request by the endpoint and passed
    in; the resolver stays pure (no DB I/O). See ADR 0031. */
 
-const SUPPORTED_ENGINE_VERSIONS = ["1.0.0"] as const;
+const SUPPORTED_ENGINE_VERSIONS = ["1.0.0", "1.1.0"] as const;
 export type SupportedEngineVersion = (typeof SUPPORTED_ENGINE_VERSIONS)[number];
 
 export function getSupportedEngineVersions(): readonly string[] {
@@ -138,9 +138,10 @@ export function resolveEngineVersion(
     };
   }
 
-  // All v2.x versions in the supported window route to the current engine —
-  // they are score-equivalent. The response header echoes what the caller
-  // asked for; the body's `engine_version` field stamps what actually ran.
+  // All versions in the supported window route to the current engine —
+  // they share the same scoring math. The response header echoes what the
+  // caller asked for; the body's `engine_version` field stamps what actually
+  // ran.
   return {
     ok: true,
     requestedVersion: trimmed,

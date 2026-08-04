@@ -141,7 +141,7 @@ describe("GET /v1/area", () => {
       expect.objectContaining({ area: "M1 1AE", signals: 1, sources: 1 }),
       null,
     );
-    expect(res.headers["x-engine-version"]).toBe("1.0.0");
+    expect(res.headers["x-engine-version"]).toBe("1.1.0");
   });
 
   it("accepts the ?postcode= alias", async () => {

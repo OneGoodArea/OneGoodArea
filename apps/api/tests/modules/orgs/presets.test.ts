@@ -12,27 +12,29 @@ describe("presets/findUnknownWeightKeys", () => {
   it("returns empty when every weight key is in the base_preset's dimension set", () => {
     expect(
       findUnknownWeightKeys("moving", {
-        safety_crime: 0.4,
-        schools_education: 0.1,
-        transport_commute: 0.2,
-        daily_amenities: 0.15,
-        cost_of_living: 0.15,
+        crime: 0.2,
+        deprivation: 0.1,
+        property: 0.2,
+        schools: 0.2,
+        amenities: 0.1,
+        transport: 0.15,
+        environment: 0.05,
       }),
     ).toEqual([]);
   });
 
   it("flags weight keys that aren't in the chosen base_preset's dimension set", () => {
-    // price_growth is an `investing` dimension, not a `moving` dimension.
+    // price_growth is not one of the seven shared keys.
     expect(
       findUnknownWeightKeys("moving", {
-        safety_crime: 0.5,
+        crime: 0.5,
         price_growth: 0.5,
       }),
     ).toEqual(["price_growth"]);
   });
 
   it("returns every unknown key (in iteration order) for a base_preset with zero overlap", () => {
-    // research dimensions vs business weight keys.
+    // Legacy methodology-1.0.0 keys vs the shared seven.
     expect(
       findUnknownWeightKeys("research", {
         foot_traffic_demand: 0.5,
@@ -41,9 +43,9 @@ describe("presets/findUnknownWeightKeys", () => {
     ).toEqual(["competition_density", "foot_traffic_demand"]);
   });
 
-  it("accepts a partial weights map (callers can override 1 of 5 dims)", () => {
-    // Only one weight, but it's a valid dim for `business`.
-    expect(findUnknownWeightKeys("business", { foot_traffic_demand: 2 })).toEqual([]);
+  it("accepts a partial weights map (callers can override 1 of 7 dims)", () => {
+    // Only one weight, but it's a valid shared dim.
+    expect(findUnknownWeightKeys("business", { crime: 2 })).toEqual([]);
   });
 
   it("treats empty weights as valid (the Zod contract refines empty-out)", () => {
@@ -51,6 +53,6 @@ describe("presets/findUnknownWeightKeys", () => {
   });
 
   it("is case-sensitive (dim keys are lower_snake)", () => {
-    expect(findUnknownWeightKeys("moving", { Safety_Crime: 1 })).toEqual(["Safety_Crime"]);
+    expect(findUnknownWeightKeys("moving", { Crime: 1 })).toEqual(["Crime"]);
   });
 });

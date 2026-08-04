@@ -13,7 +13,7 @@ export const engineVersionToolName = "engine_version";
 export const engineVersionToolDef = {
   name: engineVersionToolName,
   description:
-    "Return the current OneGoodArea engine version (e.g. '1.0.0'), release date, and changelog. " +
+    "Return the current OneGoodArea engine version (e.g. '1.1.0'), release date, and changelog. " +
     "Use this when a customer asks 'what version are we on' or for procurement / model-risk documentation. " +
     "The engine version is also stamped on every score_postcode response for audit trails.",
   inputSchema: {

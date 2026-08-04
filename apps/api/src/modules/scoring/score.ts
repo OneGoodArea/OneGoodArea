@@ -7,8 +7,10 @@
    AGGREGATION, which we do here, outside the engine. No AI — scores are
    deterministic. See ADR 0008.
 
-   Each preset uses a DIFFERENT set of five dimensions, so "custom weights" means
-   "override the weights of the chosen preset's dimensions", not "redefine them". */
+   Every preset exposes the SAME seven signal categories (methodology 1.1.0),
+   so "custom weights" means "re-weight the chosen preset's seven dimensions",
+   not "redefine them". Intent is expressed by the engine's per-intent default
+   weights, which callers may override. */
 
 import { fetchAreaSources } from "../signals";
 import { computeScores, type ComputedScores } from "../engine/scoring-engine";
@@ -29,14 +31,16 @@ export function dimensionKey(label: string): string {
   return label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
 }
 
-/** The dimension keys each preset exposes (the valid custom-weight targets). The
-    engine owns the labels; this mirrors them and is drift-guarded by a test that
-    compares against computeScores output. */
+/** The seven signal categories shared by every preset (methodology 1.1.0).
+    The engine owns the labels; this mirrors them and is drift-guarded by a test
+    that compares against computeScores output. */
+const SEVEN_CATEGORY_KEYS = ["crime", "deprivation", "property", "schools", "amenities", "transport", "environment"] as const;
+
 export const PRESET_DIMENSION_KEYS: Record<Intent, readonly string[]> = {
-  moving: ["safety_crime", "schools_education", "transport_commute", "daily_amenities", "cost_of_living"],
-  business: ["foot_traffic_demand", "competition_density", "transport_access", "local_spending_power", "commercial_costs"],
-  investing: ["price_growth", "rental_yield", "regeneration_infrastructure", "tenant_demand", "risk_factors"],
-  research: ["safety_crime", "transport_links", "amenities_services", "demographics_economy", "environment_quality"],
+  moving: [...SEVEN_CATEGORY_KEYS],
+  business: [...SEVEN_CATEGORY_KEYS],
+  investing: [...SEVEN_CATEGORY_KEYS],
+  research: [...SEVEN_CATEGORY_KEYS],
 };
 
 export interface ScoreQuery {

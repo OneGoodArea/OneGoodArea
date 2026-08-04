@@ -105,8 +105,6 @@ interface Benchmarks {
   transport: { stationMultiplier: number; busMultiplier: number; maxBusScore: number };
   schools: { multiplier: number; base: number };
   amenities: { schools: number; food: number; health: number; shops: number; parks: number };
-  footTraffic: { stationWeight: number; busWeight: number; activityWeight: number };
-  tenantDemand: { stationWeight: number; amenityWeight: number };
 }
 
 const BENCHMARKS: Record<AreaType, Benchmarks> = {
@@ -114,22 +112,16 @@ const BENCHMARKS: Record<AreaType, Benchmarks> = {
     transport: { stationMultiplier: 16, busMultiplier: 3.3, maxBusScore: 40 },
     schools: { multiplier: 28, base: 8 },
     amenities: { schools: 8, food: 20, health: 6, shops: 5, parks: 4 },
-    footTraffic: { stationWeight: 15, busWeight: 2, activityWeight: 1.5 },
-    tenantDemand: { stationWeight: 15, amenityWeight: 0.8 },
   },
   suburban: {
     transport: { stationMultiplier: 20, busMultiplier: 4, maxBusScore: 45 },
     schools: { multiplier: 32, base: 10 },
     amenities: { schools: 6, food: 14, health: 4, shops: 4, parks: 3 },
-    footTraffic: { stationWeight: 18, busWeight: 2.5, activityWeight: 1.8 },
-    tenantDemand: { stationWeight: 18, amenityWeight: 1.0 },
   },
   rural: {
     transport: { stationMultiplier: 30, busMultiplier: 6, maxBusScore: 55 },
     schools: { multiplier: 45, base: 15 },
     amenities: { schools: 3, food: 6, health: 2, shops: 2, parks: 2 },
-    footTraffic: { stationWeight: 25, busWeight: 4, activityWeight: 3 },
-    tenantDemand: { stationWeight: 25, amenityWeight: 1.5 },
   },
 };
 
@@ -463,43 +455,6 @@ function scoreCostOfLiving(deprivation: DeprivationData | null, propertyPrices: 
 
 /* ── Business-Specific Scoring ── */
 
-function scoreFootTraffic(amenities: AmenitiesData | null, bench: Benchmarks): ScoreResult {
-  if (!amenities) {
-    return { score: 50, reasoning: "Foot traffic data unavailable", confidence: CONF_NONE, confidence_reason: "No OpenStreetMap data returned for these coordinates" };
-  }
-
-  const ft = bench.footTraffic;
-  const transportFactor = Math.min(amenities.transport_stations * ft.stationWeight + amenities.bus_stops * ft.busWeight, 50);
-  const activityFactor = Math.min((amenities.restaurants_cafes + amenities.pubs_bars + amenities.shops) * ft.activityWeight, 50);
-  const score = clamp(transportFactor + activityFactor, 5, 95);
-
-  const totalActivity = amenities.restaurants_cafes + amenities.pubs_bars + amenities.shops;
-  const reasoning = `${amenities.transport_stations} transit stations and ${amenities.bus_stops} bus stops drive footfall. ${totalActivity} retail/food venues indicate ${totalActivity > 20 ? "a busy" : totalActivity > 10 ? "an active" : "a quieter"} commercial area`;
-  // Confidence: footfall is a proxy in itself — we don't have actual mobile-phone footfall data. Mark MEDIUM.
-  const confidence = totalActivity >= 15 ? CONF_MEDIUM : CONF_LOW;
-  const confidence_reason = `Footfall inferred from ${totalActivity} retail/food venues + transport. Not actual mobile-derived footfall data — directional only`;
-  return { score, reasoning, confidence, confidence_reason };
-}
-
-function scoreCompetition(amenities: AmenitiesData | null): ScoreResult {
-  if (!amenities) {
-    return { score: 50, reasoning: "Competition data unavailable", confidence: CONF_NONE, confidence_reason: "No OpenStreetMap data returned" };
-  }
-
-  const competitors = amenities.restaurants_cafes + amenities.pubs_bars + amenities.shops;
-  // More competitors = lower score (harder to compete)
-  const score = clamp(90 - competitors * 2, 10, 90);
-  const level = competitors <= 10 ? "low competition, room for new entrants"
-    : competitors <= 25 ? "moderate competition, established commercial area"
-    : "high competition, differentiation essential";
-
-  const reasoning = `${competitors} competing food/retail venues within 1km. ${level}`;
-  // Confidence scales with venue density (more data = more reliable count).
-  const confidence = competitors >= 10 ? CONF_HIGH : competitors >= 3 ? CONF_MEDIUM : CONF_LOW;
-  const confidence_reason = `${competitors} competing venues identified in OSM within 1km — ${competitors >= 10 ? "robust" : competitors >= 3 ? "moderate" : "sparse"} signal`;
-  return { score, reasoning, confidence, confidence_reason };
-}
-
 function scoreSpendingPower(deprivation: DeprivationData | null): ScoreResult {
   if (!deprivation) {
     return { score: 50, reasoning: "Spending power data unavailable", confidence: CONF_NONE, confidence_reason: "No deprivation data resolved for the LSOA" };
@@ -672,180 +627,85 @@ function scoreRentalYield(deprivation: DeprivationData | null, amenities: Amenit
   };
 }
 
-function scoreRegeneration(deprivation: DeprivationData | null, amenities: AmenitiesData | null): ScoreResult {
-  if (!deprivation) {
-    return { score: 50, reasoning: "Insufficient data for regeneration assessment", confidence: CONF_NONE, confidence_reason: "No deprivation data resolved for the LSOA" };
-  }
+function scoreInvestmentProperty(
+  deprivation: DeprivationData | null,
+  amenities: AmenitiesData | null,
+  propertyPrices: PropertyPriceData | null,
+): ScoreResult {
+  const growth = scorePriceGrowth(deprivation, amenities, propertyPrices);
+  const rental = scoreRentalYield(deprivation, amenities, propertyPrices);
 
-  const decile = deprivation.imd_decile;
-  let regenScore: number;
-  if (decile <= 4) {
-    regenScore = 60 + (4 - decile) * 5;
-  } else if (decile <= 7) {
-    regenScore = 50;
-  } else {
-    regenScore = 30;
-  }
+  const score = clamp(Math.round((growth.score + rental.score) / 2), 10, 90);
+  const confidence = Math.round(((growth.confidence + rental.confidence) / 2) * 100) / 100;
 
-  const transportBoost = amenities ? Math.min(amenities.transport_stations * 6, 20) : 0;
-  const score = clamp(regenScore + transportBoost, 10, 90);
+  const reasoning = `Investment property composite: ${growth.reasoning} Rental yield: ${rental.reasoning}`;
+  const confidence_reason = `Averaged confidence across price growth and rental yield: ${growth.confidence_reason} ${rental.confidence_reason}`;
 
-  const outlook = decile <= 4 ? "higher deprivation signals regeneration potential"
-    : decile <= 7 ? "moderate area, incremental improvement likely"
-    : "already developed, limited regeneration upside";
-
-  const { index } = getDeprivationContext(deprivation.lsoa_code);
-  const reasoning = `${index} decile ${decile}/10: ${outlook}. ${amenities ? `${amenities.transport_stations} transport links support development case` : ""}`;
-  // Regeneration prediction is inherently speculative — never HIGH confidence.
-  const confidence = amenities ? CONF_MEDIUM : CONF_LOW;
-  const confidence_reason = "Regeneration scoring is forward-looking and inherently uncertain. Based on deprivation level and infrastructure presence, not announced regeneration projects";
   return { score, reasoning, confidence, confidence_reason };
 }
 
-function scoreTenantDemand(amenities: AmenitiesData | null, bench: Benchmarks): ScoreResult {
-  if (!amenities) {
-    return { score: 50, reasoning: "Insufficient data for demand assessment", confidence: CONF_NONE, confidence_reason: "No OpenStreetMap data returned" };
+/* ── Intent Compositions ──
+   Every preset exposes the SAME seven signal categories (crime,
+   deprivation, property, schools, amenities, transport, environment).
+   Labels are the category names so dimensionKey() yields the category
+   slugs. Intent is expressed only through the weights and the property
+   scorer, which stays intent-aware. */
+
+type DimensionSpec = { label: string; weight: number; compute: () => ScoreResult };
+
+interface IntentInputs {
+  crime: CrimeSummary | null;
+  deprivation: DeprivationData | null;
+  amenities: AmenitiesData | null;
+  flood: FloodRiskData | null;
+  bench: Benchmarks;
+  propertyPrices: PropertyPriceData | null;
+  ofsted: OfstedData | null;
+}
+
+function intentSpecs(intent: Intent, i: IntentInputs): DimensionSpec[] {
+  switch (intent) {
+    case "moving":
+      return [
+        { label: "Crime", weight: 20, compute: () => scoreSafety(i.crime) },
+        { label: "Deprivation", weight: 10, compute: () => scoreDemographics(i.deprivation) },
+        { label: "Property", weight: 20, compute: () => scoreCostOfLiving(i.deprivation, i.propertyPrices) },
+        { label: "Schools", weight: 20, compute: () => scoreSchools(i.amenities, i.bench, i.ofsted) },
+        { label: "Amenities", weight: 10, compute: () => scoreAmenities(i.amenities, i.bench, i.ofsted) },
+        { label: "Transport", weight: 15, compute: () => scoreTransport(i.amenities, i.bench) },
+        { label: "Environment", weight: 5, compute: () => scoreEnvironment(i.flood, i.amenities) },
+      ];
+    case "business":
+      return [
+        { label: "Crime", weight: 5, compute: () => scoreSafety(i.crime) },
+        { label: "Deprivation", weight: 15, compute: () => scoreSpendingPower(i.deprivation) },
+        { label: "Property", weight: 15, compute: () => scoreCommercialCosts(i.deprivation, i.propertyPrices) },
+        { label: "Schools", weight: 5, compute: () => scoreSchools(i.amenities, i.bench, i.ofsted) },
+        { label: "Amenities", weight: 25, compute: () => scoreAmenities(i.amenities, i.bench, i.ofsted) },
+        { label: "Transport", weight: 20, compute: () => scoreTransport(i.amenities, i.bench) },
+        { label: "Environment", weight: 15, compute: () => scoreEnvironment(i.flood, i.amenities) },
+      ];
+    case "investing":
+      return [
+        { label: "Crime", weight: 10, compute: () => scoreSafety(i.crime) },
+        { label: "Deprivation", weight: 10, compute: () => scoreDemographics(i.deprivation) },
+        { label: "Property", weight: 30, compute: () => scoreInvestmentProperty(i.deprivation, i.amenities, i.propertyPrices) },
+        { label: "Schools", weight: 5, compute: () => scoreSchools(i.amenities, i.bench, i.ofsted) },
+        { label: "Amenities", weight: 15, compute: () => scoreAmenities(i.amenities, i.bench, i.ofsted) },
+        { label: "Transport", weight: 15, compute: () => scoreTransport(i.amenities, i.bench) },
+        { label: "Environment", weight: 15, compute: () => scoreEnvironment(i.flood, i.amenities) },
+      ];
+    case "research":
+      return [
+        { label: "Crime", weight: 15, compute: () => scoreSafety(i.crime) },
+        { label: "Deprivation", weight: 15, compute: () => scoreDemographics(i.deprivation) },
+        { label: "Property", weight: 14, compute: () => scoreCostOfLiving(i.deprivation, i.propertyPrices) },
+        { label: "Schools", weight: 14, compute: () => scoreSchools(i.amenities, i.bench, i.ofsted) },
+        { label: "Amenities", weight: 14, compute: () => scoreAmenities(i.amenities, i.bench, i.ofsted) },
+        { label: "Transport", weight: 14, compute: () => scoreTransport(i.amenities, i.bench) },
+        { label: "Environment", weight: 14, compute: () => scoreEnvironment(i.flood, i.amenities) },
+      ];
   }
-
-  const td = bench.tenantDemand;
-  const transportScore = Math.min(amenities.transport_stations * td.stationWeight, 40);
-  const amenityScore = Math.min(amenities.total * td.amenityWeight, 30);
-  const busScore = Math.min(amenities.bus_stops * 2, 15);
-  const foodScore = Math.min((amenities.restaurants_cafes + amenities.pubs_bars) * 1.5, 15);
-  const score = clamp(transportScore + amenityScore + busScore + foodScore, 10, 95);
-
-  const reasoning = `${amenities.transport_stations} stations and ${amenities.bus_stops} bus stops create commuter demand. ${amenities.total} local amenities support liveability`;
-  // Tenant demand is inferred from amenity + transport richness, not actual lettings data.
-  const confidence = amenities.total >= 30 ? CONF_MEDIUM : CONF_LOW;
-  const confidence_reason = `Demand inferred from ${amenities.transport_stations} stations and ${amenities.total} local amenities. Not actual lettings volume — directional`;
-  return { score, reasoning, confidence, confidence_reason };
-}
-
-function scoreRiskFactors(crime: CrimeSummary | null, flood: FloodRiskData | null): ScoreResult {
-  const safety = scoreSafety(crime);
-  const env = scoreEnvironment(flood, null);
-
-  // Risk score = average of safety and environment (high = low risk)
-  const score = clamp((safety.score + env.score) / 2, 10, 90);
-
-  const parts: string[] = [];
-  if (crime) {
-    const monthlyRate = crime.total_crimes / Math.max(crime.months_covered, 1);
-    parts.push(`${Math.round(monthlyRate)} crimes/month nearby`);
-  }
-  if (flood) {
-    parts.push(`${flood.flood_areas_nearby} flood risk zone${flood.flood_areas_nearby !== 1 ? "s" : ""} within 3km`);
-    if (flood.active_warnings.length > 0) {
-      parts.push(`${flood.active_warnings.length} active flood warning${flood.active_warnings.length !== 1 ? "s" : ""}`);
-    }
-  }
-  if (parts.length === 0) parts.push("Limited risk data available");
-
-  // Risk confidence: strongest when both crime + flood are present.
-  let confidence: number;
-  let confidence_reason: string;
-  if (crime && flood) {
-    confidence = CONF_HIGH;
-    confidence_reason = "Crime (police.uk) and flood risk (Environment Agency) both available";
-  } else if (crime || flood) {
-    confidence = CONF_MEDIUM;
-    confidence_reason = `Only ${crime ? "crime" : "flood"} data available — ${crime ? "flood" : "crime"} half of risk picture missing`;
-  } else {
-    confidence = CONF_NONE;
-    confidence_reason = "Neither crime nor flood data resolved";
-  }
-
-  return { score, reasoning: parts.join(". "), confidence, confidence_reason };
-}
-
-/* ── Intent Compositions ── */
-
-function computeMovingScores(
-  crime: CrimeSummary | null,
-  deprivation: DeprivationData | null,
-  amenities: AmenitiesData | null,
-  flood: FloodRiskData | null,
-  bench: Benchmarks,
-  areaType: AreaType,
-  propertyPrices: PropertyPriceData | null,
-  ofsted: OfstedData | null,
-): ComputedScores {
-  const dimensions: ComputedDimension[] = [
-    { ...scoreSafety(crime), label: "Safety & Crime", weight: 25 },
-    { ...scoreSchools(amenities, bench, ofsted), label: "Schools & Education", weight: 20 },
-    { ...scoreTransport(amenities, bench), label: "Transport & Commute", weight: 20 },
-    { ...scoreAmenities(amenities, bench, ofsted), label: "Daily Amenities", weight: 15 },
-    { ...scoreCostOfLiving(deprivation, propertyPrices), label: "Cost of Living", weight: 20 },
-  ];
-
-  const overall = Math.round(dimensions.reduce((sum, d) => sum + d.score * d.weight, 0) / 100);
-  const confidence = aggregateConfidence(dimensions);
-  return { overall, dimensions, area_type: areaType, confidence };
-}
-
-function computeBusinessScores(
-  crime: CrimeSummary | null,
-  deprivation: DeprivationData | null,
-  amenities: AmenitiesData | null,
-  bench: Benchmarks,
-  areaType: AreaType,
-  propertyPrices: PropertyPriceData | null,
-): ComputedScores {
-  const dimensions: ComputedDimension[] = [
-    { ...scoreFootTraffic(amenities, bench), label: "Foot Traffic & Demand", weight: 30 },
-    { ...scoreCompetition(amenities), label: "Competition Density", weight: 20 },
-    { ...scoreTransport(amenities, bench), label: "Transport & Access", weight: 15 },
-    { ...scoreSpendingPower(deprivation), label: "Local Spending Power", weight: 20 },
-    { ...scoreCommercialCosts(deprivation, propertyPrices), label: "Commercial Costs", weight: 15 },
-  ];
-
-  const overall = Math.round(dimensions.reduce((sum, d) => sum + d.score * d.weight, 0) / 100);
-  const confidence = aggregateConfidence(dimensions);
-  return { overall, dimensions, area_type: areaType, confidence };
-}
-
-function computeInvestingScores(
-  crime: CrimeSummary | null,
-  deprivation: DeprivationData | null,
-  amenities: AmenitiesData | null,
-  flood: FloodRiskData | null,
-  bench: Benchmarks,
-  areaType: AreaType,
-  propertyPrices: PropertyPriceData | null,
-): ComputedScores {
-  const dimensions: ComputedDimension[] = [
-    { ...scorePriceGrowth(deprivation, amenities, propertyPrices), label: "Price Growth", weight: 25 },
-    { ...scoreRentalYield(deprivation, amenities, propertyPrices), label: "Rental Yield", weight: 25 },
-    { ...scoreRegeneration(deprivation, amenities), label: "Regeneration & Infrastructure", weight: 20 },
-    { ...scoreTenantDemand(amenities, bench), label: "Tenant Demand", weight: 15 },
-    { ...scoreRiskFactors(crime, flood), label: "Risk Factors", weight: 15 },
-  ];
-
-  const overall = Math.round(dimensions.reduce((sum, d) => sum + d.score * d.weight, 0) / 100);
-  const confidence = aggregateConfidence(dimensions);
-  return { overall, dimensions, area_type: areaType, confidence };
-}
-
-function computeResearchScores(
-  crime: CrimeSummary | null,
-  deprivation: DeprivationData | null,
-  amenities: AmenitiesData | null,
-  flood: FloodRiskData | null,
-  bench: Benchmarks,
-  areaType: AreaType,
-  ofsted: OfstedData | null,
-): ComputedScores {
-  const dimensions: ComputedDimension[] = [
-    { ...scoreSafety(crime), label: "Safety & Crime", weight: 20 },
-    { ...scoreTransport(amenities, bench), label: "Transport Links", weight: 20 },
-    { ...scoreAmenities(amenities, bench, ofsted), label: "Amenities & Services", weight: 20 },
-    { ...scoreDemographics(deprivation), label: "Demographics & Economy", weight: 20 },
-    { ...scoreEnvironment(flood, amenities), label: "Environment & Quality", weight: 20 },
-  ];
-
-  const overall = Math.round(dimensions.reduce((sum, d) => sum + d.score * d.weight, 0) / 100);
-  const confidence = aggregateConfidence(dimensions);
-  return { overall, dimensions, area_type: areaType, confidence };
 }
 
 /* Aggregate dimension confidences using the same weight scheme as the
@@ -871,15 +731,15 @@ export function computeScores(
   ofsted: OfstedData | null = null,
 ): ComputedScores {
   const bench = BENCHMARKS[areaType];
+  const inputs: IntentInputs = { crime, deprivation, amenities, flood, bench, propertyPrices, ofsted };
 
-  switch (intent) {
-    case "moving":
-      return computeMovingScores(crime, deprivation, amenities, flood, bench, areaType, propertyPrices, ofsted);
-    case "business":
-      return computeBusinessScores(crime, deprivation, amenities, bench, areaType, propertyPrices);
-    case "investing":
-      return computeInvestingScores(crime, deprivation, amenities, flood, bench, areaType, propertyPrices);
-    case "research":
-      return computeResearchScores(crime, deprivation, amenities, flood, bench, areaType, ofsted);
-  }
+  const dimensions: ComputedDimension[] = intentSpecs(intent, inputs).map(({ label, weight, compute }) => ({
+    ...compute(),
+    label,
+    weight,
+  }));
+
+  const overall = Math.round(dimensions.reduce((sum, d) => sum + d.score * d.weight, 0) / 100);
+  const confidence = aggregateConfidence(dimensions);
+  return { overall, dimensions, area_type: areaType, confidence };
 }

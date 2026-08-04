@@ -53,17 +53,17 @@ const LENDER: AudienceConfig = {
   sections: [
     {
       title: "Affordability & cost",
-      dimensions: ["Cost of Living"],
+      dimensions: ["Property", "Cost of Living"],
       signals: ["property.median_price", "property.price_change_pct", "property.transaction_count"],
     },
     {
       title: "Borrower-side risk",
-      dimensions: ["Safety", "Safety & Crime"],
+      dimensions: ["Crime", "Safety", "Safety & Crime"],
       signals: ["crime.total_12m", "crime.monthly_rate", "environment.flood_areas_nearby", "environment.active_flood_warnings"],
     },
     {
       title: "Long-term value drivers",
-      dimensions: ["Transport", "Transport & Commute", "Schools", "Schools & Education"],
+      dimensions: ["Transport", "Schools", "Transport & Commute", "Schools & Education"],
       signals: ["schools.rated_count", "schools.good_or_outstanding_pct", "transport.stations", "transport.bus_stops"],
     },
   ],
@@ -79,17 +79,17 @@ const INSURER: AudienceConfig = {
   sections: [
     {
       title: "Physical hazard",
-      dimensions: ["Risk Factors"],
+      dimensions: ["Environment", "Risk Factors"],
       signals: ["environment.flood_areas_nearby", "environment.active_flood_warnings"],
     },
     {
       title: "Crime profile",
-      dimensions: ["Safety", "Safety & Crime"],
+      dimensions: ["Crime", "Safety", "Safety & Crime"],
       signals: ["crime.total_12m", "crime.monthly_rate"],
     },
     {
       title: "Building stock & market signals",
-      dimensions: ["Price Growth"],
+      dimensions: ["Property", "Price Growth"],
       signals: ["property.median_price", "property.transaction_count", "property.price_change_pct"],
     },
   ],
@@ -105,12 +105,12 @@ const RETAILER: AudienceConfig = {
   sections: [
     {
       title: "Footfall & spending power",
-      dimensions: ["Foot Traffic", "Local Spending Power", "Spending Power"],
+      dimensions: ["Amenities", "Deprivation", "Foot Traffic", "Local Spending Power", "Spending Power"],
       signals: ["amenities.total", "amenities.restaurants_cafes", "amenities.shops"],
     },
     {
       title: "Competition",
-      dimensions: ["Competition", "Competition Density"],
+      dimensions: ["Amenities", "Competition", "Competition Density"],
       signals: ["amenities.shops", "amenities.pubs_bars", "amenities.restaurants_cafes"],
     },
     {
@@ -120,7 +120,7 @@ const RETAILER: AudienceConfig = {
     },
     {
       title: "Commercial costs",
-      dimensions: ["Commercial Costs"],
+      dimensions: ["Property", "Commercial Costs"],
       signals: ["property.median_price"],
     },
   ],
@@ -136,17 +136,17 @@ const INVESTOR: AudienceConfig = {
   sections: [
     {
       title: "Yield & growth",
-      dimensions: ["Price Growth", "Rental Yield"],
+      dimensions: ["Property", "Price Growth", "Rental Yield"],
       signals: ["property.median_price", "property.price_change_pct", "property.transaction_count"],
     },
     {
       title: "Demand pressure",
-      dimensions: ["Tenant Demand", "Regeneration", "Regeneration & Infrastructure"],
+      dimensions: ["Amenities", "Transport", "Tenant Demand", "Regeneration", "Regeneration & Infrastructure"],
       signals: ["amenities.total", "transport.stations", "transport.bus_stops"],
     },
     {
       title: "Risk discount",
-      dimensions: ["Risk Factors"],
+      dimensions: ["Crime", "Environment", "Risk Factors"],
       signals: ["crime.total_12m", "environment.flood_areas_nearby", "environment.active_flood_warnings"],
     },
   ],

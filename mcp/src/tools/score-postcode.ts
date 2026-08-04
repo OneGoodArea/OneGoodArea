@@ -17,7 +17,7 @@ export const scorePostcodeToolDef = {
   name: scorePostcodeToolName,
   description:
     "Score a UK postcode (or place name) for a given decision preset using the OneGoodArea engine. " +
-    "Returns the overall 0-100 score, five weighted dimensions with confidence + engine-grounded reasoning, " +
+    "Returns the overall 0-100 score, seven weighted dimensions with confidence + engine-grounded reasoning, " +
     "a server-composed one-paragraph summary, actionable recommendations from low-scoring or low-confidence dimensions, " +
     "and the list of public datasets that contributed. Every value is deterministic; the engine version is stamped on every response.",
   inputSchema: {
@@ -35,7 +35,7 @@ export const scorePostcodeToolDef = {
           "Decision context. 'moving' = origination scoring (residential mortgage suitability, demand-side risk). " +
           "'business' = site selection (footfall, competition, commercial viability). " +
           "'investing' = investment scoring (yield, growth, regeneration). " +
-          "'research' = reference scoring (neutral baseline across all five dimensions).",
+          "'research' = reference scoring (neutral baseline across all seven dimensions).",
       },
     },
     required: ["area", "preset"],
