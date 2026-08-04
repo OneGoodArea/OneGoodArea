@@ -6,6 +6,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { ShowcaseScoring } from "@/components/showcase/ShowcaseScoring";
+import type { Preset, ScoreResult, Score } from "@/lib/showcase/types";
 
 vi.mock("@/lib/showcase/api", () => ({
   getScores: vi.fn(),
@@ -15,7 +16,7 @@ import { getScores } from "@/lib/showcase/api";
 
 const mockGetScores = getScores as ReturnType<typeof vi.fn>;
 
-const DIMENSIONS = [
+const DIMENSIONS: Score[] = [
   { id: "crime", name: "Safety & Crime", value: 72, weight: 20, maxValue: 100, product: "scores", confidence: 0.9 },
   { id: "deprivation", name: "Deprivation", value: 55, weight: 10, maxValue: 100, product: "scores", confidence: 0.8 },
   { id: "property", name: "Property Market", value: 80, weight: 20, maxValue: 100, product: "scores", confidence: 0.85 },
@@ -25,12 +26,12 @@ const DIMENSIONS = [
   { id: "environment", name: "Environment & Flood Risk", value: 40, weight: 5, maxValue: 100, product: "scores", confidence: 0.6 },
 ];
 
-function makeResult(overrides?: Partial<{ preset: string; score: number; confidence: number; weights_source: string }>) {
+function makeResult(overrides?: Partial<{ preset: Preset; score: number; confidence: number; weightsSource: "preset" | "custom" }>): ScoreResult {
   return {
-    preset: "business" as const,
+    preset: "business" as Preset,
     score: 62,
     confidence: 0.78,
-    weights_source: "preset" as const,
+    weightsSource: "preset",
     dimensions: DIMENSIONS,
     ...overrides,
   };
@@ -82,8 +83,8 @@ describe("<ShowcaseScoring> (AR-706)", () => {
     });
 
     expect(screen.getByText("Overall score")).toBeInTheDocument();
-    expect(screen.getByText("Safety & Crime")).toBeInTheDocument();
-    expect(screen.getByText("Deprivation")).toBeInTheDocument();
+    expect(screen.getByText("Safety & Crime", { selector: ".text-sm.font-medium" })).toBeInTheDocument();
+    expect(screen.getByText("Deprivation", { selector: ".text-sm.font-medium" })).toBeInTheDocument();
   });
 
   it("switches preset and re-fetches scores", async () => {
