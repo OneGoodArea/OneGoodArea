@@ -1,4 +1,5 @@
 export type Product = "signals" | "scores" | "monitor" | "intelligence";
+export type Preset = "moving" | "business" | "investing" | "research";
 
 export interface Signal {
   id: string;
@@ -14,6 +15,16 @@ export interface Score {
   value: number;
   maxValue: number;
   product: Product;
+  weight: number;
+  confidence: number;
+}
+
+export interface ScoreResult {
+  preset: Preset;
+  score: number;
+  confidence: number;
+  weightsSource: "preset" | "custom";
+  dimensions: Score[];
 }
 
 export interface Weight {
