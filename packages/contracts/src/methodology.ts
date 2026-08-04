@@ -74,10 +74,10 @@ export const METHODOLOGY_VERSIONS: MethodologyVersion[] = [
     version: "1.1.0",
     released_at: "2026-08-04",
     summary:
-      "Intent-aware scoring. Every preset now scores the same seven categories — safety & crime, deprivation, property, schools, amenities, transport, environment — using the full source set; intent changes only how those categories are weighted.",
+      "Intent-aware scoring. Every preset now scores the same seven categories (safety & crime, deprivation, property, schools, amenities, transport, environment) using the full source set; intent changes only how those categories are weighted.",
     changes: [
       "Seven standard dimensions for every preset (safety & crime, deprivation, property, schools, amenities, transport, environment), replacing the previous five-dimension-per-preset sets.",
-      "Intent-aware weighting: the same category contributes differently by decision type — property weighs more for investing, transport for business, deprivation for moving.",
+      "Intent-aware weighting: the same category contributes differently by decision type (property weighs more for investing, transport for business, deprivation for moving).",
       "Business and investing presets now score directly from property and schools signals instead of derived demand proxies.",
       "Custom weights override the chosen preset's weights across the shared seven-dimension key set, so any preset can be tuned on the same categories.",
     ],

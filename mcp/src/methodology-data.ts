@@ -98,7 +98,7 @@ export const ENGINE = {
       version: "1.1.0",
       date: "2026-08-04",
       summary:
-        "Intent-aware scoring. Every preset now scores the same seven categories — safety & crime, deprivation, property, schools, amenities, transport, environment — using the full source set; intent changes only how those categories are weighted.",
+        "Intent-aware scoring. Every preset now scores the same seven categories (safety & crime, deprivation, property, schools, amenities, transport, environment) using the full source set; intent changes only how those categories are weighted.",
     },
   ],
 } as const;
