@@ -26,9 +26,9 @@ function groupByCategory(signals: Signal[]): Record<string, Signal[]> {
 }
 
 function formatValue(s: Signal): string {
-  if (s.score === null || s.score === undefined) return "N/A";
-  if (typeof s.score === "number") return s.score.toLocaleString();
-  return String(s.score);
+  if (s.value === null || s.value === undefined) return "N/A";
+  if (typeof s.value === "number") return s.value.toLocaleString();
+  return String(s.value);
 }
 
 interface Props {

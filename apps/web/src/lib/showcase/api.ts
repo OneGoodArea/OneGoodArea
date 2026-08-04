@@ -41,7 +41,7 @@ export async function getSignals(postcode?: string): Promise<Signal[]> {
     id: s.key,
     name: s.label,
     description: s.confidence_reason,
-    score: s.percentile ?? 0,
+    value: s.value,
     category: s.category,
   }));
 }
@@ -54,10 +54,11 @@ interface ApiDimension {
   confidence: number;
 }
 
-export async function getScores(): Promise<Score[]> {
+export async function getScores(postcode?: string): Promise<Score[]> {
+  const area = postcode ?? "M1 1AE";
   const data = await apiFetch<{ dimensions: ApiDimension[] }>("/v1/score", {
     method: "POST",
-    body: JSON.stringify({ area: "M1 1AE", preset: "business" }),
+    body: JSON.stringify({ area, preset: "business" }),
   });
   return (data.dimensions ?? []).map((d) => ({
     id: d.key,
