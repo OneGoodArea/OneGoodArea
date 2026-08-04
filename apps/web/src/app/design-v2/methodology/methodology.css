@@ -1111,9 +1111,14 @@
 
 .oga-meth-versioning__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.2fr);
   gap: var(--oga-7);
   align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .oga-meth-versioning__grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+  .oga-meth-versioning__history { grid-column: 1 / -1; }
 }
 
 @media (max-width: 960px) {
@@ -1205,6 +1210,84 @@
 
 .oga-meth-versioning__current-meta-key { text-transform: uppercase; letter-spacing: 0.12em; }
 .oga-meth-versioning__current-meta-val { color: var(--oga-fg); margin-left: var(--oga-2); }
+
+.oga-meth-versioning__history {
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  background: var(--oga-white);
+  padding: var(--oga-4) var(--oga-5);
+}
+
+.oga-meth-versioning__history-label {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oga-fg-muted);
+  margin-bottom: var(--oga-3);
+}
+
+.oga-meth-versioning__version {
+  padding: var(--oga-4) 0;
+  border-top: 1px solid var(--oga-border);
+}
+
+.oga-meth-versioning__version:first-of-type { border-top: 0; }
+
+.oga-meth-versioning__version-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--oga-2) var(--oga-3);
+  margin-bottom: var(--oga-2);
+}
+
+.oga-meth-versioning__version-badge {
+  font-family: var(--oga-font-mono);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--oga-fg);
+}
+
+.oga-meth-versioning__version-date {
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  color: var(--oga-fg-muted);
+}
+
+.oga-meth-versioning__version-current-tag {
+  font-family: var(--oga-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-ink);
+  background: var(--oga-ink-06);
+  border: 1px solid var(--oga-border);
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
+.oga-meth-versioning__version-summary {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-fg);
+  margin: 0 0 var(--oga-3);
+}
+
+.oga-meth-versioning__version-changes {
+  margin: 0;
+  padding-left: var(--oga-4);
+  display: grid;
+  gap: var(--oga-2);
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+}
+
+.oga-meth-versioning__version-changes li::marker { color: var(--oga-fg-muted); }
 
 .oga-meth-versioning__pin {
   margin-top: var(--oga-5);
