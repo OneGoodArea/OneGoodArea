@@ -53,6 +53,24 @@ describe("getFloodRisk", () => {
     const r = await getFloodRisk(53.4, -2.2);
     expect(r).toEqual<FloodRiskData>({ flood_areas_nearby: 0, rivers_at_risk: [], active_warnings: [] });
   });
+
+  it("returns partial data when one EA endpoint throws (AR-679)", async () => {
+    /* Previously: Promise.all meant one throw nulled both results.
+       Now: safeFetch wraps each call so one throwing resolves to 503,
+       letting the other succeed. */
+    server.use(
+      http.get(AREAS, () => HttpResponse.error()),
+      http.get(FLOODS, () =>
+        HttpResponse.json({
+          items: [{ description: "Warning", severity: "Flood Warning", severityLevel: 2, message: "" }],
+        })
+      ),
+    );
+    const r = await getFloodRisk(53.4, -2.2);
+    expect(r).not.toBeNull();
+    expect(r!.flood_areas_nearby).toBe(0); // areas failed → 0
+    expect(r!.active_warnings).toHaveLength(1); // warnings succeeded
+  });
 });
 
 describe("getFloodRisk caching (AR-396)", () => {

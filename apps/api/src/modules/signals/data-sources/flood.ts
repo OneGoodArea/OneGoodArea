@@ -84,15 +84,21 @@ export async function getFloodRisk(lat: number, lng: number): Promise<FloodRiskD
   if (cached !== undefined) return cached;
 
   try {
+    /* AR-679: Wrap each fetch so one EA endpoint failing (network error /
+       timeout) doesn't null out the other. The existing `res.ok` guards
+       already handle non-200 responses, so we only need to catch throws. */
+    const safeFetch = async (url: string) => {
+      try {
+        return await fetch(url, { signal: AbortSignal.timeout(FLOOD_TIMEOUT_MS) });
+      } catch (err) {
+        logger.warn("[flood] EA endpoint fetch failed, continuing with partial data", { url, error: err });
+        return new Response(null, { status: 503 });
+      }
+    };
+
     const [areasRes, warningsRes] = await Promise.all([
-      fetch(
-        `https://environment.data.gov.uk/flood-monitoring/id/floodAreas?lat=${lat}&long=${lng}&dist=3`,
-        { signal: AbortSignal.timeout(FLOOD_TIMEOUT_MS) }
-      ),
-      fetch(
-        `https://environment.data.gov.uk/flood-monitoring/id/floods?lat=${lat}&long=${lng}&dist=5`,
-        { signal: AbortSignal.timeout(FLOOD_TIMEOUT_MS) }
-      ),
+      safeFetch(`https://environment.data.gov.uk/flood-monitoring/id/floodAreas?lat=${lat}&long=${lng}&dist=3`),
+      safeFetch(`https://environment.data.gov.uk/flood-monitoring/id/floods?lat=${lat}&long=${lng}&dist=5`),
     ]);
 
     let floodAreas: FloodArea[] = [];
