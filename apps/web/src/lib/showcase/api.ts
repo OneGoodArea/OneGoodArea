@@ -5,7 +5,7 @@ const SHOWCASE_API_KEY = process.env.SHOWCASE_API_KEY ?? "";
 
 async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
+  const timeout = setTimeout(() => controller.abort(), 60_000);
   try {
     const res = await fetch(`${BASE_URL}${path}`, {
       ...init,
@@ -34,8 +34,9 @@ interface ApiSignal {
   confidence_reason: string;
 }
 
-export async function getSignals(): Promise<Signal[]> {
-  const data = await apiFetch<{ signals: ApiSignal[] }>("/v1/area?postcode=M1+1AE");
+export async function getSignals(postcode?: string): Promise<Signal[]> {
+  const area = postcode ?? "M1 1AE";
+  const data = await apiFetch<{ signals: ApiSignal[] }>(`/v1/area?postcode=${encodeURIComponent(area)}`);
   return (data.signals ?? []).map((s) => ({
     id: s.key,
     name: s.label,
