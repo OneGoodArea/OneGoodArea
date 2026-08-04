@@ -49,7 +49,7 @@ const TOOL_GROUPS: ToolGroup[] = [
       {
         name: "score_postcode",
         args: "area, preset",
-        blurb: "Score a UK postcode or place name for a preset (moving, business, investing, research). Returns a 0-100 score, five weighted dimensions with engine-grounded reasoning and confidence, a server-composed summary, recommendations, and data sources.",
+        blurb: "Score a UK postcode or place name for a preset (moving, business, investing, research). Returns a 0-100 score, seven weighted dimensions with engine-grounded reasoning and confidence, a server-composed summary, recommendations, and data sources.",
         example: "Score SW1A 1AA for moving.",
       },
       {

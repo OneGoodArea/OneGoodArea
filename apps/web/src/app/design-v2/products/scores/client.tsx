@@ -264,19 +264,23 @@ function Behind() {
 
 /* ---------- Section 3 (light): setups + your own recipe ---------- */
 const DEFAULT_WEIGHTS: { label: string; w: number }[] = [
-  { label: "Safety & Crime", w: 25 },
-  { label: "Schools & Education", w: 25 },
-  { label: "Transport & Commute", w: 20 },
-  { label: "Daily Amenities", w: 15 },
-  { label: "Cost of Living", w: 15 },
+  { label: "Crime", w: 20 },
+  { label: "Deprivation", w: 10 },
+  { label: "Property", w: 20 },
+  { label: "Schools", w: 20 },
+  { label: "Amenities", w: 10 },
+  { label: "Transport", w: 15 },
+  { label: "Environment", w: 5 },
 ];
 
 const CUSTOM_WEIGHTS: { label: string; w: number }[] = [
-  { label: "Safety & Crime", w: 40 },
-  { label: "Schools & Education", w: 20 },
-  { label: "Transport & Commute", w: 20 },
-  { label: "Daily Amenities", w: 10 },
-  { label: "Cost of Living", w: 10 },
+  { label: "Crime", w: 40 },
+  { label: "Deprivation", w: 10 },
+  { label: "Property", w: 15 },
+  { label: "Schools", w: 10 },
+  { label: "Amenities", w: 10 },
+  { label: "Transport", w: 10 },
+  { label: "Environment", w: 5 },
 ];
 
 function Setups() {
@@ -312,7 +316,7 @@ function Setups() {
             <h3 className="oga-scr-found__cell-title">Pick the setup that fits the job.</h3>
             <p className="oga-scr-found__cell-desc">
               Moving home, choosing a business location, weighing up an investment
-              or a general read. Each setup already weighs up the five things that
+              or a general read. Each setup already weighs up the seven categories that
               matter most for that decision.
             </p>
           </div>
@@ -489,7 +493,7 @@ const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "What are the four setups?",
-    a: "Moving home, choosing a business location, weighing up an investment, and a general research read. Each one focuses on the five things that matter most for that job.",
+    a: "Moving home, choosing a business location, weighing up an investment, and a general research read. Each one focuses on the seven categories that matter most for that job.",
   },
   {
     q: "Can I change what the score cares about?",
@@ -505,7 +509,7 @@ const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "Do I get to see why an area scored the way it did?",
-    a: "Always. Every score opens up into its five parts, how much each one counted, and how confident we are in each.",
+    a: "Always. Every score opens up into its seven parts, how much each one counted, and how confident we are in each.",
   },
   {
     q: "How do I use it?",

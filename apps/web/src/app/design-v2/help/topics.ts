@@ -84,7 +84,7 @@ export const TOPICS: Topic[] = [
     items: [
       {
         q: "What is Scores?",
-        a: "Scores returns a 0-100 number for an area against a named scoring profile, broken down by five dimensions (Safety, Education, Property, Amenities, Transport). Each response shows the dimension values, the weight applied to each, the per-dimension confidence, the preset used, the weights_source, and the engine_version. The number is reproducible byte-for-byte across deploys at the same engine version.",
+        a: "Scores returns a 0-100 number for an area against a named scoring profile, broken down by seven dimensions (Crime, Deprivation, Property, Schools, Amenities, Transport, Environment). Each response shows the dimension values, the weight applied to each, the per-dimension confidence, the preset used, the weights_source, and the engine_version. The number is reproducible byte-for-byte across deploys at the same engine version.",
       },
       {
         q: "What scoring profiles are available?",
@@ -96,7 +96,7 @@ export const TOPICS: Topic[] = [
       },
       {
         q: "Which signals feed into the score?",
-        a: "Each of the five dimensions composes from a known set of signals (e.g. Safety = violent crime + total crime + IMD crime sub-domain). Full mapping is on /methodology under \"Normalization\" and \"Scoring presets\". The composition rule is identical across the four shipped profiles; only the weights differ.",
+        a: "Each of the seven dimensions composes from a known set of signals (e.g. Crime = violent crime + total crime + IMD crime sub-domain). Full mapping is on /methodology under \"Normalization\" and \"Scoring presets\". The composition rule is identical across the four shipped profiles; only the weights differ.",
       },
       {
         q: "Why are scores stable across deploys?",
