@@ -41,20 +41,30 @@ export default function ShowcaseSignals({ initialSignals, initialPostcode }: Pro
   const [input, setInput] = useState(initialPostcode ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [prevPostcode, setPrevPostcode] = useState(initialPostcode);
+
+  if (prevPostcode !== initialPostcode) {
+    setPrevPostcode(initialPostcode);
+    setLoading(false);
+    setError(null);
+  }
 
   const signals = initialSignals;
   const grouped = groupByCategory(signals);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const trimmed = input.trim();
+    const trimmed = input.trim().toUpperCase();
     if (!UK_POSTCODE_RE.test(trimmed)) {
       setError("Please enter a valid UK postcode (e.g. M1 1AE)");
       return;
     }
+    if (trimmed === initialPostcode) {
+      return;
+    }
     setError(null);
     setLoading(true);
-    router.push(`/showcase/proptech?postcode=${encodeURIComponent(trimmed.toUpperCase())}`);
+    router.push(`/showcase/proptech?postcode=${encodeURIComponent(trimmed)}`);
   }
 
   return (
