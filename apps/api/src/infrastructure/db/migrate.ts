@@ -1,15 +1,22 @@
 import { exec } from "./client";
-import { MIGRATIONS, type Migration } from "./schema";
+import { MIGRATIONS, SEEDS, type Migration, type Seed } from "./schema";
 
 /* Standalone, runnable migrator — replaces the legacy per-request
-   ensureXTable() bootstrapping. Runs every migration's idempotent DDL once.
+   ensureXTable() bootstrapping. Runs every migration's idempotent DDL once,
+   then every env-gated seed (the autonomous-install bootstrap data).
 
    Run it explicitly (CI / deploy / local):  npm run migrate -w @onegoodarea/api
 
-   runMigrations() takes an injectable executor so it's unit-testable WITHOUT a
-   live database (the default executor is the real Neon `exec`). */
+   runMigrations()/runSeeds() take an injectable executor so they're
+   unit-testable WITHOUT a live database (the default executor is the real
+   Neon `exec`). */
 
 export interface AppliedMigration {
+  name: string;
+  statements: number;
+}
+
+export interface AppliedSeed {
   name: string;
   statements: number;
 }
@@ -28,6 +35,27 @@ export async function runMigrations(
   return applied;
 }
 
+/** Run every env-gated seed. Seeds whose gate env var is unset are skipped
+    (a no-op), so dev/test environments without secrets stay clean while a
+    fresh production install bootstraps its showcase/operator data. */
+export async function runSeeds(
+  run: (statement: string) => Promise<unknown> = exec,
+  seeds: readonly Seed[] = SEEDS,
+): Promise<AppliedSeed[]> {
+  const applied: AppliedSeed[] = [];
+  for (const seed of seeds) {
+    if (seed.requiresEnv && !process.env[seed.requiresEnv]) {
+      console.log(`[seeds] skip ${seed.name} (${seed.requiresEnv} not set)`);
+      continue;
+    }
+    for (const statement of seed.statements) {
+      await run(statement);
+    }
+    applied.push({ name: seed.name, statements: seed.statements.length });
+  }
+  return applied;
+}
+
 /* CLI entry — runs against the real DATABASE_URL when invoked directly.
    Matches both the local tsx invocation (path ends migrate.ts) AND the
    esbuild-bundled CJS invocation (path ends migrate.cjs) used by the
@@ -37,9 +65,12 @@ const invokedDirectly = Boolean(
 );
 if (invokedDirectly) {
   runMigrations()
-    .then((applied) => {
+    .then(async (applied) => {
       console.log(`[migrate] applied ${applied.length} tables:`);
       for (const a of applied) console.log(`  ✓ ${a.name} (${a.statements} statements)`);
+      const seeds = await runSeeds();
+      console.log(`[seeds] applied ${seeds.length} seeds:`);
+      for (const s of seeds) console.log(`  ✓ ${s.name} (${s.statements} statements)`);
       process.exit(0);
     })
     .catch((err) => {

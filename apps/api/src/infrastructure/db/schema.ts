@@ -11,10 +11,28 @@
    stays the live app's source until the Phase 1 cutover; keep the two in sync
    until then. */
 
+import { createHash } from "node:crypto";
+
 export interface Migration {
   /** Logical table name (for logging + tests). */
   name: string;
   /** Ordered idempotent DDL statements. */
+  statements: string[];
+}
+
+/** One env-driven bootstrap (a "seed"). Seeds are the second phase of the
+    autonomous install: after MIGRATIONS lay down the schema, seeds turn an
+    operator-supplied secret into durable rows (a showcase user + API key,
+    a demo org, …). Same idempotency contract as migrations — every
+    statement must be re-runnable (INSERT … ON CONFLICT DO NOTHING, guarded
+    UPDATE … WHERE … IS NULL, etc.). A seed whose gate env var is unset is
+    skipped entirely, so dev/test environments without secrets stay clean. */
+export interface Seed {
+  /** Logical name (for logging + tests). */
+  name: string;
+  /** Env var that gates the seed. When unset the seed is skipped (no-op). */
+  requiresEnv: string;
+  /** Ordered idempotent bootstrap statements. */
   statements: string[];
 }
 
@@ -1018,6 +1036,49 @@ export const MIGRATIONS: Migration[] = [
           ae.user_id, u.email,
           ae.event,
           ae.metadata->>'client_app'`,
+    ],
+  },
+];
+
+/* ── Seeds ──────────────────────────────────────────────────────────────
+   Env-driven bootstrap data, run AFTER migrations by migrate.ts's runSeeds.
+   These are not schema — they turn an operator-supplied secret into durable
+   rows so a fresh install is fully autonomous (no manual SQL). */
+
+/** Plaintext showcase API key (operator-supplied via env). The DB only ever
+    stores the sha-256 hash — the plaintext lives in the Render + Vercel
+    secrets, never in Postgres or git. */
+const showcaseKey = process.env.SEED_SHOWCASE_API_KEY ?? "";
+const showcaseKeyHash = createHash("sha256").update(showcaseKey).digest("hex");
+const showcaseKeyPreview = showcaseKey
+  ? `${showcaseKey.slice(0, 12)}...${showcaseKey.slice(-4)}`
+  : "";
+
+/** SEEDS: the ordered registry of bootstrap seeds. */
+export const SEEDS: Seed[] = [
+  {
+    // Showcase account backing the public /showcase/* pages. The web app
+    // calls the live API with this key (SHOWCASE_API_KEY on Vercel holds the
+    // same plaintext). Idempotent: re-running on a deployed DB is a no-op
+    // (ON CONFLICT DO NOTHING). Gate env = SEED_SHOWCASE_API_KEY.
+    name: "showcase_proptech",
+    requiresEnv: "SEED_SHOWCASE_API_KEY",
+    statements: [
+      `INSERT INTO users (id, email, name, provider, email_verified)
+       VALUES ('user_showcase_proptech', 'showcase.proptech@onegoodarea.local', 'Showcase Proptech', 'credentials', TRUE)
+       ON CONFLICT (id) DO NOTHING`,
+      `INSERT INTO orgs (id, slug, name)
+       VALUES ('org_user_showcase_proptech', 'showcase-proptech', 'Showcase Proptech workspace')
+       ON CONFLICT (id) DO NOTHING`,
+      `INSERT INTO org_members (org_id, user_id, role)
+       VALUES ('org_user_showcase_proptech', 'user_showcase_proptech', 'owner')
+       ON CONFLICT (org_id, user_id) DO NOTHING`,
+      `INSERT INTO subscriptions (id, user_id, plan, status)
+       VALUES ('sub_showcase_proptech', 'user_showcase_proptech', 'sandbox', 'active')
+       ON CONFLICT (user_id) DO NOTHING`,
+      `INSERT INTO api_keys (id, key_hash, key_prefix, user_id, name, org_id)
+       VALUES ('key_showcase_proptech', '${showcaseKeyHash}', '${showcaseKeyPreview}', 'user_showcase_proptech', 'Showcase Proptech', 'org_user_showcase_proptech')
+       ON CONFLICT (id) DO NOTHING`,
     ],
   },
 ];
