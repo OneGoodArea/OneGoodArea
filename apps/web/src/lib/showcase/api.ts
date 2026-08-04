@@ -1,4 +1,4 @@
-import type { Preset, Score, ScoreResult, Product } from "@/lib/showcase/types";
+import type { Preset, Score, ScoreResult, Product, Signal } from "@/lib/showcase/types";
 
 const BASE_URL = process.env.INTERNAL_API_URL ?? "https://onegoodarea.onrender.com";
 const SHOWCASE_API_KEY = process.env.SHOWCASE_API_KEY ?? "";
