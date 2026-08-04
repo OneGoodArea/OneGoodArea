@@ -365,14 +365,15 @@ export const MIGRATIONS: Migration[] = [
     // CONFLICT (user_id) shapes in those routes. CREATE IF NOT EXISTS is a no-op
     // against prod where the table already exists; this lets a fresh DB run the
     // billing module. user_id is UNIQUE because the routes upsert ON CONFLICT
-    // (user_id); the period + subscription-id columns are nullable because the
-    // webhook nulls them on cancellation.
+    // (user_id). stripe_customer_id is NOT NULL because every write path supplies
+    // it and cancellation keeps it (only the subscription-id + period columns are
+    // nulled); the period + subscription-id columns are nullable for that reason.
     name: "subscriptions",
     statements: [
       `CREATE TABLE IF NOT EXISTS subscriptions (
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL UNIQUE,
-        stripe_customer_id TEXT,
+        stripe_customer_id TEXT NOT NULL,
         stripe_subscription_id TEXT,
         plan TEXT NOT NULL,
         status TEXT NOT NULL,
@@ -1073,8 +1074,8 @@ export const SEEDS: Seed[] = [
       `INSERT INTO org_members (org_id, user_id, role)
        VALUES ('org_user_showcase_proptech', 'user_showcase_proptech', 'owner')
        ON CONFLICT (org_id, user_id) DO NOTHING`,
-      `INSERT INTO subscriptions (id, user_id, plan, status)
-       VALUES ('sub_showcase_proptech', 'user_showcase_proptech', 'sandbox', 'active')
+      `INSERT INTO subscriptions (id, user_id, stripe_customer_id, plan, status)
+       VALUES ('sub_showcase_proptech', 'user_showcase_proptech', 'cus_showcase_proptech', 'sandbox', 'active')
        ON CONFLICT (user_id) DO NOTHING`,
       `INSERT INTO api_keys (id, key_hash, key_prefix, user_id, name, org_id)
        VALUES ('key_showcase_proptech', '${showcaseKeyHash}', '${showcaseKeyPreview}', 'user_showcase_proptech', 'Showcase Proptech', 'org_user_showcase_proptech')
