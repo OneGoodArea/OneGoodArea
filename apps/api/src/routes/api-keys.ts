@@ -5,7 +5,6 @@ import { logger } from "../modules/tracking/structured-logger";
 import { sql } from "../infrastructure/db/client";
 import { rows, row, type ApiKeyRow, type ActivityEventRow } from "../infrastructure/db/types";
 import { createApiKey, listApiKeys, revokeApiKey, setApiKeyTrainingOptout, provisionPlaygroundApiKey } from "../modules/api-keys";
-import { isoOrNull } from "../infrastructure/utils/iso-date";
 import { hasApiAccess, getUserPlan } from "../modules/usage";
 import { PLANS, type PlanId } from "../modules/billing/plans";
 import { ApiKeyUsageResponseSchema, ListApiKeysResponseSchema, CreateApiKeyResponseSchema } from "@onegoodarea/contracts";
@@ -182,13 +181,13 @@ export function registerApiKeysRoutes(app: FastifyInstance): void {
         requestsThisMonth: monthCount.count || 0,
         monthlyLimit: PLANS[plan as PlanId]?.apiCallsPerMonth ?? 100,
         dailyData,
-        lastRequestAt: isoOrNull(lastRow?.created_at),
+        lastRequestAt: lastRow?.created_at ?? null,
         keys: keys.map((k) => ({
           id: k.id,
           key_preview: k.key_preview,
           name: k.name,
-          created_at: isoOrNull(k.created_at) as string, // NOT NULL column
-          last_used_at: isoOrNull(k.last_used_at),
+          created_at: k.created_at,
+          last_used_at: k.last_used_at,
           training_optout: k.training_optout,
         })),
       });

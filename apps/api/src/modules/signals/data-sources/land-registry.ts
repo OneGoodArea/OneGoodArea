@@ -37,13 +37,54 @@ function median(values: number[]): number {
   return sorted.length % 2 ? sorted[mid] : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
 }
 
+/* AR-678: 5-min TTL cache keyed by outcode. Land Registry SPARQL takes ~21s
+   on a cold path; repeated postcodes in the same outcode now pay once. Same
+   LRU pattern as flood.ts / openstreetmap.ts. */
+const PROPERTY_CACHE_TTL_MS = 5 * 60 * 1000;
+const PROPERTY_CACHE_MAX = 1000;
+
+interface PropertyCacheEntry {
+  value: PropertyPriceData | null;
+  expires_at: number;
+}
+
+const propertyCache = new Map<string, PropertyCacheEntry>();
+
+export function clearPropertyCache(): void {
+  propertyCache.clear();
+}
+
+function propertyCacheGet(key: string, now: number): PropertyPriceData | null | undefined {
+  const entry = propertyCache.get(key);
+  if (!entry) return undefined;
+  if (entry.expires_at <= now) {
+    propertyCache.delete(key);
+    return undefined;
+  }
+  propertyCache.delete(key);
+  propertyCache.set(key, entry);
+  return entry.value;
+}
+
+function propertyCacheSet(key: string, value: PropertyPriceData | null, now: number): void {
+  if (propertyCache.size >= PROPERTY_CACHE_MAX && !propertyCache.has(key)) {
+    const oldest = propertyCache.keys().next().value;
+    if (oldest !== undefined) propertyCache.delete(oldest);
+  }
+  propertyCache.set(key, { value, expires_at: now + PROPERTY_CACHE_TTL_MS });
+}
+
 export async function getPropertyPrices(postcode: string): Promise<PropertyPriceData | null> {
+  const outcode = extractOutcode(postcode);
+  const now = Date.now();
+  const cached = propertyCacheGet(outcode, now);
+  if (cached !== undefined) return cached;
+
   try {
-    const outcode = extractOutcode(postcode);
 
     // Query last 24 months for YoY comparison
-    const now = new Date();
-    const twoYearsAgo = new Date(now);
+    const currentDate = new Date();
+    const twoYearsAgo = new Date(currentDate);
     twoYearsAgo.setMonth(twoYearsAgo.getMonth() - 24);
     const startDate = twoYearsAgo.toISOString().split("T")[0];
 
@@ -76,14 +117,14 @@ LIMIT 1500`;
       signal: AbortSignal.timeout(30000),
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) { propertyCacheSet(outcode, null, now); return null; }
 
     const data = (await res.json()) as { results?: { bindings?: SparqlBinding[] } };
     const bindings: SparqlBinding[] = data?.results?.bindings || [];
-    if (bindings.length === 0) return null;
+    if (bindings.length === 0) { propertyCacheSet(outcode, null, now); return null; }
 
     // Split into current year (last 12 months) and prior year (12-24 months ago)
-    const oneYearAgo = new Date(now);
+    const oneYearAgo = new Date(currentDate);
     oneYearAgo.setMonth(oneYearAgo.getMonth() - 12);
     const oneYearAgoStr = oneYearAgo.toISOString().split("T")[0];
 
@@ -105,7 +146,7 @@ LIMIT 1500`;
       }
     }
 
-    if (currentYear.length === 0) return null;
+    if (currentYear.length === 0) { propertyCacheSet(outcode, null, now); return null; }
 
     // Current year stats
     const currentPrices = currentYear.map(t => t.price);
@@ -149,7 +190,7 @@ LIMIT 1500`;
       return dt.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
     };
 
-    return {
+    const result: PropertyPriceData = {
       postcode_area: outcode,
       median_price: medianPrice,
       mean_price: meanPrice,
@@ -158,10 +199,13 @@ LIMIT 1500`;
       by_property_type: byPropertyType,
       tenure_split: { freehold, leasehold },
       price_range: { min: Math.min(...currentPrices), max: Math.max(...currentPrices) },
-      period: `${fmtMonth(oldest)} to ${fmtMonth(now.toISOString())}`,
+      period: `${fmtMonth(oldest)} to ${fmtMonth(currentDate.toISOString())}`,
       prior_median: priorMedian,
     };
+    propertyCacheSet(outcode, result, now);
+    return result;
   } catch {
+    propertyCacheSet(outcode, null, now);
     return null;
   }
 }

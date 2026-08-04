@@ -7,6 +7,7 @@
    back, scoped to the caller. */
 
 import { z } from "zod";
+import { IsoDateTimeSchema } from "./common";
 
 /** A single row from activity_events. The `metadata` field is freeform
     JSONB so we don't pin a schema for it here; consumers handle
@@ -21,7 +22,7 @@ export const ActivityEventSchema = z.object({
   /** Freeform event metadata, recorded at trackEvent time. */
   metadata: z.record(z.string(), z.unknown()),
   /** ISO timestamp. */
-  created_at: z.string(),
+  created_at: IsoDateTimeSchema,
 }).strict();
 export type ActivityEvent = z.infer<typeof ActivityEventSchema>;
 

@@ -5,8 +5,6 @@
 
 export const APP_URL = process.env.NEXTAUTH_URL || "https://www.onegoodarea.com";
 
-export const SUPERUSER_EMAILS = ["ptengelmann@gmail.com"];
-
 export const EMAIL_FROM = "OneGoodArea <noreply@onegoodarea.com>";
 
 export const RATE_LIMITS = {

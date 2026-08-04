@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { OrgSchema, OrgRoleSchema } from "./orgs";
+import { IsoDateTimeSchema } from "./common";
 
 export { ListWebhooksResponseSchema, CreatedWebhookSchema } from "./webhooks";
 
@@ -12,8 +13,8 @@ const PortfolioAreaSchema = z.object({
 const PortfolioRowSchema = z.object({
   id: z.string(),
   name: z.string(),
-  created_at: z.string(),
-  updated_at: z.string(),
+  created_at: IsoDateTimeSchema,
+  updated_at: IsoDateTimeSchema,
   area_count: z.number(),
   areas: z.array(PortfolioAreaSchema),
 });
@@ -85,13 +86,13 @@ export const DashboardResponseSchema = z.object({
   primaryKey: z.object({
     key_prefix: z.string().nullable(),
     name: z.string(),
-    last_used_at: z.string().nullable(),
+    last_used_at: IsoDateTimeSchema.nullable(),
   }).nullable(),
   latestCall: z.object({
     preset: z.string(),
     area: z.string(),
     score: z.number(),
-    created_at: z.string(),
+    created_at: IsoDateTimeSchema,
   }).nullable(),
 });
 
@@ -107,7 +108,7 @@ const SavedAreaSchema = z.object({
   postcode: z.string(),
   label: z.string().nullable(),
   intent: z.string().nullable(),
-  created_at: z.string(),
+  created_at: IsoDateTimeSchema,
 });
 
 export const WatchlistResponseSchema = z.object({

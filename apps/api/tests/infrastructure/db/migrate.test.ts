@@ -1,9 +1,14 @@
-import { describe, it, expect, vi } from "vitest";
-import { runMigrations } from "@/infrastructure/db/migrate";
-import { MIGRATIONS } from "@/infrastructure/db/schema";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { runMigrations, runSeeds } from "@/infrastructure/db/migrate";
+import { MIGRATIONS, SEEDS } from "@/infrastructure/db/schema";
 
-/* Tests run WITHOUT a database — runMigrations takes an injected executor, so
-   we assert the migrator's behaviour + the registry's safety properties. */
+/* Tests run WITHOUT a database — runMigrations/runSeeds take an injected
+   executor, so we assert the migrator's behaviour + the registry's safety
+   properties. */
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 describe("db migrate", () => {
   it("runs every migration statement, in order, via the injected executor", async () => {
@@ -103,5 +108,64 @@ describe("db migrate", () => {
     expect(ddl).toMatch(/ADD COLUMN IF NOT EXISTS intent TEXT/i);
     expect(ddl).toMatch(/ADD COLUMN IF NOT EXISTS signup_source TEXT/i);
     expect(ddl).toMatch(/ADD COLUMN IF NOT EXISTS role_preference TEXT/i);
+  });
+});
+
+describe("db seeds", () => {
+  it("runs every gate-satisfied seed statement, in order, via the injected executor", async () => {
+    vi.stubEnv("SEED_SHOWCASE_API_KEY", "test-showcase-key");
+
+    const calls: string[] = [];
+    const run = vi.fn(async (statement: string) => {
+      calls.push(statement);
+    });
+
+    const applied = await runSeeds(run);
+
+    const totalStatements = SEEDS.reduce((n, s) => n + s.statements.length, 0);
+    expect(run).toHaveBeenCalledTimes(totalStatements);
+    expect(calls.length).toBe(totalStatements);
+    expect(applied.map((a) => a.name)).toEqual(SEEDS.map((s) => s.name));
+  });
+
+  it("skips seeds whose gate env var is unset (no-op for dev/test)", async () => {
+    const run = vi.fn(async () => {});
+
+    const applied = await runSeeds(run, [
+      {
+        name: "gated",
+        requiresEnv: "DEFINITELY_NOT_SET_ANYWHERE",
+        statements: ["INSERT INTO whatever ... ON CONFLICT DO NOTHING"],
+      },
+    ]);
+
+    expect(run).not.toHaveBeenCalled();
+    expect(applied).toEqual([]);
+  });
+
+  it("every seed statement is idempotent (safe to re-run)", () => {
+    for (const seed of SEEDS) {
+      for (const statement of seed.statements) {
+        const s = statement.toUpperCase();
+        const idempotent =
+          s.includes("IF NOT EXISTS") ||
+          s.includes("IF EXISTS") ||
+          /ON CONFLICT[\s\S]*DO NOTHING/.test(s) ||
+          /(WHERE|AND) [A-Z_.]+ IS NULL/.test(s) ||
+          /AND NOT EXISTS \(SELECT/.test(s);
+        expect(idempotent, `non-idempotent seed statement: ${statement.slice(0, 70)}`).toBe(true);
+      }
+    }
+  });
+
+  it("has no duplicate seed names", () => {
+    const names = SEEDS.map((s) => s.name);
+    expect(new Set(names).size).toBe(names.length);
+  });
+
+  it("showcase_proptech seed is gated on SEED_SHOWCASE_API_KEY", () => {
+    const showcase = SEEDS.find((s) => s.name === "showcase_proptech");
+    expect(showcase, "showcase_proptech seed must exist").toBeDefined();
+    expect(showcase!.requiresEnv).toBe("SEED_SHOWCASE_API_KEY");
   });
 });

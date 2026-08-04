@@ -70,18 +70,8 @@ export function personalOrgId(userId: string): string {
 /* ── row → DTO shapers (pure) ────────────────────────────────────────── */
 
 /* AR-389: postgres returns TIMESTAMPTZ columns as JS Date objects.
-   The previous String(date) called Date.prototype.toString() →
-   "Wed May 27 2026 23:50:10 GMT+0000 (Coordinated Universal Time)"
-   while every other surface in the API returns ISO-8601 strings.
-   Surfaced by E2E 2026-06-12 finding #4 and re-confirmed 06-30 via
-   /v1/orgs/:id/members returning "Wed May 27 2026..." in joined_at. */
-function toIso(v: unknown): string {
-  if (v instanceof Date) return v.toISOString();
-  if (typeof v === "number") return new Date(v).toISOString();
-  // Already a string — pass through. If the pg driver is configured
-  // without the timestamp parser this is what we'd see.
-  return String(v ?? "");
-}
+   AR-636: row()/rows() normalize Date→ISO upstream (AR-664), so the
+   values reaching these shapers are already ISO strings. */
 
 function orgFromRow(r: OrgRow): Org {
   return {
@@ -91,8 +81,8 @@ function orgFromRow(r: OrgRow): Org {
     display_name: r.display_name ?? null,
     brand_url: r.brand_url ?? null,
     logo_url: r.logo_url ?? null,
-    created_at: toIso(r.created_at),
-    updated_at: toIso(r.updated_at),
+    created_at: r.created_at,
+    updated_at: r.updated_at,
   };
 }
 
@@ -101,7 +91,7 @@ function memberFromRow(r: OrgMemberRow): OrgMember {
     org_id: r.org_id,
     user_id: r.user_id,
     role: r.role,
-    joined_at: toIso(r.joined_at),
+    joined_at: r.joined_at,
     /* AR-310: email/name come from the LEFT JOIN in listMembers. Null on
        legacy rows where the user record was deleted; default to empty
        string so the contract's email type stays string (the strict

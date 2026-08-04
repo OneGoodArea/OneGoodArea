@@ -211,11 +211,11 @@ describe("provisionPlaygroundApiKey (AR-595, Plan 059.3)", () => {
 describe("listApiKeys / revokeApiKey", () => {
   it("maps the projected preview rows", async () => {
     mockSql.mockResolvedValue([
-      { id: "key_1", key_preview: "oga_01234567...efXY", name: "Default", created_at: "2026-01-01", last_used_at: null },
+      { id: "key_1", key_preview: "oga_01234567...efXY", name: "Default", created_at: "2026-01-01T09:00:00.000Z", last_used_at: null },
     ] as never);
     const list = await listApiKeys("user_1");
     expect(list).toEqual([
-      { id: "key_1", key_preview: "oga_01234567...efXY", name: "Default", created_at: "2026-01-01", last_used_at: null },
+      { id: "key_1", key_preview: "oga_01234567...efXY", name: "Default", created_at: "2026-01-01T09:00:00.000Z", last_used_at: null },
     ]);
   });
 

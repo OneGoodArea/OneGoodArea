@@ -17,9 +17,9 @@ export const metadata: Metadata = {
   title: "Admin Analytics | OneGoodArea",
 };
 
-/* AR-313 Phase 0: gate is DB-backed via users.is_superuser (AR-312).
-   The previous hardcoded ADMIN_EMAILS list is gone — toggling admin
-   access is now a single UPDATE, no deploy.
+/* AR-313 Phase 0: gate was DB-backed via users.is_superuser (AR-312).
+   AR-654: replaced with userType check from JWT session — no BFF
+   round-trip needed. Admin pages are gated on userType ∈ {admin, superuser}.
 
    Phase 1: fetch audience composite alongside the legacy analytics +
    traffic blobs. All three populate different tabs; one round-trip per
@@ -29,11 +29,9 @@ export default async function AdminPage() {
   const userId = session?.user?.id;
   if (!userId) redirect("/sign-in?callbackUrl=/admin");
 
-  const { data: gate } = await callApi<{ is_superuser: boolean }>(
-    "/me/is-superuser",
-    { userId },
-  );
-  if (!gate?.is_superuser) redirect("/dashboard");
+  const userType = session?.user?.userType;
+  const isAdmin = userType === "admin" || userType === "superuser";
+  if (!isAdmin) redirect("/dashboard");
 
   const [
     analyticsRes,

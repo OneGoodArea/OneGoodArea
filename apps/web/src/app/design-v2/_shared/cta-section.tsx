@@ -56,6 +56,10 @@ export function CtaSection() {
             Read the methodology
             <span aria-hidden>→</span>
           </Link>
+          <Link href="/showcase/proptech" className="oga-btn oga-btn-lg oga-btn-secondary">
+            Explore workflows
+            <span aria-hidden>→</span>
+          </Link>
         </div>
 
         <div className="oga-cta__foot" aria-hidden>

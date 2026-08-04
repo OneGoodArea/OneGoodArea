@@ -30,6 +30,7 @@ WORKDIR /app
 # be present to resolve the workspace tree, hence apps/web's manifest is copied
 # even though its source is not (the API does not run it).
 COPY package.json package-lock.json ./
+COPY eslint.config.mjs ./
 COPY apps/api/package.json ./apps/api/
 COPY apps/web/package.json ./apps/web/
 COPY packages/contracts/package.json ./packages/contracts/

@@ -23,6 +23,7 @@ vi.mock("@/infrastructure/rate-limit", async (orig) => ({
   rateLimit: vi.fn(),
 }));
 vi.mock("@/modules/usage", () => ({
+  resolveUserType: vi.fn(),
   isSuperuser: vi.fn(),
   getUserPlan: vi.fn(),
   canMakeApiCall: vi.fn(),
@@ -46,7 +47,7 @@ import { buildApp } from "@/app";
 import { sql } from "@/infrastructure/db/client";
 import { validateApiKey } from "@/modules/api-keys";
 import { rateLimit } from "@/infrastructure/rate-limit";
-import { isSuperuser, getUserPlan, hasApiAccess, canMakeApiCall } from "@/modules/usage";
+import { isSuperuser, getUserPlan, hasApiAccess, canMakeApiCall, resolveUserType } from "@/modules/usage";
 import { runQuery } from "@/modules/intelligence";
 
 const app = await buildApp();
@@ -54,6 +55,7 @@ const mockSql = vi.mocked(sql);
 const mockValidate = vi.mocked(validateApiKey);
 const mockRate = vi.mocked(rateLimit);
 const mockIsSuperuser = vi.mocked(isSuperuser);
+const mockResolveUserType = vi.mocked(resolveUserType);
 const mockGetUserPlan = vi.mocked(getUserPlan);
 const mockHasApiAccess = vi.mocked(hasApiAccess);
 const mockRunQuery = vi.mocked(runQuery);
@@ -72,6 +74,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockRate.mockResolvedValue({ success: true, remaining: 29, reset: 0 });
   mockHasApiAccess.mockResolvedValue(true);
+  mockResolveUserType.mockResolvedValue("user");
   vi.mocked(canMakeApiCall).mockResolvedValue({ allowed: true, plan: "sandbox", used: 0, limit: 200 } as never);
   mockRunQuery.mockResolvedValue({ ok: true, response: { plan: { op: "get_area" }, plan_source: "client" } } as never);
 });
@@ -111,7 +114,6 @@ describe("Tiered playground access — cross-tier integration (AR-599, Plan 059.
   it("basic: a real API key with no plan/tier override resolves to basic, 200 within quota", async () => {
     mockSql.mockImplementation(routeQuery(null) as never);
     mockValidate.mockResolvedValue({ userId: "user_basic", orgId: null } as never);
-    mockIsSuperuser.mockResolvedValue(false);
     mockGetUserPlan.mockResolvedValue("sandbox" as never);
     const res = await postQuery({ authorization: "Bearer oga_basic" });
     expect(res.statusCode).toBe(200);
@@ -120,7 +122,6 @@ describe("Tiered playground access — cross-tier integration (AR-599, Plan 059.
   it("high_tier: a real API key on a paid plan resolves to high_tier and is exempt from the free-tier backstop", async () => {
     mockSql.mockImplementation(routeQuery(null) as never);
     mockValidate.mockResolvedValue({ userId: "user_paid", orgId: null } as never);
-    mockIsSuperuser.mockResolvedValue(false);
     mockGetUserPlan.mockResolvedValue("build" as never);
     // Even if the shared free-tier bucket is exhausted, high_tier never touches it.
     mockRate.mockImplementation(async (identifier) =>
@@ -135,7 +136,7 @@ describe("Tiered playground access — cross-tier integration (AR-599, Plan 059.
   it("superuser: unlimited quota — never calls rateLimit at all", async () => {
     mockSql.mockImplementation(routeQuery(null) as never);
     mockValidate.mockResolvedValue({ userId: "staff_1", orgId: null } as never);
-    mockIsSuperuser.mockResolvedValue(true);
+    mockResolveUserType.mockResolvedValue("superuser");
     const res = await postQuery({ authorization: "Bearer oga_staff" });
     expect(res.statusCode).toBe(200);
     expect(mockRate).not.toHaveBeenCalled();

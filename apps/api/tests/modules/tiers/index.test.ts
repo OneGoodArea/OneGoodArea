@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
 vi.mock("@/modules/usage", () => ({
-  isSuperuser: vi.fn(),
+  resolveUserType: vi.fn(),
   getUserPlan: vi.fn(),
 }));
 vi.mock("@/infrastructure/rate-limit", () => ({
@@ -10,14 +10,14 @@ vi.mock("@/infrastructure/rate-limit", () => ({
 }));
 
 import { sql } from "@/infrastructure/db/client";
-import { isSuperuser, getUserPlan } from "@/modules/usage";
+import { resolveUserType, getUserPlan } from "@/modules/usage";
 import { rateLimit } from "@/infrastructure/rate-limit";
 import { RATE_LIMITS } from "@/infrastructure/config";
 import { getAiConfig } from "@/modules/ai/config";
 import { resolveTier, checkQuota, decideLlm, TIERS } from "@/modules/tiers/index";
 
 const mockSql = vi.mocked(sql);
-const mockIsSuperuser = vi.mocked(isSuperuser);
+const mockResolveUserType = vi.mocked(resolveUserType);
 const mockGetUserPlan = vi.mocked(getUserPlan);
 const mockRateLimit = vi.mocked(rateLimit);
 
@@ -27,7 +27,7 @@ function routeQuery(strings: TemplateStringsArray): Promise<unknown[]> {
     return Promise.resolve([{ tier: db.tier }]);
   }
   if (q.includes("FROM users WHERE id")) {
-    return Promise.resolve([{ email: "test@test.com", is_superuser: false, tier: db.tier }]);
+    return Promise.resolve([{ email: "test@test.com", tier: db.tier }]);
   }
   if (q.includes("FROM subscriptions")) {
     return Promise.resolve(db.plan ? [{ plan: db.plan }] : []);
@@ -41,8 +41,8 @@ beforeEach(() => {
   db = { tier: "basic", plan: "sandbox" };
   mockSql.mockReset();
   mockSql.mockImplementation(routeQuery as never);
-  mockIsSuperuser.mockReset();
-  mockIsSuperuser.mockResolvedValue(false);
+  mockResolveUserType.mockReset();
+  mockResolveUserType.mockResolvedValue("user");
   mockGetUserPlan.mockReset();
   mockGetUserPlan.mockResolvedValue("sandbox");
   mockRateLimit.mockReset();
@@ -55,8 +55,8 @@ describe("resolveTier", () => {
     expect(tier).toBe("anonymous");
   });
 
-  it("returns superuser when is_superuser is true", async () => {
-    mockIsSuperuser.mockResolvedValue(true);
+  it("returns superuser when user_type is 'superuser'", async () => {
+    mockResolveUserType.mockResolvedValue("superuser");
     const tier = await resolveTier({ userId: "u1", hasApiKey: true });
     expect(tier).toBe("superuser");
   });

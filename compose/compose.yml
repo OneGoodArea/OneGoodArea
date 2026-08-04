@@ -57,12 +57,14 @@ services:
       NEON_FETCH_ENDPOINT: http://neon-proxy:55433/sql
       AUTH_SECRET: replace-me
       NEXTAUTH_URL: http://localhost:3000
-      OGA_AI_PROVIDER: mock
       OGA_EMAIL_PROVIDER: mailhog
       OGA_EMAIL_HOST: mailhog
       OGA_SIGNALS_API: "true"
       OGA_SIGNALS_STORE_READ: "true"
       CRON_SECRET: replace-me
+      # Env-gated showcase seed (see schema.ts SEEDS). Unset -> skipped, so
+      # local dev stays clean unless SEED_SHOWCASE_API_KEY is exported.
+      SEED_SHOWCASE_API_KEY: ${SEED_SHOWCASE_API_KEY:-}
     depends_on:
       neon-proxy:
         condition: service_healthy
@@ -84,6 +86,8 @@ services:
       NEXTAUTH_URL: http://localhost:3000
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       INTERNAL_API_URL: http://api:8080
+      # Showcase bearer; must equal the api's SEED_SHOWCASE_API_KEY (same plaintext).
+      SHOWCASE_API_KEY: ${SHOWCASE_API_KEY:-}
     depends_on:
       api:
         condition: service_started
@@ -109,6 +113,21 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@onegoodarea.com
       PGADMIN_DEFAULT_PASSWORD: admin
       PGADMIN_CONFIG_SERVER_MODE: "False"
+      # No master password prompt — saved server passwords are used directly.
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+      # Declarative server list: reloaded from servers.json on every boot
+      # (self-healing even if the config DB is wiped).
+      PGADMIN_REPLACE_SERVERS_ON_STARTUP: "True"
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+      # libpq-level password auto-fill (backup; primary is SavePassword in servers.json).
+      PGPASS_FILE: /pgadmin4/pgpass
+    volumes:
+      # Named volume, not a bind mount: avoids the host-UID mismatch that
+      # blocked pgAdmin (container runs as UID 5050). Keeps the config DB
+      # (server list, prefs) across container recreations.
+      - oga-pgadmin-data:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - ./pgadmin/pgpass:/pgadmin4/pgpass:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -118,3 +137,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+
+volumes:
+  oga-pgadmin-data:

@@ -14,7 +14,7 @@
 
 import type { QueryRequest, QueryResponse, PlannerError } from "@onegoodarea/contracts";
 import { QueryRequestSchema } from "@onegoodarea/contracts";
-import { getAiProvider, getAiProviderForTier, type AiProvider } from "../ai/provider-factory";
+import { getAiProviderForTier, type AiProvider } from "../ai/provider-factory";
 import type { Tier } from "../tiers";
 import { plan as planFromNl } from "./planner";
 import { executePlan } from "./executor";
@@ -40,10 +40,10 @@ export function parseQueryRequest(body: unknown): { ok: true; req: QueryRequest 
 
 /** Either programmatic-mode (plan executed directly) OR NL-mode (plan first
     translated via the AiProvider, then executed). AiProvider is injected in
-    tests; in prod it defaults to the configured Anthropic/Mock provider,
-    or — when `tier` is given (AR-597, Plan 059.5) — to the model/provider
-    that tier maps to. `aiProvider` (when passed) always wins, so existing
-    test call sites that inject a mock provider directly are unaffected. */
+    tests; in prod it defaults to the strategy provider for the given tier
+    (AR-597, Plan 059.5), falling back to the basic tier when none is passed.
+    `aiProvider` (when passed) always wins, so existing test call sites that
+    inject a mock provider directly are unaffected. */
 export async function runQuery(
   req: QueryRequest,
   aiProvider: AiProvider | undefined = undefined,
@@ -53,15 +53,16 @@ export async function runQuery(
     const response = await executePlan(req.plan, { planSource: "client" });
     return { ok: true, response };
   }
-  // NL mode — strict typed failure on planner errors. AnthropicAiProvider's
-  // constructor throws when ANTHROPIC_API_KEY is missing; that is a
-  // configuration / runtime issue that belongs in the typed llm_error path
-  // (-> 422) rather than as a 500. We catch the construction here.
+  // NL mode — strict typed failure on planner errors. Provider construction
+  // throws when no configured provider is usable (e.g. every API key in the
+  // tier's strategy chain is missing); that is a configuration / runtime
+  // issue that belongs in the typed llm_error path (-> 422) rather than as
+  // a 500. We catch the construction here.
   let provider: AiProvider;
   if (aiProvider) {
     provider = aiProvider;
   } else {
-    try { provider = tier ? getAiProviderForTier(tier) : getAiProvider(); }
+    try { provider = getAiProviderForTier(tier ?? "basic"); }
     catch (err) {
       return { ok: false, error: { code: "llm_error", message: err instanceof Error ? err.message : String(err) } };
     }

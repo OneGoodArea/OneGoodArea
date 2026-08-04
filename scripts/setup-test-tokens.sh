@@ -4,7 +4,8 @@
 # Setup Test Tokens
 #
 # Programmatically creates all auth tokens needed for API testing.
-# Registers a test user, creates API key, and extracts session token.
+# Registers a test user, creates API key, extracts session token,
+# promotes user to superadmin, and extracts admin session token.
 #
 # Usage:
 #   source scripts/setup-test-tokens.sh
@@ -28,12 +29,11 @@ echo "User: $TEST_EMAIL"
 echo ""
 
 # === 1. Bootstrap API Key ===
-echo "Step 1/3: Creating API key..."
+echo "Step 1/5: Creating API key..."
 API_KEY=$(make scripts-bootstrap-test-key ARGS="--email $TEST_EMAIL --plan sandbox" 2>/dev/null | grep -oP 'oga_\w+' | head -1 || echo "")
 
 if [ -z "$API_KEY" ]; then
   echo "⚠ Could not bootstrap API key via make. Trying direct DB approach..."
-  # Fallback: would need direct DB access
   echo "Run 'make scripts-bootstrap-test-key' manually and set OGA_API_KEY"
   API_KEY=""
 else
@@ -41,7 +41,7 @@ else
 fi
 
 # === 2. Register Test User ===
-echo "Step 2/3: Registering test user..."
+echo "Step 2/5: Registering test user..."
 REGISTER_RESPONSE=$(curl -s -X POST "$API_DOMAIN/auth/register" \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"$TEST_EMAIL\",\"password\":\"$TEST_PASSWORD\"}")
@@ -57,18 +57,15 @@ else
 fi
 
 # === 3. Get Session Token ===
-echo "Step 3/3: Getting session token..."
+echo "Step 3/5: Getting session token..."
 
-# Create temporary cookie jar
 COOKIE_JAR=$(mktemp)
 trap "rm -f $COOKIE_JAR" EXIT
 
-# Login and capture session cookie
 curl -s -c "$COOKIE_JAR" -X POST "$API_DOMAIN/auth/login" \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"$TEST_EMAIL\",\"password\":\"$TEST_PASSWORD\"}" > /dev/null
 
-# Extract session token
 SESSION=$(grep -oP 'next-auth\.session-token\s+\K\S+' "$COOKIE_JAR" | tail -1 || echo "")
 
 if [ -z "$SESSION" ]; then
@@ -78,8 +75,44 @@ else
   echo "✓ SESSION_TOKEN: ${SESSION:0:20}..."
 fi
 
-# === 4. Get CRON Secret ===
+# === 4. Promote to Superuser ===
+echo "Step 4/5: Promoting to superuser..."
+
+ADMIN_SESSION=""
+NEON_FETCH_ENDPOINT="${NEON_FETCH_ENDPOINT:-}"
+PROMOTE_DB_URL="${DATABASE_URL:-}"
+
+if [ -n "$PROMOTE_DB_URL" ]; then
+  PROMOTE_OUTPUT=$(NEON_FETCH_ENDPOINT="$NEON_FETCH_ENDPOINT" DATABASE_URL="$PROMOTE_DB_URL" node scripts/promote-superuser.mjs --email "$TEST_EMAIL" 2>&1 || echo "")
+  if echo "$PROMOTE_OUTPUT" | grep -q "✓"; then
+    echo "$PROMOTE_OUTPUT"
+
+    # Re-login to get a superuser session token
+    ADMIN_COOKIE_JAR=$(mktemp)
+    curl -s -c "$ADMIN_COOKIE_JAR" -X POST "$API_DOMAIN/auth/login" \
+      -H "Content-Type: application/json" \
+      -d "{\"email\":\"$TEST_EMAIL\",\"password\":\"$TEST_PASSWORD\"}" > /dev/null
+
+    ADMIN_SESSION=$(grep -oP 'next-auth\.session-token\s+\K\S+' "$ADMIN_COOKIE_JAR" | tail -1 || echo "")
+    rm -f "$ADMIN_COOKIE_JAR"
+
+    if [ -n "$ADMIN_SESSION" ]; then
+      echo "✓ ADMIN_SESSION_TOKEN: ${ADMIN_SESSION:0:20}..."
+    else
+      echo "⚠ Could not extract admin session token"
+    fi
+  else
+    echo "⚠ Could not promote to superuser"
+    echo "  Set DATABASE_URL and NEON_FETCH_ENDPOINT to enable admin endpoint testing"
+  fi
+else
+  echo "⚠ DATABASE_URL not set; skipping superuser promotion"
+  echo "  Set DATABASE_URL and NEON_FETCH_ENDPOINT to enable admin endpoint testing"
+fi
+
+# === 5. Get CRON Secret ===
 echo ""
+echo "Step 5/5: Loading CRON secret..."
 CRON=""
 if [ -f "apps/api/.env.local" ]; then
   CRON=$(grep -oP 'CRON_SECRET=\K.+' apps/api/.env.local || echo "")
@@ -100,6 +133,11 @@ fi
 if [ -n "$SESSION" ]; then
   export OGA_SESSION_TOKEN="$SESSION"
   echo "  export OGA_SESSION_TOKEN='$SESSION'"
+fi
+
+if [ -n "$ADMIN_SESSION" ]; then
+  export OGA_ADMIN_SESSION_TOKEN="$ADMIN_SESSION"
+  echo "  export OGA_ADMIN_SESSION_TOKEN='$ADMIN_SESSION'"
 fi
 
 if [ -n "$CRON" ]; then

@@ -11,19 +11,16 @@ export const metadata: Metadata = {
 };
 
 /* AR-313 Phase 0 + Phase 1: kept in sync with /admin/page.tsx so the
-   design-v2 preview surface renders the same shape. Gate is DB-backed
-   via users.is_superuser (AR-312); the previous hardcoded ADMIN_EMAILS
-   list is gone. */
+   design-v2 preview surface renders the same shape. AR-654: gate now
+   reads userType from JWT session — no BFF round-trip needed. */
 export default async function DesignV2AdminPage() {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) redirect("/sign-in?callbackUrl=/design-v2/admin");
 
-  const { data: gate } = await callApi<{ is_superuser: boolean }>(
-    "/me/is-superuser",
-    { userId },
-  );
-  if (!gate?.is_superuser) redirect("/dashboard");
+  const userType = session?.user?.userType;
+  const isAdmin = userType === "admin" || userType === "superuser";
+  if (!isAdmin) redirect("/dashboard");
 
   const [
     analyticsRes,

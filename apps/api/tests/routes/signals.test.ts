@@ -4,7 +4,7 @@ vi.mock("@/modules/api-keys", () => ({ validateApiKey: vi.fn() }));
 vi.mock("@/infrastructure/rate-limit", () => ({ rateLimit: vi.fn(), rateLimitHeaders: () => ({}) }));
 vi.mock("@/modules/usage", () => ({ hasApiAccess: vi.fn(), canMakeApiCall: vi.fn() }));
 /* AR-547: requireApiAccess resolves the caller's tier (AR-499), and resolveTier
-   reads isSuperuser/getUserPlan from the fully-replaced usage mock above. Stub
+   uses resolveUserType/getUserPlan from the fully-replaced usage mock above. Stub
    the resolution only, keeping checkQuota real so the rateLimit mock still
    drives the 429 assertions. */
 vi.mock("@/modules/tiers", async (orig) => ({

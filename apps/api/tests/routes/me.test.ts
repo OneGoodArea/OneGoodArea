@@ -13,6 +13,7 @@ vi.mock("@/modules/usage", () => ({
   trackMcpCall: vi.fn(),
   isSuperuser: vi.fn(),
   getUserTier: vi.fn(),
+  resolveUserType: vi.fn(),
 }));
 /* AR-547: see signals.test.ts — stub tier resolution, keep checkQuota real. */
 vi.mock("@/modules/tiers", async (orig) => ({
@@ -53,6 +54,7 @@ import {
   getMcpUsageThisMonth,
   isSuperuser,
   getUserTier,
+  resolveUserType,
 } from "@/modules/usage";
 import { sql } from "@/infrastructure/db/client";
 import { METHODOLOGY_VERSION } from "@/modules/engine/methodology";
@@ -84,6 +86,7 @@ const mockListWebhooks = vi.mocked(listWebhookSubscriptions);
 const mockRevokeWebhook = vi.mocked(revokeWebhookSubscription);
 const mockRotateWebhook = vi.mocked(rotateWebhookSecret);
 const mockGetUserTier = vi.mocked(getUserTier);
+const mockResolveUserType = vi.mocked(resolveUserType);
 
 const JSON_HEADERS = { "content-type": "application/json" };
 const SESSION_AUTH = { authorization: "Bearer session.jwt" };
@@ -100,6 +103,7 @@ beforeEach(() => {
   mockQuota.mockResolvedValue({ allowed: true, plan: "sandbox", used: 3, limit: 200 } as never);
   mockAddons.mockResolvedValue([]);
   mockMcpUsage.mockResolvedValue(0);
+  mockResolveUserType.mockResolvedValue("user");
   // Defaults for track and watchlist:
   mockSql.mockResolvedValue([] as never);
   mockSessionVerify.mockResolvedValue({ userId: "user_1" });
@@ -179,12 +183,10 @@ describe("GET /me/activity", () => {
     expect(body.page_size).toBe(20);
   });
 
-  /* AR-629: the Neon driver returns activity_events.created_at as a Date, not
-     a string. The event was passed through raw, so the Zod response serializer
-     (ActivityEventSchema.created_at is z.string()) rejected the Date and
-     /me/activity 500'd. The choke-point coercion (hybridSerializerCompiler)
-     converts Date -> ISO before validation. The earlier test masked this by
-     mocking created_at as a string. */
+   /* AR-664: row()/rows() normalize Date→ISO upstream, so the
+      event's created_at is already an ISO string by the time it
+      reaches the Zod serializer. The earlier test mocked
+      created_at as a string to avoid the Date→ISO normalization. */
   it("serialises a driver Date created_at to an ISO string (does not 500)", async () => {
     const createdAt = new Date("2026-06-09T12:00:00.000Z");
     mockSql
@@ -324,6 +326,16 @@ describe("POST /track", () => {
     expect(params[1]).toBeNull();
   });
 
+  it("accepts null referrer without 400/500 cascade (AR-677)", async () => {
+    const res = await postTrack({ path: "/area/m1", referrer: null, sessionId: null });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ ok: true });
+    expect(mockSql).toHaveBeenCalledTimes(1);
+    const params = mockSql.mock.calls[0].slice(1);
+    expect(params[1]).toBeNull();
+    expect(params[4]).toBeNull();
+  });
+
   it("never fails visibly: returns ok even if the insert throws", async () => {
     mockSql.mockRejectedValue(new Error("db down"));
     const res = await postTrack({ path: "/area/m1" });
@@ -386,7 +398,7 @@ describe("GET /watchlist", () => {
 
   it("returns the caller's saved areas", async () => {
     mockSql.mockResolvedValue([
-      { id: "sa_1", postcode: "M1 1AE", label: "Home", intent: "moving", created_at: "2026-05-25" },
+      { id: "sa_1", postcode: "M1 1AE", label: "Home", intent: "moving", created_at: "2026-05-25T09:00:00.000Z" },
     ] as never);
     const res = await app.inject({ method: "GET", url: "/watchlist", headers: { ...SESSION_AUTH, "content-type": "application/json" } });
     expect(res.statusCode).toBe(200);
@@ -418,7 +430,7 @@ describe("POST /watchlist", () => {
 
   it("normalises the postcode and saves (201)", async () => {
     mockSql.mockResolvedValue([
-      { id: "sa_1", postcode: "M1 1AE", label: "Home", intent: "moving", created_at: "x" },
+      { id: "sa_1", postcode: "M1 1AE", label: "Home", intent: "moving", created_at: "2026-01-01T09:00:00.000Z" },
     ] as never);
     const res = await postWatchlist({ postcode: " m1 1ae ", label: " Home ", intent: "moving" });
     expect(res.statusCode).toBe(201);
@@ -728,13 +740,13 @@ describe("GET /me/portfolios", () => {
     mockSql
       .mockResolvedValueOnce([{ total: 2 }] as never)
       .mockResolvedValueOnce([
-        { id: "p_1", name: "London", created_at: "2026-01-01", updated_at: "2026-01-02" },
-        { id: "p_2", name: "Manchester", created_at: "2026-01-03", updated_at: "2026-01-03" },
+        { id: "p_1", name: "London", created_at: "2026-01-01T09:00:00.000Z", updated_at: "2026-01-02T09:00:00.000Z" },
+        { id: "p_2", name: "Manchester", created_at: "2026-01-03T09:00:00.000Z", updated_at: "2026-01-03T09:00:00.000Z" },
       ] as never)
       .mockResolvedValueOnce([
-        { id: "pa_1", portfolio_id: "p_1", area: "SW1A 1AA", label: "Westminster", created_at: "2026-01-01" },
-        { id: "pa_2", portfolio_id: "p_1", area: "EC1A 1BB", label: null, created_at: "2026-01-02" },
-        { id: "pa_3", portfolio_id: "p_2", area: "M1 1AA", label: "City", created_at: "2026-01-03" },
+        { id: "pa_1", portfolio_id: "p_1", area: "SW1A 1AA", label: "Westminster", created_at: "2026-01-01T09:00:00.000Z" },
+        { id: "pa_2", portfolio_id: "p_1", area: "EC1A 1BB", label: null, created_at: "2026-01-02T09:00:00.000Z" },
+        { id: "pa_3", portfolio_id: "p_2", area: "M1 1AA", label: "City", created_at: "2026-01-03T09:00:00.000Z" },
       ] as never);
     const res = await app.inject({ method: "GET", url: "/me/portfolios", headers: SESSION_AUTH });
     expect(res.statusCode).toBe(200);
@@ -879,5 +891,40 @@ describe("GET /me/tier", () => {
     });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ tier: "basic" });
+  });
+});
+
+// ── me-user-type.test.ts ──────────────────────────────────────────
+// AR-654: /me/user-type replaces the deprecated /me/is-superuser.
+
+describe("GET /me/user-type", () => {
+  it("401s when the session token is missing", async () => {
+    const res = await app.inject({ method: "GET", url: "/me/user-type" });
+    expect(res.statusCode).toBe(401);
+    expect(mockResolveUserType).not.toHaveBeenCalled();
+  });
+
+  it("returns the caller's user_type", async () => {
+    mockSessionVerify.mockResolvedValue({ userId: "user_1" });
+    mockResolveUserType.mockResolvedValue("superuser");
+    const res = await app.inject({
+      method: "GET",
+      url: "/me/user-type",
+      headers: { authorization: "Bearer good-token" },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ user_type: "superuser" });
+  });
+
+  it("returns 'user' for a normal user", async () => {
+    mockSessionVerify.mockResolvedValue({ userId: "user_1" });
+    mockResolveUserType.mockResolvedValue("user");
+    const res = await app.inject({
+      method: "GET",
+      url: "/me/user-type",
+      headers: { authorization: "Bearer good-token" },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ user_type: "user" });
   });
 });

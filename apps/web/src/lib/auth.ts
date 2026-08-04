@@ -159,12 +159,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.userId = user.id;
+        /* AR-654: fetch userType from the DB so admin pages can gate
+           on the user_type column without a separate BFF round-trip. */
+        try {
+          const rows = await sql`SELECT user_type FROM users WHERE id = ${user.id} LIMIT 1`;
+          if (rows.length > 0 && rows[0].user_type) {
+            token.userType = rows[0].user_type as string;
+          }
+        } catch {
+          // Soft-fail: userType will be absent from the token.
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (token.userId) {
         session.user.id = token.userId as string;
+      }
+      if (token.userType) {
+        session.user.userType = token.userType as string;
       }
       return session;
     },

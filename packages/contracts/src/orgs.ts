@@ -4,6 +4,7 @@
    window). See ADR 0027 (Foundation) + ADR 0028 (this commit). */
 
 import { z } from "zod";
+import { IsoDateTimeSchema } from "./common";
 
 /** Roles in priority order (owner > admin > member). RBAC checks live in
     the orgs module + endpoint guards. The full admin-honouring rule set
@@ -29,8 +30,8 @@ export const OrgSchema = z.object({
   display_name: z.string().nullable().optional(),
   brand_url: z.string().nullable().optional(),
   logo_url: z.string().nullable().optional(),
-  created_at: z.string(),
-  updated_at: z.string(),
+  created_at: IsoDateTimeSchema,
+  updated_at: IsoDateTimeSchema,
 }).strict();
 export type Org = z.infer<typeof OrgSchema>;
 
@@ -43,7 +44,7 @@ export const OrgMemberSchema = z.object({
   org_id: z.string().min(1),
   user_id: z.string().min(1),
   role: OrgRoleSchema,
-  joined_at: z.string(),
+  joined_at: IsoDateTimeSchema,
   email: z.string(),
   name: z.string().nullable(),
 }).strict();

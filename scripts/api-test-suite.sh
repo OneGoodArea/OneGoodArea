@@ -3,7 +3,7 @@
 ################################################################################
 # OneGoodArea API Test Suite
 # 
-# Tests all 68 endpoints with curl, using parameterized domain and auth tokens.
+# Tests all 84 endpoints with curl, using parameterized domain and auth tokens.
 #
 # Usage:
 #   ./scripts/api-test-suite.sh DOMAIN [API_KEY] [SESSION_COOKIE] [CRON_SECRET]
@@ -14,9 +14,10 @@
 #   ./scripts/api-test-suite.sh https://localhost:8080 oga_test1234... session_jwt...
 #
 # Environment variables (fallbacks):
-#   OGA_API_KEY         - API Bearer token (oga_...)
-#   OGA_SESSION_TOKEN   - Session JWT cookie value
-#   OGA_CRON_SECRET     - CRON_SECRET Bearer token
+#   OGA_API_KEY              - API Bearer token (oga_...)
+#   OGA_SESSION_TOKEN        - Session JWT cookie value
+#   OGA_ADMIN_SESSION_TOKEN  - Admin session JWT cookie value (superuser)
+#   OGA_CRON_SECRET          - CRON_SECRET Bearer token
 #
 ################################################################################
 
@@ -26,6 +27,7 @@ set -e
 DOMAIN="${1:-localhost:8080}"
 API_KEY="${2:-${OGA_API_KEY:-}}"
 SESSION_TOKEN="${3:-${OGA_SESSION_TOKEN:-}}"
+ADMIN_SESSION="${OGA_ADMIN_SESSION_TOKEN:-}"
 CRON_SECRET="${4:-${OGA_CRON_SECRET:-}}"
 
 # Normalize domain: add scheme if missing
@@ -77,6 +79,14 @@ test_endpoint() {
       fi
       cmd="$cmd -H 'Cookie: next-auth.session-token=$SESSION_TOKEN'"
       ;;
+    "Admin")
+      if [ -z "$ADMIN_SESSION" ]; then
+        echo -e "${YELLOW}⊘ SKIPPED${NC} $method $path (auth: $auth) - missing ADMIN_SESSION"
+        SKIPPED=$((SKIPPED + 1))
+        return
+      fi
+      cmd="$cmd -H 'Cookie: next-auth.session-token=$ADMIN_SESSION'"
+      ;;
     "CRON")
       if [ -z "$CRON_SECRET" ]; then
         echo -e "${YELLOW}⊘ SKIPPED${NC} $method $path (auth: $auth) - missing CRON_SECRET"
@@ -116,7 +126,7 @@ print_section() {
 
 echo -e "${BLUE}OneGoodArea API Test Suite${NC}"
 echo "Domain: $DOMAIN"
-echo "Auth tokens: API=$([ -n "$API_KEY" ] && echo "✓" || echo "✗") Session=$([ -n "$SESSION_TOKEN" ] && echo "✓" || echo "✗") CRON=$([ -n "$CRON_SECRET" ] && echo "✓" || echo "✗")"
+echo "Auth tokens: API=$([ -n "$API_KEY" ] && echo "✓" || echo "✗") Session=$([ -n "$SESSION_TOKEN" ] && echo "✓" || echo "✗") Admin=$([ -n "$ADMIN_SESSION" ] && echo "✓" || echo "✗") CRON=$([ -n "$CRON_SECRET" ] && echo "✓" || echo "✗")"
 
 print_section "Health & Meta"
 test_endpoint "GET" "/health" "Public" "" "Liveness probe"
@@ -228,6 +238,38 @@ test_endpoint "POST" "/track" "Public" '{"path":"/report","referrer":"https://go
 
 print_section "Cron (1)"
 test_endpoint "GET" "/cron/rescore?dry_run=true&limit=5" "CRON" "" "Rescore (dry run)"
+
+print_section "Me: Activity (1)"
+test_endpoint "GET" "/me/activity" "Session" "" "My activity log"
+
+print_section "Me: User Info (2)"
+test_endpoint "GET" "/me/user-type" "Session" "" "My user type"
+test_endpoint "GET" "/me/tier" "Session" "" "My tier"
+
+print_section "Me: Webhooks (4)"
+test_endpoint "GET" "/me/webhooks" "Session" "" "List my webhooks"
+test_endpoint "POST" "/me/webhooks" "Session" '{"url":"https://example.com/hook","events":["signal.changed"]}' "Create my webhook"
+test_endpoint "DELETE" "/me/webhooks/wh_123" "Session" "" "Delete my webhook"
+test_endpoint "POST" "/me/webhooks/wh_123/rotate-secret" "Session" "" "Rotate webhook secret"
+
+print_section "Me: Portfolios (1)"
+test_endpoint "GET" "/me/portfolios" "Session" "" "List my portfolios"
+
+print_section "Admin (8) [Requires Superuser]"
+ADMIN_SESSION="${OGA_ADMIN_SESSION_TOKEN:-}"
+if [ -n "$ADMIN_SESSION" ]; then
+  test_endpoint "GET" "/admin/analytics" "Admin" "" "Admin analytics"
+  test_endpoint "GET" "/admin/traffic-analytics" "Admin" "" "Admin traffic analytics"
+  test_endpoint "GET" "/admin/audience" "Admin" "" "Admin audience"
+  test_endpoint "GET" "/admin/usage" "Admin" "" "Admin usage"
+  test_endpoint "GET" "/admin/revenue" "Admin" "" "Admin revenue"
+  test_endpoint "GET" "/admin/mcp-adoption" "Admin" "" "Admin MCP adoption"
+  test_endpoint "GET" "/admin/training-corpus" "Admin" "" "Admin training corpus"
+  test_endpoint "POST" "/admin/users/user_123/tier" "Admin" '{"tier":"business"}' "Set user tier"
+else
+  echo -e "${YELLOW}⊘ SKIPPED${NC} Admin endpoints - missing OGA_ADMIN_SESSION_TOKEN"
+  SKIPPED=$((SKIPPED + 8))
+fi
 
 # === Summary ===
 echo ""

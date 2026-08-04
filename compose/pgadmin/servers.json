@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Local Postgres",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "oga_local",
+      "Username": "oga_user",
+      "SavePassword": "TRUE",
+      "SSLMode": "prefer"
+    }
+  }
+}

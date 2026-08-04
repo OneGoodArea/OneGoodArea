@@ -5,6 +5,7 @@
    later. Scoped to a user today; to an org when Levers land. */
 
 import { z } from "zod";
+import { IsoDateTimeSchema } from "./common";
 import { ScoreResultSchema } from "./scores";
 
 /** One area tracked in a portfolio. */
@@ -12,7 +13,7 @@ export const PortfolioAreaSchema = z.object({
   id: z.string(),
   area: z.string(),
   label: z.string().nullable(),
-  created_at: z.string().optional(),
+  created_at: IsoDateTimeSchema.optional(),
 });
 export type PortfolioArea = z.infer<typeof PortfolioAreaSchema>;
 
@@ -38,7 +39,7 @@ export const PortfolioSchema = z.object({
   id: z.string(),
   name: z.string(),
   area_count: z.number().optional(),
-  created_at: z.string().optional(),
+  created_at: IsoDateTimeSchema.optional(),
 });
 export type Portfolio = z.infer<typeof PortfolioSchema>;
 
@@ -86,6 +87,6 @@ export const ChangeReportSchema = z.object({
   areas_checked: z.number(),
   material_count: z.number(),
   changes: z.array(SignalChangeSchema),     // material changes only
-  generated_at: z.string(),
+  generated_at: IsoDateTimeSchema,
 });
 export type ChangeReport = z.infer<typeof ChangeReportSchema>;
