@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
-import type { ScoreResult, Preset } from "@/lib/showcase/types";
+import type { ScoreResult, Score, Preset } from "@/lib/showcase/types";
 import { INTENTS, INTENT_WORKFLOW } from "@onegoodarea/contracts";
 import { getScores } from "@/lib/showcase/api";
 import { WeightInput } from "./weight-input";
@@ -11,7 +11,10 @@ interface ShowcaseScoringProps {
   initialResult?: ScoreResult;
 }
 
-function computeOverall(dimensions: { value: number; weight: number }[], customWeights: Map<string, number>): number {
+function computeOverall(
+  dimensions: Array<{ id: string; value: number; weight: number }>,
+  customWeights: Map<string, number>,
+): number {
   const totalWeight = dimensions.reduce((s, d) => s + (customWeights.get(d.id) ?? d.weight), 0) || 1;
   return Math.round(dimensions.reduce((s, d) => s + d.value * (customWeights.get(d.id) ?? d.weight), 0) / totalWeight);
 }
