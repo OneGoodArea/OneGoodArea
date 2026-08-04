@@ -18,6 +18,22 @@ type Month = { month: string; updatedAt: string; entries: Entry[] };
 
 const CHANGELOG: Month[] = [
   {
+    month: "August 2026",
+    updatedAt: "2026-08-04",
+    entries: [
+      {
+        type: "improvement",
+        title: "Methodology 1.1.0 — intent-aware scoring.",
+        description: "Every preset now scores the same seven categories (safety & crime, deprivation, property, schools, amenities, transport, environment) using the full source set. Intent changes only how those categories are weighted: property weighs more for investing, transport for business, deprivation for moving.",
+      },
+      {
+        type: "improvement",
+        title: "Custom weights on any preset.",
+        description: "Override the chosen preset's weights across the shared seven-dimension set, so any preset can be tuned on the same categories. Responses keep stamping engine_version and X-Engine-Version for model risk registers.",
+      },
+    ],
+  },
+  {
     month: "July 2026",
     updatedAt: "2026-07-08",
     entries: [
@@ -34,7 +50,7 @@ const CHANGELOG: Month[] = [
       {
         type: "feature",
         title: "Scores.",
-        description: "Deterministic 0-100 composites over five weighted dimensions per preset. No AI in the scoring path: the same input and engine version produce the same number every time. Every response is versioned and pinnable via the X-Engine-Version header for model risk registers.",
+        description: "Deterministic 0-100 composites over the seven category dimensions per preset. No AI in the scoring path: the same input and engine version produce the same number every time. Every response is versioned and pinnable via the X-Engine-Version header for model risk registers.",
       },
       {
         type: "feature",

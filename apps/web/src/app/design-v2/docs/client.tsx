@@ -116,9 +116,9 @@ const PRODUCTS: Product[] = [
     name: "Scores",
     Icon: ScoresIcon,
     body:
-      "Deterministic composite scoring. Pick one of four presets (moving, business, investing, research), each with its own five dimensions. Override the weights per request, or save a preset against your org. No AI in the scoring path; the engine version is stamped on every response.",
+      "Deterministic composite scoring. Pick one of four presets (moving, business, investing, research), each weighting the same seven dimensions differently. Override the weights per request, or save a preset against your org. No AI in the scoring path; the engine version is stamped on every response.",
     caps: [
-      "Four presets, each with a different five-dimension set",
+      "Four presets, each with a different weighting of the same seven dimensions",
       "Custom per-request weights or saved preset_id (per org)",
       "Per-dimension confidence plus aggregate confidence",
       "engine_version on the body and X-Engine-Version response header",

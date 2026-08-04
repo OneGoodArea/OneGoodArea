@@ -370,7 +370,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Can I use my own commercial weighting?",
-    a: "Yes, within the business profile's five dimensions: footfall demand, competition density, transport access, spending power and commercial costs. You re-weight them per request, or save a per-org profile and reference it by id. You re-weight, you do not redefine.",
+    a: "Yes, within the business profile's seven dimensions: Crime, Deprivation, Property, Schools, Amenities, Transport and Environment. You re-weight them per request, or save a per-org profile and reference it by id. You re-weight, you do not redefine.",
   },
   {
     q: "What about catchments that are not neighbourhood-shaped?",

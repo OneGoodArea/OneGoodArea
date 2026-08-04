@@ -60,7 +60,7 @@ export const INTENT_WORKFLOW_DESCRIPTION: Record<Intent, string> = {
   moving: "Residential mortgage origination scoring. Used by lenders for portfolio screening, origination decisions, and demand-side risk enrichment.",
   business: "Commercial site selection. Used by retail, F&B, and CRE teams scoring candidate locations across thousands of postcodes.",
   investing: "Residential property investment screening. Used by BTL operators, BTR funds, and investment committees evaluating acquisitions.",
-  research: "Neutral baseline scoring for analysts, planners, and researchers. Equal weight across the five dimensions.",
+  research: "Neutral baseline scoring for analysts, planners, and researchers. Balanced weight across the seven categories.",
 };
 
 /** The customer-facing workflow label for an intent enum. Falls back to the raw

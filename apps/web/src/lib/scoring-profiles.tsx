@@ -41,7 +41,7 @@ export const SCORING_PROFILES: ScoringProfile[] = [
   {
     slug: "business",
     name: "Commercial site selection",
-    use: "Where to open. Foot traffic, competition density, transport access, spending power, occupancy cost. Drives shortlisting at portfolio scale.",
+    use: "Where to open. Weights the seven categories — crime, deprivation (spending power), property (commercial costs), schools, amenities, transport, environment — toward commercial demand. Drives shortlisting at portfolio scale.",
     Glyph: GlyphBusiness,
   },
   {
@@ -53,7 +53,7 @@ export const SCORING_PROFILES: ScoringProfile[] = [
   {
     slug: "research",
     name: "Research baseline",
-    use: "Analyst-friendly default. Balanced weights across safety, transport, amenities, demographics and environment. Survives FOI and procurement review.",
+    use: "Analyst-friendly default. Balanced weights across all seven categories. Survives FOI and procurement review.",
     Glyph: GlyphResearch,
   },
 ];

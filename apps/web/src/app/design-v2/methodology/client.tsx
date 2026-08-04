@@ -1185,6 +1185,30 @@ function SectionVersioning() {
               </span>
             </div>
           </article>
+
+          <aside className="oga-meth-versioning__history" aria-label="Engine version history">
+            <div className="oga-meth-versioning__history-label">Version history</div>
+            {[...METHODOLOGY_VERSIONS].reverse().map((v) => (
+              <div
+                key={v.version}
+                className={`oga-meth-versioning__version${v.version === METHODOLOGY_VERSION ? " oga-meth-versioning__version--current" : ""}`}
+              >
+                <div className="oga-meth-versioning__version-head">
+                  <span className="oga-meth-versioning__version-badge">v{v.version}</span>
+                  <span className="oga-meth-versioning__version-date">{v.released_at}</span>
+                  {v.version === METHODOLOGY_VERSION && (
+                    <span className="oga-meth-versioning__version-current-tag">current</span>
+                  )}
+                </div>
+                <p className="oga-meth-versioning__version-summary">{v.summary}</p>
+                <ul className="oga-meth-versioning__version-changes">
+                  {v.changes.map((c) => (
+                    <li key={c}>{c}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </aside>
         </div>
 
         <p className="oga-meth-versioning__pin">

@@ -209,8 +209,8 @@ function BuiltInProfiles({
       <header className="oga-scoresp-section__head">
         <h3 className="oga-scoresp-section__title">Built-in profiles</h3>
         <p className="oga-scoresp-section__hint">
-          Four profiles ship with the engine, each with its own five-
-          dimension set. Pass <code>preset</code> on /v1/score to use any
+          Four profiles ship with the engine, all scoring the same seven
+          dimensions with different weightings. Pass <code>preset</code> on /v1/score to use any
           of them as-is.
         </p>
       </header>
@@ -388,7 +388,7 @@ function SchemaPanel() {
     { field: "  .created_at",  type: "string",                                 desc: "ISO timestamp." },
     { field: "ScoreResult",    type: "",                                       desc: "Returned by /v1/score." },
     { field: "  .score",       type: "number 0-100",                           desc: "Composite." },
-    { field: "  .dimensions",  type: "ScoreDimension[]",                       desc: "5 weighted components." },
+    { field: "  .dimensions",  type: "ScoreDimension[]",                       desc: "7 weighted components." },
     { field: "  .confidence",  type: "number 0-1",                             desc: "Aggregate confidence." },
     { field: "  .weights_source", type: "preset | custom",                     desc: "Whether overrides were used." },
     { field: "  .engine_version", type: "string",                              desc: "Methodology version." },
