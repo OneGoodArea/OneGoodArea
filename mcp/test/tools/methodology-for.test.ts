@@ -11,14 +11,14 @@ describe("methodologyForToolDef", () => {
   });
 
   it("description lists recognised dimensions", () => {
-    expect(methodologyForToolDef.description).toContain("Safety & Crime");
+    expect(methodologyForToolDef.description).toContain("Crime");
     expect(methodologyForToolDef.description).toContain("Transport");
   });
 });
 
 describe("parseMethodologyForArgs", () => {
   it("accepts valid input", () => {
-    expect(parseMethodologyForArgs({ dimension: "Safety" })).toEqual({ dimension: "Safety" });
+    expect(parseMethodologyForArgs({ dimension: "Crime" })).toEqual({ dimension: "Crime" });
   });
 
   it("trims whitespace", () => {
@@ -33,17 +33,17 @@ describe("parseMethodologyForArgs", () => {
 
 describe("executeMethodologyFor", () => {
   it("returns methodology for exact dimension name", () => {
-    const out = executeMethodologyFor({ dimension: "Safety & Crime" });
+    const out = executeMethodologyFor({ dimension: "Crime" });
     expect(out.isError).toBeFalsy();
-    expect(out.content[0].text).toContain("# Safety & Crime");
+    expect(out.content[0].text).toContain("# Crime");
     expect(out.content[0].text).toContain("Police.uk");
     expect(out.content[0].text).toContain("moving");
   });
 
   it("matches case-insensitively", () => {
-    const out = executeMethodologyFor({ dimension: "SAFETY & crime" });
+    const out = executeMethodologyFor({ dimension: "crime" });
     expect(out.isError).toBeFalsy();
-    expect(out.content[0].text).toContain("Safety & Crime");
+    expect(out.content[0].text).toContain("# Crime");
   });
 
   it("matches partial query (substring)", () => {
@@ -57,11 +57,11 @@ describe("executeMethodologyFor", () => {
     const out = executeMethodologyFor({ dimension: "made-up dimension" });
     expect(out.isError).toBe(true);
     expect(out.content[0].text).toContain("No methodology found");
-    expect(out.content[0].text).toContain("Safety & Crime");
+    expect(out.content[0].text).toContain("Crime");
   });
 
   it("includes per-intent weights for the dimension", () => {
-    const out = executeMethodologyFor({ dimension: "Cost of Living" });
+    const out = executeMethodologyFor({ dimension: "Property" });
     expect(out.content[0].text).toContain("moving");
     expect(out.content[0].text).toContain("20%");
   });
@@ -73,22 +73,21 @@ describe("executeMethodologyFor", () => {
 
   /* AR-391: "Used in intents" header must agree with the weights
      table — derived from non-zero weights, NOT the static intents
-     field which had drifted. Safety & Crime previously read
+     field which had drifted. Crime previously read
      "Used in intents: moving, research" but had non-zero weights
      for all 4 presets. */
   it("derives 'Used in intents' from non-zero weights (no header/table drift)", () => {
-    const out = executeMethodologyFor({ dimension: "Safety & Crime" });
+    const out = executeMethodologyFor({ dimension: "Crime" });
     const text = out.content[0].text;
     // Header reflects ALL 4 presets (all have non-zero weight).
     expect(text).toMatch(/Used in intents:.*moving.*business.*investing.*research/s);
   });
 
-  it("'Used in intents' excludes zero-weight presets", () => {
-    // Schools has business: 0, so it should NOT appear in the header.
-    const out = executeMethodologyFor({ dimension: "Schools" });
-    const text = out.content[0].text;
-    const header = text.split("\n").find((l) => l.startsWith("**Used in intents:"));
-    expect(header).toBeDefined();
-    expect(header).not.toContain("business");
+  it("all seven dimensions are weighted for every preset", () => {
+    for (const dim of ["Crime", "Deprivation", "Property", "Schools", "Amenities", "Transport", "Environment"]) {
+      const out = executeMethodologyFor({ dimension: dim });
+      const text = out.content[0].text;
+      expect(text).toMatch(/Used in intents:.*moving.*business.*investing.*research/s);
+    }
   });
 });
