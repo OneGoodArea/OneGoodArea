@@ -113,11 +113,13 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@onegoodarea.com
       PGADMIN_DEFAULT_PASSWORD: admin
       PGADMIN_CONFIG_SERVER_MODE: "False"
+      # No master password prompt — saved server passwords are used directly.
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
       # Declarative server list: reloaded from servers.json on every boot
       # (self-healing even if the config DB is wiped).
       PGADMIN_REPLACE_SERVERS_ON_STARTUP: "True"
       PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
-      # Auto-fill the Local Postgres password (dev-only creds).
+      # libpq-level password auto-fill (backup; primary is SavePassword in servers.json).
       PGPASS_FILE: /pgadmin4/pgpass
     volumes:
       # Named volume, not a bind mount: avoids the host-UID mismatch that
