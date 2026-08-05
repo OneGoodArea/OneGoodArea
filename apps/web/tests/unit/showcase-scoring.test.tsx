@@ -157,4 +157,58 @@ describe("<ShowcaseScoring> (AR-706)", () => {
     const investingTab = screen.getByRole("tab", { name: "Investment" });
     expect(investingTab).toHaveAttribute("aria-selected", "true");
   });
+
+  it("shows weight as percentage in slider header", async () => {
+    global.fetch = mockFetch(makeResult());
+    render(<ShowcaseScoring postcode="M1 1AE" />);
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(screen.getByText("20%")).toBeInTheDocument();
+  });
+
+  it("shows running total that updates when a weight slider changes", async () => {
+    global.fetch = mockFetch(makeResult());
+    render(<ShowcaseScoring postcode="M1 1AE" />);
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(screen.getByText("Total weight: 100%")).toBeInTheDocument();
+
+    const sliders = screen.getAllByRole("slider");
+    const crimeSlider = sliders[0];
+    await act(async () => {
+      fireEvent.change(crimeSlider, { target: { value: "50" } });
+    });
+
+    expect(screen.getByText("Total weight: 130%")).toBeInTheDocument();
+  });
+
+  it("reset button restores total weight to 100%", async () => {
+    global.fetch = mockFetch(makeResult());
+    render(<ShowcaseScoring postcode="M1 1AE" />);
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    const sliders = screen.getAllByRole("slider");
+    const crimeSlider = sliders[0];
+    await act(async () => {
+      fireEvent.change(crimeSlider, { target: { value: "50" } });
+    });
+
+    expect(screen.getByText("Total weight: 130%")).toBeInTheDocument();
+
+    const resetBtn = screen.getByRole("button", { name: /reset to preset defaults/i });
+    await act(async () => {
+      fireEvent.click(resetBtn);
+    });
+
+    expect(screen.getByText("Total weight: 100%")).toBeInTheDocument();
+  });
 });
