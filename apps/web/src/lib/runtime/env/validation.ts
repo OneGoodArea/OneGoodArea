@@ -5,7 +5,6 @@ export interface RuntimeConfig {
   localRuntimeEnabled: boolean;
   serviceMode: RuntimeServiceMode;
   logLevel: RuntimeLogLevel;
-  databaseUrl: string;
   postcodesApiBaseUrl: string;
   aiProvider: string;
   emailProvider: string;
@@ -55,10 +54,6 @@ export function validateRuntimeConfig(config: RuntimeConfig): void {
 
   if (!allowedLogLevels.includes(config.logLevel)) {
     throw new Error(`Invalid log level: ${config.logLevel}`);
-  }
-
-  if (!config.databaseUrl) {
-    throw new Error("DATABASE_URL is required");
   }
 
   if (!config.postcodesApiBaseUrl) {
