@@ -118,6 +118,11 @@ export function ShowcaseScoring({ postcode, initialResult }: ShowcaseScoringProp
             <span className="text-lg font-bold text-blue-400">{overall}</span>
           </div>
 
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm text-[#8a8a96]">Total weight</span>
+            <span className="text-sm font-mono text-amber-400">{totalWeight}%</span>
+          </div>
+
           <div className="space-y-3 mb-4">
             {result.dimensions.map((d) => (
               <div key={d.id}>
@@ -138,11 +143,6 @@ export function ShowcaseScoring({ postcode, initialResult }: ShowcaseScoringProp
                 />
               </div>
             ))}
-          </div>
-
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm text-[#8a8a96]">Total weight</span>
-            <span className="text-sm font-mono text-blue-400">{totalWeight}%</span>
           </div>
 
           <div className="flex items-center gap-3">
