@@ -103,26 +103,45 @@ function cacheSet(key: string, value: AmenitiesData | null, now: number): void {
    Crucially, partial failure becomes OK: if one category times out the
    other 7 still contribute. The old all-or-nothing behaviour was the
    root cause of the 2026-07-01 M1 1AE failure even after AR-397's
-   cache + remark detection. */
+   cache + remark detection.
+
+   AR-726: Categories are now grouped by Overpass `around:` radius.
+   Categories sharing the same radius are combined into a single union
+   query, reducing 8 HTTP round-trips to 4. Partial failure tolerance
+   is preserved at the batch level — if one batch fails the others
+   still contribute. */
 
 interface CategorySpec {
-  /** Display name used in logs; not part of the wire shape. */
+  /** Display name used in logs and element classification. */
   name: string;
   /** Overpass selector (the bit that goes between `nwr[...](around:..,$lat,$lng)`). */
   selector: string;
-  /** Radius in metres for the around: clause. */
-  radius: number;
 }
 
-const CATEGORIES: CategorySpec[] = [
-  { name: "schools",       selector: `["amenity"~"^(school|kindergarten|college|university)$"]`, radius: 1500 },
-  { name: "food",          selector: `["amenity"~"^(restaurant|cafe|fast_food)$"]`,              radius: 1000 },
-  { name: "pubs_bars",     selector: `["amenity"~"^(pub|bar)$"]`,                                 radius: 1000 },
-  { name: "healthcare",    selector: `["amenity"~"^(pharmacy|doctors|hospital|dentist|clinic)$"]`, radius: 1500 },
-  { name: "shops",         selector: `["shop"~"^(supermarket|convenience)$"]`,                    radius: 1000 },
-  { name: "parks_leisure", selector: `["leisure"~"^(park|playground|sports_centre|swimming_pool|fitness_centre|garden)$"]`, radius: 1500 },
-  { name: "stations",      selector: `["railway"="station"]`,                                     radius: 2000 },
-  { name: "bus_stops",     selector: `["highway"="bus_stop"]`,                                    radius: 500 },
+interface RadiusGroup {
+  /** Radius in metres for the around: clause (shared by all categories in this group). */
+  radius: number;
+  /** Categories that share this radius. */
+  categories: CategorySpec[];
+}
+
+const RADIUS_GROUPS: RadiusGroup[] = [
+  { radius: 1500, categories: [
+    { name: "schools",       selector: `["amenity"~"^(school|kindergarten|college|university)$"]` },
+    { name: "healthcare",    selector: `["amenity"~"^(pharmacy|doctors|hospital|dentist|clinic)$"]` },
+    { name: "parks_leisure", selector: `["leisure"~"^(park|playground|sports_centre|swimming_pool|fitness_centre|garden)$"]` },
+  ]},
+  { radius: 1000, categories: [
+    { name: "food",      selector: `["amenity"~"^(restaurant|cafe|fast_food)$"]` },
+    { name: "pubs_bars", selector: `["amenity"~"^(pub|bar)$"]` },
+    { name: "shops",     selector: `["shop"~"^(supermarket|convenience)$"]` },
+  ]},
+  { radius: 2000, categories: [
+    { name: "stations", selector: `["railway"="station"]` },
+  ]},
+  { radius: 500, categories: [
+    { name: "bus_stops", selector: `["highway"="bus_stop"]` },
+  ]},
 ];
 
 /* AR-402: Overpass 406s anonymous/missing-User-Agent requests as part
@@ -156,17 +175,17 @@ const OVERPASS_MIRRORS = [
 
 /** Try ONE mirror. Returns elements[] on a clean success, null on any
     failure mode (HTTP error / fetch threw / remark response). Never
-    throws. The category fetcher walks all mirrors via this helper. */
+    throws. The batch fetcher races all mirrors via this helper. */
 async function tryMirror(
   url: string,
-  spec: CategorySpec,
+  batchLabel: string,
   query: string,
   lat: number,
   lng: number,
 ): Promise<OverpassElement[] | null> {
   const cooldown = mirrorCooldownUntil.get(url);
   if (cooldown && Date.now() < cooldown) {
-    logger.debug("[overpass] skipping mirror in cooldown", { mirror: url, category: spec.name });
+    logger.debug("[overpass] skipping mirror in cooldown", { mirror: url, batch: batchLabel });
     return null;
   }
   try {
@@ -181,14 +200,27 @@ async function tryMirror(
       signal: AbortSignal.timeout(OVERPASS_FETCH_TIMEOUT_MS),
     });
     if (!res.ok) {
-      mirrorCooldownUntil.set(url, Date.now() + OVERPASS_COOLDOWN_MS);
-      logger.warn("[overpass] mirror HTTP error", { mirror: url, category: spec.name, status: res.status });
+      let cooldownMs = OVERPASS_COOLDOWN_MS;
+      /* AR-725: Honor Retry-After on 503 (service unavailable).
+         Overpass mirrors send this header when temporarily overloaded;
+         respecting it lets them recover faster than our default 60s. */
+      if (res.status === 503) {
+        const retryAfter = res.headers.get("Retry-After");
+        if (retryAfter) {
+          const seconds = parseInt(retryAfter, 10);
+          if (!isNaN(seconds) && seconds > 0) {
+            cooldownMs = Math.min(seconds * 1000, OVERPASS_COOLDOWN_MS);
+          }
+        }
+      }
+      mirrorCooldownUntil.set(url, Date.now() + cooldownMs);
+      logger.warn("[overpass] mirror HTTP error", { mirror: url, batch: batchLabel, status: res.status, cooldown_ms: cooldownMs });
       return null;
     }
     const data = (await res.json()) as { elements?: unknown; remark?: unknown };
     if (typeof data.remark === "string" && data.remark.length > 0) {
       mirrorCooldownUntil.set(url, Date.now() + OVERPASS_COOLDOWN_MS);
-      logger.warn("[overpass] mirror got remark", { mirror: url, category: spec.name, lat, lng, remark: data.remark });
+      logger.warn("[overpass] mirror got remark", { mirror: url, batch: batchLabel, lat, lng, remark: data.remark });
       return null;
     }
     if (!Array.isArray(data.elements)) return null;
@@ -197,7 +229,7 @@ async function tryMirror(
     mirrorCooldownUntil.set(url, Date.now() + OVERPASS_COOLDOWN_MS);
     logger.warn("[overpass] mirror fetch threw", {
       mirror: url,
-      category: spec.name,
+      batch: batchLabel,
       lat,
       lng,
       error: err instanceof Error ? err.message : String(err),
@@ -206,25 +238,30 @@ async function tryMirror(
   }
 }
 
-/** Fetch ONE category by RACING all mirrors in parallel (AR-406).
-    First success wins; the rest of the in-flight requests keep going
-    but their results are discarded. If EVERY mirror fails (rejects),
-    Promise.any throws AggregateError and we return null.
+/** Fetch ONE radius group by building a union Overpass QL query and
+    RACING all mirrors in parallel (AR-406, AR-726).
 
-    Why race instead of walk: walking pays the slow-mirror tax serially,
-    which made cold-path /v1/area for Piccadilly ~35s (kumi.systems
-    timed out before .fr was tried). Racing means wall time = fastest
-    successful mirror's response time (typically 1-3s), at the cost of
-    bandwidth (3x per category). Overpass queries are small (~200KB
-    max) so bandwidth is cheap; latency is what matters. */
-async function fetchCategory(spec: CategorySpec, lat: number, lng: number): Promise<OverpassElement[] | null> {
-  const query = `[out:json][timeout:${OVERPASS_QUERY_TIMEOUT_SECONDS}];nwr${spec.selector}(around:${spec.radius},${lat},${lng});out tags center;`;
+    A union query combines all categories sharing the same radius into
+    one request: `(nwr[selector1](r); nwr[selector2](r); ...);`
+    This halves HTTP round-trips (8→4) while preserving partial failure
+    tolerance at the batch level.
+
+    Returns a Map from category name to its matched elements, so the
+    caller can classify elements into the correct counters. */
+async function fetchBatch(group: RadiusGroup, lat: number, lng: number): Promise<Map<string, OverpassElement[]> | null> {
+  /* Build union Overpass QL: one sub-query per category, shared radius. */
+  const subQueries = group.categories
+    .map((c) => `nwr${c.selector}(around:${group.radius},${lat},${lng})`)
+    .join(";\n");
+  const query = `[out:json][timeout:${OVERPASS_QUERY_TIMEOUT_SECONDS}];\n(${subQueries};\n);\nout tags center;`;
+
+  const batchLabel = `r${group.radius}`;
 
   /* Wrap each tryMirror call so that a null resolution counts as a
      reject (Promise.any treats only thrown rejections as failures —
      a resolved-with-null would WIN the race despite being a failure). */
   const attempts = OVERPASS_MIRRORS.map((mirror) =>
-    tryMirror(mirror, spec, query, lat, lng).then((r) => {
+    tryMirror(mirror, batchLabel, query, lat, lng).then((r) => {
       if (r === null) throw new Error(`mirror ${mirror} returned null`);
       return { mirror, elements: r };
     }),
@@ -232,16 +269,61 @@ async function fetchCategory(spec: CategorySpec, lat: number, lng: number): Prom
 
   try {
     const winner = await Promise.any(attempts);
-    /* Only log non-primary wins; primary is the happy path. */
     if (winner.mirror !== OVERPASS_MIRRORS[0]) {
-      logger.info("[overpass] category served by fallback mirror", { mirror: winner.mirror, category: spec.name });
+      logger.info("[overpass] batch served by fallback mirror", { mirror: winner.mirror, batch: batchLabel });
     }
-    return winner.elements;
+
+    /* Partition the flat elements[] back into per-category buckets by
+       inspecting each element's tags. This reuses the same tag-matching
+       logic the old per-category path used, but runs once per batch. */
+    const byCategory = new Map<string, OverpassElement[]>();
+    for (const c of group.categories) {
+      byCategory.set(c.name, []);
+    }
+    for (const el of winner.elements) {
+      const tags = el.tags || {};
+      for (const c of group.categories) {
+        if (matchesSelector(tags, c.selector)) {
+          byCategory.get(c.name)!.push(el);
+        }
+      }
+    }
+    return byCategory;
   } catch {
     /* AggregateError: every mirror failed (rejected or returned null).
        tryMirror already logged each mirror's specific failure. */
     return null;
   }
+}
+
+/** Quick tag-matcher that mirrors the Overpass selector semantics.
+    Only checks the primary tag key for each selector; sufficient for
+    partitioning elements within a batch. */
+function matchesSelector(tags: Record<string, string>, selector: string): boolean {
+  /* Extract the key and values from selectors like:
+     ["amenity"~"^(school|kindergarten|college|university)$"]
+     ["railway"="station"]
+     ["shop"~"^(supermarket|convenience)$"] */
+  const keyMatch = selector.match(/^\["(\w+)"/);
+  if (!keyMatch) return false;
+  const key = keyMatch[1];
+  const tagValue = tags[key];
+  if (tagValue === undefined) return false;
+
+  /* Exact match: ="station" */
+  const exactMatch = selector.match(/~?"\^?(\w+)"?\]$/);
+  if (exactMatch && !selector.includes("~")) {
+    return tagValue === exactMatch[1];
+  }
+
+  /* Regex match: ~"^(school|kindergarten|...)$" */
+  const regexMatch = selector.match(/~"\^?\(([^)]+)\)\$?"\]$/);
+  if (regexMatch) {
+    const values = regexMatch[1].split("|");
+    return values.includes(tagValue);
+  }
+
+  return false;
 }
 
 export async function getNearbyAmenities(lat: number, lng: number): Promise<AmenitiesData | null> {
@@ -252,29 +334,32 @@ export async function getNearbyAmenities(lat: number, lng: number): Promise<Amen
   const cached = cacheGet(key, now);
   if (cached !== undefined) return cached;
 
-  /* AR-400: 8 parallel queries. Each is small and independent.
-     Promise.all is fine even though we want partial failure tolerance:
-     fetchCategory never throws (returns null on any failure mode),
-     so all 8 promises always resolve. */
-  const categoryResults = await Promise.all(CATEGORIES.map((spec) => fetchCategory(spec, lat, lng)));
+  /* AR-726: 4 parallel batch queries (one per radius group) instead
+     of 8 per-category queries. Each batch fires a union Overpass QL
+     query combining all categories sharing the same radius. Partial
+     failure tolerance is preserved at the batch level. */
+  const batchResults = await Promise.all(RADIUS_GROUPS.map((g) => fetchBatch(g, lat, lng)));
 
-  /* Detect total outage: if EVERY category failed, treat as if Overpass
-     is unreachable. Cache null so we don't busy-loop the 8x retry
-     until the TTL expires. */
-  const successCount = categoryResults.filter((r) => r !== null).length;
+  /* Detect total outage: if EVERY batch failed, treat as if Overpass
+     is unreachable. Cache null so we don't busy-loop until the TTL expires. */
+  const successCount = batchResults.filter((r) => r !== null).length;
   if (successCount === 0) {
-    logger.warn("[overpass] ALL 8 categories failed for this area", { lat, lng });
+    logger.warn("[overpass] ALL 4 batches failed for this area", { lat, lng });
     cacheSet(key, null, now);
     return null;
   }
 
   try {
-    /* Aggregate elements from successful categories. The original tag
-       inspector below treats each element independently, so order
-       doesn't matter and we don't need to know which category an
-       element came from (an "amenity":"restaurant" element bucketed
-       as restaurants_cafes regardless of which query returned it). */
-    const elements: OverpassElement[] = categoryResults.flatMap((r) => r ?? []);
+    /* Aggregate elements from successful batches into per-category buckets,
+       then classify each element into the final counters. */
+    const allElements: OverpassElement[] = [];
+    for (const batch of batchResults) {
+      if (batch) {
+        for (const els of batch.values()) {
+          allElements.push(...els);
+        }
+      }
+    }
 
     let schools = 0;
     let restaurants_cafes = 0;
@@ -286,10 +371,7 @@ export async function getNearbyAmenities(lat: number, lng: number): Promise<Amen
     let bus_stops = 0;
     const highlights: string[] = [];
 
-    // Bind `responseData` shape so the original loop below keeps compiling.
-    const responseData = { elements } as { elements: OverpassElement[] };
-
-    for (const el of responseData.elements as OverpassElement[]) {
+    for (const el of allElements) {
       const tags = el.tags || {};
       const amenity = tags.amenity;
       const shop = tags.shop;
