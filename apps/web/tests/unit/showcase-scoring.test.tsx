@@ -8,14 +8,6 @@ import { render, screen, fireEvent, act } from "@testing-library/react";
 import { ShowcaseScoring } from "@/components/showcase/ShowcaseScoring";
 import type { Preset, ScoreResult, Score } from "@/lib/showcase/types";
 
-vi.mock("@/lib/showcase/api", () => ({
-  getScores: vi.fn(),
-}));
-
-import { getScores } from "@/lib/showcase/api";
-
-const mockGetScores = getScores as ReturnType<typeof vi.fn>;
-
 const DIMENSIONS: Score[] = [
   { id: "crime", name: "Safety & Crime", value: 72, weight: 20, maxValue: 100, product: "scores", confidence: 0.9 },
   { id: "deprivation", name: "Deprivation", value: 55, weight: 10, maxValue: 100, product: "scores", confidence: 0.8 },
@@ -37,6 +29,15 @@ function makeResult(overrides?: Partial<{ preset: Preset; score: number; confide
   };
 }
 
+function mockFetch(result: ScoreResult, ok = true) {
+  return vi.fn().mockResolvedValue(
+    new Response(JSON.stringify(result), {
+      status: ok ? 200 : 502,
+      headers: { "Content-Type": "application/json" },
+    }),
+  );
+}
+
 describe("<ShowcaseScoring> (AR-706)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -46,8 +47,8 @@ describe("<ShowcaseScoring> (AR-706)", () => {
     vi.unstubAllGlobals();
   });
 
-  it("renders the four preset tabs", () => {
-    mockGetScores.mockResolvedValue(makeResult());
+  it("renders the four preset tabs", async () => {
+    global.fetch = mockFetch(makeResult());
     render(<ShowcaseScoring postcode="M1 1AE" />);
 
     expect(screen.getByRole("tab", { name: "Origination" })).toBeInTheDocument();
@@ -56,15 +57,15 @@ describe("<ShowcaseScoring> (AR-706)", () => {
     expect(screen.getByRole("tab", { name: "Reference" })).toBeInTheDocument();
   });
 
-  it("shows loading state while fetching", () => {
-    mockGetScores.mockReturnValue(new Promise(() => {}));
+  it("shows loading state while fetching", async () => {
+    global.fetch = vi.fn().mockReturnValue(new Promise(() => {}));
     render(<ShowcaseScoring postcode="M1 1AE" />);
 
     expect(screen.getByText(/loading scores/i)).toBeInTheDocument();
   });
 
   it("shows error state on fetch failure", async () => {
-    mockGetScores.mockRejectedValue(new Error("Network error"));
+    global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
     render(<ShowcaseScoring postcode="M1 1AE" />);
 
     await act(async () => {
@@ -75,7 +76,7 @@ describe("<ShowcaseScoring> (AR-706)", () => {
   });
 
   it("renders dimension sliders and overall score after fetch", async () => {
-    mockGetScores.mockResolvedValue(makeResult());
+    global.fetch = mockFetch(makeResult());
     render(<ShowcaseScoring postcode="M1 1AE" />);
 
     await act(async () => {
@@ -88,7 +89,7 @@ describe("<ShowcaseScoring> (AR-706)", () => {
   });
 
   it("switches preset and re-fetches scores", async () => {
-    mockGetScores.mockResolvedValue(makeResult({ preset: "moving" }));
+    global.fetch = mockFetch(makeResult({ preset: "moving" }));
     render(<ShowcaseScoring postcode="M1 1AE" />);
 
     await act(async () => {
@@ -100,11 +101,14 @@ describe("<ShowcaseScoring> (AR-706)", () => {
       fireEvent.click(researchTab);
     });
 
-    expect(mockGetScores).toHaveBeenCalledWith("M1 1AE", "research");
+    const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+    const lastCall = calls[calls.length - 1][0] as string;
+    const url = new URL(lastCall);
+    expect(url.searchParams.get("preset")).toBe("research");
   });
 
   it("recalculates overall score when a weight slider changes", async () => {
-    mockGetScores.mockResolvedValue(makeResult());
+    global.fetch = mockFetch(makeResult());
     render(<ShowcaseScoring postcode="M1 1AE" />);
 
     await act(async () => {
@@ -119,11 +123,11 @@ describe("<ShowcaseScoring> (AR-706)", () => {
       fireEvent.change(firstSlider, { target: { value: "50" } });
     });
 
-    expect(mockGetScores).toHaveBeenCalledTimes(1);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 
   it("reset button clears custom weights", async () => {
-    mockGetScores.mockResolvedValue(makeResult());
+    global.fetch = mockFetch(makeResult());
     render(<ShowcaseScoring postcode="M1 1AE" />);
 
     await act(async () => {
@@ -138,11 +142,11 @@ describe("<ShowcaseScoring> (AR-706)", () => {
     render(<ShowcaseScoring />);
 
     expect(screen.getByText(/enter a postcode to see scoring weights/i)).toBeInTheDocument();
-    expect(mockGetScores).not.toHaveBeenCalled();
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 
   it("passes initialResult as default preset", async () => {
-    mockGetScores.mockResolvedValue(makeResult({ preset: "investing" }));
+    global.fetch = mockFetch(makeResult({ preset: "investing" }));
     const initial = makeResult({ preset: "investing" });
     render(<ShowcaseScoring postcode="M1 1AE" initialResult={initial} />);
 

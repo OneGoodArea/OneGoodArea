@@ -1,3 +1,5 @@
+import "server-only";
+
 import type { Preset, Score, ScoreResult, Product, Signal } from "@/lib/showcase/types";
 
 const BASE_URL = process.env.INTERNAL_API_URL ?? "https://onegoodarea.onrender.com";
