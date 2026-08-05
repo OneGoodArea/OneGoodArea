@@ -4,10 +4,12 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import type { ScoreResult, Score, Preset } from "@/lib/showcase/types";
 import { INTENTS, INTENT_WORKFLOW } from "@onegoodarea/contracts";
 import { WeightInput } from "./weight-input";
+import type { ApiError } from "@/lib/showcase/api";
 
 interface ShowcaseScoringProps {
   postcode?: string;
   initialResult?: ScoreResult;
+  apiError?: ApiError | null;
 }
 
 function computeOverall(
@@ -18,7 +20,7 @@ function computeOverall(
   return Math.round(dimensions.reduce((s, d) => s + d.value * (customWeights.get(d.id) ?? d.weight), 0) / totalWeight);
 }
 
-export function ShowcaseScoring({ postcode, initialResult }: ShowcaseScoringProps) {
+export function ShowcaseScoring({ postcode, initialResult, apiError }: ShowcaseScoringProps) {
   const [preset, setPreset] = useState<Preset>(initialResult?.preset ?? "business");
   const [result, setResult] = useState<ScoreResult | null>(initialResult ?? null);
   const [customWeights, setCustomWeights] = useState<Map<string, number>>(new Map());
@@ -88,6 +90,36 @@ export function ShowcaseScoring({ postcode, initialResult }: ShowcaseScoringProp
 
   const activePreset = result?.preset ?? preset;
 
+  function renderApiError() {
+    if (!apiError) return null;
+    if (apiError.status === 404) {
+      const terminated = apiError.body?.terminated as
+        | { year_terminated: number; month_terminated: number }
+        | undefined;
+      return (
+        <div className="rounded border border-red-900/40 bg-red-950/20 p-4">
+          <p className="text-sm font-medium text-red-400">Postcode not found</p>
+          {terminated ? (
+            <p className="text-xs text-red-300/80 mt-1">
+              This postcode was terminated in {terminated.month_terminated}/{terminated.year_terminated}.
+              It is no longer a valid UK postcode.
+            </p>
+          ) : (
+            <p className="text-xs text-red-300/80 mt-1">
+              No area data found for this postcode. Check the spelling or try a different postcode.
+            </p>
+          )}
+        </div>
+      );
+    }
+    return (
+      <div className="rounded border border-red-900/40 bg-red-950/20 p-4">
+        <p className="text-sm font-medium text-red-400">API error</p>
+        <p className="text-xs text-red-300/80 mt-1">{apiError.message}</p>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="flex gap-2 mb-4 flex-wrap" role="tablist" aria-label="Scoring preset">
@@ -111,7 +143,9 @@ export function ShowcaseScoring({ postcode, initialResult }: ShowcaseScoringProp
       {loading && <p className="text-sm text-[#8a8a96]">Loading scores…</p>}
       {error && <p className="text-sm text-red-400">{error}</p>}
 
-      {result && (
+      {apiError ? (
+        renderApiError()
+      ) : result ? (
         <>
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-medium text-[#e4e4e8]">Overall score</span>
@@ -158,10 +192,10 @@ export function ShowcaseScoring({ postcode, initialResult }: ShowcaseScoringProp
             )}
           </div>
         </>
-      )}
-
-      {!postcode && !result && (
-        <p className="text-sm text-[#8a8a96]">Enter a postcode to see scoring weights.</p>
+      ) : (
+        !postcode && (
+          <p className="text-sm text-[#8a8a96]">Enter a postcode to see scoring weights.</p>
+        )
       )}
     </div>
   );

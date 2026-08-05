@@ -5,6 +5,17 @@ import type { Preset, Score, ScoreResult, Product, Signal } from "@/lib/showcase
 const BASE_URL = process.env.INTERNAL_API_URL ?? "https://onegoodarea.onrender.com";
 const SHOWCASE_API_KEY = process.env.SHOWCASE_API_KEY ?? "";
 
+class ApiError extends Error {
+  constructor(
+    public readonly status: number,
+    message: string,
+    public readonly body: Record<string, unknown> | null,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 60_000);
@@ -19,7 +30,9 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
       signal: controller.signal,
     });
     if (!res.ok) {
-      throw new Error(`${res.status} ${res.statusText}`);
+      const body = await res.json().catch(() => null);
+      const errorMsg = body?.error ?? `${res.status} ${res.statusText}`;
+      throw new ApiError(res.status, errorMsg, body);
     }
     return res.json();
   } finally {
@@ -88,3 +101,5 @@ export async function getScores(postcode?: string, preset?: Preset): Promise<Sco
     })),
   };
 }
+
+export { ApiError };
