@@ -3,7 +3,6 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import type { ScoreResult, Score, Preset } from "@/lib/showcase/types";
 import { INTENTS, INTENT_WORKFLOW } from "@onegoodarea/contracts";
-import { getScores } from "@/lib/showcase/api";
 import { WeightInput } from "./weight-input";
 
 interface ShowcaseScoringProps {
@@ -28,12 +27,18 @@ export function ShowcaseScoring({ postcode, initialResult }: ShowcaseScoringProp
 
   useEffect(() => {
     if (!postcode) return;
+    const area = postcode;
     let cancelled = false;
     async function fetchScores() {
       setLoading(true);
       setError(null);
       try {
-        const r = await getScores(postcode, preset);
+        const url = new URL("/api/showcase/score", window.location.origin);
+        url.searchParams.set("area", area);
+        if (preset) url.searchParams.set("preset", preset);
+        const res = await fetch(url.toString());
+        if (!res.ok) throw new Error(res.statusText);
+        const r = await res.json();
         if (!cancelled) {
           setResult(r);
           setCustomWeights(new Map());
