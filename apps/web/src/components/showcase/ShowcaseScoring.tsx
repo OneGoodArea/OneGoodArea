@@ -58,14 +58,15 @@ export function ShowcaseScoring({ postcode, initialResult }: ShowcaseScoringProp
   }, []);
 
   const updateWeight = useCallback((dimId: string, weight: number) => {
+    const clamped = Math.min(100, Math.max(0, weight));
     setCustomWeights((prev) => {
       const next = new Map(prev);
       const dim = result?.dimensions.find((d) => d.id === dimId);
       const defaultWeight = dim?.weight ?? 0;
-      if (weight === defaultWeight) {
+      if (clamped === defaultWeight) {
         next.delete(dimId);
       } else {
-        next.set(dimId, weight);
+        next.set(dimId, clamped);
       }
       return next;
     });
@@ -78,6 +79,11 @@ export function ShowcaseScoring({ postcode, initialResult }: ShowcaseScoringProp
   const overall = useMemo(() => {
     if (!result) return 0;
     return computeOverall(result.dimensions, customWeights);
+  }, [result, customWeights]);
+
+  const totalWeight = useMemo(() => {
+    if (!result) return 0;
+    return result.dimensions.reduce((s, d) => s + (customWeights.get(d.id) ?? d.weight), 0);
   }, [result, customWeights]);
 
   const activePreset = result?.preset ?? preset;
@@ -127,12 +133,16 @@ export function ShowcaseScoring({ postcode, initialResult }: ShowcaseScoringProp
                 </div>
                 <WeightInput
                   label={d.name}
-                  product={d.weight.toString()}
                   value={customWeights.get(d.id) ?? d.weight}
                   onChange={(v) => updateWeight(d.id, v)}
                 />
               </div>
             ))}
+          </div>
+
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm text-[#8a8a96]">Total weight</span>
+            <span className="text-sm font-mono text-blue-400">{totalWeight}%</span>
           </div>
 
           <div className="flex items-center gap-3">
