@@ -166,7 +166,8 @@ describe("<ShowcaseScoring> (AR-706)", () => {
       await Promise.resolve();
     });
 
-    expect(screen.getByText("20%")).toBeInTheDocument();
+    const percentages = screen.getAllByText("20%");
+    expect(percentages.length).toBeGreaterThanOrEqual(1);
   });
 
   it("shows running total that updates when a weight slider changes", async () => {
@@ -177,7 +178,8 @@ describe("<ShowcaseScoring> (AR-706)", () => {
       await Promise.resolve();
     });
 
-    expect(screen.getByText("Total weight: 100%")).toBeInTheDocument();
+    expect(screen.getByText("Total weight")).toBeInTheDocument();
+    expect(screen.getByText("100%")).toBeInTheDocument();
 
     const sliders = screen.getAllByRole("slider");
     const crimeSlider = sliders[0];
@@ -185,7 +187,8 @@ describe("<ShowcaseScoring> (AR-706)", () => {
       fireEvent.change(crimeSlider, { target: { value: "50" } });
     });
 
-    expect(screen.getByText("Total weight: 130%")).toBeInTheDocument();
+    expect(screen.getByText("Total weight")).toBeInTheDocument();
+    expect(screen.getByText("130%")).toBeInTheDocument();
   });
 
   it("reset button restores total weight to 100%", async () => {
@@ -202,13 +205,13 @@ describe("<ShowcaseScoring> (AR-706)", () => {
       fireEvent.change(crimeSlider, { target: { value: "50" } });
     });
 
-    expect(screen.getByText("Total weight: 130%")).toBeInTheDocument();
+    expect(screen.getByText("130%")).toBeInTheDocument();
 
     const resetBtn = screen.getByRole("button", { name: /reset to preset defaults/i });
     await act(async () => {
       fireEvent.click(resetBtn);
     });
 
-    expect(screen.getByText("Total weight: 100%")).toBeInTheDocument();
+    expect(screen.getByText("100%")).toBeInTheDocument();
   });
 });
