@@ -162,7 +162,7 @@ export function ShowcaseScoring({ postcode, initialResult, apiError }: ShowcaseS
               <div key={d.id}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm text-[#e4e4e8]">{d.name}</span>
-                  <span className="text-xs font-mono text-[#3b82f6]">{d.value}</span>
+                  <span className="text-xs font-mono text-[#3b82f6]">Score {d.value}</span>
                 </div>
                 <div className="w-full h-2 rounded-full bg-[#1c1c22] mb-2">
                   <div

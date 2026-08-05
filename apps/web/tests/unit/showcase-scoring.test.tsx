@@ -166,7 +166,7 @@ describe("<ShowcaseScoring> (AR-706)", () => {
       await Promise.resolve();
     });
 
-    const percentages = screen.getAllByText("20%");
+    const percentages = screen.getAllByText("Weight 20%");
     expect(percentages.length).toBeGreaterThanOrEqual(1);
   });
 
