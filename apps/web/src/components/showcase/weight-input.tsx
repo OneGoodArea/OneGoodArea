@@ -27,7 +27,6 @@ export function WeightInput({ label, value, onChange }: WeightInputProps) {
         }}
         className="w-full accent-blue-500"
       />
-      <span className="text-xs text-[#7a7a88]">weight %</span>
     </div>
   );
 }
