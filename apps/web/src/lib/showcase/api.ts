@@ -5,6 +5,11 @@ import type { Preset, Score, ScoreResult, Product, Signal } from "@/lib/showcase
 const BASE_URL = process.env.INTERNAL_API_URL ?? "https://onegoodarea.onrender.com";
 const SHOWCASE_API_KEY = process.env.SHOWCASE_API_KEY ?? "";
 
+/* AR-755: attribute showcase-demo traffic in event/training analytics. The
+   API's classifyClientApp() maps this stamp to client_app: "estate-agents"
+   (same mechanism as onegoodarea-mcp-server in mcp/src/api-client.ts). */
+const SHOWCASE_USER_AGENT = "onegoodarea-estate-agents/1.0.0";
+
 class ApiError extends Error {
   constructor(
     public readonly status: number,
@@ -24,6 +29,7 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
       ...init,
       headers: {
         "Content-Type": "application/json",
+        "User-Agent": SHOWCASE_USER_AGENT,
         ...(SHOWCASE_API_KEY ? { Authorization: `Bearer ${SHOWCASE_API_KEY}` } : {}),
         ...init.headers,
       },
