@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from "react";
 import type { ScoreResult, Score, Preset } from "@/lib/showcase/types";
-import { INTENTS, INTENT_WORKFLOW } from "@onegoodarea/contracts";
+import { INTENTS, INTENT_WORKFLOW, type Intent } from "@onegoodarea/contracts";
 import { WeightInput } from "./weight-input";
 import type { ApiError } from "@/lib/showcase/api";
 
@@ -10,6 +10,7 @@ interface ShowcaseScoringProps {
   postcode?: string;
   initialResult?: ScoreResult;
   apiError?: ApiError | null;
+  intentLabels?: Partial<Record<Intent, string>>;
 }
 
 type ClientError = Pick<ApiError, "status" | "message" | "body">;
@@ -22,7 +23,7 @@ function computeOverall(
   return Math.round(dimensions.reduce((s, d) => s + d.value * (customWeights.get(d.id) ?? d.weight), 0) / totalWeight);
 }
 
-export function ShowcaseScoring({ postcode, initialResult, apiError }: ShowcaseScoringProps) {
+export function ShowcaseScoring({ postcode, initialResult, apiError, intentLabels }: ShowcaseScoringProps) {
   const [preset, setPreset] = useState<Preset>(initialResult?.preset ?? "business");
   const [result, setResult] = useState<ScoreResult | null>(initialResult ?? null);
   const [customWeights, setCustomWeights] = useState<Map<string, number>>(new Map());
@@ -145,7 +146,7 @@ export function ShowcaseScoring({ postcode, initialResult, apiError }: ShowcaseS
                 : "bg-[#1c1c22] text-[#8a8a96] hover:text-[#e4e4e8]"
             }`}
           >
-            {INTENT_WORKFLOW[intent]}
+            {intentLabels?.[intent] ?? INTENT_WORKFLOW[intent]}
           </button>
         ))}
       </div>
