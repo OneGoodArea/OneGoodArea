@@ -66,7 +66,7 @@ export default function ShowcaseSignals({ initialSignals, initialPostcode, apiEr
     }
     setError(null);
     setLoading(true);
-    router.push(`/showcase/proptech?postcode=${encodeURIComponent(trimmed)}`);
+    router.push(`/showcase/estate-agents?postcode=${encodeURIComponent(trimmed)}`);
   }
 
   function renderErrorState() {
