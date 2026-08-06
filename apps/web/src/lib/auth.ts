@@ -1,9 +1,8 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
-import { sql } from "@/lib/db";
-import { row, UserRow, MagicLinkTokenRow } from "@/lib/db-types";
 import { apiBaseUrl } from "@/lib/server/api-client";
+import { mintBridgeToken } from "@/lib/server/bridge";
 
 /* AR-339 (epic AR-335): the per-request ensureAuthTables() bootstrap
    was removed. The apps/api migrator owns DDL for users / verification
@@ -69,43 +68,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
-        const token = credentials.token;
+        /* AR-646: magic-link consume moved to the API — single-use
+           consumption, expiry and email_verified backfill all happen there
+           atomically. Web just relays the token and mints the session from
+           the returned user. */
+        const res = await fetch(`${apiBaseUrl()}/auth/magic-link/consume`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ token: credentials.token }),
+        });
+        if (!res.ok) return null;
 
-        const tokenRows = await sql`
-          SELECT id, user_id, email, expires_at, used
-          FROM magic_link_tokens
-          WHERE token = ${token}
-        `;
-        if (tokenRows.length === 0) return null;
-
-        const tokenRow = row<
-          Pick<MagicLinkTokenRow, "id" | "user_id" | "email" | "expires_at" | "used">
-        >(tokenRows[0]);
-        if (tokenRow.used) return null;
-        if (new Date(tokenRow.expires_at) < new Date()) return null;
-
-        /* Single-use: mark consumed atomically before signing in.
-           If a second click races, the second authorize call will
-           see used=TRUE and return null. */
-        await sql`
-          UPDATE magic_link_tokens SET used = TRUE WHERE id = ${tokenRow.id}
-        `;
-
-        /* Clicking a magic link is strong proof of email ownership.
-           Auto-verify the email if it wasn't already (saves the user
-           a separate verification step — AR-248 section 2 says "verify gates
-           writes" so users still need verified email to write data,
-           and this is the path that gets them there). */
-        await sql`
-          UPDATE users SET email_verified = TRUE
-          WHERE id = ${tokenRow.user_id} AND email_verified = FALSE
-        `;
-
-        const userRows = await sql`
-          SELECT id, email, name, image FROM users WHERE id = ${tokenRow.user_id}
-        `;
-        if (userRows.length === 0) return null;
-        const user = row<Pick<UserRow, "id" | "email" | "name" | "image">>(userRows[0]);
+        const data = await res.json();
+        const user = data?.user;
+        if (!user?.id) return null;
 
         return {
           id: user.id,
@@ -159,15 +135,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.userId = user.id;
-        /* AR-654: fetch userType from the DB so admin pages can gate
-           on the user_type column without a separate BFF round-trip. */
-        try {
-          const rows = await sql`SELECT user_type FROM users WHERE id = ${user.id} LIMIT 1`;
-          if (rows.length > 0 && rows[0].user_type) {
-            token.userType = rows[0].user_type as string;
+        if (user.id) {
+          try {
+            const res = await fetch(`${apiBaseUrl()}/auth/state`, {
+              method: "GET",
+              headers: { authorization: `Bearer ${(await mintBridgeToken(user.id))}` },
+            });
+            if (res.ok) {
+              const data = await res.json();
+              if (data?.userType) token.userType = data.userType;
+            }
+          } catch {
           }
-        } catch {
-          // Soft-fail: userType will be absent from the token.
         }
       }
       return token;

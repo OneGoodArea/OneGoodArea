@@ -108,7 +108,6 @@ services:
     image: onegoodarea/web-test:local
     environment:
       NODE_ENV: development
-      DATABASE_URL: postgres://oga_test:oga_test@postgres-test:5432/oga_test
       AUTH_SECRET: test-secret-do-not-use-in-prod
       NEXTAUTH_URL: http://localhost:3000
       NEXT_PUBLIC_APP_URL: http://localhost:3000

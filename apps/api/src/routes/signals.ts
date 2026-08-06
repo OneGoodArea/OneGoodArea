@@ -6,7 +6,7 @@ import { sendAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { getConfig } from "../infrastructure/config";
 import { validateLocationInput } from "../infrastructure/validation/validator";
-import { getAreaProfile, queryAreas, parseAreasQuery } from "../modules/signals";
+import { getAreaProfile, queryAreas, parseAreasQuery, areaNotFoundBody } from "../modules/signals";
 import { filterSignalsByBundle } from "../modules/orgs/bundles";
 import { trackEvent } from "../modules/tracking/activity";
 
@@ -18,6 +18,16 @@ const AreaResultSchema = z.object({
   value: z.number().nullable(),
   normalized_value: z.number().nullable(),
   percentile: z.number().nullable(),
+});
+
+const TerminatedInfoSchema = z.object({
+  year_terminated: z.number(),
+  month_terminated: z.number(),
+});
+
+const AreaNotFoundSchema = z.object({
+  error: z.string(),
+  terminated: TerminatedInfoSchema.optional(),
 });
 
 /** signals route handlers — extracted from app.ts per AR-286. */
@@ -45,7 +55,7 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
               400: z.object({ error: z.string() }),
               401: z.object({ error: z.string() }),
               403: z.object({ error: z.string() }),
-              404: z.object({ error: z.string() }),
+              404: AreaNotFoundSchema,
               429: z.object({ error: z.string() }),
               500: z.object({ error: z.string() }),
             },
@@ -74,9 +84,7 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
 
         const profile = await getAreaProfile(locationCheck.sanitized);
         if (!profile) {
-          return reply.code(404).send({
-            error: `Could not resolve area "${locationCheck.sanitized}". Provide a UK postcode or place name.`,
-          });
+          return reply.code(404).send(await areaNotFoundBody(locationCheck.sanitized));
         }
 
         const filteredSignals = filterSignalsByBundle(profile.signals, resolved.allowed);
@@ -138,7 +146,7 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
               400: z.object({ error: z.string() }),
               401: z.object({ error: z.string() }),
               403: z.object({ error: z.string() }),
-              404: z.object({ error: z.string() }),
+              404: AreaNotFoundSchema,
               429: z.object({ error: z.string() }),
               500: z.object({ error: z.string() }),
             },
@@ -168,9 +176,7 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
 
         const profile = await getAreaProfile(locationCheck.sanitized);
         if (!profile) {
-          return reply.code(404).send({
-            error: `Could not resolve area "${locationCheck.sanitized}". Provide a UK postcode or place name.`,
-          });
+          return reply.code(404).send(await areaNotFoundBody(locationCheck.sanitized));
         }
 
         const signals = profile.signals.filter((s) => s.category === category);

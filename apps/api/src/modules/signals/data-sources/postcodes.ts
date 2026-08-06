@@ -238,6 +238,34 @@ export async function geocodeArea(query: string): Promise<GeocodedArea | null> {
   return geocodePlace(query.trim());
 }
 
+/* AR-711/712: terminated-postcode detection. postcodes.io's public
+   /postcodes/:postcode returns a BARE 404 for terminated postcodes (the
+   docs describe a `terminated` property on the 404 body, but the live
+   instance does not emit it — verified for AB1 0AA, NW1 8TQ). The
+   dedicated /terminated_postcodes/:postcode endpoint is the source of
+   truth: it returns year_terminated + month_terminated for any postcode
+   in the ONS terminated dataset. Only postcode-shaped queries are
+   eligible — place names can never be "terminated". */
+export interface TerminatedPostcode {
+  postcode: string;
+  year_terminated: number;
+  month_terminated: number;
+}
+
+export async function lookupTerminatedPostcode(query: string): Promise<TerminatedPostcode | null> {
+  const q = query.trim();
+  if (!POSTCODE_REGEX.test(q)) return null;
+  try {
+    const res = await timedFetch(`https://api.postcodes.io/terminated_postcodes/${encodeURIComponent(q)}`);
+    if (!res || !res.ok) return null;
+    const data = (await res.json()) as { status?: number; result?: TerminatedPostcode };
+    if (data.status !== 200 || !data.result) return null;
+    return data.result;
+  } catch {
+    return null;
+  }
+}
+
 async function geocodePostcode(postcode: string): Promise<GeocodedArea | null> {
   try {
     const res = await timedFetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(postcode)}`);

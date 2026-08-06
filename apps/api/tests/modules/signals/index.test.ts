@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
 import type { Signal } from "@onegoodarea/contracts";
 
-vi.mock("@/modules/signals/data-sources/postcodes", () => ({ geocodeArea: vi.fn() }));
+vi.mock("@/modules/signals/data-sources/postcodes", () => ({ geocodeArea: vi.fn(), lookupTerminatedPostcode: vi.fn() }));
 vi.mock("@/modules/signals/data-sources/police", () => ({ getCrimeData: vi.fn() }));
 vi.mock("@/modules/signals/data-sources/deprivation", () => ({ getDeprivationData: vi.fn() }));
 vi.mock("@/modules/signals/data-sources/openstreetmap", () => ({ getNearbyAmenities: vi.fn() }));
@@ -18,8 +18,8 @@ vi.mock("@/modules/signals/store-reader", () => ({
 }));
 vi.mock("@/modules/tracking/structured-logger", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 
-import { getAreaProfile } from "@/modules/signals/index";
-import { geocodeArea } from "@/modules/signals/data-sources/postcodes";
+import { getAreaProfile, areaNotFoundBody } from "@/modules/signals/index";
+import { geocodeArea, lookupTerminatedPostcode } from "@/modules/signals/data-sources/postcodes";
 import { getDeprivationData } from "@/modules/signals/data-sources/deprivation";
 import { getPropertyPrices } from "@/modules/signals/data-sources/land-registry";
 import { getCrimeData } from "@/modules/signals/data-sources/police";
@@ -33,6 +33,7 @@ import {
 } from "@/modules/signals/store-reader";
 
 const mockGeocode = vi.mocked(geocodeArea);
+const mockTerminated = vi.mocked(lookupTerminatedPostcode);
 const mockLiveDep = vi.mocked(getDeprivationData);
 const mockLiveProperty = vi.mocked(getPropertyPrices);
 const mockLiveCrime = vi.mocked(getCrimeData);
@@ -60,6 +61,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   delete process.env.OGA_SIGNALS_STORE_READ;
   mockGeocode.mockResolvedValue(GEO);
+  mockTerminated.mockResolvedValue(null);
   mockLiveDep.mockResolvedValue(LIVE_DEP);
   mockStoreDep.mockResolvedValue(null);
   mockStoreNorm.mockResolvedValue({});
@@ -169,5 +171,22 @@ describe("getAreaProfile (store-read flip)", () => {
     expect(total.percentile).toBe(41.5);
     // monthly rate derives from the stored total + months_covered
     expect(signal(profile.signals, "crime.monthly_rate").value).toBe(20); // 240 / 12
+  });
+});
+
+describe("areaNotFoundBody (AR-711/712)", () => {
+  it("returns the bare error when the area is not a known terminated postcode", async () => {
+    mockTerminated.mockResolvedValue(null);
+    expect(await areaNotFoundBody("Nowhereville")).toEqual({
+      error: 'Could not resolve area "Nowhereville". Provide a UK postcode or place name.',
+    });
+  });
+
+  it("attaches terminated info when the postcode is in the ONS terminated dataset", async () => {
+    mockTerminated.mockResolvedValue({ postcode: "AB1 0AA", year_terminated: 1996, month_terminated: 6 });
+    expect(await areaNotFoundBody("AB1 0AA")).toEqual({
+      error: 'Could not resolve area "AB1 0AA". Provide a UK postcode or place name.',
+      terminated: { year_terminated: 1996, month_terminated: 6 },
+    });
   });
 });

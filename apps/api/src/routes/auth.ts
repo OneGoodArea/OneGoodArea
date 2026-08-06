@@ -505,6 +505,137 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       }
     });
 
+    app.post("/auth/magic-link/consume", {
+      schema: {
+        tags: ["Auth"],
+        summary: "Consume a magic link",
+        description: "Validate and single-use consume a magic link token, verify the user's email, and return the user so the web layer can mint a session.",
+        "x-internal": true,
+        response: {
+          200: z.object({
+            ok: z.literal(true),
+            user: z.object({
+              id: z.string(),
+              email: z.string(),
+              name: z.string().nullable(),
+              image: z.string().nullable(),
+              userType: z.string().nullable(),
+            }),
+          }),
+          400: z.object({ error: z.string() }),
+          401: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
+      },
+    }, async (request, reply) => {
+      try {
+        const { token } = (request.body ?? {}) as { token?: unknown };
+        if (!token || typeof token !== "string" || token.length === 0) {
+          return reply.code(400).send({ error: "Token is required" });
+        }
+
+        const tokenRows = await sql`
+          SELECT id, user_id, email, expires_at, used
+          FROM magic_link_tokens
+          WHERE token = ${token}
+        `;
+        if (tokenRows.length === 0) {
+          /* No leak of whether the token existed. */
+          return reply.code(401).send({ error: "invalid_or_expired_token" });
+        }
+
+        const tokenRow = row<{
+          id: string;
+          user_id: string;
+          email: string;
+          expires_at: string;
+          used: boolean;
+        }>(tokenRows[0]);
+        if (tokenRow.used) {
+          return reply.code(401).send({ error: "invalid_or_expired_token" });
+        }
+        if (new Date(tokenRow.expires_at) < new Date()) {
+          return reply.code(401).send({ error: "invalid_or_expired_token" });
+        }
+
+        /* Single-use: mark consumed atomically. A second click races here, but
+           the prior `used` read already rejected it, mirroring the web
+           authorize() behaviour (second -> sees used=TRUE). */
+        await sql`
+          UPDATE magic_link_tokens SET used = TRUE WHERE id = ${tokenRow.id}
+        `;
+
+        /* Clicking a magic link is strong proof of email ownership — verify
+           the email so the user can write data without a separate step. */
+        await sql`
+          UPDATE users SET email_verified = TRUE
+          WHERE id = ${tokenRow.user_id} AND email_verified = FALSE
+        `;
+
+        const userRows = await sql`
+          SELECT id, email, name, image, user_type FROM users WHERE id = ${tokenRow.user_id}
+        `;
+        if (userRows.length === 0) {
+          return reply.code(401).send({ error: "invalid_or_expired_token" });
+        }
+        const user = userRows[0];
+
+        return reply.send({
+          ok: true,
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name ?? null,
+            image: user.image ?? null,
+            userType: user.user_type ?? null,
+          },
+        });
+      } catch (error) {
+        logger.error("Magic link consume error:", error);
+        if (sendAppError(reply, error)) return;
+        return reply.code(500).send({ error: "Something went wrong" });
+      }
+    });
+
+    app.get("/auth/state", {
+      schema: {
+        tags: ["Auth"],
+        summary: "Auth state",
+        description: "Return the authenticated user's auth state (email verified + user type). Session user only — never accepts a client-supplied id.",
+        "x-internal": true,
+        security: [{ bearerToken: [] }],
+        response: {
+          200: z.object({
+            emailVerified: z.boolean(),
+            userType: z.string().nullable(),
+          }),
+          401: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
+      },
+    }, async (request, reply) => {
+      try {
+        const userId = await authenticateSession(request, reply);
+        if (!userId) return reply; // 401 already sent
+
+        const rows = await sql`
+          SELECT email_verified, user_type FROM users WHERE id = ${userId} LIMIT 1
+        `;
+        if (rows.length === 0) {
+          return reply.code(401).send({ error: "User not found" });
+        }
+
+        return reply.send({
+          emailVerified: Boolean(rows[0].email_verified),
+          userType: rows[0].user_type ?? null,
+        });
+      } catch (error) {
+        logger.error("Auth state error:", error);
+        if (sendAppError(reply, error)) return;
+        return reply.code(500).send({ error: "Something went wrong" });
+      }
+    });
+
     app.get("/auth/check-email", {
       schema: {
         tags: ["Auth"],

@@ -98,6 +98,18 @@ describe("POST /contact", () => {
     expect(mockSend).toHaveBeenCalledWith(expect.objectContaining({ company: null, role: null }));
   });
 
+  it("accepts the estate agent role", async () => {
+    const res = await post({ ...VALID, role: "estate-agent" });
+    expect(res.statusCode).toBe(200);
+    expect(mockSend).toHaveBeenCalledWith(expect.objectContaining({ role: "Estate agent" }));
+  });
+
+  it("rejects an unknown role", async () => {
+    const res = await post({ ...VALID, role: "landlords" });
+    expect(res.statusCode).toBe(400);
+    expect(mockSend).not.toHaveBeenCalled();
+  });
+
   it("still 200s and sends the notification even if the confirmation email fails", async () => {
     mockConfirm.mockRejectedValue(new Error("smtp down"));
     const res = await post(VALID);
