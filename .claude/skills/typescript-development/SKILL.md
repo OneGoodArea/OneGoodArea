@@ -18,6 +18,7 @@ description: Use when writing or reviewing TypeScript in the monorepo — coding
 5. Keep production code in `src/`, tests in `test/`. Never mix.
 6. No comments unless the intent is genuinely unclear; prefer self-documenting code.
 7. Small, focused modules; avoid leaky cross-app imports (web must not import api internals).
+8. Interfaces MUST be defined in the current design using ZOD schemas
 
 ## Verification (MUST run in containers)
 Lint and typecheck run inside containers, exactly like tests — see software-testing skill:
