@@ -20,7 +20,7 @@ We log structured metadata for every authenticated API call. This is the only th
 - `user_id` + `org_id` (you, your organization)
 - `created_at` (timestamp)
 - A small, structured `metadata` JSON describing the call shape: area, preset, op (for `/v1/query`), counts, the computed score number. No raw response body, no chat content.
-- `source` ("mcp" or "api") and `client_app` ("claude-desktop", "cursor", "claude-code", "other"), derived from the `User-Agent` header. We use this to understand which integrations are used.
+- `source` ("mcp" or "api") and `client_app` ("claude-desktop", "cursor", "claude-code", "estate-agents", "other"), derived from the `User-Agent` header. We use this to understand which integrations are used.
 
 We do NOT log:
 - Your raw IP beyond what is needed for IP allowlist enforcement (a per-key, opt-in feature)
