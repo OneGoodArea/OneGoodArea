@@ -61,13 +61,13 @@ export const METHODOLOGY_VERSIONS: MethodologyVersion[] = [
     summary:
       "Deterministic UK area-intelligence engine. Four decision presets, five weighted dimensions each, per-dimension confidence, and full source attribution. Scores are computed from public data by fixed formulas; no AI in the scoring path.",
     changes: [
-      "Deterministic scoring: the same input and engine version always produce the same score. No LLM in the scoring path.",
-      "Four decision presets (moving, business, investing, research), each with five weighted dimensions summing to 100.",
+      "Deterministic scoring: the same inputs and engine version always produce the same score, with no AI in the scoring path.",
+      "Four decision presets (moving, business, investing, research), each weighting the categories for its use case.",
       "Area-type benchmarks (urban, suburban, rural) so scores are fair across settlement types.",
-      "Per-dimension confidence (0.0 to 1.0) with a plain-language reason, aggregated weight-averaged across dimensions. Property confidence is variance-aware: wide year-on-year swings cap it.",
+      "A confidence level and a plain-language reason on every value, so you always know how solid each number is.",
       "Seven signal categories from public data: crime, deprivation, property, schools, amenities, transport, environment. Every value carries its source and observed period.",
-      "Normalised values plus national and regional percentiles for cross-area comparison.",
-      "Engine version stamped on every response and pinnable via the X-Engine-Version header for regulated buyers' model risk registers.",
+      "Normalised values plus national and regional context for cross-area comparison.",
+      "The engine version is stamped on every response and can be pinned, so scores stay reproducible for audits.",
     ],
   },
   {
@@ -79,7 +79,7 @@ export const METHODOLOGY_VERSIONS: MethodologyVersion[] = [
       "Seven standard dimensions for every preset (safety & crime, deprivation, property, schools, amenities, transport, environment), replacing the previous five-dimension-per-preset sets.",
       "Intent-aware weighting: the same category contributes differently by decision type (property weighs more for investing, transport for business, deprivation for moving).",
       "Business and investing presets now score directly from property and schools signals instead of derived demand proxies.",
-      "Custom weights override the chosen preset's weights across the shared seven-dimension key set, so any preset can be tuned on the same categories.",
+      "Custom weights let you re-weight the same seven categories for any preset.",
     ],
   },
 ];
