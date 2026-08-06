@@ -2,7 +2,7 @@
 
    AR-218 (Dashboard redesign Epic AR-217): the `/welcome` flow persists three
    onboarding signals on the users row:
-   - `intent` — which of the 5 ICPs the user is here for (Step 1)
+   - `intent` — which of the 6 ICPs the user is here for (Step 1)
    - `signup_source` — the marketing surface that referred them via `?from=`
    - `role_preference` — how they'll use the product (Step 3); determines
      which surface the dashboard lands them on (engineer → /api-usage,
@@ -22,11 +22,11 @@
 import { z } from "zod";
 import { IsoDateTimeSchema } from "./common";
 
-/** The five ICPs the marketing site routes from. Mirrors the cards on
+/** The six ICPs the marketing site routes from. Mirrors the cards on
     /for/* and the Products mega-menu. Canonical list (don't add an ICP
     here without coordinating with the marketing pages + the /welcome
     intent picker). */
-export const USER_INTENTS = ["proptech", "lenders", "insurance", "cre", "public-sector"] as const;
+export const USER_INTENTS = ["proptech", "lenders", "insurance", "cre", "public-sector", "estate-agents"] as const;
 export type UserIntent = (typeof USER_INTENTS)[number];
 
 /** Schema for `users.intent` — either a known ICP or null (user

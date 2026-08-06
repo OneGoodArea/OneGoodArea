@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 
-/* BuiltForSection v4 — re-cut from 5 workflows to 5 ICPs (PropTech /
-   Insurance / Lenders / CRE / Public sector). Mirrors the ICP cut on
-   /business and the /for/<slug> page set so a buyer sees a consistent
-   set of buyer types across the site.
+/* BuiltForSection v4 — re-cut from 5 workflows to 6 ICPs (PropTech /
+   Insurance / Lenders / CRE / Public sector / Estate agents). Mirrors
+   the ICP cut on /business and the /for/<slug> page set so a buyer
+   sees a consistent set of buyer types across the site.
 
    Tabs across top, one ICP visible at a time. Each tab's panel:
 
@@ -105,6 +105,20 @@ const WORKFLOWS: Workflow[] = [
     ready: true,
     highlight: [[60, 18], [46, 32], [60, 32], [74, 32], [32, 46], [88, 46]],
     caption: "Defensible, FOI-survivable evidence",
+  },
+  {
+    id: "estate-agents",
+    index: "06",
+    title: "Estate agents",
+    body: "Answer the area question before it is asked. One call returns schools, crime, prices and transport for any UK postcode, ready to render onto your listings and brochures, with the source behind each number.",
+    endpointVerb: "GET",
+    endpointPath: "/v1/area",
+    usedBy: "High-street agencies · independent agents · listing portals",
+    icpLabel: "Estate agents",
+    icpSlug: "estate-agents",
+    ready: true,
+    highlight: [[60, 32], [46, 46], [60, 46], [74, 46], [46, 60], [60, 60], [74, 60]],
+    caption: "The area, on the brochure",
   },
 ];
 

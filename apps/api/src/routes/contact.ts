@@ -19,7 +19,7 @@ const ContactErrorResponse = z.object({ error: z.string() });
      2. Per-IP sliding-window rate limit (5/hour, RATE_LIMITS.contact).
      3. Strict Zod validation (valid email, message length bounds). */
 
-const CONTACT_ROLES = ["lender", "insurer", "proptech", "cre", "public-sector", "other"] as const;
+const CONTACT_ROLES = ["lender", "insurer", "proptech", "cre", "public-sector", "estate-agent", "other"] as const;
 
 const ROLE_LABELS: Record<(typeof CONTACT_ROLES)[number], string> = {
   lender: "Lender",
@@ -27,6 +27,7 @@ const ROLE_LABELS: Record<(typeof CONTACT_ROLES)[number], string> = {
   proptech: "PropTech",
   cre: "Commercial real estate",
   "public-sector": "Public sector",
+  "estate-agent": "Estate agent",
   other: "Other",
 };
 
