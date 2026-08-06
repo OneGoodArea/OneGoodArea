@@ -343,7 +343,7 @@ function AnnouncementBar() {
         <span className="oga-announce__badge">NEW</span>
         <McpLogo className="oga-announce__icon" />
         <span className="oga-announce__copy oga-announce__copy--full">
-          OneGoodArea is live as an MCP server. Use it inside Claude Desktop, Cursor, and Claude Code.
+          OneGoodArea is live as an MCP server. Use it inside your AI Agent.
         </span>
         <span className="oga-announce__copy oga-announce__copy--short">
           MCP server is live for Claude Desktop, Cursor, and Claude Code.
