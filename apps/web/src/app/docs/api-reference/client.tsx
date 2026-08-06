@@ -1,9 +1,10 @@
 "use client";
 
-import type { ComponentType, SVGProps } from "react";
+import type { ComponentType, ReactNode, SVGProps } from "react";
 import Link from "next/link";
 import { Nav } from "../../design-v2/_shared/nav";
 import { Footer } from "../../design-v2/_shared/footer";
+import { DEMO_URL } from "../../design-v2/_shared/book-demo";
 import {
   SignalsIcon,
   ScoresIcon,
@@ -12,40 +13,29 @@ import {
 } from "../../design-v2/_shared/product-icons";
 import "./api-reference.css";
 
-/* /docs/api-reference — Brand v3 (Plotted) — rewritten in AR-358.
+/* /docs/api-reference - the reference landing, rebuilt bespoke in the
+   product-page language (Plan 064). A signature request/response console in
+   the hero, then the four products with their live endpoints, the
+   control-plane endpoints, and the routes to /methodology and the live
+   interactive Scalar reference (the Scalar itself is untouched). Endpoint
+   paths stay (this is the reference); implementation jargon and the planner
+   accuracy stat are gone, plain full-sentence copy throughout. */
 
-   Four products, one control plane, one spec. Reframed away from the
-   previous "honest interim while we rebuild" theatre, which was
-   pre-customer dress-up for a regeneration story that's already
-   shipped (@fastify/swagger is wired in apps/api/src/app.ts:35 and
-    the live Scalar reference at /playground consumes it).
-
-   Page layout:
-     - Hero: direct framing, no "interim" language
-     - Products: 4-up grid with bespoke product icons (same set as
-       the marketing /products pages)
-     - Levers: visually subordinate single card on a quiet surface,
-       because Levers is the control plane, not a 5th product
-      - Resources: pointer to /methodology + /playground (the live
-        interactive reference)
-     - No roadmap section. The work it described is done. */
-
+type Endpoint = { verb: "GET" | "POST" | "PUT" | "DELETE"; path: string };
 type Product = {
-  num: string;
   name: string;
   count: string;
   body: string;
   icon: ComponentType<SVGProps<SVGSVGElement>>;
-  endpoints: { verb: "GET" | "POST" | "PUT" | "DELETE" | "PATCH"; path: string }[];
+  endpoints: Endpoint[];
 };
 
 const PRODUCTS: Product[] = [
   {
-    num: "01",
     name: "Signals",
     count: "4 endpoints",
-    body: "Raw normalised signal catalog per area. The primitive: every other product composes from this.",
     icon: SignalsIcon,
+    body: "Every public signal for an area, in one consistent shape. The primitive everything else builds on.",
     endpoints: [
       { verb: "GET", path: "/v1/area" },
       { verb: "GET", path: "/v1/signals/:category" },
@@ -54,37 +44,32 @@ const PRODUCTS: Product[] = [
     ],
   },
   {
-    num: "02",
     name: "Scores",
     count: "1 endpoint",
-    body: "Deterministic composite score per area. Four presets, custom weights, or saved organisation preset_id.",
     icon: ScoresIcon,
-    endpoints: [
-      { verb: "POST", path: "/v1/score" },
-    ],
+    body: "A single 0 to 100 score for an area, from one of four profiles, custom weights, or a weighting saved for your organisation.",
+    endpoints: [{ verb: "POST", path: "/v1/score" }],
   },
   {
-    num: "03",
     name: "Monitor",
     count: "7 endpoints",
-    body: "Portfolios of tracked areas. Bulk enrich, detect monthly change, fire signal.changed webhooks.",
     icon: MonitorIcon,
+    body: "Watch a list of areas, enrich them in bulk, detect monthly change, and get a signed webhook when something material moves.",
     endpoints: [
-      { verb: "POST",   path: "/v1/portfolios" },
-      { verb: "GET",    path: "/v1/portfolios" },
-      { verb: "GET",    path: "/v1/portfolios/:id" },
+      { verb: "POST", path: "/v1/portfolios" },
+      { verb: "GET", path: "/v1/portfolios" },
+      { verb: "GET", path: "/v1/portfolios/:id" },
       { verb: "DELETE", path: "/v1/portfolios/:id" },
-      { verb: "POST",   path: "/v1/portfolios/:id/areas" },
-      { verb: "POST",   path: "/v1/portfolios/:id/enrich" },
-      { verb: "POST",   path: "/v1/portfolios/:id/changes" },
+      { verb: "POST", path: "/v1/portfolios/:id/areas" },
+      { verb: "POST", path: "/v1/portfolios/:id/enrich" },
+      { verb: "POST", path: "/v1/portfolios/:id/changes" },
     ],
   },
   {
-    num: "04",
     name: "Intelligence",
     count: "4 endpoints",
-    body: "Typed query plane. AI emits the plan; the database answers. 6 plan ops, 92.9% planner accuracy.",
     icon: IntelligenceIcon,
+    body: "Ask in plain English or send a typed query. You get the answer and the plan behind it, so every result can be reviewed and run again.",
     endpoints: [
       { verb: "POST", path: "/v1/query" },
       { verb: "POST", path: "/v1/peers" },
@@ -94,112 +79,113 @@ const PRODUCTS: Product[] = [
   },
 ];
 
-const LEVERS_ENDPOINTS = [
-  "/v1/orgs (+ CRUD)",
-  "/v1/orgs/:id/bundles (+ CRUD)",
-  "/v1/orgs/:id/presets (+ CRUD)",
-  "/v1/orgs/:id/methodology (pin/unpin)",
-  "/v1/orgs/:id/cohorts (+ CRUD)",
-  "/v1/orgs/:id/members (+ CRUD, RBAC)",
-  "/v1/orgs/:id/invitations",
-  "/v1/webhooks",
+const CONTROL_PLANE: { path: string; note: string }[] = [
+  { path: "/v1/orgs", note: "Organisations" },
+  { path: "/v1/orgs/:id/bundles", note: "Signal bundles" },
+  { path: "/v1/orgs/:id/presets", note: "Scoring presets" },
+  { path: "/v1/orgs/:id/methodology", note: "Version pinning" },
+  { path: "/v1/orgs/:id/cohorts", note: "Peer groups" },
+  { path: "/v1/orgs/:id/members", note: "Members and roles" },
+  { path: "/v1/orgs/:id/invitations", note: "Invitations" },
+  { path: "/v1/webhooks", note: "Webhook delivery" },
 ];
-
-/* ============================================================
-   Page
-   ============================================================ */
 
 export default function ApiReferenceClient() {
   return (
     <div className="oga-root oga-apiref">
       <Nav />
-
       <Hero />
       <SectionProducts />
-      <SectionLevers />
+      <SectionControlPlane />
       <SectionResources />
-
       <FinalCta />
       <Footer />
     </div>
   );
 }
 
+/* ---------- Hero: headline + request/response console ---------- */
+
 function Hero() {
   return (
-    <section className="oga-apiref-hero oga-section-hero">
-      <div className="oga-apiref__container--narrow">
-        <div className="oga-apiref-hero__eyebrow">
-          <span className="oga-apiref-hero__status-dot" aria-hidden />
-          <span>API reference</span>
+    <section className="oga-apiref-hero">
+      <div className="oga-apiref-hero__dots" aria-hidden />
+      <div className="oga-apiref-hero__inner">
+        <div className="oga-apiref-hero__copy">
+          <span className="oga-apiref-hero__eyebrow">
+            <span className="oga-apiref-hero__eyebrow-dot" aria-hidden />
+            API reference
+          </span>
+          <h1 className="oga-apiref-hero__title">Build on the OneGoodArea API.</h1>
+          <p className="oga-apiref-hero__lead">
+            Four products and a control plane, all on one API. Browse what every
+            endpoint does here, read how the engine works on the methodology page,
+            or open the interactive reference to try any call in your browser.
+          </p>
+          <div className="oga-apiref-hero__ctas">
+            <Link href="/playground" className="oga-btn oga-btn-primary">
+              Open the interactive reference
+              <span aria-hidden>→</span>
+            </Link>
+            <Link href="/methodology" className="oga-btn oga-btn-secondary">
+              Read the methodology
+            </Link>
+          </div>
         </div>
 
-        <h1 className="oga-apiref-hero__title">
-          Four products. One control plane. One spec.
-        </h1>
-
-        <p className="oga-apiref-hero__lead">
-          The OneGoodArea API exposes four composable products on one signal-first engine, plus a
-          per-organisation control plane. Read the methodology to understand how the engine works.
-          Open the interactive reference to query it.
-        </p>
-
-        <div className="oga-apiref-hero__actions">
-          <Link href="/methodology" className="oga-btn oga-btn-primary">
-            Read the methodology
-            <span aria-hidden>→</span>
-          </Link>
-          <Link href="/playground" className="oga-btn oga-btn-secondary">
-            Open the reference
-            <span aria-hidden>→</span>
-          </Link>
+        <div className="oga-apiref-hero__console" aria-hidden>
+          <div className="oga-apiref-hero__con-bar">
+            <span className="oga-apiref-hero__con-dots"><i /><i /><i /></span>
+            <span className="oga-apiref-hero__con-meta">REST · JSON</span>
+          </div>
+          <div className="oga-apiref-hero__con-body">
+            <div className="oga-apiref-hero__con-req">
+              <span className="oga-apiref-hero__con-verb">GET</span>
+              <span className="oga-apiref-hero__con-path">/v1/area?postcode=M1 1AE</span>
+            </div>
+            <div className="oga-apiref-hero__con-auth">Authorization: Bearer oga_…</div>
+            <div className="oga-apiref-hero__con-sep" />
+            <ul className="oga-apiref-hero__con-rows">
+              <li><span>crime</span><span>92nd pct</span><em>police.uk</em></li>
+              <li><span>deprivation</span><span>decile 1</span><em>IMD 2025</em></li>
+              <li><span>schools</span><span>4 rated good</span><em>Ofsted</em></li>
+            </ul>
+            <div className="oga-apiref-hero__con-status">200 · engine v1.1.0</div>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
+/* ---------- 01 Products (dark) ---------- */
+
 function SectionProducts() {
   return (
-    <section id="products" className="oga-section-dark" data-oga-surface="dark">
-      <div className="oga-apiref__container">
-        <header className="oga-apiref__header">
-          <div className="oga-apiref__eyebrow">
-            <span className="oga-apiref__eyebrow-num">01</span>
-            <span className="oga-apiref__eyebrow-line" aria-hidden />
-            <span>Products</span>
-          </div>
-          <h2 className="oga-apiref__h2">Four composable products.</h2>
-          <p className="oga-apiref__lead">
-            Same vocabulary as the marketing surfaces. Each tile lists its live endpoints. The
-            engine details live on the methodology page; the interactive request runner lives on
-            the reference.
-          </p>
-        </header>
+    <section id="products" className="oga-apiref-sec oga-apiref-sec--dark" data-oga-surface="dark">
+      <div className="oga-apiref__wrap">
+        <ApiHead num="01" kicker="Products" title="Four products on one API." dark>
+          Each product exposes a small set of endpoints. Read how they work on the
+          methodology page, and open the interactive reference to try any of them
+          in your browser.
+        </ApiHead>
 
-        <div className="oga-apiref-products__grid">
+        <div className="oga-apiref-prod__grid">
           {PRODUCTS.map((p) => {
             const Icon = p.icon;
             return (
-              <article key={p.num} className="oga-apiref-products__card">
-                <div className="oga-apiref-products__card-head">
-                  <span className="oga-apiref-products__card-icon"><Icon /></span>
-                  <div className="oga-apiref-products__card-head-text">
-                    <span className="oga-apiref-products__card-num">{p.num}</span>
-                    <h3 className="oga-apiref-products__card-name">{p.name}</h3>
-                  </div>
-                  <span className="oga-apiref-products__card-count">{p.count}</span>
+              <article key={p.name} className="oga-apiref-prod__card">
+                <div className="oga-apiref-prod__top">
+                  <span className="oga-apiref-prod__icon"><Icon width={26} height={26} /></span>
+                  <span className="oga-apiref-prod__count">{p.count}</span>
                 </div>
-
-                <p className="oga-apiref-products__card-body">{p.body}</p>
-
-                <ul className="oga-apiref-products__endpoints">
+                <h3 className="oga-apiref-prod__name">{p.name}</h3>
+                <p className="oga-apiref-prod__body">{p.body}</p>
+                <ul className="oga-apiref-prod__eps">
                   {p.endpoints.map((e) => (
-                    <li key={`${e.verb}-${e.path}`} className="oga-apiref-products__endpoint">
-                      <span className={`oga-apiref-products__endpoint-verb oga-verb oga-verb--${e.verb.toLowerCase()}`}>
-                        {e.verb}
-                      </span>
-                      <span className="oga-apiref-products__endpoint-path">{e.path}</span>
+                    <li key={`${e.verb}-${e.path}`} className="oga-apiref-prod__ep">
+                      <span className={`oga-apiref-prod__verb oga-apiref-prod__verb--${e.verb.toLowerCase()}`}>{e.verb}</span>
+                      <span className="oga-apiref-prod__path">{e.path}</span>
                     </li>
                   ))}
                 </ul>
@@ -212,96 +198,67 @@ function SectionProducts() {
   );
 }
 
-function SectionLevers() {
-  return (
-    <section id="levers" className="oga-section-quiet">
-      <div className="oga-apiref__container">
-        <header className="oga-apiref__header">
-          <div className="oga-apiref__eyebrow">
-            <span className="oga-apiref__eyebrow-num">02</span>
-            <span className="oga-apiref__eyebrow-line" aria-hidden />
-            <span>Control plane</span>
-          </div>
-          <h2 className="oga-apiref__h2">Levers: per-organisation methodology and admin.</h2>
-          <p className="oga-apiref__lead">
-            Different audience to the four products. Admins configure how the engine behaves for
-            their organisation: custom signal bundles, saved scoring presets, methodology pinning,
-            peer cohorts, members and RBAC, white-label, IP allowlist.
-          </p>
-        </header>
+/* ---------- 02 Control plane (quiet) ---------- */
 
-        <article className="oga-apiref-levers__card">
-          <div className="oga-apiref-levers__head">
-            <span className="oga-apiref-levers__count">~32 endpoints</span>
-            <span className="oga-apiref-levers__divider" aria-hidden />
-            <span className="oga-apiref-levers__scope">Admin / owner only</span>
-          </div>
-          <ul className="oga-apiref-levers__endpoints">
-            {LEVERS_ENDPOINTS.map((path) => (
-              <li key={path} className="oga-apiref-levers__endpoint">
-                <span className="oga-apiref-levers__endpoint-bullet" aria-hidden />
-                <span className="oga-apiref-levers__endpoint-path">{path}</span>
+function SectionControlPlane() {
+  return (
+    <section id="control-plane" className="oga-apiref-sec oga-apiref-sec--quiet">
+      <div className="oga-apiref__wrap">
+        <ApiHead num="02" kicker="Control plane" title="Configure it for your whole organisation.">
+          A separate set of endpoints for admins and owners: signal bundles,
+          scoring presets, version pinning, peer groups, members and roles, and
+          webhook delivery. All opt-in, and covered in full on the interactive
+          reference.
+        </ApiHead>
+
+        <div className="oga-apiref-cp__panel">
+          <ul className="oga-apiref-cp__list">
+            {CONTROL_PLANE.map((c) => (
+              <li key={c.path} className="oga-apiref-cp__row">
+                <span className="oga-apiref-cp__path">{c.path}</span>
+                <span className="oga-apiref-cp__note">{c.note}</span>
               </li>
             ))}
           </ul>
-          <p className="oga-apiref-levers__foot">
-            Full request shapes on the{" "}
-            <Link href="/playground" className="oga-apiref-levers__foot-link">
-              interactive reference <span aria-hidden>→</span>
-            </Link>
-            . Methodology rationale on the{" "}
-            <Link href="/methodology#levers" className="oga-apiref-levers__foot-link">
-              Levers section of /methodology <span aria-hidden>→</span>
+          <p className="oga-apiref-cp__foot">
+            The why behind these lives in{" "}
+            <Link href="/methodology#levers" className="oga-apiref-cp__link">
+              the Levers section of the methodology <span aria-hidden>→</span>
             </Link>.
           </p>
-        </article>
+        </div>
       </div>
     </section>
   );
 }
+
+/* ---------- 03 Reference (light) ---------- */
 
 function SectionResources() {
   return (
-    <section id="resources" className="oga-section-hero">
-      <div className="oga-apiref__container">
-        <header className="oga-apiref__header">
-          <div className="oga-apiref__eyebrow">
-            <span className="oga-apiref__eyebrow-num">03</span>
-            <span className="oga-apiref__eyebrow-line" aria-hidden />
-            <span>Reference</span>
-          </div>
-          <h2 className="oga-apiref__h2">Methodology and live spec.</h2>
-          <p className="oga-apiref__lead">
-            The engine details and the request runner. Both are live, both stay in step with the
-            backend.
-          </p>
-        </header>
+    <section id="reference" className="oga-apiref-sec oga-apiref-sec--light">
+      <div className="oga-apiref__wrap">
+        <ApiHead num="03" kicker="Go deeper" title="The methodology and the live reference.">
+          The reasoning behind every endpoint, and a runner to try them. Both stay
+          in step with the API on every deploy.
+        </ApiHead>
 
-        <div className="oga-apiref-resources__grid">
-          <Link href="/methodology" className="oga-apiref-resources__item">
-            <span className="oga-apiref-resources__item-num">03.1</span>
-            <h3 className="oga-apiref-resources__item-name">Methodology</h3>
-            <p className="oga-apiref-resources__item-desc">
-              14 sections covering signals, store, time-series, scoring, Intelligence, Levers,
-              versioning. The why behind every endpoint.
+        <div className="oga-apiref-res__grid">
+          <Link href="/methodology" className="oga-apiref-res__card">
+            <h3 className="oga-apiref-res__name">Methodology</h3>
+            <p className="oga-apiref-res__desc">
+              How every signal, score, comparison and forecast is worked out, and
+              the public sources behind them. The why behind every endpoint.
             </p>
-            <span className="oga-apiref-resources__item-cta">
-              Read methodology
-              <span aria-hidden>→</span>
-            </span>
+            <span className="oga-apiref-res__cta">Read the methodology <span aria-hidden>→</span></span>
           </Link>
-
-          <Link href="/playground" className="oga-apiref-resources__item">
-            <span className="oga-apiref-resources__item-num">03.2</span>
-            <h3 className="oga-apiref-resources__item-name">Interactive reference</h3>
-            <p className="oga-apiref-resources__item-desc">
-              OpenAPI 3.0 spec auto-generated from the live Fastify schemas. Request shapes,
-              response shapes, try-it-in-browser. Stays in step with the backend on every deploy.
+          <Link href="/playground" className="oga-apiref-res__card">
+            <h3 className="oga-apiref-res__name">Interactive reference</h3>
+            <p className="oga-apiref-res__desc">
+              Every endpoint, generated from the live API so it never drifts. See
+              the request and response shapes, and try any call in your browser.
             </p>
-            <span className="oga-apiref-resources__item-cta">
-              Open reference
-              <span aria-hidden>→</span>
-            </span>
+            <span className="oga-apiref-res__cta">Open the reference <span aria-hidden>→</span></span>
           </Link>
         </div>
       </div>
@@ -309,27 +266,55 @@ function SectionResources() {
   );
 }
 
+/* ---------- Final CTA (dark) ---------- */
+
 function FinalCta() {
   return (
-    <section className="oga-section-dark" data-oga-surface="dark">
-      <div className="oga-apiref__container--narrow oga-apiref-cta__inner">
-        <h2 className="oga-apiref-cta__title">
-          The engine ships today.
-        </h2>
+    <section className="oga-apiref-sec oga-apiref-sec--dark oga-apiref-cta" data-oga-surface="dark">
+      <div className="oga-apiref__wrap oga-apiref-cta__inner">
+        <h2 className="oga-apiref-cta__title">Start building.</h2>
         <p className="oga-apiref-cta__lead">
-          Get an API key and start scoring areas. The methodology and the reference are both live.
+          Make your first call in the playground, then reach for the interactive
+          reference whenever you need the exact shape of a request.
         </p>
-        <div className="oga-apiref-cta__buttons">
-          <Link href="/sign-up" className="oga-btn oga-btn-primary">
-            Get an API key
+        <div className="oga-apiref-cta__ctas">
+          <Link href="/playground" className="oga-btn oga-btn-primary">
+            Try in the playground
             <span aria-hidden>→</span>
           </Link>
-          <Link href="/methodology" className="oga-btn oga-btn-secondary">
-            Read the methodology
-            <span aria-hidden>→</span>
+          <Link href={DEMO_URL} className="oga-btn oga-btn-secondary">
+            Book a demo
           </Link>
         </div>
       </div>
     </section>
+  );
+}
+
+/* ---------- Shared section header ---------- */
+
+function ApiHead({
+  num,
+  kicker,
+  title,
+  children,
+  dark = false,
+}: {
+  num: string;
+  kicker: string;
+  title: string;
+  children: ReactNode;
+  dark?: boolean;
+}) {
+  return (
+    <header className={`oga-apiref-head${dark ? " oga-apiref-head--dark" : ""}`}>
+      <div className="oga-apiref-head__eyebrow">
+        <span className="oga-apiref-head__num">{num}</span>
+        <span className="oga-apiref-head__line" aria-hidden />
+        <span>{kicker}</span>
+      </div>
+      <h2 className="oga-apiref-head__title">{title}</h2>
+      <p className="oga-apiref-head__lead">{children}</p>
+    </header>
   );
 }
