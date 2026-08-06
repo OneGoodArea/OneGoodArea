@@ -222,7 +222,7 @@ function SectionIntegration() {
             <h3 className="oga-pt-int__title">How it is moving</h3>
             <p className="oga-pt-int__desc">
               Monthly snapshots, so you can show the direction of travel — the
-              "it's on the way up" line that sells.
+              &ldquo;it&rsquo;s on the way up&rdquo; line that sells.
             </p>
           </div>
 
