@@ -5,7 +5,7 @@ import { ShowcaseScoring } from "@/components/showcase/ShowcaseScoring";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProptechPage({
+export default async function EstateAgentsPage({
   searchParams,
 }: {
   searchParams: Promise<{ postcode?: string }>;
@@ -29,7 +29,7 @@ export default async function ProptechPage({
   return (
     <main className="min-h-screen bg-[#09090b]">
       <section className="mx-auto max-w-4xl px-4 py-12">
-        <h1 className="text-3xl font-bold text-[#e4e4e8] mb-2">Proptech Workflow</h1>
+        <h1 className="text-3xl font-bold text-[#e4e4e8] mb-2">Estate Agent Workflow</h1>
         <p className="text-[#8a8a96] mb-8">
           {postcode
             ? `Live data for ${postcode} — real signals from the API.`
