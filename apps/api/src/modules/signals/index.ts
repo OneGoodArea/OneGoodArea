@@ -13,7 +13,7 @@
 
    The fetchers live in this module (./data-sources): signals owns ingestion. */
 
-import { geocodeArea, type GeocodedArea } from "./data-sources/postcodes";
+import { geocodeArea, lookupTerminatedPostcode, type GeocodedArea } from "./data-sources/postcodes";
 import { getCrimeData } from "./data-sources/police";
 import { getDeprivationData } from "./data-sources/deprivation";
 import { getNearbyAmenities } from "./data-sources/openstreetmap";
@@ -35,6 +35,7 @@ import type { AreaProfile } from "@onegoodarea/contracts";
 
 export { buildAreaProfile, type AreaSources } from "./area-profile";
 export { queryAreas, parseAreasQuery, type AreaResult, type AreasQuery } from "./query";
+export { lookupTerminatedPostcode, type TerminatedPostcode } from "./data-sources/postcodes";
 
 /** Geocoded area + its assembled source structs + which sources came from the
     store. The shared fetch behind getAreaProfile (signals) AND scoreArea
@@ -142,6 +143,25 @@ export async function fetchAreaSources(area: string): Promise<FetchedArea | null
     store-backed and the rest are live, "live" otherwise. Store-backed signals
     are enriched with their normalized_value + national percentile + regional
     percentile (AR-408). See ADR 0004. */
+export interface AreaNotFoundBody {
+  error: string;
+  terminated?: { year_terminated: number; month_terminated: number };
+}
+
+/** AR-712: 404 body for an unresolvable area. When the query is postcode-shaped
+    and exists in the ONS terminated dataset, attach `terminated` so clients can
+    show the termination-year message instead of a generic "not found". Place
+    names and unknown postcodes get the bare error. */
+export async function areaNotFoundBody(area: string): Promise<AreaNotFoundBody> {
+  const error = `Could not resolve area "${area}". Provide a UK postcode or place name.`;
+  const terminated = await lookupTerminatedPostcode(area);
+  if (!terminated) return { error };
+  return {
+    error,
+    terminated: { year_terminated: terminated.year_terminated, month_terminated: terminated.month_terminated },
+  };
+}
+
 export async function getAreaProfile(area: string): Promise<AreaProfile | null> {
   const fetched = await fetchAreaSources(area);
   if (!fetched) return null;

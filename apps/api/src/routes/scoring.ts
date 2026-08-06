@@ -9,6 +9,7 @@ import { sql } from "../infrastructure/db/client";
 import { rows } from "../infrastructure/db/types";
 import { getConfig } from "../infrastructure/config";
 import { scoreArea, parseScoreBody } from "../modules/scoring";
+import { areaNotFoundBody } from "../modules/signals";
 import { getPreset } from "../modules/orgs/presets";
 import { trackEvent } from "../modules/tracking/activity";
 import { insertBriefComposerLog } from "../modules/training/brief-composer-logs";
@@ -48,7 +49,13 @@ export function registerScoringRoutes(app: FastifyInstance): void {
               400: z.object({ error: z.string() }),
               401: z.object({ error: z.string() }),
               403: z.object({ error: z.string() }),
-              404: z.object({ error: z.string() }),
+              404: z.object({
+                error: z.string(),
+                terminated: z.object({
+                  year_terminated: z.number(),
+                  month_terminated: z.number(),
+                }).optional(),
+              }),
               422: z.object({ error: z.string(), code: z.string() }),
               429: z.object({ error: z.string() }),
               500: z.object({ error: z.string() }),
@@ -152,9 +159,7 @@ export function registerScoringRoutes(app: FastifyInstance): void {
         const result = await scoreArea(parsed.query);
         const latencyMs = Date.now() - t0;
         if (!result) {
-          return reply.code(404).send({
-            error: `Could not resolve area "${parsed.query.area}". Provide a UK postcode or place name.`,
-          });
+          return reply.code(404).send(await areaNotFoundBody(parsed.query.area));
         }
 
         trackEvent("api.score.computed", ctx.userId, {
