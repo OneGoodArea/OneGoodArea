@@ -46,7 +46,7 @@ function Hero() {
         </p>
         <div className="oga-icp-hero__ctas">
           <Link href="/showcase/estate-agents" className="oga-btn oga-btn-primary">
-            See the live demo
+            Try the Demo Workflow
             <span aria-hidden>→</span>
           </Link>
           <Link href="/playground" className="oga-btn oga-btn-secondary">
