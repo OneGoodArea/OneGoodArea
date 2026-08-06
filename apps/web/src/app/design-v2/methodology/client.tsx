@@ -110,178 +110,147 @@ const DATA_SOURCES: SourceTile[] = [
 /* ───────────────────────────── store tables (ADR 0002) */
 
 const STORE_TABLES: { name: string; desc: string }[] = [
-  { name: "geo_entities", desc: "Canonical area registry: LSOAs, MSOAs, LADs, regions, with boundary version (2011 / 2021)." },
-  { name: "geo_lookup", desc: "ONS NSPL/ONSPD spine: postcode → OA / LSOA / MSOA / LAD / region. 1.8M postcodes loaded." },
-  { name: "source_snapshots", desc: "One row per refresh run. Captures source name, captured_at, record count, optional sha. The audit anchor." },
-  { name: "signals", desc: "Catalog of every signal we expose. signal_key, label, direction, unit, source, description." },
-  { name: "signal_values", desc: "One row per (signal_key, geo_type, geo_code). Current value, normalized_value, source_snapshot_id, engine_version." },
-  { name: "signal_percentiles", desc: "Per-scope percentile rank, 0 to 100. Computed in-DB via PERCENT_RANK() window function." },
-  { name: "signal_timeseries", desc: "Append-only history. PK includes observed_period; INSERT … ON CONFLICT DO NOTHING. Corrections surface as next period, never overwrite." },
+  { name: "Area registry", desc: "Every UK small area, and the postcodes that resolve into it, so a postcode always maps to the right neighbourhood." },
+  { name: "Source snapshots", desc: "A dated record of each data refresh, capturing where the numbers came from and when. The anchor that makes every value auditable." },
+  { name: "Current values", desc: "The latest value for every signal in every area, placed in national context and linked back to the snapshot it came from." },
+  { name: "Monthly history", desc: "A month-by-month record that is only ever added to, so past values are preserved and any figure can be reproduced later." },
 ];
 
 /* ───────────────────────────── store fetch modes */
 
 const STORE_MODES: { tag: string; body: string }[] = [
-  { tag: "live", body: "Every contributing signal was fetched from a live source on this request. The fallback path; happens when the store has no row for an area." },
-  { tag: "store", body: "Every contributing signal was read from the persisted store. No live calls were made. The path that scales." },
-  { tag: "hybrid", body: "A mix: some signals store-served, some live-served on this request. Honest about partial coverage during the live-to-store migration." },
+  { tag: "live", body: "Every number in this response was fetched fresh from its source when you asked." },
+  { tag: "stored", body: "Every number was served from our own store, so it comes back fast and consistently." },
+  { tag: "mixed", body: "A blend of the two, so you always know exactly how each number was sourced." },
 ];
 
 /* ───────────────────────────── derived signals (ADRs 0018, 0020-0024) */
 
 type DerivedSignal = {
-  key: string;
+  name: string;
   desc: string;
-  window: string;
-  conf: string;
 };
 
 const DERIVED_SIGNALS: DerivedSignal[] = [
   {
-    key: "property.price_change_pct_yoy",
-    desc: "Count-weighted calendar-year YoY. Median weighted by transaction count, latest year vs prior year.",
-    window: "calendar",
-    conf: "0.85",
+    name: "Change over time",
+    desc: "How prices, sales activity and crime have moved compared with a year ago.",
   },
   {
-    key: "crime.total_12m_change_pct_yoy",
-    desc: "Rolling 12-month sum vs prior 12-month sum. Like-for-like windows; full-coverage guard.",
-    window: "rolling 12m",
-    conf: "0.85",
+    name: "Momentum",
+    desc: "The recent direction of travel over the last few months, so a fast-moving area shows up early.",
   },
   {
-    key: "property.transaction_count_change_pct_yoy",
-    desc: "Rolling 12-month transaction-count YoY. Surfaces market liquidity shifts independent of price.",
-    window: "rolling 12m",
-    conf: "0.85",
+    name: "Trend",
+    desc: "The longer-run direction over a couple of years, steadier than a single year-on-year jump.",
   },
   {
-    key: "property.median_price_change_pct_6m",
-    desc: "Latest 6-month window vs prior 6-month window. Count-weighted; full-window guard each side.",
-    window: "6m",
-    conf: "0.85",
-  },
-  {
-    key: "crime.total_6m_change_pct",
-    desc: "6-month crime momentum. Strict full-window guard on both sides.",
-    window: "6m",
-    conf: "0.85",
-  },
-  {
-    key: "crime.monthly_count_trend_slope_24m",
-    desc: "Postgres regr_slope over a synthetic monthly index. More robust than two-point YoY at LSOA grain.",
-    window: "24m (min 18)",
-    conf: "0.80",
-  },
-  {
-    key: "property.transaction_count_trend_slope_24m",
-    desc: "24-month linear-regression slope of transaction count. Multiply by 12 for annualized direction.",
-    window: "24m (min 18)",
-    conf: "0.80",
-  },
-  {
-    key: "crime.total_12m_peer_relative_z",
-    desc: "Z-score against the area's 20-LSOA peer cohort: (target − peer_avg) / peer_stddev. Min 5 peers.",
-    window: "current",
-    conf: "0.80",
-  },
-  {
-    key: "property.median_price_peer_relative_z",
-    desc: "Peer-relative price z-score. Materialized peer graph; same distance metric as POST /v1/peers.",
-    window: "current",
-    conf: "0.80",
+    name: "Peer comparison",
+    desc: "How an area compares with similar areas, so a number reads as high or low for its kind, not just nationally.",
   },
 ];
 
 /* ───────────────────────────── 4 scoring presets (ADR 0008) */
 
+/* Every preset scores the same seven categories (ADR 0038 / engine 1.1.0);
+   the preset only changes how they are weighted for its use case. */
+const SCORING_CATEGORIES = [
+  "Crime",
+  "Deprivation",
+  "Property",
+  "Schools",
+  "Amenities",
+  "Transport",
+  "Environment",
+] as const;
+
 type Preset = {
   slug: string;
   name: string;
   purpose: string;
-  dims: string[];
+  leans: string;
 };
 
 const PRESETS: Preset[] = [
   {
     slug: "moving",
     name: "Moving",
-    purpose: "Origination. For someone choosing where to live.",
-    dims: ["Safety", "Schools", "Transport", "Amenities", "Cost of Living"],
+    purpose: "For someone choosing where to live.",
+    leans: "Weighted towards crime, schools and property.",
   },
   {
     slug: "business",
     name: "Business",
-    purpose: "Site selection. For commercial location decisions.",
-    dims: ["Foot Traffic", "Competition", "Transport", "Spending Power", "Commercial Costs"],
+    purpose: "For commercial site selection.",
+    leans: "Weighted towards amenities, transport and spending power.",
   },
   {
     slug: "investing",
     name: "Investing",
-    purpose: "Investment underwrite. For acquisitions and portfolio.",
-    dims: ["Price Growth", "Rental Yield", "Regeneration", "Tenant Demand", "Risk Factors"],
+    purpose: "For acquisitions and portfolio screening.",
+    leans: "Weighted towards property growth and yield.",
   },
   {
     slug: "research",
     name: "Research",
-    purpose: "Reference baseline. The default preset.",
-    dims: ["Safety", "Transport", "Amenities", "Demographics", "Environment"],
+    purpose: "A balanced baseline, and the default.",
+    leans: "Weights all seven categories evenly.",
   },
 ];
 
 /* ───────────────────────────── intelligence plan ops (ADR 0017, 0019, 0023-0025) */
 
 const PLAN_OPS: { name: string; desc: string }[] = [
-  { name: "rank_areas",     desc: "Filter + sort LSOAs across signals with AND semantics (eq, lt, lte, gt, gte, between, percentile_*)" },
-  { name: "get_area",       desc: "Full signal catalog for an area (geo_code, postcode, or area name)" },
-  { name: "score_area",     desc: "Composite score for an area; preset, custom weights, or saved preset_id" },
-  { name: "compare_areas",  desc: "Side-by-side score + signal comparison across 2 to 8 areas, same intent or custom weights" },
-  { name: "find_peers",     desc: "k-NN similarity search over normalized signal vectors (default k=20)" },
-  { name: "find_insights",  desc: "Rank LSOAs by |peer-relative z| for a derived signal (anomaly screening)" },
-  { name: "find_forecast",  desc: "Linear-regression projection of one monthly signal at one LSOA (default 24m window, 12m horizon)" },
+  { name: "Rank areas",       desc: "Filter and sort areas across any combination of signals" },
+  { name: "Look up an area",  desc: "Pull the full picture for a single postcode or area" },
+  { name: "Score an area",    desc: "Get a composite score for the workflow you choose" },
+  { name: "Compare areas",    desc: "Put several areas side by side on the same measures" },
+  { name: "Find similar",     desc: "Surface the areas most like a given one" },
+  { name: "Spot outliers",    desc: "Find areas that stand out from their peers" },
+  { name: "Forecast",         desc: "Project where a single measure is heading" },
 ];
 
 /* ───────────────────────────── peers / insights / forecast (8) */
 
 const DERIVED_THREE: { num: string; name: string; endpoint: string; body: string; honest: string }[] = [
   {
-    num: "08.1",
-    name: "Peers",
-    endpoint: "POST /v1/peers",
-    body: "k nearest LSOAs to a target. Euclidean distance over normalized values, dimension-mean-squared (AVG, not SUM), default k=20, max k=200, min 3 overlapping signals.",
-    honest: "Distance is symmetric and bounded in [0,1]. No per-signal weighting in v1.",
+    num: "01",
+    name: "Similar areas",
+    endpoint: "Peers",
+    body: "The areas most like a given one, based on how closely they sit across the signals they share. Useful for building a comparison set you can defend.",
+    honest: "A simple, symmetric similarity, so \"most like\" means the same thing in both directions.",
   },
   {
-    num: "08.2",
-    name: "Insights",
-    endpoint: "POST /v1/insights",
-    body: "Anomaly screening: rank LSOAs by |peer-relative z|. Materialized peer graph (~840k assignments). Default k=50, max k=500. Optional |z| threshold.",
-    honest: "Peer math is precomputed offline. No request-time recompute.",
+    num: "02",
+    name: "Outliers",
+    endpoint: "Insights",
+    body: "Areas that stand out from their peer group on a given signal, so unusual places surface without you having to hunt for them.",
+    honest: "Worked out ahead of time, so it comes back fast.",
   },
   {
-    num: "08.3",
+    num: "03",
     name: "Forecast",
-    endpoint: "POST /v1/forecast",
-    body: "Linear regression over signal_timeseries: regr_slope, regr_intercept, regr_r2, regr_syy. Default window 24 months, horizon 12. Constant ±2·residual_stderr confidence band.",
-    honest: "This is not a learned model. Not ARIMA, not Holt-Winters, not Prophet. CI does not widen with horizon distance.",
+    endpoint: "Projection",
+    body: "A straightforward projection of where a single monthly signal is heading, with a confidence band around it.",
+    honest: "A transparent trend projection, not a black-box predictive model.",
   },
 ];
 
 /* ───────────────────────────── confidence rubric */
 
-const CONFIDENCE_BANDS: { band: string; value: string; criteria: string; example: string }[] = [
-  { band: "HIGH",   value: "1.0", criteria: "Fresh primary data, sufficient sample, low volatility.", example: "Crime from Police.uk last 12 months; Prices with ≥50 transactions and ≤15% YoY swing." },
-  { band: "MEDIUM", value: "0.7", criteria: "Partial fallback, older dataset, smaller sample, or higher volatility.", example: "WIMD 2019 / SIMD 2020 (older than IMD 2025); Schools in Wales/Scotland; Property with 20-50 transactions or wide YoY swing." },
-  { band: "LOW",    value: "0.4", criteria: "Full proxy fallback or sparse sample.", example: "Property with fewer than 20 transactions per period." },
-  { band: "NONE",   value: "0.2", criteria: "No usable data; signal returns null with reason.", example: "Service unavailable, coverage gap, or out-of-region postcode." },
+const CONFIDENCE_BANDS: { band: string; criteria: string; example: string }[] = [
+  { band: "High",   criteria: "Fresh data from the primary source, with a healthy sample and little movement.", example: "Recent crime from police.uk, or prices in an area with plenty of recent sales." },
+  { band: "Medium", criteria: "An older release, a smaller sample, a fallback source, or a more volatile signal.", example: "Older deprivation indices, schools in Wales or Scotland, or prices in a thinner market." },
+  { band: "Low",    criteria: "A proxy fallback, or very little underlying data.", example: "Prices in an area with very few recent sales." },
+  { band: "None",   criteria: "No usable data. The value comes back empty, with the reason why.", example: "A source is unavailable, or the area is outside our coverage." },
 ];
 
 /* ───────────────────────────── semver convention */
 
 const SEMVER: { tag: string; desc: string }[] = [
-  { tag: "MAJOR", desc: "Breaking change to dimension structure, intent set, or core weight. Anything that would invalidate prior scores." },
-  { tag: "MINOR", desc: "New dimension, new data source, new intent. Additive. Old responses still parse." },
-  { tag: "PATCH", desc: "Formula tuning, threshold adjustment, confidence rubric refinement. Score values stay byte-identical." },
+  { tag: "Major", desc: "A change big enough that scores could move. Anything that would invalidate numbers you saved under the old version." },
+  { tag: "Minor", desc: "An addition, such as a new category or data source, that does not change the numbers you already have." },
+  { tag: "Patch", desc: "A small refinement, with scores staying exactly the same." },
 ];
 
 /* ───────────────────────────── scope-not (12) */
@@ -295,12 +264,12 @@ const SCOPE_NOT: { tag: string; title: string; body: string }[] = [
   {
     tag: "Not",
     title: "A credit decisioning model",
-    body: "Not a predictor of individual default, affordability, or creditworthiness. Tier-3 enrichment input only.",
+    body: "It does not predict an individual's default, affordability or creditworthiness. It is an input to enrich your own models, not a decision on any person.",
   },
   {
     tag: "Not",
     title: "Address-level",
-    body: "LSOA grain is the floor today. Address-level scoring via OS AddressBase Premium + UPRN is on the roadmap.",
+    body: "We score small areas (neighbourhoods), not individual addresses. For anything that needs a specific property, pair us with an address-level source.",
   },
   {
     tag: "MAUP",
@@ -388,13 +357,15 @@ function Hero() {
         </h1>
 
         <p className="oga-meth-hero__lead">
-          Signal-first infrastructure. Country-scoped percentiles. Monthly time-series snapshots that
-          cannot be backfilled. Deterministic engine, version stamped on every response.
+          Every number comes from a named public source, is placed in national
+          context, carries its own confidence, and is stamped with the engine
+          version that produced it. So you can trace it, cite it, and get the same
+          answer when you check it again.
         </p>
 
         <div className="oga-meth-hero__anchors">
           <Link href="#signal" className="oga-meth-hero__anchor">
-            Signal primitive
+            What a signal is
             <span className="oga-meth-hero__anchor-arrow" aria-hidden>↓</span>
           </Link>
           <Link href="#data-sources" className="oga-meth-hero__anchor">
@@ -402,7 +373,7 @@ function Hero() {
             <span className="oga-meth-hero__anchor-arrow" aria-hidden>↓</span>
           </Link>
           <Link href="#intelligence" className="oga-meth-hero__anchor">
-            Query plane
+            Ask a question
             <span className="oga-meth-hero__anchor-arrow" aria-hidden>↓</span>
           </Link>
           <Link href="#versioning" className="oga-meth-hero__anchor">
@@ -431,11 +402,12 @@ function SectionSignal() {
             <span className="oga-meth__eyebrow-line" aria-hidden />
             <span>The primitive</span>
           </div>
-          <h2 className="oga-meth__h2">Signal is the public primitive.</h2>
+          <h2 className="oga-meth__h2">Everything starts with a signal.</h2>
           <p className="oga-meth__lead">
-            A signal is one measured, sourced, normalized, percentiled, time-stamped attribute of a UK
-            area. Everything above signals is composition. Reports, scores, peers, insights, and
-            forecasts are surfaces built on top.
+            A signal is one measured attribute of a UK area, from a named source,
+            placed in national context, time-stamped and confidence-rated.
+            Everything else, scores, comparisons and forecasts, is built on top of
+            signals.
           </p>
         </header>
 
@@ -457,7 +429,7 @@ function SectionSignal() {
             <div className="oga-meth-signal__attr">
               <div className="oga-meth-signal__attr-name">percentile</div>
               <p className="oga-meth-signal__attr-body">
-                National rank 0&ndash;100 from PERCENT_RANK() partitioned by country.
+                National rank from 0 to 100, worked out within each country.
               </p>
             </div>
             <div className="oga-meth-signal__attr">
@@ -596,17 +568,18 @@ function SectionStore() {
             <span className="oga-meth__eyebrow-line" aria-hidden />
             <span>How we store it</span>
           </div>
-          <h2 className="oga-meth__h2">Live fetch, persisted store, geographic spine.</h2>
+          <h2 className="oga-meth__h2">Some data is kept, some is fetched live.</h2>
           <p className="oga-meth__lead">
-            Slow-moving signals (deprivation, prices, crime) live in a persisted store. Live signals
-            (Ofsted, OpenStreetMap, flood) call the source on every request. The geographic spine joins
-            them.
+            Slower-moving data like deprivation, prices and crime is kept in our
+            own store, so it returns fast and stays consistent. Faster-moving data
+            like schools, local amenities and flood risk is fetched live from the
+            source each time you ask. Every response tells you which.
           </p>
         </header>
 
         <div className="oga-meth-store__grid">
           <section className="oga-meth-store__panel" aria-label="Store schema">
-            <h3 className="oga-meth-store__panel-title">Store tables</h3>
+            <h3 className="oga-meth-store__panel-title">What we keep</h3>
             <div className="oga-meth-store__tables">
               {STORE_TABLES.map((t) => (
                 <div key={t.name} className="oga-meth-store__table-row">
@@ -617,8 +590,8 @@ function SectionStore() {
             </div>
           </section>
 
-          <section className="oga-meth-store__modes" aria-label="meta.fetch_mode enum">
-            <h3 className="oga-meth-store__panel-title">meta.fetch_mode on every response</h3>
+          <section className="oga-meth-store__modes" aria-label="How each number was sourced">
+            <h3 className="oga-meth-store__panel-title">How each number was sourced</h3>
             {STORE_MODES.map((m) => (
               <div key={m.tag} className="oga-meth-store__mode">
                 <div className="oga-meth-store__mode-head">
@@ -648,44 +621,33 @@ function SectionNormalization() {
           </div>
           <h2 className="oga-meth__h2">Country-scoped percentiles, never cross-border.</h2>
           <p className="oga-meth__lead">
-            Percentiles are computed in the database with PERCENT_RANK() window functions and persisted.
-            Each country (England, Wales, Scotland) normalizes within itself. IMD 2025, WIMD 2019, and
-            SIMD 2020 are different methodologies; we never compare across.
+            Every value is ranked against comparable areas and kept up to date.
+            Each country (England, Wales and Scotland) is ranked within itself,
+            because their deprivation indices are built differently and are not
+            comparable across the border.
           </p>
         </header>
 
         <div className="oga-meth-norm__scopes">
           <article className="oga-meth-norm__scope">
             <div className="oga-meth-norm__scope-head">
-              <span className="oga-meth-norm__scope-name">scope = &ldquo;national&rdquo;</span>
+              <span className="oga-meth-norm__scope-name">National</span>
               <span className="oga-status oga-status-green oga-meth-norm__scope-status">Live</span>
             </div>
             <p className="oga-meth-norm__scope-body">
-              Rank within country. The current production scope. England LSOAs ranked against England;
-              Wales against Wales; Scotland against Scotland.
+              Rank each area against the whole country. England is ranked against
+              England, Wales against Wales, and Scotland against Scotland.
             </p>
           </article>
           <article className="oga-meth-norm__scope">
             <div className="oga-meth-norm__scope-head">
-              <span className="oga-meth-norm__scope-name">scope = &ldquo;regional&rdquo;</span>
+              <span className="oga-meth-norm__scope-name">Regional</span>
               <span className="oga-status oga-status-green oga-meth-norm__scope-status">Live</span>
             </div>
             <p className="oga-meth-norm__scope-body">
-              Rank within ONS region (North West, South East, &hellip;). Callers pass
-              <code> ?scope=regional</code> to <code>/v1/areas</code> to rank+filter within region,
-              or read <code>regional_percentile</code> alongside <code>percentile</code> on any
-              store-backed signal.
-            </p>
-          </article>
-          <article className="oga-meth-norm__scope">
-            <div className="oga-meth-norm__scope-head">
-              <span className="oga-meth-norm__scope-name">scope = &ldquo;peer_group&rdquo;</span>
-              <span className="oga-status oga-status-yellow oga-meth-norm__scope-status">Roadmap</span>
-            </div>
-            <p className="oga-meth-norm__scope-body">
-              Rank within a customer-defined Levers cohort. Cohorts themselves ship today (<code>POST
-              /v1/orgs/:id/cohorts</code>); per-cohort percentile recompute is the planned step. The
-              k-NN peer graph already drives the peer-relative z-score derived signals (see &sect; 06).
+              Rank each area against its own region instead, so a strong area in a
+              quieter region stands out rather than being flattened by the national
+              picture.
             </p>
           </article>
         </div>
@@ -702,13 +664,13 @@ function SectionNormalization() {
             </span>
           </div>
           <p className="oga-meth-norm__example-lead">
-            Same signal (<code>property.median_price</code>), same country, same limit &mdash;
-            only <code>?scope=</code> differs.
+            The same signal, the same country, the same shortlist size, only the
+            way the ranking is scoped changes.
           </p>
           <div className="oga-meth-norm__example-cols">
             <div className="oga-meth-norm__example-col">
               <div className="oga-meth-norm__example-col-head">
-                <code className="oga-meth-norm__example-col-name">scope=national</code>
+                <span className="oga-meth-norm__example-col-name">National ranking</span>
               </div>
               <ol className="oga-meth-norm__example-list">
                 <li>
@@ -735,7 +697,7 @@ function SectionNormalization() {
             </div>
             <div className="oga-meth-norm__example-col">
               <div className="oga-meth-norm__example-col-head">
-                <code className="oga-meth-norm__example-col-name">scope=regional</code>
+                <span className="oga-meth-norm__example-col-name">Regional ranking</span>
               </div>
               <ol className="oga-meth-norm__example-list">
                 <li>
@@ -815,61 +777,61 @@ function SectionMoat() {
           <div className="oga-meth__eyebrow">
             <span className="oga-meth__eyebrow-num">05</span>
             <span className="oga-meth__eyebrow-line" aria-hidden />
-            <span>The moat</span>
+            <span>Historical snapshots</span>
           </div>
-          <h2 className="oga-meth__h2">Monthly snapshots, immutable per period.</h2>
+          <h2 className="oga-meth__h2">A monthly record that only ever grows.</h2>
           <p className="oga-meth__lead">
-            Every month, a CLI job appends one row per signal per area to{" "}
-            <code>signal_timeseries</code>, keyed by <code>observed_period</code>. INSERT &hellip; ON
-            CONFLICT DO NOTHING. Corrections surface as next period&rsquo;s value, never overwrite the past.
-            Un-backfillable history that compounds every month.
+            Each month we add a fresh snapshot of every signal in every area. We
+            only ever add to that history, never overwrite it, so past values stay
+            exactly as they were measured and any figure can be reproduced months
+            later. It is area context that cannot be recreated after the fact.
           </p>
         </header>
 
         <div className="oga-meth-moat__row">
           <article className="oga-meth-moat__card">
-            <div className="oga-meth-moat__card-name">Append-only</div>
+            <div className="oga-meth-moat__card-name">Never overwritten</div>
             <p className="oga-meth-moat__card-body">
-              History is immutable per (signal_key, geo_type, geo_code, observed_period). The primary
-              key prevents duplication; the conflict policy prevents overwrite.
+              A correction shows up as the next month&rsquo;s value, so a number you
+              saw before stays exactly as it was, and stays reproducible.
             </p>
           </article>
           <article className="oga-meth-moat__card">
-            <div className="oga-meth-moat__card-name">Idempotent</div>
+            <div className="oga-meth-moat__card-name">Always reproducible</div>
             <p className="oga-meth-moat__card-body">
-              The append job is one set-based INSERT &hellip; SELECT statement. Re-running a period is a
-              no-op. Safe under partial failure and re-deploy.
+              Because the history never changes, a figure you cite today returns
+              the same figure when you or an auditor check it months from now.
             </p>
           </article>
           <article className="oga-meth-moat__card">
-            <div className="oga-meth-moat__card-name">Granular</div>
+            <div className="oga-meth-moat__card-name">Compounding</div>
             <p className="oga-meth-moat__card-body">
-              Prices and crime ingest write monthly history directly; the static-source job (deprivation)
-              snapshots at refresh time. Each signal&rsquo;s observed_period reflects its actual cadence.
+              The record gets deeper every month, building up area history that
+              nobody can backfill after the fact.
             </p>
           </article>
         </div>
 
         <dl className="oga-meth-stats">
           <div className="oga-meth-stats__cell">
-            <dt className="oga-meth-stats__label">Prices history</dt>
+            <dt className="oga-meth-stats__label">History so far</dt>
             <dd className="oga-meth-stats__val">24 months</dd>
-            <div className="oga-meth-stats__sub">35,606 E&amp;W LSOAs</div>
+            <div className="oga-meth-stats__sub">and growing</div>
           </div>
           <div className="oga-meth-stats__cell">
-            <dt className="oga-meth-stats__label">Price history rows</dt>
-            <dd className="oga-meth-stats__val">626k+</dd>
-            <div className="oga-meth-stats__sub">2024-2025 backfill</div>
+            <dt className="oga-meth-stats__label">Coverage</dt>
+            <dd className="oga-meth-stats__val">3 nations</dd>
+            <div className="oga-meth-stats__sub">England · Wales · Scotland</div>
           </div>
           <div className="oga-meth-stats__cell">
-            <dt className="oga-meth-stats__label">Deprivation snapshot</dt>
-            <dd className="oga-meth-stats__val">85,280 rows</dd>
-            <div className="oga-meth-stats__sub">IMD 2025 · WIMD · SIMD</div>
-          </div>
-          <div className="oga-meth-stats__cell">
-            <dt className="oga-meth-stats__label">Append cadence</dt>
+            <dt className="oga-meth-stats__label">Updated</dt>
             <dd className="oga-meth-stats__val">Monthly</dd>
-            <div className="oga-meth-stats__sub">GitHub Actions cron</div>
+            <div className="oga-meth-stats__sub">a new snapshot each month</div>
+          </div>
+          <div className="oga-meth-stats__cell">
+            <dt className="oga-meth-stats__label">Past values</dt>
+            <dd className="oga-meth-stats__val">Preserved</dd>
+            <div className="oga-meth-stats__sub">never overwritten</div>
           </div>
         </dl>
       </div>
@@ -889,30 +851,20 @@ function SectionDerived() {
             <span className="oga-meth__eyebrow-line" aria-hidden />
             <span>Derived signals</span>
           </div>
-          <h2 className="oga-meth__h2">YoY, momentum, trend slope, peer-relative.</h2>
+          <h2 className="oga-meth__h2">Signals that show movement, not just a snapshot.</h2>
           <p className="oga-meth__lead">
-            Computed in the database from the time-series, persisted alongside raw signals, immediately
-            queryable through the typed query plane. Each derived signal carries a documented window and a
-            sample-size guard.
+            As well as today&apos;s numbers, we work out how areas are changing, so
+            you see direction, not just a single reading. Each of these comes with
+            its own time window and its own confidence.
           </p>
         </header>
 
-        <div className="oga-meth-derived__table" role="table" aria-label="Derived signals">
-          <div className="oga-meth-derived__row oga-meth-derived__row--head" role="row">
-            <div className="oga-meth-derived__key" role="columnheader">signal_key</div>
-            <div className="oga-meth-derived__desc" role="columnheader">Methodology</div>
-            <div className="oga-meth-derived__window" role="columnheader">Window</div>
-            <div className="oga-meth-derived__conf" role="columnheader">Confidence</div>
-          </div>
+        <div className="oga-meth-derived__cards">
           {DERIVED_SIGNALS.map((s) => (
-            <div key={s.key} className="oga-meth-derived__row" role="row">
-              <div className="oga-meth-derived__key" role="cell">{s.key}</div>
-              <div className="oga-meth-derived__desc" role="cell">{s.desc}</div>
-              <div className="oga-meth-derived__row-meta">
-                <div className="oga-meth-derived__window" role="cell">{s.window}</div>
-                <div className="oga-meth-derived__conf" role="cell">{s.conf}</div>
-              </div>
-            </div>
+            <article key={s.name} className="oga-meth-derived__card">
+              <h3 className="oga-meth-derived__card-name">{s.name}</h3>
+              <p className="oga-meth-derived__card-desc">{s.desc}</p>
+            </article>
           ))}
         </div>
       </div>
@@ -932,13 +884,20 @@ function SectionScoring() {
             <span className="oga-meth__eyebrow-line" aria-hidden />
             <span>Scoring</span>
           </div>
-          <h2 className="oga-meth__h2">Deterministic composites, four presets.</h2>
+          <h2 className="oga-meth__h2">One score, from the same seven categories.</h2>
           <p className="oga-meth__lead">
-            <code>POST /v1/score</code> aggregates the signal catalog into a 0&ndash;100 composite. Same input,
-            same engine version, same output. Four presets cover the canonical workflows; custom weights
-            and saved org presets layer on top.
+            A score turns an area&apos;s signals into a single 0 to 100 number. Every
+            preset scores the same seven categories; the preset only changes how
+            they are weighted for its use case. The scoring is deterministic, so
+            the same inputs always return the same score.
           </p>
         </header>
+
+        <div className="oga-meth-scoring__cats" aria-label="The seven scoring categories">
+          {SCORING_CATEGORIES.map((c) => (
+            <span key={c} className="oga-meth-scoring__cat">{c}</span>
+          ))}
+        </div>
 
         <div className="oga-meth-scoring__grid">
           {PRESETS.map((p) => (
@@ -948,17 +907,16 @@ function SectionScoring() {
                 <span className="oga-meth-scoring__preset-slug">{p.slug}</span>
               </header>
               <p className="oga-meth-scoring__preset-purpose">{p.purpose}</p>
-              <ul className="oga-meth-scoring__preset-dims">
-                {p.dims.map((d) => <li key={d} className="oga-meth-scoring__preset-dim">{d}</li>)}
-              </ul>
+              <p className="oga-meth-scoring__preset-leans">{p.leans}</p>
             </article>
           ))}
         </div>
 
         <p className="oga-meth-scoring__foot">
-          The frozen deterministic engine computes every dimension. Custom weights pass <code>{`{ preset, weights }`}</code>;
-          saved organisation presets pass <code>{`{ preset_id }`}</code>. Response carries <code>weights_source</code>
-          {" "}(<code>&quot;preset&quot;</code> or <code>&quot;custom&quot;</code>) and the engine version that produced the number.
+          You can re-weight the seven categories for a single request, or save a
+          weighting against your organisation and reuse it. Every response is
+          stamped with the engine version that produced the score, so you can pin
+          it and reproduce the exact number later.
         </p>
       </div>
     </section>
@@ -1010,14 +968,14 @@ function SectionIntelligence() {
           <div className="oga-meth__eyebrow">
             <span className="oga-meth__eyebrow-num">09</span>
             <span className="oga-meth__eyebrow-line" aria-hidden />
-            <span>Query plane</span>
+            <span>Ask a question</span>
           </div>
-          <h2 className="oga-meth__h2">AI emits the plan. The database answers.</h2>
+          <h2 className="oga-meth__h2">Ask in plain English, get an answer you can check.</h2>
           <p className="oga-meth__lead">
-            <code>POST /v1/query</code> is a typed JSON grammar with seven plan ops. Programmatic <code>{`{plan}`}</code>{" "}
-            never touches the LLM. Natural-language <code>{`{question}`}</code> routes through a planner that emits
-            the same typed grammar. Every response echoes the executed plan and <code>plan_source</code> so
-            every result is replayable.
+            Ask a question in plain English and it is turned into a precise query.
+            You get the answer and the exact query behind it, so every result can
+            be reviewed and run again. Prefer to be exact? Send the typed query
+            yourself and skip the AI entirely.
           </p>
         </header>
 
@@ -1033,30 +991,21 @@ function SectionIntelligence() {
 
           <div className="oga-meth-intel__sample">
             <div className="oga-meth-intel__sample-head">
-              <span>POST /v1/query</span>
-              <span>plan_source: nl</span>
+              <span>Your question</span>
+              <span>in plain English</span>
             </div>
             <div className="oga-meth-intel__sample-body">
               <span className="oga-meth-intel__nl">
-                &ldquo;England LSOAs with price ≤ £250k AND YoY &gt; 0 AND crime_pct ≤ 50 AND imd_pct ≥ 50,
-                sort by YoY desc, limit 5&rdquo;
+                &ldquo;English neighbourhoods under &pound;250k where prices are rising,
+                crime is below average and deprivation is low, best growth first,
+                top five.&rdquo;
               </span>
 
               <div className="oga-meth-intel__sample-divider">
-{`{
-  "op": "rank_areas",
-  "params": {
-    "country": "E",
-    "signals": [
-      { "key": "property.median_price",                  "filter": { "lte": 250000 } },
-      { "key": "property.price_change_pct_yoy",          "filter": { "gt": 0 } },
-      { "key": "crime.total_12m",                        "filter": { "percentile_lte": 50 } },
-      { "key": "deprivation.imd_decile",                 "filter": { "percentile_gte": 50 } }
-    ],
-    "sort_by": { "signal": "property.price_change_pct_yoy", "direction": "desc" },
-    "limit": 5
-  }
-}`}
+                Understood as: rank English areas, keep the ones under &pound;250k with
+                prices rising, crime in the better half and deprivation in the
+                better half, sort by growth, and return the top five, with the plan
+                handed back so you can run it again.
               </div>
             </div>
           </div>
@@ -1064,24 +1013,24 @@ function SectionIntelligence() {
 
         <dl className="oga-meth-stats">
           <div className="oga-meth-stats__cell">
-            <dt className="oga-meth-stats__label">Planner accuracy</dt>
-            <dd className="oga-meth-stats__val">92.9%</dd>
-            <div className="oga-meth-stats__sub">14-case curated corpus</div>
+            <dt className="oga-meth-stats__label">Ask in</dt>
+            <dd className="oga-meth-stats__val">Plain English</dd>
+            <div className="oga-meth-stats__sub">or send a typed query</div>
           </div>
           <div className="oga-meth-stats__cell">
-            <dt className="oga-meth-stats__label">Plan ops</dt>
-            <dd className="oga-meth-stats__val">7</dd>
-            <div className="oga-meth-stats__sub">rank · get · score · compare · peers · insights · forecast</div>
+            <dt className="oga-meth-stats__label">You can</dt>
+            <dd className="oga-meth-stats__val">Rank &amp; compare</dd>
+            <div className="oga-meth-stats__sub">areas across any signals</div>
           </div>
           <div className="oga-meth-stats__cell">
-            <dt className="oga-meth-stats__label">Filter ops</dt>
-            <dd className="oga-meth-stats__val">11</dd>
-            <div className="oga-meth-stats__sub">eq · lt · lte · gt · gte · between · percentile_*</div>
+            <dt className="oga-meth-stats__label">And</dt>
+            <dd className="oga-meth-stats__val">Find similar areas</dd>
+            <div className="oga-meth-stats__sub">outliers and forecasts too</div>
           </div>
           <div className="oga-meth-stats__cell">
-            <dt className="oga-meth-stats__label">Model under test</dt>
-            <dd className="oga-meth-stats__val">claude-sonnet-4</dd>
-            <div className="oga-meth-stats__sub">harness measures the seam, not the model</div>
+            <dt className="oga-meth-stats__label">Every result</dt>
+            <dd className="oga-meth-stats__val">Replayable</dd>
+            <div className="oga-meth-stats__sub">the plan comes back with it</div>
           </div>
         </dl>
       </div>
@@ -1101,25 +1050,24 @@ function SectionConfidence() {
             <span className="oga-meth__eyebrow-line" aria-hidden />
             <span>Confidence</span>
           </div>
-          <h2 className="oga-meth__h2">Per-signal, source-driven, honest.</h2>
+          <h2 className="oga-meth__h2">Every number tells you how sure we are.</h2>
           <p className="oga-meth__lead">
-            Every signal value and every score dimension carries <code>confidence</code> (0.0&ndash;1.0) and a
-            human-readable <code>confidence_reason</code>. The rubric is fixed; the inputs are sample size,
-            freshness, fallback path, and (for property) YoY volatility.
+            Every value comes with a confidence level and a short, plain-English
+            reason. It reflects how fresh the data is, how large the sample is,
+            whether we had to fall back to another source, and how much the signal
+            moves around.
           </p>
         </header>
 
         <div className="oga-meth-conf__rubric" role="table" aria-label="Confidence rubric">
           <div className="oga-meth-conf__row" role="row">
-            <div role="columnheader">Band</div>
-            <div role="columnheader">Value</div>
-            <div role="columnheader">Criteria</div>
+            <div role="columnheader">Level</div>
+            <div role="columnheader">What it means</div>
             <div role="columnheader">Example</div>
           </div>
           {CONFIDENCE_BANDS.map((b) => (
             <div key={b.band} className="oga-meth-conf__row" role="row">
               <div className="oga-meth-conf__band" role="cell">{b.band}</div>
-              <div className="oga-meth-conf__value" role="cell">{b.value}</div>
               <div className="oga-meth-conf__criteria" role="cell">{b.criteria}</div>
               <div className="oga-meth-conf__example" role="cell">{b.example}</div>
             </div>
@@ -1127,9 +1075,10 @@ function SectionConfidence() {
         </div>
 
         <p className="oga-meth-conf__gating">
-          Inferred-not-measured dimensions (Foot Traffic, Rental Yield, Regeneration, Tenant Demand) cap
-          at <code>MEDIUM</code> by design. Monitor change detection gates on{" "}
-          <code>min_transactions</code> (default <code>8</code>) so a 2-sale move never fires a webhook.
+          Categories that are inferred rather than directly measured are capped at
+          medium confidence by design. And when we watch an area for change, a move
+          backed by too little data is held back rather than flagged, so a one-off
+          blip never triggers a false alarm.
         </p>
       </div>
     </section>
@@ -1150,9 +1099,10 @@ function SectionVersioning() {
           </div>
           <h2 className="oga-meth__h2">Engine version stamped on every response.</h2>
           <p className="oga-meth__lead">
-            Every response carries <code>engine_version</code> in the body and{" "}
-            <code>X-Engine-Version</code> in the headers. Pin a request to a specific version with the
-            request header. Pin a whole organisation through Levers methodology pinning.
+            Every response is stamped with the engine version that produced it, so
+            you always know which version a number came from. You can pin a single
+            request to a specific version, or pin your whole organisation, and get
+            the same numbers back for as long as you need them.
           </p>
         </header>
 
@@ -1212,11 +1162,10 @@ function SectionVersioning() {
         </div>
 
         <p className="oga-meth-versioning__pin">
-          Org-level methodology pinning is owner-only. <code>PUT /v1/orgs/:id/methodology</code> sets the
-          pin; every scoring response from that org&rsquo;s keys stamps the pinned version in{" "}
-          <code>X-Engine-Version</code>. Explicit request headers still win over the org pin. The pinned
-          row stays in the database even after a version ages out of support, for audit; runtime
-          gracefully falls back to latest rather than 500.
+          Pinning your whole organisation is owner-only, because it matters for
+          regulator-facing audits. A single request can still ask for the latest
+          when you need it, and older pinned versions stay available for as long as
+          you rely on them.
         </p>
       </div>
     </section>
@@ -1228,7 +1177,6 @@ function SectionVersioning() {
 type Lever = {
   num: string;
   name: string;
-  endpoint: { verb: string; path: string };
   rbac: "Owner" | "Admin";
   body: string;
   honest: string;
@@ -1236,36 +1184,32 @@ type Lever = {
 
 const LEVERS: Lever[] = [
   {
-    num: "12.1",
+    num: "01",
     name: "Signal bundles",
-    endpoint: { verb: "POST", path: "/v1/orgs/:id/bundles" },
     rbac: "Admin",
-    body: "Named whitelist of signal_keys. Scopes /v1/area, /v1/areas, and /v1/query: the API exposes only the bundle's signals to your keys.",
-    honest: "A request for an out-of-bundle signal returns 422 bundle_signal_not_allowed. No silent omission.",
+    body: "Choose which signals your team's keys can see, so everyone works from the same agreed set.",
+    honest: "Ask for a signal outside the set and you get a clear error, never a silent gap.",
   },
   {
-    num: "12.2",
+    num: "02",
     name: "Scoring presets",
-    endpoint: { verb: "POST", path: "/v1/orgs/:id/presets" },
     rbac: "Admin",
-    body: "Save a (base_preset, weights) pair server-side. Call by preset_id from POST /v1/score. Reusable across team members and replayable in audits.",
-    honest: "Frozen engine unchanged. weights_source surfaces as \"custom\" on response.",
+    body: "Save a scoring weighting for your organisation and reuse it across the team, so every score is worked out the same way and can be replayed in an audit.",
+    honest: "The engine itself is unchanged; only the weighting is yours.",
   },
   {
-    num: "12.3",
-    name: "Methodology pinning",
-    endpoint: { verb: "PUT", path: "/v1/orgs/:id/methodology" },
+    num: "03",
+    name: "Version pinning",
     rbac: "Owner",
-    body: "Pin the whole org to a specific engine_version. Every scoring response from the org's keys stamps that version in X-Engine-Version.",
-    honest: "Owner-only by design: misclicking a pin has high cost for regulator-facing audits. Explicit request header still wins.",
+    body: "Pin your whole organisation to a specific engine version, so every score stays reproducible for as long as you need it.",
+    honest: "Owner-only, because pinning matters for regulator-facing audits. A single request can still override it.",
   },
   {
-    num: "12.4",
-    name: "Peer cohorts",
-    endpoint: { verb: "POST", path: "/v1/orgs/:id/cohorts" },
+    num: "04",
+    name: "Peer groups",
     rbac: "Admin",
-    body: "Named list of LSOA codes (max 10,000). Scopes the candidate pool on /v1/peers: \"find peers in MY universe.\"",
-    honest: "Cohorts ship today. National + regional percentile scopes are live; per-cohort recompute (scope=peer_group) is still on the roadmap.",
+    body: "Define your own set of areas, so \"similar areas\" means similar within your portfolio, not the whole country.",
+    honest: "Available today, and it does not change how anyone else's results are worked out.",
   },
 ];
 
@@ -1281,9 +1225,10 @@ function SectionLevers() {
           </div>
           <h2 className="oga-meth__h2">Four Levers shape how the API behaves for your keys.</h2>
           <p className="oga-meth__lead">
-            Levers are the per-organisation methodology controls. All four are opt-in: no bundle, no
-            preset_id, no pin, no cohort means default behaviour. RBAC, white-label, and IP allowlist
-            live alongside on the operational side.
+            Levers are the controls that shape how the API behaves for your
+            organisation. All four are opt-in, so if you leave them alone
+            everything works exactly as it does by default. Role-based access,
+            white-labelling and IP allowlisting sit alongside them.
           </p>
         </header>
 
@@ -1295,9 +1240,6 @@ function SectionLevers() {
                 <span className="oga-meth-levers__card-rbac">{l.rbac}-only</span>
               </div>
               <h3 className="oga-meth-levers__card-name">{l.name}</h3>
-              <code className="oga-meth-levers__card-endpoint">
-                <span className={`oga-meth-levers__card-verb oga-verb oga-verb--${l.endpoint.verb.toLowerCase()}`}>{l.endpoint.verb}</span> {l.endpoint.path}
-              </code>
               <p className="oga-meth-levers__card-body">{l.body}</p>
               <p className="oga-meth-levers__card-honest">{l.honest}</p>
             </article>
@@ -1305,11 +1247,10 @@ function SectionLevers() {
         </div>
 
         <p className="oga-meth-levers__foot">
-          Three-tier RBAC (<code>member</code> / <code>admin</code> / <code>owner</code>),
-          per-org white-label (<code>display_name</code> + <code>brand_url</code>), and
-          per-key IP allowlist (<code>allowed_ip_cidrs</code>) are covered on{" "}
+          Role-based access, per-organisation white-labelling and per-key IP
+          allowlisting round out the controls. The full detail lives in{" "}
           <Link href="/docs#levers" className="oga-meth-levers__foot-link">
-            the docs index <span aria-hidden>→</span>
+            the docs <span aria-hidden>→</span>
           </Link>.
         </p>
       </div>

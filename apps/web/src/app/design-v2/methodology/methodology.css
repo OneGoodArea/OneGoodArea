@@ -492,7 +492,7 @@
 
 .oga-meth-norm__scopes {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--oga-4);
 }
 
@@ -765,6 +765,38 @@
   text-align: right;
 }
 
+/* Derived signals shown as plain cards (movement / momentum / trend / peers). */
+.oga-meth-derived__cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--oga-4);
+}
+@media (max-width: 720px) { .oga-meth-derived__cards { grid-template-columns: 1fr; } }
+
+.oga-meth-derived__card {
+  border: 1px solid var(--oga-border);
+  border-radius: var(--oga-radius-md);
+  background: var(--oga-white);
+  padding: var(--oga-5);
+}
+
+.oga-meth-derived__card-name {
+  font-family: var(--oga-font-sans);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--oga-fg);
+  margin: 0 0 var(--oga-2);
+}
+
+.oga-meth-derived__card-desc {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+  margin: 0;
+}
+
 /* ============================================================
    7 — Scoring presets (4 cards)
    ============================================================ */
@@ -820,29 +852,31 @@
   margin: 0 0 var(--oga-4);
 }
 
-.oga-meth-scoring__preset-dims {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: var(--oga-1);
+/* The seven shared scoring categories, shown once as chips above the presets. */
+.oga-meth-scoring__cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--oga-2);
+  margin-bottom: var(--oga-5);
 }
 
-.oga-meth-scoring__preset-dim {
+.oga-meth-scoring__cat {
   font-family: var(--oga-font-mono);
   font-size: 12px;
+  letter-spacing: 0.01em;
   color: var(--oga-fg);
-  display: flex;
-  align-items: center;
-  gap: var(--oga-2);
+  background: var(--oga-ink-06);
+  border: 1px solid var(--oga-border);
+  border-radius: 999px;
+  padding: 5px 12px;
 }
 
-.oga-meth-scoring__preset-dim::before {
-  content: "";
-  display: block;
-  width: 4px; height: 4px;
-  background: var(--oga-ink);
-  opacity: 0.5;
+.oga-meth-scoring__preset-leans {
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--oga-fg);
+  margin: 0;
 }
 
 .oga-meth-scoring__foot {
@@ -1031,7 +1065,7 @@
 
 .oga-meth-conf__row {
   display: grid;
-  grid-template-columns: 100px 90px minmax(0, 1fr) minmax(0, 1.6fr);
+  grid-template-columns: 110px minmax(0, 1fr) minmax(0, 1.6fr);
   align-items: center;
   gap: var(--oga-4);
   padding: var(--oga-4) var(--oga-5);
@@ -1042,11 +1076,8 @@
 
 @media (max-width: 880px) {
   .oga-meth-conf__row {
-    grid-template-columns: 1fr 1fr;
-  }
-  .oga-meth-conf__row > *:nth-child(3),
-  .oga-meth-conf__row > *:nth-child(4) {
-    grid-column: 1 / -1;
+    grid-template-columns: 1fr;
+    gap: var(--oga-2);
   }
 }
 
