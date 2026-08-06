@@ -131,6 +131,16 @@ describe("buildChanges", () => {
     expect(out).toHaveLength(1);
     expect(out[0]!.signal_key).toBe("property.median_price");
   });
+
+  it("skips static deprivation signals even across two observed_periods (new vintage)", () => {
+    const dep: TimeseriesRow[] = [
+      { signal_key: "deprivation.imd_decile", label: "Decile", geo_code: "E01000001", observed_period: "IMD 2025", raw_value: 5 },
+      { signal_key: "deprivation.imd_decile", label: "Decile", geo_code: "E01000001", observed_period: "IMD 2030", raw_value: 7 }, // would be a +40% "change"
+      { signal_key: "deprivation.imd_rank", label: "Rank", geo_code: "E01000001", observed_period: "IMD 2025", raw_value: 1000 },
+      { signal_key: "deprivation.imd_rank", label: "Rank", geo_code: "E01000001", observed_period: "IMD 2030", raw_value: 900 }, // would be a -10% "change"
+    ];
+    expect(buildChanges([{ area: "A", geoCode: "E01000001" }], dep, { baseline: "first", thresholdPct: 5 })).toEqual([]);
+  });
 });
 
 describe("readTimeseriesForLsoas", () => {
