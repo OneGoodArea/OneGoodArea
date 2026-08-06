@@ -27,6 +27,7 @@ const ROLES: Array<{ value: string; label: string }> = [
   { value: "proptech", label: "PropTech" },
   { value: "cre", label: "Commercial real estate" },
   { value: "public-sector", label: "Public sector" },
+  { value: "estate-agent", label: "Estate agent" },
   { value: "other", label: "Other" },
 ];
 

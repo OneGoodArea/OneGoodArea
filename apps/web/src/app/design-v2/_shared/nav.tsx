@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 import { Wordmark } from "./wordmark";
 import { SignalsIcon, ScoresIcon, MonitorIcon, IntelligenceIcon } from "./product-icons";
 import { DocsHomeIcon, ApiReferenceIcon, McpServerIcon, ChangelogIcon, MethodologyIcon } from "./docs-icons";
-import { ProptechIcon, LendersIcon, InsuranceIcon, CreIcon, PublicSectorIcon } from "./icp-icons";
+import { ProptechIcon, LendersIcon, InsuranceIcon, CreIcon, PublicSectorIcon, EstateAgentsIcon } from "./icp-icons";
 import { McpLogo } from "./editor-icons";
 import { BookDemo } from "./book-demo";
 import "./nav.css";
@@ -18,7 +18,7 @@ import "./nav.css";
      [Wordmark] - - - Products▾  Solutions▾  Methodology  Docs▾  Pricing - - - Sign in  Book a demo
                   └─ mega-menu   └─ ICP pages              └─ list
 
-   Solutions dropdown surfaces the 5 buyer pages (/for/<slug>), PropTech
+   Solutions dropdown surfaces the 6 buyer pages (/for/<slug>), PropTech
    featured above a divider.
 
    Products dropdown surfaces the 4 composable products (Signals /
@@ -70,7 +70,7 @@ const DOCS: DocsLink[] = [
   { label: "Changelog",     href: "/changelog",                         icon: ChangelogIcon },
 ];
 
-/* Solutions dropdown: the five buyer (ICP) pages under one menu, so the front
+/* Solutions dropdown: the six buyer (ICP) pages under one menu, so the front
    door stays minimal. PropTech is featured (self-serve, the primary ICP) and
    sits above a divider; the rest are demo-led. Each row carries a bespoke ICP
    icon from icp-icons.tsx (same Plotted vocabulary as the product/docs icons). */
@@ -88,6 +88,7 @@ const SOLUTIONS: SolutionLink[] = [
   { slug: "insurance",     title: "For Insurers",      sub: "Risk inputs and portfolio drift",         icon: InsuranceIcon },
   { slug: "cre",           title: "For CRE",           sub: "Rank every catchment in one query",       icon: CreIcon },
   { slug: "public-sector", title: "For Public Sector", sub: "Metrics that survive FOI",                icon: PublicSectorIcon },
+  { slug: "estate-agents", title: "For Estate Agents", sub: "The area on the listing, before they ask", icon: EstateAgentsIcon },
 ];
 
 export function Nav() {
@@ -342,7 +343,7 @@ function AnnouncementBar() {
         <span className="oga-announce__badge">NEW</span>
         <McpLogo className="oga-announce__icon" />
         <span className="oga-announce__copy oga-announce__copy--full">
-          OneGoodArea is live as an MCP server. Use it inside Claude Desktop, Cursor, and Claude Code.
+          Bring OneGoodArea to your favorite AI agent. MCP support is now live.
         </span>
         <span className="oga-announce__copy oga-announce__copy--short">
           MCP server is live for Claude Desktop, Cursor, and Claude Code.

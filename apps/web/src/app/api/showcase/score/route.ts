@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getScores } from "@/lib/showcase/api";
+import { ApiError, getScores } from "@/lib/showcase/api";
 import type { Preset } from "@/lib/showcase/types";
 
 export async function GET(req: NextRequest) {
@@ -12,7 +12,13 @@ export async function GET(req: NextRequest) {
   try {
     const result = await getScores(area, preset);
     return NextResponse.json(result);
-  } catch {
+  } catch (err) {
+    if (err instanceof ApiError) {
+      return NextResponse.json(
+        err.body ?? { error: err.message },
+        { status: err.status },
+      );
+    }
     return NextResponse.json(
       { error: "Failed to fetch scores." },
       { status: 502 },

@@ -38,6 +38,15 @@ function mockFetch(result: ScoreResult, ok = true) {
   );
 }
 
+function mockFetchError(status: number, body: Record<string, unknown>) {
+  return vi.fn().mockResolvedValue(
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    }),
+  );
+}
+
 describe("<ShowcaseScoring> (AR-706)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -166,7 +175,7 @@ describe("<ShowcaseScoring> (AR-706)", () => {
       await Promise.resolve();
     });
 
-    const percentages = screen.getAllByText("20%");
+    const percentages = screen.getAllByText("Weight 20%");
     expect(percentages.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -189,6 +198,36 @@ describe("<ShowcaseScoring> (AR-706)", () => {
 
     expect(screen.getByText("Total weight")).toBeInTheDocument();
     expect(screen.getByText("130%")).toBeInTheDocument();
+  });
+
+  it("shows generic not-found message on 404 without terminated info (AR-711/712)", async () => {
+    global.fetch = mockFetchError(404, {
+      error: 'Could not resolve area "XXXX 9ZZ". Provide a UK postcode or place name.',
+    });
+    render(<ShowcaseScoring postcode="XXXX 9ZZ" />);
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(screen.getByText("Postcode not found")).toBeInTheDocument();
+    expect(screen.getByText(/No area data found for this postcode/i)).toBeInTheDocument();
+  });
+
+  it("shows terminated postcode details when 404 carries termination info (AR-711/712)", async () => {
+    global.fetch = mockFetchError(404, {
+      error: 'Could not resolve area "AB1 0AA". Provide a UK postcode or place name.',
+      terminated: { year_terminated: 1996, month_terminated: 6 },
+    });
+    render(<ShowcaseScoring postcode="AB1 0AA" />);
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(screen.getByText("Postcode not found")).toBeInTheDocument();
+    expect(screen.getByText(/terminated in 6\/1996/i)).toBeInTheDocument();
+    expect(screen.getByText(/no longer a valid UK postcode/i)).toBeInTheDocument();
   });
 
   it("reset button restores total weight to 100%", async () => {

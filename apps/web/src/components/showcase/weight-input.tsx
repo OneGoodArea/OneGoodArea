@@ -10,10 +10,10 @@ interface WeightInputProps {
 
 export function WeightInput({ label, value, onChange }: WeightInputProps) {
   return (
-    <div className="flex flex-col gap-2 p-4 rounded-lg border border-[#1c1c22] bg-[#0f0f12]">
+    <div className="flex flex-col gap-2 p-4 rounded-lg border border-slate-200 bg-white">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-[#e4e4e8]">{label}</span>
-        <span className="text-sm text-[#8a8a96]">{Math.round(value)}%</span>
+        <span className="text-sm font-medium text-slate-700">{label}</span>
+        <span className="text-sm text-slate-500">Weight {Math.round(value)}%</span>
       </div>
       <input
         type="range"
@@ -25,9 +25,8 @@ export function WeightInput({ label, value, onChange }: WeightInputProps) {
           const v = parseFloat(e.target.value);
           onChange(v);
         }}
-        className="w-full accent-blue-500"
+        className="w-full accent-[#003087]"
       />
-      <span className="text-xs text-[#7a7a88]">weight %</span>
     </div>
   );
 }

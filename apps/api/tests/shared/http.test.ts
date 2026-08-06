@@ -71,4 +71,33 @@ describe("classifyClientApp", () => {
       client_app: "claude-code",
     });
   });
+
+  /* AR-755/AR-756: the showcase estate-agents demo stamps its own UA so its
+     traffic is attributable in event/training analytics. */
+  it("classifies the estate-agents demo UA as api + estate-agents", () => {
+    expect(classifyClientApp("onegoodarea-estate-agents/1.0.0")).toEqual({
+      source: "api",
+      client_app: "estate-agents",
+    });
+  });
+
+  it("classifies a browser UA stamped by the estate-agents demo", () => {
+    expect(
+      classifyClientApp(
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 onegoodarea-estate-agents/1.0.0",
+      ),
+    ).toEqual({ source: "api", client_app: "estate-agents" });
+  });
+
+  it("matches the estate-agents stamp case-insensitively", () => {
+    expect(classifyClientApp("ONEGOODAREA-ESTATE-AGENTS/1.0.0")).toEqual({
+      source: "api",
+      client_app: "estate-agents",
+    });
+  });
+
+  it("does not treat the estate-agents demo as an MCP request", () => {
+    const ctx = classifyClientApp("onegoodarea-estate-agents/1.0.0");
+    expect(ctx.source).toBe("api");
+  });
 });

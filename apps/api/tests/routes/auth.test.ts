@@ -430,3 +430,97 @@ describe("GET /keys/usage", () => {
     });
   });
 });
+
+describe("POST /auth/magic-link/consume", () => {
+  it("401s for an unknown token", async () => {
+    vi.mocked(sql).mockResolvedValueOnce([] as never);
+    const res = await app.inject({
+      method: "POST",
+      url: "/auth/magic-link/consume",
+      payload: { token: "unknown-token" },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("401s for an already-used token", async () => {
+    vi.mocked(sql).mockResolvedValueOnce([
+      { id: "mlt_1", user_id: "user_1", email: "a@b.com", expires_at: new Date(Date.now() + 3600000).toISOString(), used: true },
+    ] as never);
+    const res = await app.inject({
+      method: "POST",
+      url: "/auth/magic-link/consume",
+      payload: { token: "tok_used" },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("401s for an expired token", async () => {
+    vi.mocked(sql).mockResolvedValueOnce([
+      { id: "mlt_1", user_id: "user_1", email: "a@b.com", expires_at: new Date(Date.now() - 1000).toISOString(), used: false },
+    ] as never);
+    const res = await app.inject({
+      method: "POST",
+      url: "/auth/magic-link/consume",
+      payload: { token: "tok_expired" },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("200s and returns the user on a valid, unused token", async () => {
+    vi.mocked(sql)
+      .mockResolvedValueOnce([
+        { id: "mlt_1", user_id: "user_1", email: "a@b.com", expires_at: new Date(Date.now() + 3600000).toISOString(), used: false },
+      ] as never)
+      .mockResolvedValueOnce([] as never) // UPDATE magic_link_tokens — no return needed
+      .mockResolvedValueOnce([] as never) // UPDATE email_verified
+      .mockResolvedValueOnce([
+        { id: "user_1", email: "a@b.com", name: "Test", image: null, user_type: "admin" },
+      ] as never);
+    const res = await app.inject({
+      method: "POST",
+      url: "/auth/magic-link/consume",
+      payload: { token: "tok_valid" },
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.ok).toBe(true);
+    expect(body.user.id).toBe("user_1");
+    expect(body.user.email).toBe("a@b.com");
+    expect(body.user.userType).toBe("admin");
+  });
+
+  it("400s with a missing token", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: "/auth/magic-link/consume",
+      payload: {},
+    });
+    expect(res.statusCode).toBe(400);
+  });
+});
+
+describe("GET /auth/state", () => {
+  it("401s without a session token", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: "/auth/state",
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("returns emailVerified and userType for an authenticated user", async () => {
+    mockSessionVerify.mockResolvedValueOnce({ userId: "user_1" });
+    vi.mocked(sql).mockResolvedValueOnce([
+      { email_verified: true, user_type: "admin" },
+    ] as never);
+    const res = await app.inject({
+      method: "GET",
+      url: "/auth/state",
+      headers: AUTH,
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.emailVerified).toBe(true);
+    expect(body.userType).toBe("admin");
+  });
+});

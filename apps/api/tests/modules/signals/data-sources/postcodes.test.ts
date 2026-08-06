@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "../../../msw-server";
-import { geocodeArea, geocodeAreaStrict } from "@/modules/signals/data-sources/postcodes";
+import { geocodeArea, geocodeAreaStrict, lookupTerminatedPostcode } from "@/modules/signals/data-sources/postcodes";
 
 /* MSW locks the geocode branches (postcodes.io) without the network: direct
    postcode lookup + rural/urban classification, the not-found path, and the
@@ -291,5 +291,58 @@ describe("geocodeArea — invalid input early-rejection (AR-390)", () => {
     // after a 15s chain. Now: null, fast.
     const r = await geocodeArea("BAD");
     expect(r).toBeNull();
+  });
+});
+
+/* AR-711/712: terminated-postcode detection. postcodes.io's public
+   /postcodes/:postcode returns a BARE 404 for terminated postcodes, so
+   the dedicated /terminated_postcodes/:postcode endpoint is the source
+   of truth for the termination year/month. Only postcode-shaped queries
+   are eligible (place names can never be terminated). */
+describe("lookupTerminatedPostcode (AR-711/712)", () => {
+  const TERMINATED = "https://api.postcodes.io/terminated_postcodes/:postcode";
+
+  it("returns year_terminated + month_terminated for a postcode in the terminated dataset", async () => {
+    server.use(
+      http.get(TERMINATED, () =>
+        HttpResponse.json({
+          status: 200,
+          result: { postcode: "AB1 0AA", year_terminated: 1996, month_terminated: 6 },
+        })
+      )
+    );
+
+    const r = await lookupTerminatedPostcode("AB1 0AA");
+    expect(r).toEqual({ postcode: "AB1 0AA", year_terminated: 1996, month_terminated: 6 });
+  });
+
+  it("returns null for a postcode not in the terminated dataset (404)", async () => {
+    server.use(http.get(TERMINATED, () => new HttpResponse(null, { status: 404 })));
+    expect(await lookupTerminatedPostcode("M1 1AE")).toBeNull();
+  });
+
+  it("returns null on a non-200 status", async () => {
+    server.use(http.get(TERMINATED, () => HttpResponse.json({ status: 500 }, { status: 500 })));
+    expect(await lookupTerminatedPostcode("AB1 0AA")).toBeNull();
+  });
+
+  it("returns null for a place name without hitting the network (regex gate)", async () => {
+    expect(await lookupTerminatedPostcode("Nowhereville")).toBeNull();
+  });
+
+  it("is case/space-insensitive like the regular geocoder", async () => {
+    server.use(
+      http.get(TERMINATED, () =>
+        HttpResponse.json({
+          status: 200,
+          result: { postcode: "AB1 0AA", year_terminated: 1996, month_terminated: 6 },
+        })
+      )
+    );
+    expect(await lookupTerminatedPostcode("ab1  0aa")).toEqual({
+      postcode: "AB1 0AA",
+      year_terminated: 1996,
+      month_terminated: 6,
+    });
   });
 });

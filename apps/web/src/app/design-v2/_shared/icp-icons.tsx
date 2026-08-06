@@ -1,4 +1,4 @@
-/* ICP icons - 5 bespoke dot-and-hairline diagrams in the Plotted
+/* ICP icons - 6 bespoke dot-and-hairline diagrams in the Plotted
    vocabulary, same approach as product-icons.tsx and docs-icons.tsx.
    Each is a miniature illustration of what we do for that buyer, not a
    generic glyph:
@@ -13,6 +13,8 @@
      ("rank the field, surface a shortlist").
    - Public Sector: a figure cited to sources, written to a record line
      ("sourced, dated, on the record").
+   - Estate Agents: an area score dropped onto a brochure card ("the
+     area on the listing, before the buyer asks").
 
    Dot-and-hairline only - same vocabulary as the brand mark. 24x24
    viewBox; the nav dropdown sizes them ~20px. currentColor everywhere
@@ -153,10 +155,38 @@ export function PublicSectorIcon(props: IconProps) {
   );
 }
 
+/* ---------- Estate Agents - area score dropped onto a brochure ---------- */
+export function EstateAgentsIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      {/* Brochure card */}
+      <rect x="4.5" y="8" width="15" height="11" rx="1.5" stroke="currentColor" strokeWidth="0.9" strokeOpacity="0.5" />
+      {/* Area-context rows on the card */}
+      <g fill="currentColor" opacity="0.55">
+        <circle cx="7.5" cy="12" r="0.85" />
+        <circle cx="7.5" cy="15.5" r="0.85" />
+        <circle cx="7.5" cy="19" r="0.85" />
+      </g>
+      <g stroke="currentColor" strokeWidth="0.8" strokeOpacity="0.45" strokeLinecap="round">
+        <line x1="10" y1="12" x2="16.5" y2="12" />
+        <line x1="10" y1="15.5" x2="14.5" y2="15.5" />
+        <line x1="10" y1="19" x2="16" y2="19" />
+      </g>
+      {/* The area score, pinned above the card */}
+      <line x1="12" y1="6.5" x2="12" y2="7.8" stroke="currentColor" strokeWidth="0.8" strokeOpacity="0.5" strokeLinecap="round" />
+      <g fill="currentColor">
+        <circle cx="12" cy="4.8" r="1.9" />
+        <circle cx="12" cy="4.8" r="3.3" fill="none" stroke="currentColor" strokeOpacity="0.4" strokeWidth="0.6" />
+      </g>
+    </svg>
+  );
+}
+
 export const ICP_ICONS = {
   proptech: ProptechIcon,
   lenders: LendersIcon,
   insurance: InsuranceIcon,
   cre: CreIcon,
   "public-sector": PublicSectorIcon,
+  "estate-agents": EstateAgentsIcon,
 } as const;
