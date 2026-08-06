@@ -9,6 +9,7 @@ import {
   METHODOLOGY_VERSIONS,
   getCurrentMethodology,
 } from "@/lib/methodology-versions";
+import { SCORING_PROFILES } from "@/lib/scoring-profiles";
 import "./methodology.css";
 
 /* /methodology — Brand v3 (Plotted) — AR-204 PR A.
@@ -164,39 +165,9 @@ const SCORING_CATEGORIES = [
   "Environment",
 ] as const;
 
-type Preset = {
-  slug: string;
-  name: string;
-  purpose: string;
-  leans: string;
-};
-
-const PRESETS: Preset[] = [
-  {
-    slug: "moving",
-    name: "Moving",
-    purpose: "For someone choosing where to live.",
-    leans: "Weighted towards crime, schools and property.",
-  },
-  {
-    slug: "business",
-    name: "Business",
-    purpose: "For commercial site selection.",
-    leans: "Weighted towards amenities, transport and spending power.",
-  },
-  {
-    slug: "investing",
-    name: "Investing",
-    purpose: "For acquisitions and portfolio screening.",
-    leans: "Weighted towards property growth and yield.",
-  },
-  {
-    slug: "research",
-    name: "Research",
-    purpose: "A balanced baseline, and the default.",
-    leans: "Weights all seven categories evenly.",
-  },
-];
+/* The four scoring profiles (formal names, use copy and glyphs) come from
+   the shared catalog @/lib/scoring-profiles, so this page stays in sync with
+   the dashboard and /products/scores. */
 
 /* ───────────────────────────── intelligence plan ops (ADR 0017, 0019, 0023-0025) */
 
@@ -900,14 +871,11 @@ function SectionScoring() {
         </div>
 
         <div className="oga-meth-scoring__grid">
-          {PRESETS.map((p) => (
+          {SCORING_PROFILES.map((p) => (
             <article key={p.slug} className="oga-meth-scoring__preset">
-              <header className="oga-meth-scoring__preset-head">
-                <h3 className="oga-meth-scoring__preset-name">{p.name}</h3>
-                <span className="oga-meth-scoring__preset-slug">{p.slug}</span>
-              </header>
-              <p className="oga-meth-scoring__preset-purpose">{p.purpose}</p>
-              <p className="oga-meth-scoring__preset-leans">{p.leans}</p>
+              <div className="oga-meth-scoring__preset-glyph" aria-hidden>{p.Glyph()}</div>
+              <h3 className="oga-meth-scoring__preset-name">{p.name}</h3>
+              <p className="oga-meth-scoring__preset-purpose">{p.use}</p>
             </article>
           ))}
         </div>

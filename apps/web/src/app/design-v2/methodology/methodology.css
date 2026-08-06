@@ -72,9 +72,9 @@
 .oga-meth__h2 {
   font-family: var(--oga-font-sans);
   font-size: var(--oga-fs-h2);
-  line-height: var(--oga-lh-tight);
-  letter-spacing: var(--oga-tracking-tight);
-  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  font-weight: 600;
   color: var(--oga-fg);
   margin: 0 0 var(--oga-4);
   max-width: 840px;
@@ -234,6 +234,15 @@
   padding: 1px 5px;
   border-radius: 3px;
 }
+
+/* Signal JSON panel — modernise the shared .oga-code-panel chrome: drop the
+   dated corner ticks, the light gradient header and the inset gloss. */
+.oga-meth .oga-code-panel {
+  border-radius: 14px;
+  box-shadow: 0 20px 44px -30px rgba(26, 28, 31, 0.3);
+}
+.oga-meth .oga-code-panel__tick { display: none; }
+.oga-meth .oga-code-panel__header { background: transparent; }
 
 /* ============================================================
    2 — Data sources (7 tiles)
@@ -828,12 +837,19 @@
   border-bottom: 1px solid var(--oga-border);
 }
 
+.oga-meth-scoring__preset-glyph {
+  color: var(--oga-fg);
+  margin-bottom: var(--oga-3);
+}
+.oga-meth-scoring__preset-glyph svg { width: 30px; height: 30px; }
+
 .oga-meth-scoring__preset-name {
   font-family: var(--oga-font-sans);
   font-size: 18px;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--oga-fg);
-  margin: 0;
+  margin: 0 0 var(--oga-2);
 }
 
 .oga-meth-scoring__preset-slug {
