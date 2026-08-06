@@ -1062,23 +1062,23 @@ export const SEEDS: Seed[] = [
     // calls the live API with this key (SHOWCASE_API_KEY on Vercel holds the
     // same plaintext). Idempotent: re-running on a deployed DB is a no-op
     // (ON CONFLICT DO NOTHING). Gate env = SEED_SHOWCASE_API_KEY.
-    name: "showcase_proptech",
+    name: "showcase",
     requiresEnv: "SEED_SHOWCASE_API_KEY",
     statements: [
       `INSERT INTO users (id, email, name, provider, email_verified)
-       VALUES ('user_showcase_proptech', 'showcase.proptech@onegoodarea.local', 'Showcase Proptech', 'credentials', TRUE)
+       VALUES ('user_showcase', 'showcase@onegoodarea.local', 'Showcase', 'credentials', TRUE)
        ON CONFLICT (id) DO NOTHING`,
       `INSERT INTO orgs (id, slug, name)
-       VALUES ('org_user_showcase_proptech', 'showcase-proptech', 'Showcase Proptech workspace')
+       VALUES ('org_user_showcase', 'showcase', 'Showcase workspace')
        ON CONFLICT (id) DO NOTHING`,
       `INSERT INTO org_members (org_id, user_id, role)
-       VALUES ('org_user_showcase_proptech', 'user_showcase_proptech', 'owner')
+       VALUES ('org_user_showcase', 'user_showcase', 'owner')
        ON CONFLICT (org_id, user_id) DO NOTHING`,
       `INSERT INTO subscriptions (id, user_id, stripe_customer_id, plan, status)
-       VALUES ('sub_showcase_proptech', 'user_showcase_proptech', 'cus_showcase_proptech', 'sandbox', 'active')
+       VALUES ('sub_showcase', 'user_showcase', 'cus_showcase', 'sandbox', 'active')
        ON CONFLICT (user_id) DO NOTHING`,
       `INSERT INTO api_keys (id, key_hash, key_prefix, user_id, name, org_id)
-       VALUES ('key_showcase_proptech', '${showcaseKeyHash}', '${showcaseKeyPreview}', 'user_showcase_proptech', 'Showcase Proptech', 'org_user_showcase_proptech')
+       VALUES ('key_showcase', '${showcaseKeyHash}', '${showcaseKeyPreview}', 'user_showcase', 'Showcase', 'org_user_showcase')
        ON CONFLICT (id) DO NOTHING`,
     ],
   },
