@@ -77,9 +77,9 @@
 .oga-docs__h2 {
   font-family: var(--oga-font-sans);
   font-size: var(--oga-fs-h2);
-  line-height: var(--oga-lh-tight);
-  letter-spacing: var(--oga-tracking-tight);
-  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  font-weight: 600;
   color: var(--oga-fg);
   margin: 0 0 var(--oga-4);
   max-width: 840px;
@@ -95,13 +95,20 @@
 }
 
 /* ============================================================
-   Hero — engine state + dual-mode framing
+   Hero — headline + live console + small index (centred)
    ============================================================ */
 
 .oga-docs-hero {
   position: relative;
-  padding-top: var(--oga-9);
-  padding-bottom: var(--oga-9);
+  padding-top: clamp(48px, 8vh, 96px);
+  padding-bottom: clamp(48px, 8vh, 96px);
+  text-align: center;
+}
+
+.oga-docs-hero__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .oga-docs-hero__eyebrow {
@@ -125,13 +132,13 @@
 
 .oga-docs-hero__h1 {
   font-family: var(--oga-font-sans);
-  font-size: clamp(38px, 5vw, 64px);
-  line-height: 1.04;
-  letter-spacing: -0.02em;
+  font-size: clamp(38px, 5vw, 60px);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
   font-weight: 500;
   color: var(--oga-fg);
   margin: 0 0 var(--oga-5);
-  max-width: 18ch;
+  max-width: 20ch;
 }
 
 .oga-docs-hero__lead {
@@ -140,13 +147,280 @@
   line-height: var(--oga-lh-snug);
   color: var(--oga-fg-muted);
   margin: 0 0 var(--oga-6);
-  max-width: 56ch;
+  max-width: 60ch;
 }
 
 .oga-docs-hero__ctas {
   display: inline-flex;
   flex-wrap: wrap;
   gap: var(--oga-3);
+  justify-content: center;
+}
+
+/* Small on-this-page index sitting under the console */
+.oga-docs-hero__index {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: clamp(16px, 3vw, 40px);
+  justify-content: center;
+  margin-top: clamp(28px, 4vh, 44px);
+}
+
+.oga-docs-hero__index a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--oga-fg-muted);
+  text-decoration: none;
+  transition: color 140ms ease;
+}
+
+.oga-docs-hero__index a:hover { color: var(--oga-fg); }
+.oga-docs-hero__index-num { color: var(--oga-fg); font-weight: 500; }
+
+/* ============================================================
+   Live console (hero centrepiece) — a dark terminal on cream
+   that cycles a real call + response for each product
+   ============================================================ */
+
+.oga-docs-con {
+  width: 100%;
+  max-width: 680px;
+  margin: clamp(40px, 6vh, 68px) auto 0;
+  text-align: left;
+}
+
+.oga-docs-con__win {
+  position: relative;
+  background: var(--oga-ink);
+  border: 1px solid rgba(250, 248, 244, 0.1);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow:
+    0 40px 80px -40px rgba(26, 28, 31, 0.55),
+    0 12px 32px -16px rgba(26, 28, 31, 0.4);
+}
+
+.oga-docs-con__bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 18px;
+  border-bottom: 1px solid rgba(250, 248, 244, 0.08);
+}
+
+.oga-docs-con__dots { display: inline-flex; gap: 6px; }
+.oga-docs-con__dots i {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: rgba(250, 248, 244, 0.16);
+}
+
+.oga-docs-con__who {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--oga-white);
+}
+.oga-docs-con__who svg { color: var(--oga-white); }
+
+.oga-docs-con__ver {
+  margin-left: auto;
+  font-family: var(--oga-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: rgba(250, 248, 244, 0.4);
+}
+
+.oga-docs-con__body {
+  padding: clamp(20px, 2.6vw, 28px);
+  min-height: 216px;
+}
+
+.oga-docs-con__frame { animation: oga-con-in 400ms var(--oga-ease, ease); }
+@keyframes oga-con-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.oga-docs-con__cmd {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
+  color: rgba(250, 248, 244, 0.92);
+}
+
+.oga-docs-con__prompt { color: rgba(250, 248, 244, 0.4); }
+
+.oga-docs-con__method {
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+.oga-docs-con__method--get { color: #8FC79A; background: rgba(143, 199, 154, 0.14); }
+.oga-docs-con__method--post { color: #E7B27A; background: rgba(231, 178, 122, 0.14); }
+
+.oga-docs-con__target { color: rgba(250, 248, 244, 0.9); }
+
+.oga-docs-con__caret {
+  width: 7px;
+  height: 15px;
+  display: inline-block;
+  background: rgba(250, 248, 244, 0.5);
+  animation: oga-con-blink 1.1s step-end infinite;
+}
+@keyframes oga-con-blink { 50% { opacity: 0; } }
+
+.oga-docs-con__cmd-body {
+  margin-top: 7px;
+  padding-left: 19px;
+  font-family: var(--oga-font-mono);
+  font-size: 12.5px;
+  color: rgba(250, 248, 244, 0.5);
+}
+
+.oga-docs-con__sep {
+  height: 1px;
+  margin: 16px 0;
+  background: rgba(250, 248, 244, 0.08);
+}
+
+.oga-docs-con__score {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.oga-docs-con__score-num {
+  font-family: var(--oga-font-sans);
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--oga-white);
+}
+.oga-docs-con__score-sub {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  color: rgba(250, 248, 244, 0.5);
+}
+
+.oga-docs-con__rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 11px; }
+.oga-docs-con__row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+}
+.oga-docs-con__k {
+  font-family: var(--oga-font-mono);
+  font-size: 13px;
+  color: rgba(250, 248, 244, 0.62);
+}
+.oga-docs-con__v {
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--oga-white);
+}
+.oga-docs-con__tag {
+  font-family: var(--oga-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: rgba(250, 248, 244, 0.55);
+  background: rgba(250, 248, 244, 0.06);
+  border: 1px solid rgba(250, 248, 244, 0.1);
+}
+.oga-docs-con__tag--flag {
+  color: #8FC79A;
+  background: rgba(143, 199, 154, 0.12);
+  border-color: rgba(143, 199, 154, 0.24);
+}
+.oga-docs-con__tag--muted {
+  color: rgba(250, 248, 244, 0.4);
+  background: transparent;
+}
+
+.oga-docs-con__note {
+  margin-top: 18px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(250, 248, 244, 0.08);
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(250, 248, 244, 0.6);
+}
+.oga-docs-con__check { color: #8FC79A; flex: 0 0 auto; }
+
+.oga-docs-con__timer {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  background: rgba(250, 248, 244, 0.45);
+  animation: oga-con-timer 5200ms linear;
+}
+@keyframes oga-con-timer { from { width: 0; } to { width: 100%; } }
+
+.oga-docs-con__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 16px;
+}
+.oga-docs-con__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--oga-fg-muted);
+  background: transparent;
+  border: 1px solid var(--oga-border);
+  border-radius: 999px;
+  padding: 7px 15px;
+  cursor: pointer;
+  transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
+}
+.oga-docs-con__tab svg { opacity: 0.65; }
+.oga-docs-con__tab:hover { color: var(--oga-fg); border-color: var(--oga-ink-30); }
+.oga-docs-con__tab--on {
+  color: var(--oga-white);
+  background: var(--oga-ink);
+  border-color: var(--oga-ink);
+}
+.oga-docs-con__tab--on svg { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .oga-docs-con__frame,
+  .oga-docs-con__caret,
+  .oga-docs-con__timer { animation: none; }
+}
+
+@media (max-width: 560px) {
+  .oga-docs-con__body { min-height: 0; }
+  .oga-docs-con__k { font-size: 12px; }
 }
 
 /* ============================================================
@@ -398,30 +672,25 @@
 
 .oga-docs-ref__grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1px;
-  background: var(--oga-border);
-  border: 1px solid var(--oga-border);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(12px, 1.4vw, 18px);
 }
 
-@media (max-width: 960px) {
-  .oga-docs-ref__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-@media (max-width: 560px) {
+@media (max-width: 640px) {
   .oga-docs-ref__grid { grid-template-columns: 1fr; }
 }
 
 .oga-docs-ref-tile {
   background: var(--oga-white);
-  padding: var(--oga-5);
+  border: 1px solid var(--oga-border);
+  border-radius: 16px;
+  padding: clamp(22px, 2vw, 30px);
   text-decoration: none;
   color: inherit;
   display: flex;
   flex-direction: column;
-  gap: var(--oga-3);
-  min-height: 200px;
-  transition: background 140ms ease;
+  gap: 12px;
+  transition: border-color 160ms ease;
 }
 
 .oga-docs-ref-tile--link {
@@ -429,7 +698,7 @@
 }
 
 .oga-docs-ref-tile--link:hover {
-  background: var(--oga-canvas);
+  border-color: var(--oga-ink-30);
 }
 
 .oga-docs-ref-tile--disabled {
@@ -476,13 +745,18 @@
   background: rgba(179, 100, 0, 0.08);
 }
 
+.oga-docs-ref-tile__icon {
+  display: inline-flex;
+  color: var(--oga-fg);
+}
+
 .oga-docs-ref-tile__title {
   font-family: var(--oga-font-sans);
   font-size: 18px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--oga-fg);
   margin: 0;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
 .oga-docs-ref-tile__body {
@@ -495,14 +769,15 @@
 
 .oga-docs-ref-tile__foot {
   margin-top: auto;
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  padding-top: 4px;
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
   color: var(--oga-fg);
   display: inline-flex;
   align-items: center;
-  gap: var(--oga-2);
+  gap: 7px;
 }
 
 /* ============================================================
@@ -512,10 +787,8 @@
 .oga-docs-qs__steps {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1px;
-  background: rgba(250, 248, 244, 0.16);
-  border: 1px solid rgba(250, 248, 244, 0.16);
-  margin-bottom: var(--oga-6);
+  gap: clamp(12px, 1.4vw, 18px);
+  margin-bottom: clamp(28px, 4vh, 44px);
 }
 
 @media (max-width: 880px) {
@@ -523,8 +796,10 @@
 }
 
 .oga-docs-qs-step {
-  background: var(--oga-ink);
-  padding: var(--oga-5);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: clamp(20px, 2vw, 28px);
   display: flex;
   flex-direction: column;
   gap: var(--oga-3);
@@ -541,10 +816,10 @@
 .oga-docs-qs-step__title {
   font-family: var(--oga-font-sans);
   font-size: 18px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--oga-white);
   margin: 0;
-  letter-spacing: -0.005em;
+  letter-spacing: -0.015em;
 }
 
 .oga-docs-qs-step__body {
@@ -555,28 +830,31 @@
   margin: 0;
 }
 
-/* Code panel dark-surface override — 04 sits on graphite. The
-   global .oga-code-panel chrome is cream-tuned; we override the
-   shell colours here so the panel reads on dark without losing
-   the corner-tick + line-number aesthetic. */
-[data-oga-surface="dark"] .oga-code-panel {
-  background: rgba(250, 248, 244, 0.04);
-  border-color: rgba(250, 248, 244, 0.14);
-  color: rgba(250, 248, 244, 0.92);
+/* Quickstart code block — restyle to match the hero console.
+   The shared .oga-code-panel chrome is cream-tuned: a light gradient
+   header, an inset white top highlight and corner ticks. On the dark
+   quickstart that light header bled through as a grey glossy bar, so
+   we flatten the whole thing into the same dark ink terminal as the
+   console above (kill the ticks, kill the gradient, recolour). */
+.oga-docs .oga-code-panel {
+  background: var(--oga-ink);
+  border: 1px solid rgba(250, 248, 244, 0.1);
+  border-radius: 16px;
+  box-shadow:
+    0 40px 80px -40px rgba(26, 28, 31, 0.55),
+    0 12px 32px -16px rgba(26, 28, 31, 0.4);
 }
-
-[data-oga-surface="dark"] .oga-code-panel pre {
-  color: rgba(250, 248, 244, 0.9);
+.oga-docs .oga-code-panel__tick { display: none; }
+.oga-docs .oga-code-panel__header {
+  background: transparent;
+  border-bottom: 1px solid rgba(250, 248, 244, 0.08);
+  color: rgba(250, 248, 244, 0.45);
 }
-
-[data-oga-surface="dark"] .oga-code-panel__num {
-  color: rgba(250, 248, 244, 0.35);
-}
-
-[data-oga-surface="dark"] .oga-code-panel__head {
-  color: rgba(250, 248, 244, 0.55);
-  border-bottom-color: rgba(250, 248, 244, 0.12);
-}
+.oga-docs .oga-code-panel__path { color: rgba(250, 248, 244, 0.9); }
+.oga-docs .oga-code-panel__meta { color: rgba(250, 248, 244, 0.4); }
+.oga-docs .oga-code-panel__body { color: rgba(250, 248, 244, 0.9); }
+.oga-docs .oga-code-panel__num { color: rgba(250, 248, 244, 0.28); }
+.oga-docs .oga-code-panel__text { color: rgba(250, 248, 244, 0.9); }
 
 /* ============================================================
    05 — Code examples (cream, tabbed)
@@ -590,29 +868,48 @@
 }
 
 .oga-docs-ex__tab {
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--oga-font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
   color: var(--oga-fg-muted);
   background: transparent;
   border: 1px solid var(--oga-border);
-  padding: 8px 14px;
-  border-radius: 2px;
+  padding: 7px 14px;
+  border-radius: 999px;
   cursor: pointer;
   transition: color 140ms ease, background 140ms ease, border-color 140ms ease;
+}
+
+.oga-docs-ex__tab-logo {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  opacity: 0.7;
 }
 
 .oga-docs-ex__tab:hover {
   color: var(--oga-fg);
   border-color: var(--oga-fg);
 }
+.oga-docs-ex__tab:hover .oga-docs-ex__tab-logo { opacity: 1; }
 
-.oga-docs-ex__tab--active {
-  color: var(--oga-white);
-  background: var(--oga-fg);
-  border-color: var(--oga-fg);
+/* Active pill sits on the dark quickstart, where --oga-fg remaps to
+   white (which made a white-on-white chip). Use the non-remapped
+   cream + ink tokens so the selected tab is a readable light chip.
+   The :hover variant is listed explicitly because .oga-docs-ex__tab:hover
+   (class + pseudo) outranks a plain .--active class, and would otherwise
+   repaint the selected tab's text white on hover. */
+.oga-docs-ex__tab--active,
+.oga-docs-ex__tab--active:hover {
+  color: var(--oga-ink);
+  background: var(--oga-white);
+  border-color: var(--oga-white);
 }
+.oga-docs-ex__tab--active .oga-docs-ex__tab-logo { opacity: 1; }
 
 .oga-docs-ex__lang-meta {
   display: flex;
@@ -670,3 +967,104 @@
   flex-wrap: wrap;
   justify-content: center;
 }
+
+/* ============================================================
+   02 — Products (light): a card per product
+   ============================================================ */
+.oga-docs-pcards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(12px, 1.4vw, 18px);
+}
+@media (max-width: 720px) { .oga-docs-pcards { grid-template-columns: 1fr; } }
+
+.oga-docs-pcard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: clamp(22px, 2.2vw, 30px);
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  border-radius: 16px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+.oga-docs-pcard:hover {
+  border-color: var(--oga-ink-30);
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px -28px rgba(26, 28, 31, 0.4);
+}
+.oga-docs-pcard__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.oga-docs-pcard__icon { display: inline-flex; color: var(--oga-fg); }
+.oga-docs-pcard__ep {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--oga-font-mono);
+  font-size: 11.5px;
+  color: var(--oga-fg-muted);
+}
+.oga-docs-pcard__verb {
+  font-family: var(--oga-font-mono);
+  font-weight: 600;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: var(--oga-canvas);
+  color: var(--oga-fg);
+}
+.oga-docs-pcard__name {
+  margin: 2px 0 0;
+  font-family: var(--oga-font-sans);
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--oga-fg);
+}
+.oga-docs-pcard__line {
+  margin: 0;
+  font-family: var(--oga-font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--oga-fg-muted);
+}
+.oga-docs-pcard__foot {
+  margin-top: auto;
+  padding-top: 8px;
+  font-family: var(--oga-font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--oga-fg);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: gap 160ms ease;
+}
+.oga-docs-pcard:hover .oga-docs-pcard__foot { gap: 11px; }
+
+/* Levers callout (under Reference) */
+.oga-docs-levers-note {
+  margin-top: clamp(24px, 4vh, 44px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(20px, 4vw, 48px);
+  flex-wrap: wrap;
+  padding: clamp(26px, 3vw, 40px);
+  background: var(--oga-canvas);
+  border-radius: 18px;
+}
+.oga-docs-levers-note__text { flex: 1; min-width: 260px; }
+.oga-docs-levers-note__kicker { font-family: var(--oga-font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--oga-fg-subtle); }
+.oga-docs-levers-note__title { margin: 8px 0 0; font-family: var(--oga-font-sans); font-size: 20px; font-weight: 600; letter-spacing: -0.015em; color: var(--oga-fg); }
+.oga-docs-levers-note__body { margin: 10px 0 0; max-width: 62ch; font-family: var(--oga-font-sans); font-size: 14.5px; line-height: 1.55; color: var(--oga-fg-muted); }
+
+/* Anchored sections clear the sticky nav when jumped to from the index */
+.oga-docs section[id] { scroll-margin-top: 84px; }

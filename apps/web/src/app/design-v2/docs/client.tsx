@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Nav } from "../_shared/nav";
 import { Footer } from "../_shared/footer";
@@ -11,527 +11,422 @@ import {
   MonitorIcon,
   IntelligenceIcon,
 } from "../_shared/product-icons";
+import {
+  CurlLogo,
+  JavaScriptLogo,
+  TypeScriptLogo,
+  PythonLogo,
+  GoLogo,
+  PhpLogo,
+  RubyLogo,
+  JavaLogo,
+  CSharpLogo,
+} from "../_shared/lang-icons";
+import {
+  ApiReferenceIcon,
+  McpServerIcon,
+  MethodologyIcon,
+  ChangelogIcon,
+} from "../_shared/docs-icons";
 import { METHODOLOGY_VERSION } from "@/lib/methodology-versions";
 import "./docs.css";
 
-/* /docs — Brand v3 (Plotted) — AR-204.
-
-   Index page for the documentation surface. Four-product TOC plus
-   the Levers control plane plus pointers at /methodology and the
-    live interactive reference at /playground.
-
-   AR-361 (2026-06-26): killed the per-product "Docs / Soon" tiles,
-   the "Levers guide / Soon" button, and the "Webhooks reference"
-   soon-tile. The per-surface deep-dive pages they teased
-   (/docs/signals, /docs/scores, /docs/monitor, /docs/intelligence,
-   /docs/levers, /docs/webhooks) are not on a known timeline; the
-   existing Levers section above + /methodology + /docs/api-reference
-   cover the same ground today. Honesty over teases.
-
-   Every fact below was verified against ADRs 0001-0035 + the
-   apps/api Fastify routes. No source names enumerated here —
-   that detail lives on /methodology only. */
+/* /docs - developer front door. The centrepiece is a live console that cycles
+   through a real call and response for each of the four products, so the first
+   thing you see is the API actually working. Everything below is the index:
+   quickstart, the four products, and the rest of the reference. Copy stays in
+   plain full sentences (no clever fragments); endpoint and engine detail live
+   in the mockups only. Every fact traces to the live Fastify routes. */
 
 export default function DocsClient() {
   return (
     <div className="oga-root oga-docs">
       <Nav />
       <Hero />
-      <SectionProducts />
-      <SectionLevers />
-      <SectionReference />
-      <SectionQuickstart />
-      <SectionExamples />
+      <Quickstart />
+      <Products />
+      <Reference />
       <FinalCta />
       <Footer />
     </div>
   );
 }
 
-/* ============================================================
-   Hero — engine state + dual-mode framing
-   ============================================================ */
-
+/* ---------- Hero: headline + the live console + a small index ---------- */
 function Hero() {
   return (
     <section className="oga-section-hero oga-docs-hero">
-      <div className="oga-docs__container">
-        <div className="oga-docs-hero__eyebrow">
-          <span>Docs</span>
+      <div className="oga-docs__container oga-docs-hero__inner">
+        <span className="oga-docs-hero__eyebrow">
+          <span>Documentation</span>
           <span className="oga-docs-hero__eyebrow-sep" aria-hidden />
           <span>Engine v{METHODOLOGY_VERSION}</span>
-        </div>
-        <h1 className="oga-docs-hero__h1">
-          Build on UK area intelligence.
-        </h1>
+        </span>
+        <h1 className="oga-docs-hero__h1">Everything you need to build on UK area data.</h1>
         <p className="oga-docs-hero__lead">
-          Four composable products on one signal-first data layer. Reach the API
-          directly from your stack, or use the dashboard to configure how the API
-          behaves per organisation.
+          Get an API key, make your first request, and read exactly what comes
+          back. From here you can reach every endpoint, all four products and the
+          MCP server.
         </p>
         <div className="oga-docs-hero__ctas">
-          <Link href={DEMO_URL} className="oga-btn oga-btn-primary">
-            Book a demo
+          <Link href="/playground" className="oga-btn oga-btn-primary">
+            Try in the playground
             <span aria-hidden>→</span>
           </Link>
-          <Link href="/methodology" className="oga-btn oga-btn-secondary">
-            Read the methodology
+          <Link href="/docs/api-reference" className="oga-btn oga-btn-secondary">
+            API reference
           </Link>
         </div>
+
+        <Console />
+
+        <nav className="oga-docs-hero__index" aria-label="On this page">
+          <a href="#quickstart"><span className="oga-docs-hero__index-num">01</span> Quickstart</a>
+          <a href="#products"><span className="oga-docs-hero__index-num">02</span> Products</a>
+          <a href="#reference"><span className="oga-docs-hero__index-num">03</span> Reference</a>
+        </nav>
       </div>
     </section>
   );
 }
 
-/* ============================================================
-   01 — The 4 products (DARK)
-   ============================================================ */
-
-type Product = {
-  num: string;
-  name: "Signals" | "Scores" | "Monitor" | "Intelligence";
+/* ---------- The live console (cycles through the four products) ---------- */
+type ConRow = { k: string; v: string; tag?: string; tone?: "flag" | "muted" };
+type ConFrame = {
+  product: string;
   Icon: typeof SignalsIcon;
-  body: string;
-  caps: string[];
-  endpoint: { verb: string; path: string };
+  method: "GET" | "POST";
+  target: string;
+  body?: string;
+  score?: { num: string; sub: string };
+  rows: ConRow[];
+  note: string;
 };
 
-const PRODUCTS: Product[] = [
+const CON_FRAMES: ConFrame[] = [
   {
-    num: "01",
-    name: "Signals",
+    product: "Signals",
     Icon: SignalsIcon,
-    body:
-      "The deterministic, addressable UK area-data layer. Every signal is a typed primitive with value, normalised value, national-within-country percentile, source period, and per-signal confidence. LSOA grain, monthly cadence on the dynamic series.",
-    caps: [
-      "Typed Signal primitive (Zod-validated in packages/contracts)",
-      "Honest provenance via meta.fetch_mode (live, store, hybrid)",
-      "Append-only monthly time-series, immutable per observed_period",
-      "Derived signals are first-class store rows (YoY, momentum, slope, peer-relative z)",
+    method: "GET",
+    target: "/v1/area?postcode=M1 1AE",
+    rows: [
+      { k: "crime", v: "92nd percentile", tag: "police.uk" },
+      { k: "deprivation", v: "decile 1 of 10", tag: "IMD 2025" },
+      { k: "schools", v: "4 rated good", tag: "Ofsted" },
     ],
-    endpoint: { verb: "GET", path: "/v1/area" },
+    note: "Every value links back to the source it came from.",
   },
   {
-    num: "02",
-    name: "Scores",
+    product: "Scores",
     Icon: ScoresIcon,
-    body:
-      "Deterministic composite scoring. Pick one of four presets (moving, business, investing, research), each weighting the same seven dimensions differently. Override the weights per request, or save a preset against your org. No AI in the scoring path; the engine version is stamped on every response.",
-    caps: [
-      "Four presets, each with a different weighting of the same seven dimensions",
-      "Custom per-request weights or saved preset_id (per org)",
-      "Per-dimension confidence plus aggregate confidence",
-      "engine_version on the body and X-Engine-Version response header",
+    method: "POST",
+    target: "/v1/score",
+    body: `{ "postcode": "EC1A 1BB", "profile": "moving" }`,
+    score: { num: "86", sub: "out of 100 · moving profile" },
+    rows: [
+      { k: "safety", v: "91" },
+      { k: "transport", v: "88" },
+      { k: "schools", v: "84" },
     ],
-    endpoint: { verb: "POST", path: "/v1/score" },
+    note: "The score is deterministic, so the same inputs always return the same number.",
   },
   {
-    num: "03",
-    name: "Monitor",
+    product: "Monitor",
     Icon: MonitorIcon,
-    body:
-      "Portfolios plus change detection. Save a book of areas (postcodes or LSOAs), bulk-enrich through the scoring engine, and detect material moves across the time-series. Signed webhook alerts (HMAC-SHA256) when something material shifts.",
-    caps: [
-      "Portfolios as named collections of areas (CRUD, dedup)",
-      "On-demand period-vs-period change detection",
-      "Sample-size gated (default min 8 transactions on price moves)",
-      "Webhook event: signal.changed (signed delivery, HMAC verifiable)",
+    method: "POST",
+    target: "/v1/portfolios/prt_2f9/changes",
+    rows: [
+      { k: "M1 1AE · crime", v: "78 → 84 pct", tag: "material", tone: "flag" },
+      { k: "LS1 4AP", v: "held back", tag: "too few sales", tone: "muted" },
     ],
-    endpoint: { verb: "POST", path: "/v1/portfolios" },
+    note: "Only meaningful moves reach you, sent through a signed webhook.",
   },
   {
-    num: "04",
-    name: "Intelligence",
+    product: "Intelligence",
     Icon: IntelligenceIcon,
-    body:
-      "A typed query plus insight plane over the moat. Seven plan ops (rank_areas, get_area, score_area, compare_areas, find_peers, find_insights, find_forecast) reachable as a Zod-strict programmatic plan, or as natural language that the planner translates into the same plan.",
-    caps: [
-      "POST /v1/query with {plan} (programmatic) or {question} (NL)",
-      "k-NN peers with materialised ~840k-row peer graph",
-      "Anomaly screening via pre-materialised peer-relative z-scores",
-      "Linear-regression forecast: not a learned model, not ARIMA, not Prophet",
+    method: "POST",
+    target: "/v1/query",
+    body: `{ "q": "Fastest-growing areas near Leeds?" }`,
+    rows: [
+      { k: "1 · Manchester", v: "+18.4%" },
+      { k: "2 · Birmingham", v: "+14.6%" },
+      { k: "3 · Leeds", v: "+12.9%" },
     ],
-    endpoint: { verb: "POST", path: "/v1/query" },
+    note: "You get the answer and the plan behind it, so you can see how it was worked out.",
   },
 ];
 
-function SectionProducts() {
+function Console() {
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const reduce =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    if (reduce) return;
+    const id = setTimeout(
+      () => setActive((a) => (a + 1) % CON_FRAMES.length),
+      5200,
+    );
+    return () => clearTimeout(id);
+  }, [active]);
+
+  const f = CON_FRAMES[active];
+  const ActiveIcon = f.Icon;
+
   return (
-    <section
-      className="oga-section-dark"
-      data-oga-surface="dark"
-      aria-labelledby="docs-products-title"
-    >
+    <div className="oga-docs-con">
+      <div className="oga-docs-con__win">
+        <div className="oga-docs-con__bar">
+          <span className="oga-docs-con__dots" aria-hidden>
+            <i /><i /><i />
+          </span>
+          <span className="oga-docs-con__who">
+            <ActiveIcon width={14} height={14} aria-hidden />
+            {f.product}
+          </span>
+          <span className="oga-docs-con__ver">engine v{METHODOLOGY_VERSION}</span>
+        </div>
+
+        <div className="oga-docs-con__body" key={active}>
+          <div className="oga-docs-con__frame">
+            <div className="oga-docs-con__cmd">
+              <span className="oga-docs-con__prompt" aria-hidden>›</span>
+              <span className={`oga-docs-con__method oga-docs-con__method--${f.method.toLowerCase()}`}>{f.method}</span>
+              <span className="oga-docs-con__target">{f.target}</span>
+              <span className="oga-docs-con__caret" aria-hidden />
+            </div>
+            {f.body && <div className="oga-docs-con__cmd-body">{f.body}</div>}
+
+            <div className="oga-docs-con__sep" aria-hidden />
+
+            {f.score && (
+              <div className="oga-docs-con__score">
+                <span className="oga-docs-con__score-num">{f.score.num}</span>
+                <span className="oga-docs-con__score-sub">{f.score.sub}</span>
+              </div>
+            )}
+
+            <ul className="oga-docs-con__rows">
+              {f.rows.map((r) => (
+                <li key={r.k} className="oga-docs-con__row">
+                  <span className="oga-docs-con__k">{r.k}</span>
+                  <span className="oga-docs-con__v">{r.v}</span>
+                  {r.tag && (
+                    <span className={`oga-docs-con__tag ${r.tone ? `oga-docs-con__tag--${r.tone}` : ""}`}>{r.tag}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+
+            <div className="oga-docs-con__note">
+              <span className="oga-docs-con__check" aria-hidden>✓</span>
+              {f.note}
+            </div>
+          </div>
+        </div>
+
+        <span className="oga-docs-con__timer" key={`timer-${active}`} aria-hidden />
+      </div>
+
+      <div className="oga-docs-con__tabs" role="tablist" aria-label="Product">
+        {CON_FRAMES.map((frame, i) => {
+          const Icon = frame.Icon;
+          return (
+            <button
+              key={frame.product}
+              type="button"
+              role="tab"
+              aria-selected={i === active}
+              onClick={() => setActive(i)}
+              className={`oga-docs-con__tab ${i === active ? "oga-docs-con__tab--on" : ""}`}
+            >
+              <Icon width={14} height={14} aria-hidden />
+              {frame.product}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 01 Quickstart (dark): steps + code ---------- */
+const QS_STEPS: { num: string; title: string; body: string }[] = [
+  {
+    num: "01",
+    title: "Get a key",
+    body: "Sign up and we create an API key for you straight away. It starts with oga_ and is shown once, so keep it somewhere safe.",
+  },
+  {
+    num: "02",
+    title: "Make a call",
+    body: "Send a request over HTTPS with your key in the header. The simplest one is a GET to /v1/area with a postcode.",
+  },
+  {
+    num: "03",
+    title: "Read the response",
+    body: "Every value comes back with where it came from and when it was measured, so you always know what you are looking at.",
+  },
+];
+
+type LangKey =
+  | "curl"
+  | "javascript"
+  | "typescript"
+  | "python"
+  | "go"
+  | "php"
+  | "ruby"
+  | "java"
+  | "csharp";
+
+const EXAMPLES: Record<LangKey, { label: string; lang: string; snippet: string; note: string; Logo: typeof CurlLogo }> = {
+  curl: {
+    label: "cURL",
+    lang: "bash",
+    Logo: CurlLogo,
+    snippet: `curl https://onegoodarea.onrender.com/v1/area?postcode=SW1A%201AA \\
+  -H "Authorization: Bearer oga_your_api_key"`,
+    note: "HTTPS only. JSON in, JSON out.",
+  },
+  javascript: {
+    label: "JavaScript",
+    lang: "javascript",
+    Logo: JavaScriptLogo,
+    snippet: `const res = await fetch(
+  "https://onegoodarea.onrender.com/v1/area?postcode=SW1A%201AA",
+  { headers: { Authorization: "Bearer oga_your_api_key" } }
+);
+
+const area = await res.json();`,
+    note: "Any runtime with fetch. No SDK to install.",
+  },
+  typescript: {
+    label: "TypeScript",
+    lang: "typescript",
+    Logo: TypeScriptLogo,
+    snippet: `const res = await fetch(
+  "https://onegoodarea.onrender.com/v1/area?postcode=SW1A%201AA",
+  { headers: { Authorization: "Bearer oga_your_api_key" } }
+);
+
+const area: unknown = await res.json();`,
+    note: "The same fetch, fully typed.",
+  },
+  python: {
+    label: "Python",
+    lang: "python",
+    Logo: PythonLogo,
+    snippet: `import httpx
+
+res = httpx.get(
+    "https://onegoodarea.onrender.com/v1/area",
+    params={"postcode": "SW1A 1AA"},
+    headers={"Authorization": "Bearer oga_your_api_key"},
+)
+area = res.json()`,
+    note: "httpx or requests, the response is the same.",
+  },
+  go: {
+    label: "Go",
+    lang: "go",
+    Logo: GoLogo,
+    snippet: `req, _ := http.NewRequest(
+    "GET",
+    "https://onegoodarea.onrender.com/v1/area?postcode=SW1A%201AA",
+    nil,
+)
+req.Header.Set("Authorization", "Bearer oga_your_api_key")
+
+res, _ := http.DefaultClient.Do(req)
+defer res.Body.Close()`,
+    note: "The standard library is all you need.",
+  },
+  php: {
+    label: "PHP",
+    lang: "php",
+    Logo: PhpLogo,
+    snippet: `$ch = curl_init(
+    "https://onegoodarea.onrender.com/v1/area?postcode=SW1A%201AA"
+);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    "Authorization: Bearer oga_your_api_key",
+]);
+
+$area = json_decode(curl_exec($ch), true);`,
+    note: "Plain cURL, nothing to install.",
+  },
+  ruby: {
+    label: "Ruby",
+    lang: "ruby",
+    Logo: RubyLogo,
+    snippet: `require "net/http"
+require "json"
+
+uri = URI("https://onegoodarea.onrender.com/v1/area?postcode=SW1A 1AA")
+req = Net::HTTP::Get.new(uri)
+req["Authorization"] = "Bearer oga_your_api_key"
+
+res = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |h| h.request(req) }
+area = JSON.parse(res.body)`,
+    note: "Net::HTTP from the standard library.",
+  },
+  java: {
+    label: "Java",
+    lang: "java",
+    Logo: JavaLogo,
+    snippet: `HttpRequest req = HttpRequest.newBuilder()
+    .uri(URI.create(
+        "https://onegoodarea.onrender.com/v1/area?postcode=SW1A%201AA"))
+    .header("Authorization", "Bearer oga_your_api_key")
+    .build();
+
+HttpResponse<String> res = HttpClient.newHttpClient()
+    .send(req, HttpResponse.BodyHandlers.ofString());`,
+    note: "java.net.http, no dependencies.",
+  },
+  csharp: {
+    label: "C#",
+    lang: "csharp",
+    Logo: CSharpLogo,
+    snippet: `using var http = new HttpClient();
+http.DefaultRequestHeaders.Add(
+    "Authorization", "Bearer oga_your_api_key");
+
+var area = await http.GetStringAsync(
+    "https://onegoodarea.onrender.com/v1/area?postcode=SW1A%201AA");`,
+    note: "HttpClient from the base class library.",
+  },
+};
+
+const LANG_ORDER: LangKey[] = [
+  "curl",
+  "javascript",
+  "typescript",
+  "python",
+  "go",
+  "php",
+  "ruby",
+  "java",
+  "csharp",
+];
+
+function Quickstart() {
+  const [lang, setLang] = useState<LangKey>("curl");
+  const active = EXAMPLES[lang];
+  return (
+    <section id="quickstart" className="oga-section-dark" data-oga-surface="dark" aria-labelledby="docs-qs-title">
       <div className="oga-docs__container">
         <div className="oga-docs__header">
           <div className="oga-docs__eyebrow">
             <span className="oga-docs__eyebrow-num">01</span>
             <span aria-hidden className="oga-docs__eyebrow-line" />
-            <span>The 4 products</span>
-          </div>
-          <h2 id="docs-products-title" className="oga-docs__h2">
-            One signal-first data layer. Four composable products.
-          </h2>
-          <p className="oga-docs__lead">
-            Each product sits on shared infrastructure and can be consumed in
-            isolation or composed. Per-surface guides land as separate pages over
-            the coming weeks.
-          </p>
-        </div>
-
-        <div className="oga-docs-products__grid">
-          {PRODUCTS.map((p) => {
-            const Icon = p.Icon;
-            return (
-              <article key={p.name} className="oga-docs-product">
-                <header className="oga-docs-product__head">
-                  <div className="oga-docs-product__icon">
-                    <Icon width={48} height={48} />
-                  </div>
-                  <div className="oga-docs-product__title-block">
-                    <span className="oga-docs-product__num">{p.num}</span>
-                    <h3 className="oga-docs-product__title">{p.name}</h3>
-                  </div>
-                </header>
-                <p className="oga-docs-product__body">{p.body}</p>
-                <ul className="oga-docs-product__caps">
-                  {p.caps.map((c) => (
-                    <li key={c}>{c}</li>
-                  ))}
-                </ul>
-                <div className="oga-docs-product__foot">
-                  <span className="oga-docs-product__endpoint" aria-label={`Primary endpoint: ${p.endpoint.verb} ${p.endpoint.path}`}>
-                    <span className="oga-docs-product__endpoint-verb">
-                      {p.endpoint.verb}
-                    </span>
-                    {p.endpoint.path}
-                  </span>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ============================================================
-   02 — Levers control plane (cream)
-   ============================================================ */
-
-type Lever = {
-  num: string;
-  title: string;
-  body: string;
-  rbac: "Owner" | "Admin+" | "Any member";
-};
-
-const LEVERS: Lever[] = [
-  {
-    num: "01",
-    title: "Orgs and members",
-    body:
-      "Every account gets a personal org on signup. Add teammates, list members, remove them. Three-tier RBAC: member, admin, owner.",
-    rbac: "Admin+",
-  },
-  {
-    num: "02",
-    title: "Custom signal bundles",
-    body:
-      "Named whitelists of signal keys. Pass ?bundle=<id> on /v1/area, /v1/areas, /v1/score, or /v1/query and only those signals come back. LLM-planned queries are governed by the same gate.",
-    rbac: "Admin+",
-  },
-  {
-    num: "03",
-    title: "Custom scoring presets",
-    body:
-      "Save a {base_preset, weights} recipe under your org and call /v1/score with preset_id. Mutually exclusive with preset and weights on the same request.",
-    rbac: "Admin+",
-  },
-  {
-    num: "04",
-    title: "Methodology pinning",
-    body:
-      "Lock the engine version your org consumes. Sets the X-Engine-Version response header on /v1/area, /v1/areas, /v1/score, /v1/query, /v1/peers, and portfolio enrich and changes.",
-    rbac: "Owner",
-  },
-  {
-    num: "05",
-    title: "Peer cohorts",
-    body:
-      "Named lists of LSOA codes (up to 10,000 per cohort) that constrain the candidate set on /v1/peers. Areas like THIS one, but only inside your universe.",
-    rbac: "Admin+",
-  },
-  {
-    num: "06",
-    title: "Full RBAC",
-    body:
-      "Three roles. Admin drives day-to-day Levers config. Owner-only retained for methodology pinning, granting owner, and removing owner-role members.",
-    rbac: "Any member",
-  },
-  {
-    num: "07",
-    title: "White-label",
-    body:
-      "display_name and brand_url on the org, surfaced on /v1/me so downstream consumers can render your brand instead of OneGoodArea’s.",
-    rbac: "Admin+",
-  },
-  {
-    num: "08",
-    title: "Per-key IP allowlist",
-    body:
-      "allowed_ip_cidrs on each API key. Mismatch returns 403 ip_not_allowed, distinct from a 401 invalid-key. IPv4 CIDR matching with hand-rolled integer-mask helper.",
-    rbac: "Owner",
-  },
-];
-
-function SectionLevers() {
-  return (
-    <section
-      id="levers"
-      className="oga-section-hero"
-      aria-labelledby="docs-levers-title"
-    >
-      <div className="oga-docs__container">
-        <div className="oga-docs__header">
-          <div className="oga-docs__eyebrow">
-            <span className="oga-docs__eyebrow-num">02</span>
-            <span aria-hidden className="oga-docs__eyebrow-line" />
-            <span>Levers</span>
-          </div>
-          <h2 id="docs-levers-title" className="oga-docs__h2">
-            Multi-tenant control plane. Opt-in, additive.
-          </h2>
-          <p className="oga-docs__lead">
-            Eight capabilities for configuring OneGoodArea per organisation. With
-            no bundle, preset_id, pin, cohort or allowlist set, every product
-            endpoint behaves byte-identically to the pre-Levers baseline.
-          </p>
-        </div>
-
-        <div className="oga-docs-levers__grid">
-          {LEVERS.map((l) => (
-            <article key={l.title} className="oga-docs-lever">
-              <span className="oga-docs-lever__num">{l.num}</span>
-              <h3 className="oga-docs-lever__title">{l.title}</h3>
-              <p className="oga-docs-lever__body">{l.body}</p>
-              <div className="oga-docs-lever__foot">
-                <span className="oga-docs-lever__rbac">{l.rbac}</span>
-              </div>
-            </article>
-          ))}
-        </div>
-
-        <div className="oga-docs-levers__cta-row">
-          <Link href="/docs/api-reference#levers" className="oga-btn oga-btn-secondary">
-            All Levers endpoints
-            <span aria-hidden>→</span>
-          </Link>
-          <Link href="/methodology#levers" className="oga-btn oga-btn-ghost">
-            Methodology pinning rationale
-            <span aria-hidden>→</span>
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ============================================================
-   03 — Reference + spec (white)
-   ============================================================ */
-
-type RefTile = {
-  num: string;
-  title: string;
-  body: string;
-  status: "live" | "soon" | "regen";
-  href: string | null;
-  cta: string;
-};
-
-const REFERENCES: RefTile[] = [
-  {
-    num: "01",
-    title: "Interactive API reference",
-    body:
-      "The structured endpoint catalogue across all six surfaces: Signals, Scores, Intelligence, Monitor, Levers, and account. Generated from the Fastify route schemas so it stays in sync with the live API.",
-    status: "live",
-    href: "/docs/api-reference",
-    cta: "Open reference",
-  },
-  {
-    num: "02",
-    title: "MCP server",
-    body:
-      "Add OneGoodArea to Claude Desktop, Cursor, or any MCP-compatible client. 11 tools, stdio transport, npm-distributed.",
-    status: "live",
-    href: "/docs/mcp",
-    cta: "Install guide",
-  },
-  {
-    num: "03",
-    title: "Methodology",
-    body:
-      "How we compute signals, scores, peers, insights, and forecasts. The 7-source disclosure, normalisation rules, time-series cadence, every audit artefact.",
-    status: "live",
-    href: "/methodology",
-    cta: "Read methodology",
-  },
-  {
-    num: "04",
-    title: "Changelog",
-    body:
-      "Buyer-facing release log. What capability landed when, tagged feature, improvement or fix.",
-    status: "live",
-    href: "/changelog",
-    cta: "View changelog",
-  },
-  {
-    num: "05",
-    title: "Interactive reference",
-    body:
-      "OpenAPI 3.0 spec auto-generated from the live Fastify schemas. Try requests in browser. Stays in step with the backend on every deploy.",
-    status: "live",
-    href: "/playground",
-    cta: "Open reference",
-  },
-];
-
-function statusLabel(s: RefTile["status"]) {
-  if (s === "live") return "Live";
-  if (s === "regen") return "Regenerating";
-  return "Soon";
-}
-
-function statusClass(s: RefTile["status"]) {
-  if (s === "live") return "oga-docs-ref-tile__status--live";
-  if (s === "regen") return "oga-docs-ref-tile__status--regen";
-  return "oga-docs-ref-tile__status--soon";
-}
-
-function SectionReference() {
-  return (
-    <section
-      className="oga-section-quiet"
-      aria-labelledby="docs-ref-title"
-    >
-      <div className="oga-docs__container">
-        <div className="oga-docs__header">
-          <div className="oga-docs__eyebrow">
-            <span className="oga-docs__eyebrow-num">03</span>
-            <span aria-hidden className="oga-docs__eyebrow-line" />
-            <span>Reference</span>
-          </div>
-          <h2 id="docs-ref-title" className="oga-docs__h2">
-            Everything we publish today.
-          </h2>
-          <p className="oga-docs__lead">
-            What is shipped, what is regenerating, what is on the way. We mark
-            each tile honestly so you can integrate against the surfaces that
-            exist and plan around the ones that will.
-          </p>
-        </div>
-
-        <div className="oga-docs-ref__grid">
-          {REFERENCES.map((r) => {
-            const inner = (
-              <>
-                <header className="oga-docs-ref-tile__head">
-                  <span className="oga-docs-ref-tile__num">{r.num}</span>
-                  <span
-                    className={`oga-docs-ref-tile__status ${statusClass(r.status)}`}
-                  >
-                    {statusLabel(r.status)}
-                  </span>
-                </header>
-                <h3 className="oga-docs-ref-tile__title">{r.title}</h3>
-                <p className="oga-docs-ref-tile__body">{r.body}</p>
-                <span className="oga-docs-ref-tile__foot">
-                  {r.cta}
-                  <span aria-hidden>→</span>
-                </span>
-              </>
-            );
-
-            if (r.status === "soon" || !r.href) {
-              return (
-                <div
-                  key={r.title}
-                  className="oga-docs-ref-tile oga-docs-ref-tile--disabled"
-                  aria-disabled
-                >
-                  {inner}
-                </div>
-              );
-            }
-
-            return (
-              <Link
-                key={r.title}
-                href={r.href}
-                className="oga-docs-ref-tile oga-docs-ref-tile--link"
-              >
-                {inner}
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ============================================================
-   04 — Quickstart (DARK)
-   ============================================================ */
-
-const QS_STEPS: { num: string; title: string; body: string }[] = [
-  {
-    num: "01",
-    title: "Get a key",
-    body:
-      "Sign up. A personal org and an API key are created for you. The key is prefixed oga_ and shown once at creation time.",
-  },
-  {
-    num: "02",
-    title: "Send a request",
-    body:
-      "Bearer auth, JSON over HTTPS, all routes under /v1/. The simplest read is GET /v1/area with a postcode query parameter.",
-  },
-  {
-    num: "03",
-    title: "Read the response",
-    body:
-      "Every payload carries an engine_version, source provenance, and a meta.fetch_mode (live, store, hybrid) so you always know how a signal was served.",
-  },
-];
-
-const QS_CURL = `curl https://onegoodarea.onrender.com/v1/area?postcode=SW1A%201AA \\
-  -H "Authorization: Bearer oga_your_api_key"`;
-
-function SectionQuickstart() {
-  return (
-    <section
-      className="oga-section-dark"
-      data-oga-surface="dark"
-      aria-labelledby="docs-qs-title"
-    >
-      <div className="oga-docs__container">
-        <div className="oga-docs__header">
-          <div className="oga-docs__eyebrow">
-            <span className="oga-docs__eyebrow-num">04</span>
-            <span aria-hidden className="oga-docs__eyebrow-line" />
             <span>Quickstart</span>
           </div>
-          <h2 id="docs-qs-title" className="oga-docs__h2">
-            Three steps from zero to your first signal read.
-          </h2>
-          <p className="oga-docs__lead">
-            The fastest way to feel the API: one read against /v1/area to see a
-            full area profile with normalised values and provenance.
-          </p>
+          <h2 id="docs-qs-title" className="oga-docs__h2">Get your first response in three steps.</h2>
+          <p className="oga-docs__lead">Sign up for a key, send one request, and read what comes back. There is no SDK to install.</p>
         </div>
 
         <div className="oga-docs-qs__steps">
@@ -544,15 +439,34 @@ function SectionQuickstart() {
           ))}
         </div>
 
-        <CodePanel lang="bash" path="GET /v1/area" snippet={QS_CURL} />
+        <div className="oga-docs-ex__tabs" role="tablist" aria-label="Language">
+          {LANG_ORDER.map((k) => {
+            const ex = EXAMPLES[k];
+            const Logo = ex.Logo;
+            return (
+              <button
+                key={k}
+                type="button"
+                role="tab"
+                aria-selected={lang === k}
+                onClick={() => setLang(k)}
+                className={`oga-docs-ex__tab ${lang === k ? "oga-docs-ex__tab--active" : ""}`}
+              >
+                <Logo className="oga-docs-ex__tab-logo" aria-hidden />
+                {ex.label}
+              </button>
+            );
+          })}
+        </div>
+        <div className="oga-docs-ex__lang-meta">
+          <span className="oga-docs-ex__lang-name">{active.label}</span>
+          <span className="oga-docs-ex__lang-note">{active.note}</span>
+        </div>
+        <CodePanel lang={active.lang} path="GET /v1/area" snippet={active.snippet} />
       </div>
     </section>
   );
 }
-
-/* Shared code panel — canonical .oga-code-panel structure with corner
-   ticks, header strip, and one-line-per-row body for parity with the
-   methodology page. */
 
 function CodePanel({ lang, path, snippet }: { lang: string; path: string; snippet: string }) {
   const lines = snippet.split("\n");
@@ -570,7 +484,7 @@ function CodePanel({ lang, path, snippet }: { lang: string; path: string; snippe
         {lines.map((line, i) => (
           <div key={i} className="oga-code-panel__line">
             <span className="oga-code-panel__num">{String(i + 1).padStart(2, "0")}</span>
-            <span className="oga-code-panel__text">{line || " "}</span>
+            <span className="oga-code-panel__text">{line || " "}</span>
           </div>
         ))}
       </div>
@@ -578,153 +492,129 @@ function CodePanel({ lang, path, snippet }: { lang: string; path: string; snippe
   );
 }
 
-/* ============================================================
-   05 — Code examples (cream)
-   ============================================================ */
+/* ---------- 02 Products (light): a card per product ---------- */
+const PRODUCTS: { name: string; Icon: typeof SignalsIcon; slug: string; verb: string; path: string; line: string }[] = [
+  { name: "Signals", Icon: SignalsIcon, slug: "signals", verb: "GET", path: "/v1/area", line: "Pull crime, prices, schools and more for any UK postcode, all in one response." },
+  { name: "Scores", Icon: ScoresIcon, slug: "scores", verb: "POST", path: "/v1/score", line: "Turn the data into a single 0 to 100 score, weighted the way your team works." },
+  { name: "Monitor", Icon: MonitorIcon, slug: "monitor", verb: "POST", path: "/v1/portfolios", line: "Watch a list of areas and get an alert whenever something meaningful changes." },
+  { name: "Intelligence", Icon: IntelligenceIcon, slug: "intelligence", verb: "POST", path: "/v1/query", line: "Ask a question in plain English, or send a typed query, and get an answer back." },
+];
 
-type LangKey = "curl" | "node" | "python" | "go";
-
-const EXAMPLES: Record<LangKey, { label: string; lang: string; snippet: string; note: string }> = {
-  curl: {
-    label: "cURL",
-    lang: "bash",
-    snippet: `curl https://onegoodarea.onrender.com/v1/area?postcode=SW1A%201AA \\
-  -H "Authorization: Bearer oga_your_api_key" \\
-  -H "Accept: application/json"`,
-    note: "Plain HTTP rejected. HTTPS only. JSON over the wire.",
-  },
-  node: {
-    label: "Node",
-    lang: "typescript",
-    snippet: `const response = await fetch(
-  "https://onegoodarea.onrender.com/v1/area?postcode=SW1A%201AA",
-  {
-    headers: {
-      "Authorization": "Bearer oga_your_api_key",
-      "Accept": "application/json",
-    },
-  }
-);
-
-const profile = await response.json();
-const engineVersion = response.headers.get("X-Engine-Version");
-console.log(profile.meta.fetch_mode); // 'live' | 'store' | 'hybrid'`,
-    note: "Any runtime with fetch. The X-Engine-Version header reflects your org pin if set.",
-  },
-  python: {
-    label: "Python",
-    lang: "python",
-    snippet: `import httpx
-
-response = httpx.get(
-    "https://onegoodarea.onrender.com/v1/area",
-    params={"postcode": "SW1A 1AA"},
-    headers={"Authorization": "Bearer oga_your_api_key"},
-)
-profile = response.json()
-print(profile["meta"]["fetch_mode"])`,
-    note: "httpx or requests. Same shapes regardless of client.",
-  },
-  go: {
-    label: "Go",
-    lang: "go",
-    snippet: `req, _ := http.NewRequest(
-    "GET",
-    "https://onegoodarea.onrender.com/v1/area?postcode=SW1A%201AA",
-    nil,
-)
-req.Header.Set("Authorization", "Bearer oga_your_api_key")
-
-resp, _ := http.DefaultClient.Do(req)
-defer resp.Body.Close()
-
-var profile map[string]any
-json.NewDecoder(resp.Body).Decode(&profile)`,
-    note: "Standard library is enough. Decode into your own typed struct for ergonomics.",
-  },
-};
-
-const LANG_ORDER: LangKey[] = ["curl", "node", "python", "go"];
-
-function SectionExamples() {
-  const [lang, setLang] = useState<LangKey>("curl");
-  const active = useMemo(() => EXAMPLES[lang], [lang]);
-
+function Products() {
   return (
-    <section
-      className="oga-section-hero"
-      aria-labelledby="docs-ex-title"
-    >
+    <section id="products" className="oga-section-hero" aria-labelledby="docs-products-title">
       <div className="oga-docs__container">
         <div className="oga-docs__header">
           <div className="oga-docs__eyebrow">
-            <span className="oga-docs__eyebrow-num">05</span>
+            <span className="oga-docs__eyebrow-num">02</span>
             <span aria-hidden className="oga-docs__eyebrow-line" />
-            <span>Code examples</span>
+            <span>Products</span>
           </div>
-          <h2 id="docs-ex-title" className="oga-docs__h2">
-            One endpoint, four languages.
-          </h2>
-          <p className="oga-docs__lead">
-            Every example reads the same area profile. Swap the postcode, swap
-            the surface, swap the language. The shape is the same. No SDK is
-            required, no client library is shipped today.
-          </p>
+          <h2 id="docs-products-title" className="oga-docs__h2">Four products, all on one API.</h2>
+          <p className="oga-docs__lead">Use them on their own or together. Each one has its own page with the full detail.</p>
         </div>
 
-        <div className="oga-docs-ex__tabs" role="tablist" aria-label="Language selector">
-          {LANG_ORDER.map((k) => (
-            <button
-              key={k}
-              type="button"
-              role="tab"
-              aria-selected={lang === k}
-              onClick={() => setLang(k)}
-              className={`oga-docs-ex__tab ${lang === k ? "oga-docs-ex__tab--active" : ""}`}
-            >
-              {EXAMPLES[k].label}
-            </button>
-          ))}
+        <div className="oga-docs-pcards">
+          {PRODUCTS.map((p) => {
+            const Icon = p.Icon;
+            return (
+              <Link key={p.name} href={`/products/${p.slug}`} className="oga-docs-pcard">
+                <div className="oga-docs-pcard__top">
+                  <span className="oga-docs-pcard__icon" aria-hidden><Icon width={30} height={30} /></span>
+                  <span className="oga-docs-pcard__ep">
+                    <span className="oga-docs-pcard__verb">{p.verb}</span>
+                    {p.path}
+                  </span>
+                </div>
+                <h3 className="oga-docs-pcard__name">{p.name}</h3>
+                <p className="oga-docs-pcard__line">{p.line}</p>
+                <span className="oga-docs-pcard__foot">
+                  Read the docs
+                  <span aria-hidden>→</span>
+                </span>
+              </Link>
+            );
+          })}
         </div>
-
-        <div className="oga-docs-ex__lang-meta">
-          <span className="oga-docs-ex__lang-name">{active.label}</span>
-          <span className="oga-docs-ex__lang-note">{active.note}</span>
-        </div>
-
-        <CodePanel lang={active.lang} path="GET /v1/area" snippet={active.snippet} />
       </div>
     </section>
   );
 }
 
-/* ============================================================
-   Final CTA (DARK)
-   ============================================================ */
+/* ---------- 03 Reference (quiet): deduped links + Levers callout ---------- */
+const REFERENCES: { title: string; body: string; href: string; cta: string; Icon: typeof MethodologyIcon }[] = [
+  { title: "API reference", Icon: ApiReferenceIcon, body: "Every endpoint, generated from the live API so it never drifts. Try requests right in the browser.", href: "/docs/api-reference", cta: "Open the reference" },
+  { title: "MCP server", Icon: McpServerIcon, body: "Add OneGoodArea to Claude, Cursor or any MCP client and call it from your own workflow.", href: "/docs/mcp", cta: "Read the guide" },
+  { title: "Methodology", Icon: MethodologyIcon, body: "How every signal, score, peer and forecast is worked out, and the sources behind each one.", href: "/methodology", cta: "Read the methodology" },
+  { title: "Changelog", Icon: ChangelogIcon, body: "What we have shipped, and when.", href: "/changelog", cta: "View the changelog" },
+];
 
-function FinalCta() {
+function Reference() {
   return (
-    <section
-      className="oga-section-dark oga-docs-cta"
-      data-oga-surface="dark"
-      aria-labelledby="docs-cta-title"
-    >
-      <div className="oga-docs__container--narrow">
-        <h2 id="docs-cta-title" className="oga-docs-cta__h2">
-          Build on the data layer underneath UK property workflows.
-        </h2>
-        <p className="oga-docs-cta__lead">
-          Generate a key, integrate against the API, and configure how it behaves
-          per organisation through the dashboard. Per-surface guides are coming;
-          everything live is linked above.
-        </p>
-        <div className="oga-docs-cta__ctas">
-          <Link href={DEMO_URL} className="oga-btn oga-btn-primary">
-            Book a demo
+    <section id="reference" className="oga-section-quiet" aria-labelledby="docs-ref-title">
+      <div className="oga-docs__container">
+        <div className="oga-docs__header">
+          <div className="oga-docs__eyebrow">
+            <span className="oga-docs__eyebrow-num">03</span>
+            <span aria-hidden className="oga-docs__eyebrow-line" />
+            <span>Reference</span>
+          </div>
+          <h2 id="docs-ref-title" className="oga-docs__h2">The full reference, when you need it.</h2>
+        </div>
+
+        <div className="oga-docs-ref__grid">
+          {REFERENCES.map((r) => {
+            const Icon = r.Icon;
+            return (
+              <Link key={r.title} href={r.href} className="oga-docs-ref-tile oga-docs-ref-tile--link">
+                <span className="oga-docs-ref-tile__icon" aria-hidden><Icon width={26} height={26} /></span>
+                <h3 className="oga-docs-ref-tile__title">{r.title}</h3>
+                <p className="oga-docs-ref-tile__body">{r.body}</p>
+                <span className="oga-docs-ref-tile__foot">
+                  {r.cta}
+                  <span aria-hidden>→</span>
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+
+        <div className="oga-docs-levers-note" id="levers">
+          <div className="oga-docs-levers-note__text">
+            <span className="oga-docs-levers-note__kicker">Levers</span>
+            <h3 className="oga-docs-levers-note__title">Configure it for your whole team.</h3>
+            <p className="oga-docs-levers-note__body">
+              Custom signal bundles, saved scoring presets, version pinning, peer
+              groups, white-labelling and per-key IP allowlists. Everything is
+              opt-in from the dashboard, and nothing changes until you turn it on.
+            </p>
+          </div>
+          <Link href="/docs/api-reference#levers" className="oga-btn oga-btn-secondary">
+            See the Levers endpoints
             <span aria-hidden>→</span>
           </Link>
-          <Link href="/methodology" className="oga-btn oga-btn-secondary">
-            Read the methodology
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Final CTA (dark) ---------- */
+function FinalCta() {
+  return (
+    <section className="oga-section-dark oga-docs-cta" data-oga-surface="dark" aria-labelledby="docs-cta-title">
+      <div className="oga-docs__container--narrow">
+        <h2 id="docs-cta-title" className="oga-docs-cta__h2">Start building.</h2>
+        <p className="oga-docs-cta__lead">
+          Get an API key, make your first call, and set it up for your team as you go.
+        </p>
+        <div className="oga-docs-cta__ctas">
+          <Link href="/playground" className="oga-btn oga-btn-primary">
+            Try in the playground
+            <span aria-hidden>→</span>
+          </Link>
+          <Link href={DEMO_URL} className="oga-btn oga-btn-secondary">
+            Book a demo
           </Link>
         </div>
       </div>
