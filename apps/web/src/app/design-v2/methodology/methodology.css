@@ -115,19 +115,15 @@
 .oga-meth-hero__eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--oga-3);
   font-family: var(--oga-font-mono);
-  font-size: 11px;
-  letter-spacing: 0.14em;
+  font-size: var(--oga-fs-eyebrow);
+  letter-spacing: var(--oga-tracking-eyebrow);
   text-transform: uppercase;
   color: var(--oga-fg-muted);
-  border: 1px solid var(--oga-border);
-  border-radius: 999px;
-  padding: 6px 14px;
   margin-bottom: 26px;
-  background: var(--oga-white);
 }
-.oga-meth-hero__eyebrow-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--oga-fg-muted); opacity: 0.6; }
+.oga-meth-hero__eyebrow-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--oga-fg-muted); opacity: 0.5; }
 
 .oga-meth-hero__title {
   font-family: var(--oga-font-sans);
