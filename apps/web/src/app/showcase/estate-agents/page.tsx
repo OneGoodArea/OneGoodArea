@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getSignals, getScores, ApiError } from "@/lib/showcase/api";
+import { ESTATE_AGENT_INTENT_LABELS } from "@/lib/showcase/estate-agent-labels";
 import ShowcaseSignals from "@/components/showcase/ShowcaseSignals";
 import { ShowcaseScoring } from "@/components/showcase/ShowcaseScoring";
 
@@ -45,7 +46,7 @@ export default async function EstateAgentsPage({
         <div className="rounded-lg border border-[#1c1c22] bg-[#0f0f12] p-6 mb-6">
           <h3 className="text-lg font-semibold text-[#e4e4e8] mb-2">Scoring</h3>
           <p className="text-sm text-[#8a8a96] mb-4">Interactive seven-category weight sliders with instant recalculation</p>
-          <ShowcaseScoring postcode={postcode} initialResult={initialResult ?? undefined} apiError={apiError} />
+          <ShowcaseScoring postcode={postcode} initialResult={initialResult ?? undefined} apiError={apiError} intentLabels={ESTATE_AGENT_INTENT_LABELS} />
         </div>
 
         <div className="mt-8 pt-6 border-t border-[#1c1c22]">
