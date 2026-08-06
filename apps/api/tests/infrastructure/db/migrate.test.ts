@@ -33,6 +33,7 @@ describe("db migrate", () => {
           s.includes("IF NOT EXISTS") || // CREATE TABLE / CREATE INDEX / ADD COLUMN
           s.includes("IF EXISTS") || // AR-331: DROP TABLE IF EXISTS / ALTER TABLE IF EXISTS / ALTER INDEX IF EXISTS
           s.includes("DROP NOT NULL") || // ALTER COLUMN ... DROP NOT NULL is a no-op when already nullable
+          s.includes("SET DEFAULT") || // ALTER COLUMN ... SET DEFAULT is a no-op once the default matches (subscriptions reconciliation)
           s.includes("CREATE OR REPLACE VIEW") || // AR-375: view DDL is idempotent by definition
           /ON CONFLICT[\s\S]*DO NOTHING/.test(s) || // backfill INSERTs (target-free OR target-keyed e.g. ON CONFLICT (a,b) DO NOTHING)
           /(WHERE|AND) [A-Z_.]+ IS NULL/.test(s) || // backfill UPDATEs guarded by "not already done" predicate (AR-193/AR-408: alias-tolerant; column-agnostic)
@@ -98,16 +99,40 @@ describe("db migrate", () => {
     expect(new Set(names).size).toBe(names.length);
   });
 
-  it("users migration includes intent + signup_source + role_preference ADD COLUMN statements (AR-218)", () => {
+  it("users migration creates intent + signup_source + role_preference columns (AR-218)", () => {
     // AR-218 (Dashboard redesign Epic AR-217): /welcome flow needs three onboarding
-    // columns nullable on the users table. Idempotent ADD COLUMN IF NOT EXISTS so
-    // existing rows are unaffected.
+    // columns nullable on the users table. v1 consolidated them into the CREATE
+    // TABLE statement (folded from the historical ADD COLUMN statements).
     const users = MIGRATIONS.find((m) => m.name === "users");
     expect(users, "users migration must exist").toBeDefined();
     const ddl = users!.statements.join("\n");
-    expect(ddl).toMatch(/ADD COLUMN IF NOT EXISTS intent TEXT/i);
-    expect(ddl).toMatch(/ADD COLUMN IF NOT EXISTS signup_source TEXT/i);
-    expect(ddl).toMatch(/ADD COLUMN IF NOT EXISTS role_preference TEXT/i);
+    expect(ddl).toMatch(/intent TEXT/);
+    expect(ddl).toMatch(/signup_source TEXT/);
+    expect(ddl).toMatch(/role_preference TEXT/);
+  });
+
+  it("magic_link_tokens migration exists and creates the auth token table", () => {
+    const tokens = MIGRATIONS.find((m) => m.name === "magic_link_tokens");
+    expect(tokens, "magic_link_tokens migration must exist").toBeDefined();
+    const ddl = tokens!.statements.join("\n");
+    expect(ddl).toMatch(/CREATE TABLE IF NOT EXISTS magic_link_tokens/);
+    expect(ddl).toMatch(/token TEXT UNIQUE NOT NULL/);
+    expect(ddl).toMatch(/idx_magic_link_email_created/);
+  });
+
+  it("score_history migration converges the owned sequence on Neon's name", () => {
+    const score = MIGRATIONS.find((m) => m.name === "score_history");
+    expect(score, "score_history migration must exist").toBeDefined();
+    const ddl = score!.statements.join("\n");
+    expect(ddl).toMatch(/ALTER SEQUENCE IF EXISTS score_history_id_seq RENAME TO report_history_id_seq/);
+  });
+
+  it("subscriptions migration reconciles Neon's column defaults", () => {
+    const subs = MIGRATIONS.find((m) => m.name === "subscriptions");
+    expect(subs, "subscriptions migration must exist").toBeDefined();
+    const ddl = subs!.statements.join("\n");
+    expect(ddl).toMatch(/plan TEXT NOT NULL DEFAULT 'free'/);
+    expect(ddl).toMatch(/status TEXT NOT NULL DEFAULT 'active'/);
   });
 });
 
