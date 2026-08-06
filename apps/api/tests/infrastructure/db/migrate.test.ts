@@ -163,9 +163,9 @@ describe("db seeds", () => {
     expect(new Set(names).size).toBe(names.length);
   });
 
-  it("showcase_proptech seed is gated on SEED_SHOWCASE_API_KEY", () => {
-    const showcase = SEEDS.find((s) => s.name === "showcase_proptech");
-    expect(showcase, "showcase_proptech seed must exist").toBeDefined();
+  it("showcase seed is gated on SEED_SHOWCASE_API_KEY", () => {
+    const showcase = SEEDS.find((s) => s.name === "showcase");
+    expect(showcase, "showcase seed must exist").toBeDefined();
     expect(showcase!.requiresEnv).toBe("SEED_SHOWCASE_API_KEY");
   });
 });
