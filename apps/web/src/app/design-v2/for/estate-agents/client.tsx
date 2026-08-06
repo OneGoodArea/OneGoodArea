@@ -22,7 +22,6 @@ export default function ForEstateAgentsClient() {
       <SectionIntegration />
       <SectionTrust />
       <SectionFaqs />
-      <FinalCta />
       <Footer />
     </div>
   );
@@ -46,11 +45,14 @@ function Hero() {
         </p>
         <div className="oga-icp-hero__ctas">
           <Link href="/showcase/estate-agents" className="oga-btn oga-btn-primary">
-            See the live demo
+            Try the Demo Workflow
             <span aria-hidden>→</span>
           </Link>
           <Link href="/playground" className="oga-btn oga-btn-secondary">
             Try in the playground
+          </Link>
+          <Link href="/docs" className="oga-btn oga-btn-secondary">
+            Read the docs
           </Link>
         </div>
       </div>
@@ -384,24 +386,5 @@ function SectionFaqs() {
 
 /* ---------- Final CTA ---------- */
 function FinalCta() {
-  return (
-    <section className="oga-section-dark oga-icp-cta" data-oga-surface="dark" aria-labelledby="ea-cta">
-      <div className="oga-icp__wrap--narrow">
-        <h2 id="ea-cta" className="oga-icp-cta__h2">Turn the area into a reason to view.</h2>
-        <p className="oga-icp-cta__lead">
-          Enter a postcode on the live estate-agents demo, no card required, or
-          read the docs and ship area context this week.
-        </p>
-        <div className="oga-icp-cta__ctas">
-          <Link href="/showcase/estate-agents" className="oga-btn oga-btn-primary">
-            See the live demo
-            <span aria-hidden>→</span>
-          </Link>
-          <Link href="/docs" className="oga-btn oga-btn-secondary">
-            Read the docs
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
+  return null;
 }

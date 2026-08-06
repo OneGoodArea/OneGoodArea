@@ -75,15 +75,15 @@ export default function ShowcaseSignals({ initialSignals, initialPostcode, apiEr
         | { year_terminated: number; month_terminated: number }
         | undefined;
       return (
-        <div className="rounded border border-red-900/40 bg-red-950/20 p-4">
-          <p className="text-sm font-medium text-red-400">Postcode not found</p>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+          <p className="text-sm font-medium text-[#E3000F]">Postcode not found</p>
           {terminated ? (
-            <p className="text-xs text-red-300/80 mt-1">
+            <p className="text-xs text-red-600/80 mt-1">
               This postcode was terminated in {terminated.month_terminated}/{terminated.year_terminated}.
               It is no longer a valid UK postcode.
             </p>
           ) : (
-            <p className="text-xs text-red-300/80 mt-1">
+            <p className="text-xs text-red-600/80 mt-1">
               No area data found for this postcode. Check the spelling or try a different postcode.
             </p>
           )}
@@ -92,14 +92,14 @@ export default function ShowcaseSignals({ initialSignals, initialPostcode, apiEr
     }
     if (apiError) {
       return (
-        <div className="rounded border border-red-900/40 bg-red-950/20 p-4">
-          <p className="text-sm font-medium text-red-400">API error</p>
-          <p className="text-xs text-red-300/80 mt-1">{apiError.message}</p>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+          <p className="text-sm font-medium text-[#E3000F]">API error</p>
+          <p className="text-xs text-red-600/80 mt-1">{apiError.message}</p>
         </div>
       );
     }
     return (
-      <p className="text-sm text-[#8a8a96]">
+      <p className="text-sm text-slate-500">
         {loading
           ? "Fetching live signals…"
           : "No signals found. Try a different postcode."}
@@ -111,7 +111,7 @@ export default function ShowcaseSignals({ initialSignals, initialPostcode, apiEr
     <div>
       <form onSubmit={handleSubmit} className="mb-8 flex gap-3 items-end">
         <div className="flex-1">
-          <label htmlFor="postcode" className="block text-sm text-[#8a8a96] mb-1">
+          <label htmlFor="postcode" className="block text-sm text-slate-600 mb-1">
             UK Postcode
           </label>
           <input
@@ -120,14 +120,14 @@ export default function ShowcaseSignals({ initialSignals, initialPostcode, apiEr
             value={input}
             onChange={(e) => { setInput(e.target.value); setError(null); }}
             placeholder="e.g. M1 1AE"
-            className="w-full rounded border border-[#1c1c22] bg-[#09090b] px-3 py-2 text-sm text-[#e4e4e8] placeholder:text-[#555] focus:outline-none focus:border-[#3b82f6]"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#003087] focus:ring-1 focus:ring-[#003087]/20"
           />
-          {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
+          {error && <p className="text-xs text-[#E3000F] mt-1">{error}</p>}
         </div>
         <button
           type="submit"
           disabled={loading}
-          className="rounded bg-[#3b82f6] px-4 py-2 text-sm font-medium text-white hover:bg-[#2563eb] disabled:opacity-50"
+          className="rounded-lg bg-[#003087] px-4 py-2 text-sm font-medium text-white hover:bg-[#00256a] disabled:opacity-50 transition"
         >
           {loading ? "Loading…" : "Search"}
         </button>
@@ -136,7 +136,7 @@ export default function ShowcaseSignals({ initialSignals, initialPostcode, apiEr
       {apiError ? (
         renderErrorState()
       ) : signals.length === 0 ? (
-        <p className="text-sm text-[#8a8a96]">
+        <p className="text-sm text-slate-500">
           {loading
             ? "Fetching live signals…"
             : "No signals found. Try a different postcode."}
@@ -144,17 +144,17 @@ export default function ShowcaseSignals({ initialSignals, initialPostcode, apiEr
       ) : (
         Object.entries(grouped).map(([category, items]) => (
           <div key={category} className="mb-6">
-            <h4 className="text-sm font-semibold text-[#e4e4e7] mb-3 uppercase tracking-wide">
+            <h4 className="text-sm font-semibold text-slate-700 mb-3 uppercase tracking-wide">
               {CATEGORY_LABELS[category] ?? category}
             </h4>
             <div className="grid gap-3">
               {items.map((s) => (
-                <div key={s.id} className="rounded border border-[#1c1c22] bg-[#09090b] p-3">
+                <div key={s.id} className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-[#e4e4e8]">{s.name}</span>
-                    <span className="text-xs font-mono text-[#3b82f6]">{formatValue(s)}</span>
+                    <span className="text-sm font-medium text-slate-800">{s.name}</span>
+                    <span className="text-xs font-mono text-[#003087]">{formatValue(s)}</span>
                   </div>
-                  <p className="text-xs text-[#8a8a96] mt-1">{s.description}</p>
+                  <p className="text-xs text-slate-500 mt-1">{s.description}</p>
                 </div>
               ))}
             </div>
