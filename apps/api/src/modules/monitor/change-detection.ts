@@ -35,6 +35,12 @@ const SAMPLE_SIGNAL: Record<string, string> = { "property.median_price": "proper
 /** Count series are SAMPLE inputs (used to gate), not headline signals we alert
     on — a "2 sales became 1" move is noise, not a change worth a webhook. */
 const SAMPLE_SIGNALS = new Set(Object.values(SAMPLE_SIGNAL));
+/** Static signals (deprivation releases: IMD/WIMD/SIMD) are captured once per
+    vintage (e.g. "IMD 2025") and never move between releases of the same vintage.
+    A new vintage adds a second observed_period to every LSOA; diffSeries would read
+    that as a material change and fire false `signal.changed` webhooks. Excluded from
+    change detection. See ADR 0013. */
+const STATIC_SIGNAL_PREFIX = "deprivation.";
 
 export interface SeriesPoint { period: string; value: number | null }
 
@@ -127,6 +133,7 @@ export function buildChanges(
     if (!bySignal) continue;
     for (const [signalKey, { label, points }] of bySignal) {
       if (SAMPLE_SIGNALS.has(signalKey)) continue; // the sample series isn't itself a change subject
+      if (signalKey.startsWith(STATIC_SIGNAL_PREFIX)) continue; // static: one period per release vintage, not a move
       const change = diffSeries({ signalKey, label, area, geoCode, points }, opts);
       if (change && change.material && passesSampleGate(geoCode, signalKey, change)) changes.push(change);
     }
