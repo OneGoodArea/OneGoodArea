@@ -23,12 +23,15 @@ vi.mock("@/modules/scoring", async (orig) => {
   const actual = await orig() as object;
   return { ...actual, scoreArea: vi.fn() };
 });
+// /v1/score builds its 404 body via areaNotFoundBody (AR-711/712).
+vi.mock("@/modules/signals", () => ({ areaNotFoundBody: vi.fn() }));
 
 import { buildApp } from "@/app";
 import { validateApiKey } from "@/modules/api-keys";
 import { rateLimit } from "@/infrastructure/rate-limit";
 import { hasApiAccess, canMakeApiCall } from "@/modules/usage";
 import { scoreArea } from "@/modules/scoring";
+import { areaNotFoundBody } from "@/modules/signals";
 import { trackEvent } from "@/modules/tracking/activity";
 import { sql } from "@/infrastructure/db/client";
 
@@ -40,6 +43,7 @@ const mockRate = vi.mocked(rateLimit);
 const mockApiAccess = vi.mocked(hasApiAccess);
 const mockQuota = vi.mocked(canMakeApiCall);
 const mockScore = vi.mocked(scoreArea);
+const mockAreaNotFound = vi.mocked(areaNotFoundBody);
 
 const SCORE_RESULT = {
   area: "M1 1AE", preset: "research", score: 62, area_type: "urban",
@@ -58,6 +62,7 @@ beforeEach(() => {
   mockApiAccess.mockResolvedValue(true);
   mockQuota.mockResolvedValue({ allowed: true, plan: "sandbox", used: 0, limit: 200 } as never);
   mockScore.mockResolvedValue(SCORE_RESULT);
+  mockAreaNotFound.mockResolvedValue({ error: 'Could not resolve area "x". Provide a UK postcode or place name.' });
 });
 
 // ── v1-score.test.ts ────────────────────────────────────────────────
@@ -104,6 +109,19 @@ describe("POST /v1/score", () => {
     mockScore.mockResolvedValue(null);
     const res = await postScore({ area: "Nowhereville" });
     expect(res.statusCode).toBe(404);
+  });
+
+  it("404 body carries terminated info when the area is a terminated postcode (AR-711/712)", async () => {
+    mockScore.mockResolvedValue(null);
+    mockAreaNotFound.mockResolvedValue({
+      error: 'Could not resolve area "AB1 0AA". Provide a UK postcode or place name.',
+      terminated: { year_terminated: 1996, month_terminated: 6 },
+    });
+    const res = await postScore({ area: "AB1 0AA" });
+    expect(res.statusCode).toBe(404);
+    const body = res.json();
+    expect(body.error).toContain('"AB1 0AA"');
+    expect(body.terminated).toEqual({ year_terminated: 1996, month_terminated: 6 });
   });
 
   it("200s: returns the score + components, meters the call", async () => {

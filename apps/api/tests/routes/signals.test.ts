@@ -16,14 +16,14 @@ vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn(), query: vi.fn() }));
 // Partial mock: keep real exports (e.g. parseAreasQuery) but stub DB-touching functions.
 vi.mock("@/modules/signals", async (orig) => {
   const actual = await orig() as object;
-  return { ...actual, getAreaProfile: vi.fn(), queryAreas: vi.fn() };
+  return { ...actual, getAreaProfile: vi.fn(), queryAreas: vi.fn(), areaNotFoundBody: vi.fn() };
 });
 
 import { buildApp } from "@/app";
 import { validateApiKey } from "@/modules/api-keys";
 import { rateLimit } from "@/infrastructure/rate-limit";
 import { hasApiAccess, canMakeApiCall } from "@/modules/usage";
-import { getAreaProfile, queryAreas } from "@/modules/signals";
+import { getAreaProfile, queryAreas, areaNotFoundBody } from "@/modules/signals";
 import { trackEvent } from "@/modules/tracking/activity";
 import { sql } from "@/infrastructure/db/client";
 
@@ -38,6 +38,7 @@ const mockRate = vi.mocked(rateLimit);
 const mockApiAccess = vi.mocked(hasApiAccess);
 const mockProfile = vi.mocked(getAreaProfile);
 const mockQuery = vi.mocked(queryAreas);
+const mockAreaNotFound = vi.mocked(areaNotFoundBody);
 
 // ── v1-area + v1-signals shared profile ────────────────────────────
 
@@ -78,6 +79,7 @@ beforeEach(() => {
   mockQuery.mockResolvedValue([
     { geo_type: "lsoa", geo_code: "E01000001", value: 1, normalized_value: 0.01, percentile: 1 },
   ]);
+  mockAreaNotFound.mockResolvedValue({ error: 'Could not resolve area "x". Provide a UK postcode or place name.' });
 });
 
 // ── v1-area.test.ts ─────────────────────────────────────────────────
@@ -125,6 +127,19 @@ describe("GET /v1/area", () => {
     mockProfile.mockResolvedValue(null);
     const res = await apiGet("/v1/area?area=Nowhereville");
     expect(res.statusCode).toBe(404);
+  });
+
+  it("404 body carries terminated info when the area is a terminated postcode (AR-711/712)", async () => {
+    mockProfile.mockResolvedValue(null);
+    mockAreaNotFound.mockResolvedValue({
+      error: 'Could not resolve area "AB1 0AA". Provide a UK postcode or place name.',
+      terminated: { year_terminated: 1996, month_terminated: 6 },
+    });
+    const res = await apiGet("/v1/area?area=AB1%200AA");
+    expect(res.statusCode).toBe(404);
+    const body = res.json();
+    expect(body.error).toContain('"AB1 0AA"');
+    expect(body.terminated).toEqual({ year_terminated: 1996, month_terminated: 6 });
   });
 
   it("200s on the happy path: returns the profile, meters the call, stamps the engine version", async () => {
