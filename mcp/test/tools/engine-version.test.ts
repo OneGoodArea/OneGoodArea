@@ -12,7 +12,7 @@ describe("executeEngineVersion", () => {
   it("returns the current version + changelog", () => {
     const out = executeEngineVersion();
     expect(out.content[0]!.type).toBe("text");
-    expect(out.content[0]!.text).toContain("OneGoodArea engine 1.0.0");
+    expect(out.content[0]!.text).toContain("OneGoodArea engine 1.1.0");
     expect(out.content[0]!.text).toContain("Released:");
     expect(out.content[0]!.text).toContain("Changelog");
   });

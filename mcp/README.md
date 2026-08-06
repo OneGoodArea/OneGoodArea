@@ -85,7 +85,7 @@ Eleven tools across six surfaces. Every response is composed server-side from th
 
 #### `score_postcode(area, preset)`
 
-Score a UK postcode or place name for a preset (`moving`, `business`, `investing`, `research`). Returns the 0-100 score, five weighted dimensions with engine-grounded reasoning + confidence, a one-paragraph summary, recommendations, and data sources.
+Score a UK postcode or place name for a preset (`moving`, `business`, `investing`, `research`). Returns the 0-100 score, seven weighted dimensions with engine-grounded reasoning + confidence, a one-paragraph summary, recommendations, and data sources.
 
 #### `compare_postcodes(areas, preset)`
 

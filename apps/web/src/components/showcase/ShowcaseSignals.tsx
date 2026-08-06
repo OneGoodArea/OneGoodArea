@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Signal } from "@/lib/showcase/types";
+import type { ApiError } from "@/lib/showcase/api";
 
 const UK_POSTCODE_RE = /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i;
 
@@ -34,27 +35,76 @@ function formatValue(s: Signal): string {
 interface Props {
   initialSignals: Signal[];
   initialPostcode?: string;
+  apiError?: ApiError | null;
 }
 
-export default function ShowcaseSignals({ initialSignals, initialPostcode }: Props) {
+export default function ShowcaseSignals({ initialSignals, initialPostcode, apiError }: Props) {
   const router = useRouter();
   const [input, setInput] = useState(initialPostcode ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [prevPostcode, setPrevPostcode] = useState(initialPostcode);
+
+  if (prevPostcode !== initialPostcode) {
+    setPrevPostcode(initialPostcode);
+    setLoading(false);
+    setError(null);
+  }
 
   const signals = initialSignals;
   const grouped = groupByCategory(signals);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const trimmed = input.trim();
+    const trimmed = input.trim().toUpperCase();
     if (!UK_POSTCODE_RE.test(trimmed)) {
       setError("Please enter a valid UK postcode (e.g. M1 1AE)");
       return;
     }
+    if (trimmed === initialPostcode) {
+      return;
+    }
     setError(null);
     setLoading(true);
-    router.push(`/showcase/proptech?postcode=${encodeURIComponent(trimmed.toUpperCase())}`);
+    router.push(`/showcase/proptech?postcode=${encodeURIComponent(trimmed)}`);
+  }
+
+  function renderErrorState() {
+    if (apiError?.status === 404) {
+      const terminated = apiError.body?.terminated as
+        | { year_terminated: number; month_terminated: number }
+        | undefined;
+      return (
+        <div className="rounded border border-red-900/40 bg-red-950/20 p-4">
+          <p className="text-sm font-medium text-red-400">Postcode not found</p>
+          {terminated ? (
+            <p className="text-xs text-red-300/80 mt-1">
+              This postcode was terminated in {terminated.month_terminated}/{terminated.year_terminated}.
+              It is no longer a valid UK postcode.
+            </p>
+          ) : (
+            <p className="text-xs text-red-300/80 mt-1">
+              No area data found for this postcode. Check the spelling or try a different postcode.
+            </p>
+          )}
+        </div>
+      );
+    }
+    if (apiError) {
+      return (
+        <div className="rounded border border-red-900/40 bg-red-950/20 p-4">
+          <p className="text-sm font-medium text-red-400">API error</p>
+          <p className="text-xs text-red-300/80 mt-1">{apiError.message}</p>
+        </div>
+      );
+    }
+    return (
+      <p className="text-sm text-[#8a8a96]">
+        {loading
+          ? "Fetching live signals…"
+          : "No signals found. Try a different postcode."}
+      </p>
+    );
   }
 
   return (
@@ -83,7 +133,9 @@ export default function ShowcaseSignals({ initialSignals, initialPostcode }: Pro
         </button>
       </form>
 
-      {signals.length === 0 ? (
+      {apiError ? (
+        renderErrorState()
+      ) : signals.length === 0 ? (
         <p className="text-sm text-[#8a8a96]">
           {loading
             ? "Fetching live signals…"

@@ -1,7 +1,20 @@
-import type { Signal, Score } from "@/lib/showcase/types";
+import "server-only";
+
+import type { Preset, Score, ScoreResult, Product, Signal } from "@/lib/showcase/types";
 
 const BASE_URL = process.env.INTERNAL_API_URL ?? "https://onegoodarea.onrender.com";
 const SHOWCASE_API_KEY = process.env.SHOWCASE_API_KEY ?? "";
+
+class ApiError extends Error {
+  constructor(
+    public readonly status: number,
+    message: string,
+    public readonly body: Record<string, unknown> | null,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
 
 async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const controller = new AbortController();
@@ -17,7 +30,9 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
       signal: controller.signal,
     });
     if (!res.ok) {
-      throw new Error(`${res.status} ${res.statusText}`);
+      const body = await res.json().catch(() => null);
+      const errorMsg = body?.error ?? `${res.status} ${res.statusText}`;
+      throw new ApiError(res.status, errorMsg, body);
     }
     return res.json();
   } finally {
@@ -54,17 +69,37 @@ interface ApiDimension {
   confidence: number;
 }
 
-export async function getScores(postcode?: string): Promise<Score[]> {
-  const area = postcode ?? "M1 1AE";
-  const data = await apiFetch<{ dimensions: ApiDimension[] }>("/v1/score", {
-    method: "POST",
-    body: JSON.stringify({ area, preset: "business" }),
-  });
-  return (data.dimensions ?? []).map((d) => ({
-    id: d.key,
-    name: d.label,
-    value: d.score,
-    maxValue: 100,
-    product: "scores",
-  }));
+interface ApiScoreResult {
+  preset: string;
+  score: number;
+  confidence: number;
+  weights_source: "preset" | "custom";
+  dimensions: ApiDimension[];
 }
+
+export async function getScores(postcode?: string, preset?: Preset): Promise<ScoreResult> {
+  const area = postcode ?? "M1 1AE";
+  const body: { area: string; preset?: Preset } = { area };
+  if (preset) body.preset = preset;
+  const data = await apiFetch<ApiScoreResult>("/v1/score", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  return {
+    preset: data.preset as Preset,
+    score: data.score,
+    confidence: data.confidence,
+    weightsSource: data.weights_source,
+    dimensions: (data.dimensions ?? []).map((d) => ({
+      id: d.key,
+      name: d.label,
+      value: d.score,
+      maxValue: 100,
+      product: "scores" as Product,
+      weight: d.weight,
+      confidence: d.confidence,
+    })),
+  };
+}
+
+export { ApiError };

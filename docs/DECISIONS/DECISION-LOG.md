@@ -41,6 +41,10 @@ Major decisions in chronological order. Detailed reasoning lives in the linked A
 - **Brand v3 close-out + `.aiq` strip** (ADR 0036) — token-holdout migrations, co-located CSS convention, "no light-touch migrations" rule.
 - **Brand v3 dashboard primitives** (ADR 0037) — the shipped primitive set + extract-on-second-use convention + dark-surface vocabulary; opens the AR-217 dashboard redesign.
 
+## 2026 Q3 — seven-category scoring + versioning UI
+
+- **Seven-category intent-aware scoring** (ADR 0038) — every preset scores the same seven dimensions (crime, deprivation, property, schools, amenities, transport, environment); intent lives in scorer composition + weights. Methodology 1.1.0, stamped + pinnable. ADR numbered 0038 (the AR-691 "ADR 0009" name collided with `0009-monitor-portfolios.md`).
+
 ## See also
 
 - [`README.md`](./README.md) — full ADR table, by category

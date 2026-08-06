@@ -29,12 +29,12 @@ export function registerScoringRoutes(app: FastifyInstance): void {
               "properties": {
                 "area": { "type": "string", "minLength": 1, "description": "UK postcode or place name." },
                 "preset": { "type": "string", "enum": ["moving", "business", "investing", "research"] },
-                "weights": { "type": "object", "additionalProperties": { "type": "number", "exclusiveMinimum": 0 }, "description": "Custom dimension weights (keys depend on preset)." },
+                "weights": { "type": "object", "additionalProperties": { "type": "number", "exclusiveMinimum": 0 }, "description": "Custom dimension weights. Keys are the seven fixed categories: crime, deprivation, property, schools, amenities, transport, environment. Every preset accepts the same keys; intent is expressed through their relative size.", "example": { "crime": 20, "deprivation": 10, "property": 20, "schools": 20, "amenities": 10, "transport": 15, "environment": 5 } },
                 "preset_id": { "type": "string", "description": "Org-saved preset ID. Mutually exclusive with preset/weights." },
                 "explain": { "type": "boolean" },
                 "bundle": { "type": "string", "description": "Optional bundle ID to scope available signals." },
               },
-              "example": { "area": "M1 1AE", "preset": "business" },
+              "example": { "area": "M1 1AE", "preset": "business", "weights": { "crime": 5, "deprivation": 15, "property": 15, "schools": 5, "amenities": 25, "transport": 20, "environment": 15 } },
             },
             "querystring": {
               "type": "object",
