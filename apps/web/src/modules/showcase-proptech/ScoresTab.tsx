@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { INTENTS } from "@onegoodarea/contracts";
 import type { Preset, ScoreResult } from "@/lib/showcase/types";
-import { PRESET_LABELS } from "./constants";
+import { formatPercentage, PRESET_LABELS } from "./constants";
 import { remember } from "./cache";
 
 interface ScoresTabProps {
@@ -95,7 +95,7 @@ export function ScoresTab({ postcode, initialResult }: ScoresTabProps) {
               <span className="prx-scores__overall-label">Area score</span>
               <span className="prx-scores__overall-meta">
                 {PRESET_LABELS[result.preset] ?? result.preset} weighting ·{" "}
-                {result.confidence}% confidence
+                {formatPercentage(result.confidence)} confidence
               </span>
             </div>
           </div>
@@ -115,7 +115,7 @@ export function ScoresTab({ postcode, initialResult }: ScoresTabProps) {
                 </div>
                 <div className="prx-scores__dim-meta">
                   <span>weight {d.weight}%</span>
-                  <span>confidence {d.confidence}%</span>
+                  <span>confidence {formatPercentage(d.confidence)}</span>
                 </div>
               </li>
             ))}
