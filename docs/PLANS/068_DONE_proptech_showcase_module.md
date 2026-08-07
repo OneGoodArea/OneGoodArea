@@ -1,6 +1,6 @@
 # 068 PropTech showcase module + transactions endpoint
 
-Status: plan (not implemented)
+Status: implemented
 
 ## Purpose
 
