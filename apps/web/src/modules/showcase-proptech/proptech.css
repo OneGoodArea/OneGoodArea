@@ -1,24 +1,26 @@
 /* ============================================================
    AR-758 — PropTech showcase module
-   Independent demo surface styled after nested.com: cream paper,
-   ink-green, serif display, warm amber accents. Scoped under
-   .prx-root so it never collides with the brand or design-v2 sets.
+   Independent demo surface: deep-indigo canvas with coral accent,
+   deliberately distinct from OneGoodArea's light blue/gray brand.
+   Scoped under .prx-root so it never collides with the brand or
+   design-v2 sets.
    ============================================================ */
 
 .prx-root {
-  --prx-paper: #f6f2e9;
-  --prx-paper-deep: #ece6d6;
-  --prx-card: #fbf9f3;
-  --prx-ink: #14342b;
-  --prx-ink-strong: #0c231d;
-  --prx-ink-muted: #5b6b64;
-  --prx-ink-soft: #87918c;
-  --prx-line: rgba(20, 52, 43, 0.14);
-  --prx-line-strong: rgba(20, 52, 43, 0.28);
-  --prx-accent: #c5762f;
-  --prx-accent-soft: #f0e2c8;
-  --prx-up: #2e7548;
-  --prx-down: #b4361c;
+  --prx-paper: #1b1b2f;
+  --prx-paper-deep: #141426;
+  --prx-card: #232342;
+  --prx-ink: #e9eaf6;
+  --prx-ink-strong: #ffffff;
+  --prx-ink-muted: #a7aacb;
+  --prx-ink-soft: #7d80a3;
+  --prx-line: rgba(233, 234, 246, 0.1);
+  --prx-line-strong: rgba(233, 234, 246, 0.22);
+  --prx-accent: #ff6b57;
+  --prx-accent-soft: rgba(255, 107, 87, 0.14);
+  --prx-on-accent: #241028;
+  --prx-up: #34d399;
+  --prx-down: #f87171;
   --prx-serif: Georgia, "Times New Roman", Cambria, serif;
   --prx-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --prx-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -31,7 +33,7 @@
 /* ---------- Page shell ---------- */
 .prx-header {
   border-bottom: 1px solid var(--prx-line);
-  background: rgba(246, 242, 233, 0.92);
+  background: rgba(27, 27, 47, 0.92);
 }
 
 .prx-header__inner {
@@ -133,6 +135,7 @@
   font-size: 12px;
   color: var(--prx-ink-muted);
   background: var(--prx-accent-soft);
+  border: 1px solid var(--prx-line);
   border-radius: 999px;
   padding: 4px 10px;
 }
@@ -161,24 +164,33 @@
   outline: none;
 }
 
+.prx-postcode__input::placeholder {
+  color: var(--prx-ink-soft);
+}
+
 .prx-postcode__input:focus {
   border-color: var(--prx-accent);
-  box-shadow: 0 0 0 3px rgba(197, 118, 47, 0.18);
+  box-shadow: 0 0 0 3px rgba(255, 107, 87, 0.2);
 }
 
 .prx-postcode__btn {
   padding: 10px 18px;
   font-size: 14px;
   font-weight: 600;
-  color: #fbf9f3;
-  background: var(--prx-ink);
+  color: var(--prx-on-accent);
+  background: var(--prx-accent);
   border: none;
   border-radius: 6px;
   cursor: pointer;
 }
 
 .prx-postcode__btn:hover {
-  background: var(--prx-ink-strong);
+  background: #ff7f6d;
+}
+
+.prx-postcode__btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 /* ---------- Tabs ---------- */
@@ -364,9 +376,9 @@
 }
 
 .prx-chip--active {
-  color: #fbf9f3;
-  background: var(--prx-ink);
-  border-color: var(--prx-ink);
+  color: var(--prx-on-accent);
+  background: var(--prx-accent);
+  border-color: var(--prx-accent);
 }
 
 .prx-scores__error {
@@ -501,17 +513,106 @@
 }
 
 /* ---------- Monitor ---------- */
+.prx-monitor__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.prx-monitor__select-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--prx-ink-muted);
+}
+
+.prx-monitor__select {
+  padding: 8px 10px;
+  font-size: 13.5px;
+  font-family: var(--prx-sans);
+  color: var(--prx-ink);
+  background: var(--prx-card);
+  border: 1px solid var(--prx-line-strong);
+  border-radius: 6px;
+}
+
+.prx-monitor__select:focus {
+  border-color: var(--prx-accent);
+  outline: none;
+}
+
+.prx-monitor__btn {
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--prx-ink-muted);
+  background: transparent;
+  border: 1px solid var(--prx-line-strong);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.prx-monitor__btn:hover:not(:disabled) {
+  color: var(--prx-ink);
+  border-color: var(--prx-accent);
+}
+
+.prx-monitor__btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.prx-monitor__btn--danger {
+  color: var(--prx-down);
+}
+
+.prx-monitor__btn--danger:hover:not(:disabled) {
+  border-color: var(--prx-down);
+}
+
 .prx-monitor__notice {
   font-size: 13px;
-  color: var(--prx-ink-soft);
+  color: var(--prx-ink-muted);
   background: var(--prx-accent-soft);
   border-radius: 6px;
   padding: 10px 14px;
   margin-bottom: 24px;
 }
 
+.prx-monitor__add {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.prx-monitor__add-label {
+  display: none;
+}
+
+.prx-monitor__add-input {
+  flex: 1;
+  max-width: 260px;
+}
+
+.prx-monitor__cap-note {
+  font-size: 12.5px;
+  color: var(--prx-accent);
+  margin: 4px 0 16px;
+}
+
 .prx-monitor__portfolio {
   margin-bottom: 32px;
+}
+
+.prx-monitor__portfolio-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .prx-monitor__title {
@@ -519,6 +620,31 @@
   font-size: 18px;
   color: var(--prx-ink-strong);
   margin: 0 0 12px;
+}
+
+.prx-monitor__cap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--prx-mono);
+  font-size: 12px;
+  color: var(--prx-ink-soft);
+}
+
+.prx-monitor__cap-bar {
+  display: block;
+  width: 120px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--prx-accent-soft);
+  overflow: hidden;
+}
+
+.prx-monitor__cap-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--prx-accent);
+  border-radius: 999px;
 }
 
 .prx-monitor__rows,
@@ -561,36 +687,94 @@
   color: var(--prx-ink);
 }
 
-.prx-monitor__score {
+.prx-monitor__row-right {
   display: flex;
-  align-items: baseline;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
+}
+
+.prx-monitor__score-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 56px;
 }
 
 .prx-monitor__score-num {
   font-family: var(--prx-serif);
   font-size: 20px;
+  line-height: 1;
   color: var(--prx-ink-strong);
 }
 
-.prx-monitor__delta {
+.prx-monitor__score-meta {
   font-family: var(--prx-mono);
-  font-size: 12.5px;
+  font-size: 11px;
+  color: var(--prx-ink-soft);
 }
 
-.prx-monitor__delta--up {
-  color: var(--prx-up);
+.prx-monitor__score-cell--pending,
+.prx-monitor__score-cell--error {
+  font-family: var(--prx-mono);
+  font-size: 14px;
+  line-height: 1;
 }
 
-.prx-monitor__delta--down {
+.prx-monitor__score-cell--pending {
+  color: var(--prx-ink-soft);
+}
+
+.prx-monitor__score-cell--error {
   color: var(--prx-down);
 }
 
+.prx-monitor__remove {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--prx-line-strong);
+  background: transparent;
+  color: var(--prx-ink-soft);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.prx-monitor__remove:hover:not(:disabled) {
+  color: var(--prx-down);
+  border-color: var(--prx-down);
+}
+
+.prx-monitor__remove:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.prx-monitor__diff {
+  margin-top: 8px;
+}
+
+.prx-monitor__diff-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.prx-monitor__diff-head .prx-monitor__title {
+  margin: 0;
+}
+
 .prx-monitor__diff-row {
-  display: grid;
-  grid-template-columns: 96px 1fr auto auto auto;
-  gap: 14px;
+  display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
+  gap: 6px 14px;
   padding: 10px 16px;
   border-top: 1px solid var(--prx-line);
   font-size: 13.5px;
@@ -611,7 +795,7 @@
   font-weight: 600;
 }
 
-.prx-monitor__diff-arrow {
+.prx-monitor__diff-period {
   color: var(--prx-ink-soft);
 }
 
@@ -621,10 +805,38 @@
   text-decoration: line-through;
 }
 
+.prx-monitor__diff-arrow {
+  color: var(--prx-ink-soft);
+}
+
 .prx-monitor__diff-to {
   font-family: var(--prx-mono);
   color: var(--prx-ink-strong);
   font-weight: 600;
+}
+
+.prx-monitor__dir {
+  margin-left: auto;
+  font-family: var(--prx-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--prx-line-strong);
+  color: var(--prx-ink-soft);
+}
+
+.prx-monitor__dir--up {
+  color: var(--prx-up);
+  border-color: rgba(52, 211, 153, 0.4);
+  background: rgba(52, 211, 153, 0.12);
+}
+
+.prx-monitor__dir--down {
+  color: var(--prx-down);
+  border-color: rgba(248, 113, 113, 0.4);
+  background: rgba(248, 113, 113, 0.12);
 }
 
 /* ---------- Loading ---------- */
