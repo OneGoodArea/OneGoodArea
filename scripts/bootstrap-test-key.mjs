@@ -131,9 +131,10 @@ async function main() {
 
   // Ensure sandbox plan subscription
   await sql`
-    INSERT INTO subscriptions (id, user_id, plan, status)
-    VALUES (${generateId("sub")}, ${userId}, ${plan}, 'active')
+    INSERT INTO subscriptions (id, user_id, stripe_customer_id, plan, status)
+    VALUES (${generateId("sub")}, ${userId}, ${`cus_local_${userId}`}, ${plan}, 'active')
     ON CONFLICT (user_id) DO UPDATE SET
+      stripe_customer_id = EXCLUDED.stripe_customer_id,
       plan = EXCLUDED.plan,
       status = EXCLUDED.status,
       updated_at = NOW()
@@ -145,8 +146,8 @@ async function main() {
   const keyHash = hashApiKey(key);
   const preview = apiKeyPreview(key);
   await sql`
-    INSERT INTO api_keys (id, key_hash, key_prefix, user_id, name)
-    VALUES (${keyId}, ${keyHash}, ${preview}, ${userId}, ${name})
+    INSERT INTO api_keys (id, key_hash, key_prefix, user_id, name, org_id)
+    VALUES (${keyId}, ${keyHash}, ${preview}, ${userId}, ${name}, ${orgId})
   `;
 
   console.log(`User:  ${email}`);
