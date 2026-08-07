@@ -72,7 +72,7 @@ No explicit setup. Table creation happens lazily on first request (see above).
 | Data | Source | Trigger |
 |---|---|---|
 | Superuser (`ptengelmann@gmail.com`) | `ALTER TABLE users ... is_superuser = TRUE` | During `runMigrations()` — idempotent, only if no superuser exists |
-| Test API key | `scripts/mint-ephemeral-key.mjs` | Manual: `make bootstrap-test-key` |
+| Test API key | `scripts/bootstrap-test-key.mjs` | Manual: `make scripts-bootstrap-test-key` |
 | `runtime_bootstrap_marker` (test only) | `apps/web/tests/db/bootstrap/001-bootstrap.sql` | Docker `postgres-test` entrypoint (`/docker-entrypoint-initdb.d/`) |
 | Signal data (deprivation, crime, prices, peers) | `npm run refresh:*` scripts | Manual one-offs |
 | Orgs, subscriptions, reports, bundles, presets, cohorts | Application code | On user action |
@@ -130,5 +130,5 @@ Migrations are idempotent (`CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF NOT EXIS
 - [ ] Postgres is healthy (`pg_isready`)
 - [ ] Run `npm run migrate -w @onegoodarea/api` (until automated — see recommendation)
 - [ ] Verify all routes respond 200/401 (not 500) via `/health`
-- [ ] Run `make bootstrap-test-key` for a test API key (if needed)
+- [ ] Run `make scripts-bootstrap-test-key` for a test API key (if needed)
 - [ ] Run signal refresh scripts if the environment needs data

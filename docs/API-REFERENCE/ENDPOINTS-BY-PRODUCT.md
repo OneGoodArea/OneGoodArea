@@ -242,19 +242,11 @@ Superuser-only analytics. Session or API-key authenticated (AR-596, Plan
 
 ---
 
-## Playground (2)
-
-Anonymous demo tunnel, deliberately not under `/v1`.
-
-| Method | Path | Auth | Notes |
-|---|---|---|---|
-| POST | `/playground/token` | Public | Turnstile check, issues signed 24h cookie |
-| POST | `/playground/proxy` | Public | Whitelisted `/v1/*` proxy, rate-limited |
-
----
-
 ## Removed
 
+- `POST /playground/token` and `POST /playground/proxy` (legacy anonymous demo
+  tunnel) removed in Plan 050 (AR-504) — both return 404 today. The current
+  playground is the Scalar API reference over the standard `/v1/*` surface.
 - `GET /v1/widget` removed 2026-06-29 (AR-379, plan/030). Cache
   infrastructure deleted; a future embeddable surface will be a clean
   rebuild on the signal-first stack.
@@ -280,7 +272,6 @@ Anonymous demo tunnel, deliberately not under `/v1`.
 | Admin | 8 |
 | Stripe | 5 |
 | System, Health & Tracking | 5 |
-| Playground | 2 |
-| **TOTAL** | **106** |
+| **TOTAL** | **104** |
 
-**Last updated:** July 23, 2026 | Verified against `apps/api/src/routes/*.ts` on branch `feat/AR-441-tiered-playground-access` (Plan 059).
+**Last updated:** August 7, 2026 | Verified against `apps/api/src/routes/*.ts` on `main` (AR-762; legacy `/playground/*` surface retired).
