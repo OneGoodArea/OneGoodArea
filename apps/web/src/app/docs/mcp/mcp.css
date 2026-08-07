@@ -1,86 +1,116 @@
-/* /docs/mcp — Brand v3 (Plotted) — AR-204 PR C.
+/* /docs/mcp - Brand v3 (Plotted), rebuilt bespoke in the product-page language
+   (Plan 064). Alternating light / cream / dark section shells, weight-600
+   headers, rounded cards, and a distinct signature per section: the chat plate
+   (a real tool call + grounded answer), the install steps with monochrome config
+   plates, the eleven tools grouped by product, the trust points, and the local
+   dev config. Strictly two-colour with a single green accent (the connected
+   dot), matching /methodology and /docs/api-reference. */
 
-   Reskin of the install + usage guide for @onegoodarea/mcp-server.
-   Content stays accurate to the live mcp/src code: OOGA_API_KEY env
-   var name and aiq_ key prefix are kept verbatim because the server
-   still validates against them (see mcp/src/server.ts:62, :69).
-
-   Pricing table killed per delta-doc decision D5 — replaced with a
-   single sentence linking to /pricing. */
-
-/* ============================================================
-   Page container
-   ============================================================ */
-
-.oga-mcp {
+.oga-mcp-page {
   min-height: 100vh;
   background: var(--oga-white);
   color: var(--oga-fg);
 }
 
-.oga-mcp section {
-  padding: var(--oga-9) clamp(20px, 4vw, var(--oga-7));
-}
-
-.oga-mcp__container {
-  max-width: 1080px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-.oga-mcp__container--narrow {
-  max-width: 820px;
-  margin: 0 auto;
-  width: 100%;
-}
-
 /* ============================================================
-   Section header pattern
+   Section shells
    ============================================================ */
 
-.oga-mcp__header { margin-bottom: var(--oga-7); }
+.oga-mcp-sec {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(64px, 9vh, 120px) clamp(20px, 5vw, 80px);
+}
+.oga-mcp-sec--light { background: var(--oga-white); }
+.oga-mcp-sec--quiet { background: var(--oga-canvas); }
+.oga-mcp-sec--dark { background: var(--oga-ink); }
 
-.oga-mcp__eyebrow {
+.oga-mcp-page__wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.oga-mcp-page__link { color: var(--oga-fg); border-bottom: 1px solid var(--oga-border); text-decoration: none; white-space: nowrap; }
+.oga-mcp-page__link:hover { border-color: var(--oga-fg); }
+.oga-mcp-page code { font-family: var(--oga-font-mono); font-size: 0.92em; background: var(--oga-ink-06); border-radius: 5px; padding: 1px 5px; }
+
+/* ============================================================
+   Section header
+   ============================================================ */
+
+.oga-mcp-head {
+  max-width: 760px;
+  margin-bottom: clamp(36px, 5vh, 56px);
+}
+.oga-mcp-head__eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: var(--oga-3);
+  gap: 12px;
   font-family: var(--oga-font-mono);
-  font-size: var(--oga-fs-eyebrow);
-  letter-spacing: var(--oga-tracking-eyebrow);
+  font-size: 11px;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--oga-fg-muted);
-  margin-bottom: var(--oga-4);
+  margin-bottom: 18px;
 }
-
-.oga-mcp__eyebrow-num { color: var(--oga-fg); font-weight: 500; }
-.oga-mcp__eyebrow-line { display: inline-block; width: 32px; height: 1px; background: var(--oga-border); }
-
-.oga-mcp__h2 {
+.oga-mcp-head__num { color: var(--oga-fg); font-weight: 500; }
+.oga-mcp-head__line { width: 30px; height: 1px; background: var(--oga-border); display: inline-block; }
+.oga-mcp-head__title {
   font-family: var(--oga-font-sans);
-  font-size: var(--oga-fs-h2);
-  line-height: var(--oga-lh-tight);
-  letter-spacing: var(--oga-tracking-tight);
-  font-weight: 500;
+  font-size: clamp(27px, 3.6vw, 44px);
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+  font-weight: 600;
   color: var(--oga-fg);
-  margin: 0 0 var(--oga-4);
-  max-width: 720px;
+  margin: 0 0 18px;
 }
-
-.oga-mcp__lead {
+.oga-mcp-head__lead {
   font-family: var(--oga-font-sans);
-  font-size: var(--oga-fs-lead);
-  line-height: var(--oga-lh-snug);
+  font-size: clamp(15px, 1.3vw, 17px);
+  line-height: 1.6;
   color: var(--oga-fg-muted);
   margin: 0;
-  max-width: 680px;
+  max-width: 64ch;
 }
+.oga-mcp-head--dark .oga-mcp-head__eyebrow { color: rgba(250, 248, 244, 0.55); }
+.oga-mcp-head--dark .oga-mcp-head__num { color: var(--oga-white); }
+.oga-mcp-head--dark .oga-mcp-head__line { background: rgba(250, 248, 244, 0.2); }
+.oga-mcp-head--dark .oga-mcp-head__title { color: var(--oga-white); }
+.oga-mcp-head--dark .oga-mcp-head__lead { color: rgba(250, 248, 244, 0.68); }
 
 /* ============================================================
    Hero
    ============================================================ */
 
-.oga-mcp-hero { padding-top: var(--oga-9); padding-bottom: var(--oga-9); }
-
+.oga-mcp-hero {
+  position: relative;
+  overflow: hidden;
+  background: var(--oga-white);
+  padding: clamp(56px, 8vh, 104px) clamp(20px, 5vw, 80px) clamp(64px, 9vh, 120px);
+  text-align: center;
+}
+.oga-mcp-hero__dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(var(--oga-ink-10, rgba(26, 28, 31, 0.09)) 1px, transparent 1px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 0%, transparent 75%);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 0%, transparent 75%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+.oga-mcp-hero__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 840px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 .oga-mcp-hero__eyebrow {
   display: inline-flex;
   align-items: center;
@@ -90,479 +120,204 @@
   letter-spacing: var(--oga-tracking-eyebrow);
   text-transform: uppercase;
   color: var(--oga-fg-muted);
-  margin-bottom: var(--oga-5);
+  margin-bottom: 26px;
 }
-
-/* AR-370: hero eyebrow brand mark — the canonical MCP logo. Replaces
-   the legacy pulsing-dot indicator (which read as "live status"
-   theatre on a pre-customer site). */
-.oga-mcp-hero__brand {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 14px; height: 14px;
-  color: var(--oga-fg);
-}
-
-.oga-mcp-hero__brand svg { width: 14px; height: 14px; }
-
-.oga-mcp-hero__eyebrow-sep {
-  width: 4px; height: 4px;
-  background: var(--oga-fg-muted);
-  border-radius: 50%;
-  opacity: 0.5;
-}
-
+.oga-mcp-hero__eyebrow-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--oga-fg-muted); opacity: 0.5; }
 .oga-mcp-hero__title {
   font-family: var(--oga-font-sans);
-  font-size: clamp(2.25rem, 5vw, 3.5rem);
-  line-height: var(--oga-lh-tight);
-  letter-spacing: var(--oga-tracking-tight);
-  font-weight: 500;
+  font-size: clamp(32px, 5vw, 56px);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  font-weight: 600;
   color: var(--oga-fg);
-  margin: 0 0 var(--oga-5);
-  max-width: 760px;
+  margin: 0 0 22px;
+  max-width: 22ch;
 }
-
 .oga-mcp-hero__lead {
   font-family: var(--oga-font-sans);
-  font-size: var(--oga-fs-lead);
-  line-height: var(--oga-lh-snug);
+  font-size: clamp(15px, 1.4vw, 18px);
+  line-height: 1.6;
   color: var(--oga-fg-muted);
-  margin: 0 0 var(--oga-7);
-  max-width: 640px;
+  margin: 0 0 24px;
+  max-width: 64ch;
 }
-
 .oga-mcp-hero__stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--oga-2) var(--oga-5);
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--oga-fg-muted);
-  margin-bottom: var(--oga-6);
+  list-style: none; margin: 0 0 30px; padding: 0;
+  display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+}
+.oga-mcp-hero__stats li {
+  font-family: var(--oga-font-mono); font-size: 12px; letter-spacing: 0.01em; color: var(--oga-fg);
+  background: var(--oga-white); border: 1px solid var(--oga-border); border-radius: 999px; padding: 6px 14px;
+}
+.oga-mcp-hero__ctas { display: inline-flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.oga-mcp-hero__stage {
+  position: relative; z-index: 1;
+  margin: clamp(44px, 6vh, 72px) auto 0;
+  width: 100%; max-width: 520px;
 }
 
-.oga-mcp-hero__stat {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--oga-2);
+/* ---------- Signature chat plate ---------- */
+.oga-mcp-chat {
+  background: var(--oga-white);
+  border: 1px solid var(--oga-border);
+  border-radius: 18px;
+  overflow: hidden;
+  text-align: left;
+  box-shadow: 0 40px 80px -40px rgba(26, 28, 31, 0.4), 0 10px 30px -18px rgba(26, 28, 31, 0.25);
 }
+.oga-mcp-chat__bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 18px; border-bottom: 1px solid var(--oga-border);
+}
+.oga-mcp-chat__client { font-family: var(--oga-font-sans); font-size: 13px; font-weight: 600; letter-spacing: -0.01em; color: var(--oga-fg); }
+.oga-mcp-chat__conn { display: inline-flex; align-items: center; gap: 7px; font-family: var(--oga-font-mono); font-size: 10.5px; letter-spacing: 0.02em; color: var(--oga-fg-muted); }
+.oga-mcp-chat__conn-dot { width: 6px; height: 6px; border-radius: 50%; background: #2F7A3D; }
 
-.oga-mcp-hero__stat::before {
-  content: "✓";
-  font-family: var(--oga-font-mono);
-  font-size: 10px;
-  color: var(--oga-fg);
-  opacity: 0.7;
-}
+.oga-mcp-chat__body { padding: 20px; }
+.oga-mcp-chat__turn { display: block; }
+.oga-mcp-chat__who { display: block; font-family: var(--oga-font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--oga-fg-subtle); margin-bottom: 6px; }
+.oga-mcp-chat__who--oga { color: var(--oga-fg); }
+.oga-mcp-chat__msg { font-family: var(--oga-font-sans); font-size: 15px; line-height: 1.45; color: var(--oga-fg); margin: 0; }
 
-.oga-mcp-hero__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--oga-3);
+.oga-mcp-chat__call {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin: 16px 0; padding: 10px 13px;
+  background: var(--oga-canvas); border: 1px solid var(--oga-border); border-radius: 9px;
 }
+.oga-mcp-chat__call-glyph { color: var(--oga-fg-muted); font-size: 12px; }
+.oga-mcp-chat__call-name { font-family: var(--oga-font-mono); font-size: 12.5px; font-weight: 500; color: var(--oga-fg); }
+.oga-mcp-chat__call-args { font-family: var(--oga-font-mono); font-size: 11.5px; color: var(--oga-fg-muted); }
+
+.oga-mcp-chat__facts { list-style: none; margin: 12px 0 0; padding: 0; }
+.oga-mcp-chat__facts li {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+  padding: 5px 0; font-family: var(--oga-font-mono); font-size: 12px;
+}
+.oga-mcp-chat__facts li span { color: var(--oga-fg-muted); }
+.oga-mcp-chat__facts li em { font-style: normal; color: var(--oga-fg); }
+.oga-mcp-chat__stamp { margin-top: 14px; font-family: var(--oga-font-mono); font-size: 11px; color: var(--oga-fg-subtle); }
 
 /* ============================================================
-   Code panel — local variant (we don't pull .oga-code-panel here
-   because it auto-cycles values; we want static text)
+   Shared code plate (install + dev)
    ============================================================ */
 
-.oga-mcp-code {
-  border: 1px solid var(--oga-border);
-  border-radius: var(--oga-radius-md);
+.oga-mcp-plate {
   background: var(--oga-ink);
-  color: rgba(250, 248, 244, 0.92);
-  font-family: var(--oga-font-mono);
-  font-size: 13px;
-  line-height: 1.65;
+  border-radius: 16px;
   overflow: hidden;
-}
-
-.oga-mcp-code__head {
+  box-shadow: 0 30px 60px -40px rgba(26, 28, 31, 0.5);
   display: flex;
-  align-items: center;
-  gap: var(--oga-3);
-  padding: var(--oga-3) var(--oga-4);
-  border-bottom: 1px solid rgba(250, 248, 244, 0.16);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(250, 248, 244, 0.6);
+  flex-direction: column;
 }
-
-.oga-mcp-code__head-tag {
-  background: rgba(250, 248, 244, 0.08);
-  padding: 3px 8px;
-  border-radius: 3px;
-  color: var(--oga-white);
+.oga-mcp-plate__bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 16px; border-bottom: 1px solid rgba(250, 248, 244, 0.1);
 }
-
-.oga-mcp-code__body {
-  padding: var(--oga-4) var(--oga-5);
-  margin: 0;
-  white-space: pre;
-  overflow-x: auto;
+.oga-mcp-plate__client { display: inline-flex; align-items: center; gap: 9px; font-family: var(--oga-font-sans); font-size: 13px; font-weight: 600; letter-spacing: -0.01em; color: var(--oga-white); }
+.oga-mcp-plate__logo { display: inline-flex; color: var(--oga-white); }
+.oga-mcp-plate__logo svg { width: 16px; height: 16px; }
+.oga-mcp-plate__note { font-family: var(--oga-font-mono); font-size: 11px; color: rgba(250, 248, 244, 0.5); overflow-x: auto; white-space: nowrap; }
+.oga-mcp-plate__code {
+  margin: 0; padding: 18px 20px;
+  font-family: var(--oga-font-mono); font-size: 12.5px; line-height: 1.7;
+  color: rgba(250, 248, 244, 0.9); white-space: pre; overflow-x: auto;
 }
 
 /* ============================================================
-   01 — Install
+   01 Install (quiet)
    ============================================================ */
 
 .oga-mcp-install__steps {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--oga-5);
+  list-style: none; margin: 0 0 clamp(24px, 3vh, 36px); padding: 0;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
 }
-
+@media (max-width: 720px) { .oga-mcp-install__steps { grid-template-columns: 1fr; } }
 .oga-mcp-install__step {
-  display: grid;
-  grid-template-columns: 60px 1fr;
-  gap: var(--oga-5);
-  align-items: start;
+  display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: start;
+  border: 1px solid var(--oga-border); border-radius: 16px; background: var(--oga-white); padding: 22px 24px;
 }
-
-@media (max-width: 720px) {
-  .oga-mcp-install__step { grid-template-columns: 1fr; gap: var(--oga-3); }
-}
-
 .oga-mcp-install__step-num {
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--oga-fg-muted);
-  padding-top: 4px;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 999px;
+  border: 1px solid var(--oga-border); background: var(--oga-canvas);
+  font-family: var(--oga-font-mono); font-size: 12px; color: var(--oga-fg);
 }
+.oga-mcp-install__step-name { font-family: var(--oga-font-sans); font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: var(--oga-fg); margin-bottom: 5px; }
+.oga-mcp-install__step-body { font-family: var(--oga-font-sans); font-size: 14px; line-height: 1.55; color: var(--oga-fg-muted); margin: 0; }
 
-.oga-mcp-install__step-body {
-  font-family: var(--oga-font-sans);
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--oga-fg);
-}
-
-.oga-mcp-install__step-body strong {
-  font-weight: 500;
-}
-
-.oga-mcp-install__step-body code {
-  font-family: var(--oga-font-mono);
-  font-size: 12px;
-  background: var(--oga-ink-06);
-  border: 1px solid var(--oga-border);
-  padding: 1px 5px;
-  border-radius: 3px;
-  color: var(--oga-fg);
-}
-
-.oga-mcp-install__step-body a {
-  color: var(--oga-fg);
-  border-bottom: 1px solid var(--oga-ink);
-  text-decoration: none;
-  padding-bottom: 1px;
-}
-
-.oga-mcp-install__step-body a:hover { background: var(--oga-ink-06); }
-
-.oga-mcp-install__step-body p { margin: 0 0 var(--oga-3); }
-.oga-mcp-install__step-body p:last-child { margin-bottom: 0; }
-
-.oga-mcp-install__client {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--oga-2);
-  font-family: var(--oga-font-sans);
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--oga-fg);
-  margin: var(--oga-4) 0 var(--oga-2);
-}
-
-/* AR-370: brand logo next to the editor name (Claude / Cursor). The
-   ClaudeLogo + CursorLogo components use currentColor; sized to
-   match the label's cap height. */
-.oga-mcp-install__client-logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px; height: 16px;
-  color: var(--oga-fg);
-  flex-shrink: 0;
-}
-
-.oga-mcp-install__client-logo svg { width: 16px; height: 16px; }
+.oga-mcp-install__configs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 820px) { .oga-mcp-install__configs { grid-template-columns: 1fr; } }
 
 /* ============================================================
-   02 — Tools (4 cards)
+   02 Tools (dark)
    ============================================================ */
 
-.oga-mcp-tools__grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--oga-4);
-}
+.oga-mcp-tools { display: grid; gap: clamp(28px, 4vh, 44px); }
+.oga-mcp-tools__group-head { display: flex; align-items: center; gap: 13px; margin-bottom: 16px; }
+.oga-mcp-tools__group-icon { display: inline-flex; color: var(--oga-white); flex: 0 0 auto; }
+.oga-mcp-tools__group-label { font-family: var(--oga-font-sans); font-size: 18px; font-weight: 600; letter-spacing: -0.01em; color: var(--oga-white); margin: 0; }
+.oga-mcp-tools__group-tagline { font-family: var(--oga-font-sans); font-size: 13.5px; line-height: 1.5; color: rgba(250, 248, 244, 0.6); margin: 2px 0 0; }
 
-@media (max-width: 880px) {
-  .oga-mcp-tools__grid { grid-template-columns: 1fr; }
-}
+.oga-mcp-tools__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 820px) { .oga-mcp-tools__grid { grid-template-columns: 1fr; } }
 
 .oga-mcp-tools__card {
-  border: 1px solid var(--oga-border);
-  border-radius: var(--oga-radius-md);
-  background: var(--oga-white);
-  padding: var(--oga-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--oga-3);
+  border: 1px solid rgba(250, 248, 244, 0.14);
+  border-radius: 16px;
+  background: rgba(250, 248, 244, 0.03);
+  padding: 22px;
 }
-
-.oga-mcp-tools__card-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--oga-3);
-  flex-wrap: wrap;
-}
-
-.oga-mcp-tools__card-name {
-  font-family: var(--oga-font-mono);
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--oga-fg);
-}
-
-.oga-mcp-tools__card-args {
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  color: var(--oga-fg-muted);
-}
-
-.oga-mcp-tools__card-body {
-  font-family: var(--oga-font-sans);
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--oga-fg-muted);
-  margin: 0;
-}
-
-.oga-mcp-tools__card-example {
-  margin-top: auto;
-  padding-top: var(--oga-3);
-  border-top: 1px dashed var(--oga-border);
-  font-family: var(--oga-font-sans);
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--oga-fg);
-  font-style: italic;
-}
-
-.oga-mcp-tools__card-example-label {
-  font-family: var(--oga-font-mono);
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--oga-fg-muted);
-  font-style: normal;
-  margin-right: var(--oga-2);
-}
-
-/* Dark-surface variant — when the tools section punctuates with
-   .oga-section-dark to mirror the homepage's products-on-dark
-   moment. Cards drop their cream fill, lean on hairline borders
-   against the graphite shell. Token overrides on
-   [data-oga-surface="dark"] (see tokens.css) already flip
-   --oga-fg + --oga-fg-muted, so name/body/example colors adapt. */
-
-[data-oga-surface="dark"] .oga-mcp-tools__card {
-  background: transparent;
-  border-color: rgba(250, 248, 244, 0.16);
-}
-
-[data-oga-surface="dark"] .oga-mcp-tools__card-name {
-  color: var(--oga-white);
-}
-
-[data-oga-surface="dark"] .oga-mcp-tools__card-args {
-  color: rgba(250, 248, 244, 0.55);
-}
-
-[data-oga-surface="dark"] .oga-mcp-tools__card-body {
-  color: rgba(250, 248, 244, 0.78);
-}
-
-[data-oga-surface="dark"] .oga-mcp-tools__card-example {
-  border-top-color: rgba(250, 248, 244, 0.16);
-  color: rgba(250, 248, 244, 0.85);
-}
-
-[data-oga-surface="dark"] .oga-mcp-tools__card-example-label {
-  color: rgba(250, 248, 244, 0.55);
-}
-
-/* ============================================================
-   03 — Local development
-   ============================================================ */
-
-.oga-mcp-dev__body {
-  font-family: var(--oga-font-sans);
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--oga-fg);
-  margin: 0 0 var(--oga-4);
-}
-
-.oga-mcp-dev__body code,
-.oga-mcp-dev__source code {
-  font-family: var(--oga-font-mono);
-  font-size: 12px;
-  background: var(--oga-ink-06);
-  border: 1px solid var(--oga-border);
-  padding: 1px 5px;
-  border-radius: 3px;
-}
-
-.oga-mcp-dev__source {
-  margin-top: var(--oga-4);
-  padding-top: var(--oga-4);
-  border-top: 1px solid var(--oga-border);
-  font-family: var(--oga-font-sans);
-  font-size: 14px;
-  color: var(--oga-fg-muted);
-}
-
-.oga-mcp-dev__source a {
-  color: var(--oga-fg);
-  border-bottom: 1px solid var(--oga-ink);
-  text-decoration: none;
-  padding-bottom: 1px;
-}
-
-.oga-mcp-dev__source a:hover { background: var(--oga-ink-06); }
-
-/* ============================================================
-   04 — Plans pointer (AR-373: pricing-tier card killed; the
-   MCP is just free, no other claims)
-   ============================================================ */
-
-.oga-mcp-plans__pointer {
-  display: flex;
-}
-
-/* ============================================================
-   Final CTA (DARK)
-   ============================================================ */
-
-.oga-mcp-cta__inner {
-  text-align: center;
-  padding: var(--oga-7) 0;
-}
-
-.oga-mcp-cta__title {
-  font-family: var(--oga-font-sans);
-  font-size: clamp(2rem, 4vw, 3rem);
-  line-height: var(--oga-lh-tight);
-  letter-spacing: var(--oga-tracking-tight);
-  font-weight: 500;
-  color: var(--oga-white);
-  margin: 0 auto var(--oga-4);
-  max-width: 720px;
-}
-
-.oga-mcp-cta__lead {
-  font-family: var(--oga-font-sans);
-  font-size: var(--oga-fs-lead);
-  line-height: var(--oga-lh-snug);
-  color: rgba(250,248,244,0.7);
-  margin: 0 auto var(--oga-7);
-  max-width: 560px;
-}
-
-.oga-mcp-cta__buttons {
-  display: inline-flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--oga-3);
-}
-
-/* ============================================================
-   Tool groups (AR-370) — surface-level headers inside the
-   tools section. Replaces the flat 4-card grid with five
-   grouped sub-sections (Scores / Signals / Intelligence /
-   Monitor / Brief / Reference). Marquee card variant for
-   the area_brief feature.
-   ============================================================ */
-
-.oga-mcp-tools__group {
-  margin-top: var(--oga-7);
-}
-
-.oga-mcp-tools__group:first-of-type {
-  margin-top: 0;
-}
-
-.oga-mcp-tools__group-head {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--oga-4);
-  margin-bottom: var(--oga-4);
-}
-
-/* AR-370: surface icon (Plotted vocabulary — same product icons as
-   /products marketing pages + /docs/api-reference). 36px so it
-   reads as a real illustration alongside the label + tagline. */
-.oga-mcp-tools__group-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px; height: 36px;
-  color: var(--oga-fg);
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.oga-mcp-tools__group-icon svg { width: 32px; height: 32px; }
-
-.oga-mcp-tools__group-head-text {
-  flex: 1 1 auto;
-}
-
-.oga-mcp-tools__group-label {
-  font-family: var(--oga-font-mono);
-  font-size: var(--oga-fs-eyebrow);
-  letter-spacing: var(--oga-tracking-eyebrow);
-  text-transform: uppercase;
-  margin: 0 0 var(--oga-1);
-}
-
-.oga-mcp-tools__group-tagline {
-  font-family: var(--oga-font-sans);
-  font-size: 14px;
-  line-height: 1.55;
-  margin: 0;
-}
-
-[data-oga-surface="dark"] .oga-mcp-tools__group-icon {
-  color: var(--oga-white);
-}
-
-[data-oga-surface="dark"] .oga-mcp-tools__group-label {
-  color: var(--oga-white);
-}
-
-[data-oga-surface="dark"] .oga-mcp-tools__group-tagline {
-  color: rgba(250, 248, 244, 0.72);
-}
-
-/* Marquee variant — accent stripe on the area_brief card so the
-   wow-factor tool reads as featured without breaking the grid. */
 .oga-mcp-tools__card--marquee {
-  border-left-width: 3px;
-  border-left-color: var(--oga-fg);
+  grid-column: 1 / -1;
+  border-color: rgba(250, 248, 244, 0.28);
+  background: rgba(250, 248, 244, 0.06);
+}
+.oga-mcp-tools__card-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.oga-mcp-tools__card-name { font-family: var(--oga-font-mono); font-size: 14px; font-weight: 500; color: var(--oga-white); background: transparent; padding: 0; }
+.oga-mcp-tools__card-args { font-family: var(--oga-font-mono); font-size: 12px; color: rgba(250, 248, 244, 0.5); }
+.oga-mcp-tools__card-body { font-family: var(--oga-font-sans); font-size: 14px; line-height: 1.55; color: rgba(250, 248, 244, 0.72); margin: 0 0 16px; }
+.oga-mcp-tools__card-eg { font-family: var(--oga-font-mono); font-size: 12.5px; color: rgba(250, 248, 244, 0.6); display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+.oga-mcp-tools__card-eg-label {
+  font-family: var(--oga-font-mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.5); border: 1px solid rgba(250, 248, 244, 0.18); border-radius: 5px; padding: 2px 7px;
 }
 
-[data-oga-surface="dark"] .oga-mcp-tools__card--marquee {
-  border-left-color: var(--oga-white);
+/* ============================================================
+   03 Grounded (light)
+   ============================================================ */
+
+.oga-mcp-grounded__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 820px) { .oga-mcp-grounded__grid { grid-template-columns: 1fr; } }
+.oga-mcp-grounded__card { border: 1px solid var(--oga-border); border-radius: 16px; background: var(--oga-white); padding: 26px; }
+.oga-mcp-grounded__num { font-family: var(--oga-font-mono); font-size: 12px; color: var(--oga-fg-subtle); }
+.oga-mcp-grounded__name { font-family: var(--oga-font-sans); font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: var(--oga-fg); margin: 12px 0 8px; }
+.oga-mcp-grounded__body { font-family: var(--oga-font-sans); font-size: 14px; line-height: 1.55; color: var(--oga-fg-muted); margin: 0; }
+
+/* ============================================================
+   04 Local development (quiet)
+   ============================================================ */
+
+.oga-mcp-dev { max-width: 640px; }
+.oga-mcp-dev__support { margin: 20px 0 0; font-family: var(--oga-font-sans); font-size: 14px; line-height: 1.55; color: var(--oga-fg-muted); }
+
+/* ============================================================
+   05 Plans (light)
+   ============================================================ */
+
+.oga-mcp-plans { display: flex; }
+
+/* ============================================================
+   Final CTA (dark)
+   ============================================================ */
+
+.oga-mcp-cta { text-align: center; }
+.oga-mcp-cta__inner { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
+.oga-mcp-cta__title {
+  font-family: var(--oga-font-sans); font-size: clamp(28px, 4vw, 46px); line-height: 1.06;
+  letter-spacing: -0.03em; font-weight: 600; color: var(--oga-white); margin: 0 0 16px;
 }
+.oga-mcp-cta__lead {
+  font-family: var(--oga-font-sans); font-size: clamp(15px, 1.3vw, 17px); line-height: 1.6;
+  color: rgba(250, 248, 244, 0.7); margin: 0 0 28px; max-width: 52ch;
+}
+.oga-mcp-cta__ctas { display: inline-flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
