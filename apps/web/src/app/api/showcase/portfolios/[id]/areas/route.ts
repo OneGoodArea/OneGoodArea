@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { addPortfolioAreas } from "@/lib/showcase/api";
 import { handleApiError } from "../../../_shared";
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   let areas: { area: string; label?: string | null }[];
   try {
     const body = await req.json();
@@ -17,7 +17,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: "areas must be a non-empty array of { area }." }, { status: 400 });
   }
   try {
-    const result = await addPortfolioAreas(params.id, cleaned);
+    const { id } = await params;
+    const result = await addPortfolioAreas(id, cleaned);
     return NextResponse.json(result);
   } catch (err) {
     return handleApiError(err, "Failed to add areas to portfolio.");

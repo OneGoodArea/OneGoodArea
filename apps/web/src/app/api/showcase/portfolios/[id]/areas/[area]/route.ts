@@ -4,10 +4,11 @@ import { handleApiError } from "../../../../_shared";
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string; area: string } },
+  { params }: { params: Promise<{ id: string; area: string }> },
 ) {
   try {
-    await removePortfolioArea(params.id, params.area);
+    const { id, area } = await params;
+    await removePortfolioArea(id, area);
     return NextResponse.json({ removed: true });
   } catch (err) {
     /* Idempotent delete: the API 404s when the area is already gone — treat

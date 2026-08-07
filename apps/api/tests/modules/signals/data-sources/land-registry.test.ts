@@ -8,7 +8,7 @@ import type { PropertyPriceData } from "@/modules/signals/inputs";
    to now so the current-year / prior-year split is deterministic. Locks the
    median/mean, by-type grouping, tenure split, YoY change and empty paths. */
 
-const ENDPOINT = "http://landregistry.data.gov.uk/landregistry/query";
+const ENDPOINT = "https://landregistry.data.gov.uk/landregistry/query";
 const COMMON = "http://landregistry.data.gov.uk/def/common";
 
 function isoMonthsAgo(months: number): string {

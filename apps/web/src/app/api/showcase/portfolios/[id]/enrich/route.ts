@@ -5,7 +5,7 @@ import type { Preset } from "@/lib/showcase/types";
 
 const PRESETS: Preset[] = ["moving", "business", "investing", "research"];
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   let preset: Preset | undefined;
   try {
     const body = await req.json();
@@ -22,7 +22,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     /* no body → use the API default preset */
   }
   try {
-    const results = await enrichPortfolio(params.id, preset);
+    const { id } = await params;
+    const results = await enrichPortfolio(id, preset);
     return NextResponse.json({ count: results.length, results });
   } catch (err) {
     return handleApiError(err, "Failed to enrich portfolio.");
