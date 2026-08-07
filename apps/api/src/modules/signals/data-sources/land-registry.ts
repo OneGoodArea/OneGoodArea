@@ -3,13 +3,26 @@ import type { PropertyPriceData } from "../inputs";
 /* Migrated VERBATIM from legacy src/lib/data-sources/land-registry.ts. Changes:
    PropertyPriceData imported from ../inputs (canonical) instead of re-declared,
    and the SPARQL res.json() is cast to a minimal boundary type (Node's undici
-   types it as unknown vs any in the Next/DOM lib). Runtime unchanged. */
+   types it as unknown vs any in the Next/DOM lib). Runtime unchanged.
+
+   AR-758: getPropertyData now caches both the aggregate and the raw
+   last-12-month transactions, exposing getPropertyTransactions. */
 
 interface SparqlBinding {
   price: { value: string };
   date: { value: string };
   type: { value: string };
   estate: { value: string };
+}
+
+/* One raw sale record, retained from the SPARQL bindings. The individual
+   transactions behind the aggregated property.* signals — served by
+   getPropertyTransactions (the sales-history surface). */
+export interface PropertyTransaction {
+  date: string;
+  price: number;
+  property_type: string;
+  estate_type: string;
 }
 
 function extractOutcode(postcode: string): string {
@@ -39,12 +52,21 @@ function median(values: number[]): number {
 
 /* AR-678: 5-min TTL cache keyed by outcode. Land Registry SPARQL takes ~21s
    on a cold path; repeated postcodes in the same outcode now pay once. Same
-   LRU pattern as flood.ts / openstreetmap.ts. */
+   LRU pattern as flood.ts / openstreetmap.ts.
+
+   AR-758: the cache entry now carries the raw transactions alongside the
+   aggregated PropertyPriceData, so getPropertyPrices and getPropertyTransactions
+   share one SPARQL fetch per outcode. */
 const PROPERTY_CACHE_TTL_MS = 5 * 60 * 1000;
 const PROPERTY_CACHE_MAX = 1000;
 
+interface PropertyDataResult {
+  aggregate: PropertyPriceData | null;
+  transactions: PropertyTransaction[] | null;
+}
+
 interface PropertyCacheEntry {
-  value: PropertyPriceData | null;
+  value: PropertyDataResult;
   expires_at: number;
 }
 
@@ -54,7 +76,7 @@ export function clearPropertyCache(): void {
   propertyCache.clear();
 }
 
-function propertyCacheGet(key: string, now: number): PropertyPriceData | null | undefined {
+function propertyCacheGet(key: string, now: number): PropertyDataResult | undefined {
   const entry = propertyCache.get(key);
   if (!entry) return undefined;
   if (entry.expires_at <= now) {
@@ -66,7 +88,7 @@ function propertyCacheGet(key: string, now: number): PropertyPriceData | null | 
   return entry.value;
 }
 
-function propertyCacheSet(key: string, value: PropertyPriceData | null, now: number): void {
+function propertyCacheSet(key: string, value: PropertyDataResult, now: number): void {
   if (propertyCache.size >= PROPERTY_CACHE_MAX && !propertyCache.has(key)) {
     const oldest = propertyCache.keys().next().value;
     if (oldest !== undefined) propertyCache.delete(oldest);
@@ -74,7 +96,10 @@ function propertyCacheSet(key: string, value: PropertyPriceData | null, now: num
   propertyCache.set(key, { value, expires_at: now + PROPERTY_CACHE_TTL_MS });
 }
 
-export async function getPropertyPrices(postcode: string): Promise<PropertyPriceData | null> {
+/* Fetch + cache both the aggregated PropertyPriceData and the raw last-12-month
+   transactions for an outcode. Returns null only when the source has no data
+   (also cached as null). */
+async function getPropertyData(postcode: string): Promise<PropertyDataResult | null> {
   const outcode = extractOutcode(postcode);
   const now = Date.now();
   const cached = propertyCacheGet(outcode, now);
@@ -117,18 +142,18 @@ LIMIT 1500`;
       signal: AbortSignal.timeout(30000),
     });
 
-    if (!res.ok) { propertyCacheSet(outcode, null, now); return null; }
+    if (!res.ok) { propertyCacheSet(outcode, { aggregate: null, transactions: null }, now); return null; }
 
     const data = (await res.json()) as { results?: { bindings?: SparqlBinding[] } };
     const bindings: SparqlBinding[] = data?.results?.bindings || [];
-    if (bindings.length === 0) { propertyCacheSet(outcode, null, now); return null; }
+    if (bindings.length === 0) { propertyCacheSet(outcode, { aggregate: null, transactions: null }, now); return null; }
 
     // Split into current year (last 12 months) and prior year (12-24 months ago)
     const oneYearAgo = new Date(currentDate);
     oneYearAgo.setMonth(oneYearAgo.getMonth() - 12);
     const oneYearAgoStr = oneYearAgo.toISOString().split("T")[0];
 
-    const currentYear: { price: number; type: string; estate: string }[] = [];
+    const currentYear: { price: number; type: string; estate: string; date: string }[] = [];
     const priorYear: number[] = [];
 
     for (const b of bindings) {
@@ -140,13 +165,21 @@ LIMIT 1500`;
       if (isNaN(price) || price <= 0) continue;
 
       if (date >= oneYearAgoStr) {
-        currentYear.push({ price, type, estate });
+        currentYear.push({ price, type, estate, date });
       } else {
         priorYear.push(price);
       }
     }
 
-    if (currentYear.length === 0) { propertyCacheSet(outcode, null, now); return null; }
+    if (currentYear.length === 0) { propertyCacheSet(outcode, { aggregate: null, transactions: null }, now); return null; }
+
+    // Transactions list (AR-758): last-12-month sales, newest first.
+    const transactions: PropertyTransaction[] = currentYear.map((t) => ({
+      date: t.date,
+      price: t.price,
+      property_type: formatPropertyType(t.type),
+      estate_type: t.estate.includes("freehold") ? "freehold" : "leasehold",
+    }));
 
     // Current year stats
     const currentPrices = currentYear.map(t => t.price);
@@ -190,24 +223,39 @@ LIMIT 1500`;
       return dt.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
     };
 
-    const result: PropertyPriceData = {
-      postcode_area: outcode,
-      median_price: medianPrice,
-      mean_price: meanPrice,
-      transaction_count: currentYear.length,
-      price_change_pct: priceChangePct,
-      by_property_type: byPropertyType,
-      tenure_split: { freehold, leasehold },
-      price_range: { min: Math.min(...currentPrices), max: Math.max(...currentPrices) },
-      period: `${fmtMonth(oldest)} to ${fmtMonth(currentDate.toISOString())}`,
-      prior_median: priorMedian,
+    const result: PropertyDataResult = {
+      aggregate: {
+        postcode_area: outcode,
+        median_price: medianPrice,
+        mean_price: meanPrice,
+        transaction_count: currentYear.length,
+        price_change_pct: priceChangePct,
+        by_property_type: byPropertyType,
+        tenure_split: { freehold, leasehold },
+        price_range: { min: Math.min(...currentPrices), max: Math.max(...currentPrices) },
+        period: `${fmtMonth(oldest)} to ${fmtMonth(currentDate.toISOString())}`,
+        prior_median: priorMedian,
+      },
+      transactions,
     };
     propertyCacheSet(outcode, result, now);
     return result;
   } catch {
-    propertyCacheSet(outcode, null, now);
+    propertyCacheSet(outcode, { aggregate: null, transactions: null }, now);
     return null;
   }
+}
+
+export async function getPropertyPrices(postcode: string): Promise<PropertyPriceData | null> {
+  const result = await getPropertyData(postcode);
+  return result?.aggregate ?? null;
+}
+
+/* AR-758: individual last-12-month sales for an outcode, newest first. Shares
+   the getPropertyData SPARQL fetch + cache with getPropertyPrices. */
+export async function getPropertyTransactions(postcode: string): Promise<PropertyTransaction[] | null> {
+  const result = await getPropertyData(postcode);
+  return result?.transactions ?? null;
 }
 
 export function formatPropertyDataForPrompt(data: PropertyPriceData): string {

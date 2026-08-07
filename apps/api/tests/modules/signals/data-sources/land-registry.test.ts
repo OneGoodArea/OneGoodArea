@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "../../../msw-server";
-import { getPropertyPrices, formatPropertyDataForPrompt, clearPropertyCache } from "@/modules/signals/data-sources/land-registry";
+import { getPropertyPrices, getPropertyTransactions, formatPropertyDataForPrompt, clearPropertyCache } from "@/modules/signals/data-sources/land-registry";
 import type { PropertyPriceData } from "@/modules/signals/inputs";
 
 /* MSW intercepts the Land Registry SPARQL endpoint. Dates are built relative
@@ -111,6 +111,79 @@ describe("getPropertyPrices", () => {
     clearPropertyCache();
     await getPropertyPrices("M1 1AE");
     expect(callCount).toBe(2);
+  });
+});
+
+describe("getPropertyTransactions", () => {
+  beforeEach(() => clearPropertyCache());
+
+  it("returns last-12-month sales newest-first with labels", async () => {
+    const recent = isoMonthsAgo(2);
+    const mid = isoMonthsAgo(6);
+    const prior = isoMonthsAgo(18);
+    server.use(
+      http.post(ENDPOINT, () =>
+        sparql([
+          binding(300000, recent, "detached", "freehold"),
+          binding(200000, mid, "flat-maisonette", "leasehold"),
+          // prior-year sales are excluded from the transactions list
+          ...Array.from({ length: 5 }, () => binding(200000, prior, "detached", "freehold")),
+        ])
+      )
+    );
+
+    const txs = await getPropertyTransactions("M1 1AE");
+    expect(txs).not.toBeNull();
+    expect(txs).toHaveLength(2);
+    // newest first
+    expect(txs![0]).toEqual({ date: recent, price: 300000, property_type: "Detached", estate_type: "freehold" });
+    expect(txs![1]).toEqual({ date: mid, price: 200000, property_type: "Flat", estate_type: "leasehold" });
+  });
+
+  it("excludes current-year sales below/equal zero price", async () => {
+    const recent = isoMonthsAgo(2);
+    server.use(
+      http.post(ENDPOINT, () =>
+        sparql([
+          binding(300000, recent, "detached", "freehold"),
+          binding(0, recent, "terraced", "leasehold"),
+          binding(-5, recent, "terraced", "leasehold"),
+        ])
+      )
+    );
+
+    const txs = await getPropertyTransactions("M1 1AE");
+    expect(txs).not.toBeNull();
+    expect(txs).toHaveLength(1);
+    expect(txs![0].price).toBe(300000);
+  });
+
+  it("returns null when there are no bindings", async () => {
+    server.use(http.post(ENDPOINT, () => sparql([])));
+    expect(await getPropertyTransactions("M1 1AE")).toBeNull();
+  });
+
+  it("returns null when all sales are older than a year", async () => {
+    const prior = isoMonthsAgo(18);
+    server.use(http.post(ENDPOINT, () => sparql([binding(200000, prior, "detached", "freehold")])));
+    expect(await getPropertyTransactions("M1 1AE")).toBeNull();
+  });
+
+  it("shares the cache with getPropertyPrices so one HTTP fetch serves both (AR-758)", async () => {
+    const recent = isoMonthsAgo(2);
+    let callCount = 0;
+    server.use(
+      http.post(ENDPOINT, () => {
+        callCount++;
+        return sparql([binding(300000, recent, "detached", "freehold")]);
+      })
+    );
+
+    const prices = await getPropertyPrices("M1 1AE");
+    const txs = await getPropertyTransactions("M1 1AE");
+    expect(prices).not.toBeNull();
+    expect(txs).not.toBeNull();
+    expect(callCount).toBe(1);
   });
 });
 
