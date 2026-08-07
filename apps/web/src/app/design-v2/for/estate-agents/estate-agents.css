@@ -1,93 +1,138 @@
-/* /for/estate-agents - money-shot panel content only. The band layout,
-   capability grid, trust grid and base .oga-pt-bar live in
-   ../_shared/icp-template.css. This file lays out the brochure-style
-   area-intelligence output inside the split-band panel: a listing header, the
-   score ring, the ranked signals, and a source stamp. No card, no border, it
-   sits directly on the panel. */
+/* /for/estate-agents - estate-agent specific illustrations only. The band
+   layout, capability grid, trust grid and base primitives live in
+   ../_shared/icp-template.css. Everything here is bespoke to estate agents so
+   the page no longer mirrors proptech: a brochure-style listing card (house
+   line-art, price tag, score as a number, signal tiles) in the money-shot
+   band, and four estate-agent capability illustrations. */
 
-.oga-ea-out__listing {
-  padding-bottom: 16px;
-  margin-bottom: 18px;
-  border-bottom: 1px solid var(--oga-border);
-}
-.oga-ea-out__addr { display: block; font-family: var(--oga-font-sans); font-size: 15px; font-weight: 600; color: var(--oga-fg); }
-.oga-ea-out__spec { display: block; margin-top: 3px; font-family: var(--oga-font-sans); font-size: 13px; color: var(--oga-fg-muted); }
+/* ============================================================
+   Money-shot: brochure listing card (on the dark band)
+   ============================================================ */
 
-.oga-ea-out__head {
+.oga-ea-card { width: 100%; }
+
+/* stylised property photo with a line-art house + price tag */
+.oga-ea-card__photo {
+  position: relative;
+  height: 132px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(250, 248, 244, 0.05);
+  border: 1px solid rgba(250, 248, 244, 0.1);
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 22px;
+  align-items: flex-end;
+  justify-content: center;
 }
-.oga-ea-out__heading { display: flex; flex-direction: column; gap: 4px; }
-.oga-ea-out__label {
+.oga-ea-card__house { width: 72%; max-width: 240px; height: auto; display: block; margin-bottom: -1px; }
+.oga-ea-card__house path,
+.oga-ea-card__house rect {
+  fill: none;
+  stroke: rgba(250, 248, 244, 0.34);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.oga-ea-card__tag {
+  position: absolute;
+  top: 12px;
+  right: 12px;
   font-family: var(--oga-font-mono);
   font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--oga-fg);
-}
-.oga-ea-out__by { font-family: var(--oga-font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--oga-fg-subtle); }
-
-/* score ring */
-.oga-ea-ring { position: relative; width: 74px; height: 74px; flex: 0 0 auto; }
-.oga-ea-ring__svg { width: 74px; height: 74px; transform: rotate(-90deg); }
-.oga-ea-ring__track { fill: none; stroke: var(--oga-ink-10); stroke-width: 6; }
-.oga-ea-ring__value {
-  fill: none;
-  stroke: var(--oga-fg);
-  stroke-width: 6;
-  stroke-linecap: round;
-  stroke-dasharray: 139.5 188.5;
-}
-.oga-ea-ring__num {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--oga-font-sans);
-  font-size: 23px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: var(--oga-fg);
+  letter-spacing: 0.02em;
+  color: var(--oga-ink);
+  background: var(--oga-white);
+  border-radius: 999px;
+  padding: 5px 11px;
 }
 
-/* ranked signals (bar width modifiers extend the shared base .oga-pt-bar) */
-.oga-ea-out__rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 15px; }
-.oga-ea-out__row { display: grid; grid-template-columns: 84px 1fr 28px; align-items: center; gap: 14px; }
-.oga-ea-out__row-label { font-family: var(--oga-font-sans); font-size: 13.5px; color: var(--oga-fg-muted); }
-.oga-ea-out__row-pct { font-family: var(--oga-font-mono); font-size: 13px; text-align: right; color: var(--oga-fg); }
-.oga-pt-bar--w81 span { width: 81%; }
-.oga-pt-bar--w88 span { width: 88%; }
-.oga-pt-bar--w66 span { width: 66%; }
-.oga-pt-bar--w79 span { width: 79%; }
+/* listing line */
+.oga-ea-card__listing {
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(250, 248, 244, 0.14);
+}
+.oga-ea-card__addr { display: block; font-family: var(--oga-font-sans); font-size: 15px; font-weight: 600; color: var(--oga-white); }
+.oga-ea-card__spec { display: block; margin-top: 3px; font-family: var(--oga-font-sans); font-size: 13px; color: rgba(250, 248, 244, 0.68); }
+
+/* area header: label + score as a number */
+.oga-ea-card__area { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.oga-ea-card__area-label {
+  font-family: var(--oga-font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.55);
+}
+.oga-ea-card__score { display: inline-flex; align-items: baseline; gap: 8px; }
+.oga-ea-card__score em {
+  font-style: normal; font-family: var(--oga-font-mono); font-size: 10.5px; letter-spacing: 0.06em;
+  text-transform: uppercase; color: rgba(250, 248, 244, 0.5);
+}
+.oga-ea-card__score b { font-family: var(--oga-font-sans); font-size: 26px; font-weight: 600; letter-spacing: -0.02em; color: var(--oga-white); }
+
+/* signal tiles, 2x2 */
+.oga-ea-tiles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.oga-ea-tile {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  padding: 11px 13px; border-radius: 9px;
+  background: rgba(250, 248, 244, 0.04); border: 1px solid rgba(250, 248, 244, 0.1);
+}
+.oga-ea-tile__label { font-family: var(--oga-font-sans); font-size: 13px; color: rgba(250, 248, 244, 0.72); }
+.oga-ea-tile__val { font-family: var(--oga-font-mono); font-size: 15px; color: var(--oga-white); }
 
 /* source stamp */
-.oga-ea-out__foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 22px;
-  padding-top: 15px;
-  border-top: 1px solid var(--oga-border);
-  font-family: var(--oga-font-mono);
-  font-size: 10px;
-  letter-spacing: 0.04em;
-  color: var(--oga-fg-subtle);
+.oga-ea-card__foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(250, 248, 244, 0.14);
+  font-family: var(--oga-font-mono); font-size: 10px; letter-spacing: 0.04em; color: rgba(250, 248, 244, 0.5);
 }
 
-/* estate-agents output on the dark band: light-on-dark text, dividers and bars */
-.oga-pt-band[data-oga-surface="dark"] .oga-ea-out__listing,
-.oga-pt-band[data-oga-surface="dark"] .oga-ea-out__foot { border-color: rgba(250, 248, 244, 0.14); }
-.oga-pt-band[data-oga-surface="dark"] .oga-ea-out__addr,
-.oga-pt-band[data-oga-surface="dark"] .oga-ea-out__label,
-.oga-pt-band[data-oga-surface="dark"] .oga-ea-out__row-pct,
-.oga-pt-band[data-oga-surface="dark"] .oga-ea-ring__num { color: var(--oga-white); }
-.oga-pt-band[data-oga-surface="dark"] .oga-ea-out__spec,
-.oga-pt-band[data-oga-surface="dark"] .oga-ea-out__row-label { color: rgba(250, 248, 244, 0.72); }
-.oga-pt-band[data-oga-surface="dark"] .oga-ea-out__by,
-.oga-pt-band[data-oga-surface="dark"] .oga-ea-out__foot { color: rgba(250, 248, 244, 0.5); }
-.oga-pt-band[data-oga-surface="dark"] .oga-ea-ring__track { stroke: rgba(250, 248, 244, 0.16); }
+/* ============================================================
+   Integration illustrations (inside the shared .oga-pt-int__viz,
+   on the light/quiet capability grid). Estate-agent specific.
+   ============================================================ */
+
+/* 1. coverage: postcode -> nations */
+.oga-ea-cover { width: 100%; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.oga-ea-cover__pc {
+  font-family: var(--oga-font-mono); font-size: 13px; color: var(--oga-fg);
+  background: var(--oga-white); border: 1px solid var(--oga-border); border-radius: 7px; padding: 7px 11px;
+}
+.oga-ea-cover__arrow { font-family: var(--oga-font-mono); font-size: 13px; color: var(--oga-fg-subtle); }
+.oga-ea-cover__nations { display: flex; gap: 6px; flex-wrap: wrap; }
+.oga-ea-cover__nation {
+  font-family: var(--oga-font-mono); font-size: 11px; letter-spacing: 0.02em; color: var(--oga-fg-muted);
+  border: 1px solid var(--oga-border); border-radius: 999px; padding: 4px 10px;
+}
+.oga-ea-cover__nation--on { color: var(--oga-fg); border-color: var(--oga-fg-subtle); background: var(--oga-white); }
+
+/* 2. selling points: ticked buyer facts */
+.oga-ea-points { list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 11px; }
+.oga-ea-points__item { display: flex; align-items: center; gap: 10px; font-family: var(--oga-font-sans); font-size: 13.5px; color: var(--oga-fg); }
+.oga-ea-points__tick {
+  display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+  width: 18px; height: 18px; border-radius: 50%; background: var(--oga-ink); color: var(--oga-white); font-size: 10px;
+}
+
+/* 3. price trend: from -> to + up-line */
+.oga-ea-trend { width: 100%; }
+.oga-ea-trend__top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.oga-ea-trend__label { font-family: var(--oga-font-sans); font-size: 13px; color: var(--oga-fg-muted); }
+.oga-ea-trend__delta {
+  font-family: var(--oga-font-mono); font-size: 12px; color: var(--oga-fg);
+  background: var(--oga-white); border: 1px solid var(--oga-border); border-radius: 999px; padding: 3px 9px;
+}
+.oga-ea-trend__vals { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.oga-ea-trend__from { font-family: var(--oga-font-sans); font-size: 15px; color: var(--oga-fg-subtle); }
+.oga-ea-trend__arrow { font-family: var(--oga-font-mono); color: var(--oga-fg-subtle); }
+.oga-ea-trend__to { font-family: var(--oga-font-sans); font-size: 19px; font-weight: 600; letter-spacing: -0.01em; color: var(--oga-fg); }
+.oga-ea-trend__line { width: 100%; height: 34px; display: block; }
+.oga-ea-trend__line polyline { fill: none; stroke: var(--oga-fg); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.oga-ea-trend__line circle { fill: var(--oga-fg); }
+
+/* 4. nearby comparison: ranked postcodes */
+.oga-ea-nearby { list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 4px; }
+.oga-ea-nearby__row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 8px 11px; border-radius: 8px; }
+.oga-ea-nearby__row--on { background: var(--oga-white); box-shadow: 0 8px 20px -14px rgba(26, 28, 31, 0.4); }
+.oga-ea-nearby__pc { font-family: var(--oga-font-mono); font-size: 12px; color: var(--oga-fg-muted); }
+.oga-ea-nearby__name { font-family: var(--oga-font-sans); font-size: 13.5px; color: var(--oga-fg); }
+.oga-ea-nearby__row--on .oga-ea-nearby__name { font-weight: 600; }
+.oga-ea-nearby__score { font-family: var(--oga-font-mono); font-size: 13px; color: var(--oga-fg); }
