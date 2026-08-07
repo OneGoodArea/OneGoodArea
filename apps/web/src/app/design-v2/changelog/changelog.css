@@ -1,14 +1,10 @@
-/* /changelog — Brand v3 (Plotted) — AR-204 PR D.
-
-   Buyer-facing changelog only. Internal architectural moves
-   (monorepo split, Fastify cutover, container parity, DAL work)
-   stay off this page per Pedro 2026-05-30 — they're not shipping
-   capability from a buyer's view. The data lives in the CHANGELOG
-   constant in client.tsx; this file is only visual concerns. */
-
-/* ============================================================
-   Page container
-   ============================================================ */
+/* /changelog - Brand v3 (Plotted), rebuilt bespoke in the product-page language
+   (Plan 064). Split index + detail: a sticky release index on the left, full
+   detail on the right. The latest release is a dark featured panel; earlier
+   releases sit on light. Product-named entries carry their product icon.
+   Strictly two-colour with a single green accent (the "latest" dot); two-tone
+   type tags (feature filled, improvement / fix outline). Mirrors /methodology,
+   /docs/api-reference and /docs/mcp. */
 
 .oga-changelog {
   min-height: 100vh;
@@ -16,92 +12,82 @@
   color: var(--oga-fg);
 }
 
-.oga-changelog section {
-  padding: var(--oga-9) clamp(20px, 4vw, var(--oga-7));
+/* ============================================================
+   Section shells
+   ============================================================ */
+
+.oga-changelog-sec {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(64px, 9vh, 120px) clamp(20px, 5vw, 80px);
 }
+.oga-changelog-sec--light { background: var(--oga-white); }
+.oga-changelog-sec--quiet { background: var(--oga-canvas); }
+.oga-changelog-sec--dark { background: var(--oga-ink); }
 
-/* ------------------------------------------------------------
-   Dot-field override — match homepage IntegrationSection.
-
-   The global .oga-section-hero ships with a left-fading dot
-   field at 14px spacing and 0.10 alpha. That reads heavy on
-   long pages where two .oga-section-hero stack back-to-back
-   (hero + timeline). Override with the homepage's softer
-   recipe: 28px spacing, 0.07 alpha, radial ellipse fade from
-   top-centre outward, so dots breathe at the top and disappear
-   into clean cream below.
-   ------------------------------------------------------------ */
-.oga-changelog .oga-section-hero::before {
-  background-image: radial-gradient(circle, rgba(26, 28, 31, 0.07) 1.1px, transparent 1.3px);
-  background-size: 28px 28px;
-  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 0%, transparent 72%);
-          mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 0%, transparent 72%);
-}
-
-.oga-changelog__container {
-  max-width: 1080px;
+.oga-changelog__wrap {
+  max-width: 1180px;
   margin: 0 auto;
   width: 100%;
-}
-
-.oga-changelog__container--narrow {
-  max-width: 820px;
-  margin: 0 auto;
-  width: 100%;
+  position: relative;
+  z-index: 1;
 }
 
 /* ============================================================
-   Section header pattern (shared with other docs pages)
+   Type tags - two-tone monochrome
    ============================================================ */
 
-.oga-changelog__header { margin-bottom: var(--oga-7); }
-
-.oga-changelog__eyebrow {
+.oga-changelog-tag {
   display: inline-flex;
   align-items: center;
-  gap: var(--oga-3);
+  flex: 0 0 auto;
+  padding: 3px 9px;
   font-family: var(--oga-font-mono);
-  font-size: var(--oga-fs-eyebrow);
-  letter-spacing: var(--oga-tracking-eyebrow);
-  text-transform: uppercase;
-  color: var(--oga-fg-muted);
-  margin-bottom: var(--oga-4);
-}
-
-.oga-changelog__eyebrow-num { color: var(--oga-fg); font-weight: 500; }
-.oga-changelog__eyebrow-line {
-  display: inline-block;
-  width: 32px;
-  height: 1px;
-  background: var(--oga-border);
-}
-
-.oga-changelog__h2 {
-  font-family: var(--oga-font-sans);
-  font-size: var(--oga-fs-h2);
-  line-height: var(--oga-lh-tight);
-  letter-spacing: var(--oga-tracking-tight);
+  font-size: 10px;
   font-weight: 500;
-  color: var(--oga-fg);
-  margin: 0 0 var(--oga-4);
-  max-width: 760px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 5px;
+  white-space: nowrap;
 }
-
-.oga-changelog__lead {
-  font-family: var(--oga-font-sans);
-  font-size: var(--oga-fs-lead);
-  line-height: var(--oga-lh-snug);
-  color: var(--oga-fg-muted);
-  margin: 0;
-  max-width: 680px;
-}
+.oga-changelog-tag--feature { background: var(--oga-ink); color: var(--oga-white); border: 1px solid var(--oga-ink); }
+.oga-changelog-tag--improvement,
+.oga-changelog-tag--fix { background: transparent; color: var(--oga-fg-muted); border: 1px solid var(--oga-border); }
+/* dark context (featured release panel) */
+.oga-clog-rel--featured .oga-changelog-tag--feature { background: var(--oga-white); color: var(--oga-ink); border-color: var(--oga-white); }
+.oga-clog-rel--featured .oga-changelog-tag--improvement,
+.oga-clog-rel--featured .oga-changelog-tag--fix { color: rgba(250, 248, 244, 0.7); border-color: rgba(250, 248, 244, 0.28); }
 
 /* ============================================================
    Hero
    ============================================================ */
 
-.oga-changelog-hero { padding-top: var(--oga-9); padding-bottom: var(--oga-9); }
-
+.oga-changelog-hero {
+  position: relative;
+  overflow: hidden;
+  background: var(--oga-white);
+  padding: clamp(56px, 8vh, 104px) clamp(20px, 5vw, 80px) clamp(56px, 7vh, 92px);
+  text-align: center;
+}
+.oga-changelog-hero__dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(var(--oga-ink-10, rgba(26, 28, 31, 0.09)) 1px, transparent 1px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 0%, transparent 75%);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 0%, transparent 75%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+.oga-changelog-hero__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 .oga-changelog-hero__eyebrow {
   display: inline-flex;
   align-items: center;
@@ -111,345 +97,139 @@
   letter-spacing: var(--oga-tracking-eyebrow);
   text-transform: uppercase;
   color: var(--oga-fg-muted);
-  margin-bottom: var(--oga-5);
+  margin-bottom: 26px;
 }
-
-.oga-changelog-hero__dot {
-  width: 6px; height: 6px;
-  background: var(--oga-status-green);
-  border-radius: 50%;
-  box-shadow: 0 0 0 0 var(--oga-status-green);
-  animation: oga-changelog-pulse 2.4s ease-in-out infinite;
-}
-
-@keyframes oga-changelog-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(46, 117, 72, 0.45); }
-  50%      { box-shadow: 0 0 0 6px rgba(46, 117, 72, 0); }
-}
-
-.oga-changelog-hero__eyebrow-sep {
-  width: 4px; height: 4px;
-  background: var(--oga-fg-muted);
-  border-radius: 50%;
-  opacity: 0.5;
-}
-
+.oga-changelog-hero__eyebrow-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--oga-fg-muted); opacity: 0.5; }
 .oga-changelog-hero__title {
   font-family: var(--oga-font-sans);
-  font-size: clamp(2.25rem, 5vw, 3.5rem);
-  line-height: var(--oga-lh-tight);
-  letter-spacing: var(--oga-tracking-tight);
-  font-weight: 500;
+  font-size: clamp(34px, 5.2vw, 60px);
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  font-weight: 600;
   color: var(--oga-fg);
-  margin: 0 0 var(--oga-5);
-  max-width: 760px;
+  margin: 0 0 22px;
+  max-width: 18ch;
 }
-
 .oga-changelog-hero__lead {
   font-family: var(--oga-font-sans);
-  font-size: var(--oga-fs-lead);
-  line-height: var(--oga-lh-snug);
+  font-size: clamp(15px, 1.4vw, 18px);
+  line-height: 1.6;
   color: var(--oga-fg-muted);
-  margin: 0 0 var(--oga-7);
-  max-width: 640px;
+  margin: 0 0 22px;
+  max-width: 60ch;
 }
-
 .oga-changelog-hero__meta {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--oga-2);
-  padding: 7px 12px;
-  border: 1px solid var(--oga-border);
-  border-radius: var(--oga-radius-pill);
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--oga-fg);
-  background: var(--oga-white);
+  display: inline-flex; align-items: center; gap: 9px;
+  font-family: var(--oga-font-mono); font-size: 12px; letter-spacing: 0.02em; color: var(--oga-fg-muted);
 }
-
-.oga-changelog-hero__meta-dot {
-  width: 5px; height: 5px;
-  background: var(--oga-fg);
-  border-radius: 50%;
-  opacity: 0.55;
-}
+.oga-changelog-hero__meta-dot { width: 6px; height: 6px; border-radius: 50%; background: #2F7A3D; }
 
 /* ============================================================
-   01 — Timeline (all months collapsible)
+   Split: index + detail
    ============================================================ */
 
-.oga-changelog-archive__list {
+.oga-clog__grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 0;
-  position: relative;
-}
-
-.oga-changelog-archive__rail {
-  position: absolute;
-  left: 11px;
-  top: 16px;
-  bottom: 16px;
-  width: 1px;
-  background: var(--oga-border);
-  pointer-events: none;
-}
-
-.oga-changelog-archive__month {
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
-  gap: var(--oga-5);
+  grid-template-columns: 210px minmax(0, 1fr);
+  gap: clamp(32px, 5vw, 72px);
   align-items: start;
-  padding: var(--oga-4) 0;
 }
+@media (max-width: 820px) { .oga-clog__grid { grid-template-columns: 1fr; gap: 28px; } }
 
-.oga-changelog-archive__node {
-  width: 24px;
-  display: flex;
-  justify-content: center;
-  padding-top: 20px;
+/* ---------- Left: sticky release index ---------- */
+.oga-clog-index { position: sticky; top: 96px; }
+@media (max-width: 820px) { .oga-clog-index { position: static; top: auto; } }
+
+.oga-clog-index__label {
+  font-family: var(--oga-font-mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--oga-fg-muted); padding-bottom: 12px; margin-bottom: 4px; border-bottom: 1px solid var(--oga-border);
 }
+.oga-clog-index__list { display: flex; flex-direction: column; }
+.oga-clog-index__item {
+  display: grid; grid-template-columns: auto 1fr; gap: 2px 11px;
+  padding: 13px 0; border-bottom: 1px solid var(--oga-border); text-decoration: none;
+}
+.oga-clog-index__item:last-child { border-bottom: 0; }
+.oga-clog-index__dot {
+  grid-column: 1; grid-row: 1 / span 2; align-self: center;
+  width: 8px; height: 8px; border-radius: 50%; background: transparent; border: 1px solid var(--oga-fg-subtle);
+}
+.oga-clog-index__item--latest .oga-clog-index__dot { background: #2F7A3D; border-color: #2F7A3D; }
+.oga-clog-index__ver { grid-column: 2; grid-row: 1; font-family: var(--oga-font-mono); font-size: 13px; color: var(--oga-fg); }
+.oga-clog-index__date { grid-column: 2; grid-row: 2; font-family: var(--oga-font-sans); font-size: 12px; color: var(--oga-fg-subtle); }
+.oga-clog-index__item:hover .oga-clog-index__ver { text-decoration: underline; text-underline-offset: 3px; }
 
-.oga-changelog-archive__node-dot {
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
+/* ---------- Right: release detail ---------- */
+.oga-clog__detail { display: flex; flex-direction: column; gap: clamp(18px, 2.5vh, 28px); min-width: 0; }
+
+.oga-clog-rel {
+  scroll-margin-top: 96px;
+  border: 1px solid var(--oga-border);
+  border-radius: 18px;
+  background: var(--oga-white);
+  padding: clamp(24px, 3vw, 38px);
+}
+.oga-clog-rel--featured {
   background: var(--oga-ink);
-  box-shadow: 0 0 0 4px var(--oga-canvas);
+  border-color: transparent;
+  box-shadow: 0 40px 80px -44px rgba(26, 28, 31, 0.45), 0 10px 30px -18px rgba(26, 28, 31, 0.3);
 }
 
-.oga-changelog-archive__toggle {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--oga-4);
-  padding: var(--oga-4) 0;
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--oga-border);
-  cursor: pointer;
-  text-align: left;
-  font-family: inherit;
-  color: inherit;
+.oga-clog-rel__head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+.oga-clog-rel__latest {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--oga-font-mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(250, 248, 244, 0.75); margin-right: 2px;
 }
-
-.oga-changelog-archive__toggle-label {
-  display: flex;
-  align-items: baseline;
-  gap: var(--oga-3);
-  flex-wrap: wrap;
+.oga-clog-rel__latest-dot { width: 6px; height: 6px; border-radius: 50%; background: #4E9E5F; }
+.oga-clog-rel__ver {
+  font-family: var(--oga-font-mono); font-size: 13px; color: var(--oga-fg);
+  background: var(--oga-white); border: 1px solid var(--oga-border); border-radius: 6px; padding: 3px 9px;
 }
+.oga-clog-rel__month { font-family: var(--oga-font-sans); font-size: 19px; font-weight: 600; letter-spacing: -0.01em; color: var(--oga-fg); }
+.oga-clog-rel__date { font-family: var(--oga-font-mono); font-size: 11.5px; color: var(--oga-fg-subtle); }
+.oga-clog-rel__summary { font-family: var(--oga-font-sans); font-size: 15px; line-height: 1.55; color: var(--oga-fg-muted); margin: 0 0 24px; max-width: 70ch; }
 
-.oga-changelog-archive__toggle-month {
-  font-family: var(--oga-font-sans);
-  font-size: 20px;
-  font-weight: 500;
-  letter-spacing: var(--oga-tracking-tight);
-  color: var(--oga-fg);
+/* featured (dark) overrides */
+.oga-clog-rel--featured .oga-clog-rel__ver { background: rgba(250, 248, 244, 0.08); border-color: rgba(250, 248, 244, 0.22); color: var(--oga-white); }
+.oga-clog-rel--featured .oga-clog-rel__month { color: var(--oga-white); }
+.oga-clog-rel--featured .oga-clog-rel__date { color: rgba(250, 248, 244, 0.5); }
+.oga-clog-rel--featured .oga-clog-rel__summary { color: rgba(250, 248, 244, 0.78); }
+
+/* ---------- Entry rows ---------- */
+.oga-clog-rel__entries { display: grid; gap: 2px; }
+.oga-clog-entry {
+  display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 16px; align-items: start;
+  padding: 18px 0; border-top: 1px solid var(--oga-border);
 }
+.oga-clog-entry:first-child { border-top: 0; padding-top: 0; }
+.oga-clog-entry__icon { display: inline-flex; align-items: center; justify-content: center; color: var(--oga-fg); margin-top: 1px; }
+.oga-clog-entry__icon svg { width: 20px; height: 20px; }
+.oga-clog-entry__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--oga-fg-subtle); display: inline-block; }
+.oga-clog-entry__main { min-width: 0; }
+.oga-clog-entry__top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 5px; }
+.oga-clog-entry__title { font-family: var(--oga-font-sans); font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: var(--oga-fg); margin: 0; }
+.oga-clog-entry__desc { font-family: var(--oga-font-sans); font-size: 14px; line-height: 1.55; color: var(--oga-fg-muted); margin: 0; max-width: 72ch; }
 
-.oga-changelog-archive__toggle-counts {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: var(--oga-2);
-}
-
-.oga-changelog-archive__toggle-glyph {
-  width: 28px;
-  height: 28px;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--oga-border);
-  border-radius: 50%;
-  color: var(--oga-fg);
-  font-family: var(--oga-font-sans);
-  font-size: 14px;
-  background: transparent;
-  transition: transform var(--oga-dur-slow) var(--oga-ease),
-              background var(--oga-dur) var(--oga-ease),
-              border-color var(--oga-dur) var(--oga-ease);
-}
-
-.oga-changelog-archive__toggle[aria-expanded="true"] .oga-changelog-archive__toggle-glyph {
-  transform: rotate(45deg);
-  background: var(--oga-ink-06);
-  border-color: var(--oga-ink);
-}
-
-.oga-changelog-archive__panel {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height var(--oga-dur-slow) var(--oga-ease);
-}
-
-.oga-changelog-archive__panel--open {
-  max-height: 9999px;
-}
-
-.oga-changelog-archive__entries {
-  padding: var(--oga-3) 0 var(--oga-2);
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0;
-}
-
-.oga-changelog-archive__entry {
-  display: grid;
-  grid-template-columns: 120px minmax(0, 1fr);
-  align-items: start;
-  gap: var(--oga-5);
-  padding: var(--oga-4) 0;
-  border-bottom: 1px solid var(--oga-border);
-}
-
-.oga-changelog-archive__entry:last-child { border-bottom: 0; }
-
-@media (max-width: 720px) {
-  .oga-changelog-archive__entry { grid-template-columns: 1fr; gap: var(--oga-2); }
-}
-
-.oga-changelog-archive__entry-title {
-  font-family: var(--oga-font-sans);
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1.3;
-  color: var(--oga-fg);
-  margin: 0 0 var(--oga-2);
-}
-
-.oga-changelog-archive__entry-desc {
-  font-family: var(--oga-font-sans);
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--oga-fg-muted);
-  margin: 0;
-  max-width: 62ch;
-}
+/* featured (dark) entry overrides */
+.oga-clog-rel--featured .oga-clog-entry { border-top-color: rgba(250, 248, 244, 0.14); }
+.oga-clog-rel--featured .oga-clog-entry__icon { color: var(--oga-white); }
+.oga-clog-rel--featured .oga-clog-entry__dot { background: rgba(250, 248, 244, 0.4); }
+.oga-clog-rel--featured .oga-clog-entry__title { color: var(--oga-white); }
+.oga-clog-rel--featured .oga-clog-entry__desc { color: rgba(250, 248, 244, 0.72); }
 
 /* ============================================================
-   Type badge (chip) — shared between latest + archive rows
+   Final CTA (dark)
    ============================================================ */
 
-.oga-changelog-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--oga-2);
-  font-family: var(--oga-font-mono);
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  padding: 4px 8px;
-  border-radius: 3px;
-  align-self: start;
-}
-
-.oga-changelog-badge::before {
-  content: "";
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-}
-
-.oga-changelog-badge--feature {
-  color: var(--oga-fg);
-  background: var(--oga-ink-06);
-}
-.oga-changelog-badge--feature::before { background: var(--oga-ink); }
-
-.oga-changelog-badge--fix {
-  color: var(--oga-status-red);
-  background: var(--oga-status-red-bg);
-}
-.oga-changelog-badge--fix::before { background: var(--oga-status-red); }
-
-.oga-changelog-badge--improvement {
-  color: var(--oga-status-amber);
-  background: var(--oga-status-amber-bg);
-}
-.oga-changelog-badge--improvement::before { background: var(--oga-status-amber); }
-
-/* Dark-surface badge variants — 01 "This month" punctuates with
-   .oga-section-dark. Token overrides on [data-oga-surface="dark"]
-   handle most colours; badges need explicit overrides because
-   .oga-ink-06 etc are literal-color rules. */
-[data-oga-surface="dark"] .oga-changelog-badge--feature {
-  color: var(--oga-white);
-  background: rgba(250, 248, 244, 0.10);
-}
-[data-oga-surface="dark"] .oga-changelog-badge--feature::before { background: var(--oga-white); }
-
-[data-oga-surface="dark"] .oga-changelog-badge--fix {
-  color: #E87A65;
-  background: rgba(232, 122, 101, 0.12);
-}
-[data-oga-surface="dark"] .oga-changelog-badge--fix::before { background: #E87A65; }
-
-[data-oga-surface="dark"] .oga-changelog-badge--improvement {
-  color: #F0B270;
-  background: rgba(240, 178, 112, 0.12);
-}
-[data-oga-surface="dark"] .oga-changelog-badge--improvement::before { background: #F0B270; }
-
-/* MonthBlock on dark surface — 01 "This month".
-   The node dot's outer ring uses var(--oga-canvas) which is the
-   light cream — wrong on dark. Toggle border and glyph use named
-   borders that adapt via --oga-border, but the node-dot needs an
-   explicit override to swap the outer ring to ink-graphite. */
-[data-oga-surface="dark"] .oga-changelog-archive__node-dot {
-  background: var(--oga-white);
-  box-shadow: 0 0 0 4px var(--oga-ink);
-}
-
-/* Single-block variant: no vertical rail (only one item, rail
-   visually pointless), no left node indent — title sits flush. */
-.oga-changelog-archive__list--single {
-  padding-left: 0;
-}
-.oga-changelog-archive__list--single .oga-changelog-archive__month {
-  grid-template-columns: 1fr;
-  gap: 0;
-}
-.oga-changelog-archive__list--single .oga-changelog-archive__node {
-  display: none;
-}
-
-/* ============================================================
-   Final CTA (DARK)
-   ============================================================ */
-
-.oga-changelog-cta__inner {
-  text-align: center;
-  padding: var(--oga-7) 0;
-}
-
+.oga-changelog-cta { text-align: center; }
+.oga-changelog-cta__inner { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
 .oga-changelog-cta__title {
-  font-family: var(--oga-font-sans);
-  font-size: clamp(2rem, 4vw, 3rem);
-  line-height: var(--oga-lh-tight);
-  letter-spacing: var(--oga-tracking-tight);
-  font-weight: 500;
-  color: var(--oga-white);
-  margin: 0 auto var(--oga-4);
-  max-width: 720px;
+  font-family: var(--oga-font-sans); font-size: clamp(28px, 4vw, 46px); line-height: 1.06;
+  letter-spacing: -0.03em; font-weight: 600; color: var(--oga-white); margin: 0 0 16px;
 }
-
 .oga-changelog-cta__lead {
-  font-family: var(--oga-font-sans);
-  font-size: var(--oga-fs-lead);
-  line-height: var(--oga-lh-snug);
-  color: rgba(250,248,244,0.7);
-  margin: 0 auto var(--oga-7);
-  max-width: 560px;
+  font-family: var(--oga-font-sans); font-size: clamp(15px, 1.3vw, 17px); line-height: 1.6;
+  color: rgba(250, 248, 244, 0.7); margin: 0 0 28px; max-width: 52ch;
 }
-
-.oga-changelog-cta__buttons {
-  display: inline-flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--oga-3);
-}
+.oga-changelog-cta__ctas { display: inline-flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
