@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Nav } from "../../_shared/nav";
 import { Footer } from "../../_shared/footer";
+import { IcpHeroBadge } from "../_shared/icp-hero-badge";
 import { DEMO_URL } from "../../_shared/book-demo";
 import "../_shared/icp-page.css";
 import "../_shared/icp-template.css";
@@ -33,11 +34,7 @@ function Hero() {
   return (
     <section className="oga-section-quiet oga-icp-hero">
       <div className="oga-icp__wrap--narrow">
-        <div className="oga-icp-hero__eyebrow">
-          <span className="oga-icp-hero__eyebrow-mark" aria-hidden />
-          <span>For insurance and InsureTech</span>
-          <span className="oga-icp-hero__eyebrow-mark" aria-hidden />
-        </div>
+        <IcpHeroBadge icp="insurance" label="For insurance and InsureTech" />
         <h1 className="oga-icp-hero__h1">Area risk your actuary can audit, monitored continuously.</h1>
         <p className="oga-icp-hero__lead">
           Per-dimension scores with confidence, not a black box. Save your

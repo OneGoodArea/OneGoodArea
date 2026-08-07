@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Nav } from "../../_shared/nav";
 import { Footer } from "../../_shared/footer";
+import { IcpHeroBadge } from "../_shared/icp-hero-badge";
 import "../_shared/icp-page.css";
 import "../_shared/icp-template.css";
 import "./estate-agents.css";
@@ -35,11 +36,7 @@ function Hero() {
   return (
     <section className="oga-section-quiet oga-icp-hero">
       <div className="oga-icp__wrap--narrow">
-        <div className="oga-icp-hero__eyebrow">
-          <span className="oga-icp-hero__eyebrow-mark" aria-hidden />
-          <span>For estate agents</span>
-          <span className="oga-icp-hero__eyebrow-mark" aria-hidden />
-        </div>
+        <IcpHeroBadge icp="estate-agents" label="For estate agents" />
         <h1 className="oga-icp-hero__h1">Answer the area question before it is asked.</h1>
         <p className="oga-icp-hero__lead">
           Schools, crime, prices and transport for any UK postcode, from one
