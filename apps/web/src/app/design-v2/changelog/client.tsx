@@ -1,91 +1,146 @@
 "use client";
 
-import { useState } from "react";
+import type { ComponentType, ReactNode, SVGProps } from "react";
 import Link from "next/link";
 import { Nav } from "../_shared/nav";
 import { Footer } from "../_shared/footer";
+import {
+  SignalsIcon,
+  ScoresIcon,
+  MonitorIcon,
+  IntelligenceIcon,
+} from "../_shared/product-icons";
 import "./changelog.css";
 
-/* /changelog — Brand v3 (Plotted).
+/* /changelog - the buyer-facing changelog, rebuilt bespoke in the product-page
+   language (Plan 064). Split index + detail: a sticky release index on the
+   left, full detail on the right. The latest release is a dark featured panel;
+   earlier releases sit on light. Product-named entries are anchored by their
+   product icon. Monochrome with a single green accent (the "latest" dot),
+   two-tone type tags (feature filled, improvement / fix outline). Plain
+   full-sentence copy: no composite / typed query plane / signal.changed / k-NN
+   / X-Engine-Version / peer-relative-anomaly jargon. Trimmed to the 1.0 launch
+   forward (AR-449); the record is hand-written here and updated on buyer-facing
+   releases. */
 
-   Buyer-facing changelog. Trimmed to the 1.0 launch (AR-449): pre-launch
-   iteration history is deliberately omitted. This is the record from launch
-   forward. */
+type ProductKey = "signals" | "scores" | "monitor" | "intelligence";
+type EntryType = "feature" | "improvement" | "fix";
+type Entry = { type: EntryType; title: string; description: string; product?: ProductKey };
+type Release = {
+  version: string;
+  date: string;
+  label: string;
+  summary: string;
+  entries: Entry[];
+};
 
-type EntryType = "feature" | "fix" | "improvement";
-type Entry = { type: EntryType; title: string; description?: string };
-type Month = { month: string; updatedAt: string; entries: Entry[] };
+const PRODUCT_ICON: Record<ProductKey, ComponentType<SVGProps<SVGSVGElement>>> = {
+  signals: SignalsIcon,
+  scores: ScoresIcon,
+  monitor: MonitorIcon,
+  intelligence: IntelligenceIcon,
+};
 
-const CHANGELOG: Month[] = [
+const RELEASES: Release[] = [
   {
-    month: "August 2026",
-    updatedAt: "2026-08-04",
+    version: "1.1.0",
+    date: "2026-08-04",
+    label: "August 2026",
+    summary:
+      "Intent-aware scoring. Every preset now scores the same seven categories; the decision you are making only changes how they are weighted.",
     entries: [
       {
         type: "improvement",
-        title: "Methodology 1.1.0 — intent-aware scoring.",
-        description: "Every preset now scores the same seven categories (safety & crime, deprivation, property, schools, amenities, transport, environment) using the full source set. Intent changes only how those categories are weighted: property weighs more for investing, transport for business, deprivation for moving.",
+        title: "Intent-aware scoring",
+        product: "scores",
+        description:
+          "Every preset now scores the same seven categories (safety and crime, deprivation, property, schools, amenities, transport, environment) from the full set of sources. The decision you are making only changes how they are weighted: property counts for more when investing, transport when choosing a business site, deprivation when moving.",
       },
       {
         type: "improvement",
-        title: "Custom weights on any preset.",
-        description: "Override the chosen preset's weights across the shared seven-dimension set, so any preset can be tuned on the same categories. Responses keep stamping engine_version and X-Engine-Version for model risk registers.",
+        title: "Custom weights on any preset",
+        product: "scores",
+        description:
+          "Re-weight the same seven categories for any preset, so a score can follow your own priorities. Every response is still stamped with the engine version that produced it, so numbers stay reproducible for audits.",
       },
     ],
   },
   {
-    month: "July 2026",
-    updatedAt: "2026-07-08",
+    version: "1.0",
+    date: "2026-07-08",
+    label: "July 2026",
+    summary:
+      "The launch. The data and intelligence layer for UK area workflows, live: four products on one shared store of signals and one fixed scoring engine.",
     entries: [
       {
         type: "feature",
-        title: "OneGoodArea 1.0.",
-        description: "The deterministic data and intelligence layer for UK area workflows, live. Four products over one signal store and one frozen scoring engine.",
+        title: "OneGoodArea 1.0",
+        description:
+          "The data and intelligence layer for UK area workflows, live. Four products on one shared store of signals and one fixed scoring engine.",
       },
       {
         type: "feature",
-        title: "Signals.",
-        description: "Per-area values across seven categories (crime, deprivation, property, schools, amenities, transport, environment). Each carries its source, observed period, confidence, and national and regional percentile.",
+        title: "Signals",
+        product: "signals",
+        description:
+          "Every public signal for an area across seven categories: crime, deprivation, property, schools, amenities, transport and environment. Each value carries its source, when it was measured, its confidence, and where it sits nationally and regionally.",
       },
       {
         type: "feature",
-        title: "Scores.",
-        description: "Deterministic 0-100 composites over the seven category dimensions per preset. No AI in the scoring path: the same input and engine version produce the same number every time. Every response is versioned and pinnable via the X-Engine-Version header for model risk registers.",
+        title: "Scores",
+        product: "scores",
+        description:
+          "A single 0 to 100 score for an area, built from the seven categories for one of four presets. The scoring never uses AI, so the same inputs always return the same score, and every result is stamped with a version you can pin and reproduce.",
       },
       {
         type: "feature",
-        title: "Monitor.",
-        description: "Track portfolios of areas and detect material change over the time-series store. Fires signal.changed webhooks, with sample-size gating to suppress small-sample noise.",
+        title: "Monitor",
+        product: "monitor",
+        description:
+          "Watch a list of areas and get told when something material changes, with a signed webhook. Small, noisy moves are held back, so you only hear about the ones that matter.",
       },
       {
         type: "feature",
-        title: "Intelligence.",
-        description: "A typed query plane. Send a programmatic plan or a natural-language question; both run through the same deterministic executor and echo the executed plan for replay. Peers (k-NN), insights (peer-relative anomalies), and forecast (linear projection). The AI plans the query; it never sets the numbers.",
+        title: "Intelligence",
+        product: "intelligence",
+        description:
+          "Ask in plain English or send a typed query. You get the answer and the exact query behind it, so every result can be checked and run again. Includes similar-area comparison, outlier detection and a straightforward forecast. The AI works out the query; it never decides the numbers.",
       },
       {
         type: "feature",
-        title: "Enterprise controls.",
-        description: "Per-org signal bundles, saved scoring presets, methodology pinning, peer cohorts, three-tier RBAC, white-label, and per-key IP allowlist.",
+        title: "Enterprise controls",
+        description:
+          "Per-organisation signal bundles, saved scoring presets, version pinning, peer groups, role-based access, white-labelling, and per-key IP allowlisting.",
       },
     ],
   },
 ];
+
+const anchor = (version: string) => `v${version.replace(/\./g, "-")}`;
 
 /* ============================================================
    Page
    ============================================================ */
 
 export default function ChangelogClient() {
-  const total = CHANGELOG.reduce((sum, m) => sum + m.entries.length, 0);
-  const [latest, ...earlier] = CHANGELOG;
+  const total = RELEASES.reduce((sum, r) => sum + r.entries.length, 0);
+  const latestVersion = RELEASES[0]?.version;
 
   return (
     <div className="oga-root oga-changelog">
       <Nav />
+      <Hero latest={RELEASES[0]!} releaseCount={RELEASES.length} total={total} />
 
-      <Hero total={total} latestDate={latest.updatedAt} />
-      <SectionLatest month={latest} />
-      {earlier.length > 0 && <SectionArchive months={earlier} />}
+      <section className="oga-changelog-sec oga-changelog-sec--quiet">
+        <div className="oga-changelog__wrap oga-clog__grid">
+          <ReleaseIndex releases={RELEASES} latestVersion={latestVersion} />
+          <div className="oga-clog__detail">
+            {RELEASES.map((r, i) => (
+              <ReleasePanel key={r.version} release={r} featured={i === 0} />
+            ))}
+          </div>
+        </div>
+      </section>
 
       <FinalCta />
       <Footer />
@@ -93,176 +148,146 @@ export default function ChangelogClient() {
   );
 }
 
-/* ─────── Hero ─────── */
+/* ============================================================
+   Hero
+   ============================================================ */
 
-function Hero({ total, latestDate }: { total: number; latestDate: string }) {
+function Hero({ latest, releaseCount, total }: { latest: Release; releaseCount: number; total: number }) {
   return (
-    <section className="oga-changelog-hero oga-section-hero">
-      <div className="oga-changelog__container--narrow">
-        <div className="oga-changelog-hero__eyebrow">
-          <span className="oga-changelog-hero__dot" aria-hidden />
+    <section className="oga-changelog-hero">
+      <div className="oga-changelog-hero__dots" aria-hidden />
+      <div className="oga-changelog-hero__inner">
+        <span className="oga-changelog-hero__eyebrow">
           <span>Changelog</span>
-          <span className="oga-changelog-hero__eyebrow-sep" aria-hidden />
-          <span>Updated {latestDate}</span>
-        </div>
-
-        <h1 className="oga-changelog-hero__title">What we&rsquo;ve shipped.</h1>
-
+          <span className="oga-changelog-hero__eyebrow-dot" aria-hidden />
+          <span>Updated {latest.date}</span>
+        </span>
+        <h1 className="oga-changelog-hero__title">Everything we&apos;ve shipped.</h1>
         <p className="oga-changelog-hero__lead">
-          OneGoodArea 1.0, the deterministic data and intelligence layer for UK area
-          workflows. This is the buyer-facing record of what shipped, from launch forward.
+          OneGoodArea 1.0 and every release since. The buyer-facing record of what
+          shipped, from launch forward, plainly, so you always know what changed
+          and when.
         </p>
-
         <div className="oga-changelog-hero__meta">
           <span className="oga-changelog-hero__meta-dot" aria-hidden />
-          {total} updates in the 1.0 launch
+          {releaseCount} releases · {total} updates since launch
         </div>
       </div>
     </section>
   );
 }
 
-/* ─────── 01 — This release (DARK, collapsible, open by default) ─────── */
+/* ============================================================
+   Left: sticky release index
+   ============================================================ */
 
-function SectionLatest({ month }: { month: Month }) {
+function ReleaseIndex({ releases, latestVersion }: { releases: Release[]; latestVersion?: string }) {
   return (
-    <section id="latest" className="oga-section-dark" data-oga-surface="dark">
-      <div className="oga-changelog__container">
-        <header className="oga-changelog__header">
-          <div className="oga-changelog__eyebrow">
-            <span className="oga-changelog__eyebrow-num">01</span>
-            <span className="oga-changelog__eyebrow-line" aria-hidden />
-            <span>This release</span>
-          </div>
-          <h2 className="oga-changelog__h2">What just landed.</h2>
-          <p className="oga-changelog__lead">
-            The 1.0 launch, open by default. Click to collapse. Each entry tagged feature,
-            improvement, or fix.
-          </p>
-        </header>
-
-        <div className="oga-changelog-archive__list oga-changelog-archive__list--single">
-          <MonthBlock month={month} openByDefault />
-        </div>
-      </div>
-    </section>
+    <aside className="oga-clog-index">
+      <div className="oga-clog-index__label">Releases</div>
+      <nav className="oga-clog-index__list">
+        {releases.map((r) => {
+          const isLatest = r.version === latestVersion;
+          return (
+            <a
+              key={r.version}
+              href={`#${anchor(r.version)}`}
+              className={`oga-clog-index__item${isLatest ? " oga-clog-index__item--latest" : ""}`}
+            >
+              <span className="oga-clog-index__dot" aria-hidden />
+              <span className="oga-clog-index__ver">v{r.version}</span>
+              <span className="oga-clog-index__date">{r.label}</span>
+            </a>
+          );
+        })}
+      </nav>
+    </aside>
   );
 }
 
-/* ─────── 02 — Earlier (cream timeline, all collapsed by default) ─────── */
+/* ============================================================
+   Right: release detail panel
+   ============================================================ */
 
-function SectionArchive({ months }: { months: Month[] }) {
+function ReleasePanel({ release, featured }: { release: Release; featured: boolean }) {
   return (
-    <section id="archive" className="oga-section-hero">
-      <div className="oga-changelog__container">
-        <header className="oga-changelog__header">
-          <div className="oga-changelog__eyebrow">
-            <span className="oga-changelog__eyebrow-num">02</span>
-            <span className="oga-changelog__eyebrow-line" aria-hidden />
-            <span>Earlier releases</span>
-          </div>
-          <h2 className="oga-changelog__h2">The road behind.</h2>
-          <p className="oga-changelog__lead">
-            Reverse-chronological. Click any month to expand. Each entry tagged feature, improvement,
-            or fix.
-          </p>
-        </header>
-
-        <div className="oga-changelog-archive__list">
-          <div className="oga-changelog-archive__rail" aria-hidden />
-          {months.map((m) => (
-            <MonthBlock key={m.month} month={m} openByDefault={false} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function MonthBlock({ month, openByDefault }: { month: Month; openByDefault: boolean }) {
-  const [open, setOpen] = useState(openByDefault);
-  const counts = countEntries(month.entries);
-
-  return (
-    <div className="oga-changelog-archive__month">
-      <div className="oga-changelog-archive__node" aria-hidden>
-        <span className="oga-changelog-archive__node-dot" />
-      </div>
-      <div>
-        <button
-          type="button"
-          onClick={() => setOpen(!open)}
-          aria-expanded={open}
-          className="oga-changelog-archive__toggle"
-        >
-          <span className="oga-changelog-archive__toggle-label">
-            <span className="oga-changelog-archive__toggle-month">{month.month}</span>
-            <span className="oga-changelog-archive__toggle-counts">
-              {counts.feature > 0     && <Badge type="feature"     n={counts.feature} />}
-              {counts.fix > 0         && <Badge type="fix"         n={counts.fix} />}
-              {counts.improvement > 0 && <Badge type="improvement" n={counts.improvement} />}
-            </span>
+    <article
+      id={anchor(release.version)}
+      className={`oga-clog-rel${featured ? " oga-clog-rel--featured" : ""}`}
+      {...(featured ? { "data-oga-surface": "dark" as const } : {})}
+    >
+      <div className="oga-clog-rel__head">
+        {featured && (
+          <span className="oga-clog-rel__latest">
+            <span className="oga-clog-rel__latest-dot" aria-hidden />
+            Latest
           </span>
-          <span className="oga-changelog-archive__toggle-glyph" aria-hidden>+</span>
-        </button>
+        )}
+        <span className="oga-clog-rel__ver">v{release.version}</span>
+        <span className="oga-clog-rel__month">{release.label}</span>
+        <span className="oga-clog-rel__date">{release.date}</span>
+      </div>
+      <p className="oga-clog-rel__summary">{release.summary}</p>
 
-        <div className={`oga-changelog-archive__panel${open ? " oga-changelog-archive__panel--open" : ""}`}>
-          <div className="oga-changelog-archive__entries">
-            {month.entries.map((e, i) => (
-              <div key={i} className="oga-changelog-archive__entry">
-                <Badge type={e.type} />
-                <div>
-                  <h4 className="oga-changelog-archive__entry-title">{e.title}</h4>
-                  {e.description && <p className="oga-changelog-archive__entry-desc">{e.description}</p>}
-                </div>
-              </div>
-            ))}
-          </div>
+      <div className="oga-clog-rel__entries">
+        {release.entries.map((e) => (
+          <EntryRow key={e.title} entry={e} />
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function EntryRow({ entry }: { entry: Entry }) {
+  const Icon = entry.product ? PRODUCT_ICON[entry.product] : null;
+  return (
+    <div className="oga-clog-entry">
+      <span className="oga-clog-entry__icon" aria-hidden>
+        {Icon ? <Icon width={20} height={20} /> : <span className="oga-clog-entry__dot" />}
+      </span>
+      <div className="oga-clog-entry__main">
+        <div className="oga-clog-entry__top">
+          <h3 className="oga-clog-entry__title">{entry.title}</h3>
+          <Tag type={entry.type} />
         </div>
+        <p className="oga-clog-entry__desc">{entry.description}</p>
       </div>
     </div>
   );
 }
 
-/* ─────── Badge (shared) ─────── */
+/* ============================================================
+   Type tag - two-tone monochrome
+   ============================================================ */
 
-function Badge({ type, n }: { type: EntryType; n?: number }) {
-  const label = type === "feature" ? "Feature" : type === "fix" ? "Fix" : "Improvement";
-  return (
-    <span className={`oga-changelog-badge oga-changelog-badge--${type}`}>
-      {n !== undefined ? `${n} ` : ""}{label}{n !== undefined && n !== 1 ? "s" : ""}
-    </span>
-  );
+function Tag({ type }: { type: EntryType }) {
+  const label = type === "feature" ? "Feature" : type === "improvement" ? "Improvement" : "Fix";
+  return <span className={`oga-changelog-tag oga-changelog-tag--${type}`}>{label}</span>;
 }
 
-function countEntries(entries: Entry[]) {
-  return entries.reduce(
-    (acc, e) => {
-      acc[e.type] = (acc[e.type] || 0) + 1;
-      return acc;
-    },
-    { feature: 0, fix: 0, improvement: 0 } as Record<EntryType, number>,
-  );
-}
-
-/* ─────── Final CTA ─────── */
+/* ============================================================
+   Final CTA (dark)
+   ============================================================ */
 
 function FinalCta() {
   return (
-    <section className="oga-section-dark" data-oga-surface="dark">
-      <div className="oga-changelog__container--narrow oga-changelog-cta__inner">
-        <h2 className="oga-changelog-cta__title">Something missing?</h2>
+    <section className="oga-changelog-sec oga-changelog-sec--dark oga-changelog-cta" data-oga-surface="dark">
+      <div className="oga-changelog__wrap oga-changelog-cta__inner">
+        <h2 className="oga-changelog-cta__title">Something you want next?</h2>
         <p className="oga-changelog-cta__lead">
-          Tell us what you&rsquo;d like to see next. Most items on this page started as an email.
+          Tell us what would help. Most of what ships here started as an email
+          from someone building on the API.
         </p>
-        <div className="oga-changelog-cta__buttons">
-          <a href="mailto:operation@onegoodarea.co.uk?subject=Feature request" className="oga-btn oga-btn-primary">
+        <div className="oga-changelog-cta__ctas">
+          <a
+            href="mailto:operation@onegoodarea.co.uk?subject=Feature request"
+            className="oga-btn oga-btn-primary"
+          >
             Request a feature
-            <span aria-hidden>&rarr;</span>
+            <span aria-hidden>→</span>
           </a>
           <Link href="/methodology" className="oga-btn oga-btn-secondary">
             Read the methodology
-            <span aria-hidden>&rarr;</span>
           </Link>
         </div>
       </div>
