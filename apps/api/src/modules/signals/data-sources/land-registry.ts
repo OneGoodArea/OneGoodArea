@@ -132,14 +132,18 @@ WHERE {
 ORDER BY DESC(?date)
 LIMIT 1500`;
 
-    const res = await fetch("http://landregistry.data.gov.uk/landregistry/query", {
+    // HTTPS is required: the http:// variant of the SPARQL endpoint returns
+    // an empty result set (200, zero bindings), which we'd cache as null and
+    // surface as "no sale transactions".
+    const res = await fetch("https://landregistry.data.gov.uk/landregistry/query", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
         Accept: "application/sparql-results+json",
       },
       body: `query=${encodeURIComponent(query)}`,
-      signal: AbortSignal.timeout(30000),
+      // 24-month query is slow on the upstream endpoint; 30s proved flaky.
+      signal: AbortSignal.timeout(45000),
     });
 
     if (!res.ok) { propertyCacheSet(outcode, { aggregate: null, transactions: null }, now); return null; }
