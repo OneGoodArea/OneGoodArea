@@ -1,14 +1,27 @@
 import "server-only";
 
-import type { Preset, Score, ScoreResult, Product, Signal } from "@/lib/showcase/types";
+import type {
+  Preset,
+  ScoreResult,
+  Product,
+  Signal,
+  TransactionsResult,
+  Portfolio,
+  PortfolioDetail,
+  PortfolioEnrichItem,
+  ChangeReport,
+} from "@/lib/showcase/types";
 
 const BASE_URL = process.env.INTERNAL_API_URL ?? "https://onegoodarea.onrender.com";
 const SHOWCASE_API_KEY = process.env.SHOWCASE_API_KEY ?? "";
 
 /* AR-755: attribute showcase-demo traffic in event/training analytics. The
-   API's classifyClientApp() maps this stamp to client_app: "estate-agents"
-   (same mechanism as onegoodarea-mcp-server in mcp/src/api-client.ts). */
+   API's classifyClientApp() maps each stamp to a client_app (same mechanism
+   as onegoodarea-mcp-server in mcp/src/api-client.ts). */
 const SHOWCASE_USER_AGENT = "onegoodarea-estate-agents/1.0.0";
+
+/* AR-758: the PropTech showcase stamps its own client_app: "proptech". */
+const SHOWCASE_PROP_TECH_USER_AGENT = "onegoodarea-proptech/1.0.0";
 
 class ApiError extends Error {
   constructor(
@@ -21,7 +34,11 @@ class ApiError extends Error {
   }
 }
 
-async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function apiFetch<T>(
+  path: string,
+  init: RequestInit = {},
+  userAgent: string = SHOWCASE_USER_AGENT,
+): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 60_000);
   try {
@@ -29,7 +46,7 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
       ...init,
       headers: {
         "Content-Type": "application/json",
-        "User-Agent": SHOWCASE_USER_AGENT,
+        "User-Agent": userAgent,
         ...(SHOWCASE_API_KEY ? { Authorization: `Bearer ${SHOWCASE_API_KEY}` } : {}),
         ...init.headers,
       },
@@ -106,6 +123,114 @@ export async function getScores(postcode?: string, preset?: Preset): Promise<Sco
       confidence: d.confidence,
     })),
   };
+}
+
+interface ApiTransaction {
+  date: string;
+  price: number;
+  property_type: string;
+  estate_type: string;
+}
+
+interface ApiTransactionsResponse {
+  postcode_area: string;
+  period: { from: string; to: string };
+  transaction_count: number;
+  transactions: ApiTransaction[];
+}
+
+export async function getTransactions(postcode?: string): Promise<TransactionsResult> {
+  const area = postcode ?? "M1 1AE";
+  const data = await apiFetch<ApiTransactionsResponse>(
+    `/v1/area/transactions?postcode=${encodeURIComponent(area)}`,
+    {},
+    SHOWCASE_PROP_TECH_USER_AGENT,
+  );
+  return {
+    postcodeArea: data.postcode_area,
+    period: data.period,
+    transactionCount: data.transaction_count,
+    transactions: (data.transactions ?? []).map((t) => ({
+      date: t.date,
+      price: t.price,
+      propertyType: t.property_type,
+      estateType: t.estate_type,
+    })),
+  };
+}
+
+/* ── Portfolios (Monitor product). All traffic stamps the proptech client_app
+   and resolves to the shared demo user via the SHOWCASE_API_KEY. ── */
+
+export async function listPortfolios(): Promise<Portfolio[]> {
+  const data = await apiFetch<{ portfolios: Portfolio[] }>(
+    "/v1/portfolios",
+    {},
+    SHOWCASE_PROP_TECH_USER_AGENT,
+  );
+  return data.portfolios ?? [];
+}
+
+export async function createPortfolio(name: string): Promise<Portfolio> {
+  return apiFetch<Portfolio>(
+    "/v1/portfolios",
+    { method: "POST", body: JSON.stringify({ name }) },
+    SHOWCASE_PROP_TECH_USER_AGENT,
+  );
+}
+
+export async function getPortfolio(id: string): Promise<PortfolioDetail> {
+  return apiFetch<PortfolioDetail>(
+    `/v1/portfolios/${encodeURIComponent(id)}`,
+    {},
+    SHOWCASE_PROP_TECH_USER_AGENT,
+  );
+}
+
+export async function deletePortfolio(id: string): Promise<void> {
+  await apiFetch<{ deleted: true }>(
+    `/v1/portfolios/${encodeURIComponent(id)}`,
+    { method: "DELETE" },
+    SHOWCASE_PROP_TECH_USER_AGENT,
+  );
+}
+
+export async function addPortfolioAreas(
+  id: string,
+  areas: { area: string; label?: string | null }[],
+): Promise<{ added: number; portfolio: PortfolioDetail }> {
+  return apiFetch<{ added: number; portfolio: PortfolioDetail }>(
+    `/v1/portfolios/${encodeURIComponent(id)}/areas`,
+    { method: "POST", body: JSON.stringify({ areas }) },
+    SHOWCASE_PROP_TECH_USER_AGENT,
+  );
+}
+
+export async function removePortfolioArea(id: string, area: string): Promise<void> {
+  await apiFetch<{ removed: true }>(
+    `/v1/portfolios/${encodeURIComponent(id)}/areas/${encodeURIComponent(area)}`,
+    { method: "DELETE" },
+    SHOWCASE_PROP_TECH_USER_AGENT,
+  );
+}
+
+export async function enrichPortfolio(id: string, preset?: Preset): Promise<PortfolioEnrichItem[]> {
+  const body: { preset?: Preset } = {};
+  if (preset) body.preset = preset;
+  const data = await apiFetch<{ count: number; results: PortfolioEnrichItem[] }>(
+    `/v1/portfolios/${encodeURIComponent(id)}/enrich`,
+    { method: "POST", body: JSON.stringify(body) },
+    SHOWCASE_PROP_TECH_USER_AGENT,
+  );
+  return data.results ?? [];
+}
+
+export async function getPortfolioChanges(id: string): Promise<ChangeReport> {
+  return apiFetch<ChangeReport>(
+    `/v1/portfolios/${encodeURIComponent(id)}/changes`,
+    {},
+    SHOWCASE_PROP_TECH_USER_AGENT,
+  );
 }
 
 export { ApiError };

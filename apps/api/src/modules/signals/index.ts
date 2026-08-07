@@ -36,6 +36,7 @@ import type { AreaProfile } from "@onegoodarea/contracts";
 export { buildAreaProfile, type AreaSources } from "./area-profile";
 export { queryAreas, parseAreasQuery, type AreaResult, type AreasQuery } from "./query";
 export { lookupTerminatedPostcode, type TerminatedPostcode } from "./data-sources/postcodes";
+export { getPropertyTransactions, type PropertyTransaction } from "./data-sources/land-registry";
 
 /** Geocoded area + its assembled source structs + which sources came from the
     store. The shared fetch behind getAreaProfile (signals) AND scoreArea

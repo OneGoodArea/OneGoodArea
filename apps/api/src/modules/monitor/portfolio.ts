@@ -82,6 +82,23 @@ export async function addAreas(
   return { added };
 }
 
+/** Remove a single area from a portfolio. Returns { removed: false } when the
+    area is not tracked (idempotent delete), or null when the portfolio is not
+    owned. */
+export async function removeArea(
+  userId: string,
+  portfolioId: string,
+  area: string,
+): Promise<{ removed: boolean } | null> {
+  const owned = rows(await sql`SELECT id FROM portfolios WHERE id = ${portfolioId} AND user_id = ${userId}`);
+  if (owned.length === 0) return null;
+  const res = await sql`
+    DELETE FROM portfolio_areas WHERE portfolio_id = ${portfolioId} AND area = ${area} RETURNING id
+  `;
+  if (res.length > 0) await sql`UPDATE portfolios SET updated_at = NOW() WHERE id = ${portfolioId}`;
+  return { removed: res.length > 0 };
+}
+
 /** Map with bounded concurrency (don't fan out N live-fetches at once). */
 async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   const out: R[] = new Array(items.length);

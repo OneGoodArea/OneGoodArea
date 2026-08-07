@@ -34,6 +34,12 @@ export const AddAreaRequestSchema = z.object({
 }).strict();
 export type AddAreaRequest = z.infer<typeof AddAreaRequestSchema>;
 
+/** DELETE /v1/portfolios/:id/areas/:area — remove a single tracked area. */
+export const RemoveAreaResponseSchema = z.object({
+  removed: z.literal(true),
+});
+export type RemoveAreaResponse = z.infer<typeof RemoveAreaResponseSchema>;
+
 /** A portfolio summary (list view). */
 export const PortfolioSchema = z.object({
   id: z.string(),

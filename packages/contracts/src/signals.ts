@@ -226,3 +226,42 @@ export const AreaProfileSchema = z.object({
   }),
 });
 export type AreaProfile = z.infer<typeof AreaProfileSchema>;
+
+/* ── Property transactions (the GET /v1/area/transactions response) ── */
+
+/** One raw HM Land Registry sale record for a postcode area. These are the
+    individual transactions behind the aggregated `property.*` signals — the
+    building block of the PropTech sales-history surface. Deliberately thin:
+    the Land Registry Price Paid dataset exposes price, date, property type
+    and tenure (freehold/leasehold); no street/address is published. */
+export const PropertyTransactionSchema = z.object({
+  /** ISO 8601 date the sale completed, e.g. "2026-03-14". */
+  date: z.string(),
+  /** Recorded sale price in GBP. */
+  price: z.number(),
+  /** Normalised property type: Detached, Semi-Detached, Terraced, Flat,
+      Other. */
+  property_type: z.string(),
+  /** Tenure as published by HM Land Registry: freehold / leasehold. */
+  estate_type: z.string(),
+});
+export type PropertyTransaction = z.infer<typeof PropertyTransactionSchema>;
+
+/** The response of GET /v1/area/transactions: the most recent transactions
+    for a postcode area, sorted date-descending. `transaction_count` matches
+    the aggregated `property.transaction_count` signal so a count in Signals
+    ties exactly to this list. */
+export const TransactionsResponseSchema = z.object({
+  /** The outcode the records were resolved for, e.g. "SW11". */
+  postcode_area: z.string(),
+  /** Inclusive bounds of the records returned (ISO dates). */
+  period: z.object({
+    from: z.string(),
+    to: z.string(),
+  }),
+  /** Number of transactions in this response (date-desc window). */
+  transaction_count: z.number(),
+  /** The transactions themselves, newest first. */
+  transactions: z.array(PropertyTransactionSchema),
+});
+export type TransactionsResponse = z.infer<typeof TransactionsResponseSchema>;

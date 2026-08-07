@@ -6,6 +6,7 @@ export {
   getPortfolio,
   deletePortfolio,
   addAreas,
+  removeArea,
   enrichPortfolio,
   PORTFOLIO_ADD_MAX,
   PORTFOLIO_ENRICH_MAX,

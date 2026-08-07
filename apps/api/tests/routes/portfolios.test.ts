@@ -12,7 +12,7 @@ vi.mock("@/modules/tracking/activity", () => ({ trackEvent: vi.fn() }));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn(), query: vi.fn() }));
 vi.mock("@/modules/monitor", () => ({
   createPortfolio: vi.fn(), listPortfolios: vi.fn(), getPortfolio: vi.fn(),
-  deletePortfolio: vi.fn(), addAreas: vi.fn(), enrichPortfolio: vi.fn(),
+  deletePortfolio: vi.fn(), addAreas: vi.fn(), removeArea: vi.fn(), enrichPortfolio: vi.fn(),
   detectPortfolioChanges: vi.fn(),
   PORTFOLIO_ADD_MAX: 200, PORTFOLIO_ENRICH_MAX: 50,
 }));
@@ -99,6 +99,22 @@ describe("portfolio areas + enrich", () => {
     const ok = await app.inject({ method: "POST", url: "/v1/portfolios/pf_1/areas", headers: { ...auth, "content-type": "application/json" }, payload: JSON.stringify({ areas: [{ area: "M1 1AE" }, { area: "SW1A 1AA", label: "HQ" }] }) });
     expect(ok.statusCode).toBe(200);
     expect(ok.json().added).toBe(2);
+  });
+
+  it("areas: DELETE removes a single area (404 when not owned / not tracked, 200 when removed)", async () => {
+    const m1 = encodeURIComponent("M1 1AE");
+
+    vi.mocked(monitor.removeArea).mockResolvedValue(null);
+    expect((await app.inject({ method: "DELETE", url: `/v1/portfolios/pf_x/areas/${m1}`, headers: auth })).statusCode).toBe(404);
+
+    vi.mocked(monitor.removeArea).mockResolvedValue({ removed: false });
+    expect((await app.inject({ method: "DELETE", url: `/v1/portfolios/pf_1/areas/${m1}`, headers: auth })).statusCode).toBe(404);
+
+    vi.mocked(monitor.removeArea).mockResolvedValue({ removed: true });
+    const ok = await app.inject({ method: "DELETE", url: `/v1/portfolios/pf_1/areas/${m1}`, headers: auth });
+    expect(ok.statusCode).toBe(200);
+    expect(ok.json()).toEqual({ removed: true });
+    expect(monitor.removeArea).toHaveBeenCalledWith("user_1", "pf_1", "M1 1AE");
   });
 
   /* AR-386: the route returns BOTH the added count AND the full

@@ -47,6 +47,10 @@ function Hero() {
             Try in the playground
             <span aria-hidden>→</span>
           </Link>
+          <Link href="/showcase/proptech" className="oga-btn oga-btn-secondary">
+            Try the demo workflow
+            <span aria-hidden>→</span>
+          </Link>
           <Link href="/docs" className="oga-btn oga-btn-secondary">
             See the docs
           </Link>

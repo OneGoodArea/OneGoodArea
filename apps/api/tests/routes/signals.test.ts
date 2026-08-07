@@ -16,14 +16,14 @@ vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn(), query: vi.fn() }));
 // Partial mock: keep real exports (e.g. parseAreasQuery) but stub DB-touching functions.
 vi.mock("@/modules/signals", async (orig) => {
   const actual = await orig() as object;
-  return { ...actual, getAreaProfile: vi.fn(), queryAreas: vi.fn(), areaNotFoundBody: vi.fn() };
+  return { ...actual, getAreaProfile: vi.fn(), queryAreas: vi.fn(), areaNotFoundBody: vi.fn(), getPropertyTransactions: vi.fn() };
 });
 
 import { buildApp } from "@/app";
 import { validateApiKey } from "@/modules/api-keys";
 import { rateLimit } from "@/infrastructure/rate-limit";
 import { hasApiAccess, canMakeApiCall } from "@/modules/usage";
-import { getAreaProfile, queryAreas, areaNotFoundBody } from "@/modules/signals";
+import { getAreaProfile, queryAreas, areaNotFoundBody, getPropertyTransactions } from "@/modules/signals";
 import { trackEvent } from "@/modules/tracking/activity";
 import { sql } from "@/infrastructure/db/client";
 
@@ -39,6 +39,7 @@ const mockApiAccess = vi.mocked(hasApiAccess);
 const mockProfile = vi.mocked(getAreaProfile);
 const mockQuery = vi.mocked(queryAreas);
 const mockAreaNotFound = vi.mocked(areaNotFoundBody);
+const mockTransactions = vi.mocked(getPropertyTransactions);
 
 // ── v1-area + v1-signals shared profile ────────────────────────────
 
@@ -80,6 +81,10 @@ beforeEach(() => {
     { geo_type: "lsoa", geo_code: "E01000001", value: 1, normalized_value: 0.01, percentile: 1 },
   ]);
   mockAreaNotFound.mockResolvedValue({ error: 'Could not resolve area "x". Provide a UK postcode or place name.' });
+  mockTransactions.mockResolvedValue([
+    { date: "2026-03-14", price: 300000, property_type: "Detached", estate_type: "freehold" },
+    { date: "2026-01-08", price: 200000, property_type: "Flat", estate_type: "leasehold" },
+  ]);
 });
 
 // ── v1-area.test.ts ─────────────────────────────────────────────────
@@ -322,6 +327,58 @@ describe("GET /v1/areas", () => {
     );
     expect(trackEvent).toHaveBeenCalledWith("api.areas.queried", "user_1", expect.objectContaining({ signal: "deprivation.imd_decile", results: 1 }), null);
     expect(res.headers["x-engine-version"]).toBeDefined();
+  });
+});
+
+// ── GET /v1/area/transactions (AR-758) ─────────────────────────────
+
+describe("GET /v1/area/transactions", () => {
+  it("404s like an unknown route when the dark flag is off (before any auth)", async () => {
+    process.env.OGA_SIGNALS_API = "false";
+    const res = await apiGet("/v1/area/transactions?postcode=M1%201AE");
+    expect(res.statusCode).toBe(404);
+  });
+
+  it("401s without a bearer token", async () => {
+    const res = await apiGet("/v1/area/transactions?postcode=M1%201AE", false);
+    expect(res.statusCode).toBe(401);
+    expect(mockTransactions).not.toHaveBeenCalled();
+  });
+
+  it("400s when no postcode is provided", async () => {
+    const res = await apiGet("/v1/area/transactions");
+    expect(res.statusCode).toBe(400);
+    expect(mockTransactions).not.toHaveBeenCalled();
+  });
+
+  it("400s on an invalid postcode", async () => {
+    const res = await apiGet("/v1/area/transactions?postcode=xx%3Byy");
+    expect(res.statusCode).toBe(400);
+    expect(mockTransactions).not.toHaveBeenCalled();
+  });
+
+  it("404s when the data source has no transactions", async () => {
+    mockTransactions.mockResolvedValue([]);
+    const res = await apiGet("/v1/area/transactions?postcode=M1%201AE");
+    expect(res.statusCode).toBe(404);
+  });
+
+  it("200s on the happy path: returns period, count and transactions newest-first", async () => {
+    const res = await apiGet("/v1/area/transactions?postcode=M1%201AE");
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.postcode_area).toBe("M1");
+    expect(body.period).toEqual({ from: "2026-01-08", to: "2026-03-14" });
+    expect(body.transaction_count).toBe(2);
+    expect(body.transactions[0]).toEqual({ date: "2026-03-14", price: 300000, property_type: "Detached", estate_type: "freehold" });
+    expect(body.transactions[1].property_type).toBe("Flat");
+    expect(trackEvent).toHaveBeenCalledWith("api.area.transactions", "user_1", expect.objectContaining({ transactions: 2 }), null);
+  });
+
+  it("meters the call via usage", async () => {
+    const res = await apiGet("/v1/area/transactions?postcode=M1%201AE");
+    expect(res.statusCode).toBe(200);
+    expect(canMakeApiCall).toHaveBeenCalled();
   });
 });
 

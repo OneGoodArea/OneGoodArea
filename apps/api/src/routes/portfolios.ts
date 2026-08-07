@@ -1,11 +1,11 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import { isIntent, PortfolioSchema, PortfolioDetailSchema, PortfolioEnrichItemSchema, ChangeReportSchema } from "@onegoodarea/contracts";
+import { isIntent, PortfolioSchema, PortfolioDetailSchema, PortfolioEnrichItemSchema, ChangeReportSchema, RemoveAreaResponseSchema } from "@onegoodarea/contracts";
 import { requireApiAccess, requireApiAccessWithOrg } from "../shared/auth-api";
 import { effectiveEngineVersionForCaller } from "../shared/bundles";
 import { sendAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { getConfig } from "../infrastructure/config";
-import { createPortfolio, listPortfolios, getPortfolio, deletePortfolio, addAreas, enrichPortfolio, detectPortfolioChanges, PORTFOLIO_ADD_MAX, type Baseline } from "../modules/monitor";
+import { createPortfolio, listPortfolios, getPortfolio, deletePortfolio, addAreas, removeArea, enrichPortfolio, detectPortfolioChanges, PORTFOLIO_ADD_MAX, type Baseline } from "../modules/monitor";
 import { trackEvent } from "../modules/tracking/activity";
 
 import type { Intent } from "@onegoodarea/contracts";
@@ -228,6 +228,40 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
       } catch (error) {
         if (sendAppError(reply, error)) return;
         logger.error("[v1/portfolios/:id/areas] error:", error);
+        return reply.code(500).send({ error: "Internal server error" });
+      }
+    });
+
+    app.delete("/v1/portfolios/:id/areas/:area",
+      {
+      schema: {
+            "tags": [
+                "Portfolios"
+            ],
+            "summary": "Remove area from portfolio",
+            "description": "Remove a single tracked area from a portfolio.",
+            "security": [{ "bearerAuth": [] }],
+            "params": { "type": "object", "required": ["id", "area"], "properties": { "id": { "type": "string" }, "area": { "type": "string" } } },
+            response: {
+              200: RemoveAreaResponseSchema,
+              404: z.object({ error: z.string() }),
+              500: z.object({ error: z.string() }),
+            },
+        },
+      }, async (request, reply) => {
+      try {
+        const ctx = await guardSignalsCtx(request, reply);
+        if (!ctx) return reply;
+        const { userId } = ctx;
+        const { id, area } = request.params as { id: string; area: string };
+        const result = await removeArea(userId, id, area);
+        if (!result) return reply.code(404).send({ error: "Portfolio not found" });
+        if (!result.removed) return reply.code(404).send({ error: "Area not in portfolio" });
+        trackEvent("api.portfolio.area_removed", userId, { portfolioId: id, area }, ctx.orgId);
+        return reply.code(200).send({ removed: true });
+      } catch (error) {
+        if (sendAppError(reply, error)) return;
+        logger.error("[v1/portfolios/:id/areas/:area] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
     });

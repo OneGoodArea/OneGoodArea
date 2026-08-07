@@ -1,12 +1,12 @@
 import type { FastifyInstance } from "fastify";
-import { isSignalCategory, SIGNAL_CATEGORIES, AreaProfileSchema } from "@onegoodarea/contracts";
+import { isSignalCategory, SIGNAL_CATEGORIES, AreaProfileSchema, TransactionsResponseSchema } from "@onegoodarea/contracts";
 import { requireApiAccessWithOrg } from "../shared/auth-api";
 import { resolveBundleForCaller, effectiveEngineVersionForCaller } from "../shared/bundles";
 import { sendAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { getConfig } from "../infrastructure/config";
 import { validateLocationInput } from "../infrastructure/validation/validator";
-import { getAreaProfile, queryAreas, parseAreasQuery, areaNotFoundBody } from "../modules/signals";
+import { getAreaProfile, queryAreas, parseAreasQuery, areaNotFoundBody, getPropertyTransactions } from "../modules/signals";
 import { filterSignalsByBundle } from "../modules/orgs/bundles";
 import { trackEvent } from "../modules/tracking/activity";
 
@@ -114,6 +114,72 @@ export function registerSignalsRoutes(app: FastifyInstance): void {
       } catch (error) {
         if (sendAppError(reply, error)) return;
         logger.error("[v1/area] error:", error);
+        return reply.code(500).send({ error: "Internal server error" });
+      }
+    });
+
+    app.get("/v1/area/transactions",
+      {
+      schema: {
+            "tags": [
+                "Signals"
+            ],
+            "summary": "Get area sale transactions",
+            "description": "Individual HM Land Registry sale records for a UK postcode, newest first (last 12 months). The count here matches the aggregated property.transaction_count signal.",
+            "security": [{ "bearerAuth": [] }, { "bridgeToken": [] }],
+            "querystring": {
+              "type": "object",
+              "required": ["postcode"],
+              "properties": {
+                "postcode": { "type": "string", "description": "UK postcode (e.g. 'SW11 3ES')." },
+              },
+              "example": { "postcode": "SW11 3ES" },
+            },
+            response: {
+              200: TransactionsResponseSchema,
+              400: z.object({ error: z.string() }),
+              401: z.object({ error: z.string() }),
+              403: z.object({ error: z.string() }),
+              404: z.object({ error: z.string() }),
+              429: z.object({ error: z.string() }),
+              500: z.object({ error: z.string() }),
+            },
+        },
+      }, async (request, reply) => {
+      try {
+        if (!getConfig().signalsApiEnabled) {
+          return reply.code(404).send({ error: "Not found" });
+        }
+
+        const ctx = await requireApiAccessWithOrg(request, reply);
+        if (!ctx) return reply; // 401 / 403 / 429 already sent
+
+        const q = request.query as { postcode?: unknown };
+        const rawPostcode = typeof q.postcode === "string" ? q.postcode : undefined;
+        const locationCheck = validateLocationInput(rawPostcode);
+        if (!locationCheck.valid) return reply.code(400).send({ error: locationCheck.error });
+
+        const transactions = await getPropertyTransactions(locationCheck.sanitized);
+        if (!transactions || transactions.length === 0) {
+          return reply.code(404).send({ error: `No sale transactions in the last 12 months for "${locationCheck.sanitized}".` });
+        }
+
+        trackEvent("api.area.transactions", ctx.userId, {
+          area: locationCheck.sanitized,
+          transactions: transactions.length,
+        }, ctx.orgId);
+
+        const first = transactions[0].date;
+        const last = transactions[transactions.length - 1].date;
+        return reply.code(200).send({
+          postcode_area: locationCheck.sanitized.split(" ")[0].toUpperCase(),
+          period: { from: last, to: first },
+          transaction_count: transactions.length,
+          transactions,
+        });
+      } catch (error) {
+        if (sendAppError(reply, error)) return;
+        logger.error("[v1/area/transactions] error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
     });

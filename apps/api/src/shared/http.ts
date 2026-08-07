@@ -23,6 +23,7 @@ export function classifyClientApp(userAgent: string | null | undefined): {
 
   let client_app: ClientApp = "other";
   if (ua.includes("onegoodarea-estate-agents")) client_app = "estate-agents";
+  else if (ua.includes("onegoodarea-proptech")) client_app = "proptech";
   else if (ua.includes("claude-code")) client_app = "claude-code";
   else if (ua.includes("cursor")) client_app = "cursor";
   else if (ua.includes("claude-ai") || ua.includes("claude/")) client_app = "claude-desktop";
