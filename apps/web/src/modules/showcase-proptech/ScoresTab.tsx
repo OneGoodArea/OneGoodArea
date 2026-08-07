@@ -68,7 +68,12 @@ export function ScoresTab({ postcode, initialResult }: ScoresTabProps) {
         ))}
       </div>
 
-      {loading && <p className="prx-scores__hint">Loading scores…</p>}
+      {loading && (
+        <p className="prx-scores__loading">
+          <span className="prx-spinner" aria-hidden />
+          Loading scores…
+        </p>
+      )}
       {error && <p className="prx-scores__error">{error}</p>}
 
       {!loading && !error && !result && !postcode && (

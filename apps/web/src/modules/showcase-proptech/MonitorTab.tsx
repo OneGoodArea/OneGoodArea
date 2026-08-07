@@ -237,7 +237,12 @@ export function MonitorTab({ postcode = "" }: MonitorTabProps) {
 
   return (
     <div className="prx-monitor">
-      {loading && <p className="prx-scores__hint">Loading portfolios…</p>}
+      {loading && (
+        <p className="prx-scores__loading">
+          <span className="prx-spinner" aria-hidden />
+          Loading portfolios…
+        </p>
+      )}
       {error && <p className="prx-scores__error">{error}</p>}
       {notice && <p className="prx-monitor__notice">{notice}</p>}
 
