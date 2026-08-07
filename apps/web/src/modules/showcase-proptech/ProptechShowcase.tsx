@@ -89,7 +89,7 @@ export function ProptechShowcase({
       {activeTab === "scores" && (
         <ScoresTab postcode={initialPostcode ?? ""} initialResult={initialScore} />
       )}
-      {activeTab === "monitor" && <MonitorTab />}
+      {activeTab === "monitor" && <MonitorTab postcode={initialPostcode ?? ""} />}
     </div>
   );
 }
