@@ -1,0 +1,44 @@
+export type TabId = "signals" | "scores" | "monitor";
+
+export const TABS: { id: TabId; label: string; blurb: string }[] = [
+  {
+    id: "signals",
+    label: "Signals",
+    blurb: "Source-backed area metrics for any UK postcode, one call.",
+  },
+  {
+    id: "scores",
+    label: "Scores",
+    blurb: "One headline number, weighted for the decision you are making.",
+  },
+  {
+    id: "monitor",
+    label: "Monitor",
+    blurb: "Watch a portfolio of areas month over month. Static demo data.",
+  },
+];
+
+export const SIGNAL_CATEGORY_LABELS: Record<string, string> = {
+  crime: "Crime & Safety",
+  deprivation: "Deprivation",
+  property: "Property Market",
+  schools: "Schools & Education",
+  transport: "Transport & Connectivity",
+  environment: "Environment & Flood Risk",
+};
+
+export const PRESET_LABELS: Record<string, string> = {
+  moving: "Moving home",
+  business: "Business growth",
+  investing: "Investing",
+  research: "Research",
+};
+
+export const LINEAGE: { source: string; note: string }[] = [
+  { source: "Land Registry", note: "Price Paid · monthly" },
+  { source: "Ofsted", note: "school ratings" },
+  { source: "police.uk", note: "street-level crime" },
+  { source: "Environment Agency", note: "flood risk" },
+];
+
+export const UK_POSTCODE_RE = /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i;
