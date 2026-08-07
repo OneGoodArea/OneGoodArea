@@ -68,8 +68,7 @@ export default async function ProptechShowcasePage({
           with the area already explained.
         </h1>
         <p className="prx-hero__lead">
-          Source-backed schools, crime, prices, transport and a defensible score
-          for any UK postcode — from one authenticated call.
+          Source-backed schools, crime, prices, transport and score for any UK postcode.
         </p>
       </section>
 
