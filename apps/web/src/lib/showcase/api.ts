@@ -1,14 +1,24 @@
 import "server-only";
 
-import type { Preset, Score, ScoreResult, Product, Signal } from "@/lib/showcase/types";
+import type {
+  Preset,
+  Score,
+  ScoreResult,
+  Product,
+  Signal,
+  TransactionsResult,
+} from "@/lib/showcase/types";
 
 const BASE_URL = process.env.INTERNAL_API_URL ?? "https://onegoodarea.onrender.com";
 const SHOWCASE_API_KEY = process.env.SHOWCASE_API_KEY ?? "";
 
 /* AR-755: attribute showcase-demo traffic in event/training analytics. The
-   API's classifyClientApp() maps this stamp to client_app: "estate-agents"
-   (same mechanism as onegoodarea-mcp-server in mcp/src/api-client.ts). */
+   API's classifyClientApp() maps each stamp to a client_app (same mechanism
+   as onegoodarea-mcp-server in mcp/src/api-client.ts). */
 const SHOWCASE_USER_AGENT = "onegoodarea-estate-agents/1.0.0";
+
+/* AR-758: the PropTech showcase stamps its own client_app: "proptech". */
+const SHOWCASE_PROP_TECH_USER_AGENT = "onegoodarea-proptech/1.0.0";
 
 class ApiError extends Error {
   constructor(
@@ -21,7 +31,11 @@ class ApiError extends Error {
   }
 }
 
-async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function apiFetch<T>(
+  path: string,
+  init: RequestInit = {},
+  userAgent: string = SHOWCASE_USER_AGENT,
+): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 60_000);
   try {
@@ -29,7 +43,7 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
       ...init,
       headers: {
         "Content-Type": "application/json",
-        "User-Agent": SHOWCASE_USER_AGENT,
+        "User-Agent": userAgent,
         ...(SHOWCASE_API_KEY ? { Authorization: `Bearer ${SHOWCASE_API_KEY}` } : {}),
         ...init.headers,
       },
@@ -104,6 +118,40 @@ export async function getScores(postcode?: string, preset?: Preset): Promise<Sco
       product: "scores" as Product,
       weight: d.weight,
       confidence: d.confidence,
+    })),
+  };
+}
+
+interface ApiTransaction {
+  date: string;
+  price: number;
+  property_type: string;
+  estate_type: string;
+}
+
+interface ApiTransactionsResponse {
+  postcode_area: string;
+  period: { from: string; to: string };
+  transaction_count: number;
+  transactions: ApiTransaction[];
+}
+
+export async function getTransactions(postcode?: string): Promise<TransactionsResult> {
+  const area = postcode ?? "M1 1AE";
+  const data = await apiFetch<ApiTransactionsResponse>(
+    `/v1/area/transactions?postcode=${encodeURIComponent(area)}`,
+    {},
+    SHOWCASE_PROP_TECH_USER_AGENT,
+  );
+  return {
+    postcodeArea: data.postcode_area,
+    period: data.period,
+    transactionCount: data.transaction_count,
+    transactions: (data.transactions ?? []).map((t) => ({
+      date: t.date,
+      price: t.price,
+      propertyType: t.property_type,
+      estateType: t.estate_type,
     })),
   };
 }

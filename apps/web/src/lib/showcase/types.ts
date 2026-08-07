@@ -27,6 +27,20 @@ export interface ScoreResult {
   dimensions: Score[];
 }
 
+export interface PropertyTransaction {
+  date: string;
+  price: number;
+  propertyType: string;
+  estateType: string;
+}
+
+export interface TransactionsResult {
+  postcodeArea: string;
+  period: { from: string; to: string };
+  transactionCount: number;
+  transactions: PropertyTransaction[];
+}
+
 export interface Weight {
   product: Product;
   value: number;
