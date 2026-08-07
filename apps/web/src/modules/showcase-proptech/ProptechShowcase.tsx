@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import type { ScoreResult, Signal, TransactionsResult } from "@/lib/showcase/types";
 import { TABS, UK_POSTCODE_RE, type TabId } from "./constants";
 import { SignalsTab } from "./SignalsTab";
@@ -22,6 +22,7 @@ export function ProptechShowcase({
   initialTransactions,
 }: ProptechShowcaseProps) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [input, setInput] = useState(initialPostcode ?? "");
   const [activeTab, setActiveTab] = useState<TabId>("signals");
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +35,9 @@ export function ProptechShowcase({
       return;
     }
     setError(null);
-    router.push(`/showcase/proptech?postcode=${encodeURIComponent(trimmed)}`);
+    startTransition(() => {
+      router.push(`/showcase/proptech?postcode=${encodeURIComponent(trimmed)}`);
+    });
   }
 
   return (
@@ -55,11 +58,17 @@ export function ProptechShowcase({
             placeholder="e.g. M21 9PN"
             className="prx-postcode__input"
           />
-          <button type="submit" className="prx-postcode__btn">
-            Search
+          <button type="submit" className="prx-postcode__btn" disabled={isPending}>
+            {isPending ? "Searching…" : "Search"}
           </button>
         </form>
         {error && <p className="prx-showcase__error">{error}</p>}
+        {isPending && (
+          <p className="prx-showcase__searching" role="status">
+            <span className="prx-spinner prx-spinner--sm" aria-hidden />
+            Searching {input.trim().toUpperCase()}…
+          </p>
+        )}
         {initialPostcode && !error && (
           <span className="prx-showcase__current">{initialPostcode}</span>
         )}

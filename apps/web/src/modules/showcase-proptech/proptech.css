@@ -130,6 +130,21 @@
   margin: 0;
 }
 
+.prx-showcase__searching {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--prx-ink-muted);
+  margin: 0;
+}
+
+.prx-spinner--sm {
+  width: 12px;
+  height: 12px;
+  border-width: 1.5px;
+}
+
 .prx-showcase__current {
   font-family: var(--prx-mono);
   font-size: 12px;
