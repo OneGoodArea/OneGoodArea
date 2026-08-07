@@ -1,743 +1,287 @@
-/* /pricing page CSS. Brand v3 (AR-204 close-out sweep 3/16).
-   Co-located, zero inline styles in client.tsx.
+/* /pricing - Founding Pilot Partners (Plan 075). Same bespoke bar as
+   /methodology, /docs/api-reference, /docs/mcp and /changelog: a light hero with
+   dots and a signature card (the programme), alternating light / cream / dark
+   shells, weight-600 headers, and strictly two-colour with a single green accent
+   (the live "applications open" status). Compact. */
 
-   Surface plan:
-     Hero               DARK
-     PlanGrid            cream (own CSS in _shared/plan-grid.css)
-     Enterprise callout cream-quiet
-     Feature table       cream
-     FAQ                cream-quiet
-     Final CTA           DARK
-*/
-
-/* ============================================================
-   SHARED — page-scoped eyebrow helpers
-   ============================================================ */
-.oga-pricing .oga-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--oga-fg-muted);
-}
-.oga-pricing .oga-eyebrow-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--oga-ink);
-  display: inline-block;
-}
-.oga-pricing .oga-eyebrow--inverse {
-  color: rgba(250, 248, 244, 0.65);
-}
-.oga-pricing .oga-eyebrow--inverse .oga-eyebrow-dot {
+.oga-pricing {
+  min-height: 100vh;
   background: var(--oga-white);
+  color: var(--oga-fg);
 }
 
 /* ============================================================
-   HERO (DARK)
+   Section shells
    ============================================================ */
+
+.oga-pricing-sec {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(52px, 7.5vh, 100px) clamp(20px, 5vw, 80px);
+}
+.oga-pricing-sec--light { background: var(--oga-white); }
+.oga-pricing-sec--quiet { background: var(--oga-canvas); }
+.oga-pricing-sec--dark { background: var(--oga-ink); }
+
+.oga-pricing__wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================================
+   Section header
+   ============================================================ */
+
+.oga-pricing-head { max-width: 760px; margin-bottom: clamp(32px, 4.5vh, 52px); }
+.oga-pricing-head__eyebrow {
+  display: inline-flex; align-items: center; gap: 12px;
+  font-family: var(--oga-font-mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--oga-fg-muted); margin-bottom: 18px;
+}
+.oga-pricing-head__num { color: var(--oga-fg); font-weight: 500; }
+.oga-pricing-head__line { width: 30px; height: 1px; background: var(--oga-border); display: inline-block; }
+.oga-pricing-head__title {
+  font-family: var(--oga-font-sans); font-size: clamp(27px, 3.6vw, 44px); line-height: 1.06;
+  letter-spacing: -0.03em; font-weight: 600; color: var(--oga-fg); margin: 0 0 18px;
+}
+.oga-pricing-head__lead {
+  font-family: var(--oga-font-sans); font-size: clamp(15px, 1.3vw, 17px); line-height: 1.6;
+  color: var(--oga-fg-muted); margin: 0; max-width: 64ch;
+}
+
+/* ============================================================
+   Hero (light, centred, dots + programme card)
+   ============================================================ */
+
 .oga-pricing-hero {
-  padding: clamp(56px, 7vw, 88px) 24px clamp(40px, 5vw, 56px);
+  position: relative;
+  overflow: hidden;
+  background: var(--oga-white);
+  padding: clamp(52px, 8vh, 100px) clamp(20px, 5vw, 80px) clamp(56px, 8vh, 104px);
+  text-align: center;
+}
+.oga-pricing-hero__dots {
+  position: absolute; inset: 0;
+  background-image: radial-gradient(var(--oga-ink-10, rgba(26, 28, 31, 0.09)) 1px, transparent 1px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 28%, #000 0%, transparent 75%);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 28%, #000 0%, transparent 75%);
+  opacity: 0.5; pointer-events: none;
 }
 .oga-pricing-hero__inner {
-  max-width: 920px;
-  margin: 0 auto;
+  position: relative; z-index: 1; max-width: 800px; margin: 0 auto;
+  display: flex; flex-direction: column; align-items: center;
 }
 .oga-pricing-hero__eyebrow {
-  margin-bottom: 22px;
+  display: inline-flex; align-items: center; gap: 9px;
+  font-family: var(--oga-font-mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--oga-fg-muted); margin-bottom: 24px;
 }
+.oga-pricing-hero__eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: #2F7A3D; }
 .oga-pricing-hero__title {
-  font-family: var(--oga-font-sans);
-  font-size: clamp(36px, 5vw, 60px);
-  font-weight: 500;
-  line-height: 1.06;
-  letter-spacing: -0.02em;
-  color: var(--oga-white);
-  text-wrap: balance;
-  margin: 0 0 22px;
+  font-family: var(--oga-font-sans); font-size: clamp(34px, 5.2vw, 58px); line-height: 1.04;
+  letter-spacing: -0.03em; font-weight: 600; color: var(--oga-fg); margin: 0 0 22px; max-width: 17ch;
 }
 .oga-pricing-hero__lead {
-  font-family: var(--oga-font-sans);
-  font-size: clamp(15px, 1.3vw, 18px);
-  line-height: 1.55;
-  color: rgba(250, 248, 244, 0.7);
-  text-wrap: pretty;
-  margin: 0 0 36px;
-  max-width: 680px;
+  font-family: var(--oga-font-sans); font-size: clamp(15px, 1.4vw, 18px); line-height: 1.6;
+  color: var(--oga-fg-muted); margin: 0 0 30px; max-width: 56ch;
 }
-.oga-pricing-hero__stamps {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+.oga-pricing-hero__ctas { display: inline-flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+
+/* compact programme strip (replaces the hero card) */
+.oga-pricing-hero__strip {
+  list-style: none; margin: clamp(28px, 4vh, 40px) 0 0; padding: 0;
+  display: inline-flex; flex-wrap: wrap; justify-content: center; align-items: center; row-gap: 8px;
 }
-.oga-pricing-hero__stamp {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 14px;
-  border: 1px solid rgba(250, 248, 244, 0.18);
-  border-radius: var(--oga-radius-sm);
-  background: rgba(250, 248, 244, 0.04);
+.oga-pricing-hero__strip-item {
+  font-family: var(--oga-font-sans); font-size: 13.5px; color: var(--oga-fg-muted);
+  padding: 0 clamp(12px, 1.6vw, 18px); border-right: 1px solid var(--oga-border); line-height: 1.2;
 }
-.oga-pricing-hero__stamp-label {
-  font-family: var(--oga-font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: rgba(250, 248, 244, 0.55);
+.oga-pricing-hero__strip-item:last-child { border-right: 0; }
+
+/* programme card (the signature) */
+.oga-pricing-prog {
+  background: var(--oga-white); border: 1px solid var(--oga-border); border-radius: 18px;
+  padding: 22px 26px; text-align: left;
+  box-shadow: 0 40px 80px -40px rgba(26, 28, 31, 0.4), 0 10px 30px -18px rgba(26, 28, 31, 0.25);
 }
-.oga-pricing-hero__stamp-value {
-  font-family: var(--oga-font-mono);
-  font-size: 11.5px;
-  letter-spacing: 0.04em;
-  color: var(--oga-white);
+.oga-pricing-prog__head {
+  display: flex; align-items: center; gap: 9px;
+  font-family: var(--oga-font-mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--oga-fg-subtle); padding-bottom: 16px; border-bottom: 1px solid var(--oga-border);
 }
+.oga-pricing-prog__head-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--oga-fg-subtle); }
+.oga-pricing-prog__rows { list-style: none; margin: 0; padding: 0; }
+.oga-pricing-prog__row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+  padding: 13px 0; border-bottom: 1px solid var(--oga-border);
+}
+.oga-pricing-prog__k { font-family: var(--oga-font-sans); font-size: 14px; color: var(--oga-fg-muted); }
+.oga-pricing-prog__v { font-family: var(--oga-font-sans); font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--oga-fg); text-align: right; }
+.oga-pricing-prog__foot {
+  display: inline-flex; align-items: center; gap: 8px; margin-top: 15px;
+  font-family: var(--oga-font-mono); font-size: 11px; letter-spacing: 0.04em; color: var(--oga-fg-muted);
+}
+.oga-pricing-prog__foot-dot { width: 6px; height: 6px; border-radius: 50%; background: #2F7A3D; }
 
 /* ============================================================
-   ENTERPRISE CALLOUT (cream-quiet)
+   01 The plans (light) - enterprise packages
    ============================================================ */
-.oga-pricing-ent {
-  padding: clamp(40px, 5vw, 56px) 24px;
+
+.oga-pricing-plans__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+@media (max-width: 900px) { .oga-pricing-plans__grid { grid-template-columns: 1fr; max-width: 440px; margin: 0 auto; } }
+
+.oga-pricing-plan {
+  position: relative; display: flex; flex-direction: column;
+  border: 1px solid var(--oga-border); border-radius: 18px; background: var(--oga-white);
+  padding: clamp(24px, 2.6vw, 32px);
 }
-.oga-pricing-ent__inner {
-  max-width: 1240px;
-  margin: 0 auto;
+.oga-pricing-plan--featured {
+  background: var(--oga-ink); border-color: transparent;
+  box-shadow: 0 40px 80px -44px rgba(26, 28, 31, 0.5);
 }
-.oga-pricing-ent__card {
-  background: var(--oga-ink);
-  color: var(--oga-white);
-  border-radius: 4px;
-  padding: clamp(28px, 4vw, 44px);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 32px;
-  align-items: center;
+.oga-pricing-plan__badge {
+  position: absolute; top: -10px; left: clamp(24px, 2.6vw, 32px);
+  font-family: var(--oga-font-mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--oga-ink); background: var(--oga-white); border-radius: 999px; padding: 4px 11px;
 }
-@media (max-width: 880px) {
-  .oga-pricing-ent__card {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
+.oga-pricing-plan__name {
+  font-family: var(--oga-font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--oga-fg-muted); margin-bottom: 16px;
 }
-.oga-pricing-ent__eyebrow {
-  margin-bottom: 14px;
-  color: rgba(250, 248, 244, 0.65);
+.oga-pricing-plan__price {
+  font-family: var(--oga-font-sans); font-size: clamp(26px, 2.6vw, 32px); font-weight: 600;
+  letter-spacing: -0.02em; color: var(--oga-fg); display: flex; align-items: baseline; gap: 7px;
 }
-.oga-pricing-ent__eyebrow .oga-eyebrow-dot {
-  background: var(--oga-white);
+.oga-pricing-plan__price-unit { font-family: var(--oga-font-mono); font-size: 13px; font-weight: 400; color: var(--oga-fg-muted); }
+.oga-pricing-plan__price-note { font-family: var(--oga-font-mono); font-size: 11px; letter-spacing: 0.02em; color: var(--oga-fg-subtle); margin-top: 5px; }
+.oga-pricing-plan__tagline {
+  font-family: var(--oga-font-sans); font-size: 14px; line-height: 1.55; color: var(--oga-fg-muted);
+  margin: 16px 0 20px; padding-bottom: 20px; border-bottom: 1px solid var(--oga-border);
 }
-.oga-pricing-ent__title {
-  font-family: var(--oga-font-sans);
-  font-size: clamp(22px, 2.8vw, 30px);
-  font-weight: 500;
-  line-height: 1.15;
-  letter-spacing: -0.014em;
-  color: var(--oga-white);
-  text-wrap: balance;
-  margin: 0 0 12px;
-  max-width: 56ch;
+.oga-pricing-plan__features { list-style: none; margin: 0 0 24px; padding: 0; display: grid; gap: 11px; }
+.oga-pricing-plan__feature { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; font-family: var(--oga-font-sans); font-size: 14px; line-height: 1.45; color: var(--oga-fg); }
+.oga-pricing-plan__check { display: inline-flex; color: var(--oga-fg); margin-top: 1px; opacity: 0.75; }
+.oga-pricing-plan__cta { margin-top: auto; width: 100%; justify-content: center; }
+
+/* Developer: slim free option under the plans */
+.oga-pricing-devbar {
+  display: flex; align-items: center; gap: 14px 24px; flex-wrap: wrap;
+  margin-top: 16px; padding: 18px clamp(20px, 2.4vw, 28px);
+  border: 1px solid var(--oga-border); border-radius: 14px; background: var(--oga-canvas);
 }
-.oga-pricing-ent__lead {
-  font-family: var(--oga-font-sans);
-  font-size: 14.5px;
-  line-height: 1.6;
-  color: rgba(250, 248, 244, 0.7);
-  text-wrap: pretty;
-  margin: 0;
-  max-width: 56ch;
+.oga-pricing-devbar__lead { display: inline-flex; align-items: baseline; gap: 12px; flex: 0 0 auto; }
+.oga-pricing-devbar__name { font-family: var(--oga-font-sans); font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: var(--oga-fg); }
+.oga-pricing-devbar__price { font-family: var(--oga-font-mono); font-size: 12.5px; color: var(--oga-fg-muted); }
+.oga-pricing-devbar__tag { flex: 1 1 260px; min-width: 220px; margin: 0; font-family: var(--oga-font-sans); font-size: 13.5px; line-height: 1.5; color: var(--oga-fg-muted); }
+.oga-pricing-devbar__cta { flex: 0 0 auto; }
+
+.oga-pricing-plans__note {
+  margin: 22px 0 0; text-align: center;
+  font-family: var(--oga-font-sans); font-size: 13.5px; line-height: 1.55; color: var(--oga-fg-muted);
 }
-.oga-pricing-ent__cta {
-  background: var(--oga-white);
-  color: var(--oga-ink);
-  border-color: var(--oga-white);
+.oga-pricing-plans__note-link { color: var(--oga-fg); border-bottom: 1px solid var(--oga-border); text-decoration: none; }
+.oga-pricing-plans__note-link:hover { border-color: var(--oga-fg); }
+
+/* collapsible plan comparison */
+.oga-pricing-compare { margin-top: 26px; border-top: 1px solid var(--oga-border); }
+.oga-pricing-compare__toggle {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 20px 0; cursor: pointer; list-style: none;
+  font-family: var(--oga-font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--oga-fg);
 }
-.oga-pricing-ent__cta:hover {
-  background: var(--oga-white);
-  border-color: var(--oga-white);
-  filter: brightness(0.94);
+.oga-pricing-compare__toggle::-webkit-details-marker { display: none; }
+.oga-pricing-compare__chevron {
+  width: 8px; height: 8px; margin-top: -4px;
+  border-right: 1.6px solid var(--oga-fg-muted); border-bottom: 1.6px solid var(--oga-fg-muted);
+  transform: rotate(45deg); transition: transform 0.2s ease;
 }
+.oga-pricing-compare[open] .oga-pricing-compare__chevron { transform: rotate(-135deg); margin-top: 2px; }
+.oga-pricing-compare__wrap { overflow-x: auto; padding-bottom: 8px; }
+.oga-pricing-compare__table { width: 100%; border-collapse: collapse; min-width: 660px; }
+.oga-pricing-compare__th {
+  font-family: var(--oga-font-sans); font-size: 13px; font-weight: 600; color: var(--oga-fg);
+  text-align: center; padding: 14px 12px; border-bottom: 1px solid var(--oga-border); vertical-align: bottom;
+}
+.oga-pricing-compare__th--feature {
+  text-align: left; font-family: var(--oga-font-mono); font-size: 10.5px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--oga-fg-muted); font-weight: 500;
+}
+.oga-pricing-compare__td {
+  text-align: center; padding: 12px; border-bottom: 1px solid var(--oga-border);
+  font-family: var(--oga-font-sans); font-size: 13.5px; color: var(--oga-fg);
+}
+.oga-pricing-compare__td--feature { text-align: left; color: var(--oga-fg-muted); }
+.oga-pricing-compare__th--highlight,
+.oga-pricing-compare__td--highlight { background: var(--oga-canvas); }
+.oga-pricing-compare__check { color: var(--oga-fg); font-size: 14px; }
+.oga-pricing-compare__dash { color: var(--oga-fg-subtle); }
+.oga-pricing-compare__text { font-family: var(--oga-font-mono); font-size: 12px; color: var(--oga-fg-muted); }
 
 /* ============================================================
-   FEATURE TABLE (cream)
+   02 The sprint (quiet, light) - 4-phase timeline
    ============================================================ */
-.oga-pricing-table {
-  background: var(--oga-canvas);
-  padding: clamp(48px, 6vw, 72px) 24px;
-}
-.oga-pricing-table__inner {
-  max-width: 1240px;
-  margin: 0 auto;
-}
-.oga-pricing-table__head {
-  margin-bottom: 36px;
-  max-width: 720px;
-}
-.oga-pricing-table__eyebrow {
-  margin-bottom: 16px;
-}
-.oga-pricing-table__title {
-  font-family: var(--oga-font-sans);
-  font-size: clamp(26px, 3.2vw, 36px);
-  font-weight: 500;
-  line-height: 1.12;
-  letter-spacing: -0.018em;
-  color: var(--oga-fg);
-  text-wrap: balance;
-  margin: 0 0 12px;
-}
-.oga-pricing-table__lead {
-  font-family: var(--oga-font-sans);
-  font-size: 15.5px;
-  line-height: 1.55;
-  color: var(--oga-fg-subtle);
-  margin: 0;
-}
 
-.oga-pricing-table__wrap {
-  overflow-x: auto;
-  border: 1px solid var(--oga-border);
-  border-radius: 4px;
-  background: var(--oga-white);
+.oga-pricing-sprint {
+  list-style: none; margin: 0; padding: 0; position: relative;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(18px, 2.5vw, 34px);
 }
-.oga-pricing-table__table {
-  width: 100%;
-  border-collapse: collapse;
-  font-family: var(--oga-font-sans);
+@media (max-width: 860px) { .oga-pricing-sprint { grid-template-columns: 1fr 1fr; row-gap: 32px; } }
+@media (max-width: 500px) { .oga-pricing-sprint { grid-template-columns: 1fr; } }
+
+.oga-pricing-sprint__rail {
+  position: absolute; top: 15px; left: 6%; right: 6%; height: 1px; background: var(--oga-border);
 }
-.oga-pricing-table__th {
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--oga-fg-muted);
-  text-align: left;
-  padding: 18px 18px;
-  border-bottom: 1px solid var(--oga-border);
-  background: var(--oga-canvas);
-  white-space: nowrap;
+@media (max-width: 860px) { .oga-pricing-sprint__rail { display: none; } }
+
+.oga-pricing-sprint__phase { position: relative; }
+.oga-pricing-sprint__node {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 50%; margin-bottom: 16px; position: relative; z-index: 1;
+  background: var(--oga-white); border: 1px solid var(--oga-border);
+  font-family: var(--oga-font-mono); font-size: 12px; color: var(--oga-fg);
 }
-.oga-pricing-table__th--feature {
-  width: 36%;
-  min-width: 240px;
-}
-.oga-pricing-table__th--highlight {
-  color: var(--oga-fg);
-  background: rgba(26, 28, 31, 0.04);
-}
-.oga-pricing-table__th-sub {
-  display: block;
-  margin-top: 5px;
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--oga-fg);
-}
-.oga-pricing-table__trial {
-  display: inline-block;
-  font-family: var(--oga-font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--oga-fg-muted);
-  border: 1px solid var(--oga-border);
-  border-radius: 999px;
-  padding: 2px 9px;
-  white-space: nowrap;
-}
-.oga-pricing-table__tr:hover {
-  background: rgba(26, 28, 31, 0.015);
-}
-.oga-pricing-table__td {
-  padding: 16px 18px;
-  border-bottom: 1px solid var(--oga-border);
-  vertical-align: top;
-  font-size: 14px;
-  color: var(--oga-fg);
-  white-space: nowrap;
-}
-.oga-pricing-table__tr:last-child .oga-pricing-table__td {
-  border-bottom: none;
-}
-.oga-pricing-table__td--feature {
-  white-space: normal;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.oga-pricing-table__td--highlight {
-  background: rgba(26, 28, 31, 0.025);
-}
-.oga-pricing-table__label {
-  font-family: var(--oga-font-sans);
-  font-size: 14.5px;
-  font-weight: 500;
-  letter-spacing: -0.003em;
-  color: var(--oga-fg);
-}
-.oga-pricing-table__sub {
-  font-family: var(--oga-font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.02em;
-  color: var(--oga-fg-muted);
-  line-height: 1.45;
-  white-space: normal;
-}
-.oga-pricing-table__check {
-  color: var(--oga-fg);
-  font-size: 16px;
-  font-weight: 500;
-}
-.oga-pricing-table__dash {
-  color: var(--oga-fg-muted);
-}
-.oga-pricing-table__cell-text {
-  font-family: var(--oga-font-mono);
-  font-size: 13px;
-  letter-spacing: 0.02em;
-  color: var(--oga-fg);
-}
+.oga-pricing-sprint__days { display: block; font-family: var(--oga-font-mono); font-size: 11px; letter-spacing: 0.04em; color: var(--oga-fg-subtle); margin-bottom: 8px; }
+.oga-pricing-sprint__title { font-family: var(--oga-font-sans); font-size: 18px; font-weight: 600; letter-spacing: -0.01em; color: var(--oga-fg); margin: 0 0 8px; }
+.oga-pricing-sprint__body { font-family: var(--oga-font-sans); font-size: 14px; line-height: 1.55; color: var(--oga-fg-muted); margin: 0; }
 
 /* ============================================================
-   FAQ (cream-quiet)
+   03 FAQ (light) - accordion
    ============================================================ */
-.oga-pricing-faq {
-  padding: clamp(48px, 6vw, 72px) 24px;
-}
-.oga-pricing-faq__inner {
-  max-width: 880px;
-  margin: 0 auto;
-}
-.oga-pricing-faq__head {
-  margin-bottom: 32px;
-  text-align: center;
-}
-.oga-pricing-faq__eyebrow {
-  margin-bottom: 16px;
-  justify-content: center;
-}
-.oga-pricing-faq__title {
-  font-family: var(--oga-font-sans);
-  font-size: clamp(26px, 3.2vw, 36px);
-  font-weight: 500;
-  line-height: 1.12;
-  letter-spacing: -0.018em;
-  color: var(--oga-fg);
-  text-wrap: balance;
-  margin: 0;
-}
-.oga-pricing-faq__list {
-  border-top: 1px solid var(--oga-border);
-}
-.oga-pricing-faq__qa {
-  border-bottom: 1px solid var(--oga-border);
-}
+
+.oga-pricing-faq__list { max-width: 860px; }
+.oga-pricing-faq__qa { border-bottom: 1px solid var(--oga-border); }
+.oga-pricing-faq__qa:first-child { border-top: 1px solid var(--oga-border); }
 .oga-pricing-faq__q {
-  list-style: none;
-  cursor: pointer;
-  padding: 22px 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  font-family: var(--oga-font-sans);
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1.4;
-  color: var(--oga-fg);
-  letter-spacing: -0.008em;
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  padding: 20px 2px; cursor: pointer; list-style: none;
+  font-family: var(--oga-font-sans); font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: var(--oga-fg);
 }
-.oga-pricing-faq__q::-webkit-details-marker {
-  display: none;
-}
+.oga-pricing-faq__q::-webkit-details-marker { display: none; }
 .oga-pricing-faq__chevron {
-  flex: 0 0 auto;
-  width: 14px;
-  height: 14px;
-  position: relative;
+  flex: 0 0 auto; width: 8px; height: 8px; margin-top: -4px;
+  border-right: 1.6px solid var(--oga-fg-muted); border-bottom: 1.6px solid var(--oga-fg-muted);
+  transform: rotate(45deg); transition: transform 0.2s ease;
 }
-.oga-pricing-faq__chevron::before,
-.oga-pricing-faq__chevron::after {
-  content: "";
-  position: absolute;
-  background: var(--oga-fg);
-  border-radius: 1px;
-}
-.oga-pricing-faq__chevron::before {
-  top: 50%;
-  left: 0;
-  width: 100%;
-  height: 1.5px;
-  transform: translateY(-50%);
-}
-.oga-pricing-faq__chevron::after {
-  left: 50%;
-  top: 0;
-  width: 1.5px;
-  height: 100%;
-  transform: translateX(-50%);
-  transition: transform 200ms ease, opacity 200ms ease;
-}
-.oga-pricing-faq__qa[open] .oga-pricing-faq__chevron::after {
-  transform: translateX(-50%) scaleY(0);
-  opacity: 0;
-}
-.oga-pricing-faq__a {
-  padding: 0 0 24px;
-  max-width: 720px;
-}
-.oga-pricing-faq__a p {
-  font-family: var(--oga-font-sans);
-  font-size: 15px;
-  line-height: 1.65;
-  color: var(--oga-fg-subtle);
-  margin: 0;
-  text-wrap: pretty;
-}
+.oga-pricing-faq__qa[open] .oga-pricing-faq__chevron { transform: rotate(-135deg); margin-top: 2px; }
+.oga-pricing-faq__a { padding: 0 2px 22px; }
+.oga-pricing-faq__a p { margin: 0; font-family: var(--oga-font-sans); font-size: 14.5px; line-height: 1.6; color: var(--oga-fg-muted); max-width: 74ch; }
 
 /* ============================================================
-   FINAL CTA (DARK)
+   Final CTA (dark)
    ============================================================ */
-.oga-pricing-cta {
-  padding: clamp(48px, 6vw, 72px) 24px;
-}
-.oga-pricing-cta__inner {
-  max-width: 720px;
-  margin: 0 auto;
-  text-align: center;
-}
+
+.oga-pricing-cta { text-align: center; }
+.oga-pricing-cta__inner { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
 .oga-pricing-cta__title {
-  font-family: var(--oga-font-sans);
-  font-size: clamp(28px, 3.6vw, 44px);
-  font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: -0.018em;
-  color: var(--oga-white);
-  text-wrap: balance;
-  margin: 0 0 18px;
+  font-family: var(--oga-font-sans); font-size: clamp(30px, 4.4vw, 50px); line-height: 1.04;
+  letter-spacing: -0.03em; font-weight: 600; color: var(--oga-white); margin: 0 0 16px;
 }
 .oga-pricing-cta__lead {
-  font-family: var(--oga-font-sans);
-  font-size: 16px;
-  line-height: 1.6;
-  color: rgba(250, 248, 244, 0.7);
-  text-wrap: pretty;
-  margin: 0 auto 32px;
-  max-width: 600px;
+  font-family: var(--oga-font-sans); font-size: clamp(15px, 1.3vw, 17px); line-height: 1.6;
+  color: rgba(250, 248, 244, 0.7); margin: 0 0 28px; max-width: 52ch;
 }
-.oga-pricing-cta__buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: center;
-}
-
-/* ============================================================
-   PACKAGE CARDS (cream), AR-456
-   ============================================================ */
-.oga-pricing-cards {
-  background: var(--oga-canvas);
-  padding: clamp(44px, 6vw, 76px) 24px clamp(32px, 4vw, 56px);
-}
-.oga-pricing-cards__inner {
-  max-width: 1240px;
-  margin: 0 auto;
-}
-.oga-pricing-cards__grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
-  align-items: stretch;
-}
-@media (max-width: 920px) {
-  .oga-pricing-cards__grid {
-    grid-template-columns: 1fr;
-    max-width: 460px;
-    margin: 0 auto;
-  }
-}
-.oga-pricing-card {
-  position: relative;
-  background: var(--oga-white);
-  border: 1px solid var(--oga-border);
-  border-radius: 14px;
-  padding: 30px 26px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: var(--oga-shadow-sm);
-  transition:
-    transform var(--oga-dur) var(--oga-ease),
-    box-shadow var(--oga-dur) var(--oga-ease),
-    border-color var(--oga-dur) var(--oga-ease);
-}
-.oga-pricing-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--oga-shadow-md);
-  border-color: rgba(26, 28, 31, 0.28);
-}
-.oga-pricing-card--highlight {
-  background: var(--oga-ink);
-  border: 1.5px solid var(--oga-ink);
-  box-shadow: var(--oga-shadow-lg);
-}
-.oga-pricing-card--highlight:hover {
-  box-shadow: var(--oga-shadow-lg);
-}
-.oga-pricing-card--highlight .oga-pricing-card__badge {
-  background: var(--oga-white);
-  color: var(--oga-ink);
-}
-.oga-pricing-card__badge {
-  position: absolute;
-  top: -10px;
-  left: 22px;
-  background: var(--oga-ink);
-  color: var(--oga-white);
-  font-family: var(--oga-font-mono);
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 4px 10px;
-  border-radius: 999px;
-}
-.oga-pricing-card__name {
-  font-family: var(--oga-font-sans);
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--oga-fg);
-  margin-bottom: 12px;
-}
-.oga-pricing-card__price {
-  font-family: var(--oga-font-sans);
-  font-size: 30px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: var(--oga-fg);
-  line-height: 1.1;
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.oga-pricing-card__price-unit {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--oga-fg-muted);
-  letter-spacing: 0;
-}
-.oga-pricing-card__price-note {
-  font-family: var(--oga-font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--oga-fg-muted);
-  margin-top: 6px;
-}
-.oga-pricing-card__tagline {
-  font-family: var(--oga-font-sans);
-  font-size: 13.5px;
-  line-height: 1.5;
-  color: var(--oga-fg-subtle);
-  margin: 16px 0 0;
-  text-wrap: pretty;
-}
-.oga-pricing-card__features {
-  list-style: none;
-  margin: 18px 0 0;
-  padding: 18px 0 0;
-  border-top: 1px solid var(--oga-border);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  flex: 1 1 auto;
-}
-.oga-pricing-card__feature {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  font-family: var(--oga-font-sans);
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--oga-fg);
-}
-.oga-pricing-card__feature-check {
-  flex: 0 0 auto;
-  color: var(--oga-fg);
-  margin-top: 1px;
-}
-.oga-pricing-card__cta-wrap {
-  margin-top: 22px;
-}
-.oga-pricing-card__cta {
-  width: 100%;
-  justify-content: center;
-}
-.oga-pricing-cards__note {
-  font-family: var(--oga-font-sans);
-  font-size: 13.5px;
-  line-height: 1.6;
-  color: var(--oga-fg-muted);
-  text-align: center;
-  max-width: 720px;
-  margin: 28px auto 0;
-}
-.oga-pricing-cards__note-link {
-  color: var(--oga-fg);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-/* ============================================================
-   HOW BUYING WORKS (cream-quiet), AR-463
-   ============================================================ */
-.oga-pricing-how {
-  padding: clamp(48px, 6vw, 80px) 24px;
-}
-.oga-pricing-how__inner {
-  max-width: 1080px;
-  margin: 0 auto;
-}
-.oga-pricing-how__head {
-  margin-bottom: clamp(28px, 4vw, 44px);
-  max-width: 640px;
-}
-.oga-pricing-how__eyebrow {
-  margin-bottom: 16px;
-}
-.oga-pricing-how__title {
-  font-family: var(--oga-font-sans);
-  font-size: clamp(26px, 3.2vw, 36px);
-  font-weight: 500;
-  line-height: 1.12;
-  letter-spacing: -0.018em;
-  color: var(--oga-fg);
-  text-wrap: balance;
-  margin: 0 0 12px;
-}
-.oga-pricing-how__lead {
-  font-family: var(--oga-font-sans);
-  font-size: 15.5px;
-  line-height: 1.55;
-  color: var(--oga-fg-subtle);
-  margin: 0;
-  max-width: 60ch;
-}
-.oga-pricing-how__steps {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 24px;
-}
-@media (max-width: 800px) {
-  .oga-pricing-how__steps {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-}
-.oga-pricing-how__step {
-  border-top: 1px solid var(--oga-border);
-  padding-top: 18px;
-}
-.oga-pricing-how__step-n {
-  font-family: var(--oga-font-mono);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  color: var(--oga-fg-muted);
-}
-.oga-pricing-how__step-title {
-  font-family: var(--oga-font-sans);
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--oga-fg);
-  margin: 10px 0 8px;
-}
-.oga-pricing-how__step-body {
-  font-family: var(--oga-font-sans);
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--oga-fg-subtle);
-  margin: 0;
-  text-wrap: pretty;
-}
-
-/* ============================================================
-   DEVELOPER FREE-TIER BAR (AR-463)
-   ============================================================ */
-.oga-pricing-devbar {
-  margin-top: 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px 24px;
-  flex-wrap: wrap;
-  background: var(--oga-white);
-  border: 1px solid var(--oga-border);
-  border-radius: 12px;
-  padding: 18px 24px;
-}
-.oga-pricing-devbar__lead {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 10px;
-  flex: 0 0 auto;
-}
-.oga-pricing-devbar__name {
-  font-family: var(--oga-font-sans);
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--oga-fg);
-}
-.oga-pricing-devbar__price {
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--oga-fg-muted);
-}
-.oga-pricing-devbar__tag {
-  flex: 1 1 240px;
-  font-family: var(--oga-font-sans);
-  font-size: 13.5px;
-  line-height: 1.5;
-  color: var(--oga-fg-subtle);
-  margin: 0;
-}
-.oga-pricing-devbar__cta {
-  flex: 0 0 auto;
-}
-@media (max-width: 620px) {
-  .oga-pricing-devbar__cta {
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-.oga-pricing-cards__compare {
-  display: flex;
-  width: fit-content;
-  align-items: center;
-  gap: 7px;
-  margin: 24px auto 0;
-  font-family: var(--oga-font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--oga-fg-muted);
-  text-decoration: none;
-  transition: color var(--oga-dur-fast) var(--oga-ease);
-}
-.oga-pricing-cards__compare:hover {
-  color: var(--oga-fg);
-}
+.oga-pricing-cta__ctas { display: inline-flex; flex-wrap: wrap; gap: 12px; justify-content: center; }

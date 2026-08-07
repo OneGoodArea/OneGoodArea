@@ -1,21 +1,21 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { Nav } from "../_shared/nav";
 import { Footer } from "../_shared/footer";
 import { BookDemo } from "../_shared/book-demo";
 import "./pricing.css";
 
-/* /pricing, B2B repackage (AR-456). Demo-led, four workflow packages.
-   Marketing-only surface: no Stripe checkout and no self-serve signup
-   path from here (that rework rides with the demo-led pivot). Spec:
-   docs/PLANS/pricing_strategy_v1.md.
+/* /pricing - Founding Pilot Partners (Plan 075). A compact recruitment surface:
+   the pilot is the lead (ten founding partners, one 40-day sprint), the
+   enterprise plans sit right alongside it, and the FAQ carries the detail.
+   Marketing-only; Stripe billing is unchanged.
 
-   Hard rules: zero inline styles, no em dashes, no invented claims.
-   Every capability in the comparison table is a shipped product feature;
-   the four packages are the commercial layer on top. */
+   Hard rules: zero non-data inline styles, no em dashes, no invented claims.
+   The programme terms are the offer; product capabilities named here ship. */
 
-type Pkg = {
+type Plan = {
   id: string;
   name: string;
   price: string;
@@ -23,41 +23,34 @@ type Pkg = {
   priceNote: string;
   tagline: string;
   features: string[];
-  cta: "demo" | "sales" | "docs";
+  cta: "demo" | "sales";
   highlight?: boolean;
   badge?: string;
 };
 
-const PACKAGES: Pkg[] = [
-  {
-    id: "developer",
-    name: "Developer",
-    price: "Free",
-    priceNote: "30-day evaluation",
-    tagline: "Full access to all four products and the MCP server for 30 days, free. Evaluation only, not licensed for production use.",
-    features: [
-      "Full access to all four products for 30 days",
-      "MCP server access",
-      "50 natural-language queries included",
-      "Full docs and OpenAPI spec",
-      "No card required",
-    ],
-    cta: "docs",
-  },
+const PROGRAMME: string[] = [
+  "10 founding spots",
+  "40-day sprint",
+  "Free during the pilot",
+  "Founding rate after",
+];
+
+const SPRINT: { days: string; title: string; body: string }[] = [
+  { days: "Days 1 to 5", title: "Onboard", body: "Keys, integration and your first real call against a live workflow, with us alongside you." },
+  { days: "Days 6 to 25", title: "Build", body: "We wire it into your workflow and ship what you need, week by week, against real usage." },
+  { days: "Days 26 to 35", title: "Prove", body: "Run it on real decisions and measure against one success metric agreed up front." },
+  { days: "Days 36 to 40", title: "Decide", body: "Review together, then continue at the founding rate or walk away, no obligation." },
+];
+
+const PLANS: Plan[] = [
   {
     id: "core",
     name: "Core API",
     price: "From £2,000",
     priceUnit: "/ month",
     priceNote: "Billed annually",
-    tagline: "Clean UK area signals and deterministic scoring inside your product or workflow.",
-    features: [
-      "Signals API and area lookup",
-      "Deterministic Scores",
-      "Standard methodology, version-stamped",
-      "Production use",
-      "Standard support",
-    ],
+    tagline: "Clean UK area signals and deterministic scoring inside your product.",
+    features: ["Signals API and area lookup", "Deterministic Scores", "Version-stamped methodology", "Production use"],
     cta: "demo",
   },
   {
@@ -67,13 +60,7 @@ const PACKAGES: Pkg[] = [
     priceUnit: "/ month",
     priceNote: "Billed annually",
     tagline: "Rank, compare, explain and forecast areas with a versioned methodology.",
-    features: [
-      "Everything in Core API",
-      "Full Scores and Intelligence",
-      "Ranked area search and peer comparison",
-      "Insights, forecasts, natural-language planner",
-      "Custom presets and implementation support",
-    ],
+    features: ["Everything in Core API", "Full Scores and Intelligence", "Ranked search and peer comparison", "Insights, forecasts and the query planner"],
     cta: "demo",
     highlight: true,
     badge: "Where most teams start",
@@ -84,34 +71,19 @@ const PACKAGES: Pkg[] = [
     price: "Custom",
     priceNote: "Annual contract",
     tagline: "Portfolio monitoring, controls and support for regulated, high-volume workflows.",
-    features: [
-      "Everything in Decision Intelligence",
-      "Monitor and webhooks",
-      "Methodology pinning and IP allowlisting",
-      "Custom cohorts and SLA",
-      "Security review and dedicated support",
-    ],
+    features: ["Everything in Decision Intelligence", "Monitor and webhooks", "Methodology pinning and IP allowlisting", "Custom cohorts, SLA and security review"],
     cta: "sales",
   },
 ];
 
-type Cell = string | boolean;
-const COLS: { name: string; sub?: string }[] = [
-  { name: "Developer", sub: "30-day trial" },
-  { name: "Core API" },
-  { name: "Decision Intelligence" },
-  { name: "Enterprise Monitor" },
-];
-const HIGHLIGHT_COL = 2;
-
-/* Developer column shows the 30-day evaluation as "Trial" tokens rather than
-   solid entitlements: every product is unlocked to try, but as time-boxed
-   evaluation access, not a permanent grant, so the free column never reads as
-   out-featuring the paid Core tier. MCP stays a solid tick (the tier's core).
-   Enterprise controls (presets, cohorts, pinning, allowlisting, SLA) are not
-   part of the products, so they stay excluded, and production use is never
-   granted. After 30 days Developer reverts to sample and demo. */
-const MATRIX: { label: string; values: Cell[] }[] = [
+/* Collapsible plan comparison. Developer's "Trial" tokens mark the time-boxed
+   30-day evaluation, not a permanent grant, so the free column never out-features
+   Core. Highlight column is Decision Intelligence (index 2). */
+const COMPARE_COLS = ["Developer", "Core API", "Decision Intelligence", "Enterprise Monitor"];
+const COMPARE_HIGHLIGHT = 2;
+type CompareCell = string | boolean;
+const COMPARE_ROWS: { label: string; values: CompareCell[] }[] = [
+  { label: "Price", values: ["Free · 30 days", "From £2,000 / mo", "From £5,000 / mo", "Custom"] },
   { label: "MCP server", values: [true, true, true, true] },
   { label: "Signals", values: ["Trial", true, true, true] },
   { label: "Scores", values: ["Trial", "Basic", "Full", "Full"] },
@@ -126,34 +98,29 @@ const MATRIX: { label: string; values: Cell[] }[] = [
   { label: "Custom cohorts", values: [false, false, "Add-on", true] },
   { label: "Methodology pinning", values: [false, false, false, true] },
   { label: "IP allowlisting", values: [false, false, false, true] },
-  { label: "SLA", values: [false, false, "Limited", true] },
   { label: "Production use", values: [false, true, true, true] },
 ];
 
 const FAQS: { q: string; a: string }[] = [
   {
-    q: "How do I get started?",
-    a: "Book a demo. We look at your use case, then either run a paid pilot or move straight to an annual contract. Developer access is free for 30 days if you just want to evaluate the API or explore the MCP server first.",
+    q: "What does the pilot cost?",
+    a: "Nothing during the 40 days. Full access to all four products and the MCP server, free, for the length of the sprint. If you continue afterwards, you do it at a founding rate locked in for founding partners.",
   },
   {
-    q: "Is there a free trial?",
-    a: "Yes. Developer gives you full access to all four products and the MCP server, free, for 30 days, including 50 natural-language queries. It is for evaluation, prototyping and MCP exploration, and is not licensed for production, customer-facing or revenue-generating use. For a production evaluation we run a fixed-scope paid pilot.",
+    q: "Who makes a good founding partner?",
+    a: "Teams with a real UK property workflow: proptech and portals, lenders, insurers, CRE and site selection, public sector and research, or estate agents. If that is you, and you have a named contact who can make decisions, you are a fit.",
   },
   {
-    q: "What is a paid pilot?",
-    a: "A short, paid, time-boxed evaluation against one defined use case and one success metric agreed up front. If you convert, part of the pilot fee is credited to your first annual contract.",
+    q: "What do you need from us?",
+    a: "A real workflow to build against, honest feedback in a short weekly check-in, and a short case study once you have seen the value. That is what makes a 40-day sprint move.",
   },
   {
-    q: "How is OneGoodArea priced?",
-    a: "Around workflow value and production importance, not raw API-call volume. Plans are annual contracts. Usage limits exist to protect the platform, but they are not the headline.",
+    q: "What happens after the 40 days?",
+    a: "You decide. Continue at the founding rate on an annual plan, or walk away with no obligation. Developer stays free for 30 days if you just want to keep evaluating the API.",
   },
   {
-    q: "Can I buy just one product?",
-    a: "You buy a workflow-led package that already includes the signals and scores it needs. If you want data, that is Core API. If you want decisions, Decision Intelligence. If you want ongoing monitoring, Enterprise Monitor.",
-  },
-  {
-    q: "Do you support procurement and security review?",
-    a: "What is built in today: IP allowlisting, training opt-out, and per-organisation methodology and version pinning. Data handling, retention, and our sub-processors are documented in the public privacy and data policies, and for your review we will sign a DPA and complete your security questionnaire. Formal certifications like SOC 2 and ISO 27001 are on the roadmap as we grow into larger regulated deals.",
+    q: "Is our data safe, and can you handle procurement?",
+    a: "Built in today: IP allowlisting, training opt-out, and per-organisation methodology and version pinning. Data handling and our sub-processors are in the public privacy and data policies, and for your review we will sign a DPA and complete your security questionnaire. SOC 2 and ISO 27001 are on the roadmap.",
   },
 ];
 
@@ -162,10 +129,9 @@ export default function PricingClient() {
     <div className="oga-root oga-pricing">
       <Nav />
       <Hero />
-      <HowBuyingWorks />
-      <Packages />
-      <Comparison />
-      <Faq />
+      <SectionPlans />
+      <SectionSprint />
+      <SectionFaq />
       <FinalCta />
       <Footer />
     </div>
@@ -173,88 +139,200 @@ export default function PricingClient() {
 }
 
 /* ============================================================
-   HERO (DARK)
+   Hero (dark) - the pitch + the programme card
    ============================================================ */
+
 function Hero() {
   return (
-    <section className="oga-section-dark oga-pricing-hero" data-oga-surface="dark">
+    <section className="oga-pricing-hero">
+      <div className="oga-pricing-hero__dots" aria-hidden />
       <div className="oga-pricing-hero__inner">
-        <div className="oga-pricing-hero__eyebrow oga-eyebrow oga-eyebrow--inverse">
-          <span className="oga-eyebrow-dot" aria-hidden />
-          <span>Pricing</span>
-        </div>
-        <h1 className="oga-pricing-hero__title">
-          One engine, four ways to buy.
-        </h1>
+        <span className="oga-pricing-hero__eyebrow">
+          <span className="oga-pricing-hero__eyebrow-dot" aria-hidden />
+          Founding pilot programme · applications open
+        </span>
+        <h1 className="oga-pricing-hero__title">Ten founding partners. One 40-day sprint.</h1>
         <p className="oga-pricing-hero__lead">
-          Developer is free, with 30 days of full access to every product. The
-          three paid plans are annual contracts, priced to the job: area data,
-          decision workflows, or portfolio monitoring. Run a paid pilot first
-          if you want to prove it.
+          We are building with ten founding pilot partners over a focused 40-day
+          sprint. Free for the pilot, hands-on with our team, and a founding rate
+          afterwards.
         </p>
-        <div className="oga-pricing-hero__stamps">
-          <Stamp label="Engine" value="v1.0.0" />
-          <Stamp label="Contracts" value="Annual" />
-          <Stamp label="Try first" value="Paid pilot" />
+        <div className="oga-pricing-hero__ctas">
+          <BookDemo className="oga-btn oga-btn-primary">
+            Apply for the pilot
+            <span aria-hidden>→</span>
+          </BookDemo>
+          <Link href="#plans" className="oga-btn oga-btn-secondary">
+            See the plans
+          </Link>
         </div>
+        <ul className="oga-pricing-hero__strip" aria-hidden>
+          {PROGRAMME.map((p) => (
+            <li key={p} className="oga-pricing-hero__strip-item">{p}</li>
+          ))}
+        </ul>
       </div>
     </section>
   );
 }
 
-function Stamp({ label, value }: { label: string; value: string }) {
+/* ============================================================
+   01 The plans (light) - enterprise packages
+   ============================================================ */
+
+function SectionPlans() {
   return (
-    <span className="oga-pricing-hero__stamp">
-      <span className="oga-pricing-hero__stamp-label">{label}</span>
-      <span className="oga-pricing-hero__stamp-value">{value}</span>
-    </span>
+    <section id="plans" className="oga-pricing-sec oga-pricing-sec--light">
+      <div className="oga-pricing__wrap">
+        <PriceHead num="01" kicker="The plans" title="Where founding partners land.">
+          After the pilot you move onto an annual plan, priced to the job. Founding
+          partners lock a founding rate on whichever plan fits. Developer stays free
+          for 30 days if you just want to evaluate the API first.
+        </PriceHead>
+
+        <div className="oga-pricing-plans__grid">
+          {PLANS.map((p) => (
+            <PlanCard key={p.id} plan={p} />
+          ))}
+        </div>
+
+        <div className="oga-pricing-devbar">
+          <div className="oga-pricing-devbar__lead">
+            <span className="oga-pricing-devbar__name">Developer</span>
+            <span className="oga-pricing-devbar__price">Free · 30 days</span>
+          </div>
+          <p className="oga-pricing-devbar__tag">
+            Full access to all four products and the MCP server for 30 days, free.
+            For evaluation, not licensed for production use.
+          </p>
+          <Link href="/docs" className="oga-btn oga-btn-secondary oga-pricing-devbar__cta">
+            View the docs
+            <span aria-hidden>→</span>
+          </Link>
+        </div>
+
+        <Comparison />
+
+        <p className="oga-pricing-plans__note">
+          Plans are annual contracts, priced to the job and the scope. Not sure which
+          fits?{" "}
+          <BookDemo className="oga-pricing-plans__note-link">Book a demo</BookDemo>.
+        </p>
+      </div>
+    </section>
   );
 }
 
-/* ============================================================
-   HOW BUYING WORKS (cream-quiet), AR-463
-   ============================================================ */
-const BUY_STEPS = [
-  {
-    n: "01",
-    title: "Evaluate, free",
-    body: "Get 30 days of full access to every product and the MCP server on the free Developer tier, or book a demo and we will run it against a real workflow. No card, no commitment.",
-  },
-  {
-    n: "02",
-    title: "Prove it with a paid pilot",
-    body: "A short, paid pilot against one of your real use cases, scoped to a single success metric. You buy on evidence, not a demo.",
-  },
-  {
-    n: "03",
-    title: "Move to an annual contract",
-    body: "Land on the package that fits the job: Core API, Decision Intelligence, or Enterprise Monitor. Expand as your usage and teams grow.",
-  },
-];
-
-function HowBuyingWorks() {
+function PlanCard({ plan }: { plan: Plan }) {
   return (
-    <section className="oga-section-quiet oga-pricing-how" data-oga-surface="light">
-      <div className="oga-pricing-how__inner">
-        <header className="oga-pricing-how__head">
-          <div className="oga-pricing-how__eyebrow oga-eyebrow">
-            <span className="oga-eyebrow-dot" aria-hidden />
-            <span>How buying works</span>
-          </div>
-          <h2 className="oga-pricing-how__title">
-            Bought like infrastructure, not a subscription.
-          </h2>
-          <p className="oga-pricing-how__lead">
-            No self-serve checkout. You evaluate, prove it on your own use case,
-            then sign an annual contract for the package that fits.
-          </p>
-        </header>
-        <ol className="oga-pricing-how__steps">
-          {BUY_STEPS.map((s) => (
-            <li key={s.n} className="oga-pricing-how__step">
-              <span className="oga-pricing-how__step-n">{s.n}</span>
-              <h3 className="oga-pricing-how__step-title">{s.title}</h3>
-              <p className="oga-pricing-how__step-body">{s.body}</p>
+    <article
+      className={`oga-pricing-plan${plan.highlight ? " oga-pricing-plan--featured" : ""}`}
+      {...(plan.highlight ? { "data-oga-surface": "dark" as const } : {})}
+    >
+      {plan.badge && <span className="oga-pricing-plan__badge">{plan.badge}</span>}
+      <div className="oga-pricing-plan__name">{plan.name}</div>
+      <p className="oga-pricing-plan__tagline">{plan.tagline}</p>
+      <ul className="oga-pricing-plan__features">
+        {plan.features.map((f) => (
+          <li key={f} className="oga-pricing-plan__feature">
+            <span className="oga-pricing-plan__check" aria-hidden>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <span>{f}</span>
+          </li>
+        ))}
+      </ul>
+      <PlanCta plan={plan} />
+    </article>
+  );
+}
+
+function PlanCta({ plan }: { plan: Plan }) {
+  const label = plan.cta === "sales" ? "Talk to sales" : "Book a demo";
+  const cls = plan.highlight
+    ? "oga-btn oga-btn-primary oga-pricing-plan__cta"
+    : "oga-btn oga-btn-secondary oga-pricing-plan__cta";
+  return (
+    <BookDemo className={cls}>
+      {label}
+      <span aria-hidden>→</span>
+    </BookDemo>
+  );
+}
+
+/* ---------- Collapsible plan comparison ---------- */
+function Comparison() {
+  return (
+    <details className="oga-pricing-compare">
+      <summary className="oga-pricing-compare__toggle">
+        <span>Compare all plans</span>
+        <span className="oga-pricing-compare__chevron" aria-hidden />
+      </summary>
+      <div className="oga-pricing-compare__wrap">
+        <table className="oga-pricing-compare__table">
+          <thead>
+            <tr>
+              <th className="oga-pricing-compare__th oga-pricing-compare__th--feature">Capability</th>
+              {COMPARE_COLS.map((c, i) => (
+                <th
+                  key={c}
+                  className={`oga-pricing-compare__th${i === COMPARE_HIGHLIGHT ? " oga-pricing-compare__th--highlight" : ""}`}
+                >
+                  {c}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {COMPARE_ROWS.map((row) => (
+              <tr key={row.label} className="oga-pricing-compare__tr">
+                <td className="oga-pricing-compare__td oga-pricing-compare__td--feature">{row.label}</td>
+                {row.values.map((v, vi) => (
+                  <td
+                    key={vi}
+                    className={`oga-pricing-compare__td${vi === COMPARE_HIGHLIGHT ? " oga-pricing-compare__td--highlight" : ""}`}
+                  >
+                    <CompareValue value={v} />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  );
+}
+
+function CompareValue({ value }: { value: CompareCell }) {
+  if (value === true) return <span className="oga-pricing-compare__check" aria-label="Included">✓</span>;
+  if (value === false) return <span className="oga-pricing-compare__dash" aria-label="Not included">·</span>;
+  return <span className="oga-pricing-compare__text">{value}</span>;
+}
+
+/* ============================================================
+   02 The sprint (quiet) - 4-phase timeline
+   ============================================================ */
+
+function SectionSprint() {
+  return (
+    <section id="sprint" className="oga-pricing-sec oga-pricing-sec--quiet">
+      <div className="oga-pricing__wrap">
+        <PriceHead num="02" kicker="The sprint" title="How the 40 days run.">
+          A founding pilot is a structured sprint, not an open-ended trial. Four
+          phases, one success metric, and a clear decision at the end.
+        </PriceHead>
+
+        <ol className="oga-pricing-sprint">
+          <div className="oga-pricing-sprint__rail" aria-hidden />
+          {SPRINT.map((p, i) => (
+            <li key={p.title} className="oga-pricing-sprint__phase">
+              <span className="oga-pricing-sprint__node" aria-hidden>{i + 1}</span>
+              <span className="oga-pricing-sprint__days">{p.days}</span>
+              <h3 className="oga-pricing-sprint__title">{p.title}</h3>
+              <p className="oga-pricing-sprint__body">{p.body}</p>
             </li>
           ))}
         </ol>
@@ -264,237 +342,17 @@ function HowBuyingWorks() {
 }
 
 /* ============================================================
-   PACKAGE CARDS (cream)
+   03 FAQ (light)
    ============================================================ */
-function Packages() {
+
+function SectionFaq() {
   return (
-    <section className="oga-pricing-cards" data-oga-surface="light">
-      <div className="oga-pricing-cards__inner">
-        <div className="oga-pricing-cards__grid">
-          {PACKAGES.filter((p) => p.id !== "developer").map((p) => (
-            <PackageCard key={p.id} pkg={p} />
-          ))}
-        </div>
-        <DeveloperBar />
-        <p className="oga-pricing-cards__note">
-          Guide prices, billed annually. Final pricing depends on usage, support
-          and scope. Not sure which fits?{" "}
-          <BookDemo className="oga-pricing-cards__note-link">Book a demo</BookDemo>.
-        </p>
-        <a href="#compare" className="oga-pricing-cards__compare">
-          Compare all features
-          <span aria-hidden>↓</span>
-        </a>
-      </div>
-    </section>
-  );
-}
-
-function PackageCard({ pkg }: { pkg: Pkg }) {
-  return (
-    <div
-      className={
-        pkg.highlight
-          ? "oga-pricing-card oga-pricing-card--highlight"
-          : "oga-pricing-card"
-      }
-      data-oga-surface={pkg.highlight ? "dark" : undefined}
-    >
-      {pkg.badge && <span className="oga-pricing-card__badge">{pkg.badge}</span>}
-      <div className="oga-pricing-card__name">{pkg.name}</div>
-      <div className="oga-pricing-card__price">
-        {pkg.price}
-        {pkg.priceUnit && (
-          <span className="oga-pricing-card__price-unit">{pkg.priceUnit}</span>
-        )}
-      </div>
-      <div className="oga-pricing-card__price-note">{pkg.priceNote}</div>
-      <p className="oga-pricing-card__tagline">{pkg.tagline}</p>
-      <ul className="oga-pricing-card__features">
-        {pkg.features.map((f) => (
-          <li key={f} className="oga-pricing-card__feature">
-            <svg
-              className="oga-pricing-card__feature-check"
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden
-            >
-              <path
-                d="M5 12.5l4.5 4.5L19 7.5"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <span>{f}</span>
-          </li>
-        ))}
-      </ul>
-      <div className="oga-pricing-card__cta-wrap">
-        <PackageCta pkg={pkg} />
-      </div>
-    </div>
-  );
-}
-
-function PackageCta({ pkg }: { pkg: Pkg }) {
-  if (pkg.cta === "docs") {
-    return (
-      <Link href="/docs" className="oga-btn oga-btn-secondary oga-pricing-card__cta">
-        View the docs
-        <span aria-hidden>→</span>
-      </Link>
-    );
-  }
-  const label = pkg.cta === "sales" ? "Talk to sales" : "Book a demo";
-  const cls = pkg.highlight
-    ? "oga-btn oga-btn-primary oga-pricing-card__cta"
-    : "oga-btn oga-btn-secondary oga-pricing-card__cta";
-  return (
-    <BookDemo className={cls}>
-      {label}
-      <span aria-hidden>→</span>
-    </BookDemo>
-  );
-}
-
-/* Developer is free and evaluation-only, so it sits as a slim bar under
-   the three paid tiers rather than competing with them as a 4th card. */
-function DeveloperBar() {
-  const dev = PACKAGES.find((p) => p.id === "developer");
-  if (!dev) return null;
-  return (
-    <div className="oga-pricing-devbar">
-      <div className="oga-pricing-devbar__lead">
-        <span className="oga-pricing-devbar__name">{dev.name}</span>
-        <span className="oga-pricing-devbar__price">Free · 30 days</span>
-      </div>
-      <p className="oga-pricing-devbar__tag">{dev.tagline}</p>
-      <Link href="/docs" className="oga-btn oga-btn-secondary oga-pricing-devbar__cta">
-        View the docs
-        <span aria-hidden>→</span>
-      </Link>
-    </div>
-  );
-}
-
-/* ============================================================
-   COMPARISON TABLE (cream)
-   ============================================================ */
-function Comparison() {
-  return (
-    <section id="compare" className="oga-pricing-table" data-oga-surface="light">
-      <div className="oga-pricing-table__inner">
-        <header className="oga-pricing-table__head">
-          <div className="oga-pricing-table__eyebrow oga-eyebrow">
-            <span className="oga-eyebrow-dot" aria-hidden />
-            <span>Compare</span>
-          </div>
-          <h2 className="oga-pricing-table__title">What each package includes.</h2>
-          <p className="oga-pricing-table__lead">
-            Every capability below ships in the product today. You buy the
-            package that fits the job; it includes the signals and scores that
-            job needs. In the Developer column, a Trial marker means the
-            capability is unlocked during the free 30-day evaluation only.
-            Developer then reverts to sample and demo, and is never licensed
-            for production use.
-          </p>
-        </header>
-
-        <div className="oga-pricing-table__wrap">
-          <table className="oga-pricing-table__table">
-            <thead>
-              <tr>
-                <th className="oga-pricing-table__th oga-pricing-table__th--feature">
-                  Capability
-                </th>
-                {COLS.map((c, i) => (
-                  <th
-                    key={c.name}
-                    className={
-                      i === HIGHLIGHT_COL
-                        ? "oga-pricing-table__th oga-pricing-table__th--highlight"
-                        : "oga-pricing-table__th"
-                    }
-                  >
-                    {c.name}
-                    {c.sub && (
-                      <span className="oga-pricing-table__th-sub">{c.sub}</span>
-                    )}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {MATRIX.map((row) => (
-                <tr key={row.label} className="oga-pricing-table__tr">
-                  <td className="oga-pricing-table__td oga-pricing-table__td--feature">
-                    <span className="oga-pricing-table__label">{row.label}</span>
-                  </td>
-                  {row.values.map((v, vi) => (
-                    <td
-                      key={vi}
-                      className={
-                        vi === HIGHLIGHT_COL
-                          ? "oga-pricing-table__td oga-pricing-table__td--highlight"
-                          : "oga-pricing-table__td"
-                      }
-                    >
-                      <CellValue value={v} />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function CellValue({ value }: { value: Cell }) {
-  if (value === true) {
-    return (
-      <span className="oga-pricing-table__check" aria-label="Included">
-        ✓
-      </span>
-    );
-  }
-  if (value === false) {
-    return (
-      <span className="oga-pricing-table__dash" aria-label="Not included">
-        ·
-      </span>
-    );
-  }
-  if (value === "Trial") {
-    return (
-      <span className="oga-pricing-table__trial" aria-label="Available during the 30-day trial">
-        Trial
-      </span>
-    );
-  }
-  return <span className="oga-pricing-table__cell-text">{value}</span>;
-}
-
-/* ============================================================
-   FAQ (cream-quiet)
-   ============================================================ */
-function Faq() {
-  return (
-    <section className="oga-section-quiet oga-pricing-faq" data-oga-surface="light">
-      <div className="oga-pricing-faq__inner">
-        <header className="oga-pricing-faq__head">
-          <div className="oga-pricing-faq__eyebrow oga-eyebrow">
-            <span className="oga-eyebrow-dot" aria-hidden />
-            <span>Frequently asked</span>
-          </div>
-          <h2 className="oga-pricing-faq__title">How buying works.</h2>
-        </header>
+    <section className="oga-pricing-sec oga-pricing-sec--light">
+      <div className="oga-pricing__wrap">
+        <PriceHead num="03" kicker="Frequently asked" title="The questions partners ask first.">
+          The pilot is meant to be low-risk and plainly worded. If something is not
+          covered here, ask us on the call.
+        </PriceHead>
 
         <div className="oga-pricing-faq__list">
           {FAQS.map((item) => (
@@ -515,28 +373,56 @@ function Faq() {
 }
 
 /* ============================================================
-   FINAL CTA (DARK)
+   Final CTA (dark) - scarcity close
    ============================================================ */
+
 function FinalCta() {
   return (
-    <section className="oga-section-dark oga-pricing-cta" data-oga-surface="dark">
-      <div className="oga-pricing-cta__inner">
-        <h2 className="oga-pricing-cta__title">See it on your own use case.</h2>
+    <section className="oga-pricing-sec oga-pricing-sec--dark oga-pricing-cta" data-oga-surface="dark">
+      <div className="oga-pricing__wrap oga-pricing-cta__inner">
+        <h2 className="oga-pricing-cta__title">Ten spots. One sprint.</h2>
         <p className="oga-pricing-cta__lead">
-          Book a demo and we will run OneGoodArea against a real workflow, then
-          size a pilot or an annual contract.
+          We are taking ten founding partners into this first sprint. If you want to
+          shape the product and lock a founding rate, put your name forward.
         </p>
-        <div className="oga-pricing-cta__buttons">
+        <div className="oga-pricing-cta__ctas">
           <BookDemo className="oga-btn oga-btn-primary">
-            Book a demo
+            Apply for the pilot
             <span aria-hidden>→</span>
           </BookDemo>
           <Link href="/methodology" className="oga-btn oga-btn-secondary">
             Read the methodology
-            <span aria-hidden>→</span>
           </Link>
         </div>
       </div>
     </section>
+  );
+}
+
+/* ============================================================
+   Shared section header
+   ============================================================ */
+
+function PriceHead({
+  num,
+  kicker,
+  title,
+  children,
+}: {
+  num: string;
+  kicker: string;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <header className="oga-pricing-head">
+      <div className="oga-pricing-head__eyebrow">
+        <span className="oga-pricing-head__num">{num}</span>
+        <span className="oga-pricing-head__line" aria-hidden />
+        <span>{kicker}</span>
+      </div>
+      <h2 className="oga-pricing-head__title">{title}</h2>
+      <p className="oga-pricing-head__lead">{children}</p>
+    </header>
   );
 }
