@@ -14,7 +14,7 @@ export const TABS: { id: TabId; label: string; blurb: string }[] = [
   {
     id: "monitor",
     label: "Monitor",
-    blurb: "Watch a portfolio of areas month over month. Static demo data.",
+    blurb: "Track up to 10 areas in a shared demo portfolio, scored live.",
   },
 ];
 
