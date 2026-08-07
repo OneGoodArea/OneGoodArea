@@ -100,4 +100,33 @@ describe("classifyClientApp", () => {
     const ctx = classifyClientApp("onegoodarea-estate-agents/1.0.0");
     expect(ctx.source).toBe("api");
   });
+
+  /* AR-758: the proptech showcase stamps its own UA so its traffic is
+     attributable in event/training analytics. Mirrors estate-agents. */
+  it("classifies the proptech demo UA as api + proptech", () => {
+    expect(classifyClientApp("onegoodarea-proptech/1.0.0")).toEqual({
+      source: "api",
+      client_app: "proptech",
+    });
+  });
+
+  it("classifies a browser UA stamped by the proptech demo", () => {
+    expect(
+      classifyClientApp(
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 onegoodarea-proptech/1.0.0",
+      ),
+    ).toEqual({ source: "api", client_app: "proptech" });
+  });
+
+  it("matches the proptech stamp case-insensitively", () => {
+    expect(classifyClientApp("ONEGOODAREA-PROPTECH/1.0.0")).toEqual({
+      source: "api",
+      client_app: "proptech",
+    });
+  });
+
+  it("does not treat the proptech demo as an MCP request", () => {
+    const ctx = classifyClientApp("onegoodarea-proptech/1.0.0");
+    expect(ctx.source).toBe("api");
+  });
 });

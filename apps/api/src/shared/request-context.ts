@@ -5,7 +5,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
    capture all derive from these two fields. AR-375. */
 
 export type RequestSource = "mcp" | "api";
-export type ClientApp = "claude-desktop" | "cursor" | "claude-code" | "estate-agents" | "other";
+export type ClientApp = "claude-desktop" | "cursor" | "claude-code" | "estate-agents" | "proptech" | "other";
 
 export interface RequestContext {
   source: RequestSource;
