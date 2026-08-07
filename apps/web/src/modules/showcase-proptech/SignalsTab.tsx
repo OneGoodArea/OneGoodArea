@@ -1,7 +1,7 @@
 "use client";
 
 import type { Signal, TransactionsResult } from "@/lib/showcase/types";
-import { LINEAGE, SIGNAL_CATEGORY_LABELS } from "./constants";
+import { SIGNAL_CATEGORY_LABELS } from "./constants";
 
 const priceFmt = new Intl.NumberFormat("en-GB", {
   style: "currency",
@@ -93,18 +93,6 @@ export function SignalsTab({ signals, transactions }: SignalsTabProps) {
           </ul>
         </section>
       )}
-
-      <section className="prx-lineage" aria-label="Data lineage">
-        <h4 className="prx-lineage__title">Where the numbers come from</h4>
-        <ul className="prx-lineage__list">
-          {LINEAGE.map((l) => (
-            <li key={l.source} className="prx-lineage__item">
-              <span className="prx-lineage__source">{l.source}</span>
-              <span className="prx-lineage__note">{l.note}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
     </div>
   );
 }

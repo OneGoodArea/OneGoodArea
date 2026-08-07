@@ -34,11 +34,4 @@ export const PRESET_LABELS: Record<string, string> = {
   research: "Research",
 };
 
-export const LINEAGE: { source: string; note: string }[] = [
-  { source: "Land Registry", note: "Price Paid · monthly" },
-  { source: "Ofsted", note: "school ratings" },
-  { source: "police.uk", note: "street-level crime" },
-  { source: "Environment Agency", note: "flood risk" },
-];
-
 export const UK_POSTCODE_RE = /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i;
