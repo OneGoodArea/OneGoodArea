@@ -5,11 +5,13 @@ import { AsyncLocalStorage } from "node:async_hooks";
    capture all derive from these two fields. AR-375. */
 
 export type RequestSource = "mcp" | "api";
-export type ClientApp = "claude-desktop" | "cursor" | "claude-code" | "estate-agents" | "proptech" | "other";
 
 export interface RequestContext {
   source: RequestSource;
-  client_app: ClientApp;
+  /* AR-759: an opaque, analytics-only label derived from the User-Agent. Not a
+     closed enum — new clients need only a classifier rule, never a type change.
+     Never used for business decisions. */
+  client_app: string;
 }
 
 const storage = new AsyncLocalStorage<RequestContext>();

@@ -44,6 +44,7 @@ Major decisions in chronological order. Detailed reasoning lives in the linked A
 ## 2026 Q3 — seven-category scoring + versioning UI
 
 - **Seven-category intent-aware scoring** (ADR 0038) — every preset scores the same seven dimensions (crime, deprivation, property, schools, amenities, transport, environment); intent lives in scorer composition + weights. Methodology 1.1.0, stamped + pinnable. ADR numbered 0038 (the AR-691 "ADR 0009" name collided with `0009-monitor-portfolios.md`).
+- **`client_app` as an opaque string** (ADR 0039) — dropped the `ClientApp` enum; UA sniffing kept, `client_app: string` (analytics-only). New clients need only a classifier rule, never a type change. Dead `isFromMcpServer` removed.
 
 ## See also
 
