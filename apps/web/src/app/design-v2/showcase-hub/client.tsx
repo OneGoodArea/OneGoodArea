@@ -19,7 +19,7 @@ const SHOWCASE_CARDS = [
     title: "PropTech",
     blurb:
       "Add area context to every listing. Schools, crime, prices, transport and a defensible score for any UK postcode, from one API.",
-    status: "Soon" as const,
+    status: "Live" as const,
   },
   {
     icp: "lenders",
