@@ -35,3 +35,7 @@ export const PRESET_LABELS: Record<string, string> = {
 };
 
 export const UK_POSTCODE_RE = /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i;
+
+export function formatPercentage(fraction: number): string {
+  return `${Math.round(fraction * 100)}%`;
+}

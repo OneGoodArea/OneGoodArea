@@ -7,7 +7,7 @@ import type {
   PortfolioDetail,
   PortfolioEnrichItem,
 } from "@/lib/showcase/types";
-import { UK_POSTCODE_RE } from "./constants";
+import { formatPercentage, UK_POSTCODE_RE } from "./constants";
 
 /** Client-imposed cap on tracked areas per portfolio (clear in the UI). */
 const MAX_AREAS = 10;
@@ -360,7 +360,7 @@ export function MonitorTab({ postcode = "" }: MonitorTabProps) {
                         ) : item?.score ? (
                           <span className="prx-monitor__score-cell">
                             <span className="prx-monitor__score-num">{item.score.score}</span>
-                            <span className="prx-monitor__score-meta">{item.score.confidence}%</span>
+                            <span className="prx-monitor__score-meta">{formatPercentage(item.score.confidence)}</span>
                           </span>
                         ) : (
                           <span className="prx-monitor__score-cell prx-monitor__score-cell--pending">—</span>
