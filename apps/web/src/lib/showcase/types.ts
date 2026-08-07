@@ -52,3 +52,56 @@ export interface Client {
   industry: string;
   description: string;
 }
+
+/* ── Monitor / portfolios ── */
+
+export interface PortfolioArea {
+  id: string;
+  area: string;
+  label: string | null;
+  created_at?: string;
+}
+
+export interface Portfolio {
+  id: string;
+  name: string;
+  area_count?: number;
+  created_at?: string;
+}
+
+export interface PortfolioDetail extends Portfolio {
+  areas: PortfolioArea[];
+}
+
+export interface PortfolioEnrichItem {
+  area: string;
+  label: string | null;
+  score: ScoreResult | null;
+  error: string | null;
+}
+
+export interface PortfolioChange {
+  signal_key: string;
+  label: string | null;
+  area: string;
+  geo_code: string;
+  period_from: string;
+  period_to: string;
+  value_from: number | null;
+  value_to: number | null;
+  delta: number | null;
+  pct_change: number | null;
+  direction: "up" | "down" | "flat";
+  material: boolean;
+}
+
+export interface ChangeReport {
+  portfolio_id: string;
+  baseline: "previous" | "first";
+  threshold_pct: number;
+  min_transactions: number;
+  areas_checked: number;
+  material_count: number;
+  changes: PortfolioChange[];
+  generated_at: string;
+}

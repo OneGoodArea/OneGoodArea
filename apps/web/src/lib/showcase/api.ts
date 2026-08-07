@@ -6,6 +6,10 @@ import type {
   Product,
   Signal,
   TransactionsResult,
+  Portfolio,
+  PortfolioDetail,
+  PortfolioEnrichItem,
+  ChangeReport,
 } from "@/lib/showcase/types";
 
 const BASE_URL = process.env.INTERNAL_API_URL ?? "https://onegoodarea.onrender.com";
@@ -153,6 +157,80 @@ export async function getTransactions(postcode?: string): Promise<TransactionsRe
       estateType: t.estate_type,
     })),
   };
+}
+
+/* ── Portfolios (Monitor product). All traffic stamps the proptech client_app
+   and resolves to the shared demo user via the SHOWCASE_API_KEY. ── */
+
+export async function listPortfolios(): Promise<Portfolio[]> {
+  const data = await apiFetch<{ portfolios: Portfolio[] }>(
+    "/v1/portfolios",
+    {},
+    SHOWCASE_PROP_TECH_USER_AGENT,
+  );
+  return data.portfolios ?? [];
+}
+
+export async function createPortfolio(name: string): Promise<Portfolio> {
+  return apiFetch<Portfolio>(
+    "/v1/portfolios",
+    { method: "POST", body: JSON.stringify({ name }) },
+    SHOWCASE_PROP_TECH_USER_AGENT,
+  );
+}
+
+export async function getPortfolio(id: string): Promise<PortfolioDetail> {
+  return apiFetch<PortfolioDetail>(
+    `/v1/portfolios/${encodeURIComponent(id)}`,
+    {},
+    SHOWCASE_PROP_TECH_USER_AGENT,
+  );
+}
+
+export async function deletePortfolio(id: string): Promise<void> {
+  await apiFetch<{ deleted: true }>(
+    `/v1/portfolios/${encodeURIComponent(id)}`,
+    { method: "DELETE" },
+    SHOWCASE_PROP_TECH_USER_AGENT,
+  );
+}
+
+export async function addPortfolioAreas(
+  id: string,
+  areas: { area: string; label?: string | null }[],
+): Promise<{ added: number; portfolio: PortfolioDetail }> {
+  return apiFetch<{ added: number; portfolio: PortfolioDetail }>(
+    `/v1/portfolios/${encodeURIComponent(id)}/areas`,
+    { method: "POST", body: JSON.stringify({ areas }) },
+    SHOWCASE_PROP_TECH_USER_AGENT,
+  );
+}
+
+export async function removePortfolioArea(id: string, area: string): Promise<void> {
+  await apiFetch<{ removed: true }>(
+    `/v1/portfolios/${encodeURIComponent(id)}/areas/${encodeURIComponent(area)}`,
+    { method: "DELETE" },
+    SHOWCASE_PROP_TECH_USER_AGENT,
+  );
+}
+
+export async function enrichPortfolio(id: string, preset?: Preset): Promise<PortfolioEnrichItem[]> {
+  const body: { preset?: Preset } = {};
+  if (preset) body.preset = preset;
+  const data = await apiFetch<{ count: number; results: PortfolioEnrichItem[] }>(
+    `/v1/portfolios/${encodeURIComponent(id)}/enrich`,
+    { method: "POST", body: JSON.stringify(body) },
+    SHOWCASE_PROP_TECH_USER_AGENT,
+  );
+  return data.results ?? [];
+}
+
+export async function getPortfolioChanges(id: string): Promise<ChangeReport> {
+  return apiFetch<ChangeReport>(
+    `/v1/portfolios/${encodeURIComponent(id)}/changes`,
+    {},
+    SHOWCASE_PROP_TECH_USER_AGENT,
+  );
 }
 
 export { ApiError };
