@@ -49,3 +49,4 @@ and both are kept (the trail matters).
 | [0036](./0036-brand-v3-close-out-and-aiq-strip.md) | AR-204 close-out + `.aiq` token strip (`globals.css` 952 → 159 lines) | Accepted |
 | [0037](./0037-brand-v3-dashboard-primitives.md) | Brand v3 dashboard primitives (AR-217 Phase 0) — 7 shipped, extract-on-second-use | Accepted |
 | [0038](./0038-scores-seven-category-model.md) | Seven-category intent-aware scoring (methodology 1.1.0) — shared dimension set, weights by preset | Accepted |
+| [0039](./0039-client-app-opaque-string.md) | `client_app` as an opaque string — drop the `ClientApp` enum (analytics-only, UA-derived) | Accepted |
