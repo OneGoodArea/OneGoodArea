@@ -56,6 +56,32 @@
   background: var(--oga-border);
 }
 
+/* ICP identity badge: the buyer's canonical icon + "For <ICP>" label, so each
+   /for page is instantly recognisable. No pill chrome, it sits directly in the
+   hero and blends in; the icon and ink label carry the identity. */
+.oga-icp-hero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: var(--oga-5);
+}
+.oga-icp-hero__badge-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: var(--oga-fg);
+}
+.oga-icp-hero__badge-icon svg { width: 22px; height: 22px; }
+.oga-icp-hero__badge-label {
+  font-family: var(--oga-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oga-fg);
+}
+
 .oga-icp-hero__h1 {
   font-family: var(--oga-font-sans);
   font-size: clamp(38px, 5vw, 60px);

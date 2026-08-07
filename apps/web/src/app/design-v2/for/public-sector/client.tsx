@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Nav } from "../../_shared/nav";
 import { Footer } from "../../_shared/footer";
+import { IcpHeroBadge } from "../_shared/icp-hero-badge";
 import { DEMO_URL } from "../../_shared/book-demo";
 import "../_shared/icp-page.css";
 import "../_shared/icp-template.css";
@@ -34,11 +35,7 @@ function Hero() {
   return (
     <section className="oga-section-quiet oga-icp-hero">
       <div className="oga-icp__wrap--narrow">
-        <div className="oga-icp-hero__eyebrow">
-          <span className="oga-icp-hero__eyebrow-mark" aria-hidden />
-          <span>For public sector and research</span>
-          <span className="oga-icp-hero__eyebrow-mark" aria-hidden />
-        </div>
+        <IcpHeroBadge icp="public-sector" label="For public sector and research" />
         <h1 className="oga-icp-hero__h1">Area metrics that survive FOI and procurement review.</h1>
         <p className="oga-icp-hero__lead">
           Every value carries its source, its release date and a confidence.
