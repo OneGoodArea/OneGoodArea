@@ -2,7 +2,6 @@ import "server-only";
 
 import type {
   Preset,
-  Score,
   ScoreResult,
   Product,
   Signal,
