@@ -64,11 +64,11 @@ function Hero() {
 }
 
 /* ---------- What your listing looks like (the money shot) ---------- */
-const PANEL: { label: string; pct: number }[] = [
-  { label: "Schools", pct: 81 },
-  { label: "Crime", pct: 88 },
-  { label: "Prices", pct: 66 },
-  { label: "Transport", pct: 79 },
+const PANEL: { label: string; value: number }[] = [
+  { label: "Schools", value: 84 },
+  { label: "Crime", value: 79 },
+  { label: "Prices", value: 71 },
+  { label: "Transport", value: 88 },
 ];
 
 function SectionShowcase() {
@@ -112,35 +112,36 @@ function SectionShowcase() {
 
         <div className="oga-pt-band__panel">
           <div className="oga-pt-band__panel-inner" aria-hidden>
-            <div className="oga-ea-out__listing">
-              <span className="oga-ea-out__addr">48 Wilbraham Road, Chorlton</span>
-              <span className="oga-ea-out__spec">For sale · £425,000 · 3 bed terraced · M21 9PN</span>
-            </div>
-            <div className="oga-ea-out__head">
-              <div className="oga-ea-out__heading">
-                <span className="oga-ea-out__label">The area in a glance</span>
-                <span className="oga-ea-out__by">by OneGoodArea</span>
-              </div>
-              <div className="oga-ea-ring">
-                <svg className="oga-ea-ring__svg" viewBox="0 0 72 72" aria-hidden>
-                  <circle className="oga-ea-ring__track" cx="36" cy="36" r="30" />
-                  <circle className="oga-ea-ring__value" cx="36" cy="36" r="30" />
+            <div className="oga-ea-card">
+              <div className="oga-ea-card__photo">
+                <svg className="oga-ea-card__house" viewBox="0 0 260 96" preserveAspectRatio="xMidYMax meet" aria-hidden>
+                  <path d="M30 88 V46 L130 16 L230 46 V88" />
+                  <rect x="64" y="54" width="30" height="24" rx="1.5" />
+                  <rect x="166" y="54" width="30" height="24" rx="1.5" />
+                  <path d="M112 88 V56 H148 V88" />
                 </svg>
-                <span className="oga-ea-ring__num">74</span>
+                <span className="oga-ea-card__tag">For sale · £550,000</span>
               </div>
-            </div>
-            <ul className="oga-ea-out__rows">
-              {PANEL.map((r) => (
-                <li key={r.label} className="oga-ea-out__row">
-                  <span className="oga-ea-out__row-label">{r.label}</span>
-                  <span className={`oga-pt-bar oga-pt-bar--w${r.pct}`}><span /></span>
-                  <span className="oga-ea-out__row-pct">{r.pct}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="oga-ea-out__foot">
-              <span>police.uk · Land Registry · Ofsted</span>
-              <span>Updated Jul 2026</span>
+              <div className="oga-ea-card__listing">
+                <span className="oga-ea-card__addr">12 Northern Grove, Didsbury</span>
+                <span className="oga-ea-card__spec">4 bed semi-detached · M20 2RU</span>
+              </div>
+              <div className="oga-ea-card__area">
+                <span className="oga-ea-card__area-label">The area at a glance</span>
+                <span className="oga-ea-card__score"><em>Area score</em><b>82</b></span>
+              </div>
+              <ul className="oga-ea-tiles">
+                {PANEL.map((t) => (
+                  <li key={t.label} className="oga-ea-tile">
+                    <span className="oga-ea-tile__label">{t.label}</span>
+                    <span className="oga-ea-tile__val">{t.value}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="oga-ea-card__foot">
+                <span>police.uk · Land Registry · Ofsted</span>
+                <span>by OneGoodArea</span>
+              </div>
             </div>
           </div>
         </div>
