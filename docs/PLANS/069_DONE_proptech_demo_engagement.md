@@ -1,6 +1,6 @@
 # 069 PropTech demo engagement — portfolio maintenance + polish
 
-Status: plan (not implemented)
+Status: implemented
 
 ## Purpose
 
