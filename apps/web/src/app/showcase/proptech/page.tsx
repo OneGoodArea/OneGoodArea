@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ApiError, getScores, getSignals, getTransactions } from "@/lib/showcase/api";
+import { ApiError, getForecast, getScores, getSignals, getTransactions } from "@/lib/showcase/api";
 import { ProptechShowcase } from "@/modules/showcase-proptech/ProptechShowcase";
 import "@/modules/showcase-proptech/proptech.css";
 
@@ -15,6 +15,7 @@ export default async function ProptechShowcasePage({
   let signals: Awaited<ReturnType<typeof getSignals>> = [];
   let initialScore: Awaited<ReturnType<typeof getScores>> | null = null;
   let transactions: Awaited<ReturnType<typeof getTransactions>> | null = null;
+  let initialForecast: Awaited<ReturnType<typeof getForecast>> | null = null;
   let apiError: ApiError | null = null;
 
   if (postcode) {
@@ -36,6 +37,13 @@ export default async function ProptechShowcasePage({
       transactions = await getTransactions(postcode);
     } catch {
       transactions = null;
+    }
+    /* Forecast needs 2+ monthly observations; a data-less area 404s and
+       degrades to null (the tab shows YoY + sales only). */
+    try {
+      initialForecast = await getForecast(postcode);
+    } catch {
+      initialForecast = null;
     }
   }
 
@@ -84,6 +92,7 @@ export default async function ProptechShowcasePage({
           initialSignals={signals}
           initialScore={initialScore}
           initialTransactions={transactions}
+          initialForecast={initialForecast}
         />
       )}
     </main>

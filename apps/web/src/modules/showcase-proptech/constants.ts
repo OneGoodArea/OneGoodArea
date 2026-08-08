@@ -1,4 +1,4 @@
-export type TabId = "signals" | "scores" | "portfolio";
+export type TabId = "signals" | "scores" | "portfolio" | "price";
 
 export const TABS: { id: TabId; label: string; blurb: string }[] = [
   {
@@ -10,6 +10,11 @@ export const TABS: { id: TabId; label: string; blurb: string }[] = [
     id: "scores",
     label: "Scores",
     blurb: "One headline number, weighted for the decision you are making.",
+  },
+  {
+    id: "price",
+    label: "Price changes",
+    blurb: "Forecast, year-on-year change and recent sales for the area.",
   },
   {
     id: "portfolio",

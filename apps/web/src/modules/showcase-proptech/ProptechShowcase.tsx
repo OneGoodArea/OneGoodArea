@@ -2,10 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import type { ScoreResult, Signal, TransactionsResult } from "@/lib/showcase/types";
+import type { ForecastResult, ScoreResult, Signal, TransactionsResult } from "@/lib/showcase/types";
 import { TABS, UK_POSTCODE_RE, type TabId } from "./constants";
 import { SignalsTab } from "./SignalsTab";
 import { ScoresTab } from "./ScoresTab";
+import { PriceChangesTab } from "./PriceChangesTab";
 import { PortfolioTab } from "./PortfolioTab";
 
 interface ProptechShowcaseProps {
@@ -13,6 +14,7 @@ interface ProptechShowcaseProps {
   initialSignals: Signal[];
   initialScore: ScoreResult | null;
   initialTransactions: TransactionsResult | null;
+  initialForecast: ForecastResult | null;
 }
 
 export function ProptechShowcase({
@@ -20,6 +22,7 @@ export function ProptechShowcase({
   initialSignals,
   initialScore,
   initialTransactions,
+  initialForecast,
 }: ProptechShowcaseProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -92,11 +95,17 @@ export function ProptechShowcase({
       {activeTab === "signals" && (
         <SignalsTab
           signals={initialSignals}
-          transactions={initialTransactions}
         />
       )}
       {activeTab === "scores" && (
         <ScoresTab postcode={initialPostcode ?? ""} initialResult={initialScore} />
+      )}
+      {activeTab === "price" && (
+        <PriceChangesTab
+          signals={initialSignals}
+          forecast={initialForecast}
+          transactions={initialTransactions}
+        />
       )}
       {activeTab === "portfolio" && <PortfolioTab postcode={initialPostcode ?? ""} />}
     </div>
