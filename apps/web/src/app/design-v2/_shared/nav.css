@@ -54,6 +54,31 @@
   opacity: 0.95;
 }
 
+/* "applications open" pulse dot, the one live accent on the pilot bar */
+.oga-announce__pulse {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #4E9E5F;
+}
+.oga-announce__pulse::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1px solid #4E9E5F;
+  animation: oga-announce-pulse 2s ease-out infinite;
+}
+@keyframes oga-announce-pulse {
+  0%   { transform: scale(0.6); opacity: 0.9; }
+  100% { transform: scale(2);   opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .oga-announce__pulse::after { animation: none; }
+}
+
 .oga-announce__copy {
   color: rgba(250, 248, 244, 0.92);
   font-weight: 500;
