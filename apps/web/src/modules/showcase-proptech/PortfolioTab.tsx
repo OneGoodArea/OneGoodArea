@@ -245,7 +245,7 @@ export function PortfolioTab({ postcode = "" }: PortfolioTabProps) {
         { method: "POST", body: JSON.stringify({}) },
       );
       setChanges(report);
-      setNotice("Re-scan complete — webhooks suppressed in this demo.");
+      setNotice("Re-scan complete. Webhooks are suppressed in this demo.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to rescan changes.");
     } finally {
