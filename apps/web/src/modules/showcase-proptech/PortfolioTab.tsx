@@ -41,6 +41,7 @@ export function PortfolioTab({ postcode = "" }: PortfolioTabProps) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [creatingNew, setCreatingNew] = useState(false);
 
   /** Load a portfolio's areas and (re)score them. */
   const selectAndLoad = useCallback(async (id: string) => {
@@ -129,6 +130,7 @@ export function PortfolioTab({ postcode = "" }: PortfolioTabProps) {
         });
         targetId = created.id;
         setSelectedId(targetId);
+        setCreatingNew(false);
       }
       setBusy("adding");
       const res = await bff<{ added: number; portfolio: PortfolioDetail }>(
@@ -282,6 +284,7 @@ export function PortfolioTab({ postcode = "" }: PortfolioTabProps) {
                 const id = e.target.value;
                 if (!id) return;
                 setSelectedId(id);
+                setCreatingNew(false);
                 void selectAndLoad(id);
               }}
               disabled={portfolios.length === 0}
@@ -294,14 +297,31 @@ export function PortfolioTab({ postcode = "" }: PortfolioTabProps) {
               ))}
             </select>
             {selectedId && (
-              <button
-                type="button"
-                className="prx-portfolio__btn prx-portfolio__btn--danger"
-                onClick={() => void handleDelete()}
-                disabled={busy !== null}
-              >
-                {confirmDelete ? "Confirm delete?" : "Delete portfolio"}
-              </button>
+              <>
+                <button
+                  type="button"
+                  className="prx-portfolio__btn"
+                  onClick={() => {
+                    setCreatingNew(true);
+                    setSelectedId(null);
+                    setNameInput("");
+                    setDetail(null);
+                    setEnrichments(null);
+                    setChanges(null);
+                  }}
+                  disabled={busy !== null}
+                >
+                  New portfolio
+                </button>
+                <button
+                  type="button"
+                  className="prx-portfolio__btn prx-portfolio__btn--danger"
+                  onClick={() => void handleDelete()}
+                  disabled={busy !== null}
+                >
+                  {confirmDelete ? "Confirm delete?" : "Delete portfolio"}
+                </button>
+              </>
             )}
           </div>
 
@@ -309,15 +329,16 @@ export function PortfolioTab({ postcode = "" }: PortfolioTabProps) {
             className="prx-portfolio__add"
             onSubmit={(e) => {
               e.preventDefault();
+              if (!selectedId && creatingNew) setCreatingNew(false);
               void handleAddArea(areaInput);
             }}
           >
-            {!selectedId && (
+            {(!selectedId || creatingNew) && (
               <label className="prx-portfolio__add-label" htmlFor="prx-portfolio-name">
                 Portfolio name
               </label>
             )}
-            {!selectedId && (
+            {(!selectedId || creatingNew) && (
               <input
                 id="prx-portfolio-name"
                 className="prx-postcode__input prx-portfolio__add-input"
