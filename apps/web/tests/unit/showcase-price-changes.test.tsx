@@ -77,6 +77,20 @@ describe("PriceChangesTab", () => {
     expect(screen.getByRole("img", { name: /projected median price/i })).toBeTruthy();
   });
 
+  it("renders the forecast SVG with valid coordinate-pair points (no path commands)", () => {
+    const { container } = render(<PriceChangesTab signals={SIGNALS} forecast={FORECAST} transactions={null} />);
+    const svg = container.querySelector("svg");
+    expect(svg).not.toBeNull();
+    const polygon = svg?.querySelector("polygon");
+    const polyline = svg?.querySelector("polyline");
+    expect(polygon).not.toBeNull();
+    expect(polyline).not.toBeNull();
+    const polygonPoints = polygon?.getAttribute("points") ?? "";
+    const polylinePoints = polyline?.getAttribute("points") ?? "";
+    expect(polygonPoints).not.toMatch(/[ML]/);
+    expect(polylinePoints).not.toMatch(/[ML]/);
+  });
+
   it("degrades the forecast to a hint when only one point exists", () => {
     const singlePoint = { ...FORECAST, points: [FORECAST.points[0]!] };
     render(<PriceChangesTab signals={SIGNALS} forecast={singlePoint} transactions={null} />);
