@@ -178,8 +178,10 @@ function Surfaces() {
         </div>
 
         <p className="oga-ai-surfaces__note">
-          Also published: a sitemap, a robots policy that explicitly welcomes AI
-          crawlers, and schema.org structured data on every page.
+          Also published: an llms-full.txt with the complete reference in one
+          file, a discovery manifest at /.well-known/ai-plugin.json, a sitemap, a
+          robots policy that explicitly welcomes AI crawlers, and schema.org
+          structured data across the site.
         </p>
       </div>
     </section>
