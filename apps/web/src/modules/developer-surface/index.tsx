@@ -84,6 +84,8 @@ export function DeveloperSurface({
             persistAuth: false,
             isEditable: false,
             showSidebar: true,
+            tagsSorter: "alpha",
+            operationsSorter: "alpha",
             layout: "modern",
             authentication: status === "authenticated"
               ? {
