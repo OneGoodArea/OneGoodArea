@@ -430,7 +430,7 @@ export function PortfolioTab({ postcode = "" }: PortfolioTabProps) {
 
           {!detail && portfolios.length === 0 && (
             <p className="prx-scores__hint">
-              No portfolio yet. Add your first postcode above to create one —
+              No portfolio yet. Add your first postcode above to create one,
               shared by everyone visiting this demo.
             </p>
           )}
