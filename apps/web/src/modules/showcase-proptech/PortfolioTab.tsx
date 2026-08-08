@@ -16,7 +16,6 @@ const DEMO_PORTFOLIO_NAME = "Demo portfolio";
 interface PortfolioTabProps {
   postcode?: string;
 }
-
 async function bff<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     ...init,
@@ -36,6 +35,7 @@ export function PortfolioTab({ postcode = "" }: PortfolioTabProps) {
   const [enrichments, setEnrichments] = useState<PortfolioEnrichItem[] | null>(null);
   const [changes, setChanges] = useState<ChangeReport | null>(null);
   const [areaInput, setAreaInput] = useState("");
+  const [nameInput, setNameInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -125,7 +125,7 @@ export function PortfolioTab({ postcode = "" }: PortfolioTabProps) {
         setBusy("creating");
         const created = await bff<Portfolio>("/api/showcase/portfolios", {
           method: "POST",
-          body: JSON.stringify({ name: DEMO_PORTFOLIO_NAME }),
+          body: JSON.stringify({ name: nameInput.trim() || DEMO_PORTFOLIO_NAME }),
         });
         targetId = created.id;
         setSelectedId(targetId);
@@ -312,6 +312,22 @@ export function PortfolioTab({ postcode = "" }: PortfolioTabProps) {
               void handleAddArea(areaInput);
             }}
           >
+            {!selectedId && (
+              <label className="prx-portfolio__add-label" htmlFor="prx-portfolio-name">
+                Portfolio name
+              </label>
+            )}
+            {!selectedId && (
+              <input
+                id="prx-portfolio-name"
+                className="prx-postcode__input prx-portfolio__add-input"
+                type="text"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                placeholder="e.g. North West pipeline"
+                disabled={busy !== null}
+              />
+            )}
             <label className="prx-portfolio__add-label" htmlFor="prx-portfolio-area">
               Track an area
             </label>
@@ -414,8 +430,8 @@ export function PortfolioTab({ postcode = "" }: PortfolioTabProps) {
 
           {!detail && portfolios.length === 0 && (
             <p className="prx-scores__hint">
-              No portfolio yet. Add your first postcode above to create the demo
-              portfolio — shared by everyone visiting this demo.
+              No portfolio yet. Add your first postcode above to create one —
+              shared by everyone visiting this demo.
             </p>
           )}
 
