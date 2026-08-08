@@ -86,6 +86,7 @@ services:
       target: refresh
     image: onegoodarea/api-refresh:local
     profiles: ["refresh"]
+    command: ["bash", "./apps/api/scripts/signal-refresh.sh"]
     environment:
       NODE_ENV: development
       DATABASE_URL: postgres://oga_user:oga_test_password_local@postgres:5432/oga_local
