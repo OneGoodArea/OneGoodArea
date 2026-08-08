@@ -17,6 +17,10 @@ retry="$ROOT/.github/scripts/retry.sh"
 cache_dir="${REFRESH_CACHE_DIR:-/cache}"
 archive_dir="$cache_dir/archive"
 
+# Log-level + color helpers (OGA_LOG_LEVEL, see logging.sh).
+# shellcheck disable=SC1091
+source "$ROOT/.github/scripts/logging.sh"
+
 # 1. Migrate (idempotent DDL)
 bash "$retry" npm run migrate -w @onegoodarea/api
 # 2. Deprivation (England/Wales/Scotland IMD; static, re-runs no-op)
@@ -28,12 +32,13 @@ bash "$retry" npm run refresh:prices -w @onegoodarea/api -- "$(date -u +%Y)"
 #    dir (or the named volume) to force a fresh download.
 if [ ! -d "$archive_dir" ] || [ "$(find "$archive_dir" -name '*-street.csv' 2>/dev/null | wc -l)" -eq 0 ]; then
   mkdir -p "$cache_dir"
-  echo "signal-refresh: downloading police.uk latest.zip ..."
-  curl -fSL --retry 3 --retry-delay 15 -o "$cache_dir/latest.zip" https://data.police.uk/data/archive/latest.zip
+  log_info "signal-refresh: downloading police.uk latest.zip ..."
+  # shellcheck disable=SC2046
+  curl $(curl_quiet_flags) -fSL --retry 3 --retry-delay 15 -o "$cache_dir/latest.zip" https://data.police.uk/data/archive/latest.zip
   unzip -q -o "$cache_dir/latest.zip" -d "$archive_dir"
   rm -f "$cache_dir/latest.zip"
 else
-  echo "signal-refresh: reusing cached police.uk archive in $archive_dir"
+  log_info "signal-refresh: reusing cached police.uk archive in $archive_dir"
 fi
 bash "$retry" npm run refresh:crime -w @onegoodarea/api -- "$archive_dir"
 # 5. Ofsted (auto-resolves the latest gov.uk inspections CSV)

@@ -20,3 +20,14 @@ CTR_COMPOSE_DEV = $(CTR_COMPOSE) -f $(COMPOSE_BASE) -f $(COMPOSE_OVERRIDE) -f $(
 
 BUILD_FLAG ?=
 BUILD_FLAG_TEST ?=
+
+# Log level for compose-launched containers (structured logger + shell
+# helpers). Precedence: make LOG_LEVEL=... (command line) > shell
+# OGA_LOG_LEVEL > info. Exported so compose's ${OGA_LOG_LEVEL:-info}
+# interpolation picks it up and injects it into every service env.
+#   make signal-refresh            # info
+#   make signal-refresh LOG_LEVEL=debug
+#   OGA_LOG_LEVEL=warn make signal-refresh
+OGA_LOG_LEVEL ?= info
+LOG_LEVEL ?= $(OGA_LOG_LEVEL)
+export OGA_LOG_LEVEL := $(LOG_LEVEL)

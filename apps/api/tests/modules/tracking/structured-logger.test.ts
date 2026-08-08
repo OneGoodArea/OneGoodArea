@@ -5,6 +5,12 @@ import { logger } from "@/modules/tracking/structured-logger";
    context attachment, Error serialization, and level filtering — so log
    output other tools parse can't silently change. */
 
+/* The logger wraps the JSON line in ANSI color when a TTY or FORCE_COLOR is
+   active; strip it before parsing so these assertions hold in any env. */
+function stripAnsi(s: string): string {
+  return s.replace(/\x1b\[[0-9;]*m/g, "");
+}
+
 describe("structured-logger", () => {
   let logSpy: ReturnType<typeof vi.spyOn>;
   let warnSpy: ReturnType<typeof vi.spyOn>;
@@ -23,7 +29,7 @@ describe("structured-logger", () => {
   it("emits structured JSON with service, level, message, timestamp", () => {
     logger.error("boom");
     expect(errorSpy).toHaveBeenCalledOnce();
-    const payload = JSON.parse(errorSpy.mock.calls[0]![0] as string);
+    const payload = JSON.parse(stripAnsi(errorSpy.mock.calls[0]![0] as string));
     expect(payload.service).toBe("OneGoodArea");
     expect(payload.level).toBe("error");
     expect(payload.message).toBe("boom");
@@ -32,13 +38,13 @@ describe("structured-logger", () => {
 
   it("attaches a context object", () => {
     logger.info("hi", { area: "M1" });
-    const payload = JSON.parse(logSpy.mock.calls[0]![0] as string);
+    const payload = JSON.parse(stripAnsi(logSpy.mock.calls[0]![0] as string));
     expect(payload.context).toEqual({ area: "M1" });
   });
 
   it("serializes Error values in context", () => {
     logger.error("failed", { error: new Error("nope") });
-    const payload = JSON.parse(errorSpy.mock.calls[0]![0] as string);
+    const payload = JSON.parse(stripAnsi(errorSpy.mock.calls[0]![0] as string));
     expect(payload.context.error.message).toBe("nope");
     expect(payload.context.error.name).toBe("Error");
   });
@@ -58,7 +64,7 @@ describe("structured-logger", () => {
   describe("URI password redaction (AR-308)", () => {
     it("masks the password in a Postgres connection string in the error message", () => {
       logger.error("DB error: cannot connect to postgresql://neondb_owner:npg_realpassword@ep-host.neon.tech/db?sslmode=require");
-      const raw = errorSpy.mock.calls[0]![0] as string;
+      const raw = stripAnsi(errorSpy.mock.calls[0]![0] as string);
       expect(raw).not.toContain("npg_realpassword");
       expect(raw).toContain("postgresql://neondb_owner:***@ep-host.neon.tech/db");
     });
@@ -66,14 +72,14 @@ describe("structured-logger", () => {
     it("masks passwords inside a serialized Error context (the real AR-308 leak path)", () => {
       const err = new Error('Database connection string provided to `neon()` is not a valid URL. Connection string: "postgresql://neondb_owner:npg_realpassword@ep-host.neon.tech/db?sslmode=require"');
       logger.error("v1/orgs list error:", { error: err });
-      const raw = errorSpy.mock.calls[0]![0] as string;
+      const raw = stripAnsi(errorSpy.mock.calls[0]![0] as string);
       expect(raw).not.toContain("npg_realpassword");
       expect(raw).toMatch(/postgresql:\/\/neondb_owner:\*\*\*@ep-host/);
     });
 
     it("masks multiple URI passwords in a single log line", () => {
       logger.error("mismatch", { primary: "postgresql://a:secret_a@host1/db", replica: "postgresql://b:secret_b@host2/db" });
-      const raw = errorSpy.mock.calls[0]![0] as string;
+      const raw = stripAnsi(errorSpy.mock.calls[0]![0] as string);
       expect(raw).not.toContain("secret_a");
       expect(raw).not.toContain("secret_b");
       expect(raw).toContain("postgresql://a:***@host1");
@@ -82,13 +88,13 @@ describe("structured-logger", () => {
 
     it("leaves URIs without a userinfo:password segment untouched", () => {
       logger.info("ping", { url: "https://onegoodarea.onrender.com/v1/health" });
-      const raw = logSpy.mock.calls[0]![0] as string;
+      const raw = stripAnsi(logSpy.mock.calls[0]![0] as string);
       expect(raw).toContain("https://onegoodarea.onrender.com/v1/health");
     });
 
     it("does not mangle host:port patterns (no @ follows)", () => {
       logger.info("redis up", { addr: "localhost:6379" });
-      const raw = logSpy.mock.calls[0]![0] as string;
+      const raw = stripAnsi(logSpy.mock.calls[0]![0] as string);
       expect(raw).toContain("localhost:6379");
     });
   });

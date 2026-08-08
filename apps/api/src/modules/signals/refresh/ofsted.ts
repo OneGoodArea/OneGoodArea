@@ -331,14 +331,14 @@ const invokedDirectly = /[\\/]refresh[\\/]ofsted\.(ts|cjs)$/.test(process.argv[1
 if (invokedDirectly) {
   runOfstedRefresh(process.argv[2])
     .then((s) => {
-      console.log(
+      logger.info(
         `[refresh:ofsted] ${s.parsed} parsed, ${s.geocoded} geocoded, ${s.loaded} loaded, ${s.deletedStale} stale removed (snapshot ${s.snapshotId})`,
       );
-      console.log(`  source: ${s.csvUrl}${s.asAt ? ` (as at ${s.asAt})` : ""}`);
+      logger.debug(`  source: ${s.csvUrl}${s.asAt ? ` (as at ${s.asAt})` : ""}`);
       process.exit(0);
     })
     .catch((err) => {
-      console.error("[refresh:ofsted] failed:", err);
+      logger.error("[refresh:ofsted] failed:", err);
       process.exit(1);
     });
 }

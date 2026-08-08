@@ -87,6 +87,7 @@ services:
       OGA_SIGNALS_API: "true"
       OGA_SIGNALS_STORE_READ: "true"
       CRON_SECRET: test-secret-do-not-use-in-prod
+      OGA_LOG_LEVEL: ${OGA_LOG_LEVEL:-info}
       STRIPE_API_BASE_URL: http://stripe-mock-test:12111
       STRIPE_SECRET_KEY: sk_test_mock
     depends_on:

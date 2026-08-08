@@ -5,6 +5,8 @@
  * In local runtime (OGA_LOCAL_RUNTIME_ENABLED=true), enables debug output and JSON formatting.
  */
 
+import pc from "picocolors";
+
 import { getConfig } from "../../infrastructure/config";
 
 type LogLevel = 'trace' | 'debug' | 'verbose' | 'info' | 'warn' | 'error';
@@ -32,6 +34,22 @@ function getLogLevel(): LogLevel {
 function shouldLog(level: LogLevel): boolean {
   const configuredLevel = getLogLevel();
   return LogLevelRank[level] >= LogLevelRank[configuredLevel];
+}
+
+/* Whole-line ANSI color per level. picocolors auto-detects TTY support and
+   honors NO_COLOR / FORCE_COLOR, so containers and CI stay plain unless
+   FORCE_COLOR is set. */
+const LEVEL_COLOR: Record<LogLevel, (s: string) => string> = {
+  trace: pc.gray,
+  debug: pc.cyan,
+  verbose: pc.blue,
+  info: pc.green,
+  warn: pc.yellow,
+  error: pc.red,
+};
+
+function colorize(level: LogLevel, line: string): string {
+  return LEVEL_COLOR[level](line);
 }
 
 function formatTimestamp(): string {
@@ -118,37 +136,37 @@ export const logger = {
   trace(...args: unknown[]) {
     if (shouldLog('trace')) {
       const { message, context } = normalizeArgs(args);
-      console.log(formatStructured('trace', message, context));
+      console.log(colorize('trace', formatStructured('trace', message, context)));
     }
   },
   debug(...args: unknown[]) {
     if (shouldLog('debug')) {
       const { message, context } = normalizeArgs(args);
-      console.log(formatStructured('debug', message, context));
+      console.log(colorize('debug', formatStructured('debug', message, context)));
     }
   },
   verbose(...args: unknown[]) {
     if (shouldLog('verbose')) {
       const { message, context } = normalizeArgs(args);
-      console.log(formatStructured('verbose', message, context));
+      console.log(colorize('verbose', formatStructured('verbose', message, context)));
     }
   },
   info(...args: unknown[]) {
     if (shouldLog('info')) {
       const { message, context } = normalizeArgs(args);
-      console.log(formatStructured('info', message, context));
+      console.log(colorize('info', formatStructured('info', message, context)));
     }
   },
   warn(...args: unknown[]) {
     if (shouldLog('warn')) {
       const { message, context } = normalizeArgs(args);
-      console.warn(formatStructured('warn', message, context));
+      console.warn(colorize('warn', formatStructured('warn', message, context)));
     }
   },
   error(...args: unknown[]) {
     if (shouldLog('error')) {
       const { message, context } = normalizeArgs(args);
-      console.error(formatStructured('error', message, context));
+      console.error(colorize('error', formatStructured('error', message, context)));
     }
   },
 };

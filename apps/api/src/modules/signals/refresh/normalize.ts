@@ -21,6 +21,7 @@
 
 import { query as defaultQuery } from "../../../infrastructure/db/client";
 import type { QueryRunner } from "./store-writer";
+import { logger } from "../../tracking/structured-logger";
 
 const runDefault: QueryRunner = (text, params) => defaultQuery(text, params);
 
@@ -121,12 +122,12 @@ const invokedDirectly = Boolean(process.argv[1]?.endsWith("normalize.ts"));
 if (invokedDirectly) {
   runDeprivationNormalize()
     .then((s) => {
-      console.log(`[normalize:deprivation] normalized ${s.signals.length} signals (national-within-country):`);
-      for (const k of s.signals) console.log(`  ✓ ${k}`);
+      logger.info(`[normalize:deprivation] normalized ${s.signals.length} signals (national-within-country):`);
+      for (const k of s.signals) logger.debug(`  ✓ ${k}`);
       process.exit(0);
     })
     .catch((err) => {
-      console.error("[normalize:deprivation] failed:", err);
+      logger.error("[normalize:deprivation] failed:", err);
       process.exit(1);
     });
 }

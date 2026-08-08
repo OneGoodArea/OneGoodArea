@@ -30,6 +30,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # Log level for the refresh CLIs (structured logger) + shell helpers.
+      # Default info: summaries + errors. Bump to debug on manual runs to
+      # diagnose. FORCE_COLOR renders the ANSI-colored logs in the Actions UI.
+      OGA_LOG_LEVEL: info
+      FORCE_COLOR: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -52,9 +57,12 @@ jobs:
       - name: Refresh crime (police.uk latest archive, write-only)
         run: |
           set -euo pipefail
+          # shellcheck disable=SC1091
+          source "$(pwd)/.github/scripts/logging.sh"
           work="$(mktemp -d)"
-          echo "Downloading police.uk latest.zip ..."
-          curl -fSL --retry 3 --retry-delay 15 -o "$work/latest.zip" https://data.police.uk/data/archive/latest.zip
+          log_info "Downloading police.uk latest.zip ..."
+          # shellcheck disable=SC2046
+          curl $(curl_quiet_flags) -fSL --retry 3 --retry-delay 15 -o "$work/latest.zip" https://data.police.uk/data/archive/latest.zip
           ls -lh "$work/latest.zip"
           unzip -q "$work/latest.zip" -d "$work/archive"
           rm -f "$work/latest.zip"
