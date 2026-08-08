@@ -71,6 +71,40 @@ services:
       postgres:
         condition: service_healthy
 
+  # Containerized signal-refresh pipeline (AR-766). Builds the tooling-only
+  # `refresh` stage of the api Containerfile (no source COPY), then runs the
+  # orchestrator against the LOCAL stack — postgres + neon-compat-proxy via
+  # NEON_FETCH_ENDPOINT — instead of prod Neon. The host repo root is
+  # bind-mounted at /app (so scripts + .github/scripts/retry.sh resolve from
+  # the host, hot-reload); an anonymous /app/node_modules volume shadows the
+  # mount with the image's Linux-installed deps (devcontainer pattern); the
+  # refresh-cache volume persists the ~1.6GB police.uk archive between runs.
+  signal-refresh:
+    build:
+      context: ..
+      dockerfile: container/api/Containerfile
+      target: refresh
+    image: onegoodarea/api-refresh:local
+    profiles: ["refresh"]
+    command: ["bash", "./apps/api/scripts/signal-refresh.sh"]
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://oga_user:oga_test_password_local@postgres:5432/oga_local
+      # Route the @neondatabase/serverless driver's HTTPS fetch through the
+      # local neon-compat-proxy (same POST /sql protocol) instead of Neon
+      # Cloud. (AR-247)
+      NEON_FETCH_ENDPOINT: http://neon-proxy:55433/sql
+      REFRESH_CACHE_DIR: /cache
+    volumes:
+      - ..:/app:z
+      - /app/node_modules
+      - refresh-cache:/cache
+    depends_on:
+      neon-proxy:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
   web:
     build:
       context: ..
@@ -140,3 +174,4 @@ services:
 
 volumes:
   oga-pgadmin-data:
+  refresh-cache:

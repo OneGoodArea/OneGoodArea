@@ -1,4 +1,4 @@
-.PHONY: stack-up-min stack-up-full stack-down stack-logs stack-clean build-api-image build-web-image
+.PHONY: stack-up-min stack-up-full stack-down stack-logs stack-clean build-api-image build-web-image signal-refresh-build signal-refresh
 
 stack-up-min: ## Boot minimal stack (postgres, neon-proxy, api, web)
 	$(CTR_COMPOSE_CMD) --profile minimal up -d $(BUILD_FLAG)
@@ -29,3 +29,10 @@ build-api-image: ## Build the api Docker image from current branch sources
 
 build-web-image: ## Build the web Docker image from current branch sources
 	$(CTR_COMPOSE_CMD) build web
+
+signal-refresh-build: ## Build the tooling-only signal-refresh image (refresh stage)
+	$(CTR_COMPOSE_CMD) --profile refresh build signal-refresh
+
+signal-refresh: ## Run the containerized signal-refresh pipeline (boots postgres + neon-proxy first)
+	$(CTR_COMPOSE_CMD) --profile minimal --profile refresh up -d postgres neon-proxy
+	$(CTR_COMPOSE_CMD) --profile minimal --profile refresh run --rm signal-refresh
