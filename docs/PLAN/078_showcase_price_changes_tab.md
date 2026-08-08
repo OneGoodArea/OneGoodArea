@@ -53,6 +53,12 @@ supports `property.median_price`.
 - `make build-web-test-image` + `make web-test-container` — web unit tests green.
 - `make app-lint` + `make app-typecheck`.
 
+## Verification results (2026-08-08)
+- `make build-web-test-image`: image built (Next.js `build` stage passed → app compiles; `/showcase/proptech` route present).
+- Web tests in-container (`podman run ... web-test`): 36 files / 344 tests passed (includes new `showcase-price-changes.test.tsx` 5 tests + updated constants test 5 tests). NOTE: host runs `make web-test-container` via rootless podman + SELinux-enforcing fail to write the bind-mounted `.artifacts`; running with `:z` relabeled volumes succeeds (AR-764's earlier run predates this host config).
+- `tsc --noEmit` (web) in web-test container: OK.
+- `eslint apps packages` (scoped to changed showcase paths) in container: clean.
+
 ## Rollback
 - `git revert <sha>` per commit; all changes are additive in the showcase
   module + one new BFF route.
