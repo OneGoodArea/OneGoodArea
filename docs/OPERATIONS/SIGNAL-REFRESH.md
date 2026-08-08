@@ -99,6 +99,12 @@ make signal-refresh
 make signal-refresh-build
 ```
 
+> **One-shot prerequisite:** a fresh local DB has an empty postcode→LSOA map, so
+> `refresh:prices` / `refresh:crime` / `refresh:peers` will map nothing until the
+> ONS NSPL geo spine is loaded once. On prod the spine is preloaded separately;
+> locally run `npm run load:geo -w @onegoodarea/api -- <path-to-nspl.csv>`
+> against the stack (e.g. `apps/api/seed/nspl-sample.csv` for a smoke test).
+
 How it's wired:
 
 - The host repo root is bind-mounted at `/app`, so scripts and
