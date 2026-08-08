@@ -40,6 +40,9 @@ To run it by hand against a local archive:
 DATABASE_URL=... npm run refresh:crime -w @onegoodarea/api -- <police-archive-folder>
 ```
 
+The containerized pipeline (below) keeps the archive in the `refresh-cache`
+volume instead of deleting it after each run.
+
 ## Ofsted (auto-resolved on the cron)
 
 `refresh:ofsted` needs no local file. gov.uk has no stable "latest CSV" URL
@@ -78,6 +81,42 @@ DATABASE_URL=... npm run derive:signals -w @onegoodarea/api
 DATABASE_URL=... npm run normalize:signals -w @onegoodarea/api
 DATABASE_URL=... npm run timeseries:append -w @onegoodarea/api
 ```
+
+## Local containerized refresh (AR-766)
+
+The cron pipeline also runs locally in containers, against the compose stack
+(postgres + neon-compat-proxy via `NEON_FETCH_ENDPOINT`) instead of prod Neon.
+The `signal-refresh` compose service builds the tooling-only `refresh` stage of
+`container/api/Containerfile` (no source COPY), then runs
+`apps/api/scripts/signal-refresh.sh`, which mirrors the cron steps above and
+reuses the shared `.github/scripts/retry.sh` wrapper.
+
+```bash
+# One-shot: boots postgres + neon-proxy, then runs the full pipeline
+make signal-refresh
+
+# Rebuild just the tooling image (needed after Containerfile / manifest changes)
+make signal-refresh-build
+```
+
+How it's wired:
+
+- The host repo root is bind-mounted at `/app`, so scripts and
+  `.github/scripts/retry.sh` resolve from the host (hot-reload — no rebuild for
+  code changes).
+- An anonymous `/app/node_modules` volume shadows the mount with the image's
+  Linux-installed deps (devcontainer pattern), so the Windows-generated
+  lockfile never pollutes Linux runs.
+- The ~1.6GB police.uk `latest.zip` is downloaded once and cached in the named
+  `refresh-cache` volume (`/cache`), unlike the cron which deletes the archive
+  after each run. Delete the volume to force a fresh download:
+  `make stack-clean` (also drops all named volumes), or
+  `podman volume rm onegoodarea_refresh-cache`.
+
+Environment: `DATABASE_URL` (local Postgres), `NEON_FETCH_ENDPOINT`
+(neon-compat-proxy), `REFRESH_CACHE_DIR` (default `/cache`). Set
+`OGA_SIGNALS_API`/`OGA_SIGNALS_STORE_READ`/`CRON_SECRET` as needed for the
+api service; the refresh job itself only needs the DB + Neon-fetch endpoint.
 
 ## Troubleshooting
 

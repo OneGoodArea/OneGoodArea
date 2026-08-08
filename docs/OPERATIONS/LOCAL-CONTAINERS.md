@@ -49,6 +49,8 @@ Set `BUILD_FLAG=--build` to force rebuild: `make stack-up-min BUILD_FLAG=--build
 | `make web-up` | Boot web service with compose dependencies |
 | `make web-logs` | Follow web logs |
 | `make db-seed` | Load framework + baseline seed SQL |
+| `make signal-refresh-build` | Build the tooling-only signal-refresh image (refresh stage) |
+| `make signal-refresh` | Run the containerized signal-refresh pipeline (boots postgres + neon-proxy first) |
 | `make api-test-coverage-container` | Run API coverage in ephemeral container |
 | `make web-test-coverage-container` | Run web coverage in ephemeral container |
 
@@ -116,6 +118,24 @@ To connect to PostgreSQL from pgAdmin:
 - **User:** `oga_user`
 - **Password:** `oga_test_password_local`
 
+### Signal Refresh (profile: `refresh`)
+
+Containerized mirror of the prod cron (`docs/OPERATIONS/SIGNAL-REFRESH.md`).
+Builds the tooling-only `refresh` stage of `container/api/Containerfile` and
+runs `apps/api/scripts/signal-refresh.sh` against the local stack.
+
+- **Image:** `onegoodarea/api-refresh:local`
+- **Runtime:** one-shot via `make signal-refresh` (or `compose run --rm`)
+- **Volumes:**
+  - `..:/app:z` — host repo root bind mount (hot-reload of scripts; `.github/scripts/retry.sh` resolved from host)
+  - `/app/node_modules` — anonymous volume, shadows the mount with the image's Linux-installed deps
+  - `refresh-cache:/cache` — named volume, persists the ~1.6GB police.uk archive
+- **Depends on:** postgres (healthy), neon-proxy (healthy)
+
+**Image architecture (AR-766):** `refresh` stage — `node:22-slim` + `curl` +
+`unzip`, workspace manifests copied (no source), full `npm install`
+(devDeps => `tsx`). The service bind-mounts the repo root at runtime.
+
 ### Mailhog (full profile only)
 
 - **Image:** `mailhog/mailhog:v1.0.1`
@@ -162,4 +182,4 @@ make stack-up-min CTR_ENGINE=podman
 
 ---
 
-**Last Updated:** June 2026 (Plan 017)
+**Last Updated:** August 2026 (AR-766)
