@@ -29,9 +29,9 @@ const STAGES: Stage[] = [
     id: "methodology",
     index: "02",
     title: "Methodology pinned.",
-    body: "Every score is stamped with the engine version that produced it. Pin your contract to v1.0.0 and the math stays reproducible. Weights are documented, formula is published.",
+    body: "Every score is stamped with the engine version that produced it. Pin your contract to v1.1.0 and the math stays reproducible. Weights are documented, formula is published.",
     signalLabel: "Request header",
-    signalValue: "X-Engine-Version: 1.0.0",
+    signalValue: "X-Engine-Version: 1.1.0",
   },
   {
     id: "score",
@@ -135,7 +135,7 @@ function VisualMethodology() {
           letterSpacing="0.10em"
           fill="currentColor"
         >
-          v1.0.0
+          v1.1.0
         </text>
       </g>
     </svg>

@@ -332,7 +332,7 @@ function Foundation() {
               <div className="oga-sig-found__ver">
                 <div className="oga-sig-found__ver-head">
                   <span className="oga-sig-found__ver-sig">crime.total_12m</span>
-                  <span className="oga-sig-found__ver-tag">engine v1.0.0</span>
+                  <span className="oga-sig-found__ver-tag">engine v1.1.0</span>
                 </div>
                 <span className="oga-sig-found__ver-val">3,712</span>
                 <div className="oga-sig-found__ver-meta">Observed 2025-04 → 2026-03</div>
@@ -483,7 +483,7 @@ function Workflows() {
                 <pre className="oga-sig-flow__code-body">{`GET /v1/area/M1 1AE
 Authorization: Bearer oga_live_…
 
-200 · engine v1.0.0`}</pre>
+200 · engine v1.1.0`}</pre>
               </div>
             </div>
             <p className="oga-sig-flow__cap">Call it from your code, or ask in plain English through the MCP server.</p>

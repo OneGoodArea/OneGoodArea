@@ -93,7 +93,7 @@ export function HowItWorksSection() {
                 </div>
               </div>
               <div className="oga-how__report-foot">
-                <span>engine v1.0.0 · source-backed</span>
+                <span>engine v1.1.0 · source-backed</span>
                 <span className="oga-how__report-brand">OneGoodArea</span>
               </div>
             </div>

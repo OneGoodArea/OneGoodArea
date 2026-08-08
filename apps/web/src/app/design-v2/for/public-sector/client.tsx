@@ -101,7 +101,7 @@ function SectionShowcase() {
           <article className="oga-ps-record" aria-hidden>
             <div className="oga-ps-record__head">
               <span className="oga-ps-record__label">Evidence record</span>
-              <span className="oga-ps-record__ver">engine v1.0.0</span>
+              <span className="oga-ps-record__ver">engine v1.1.0</span>
             </div>
 
             <div className="oga-ps-record__meta">
@@ -287,9 +287,9 @@ const TRUST: TrustCol[] = [
     title: "Pinned for the contract",
     body: "Pin the version named in the procurement notice. The number on the deliverable matches the one at award.",
     rows: [
-      { left: "at award", right: "v1.0.0" },
-      { left: "at delivery", right: "v1.0.0", state: "active" },
-      { left: "X-Engine-Version", right: "1.0.0" },
+      { left: "at award", right: "v1.1.0" },
+      { left: "at delivery", right: "v1.1.0", state: "active" },
+      { left: "X-Engine-Version", right: "1.1.0" },
       { left: "pin", right: "owner-only", state: "dim" },
       { left: "drift", right: "none", state: "faint" },
     ],
@@ -299,7 +299,7 @@ const TRUST: TrustCol[] = [
     body: "The methodology is published and versioned. Cite the page and the exact engine version behind any figure.",
     rows: [
       { left: "/methodology", right: "public" },
-      { left: "engine", right: "v1.0.0", state: "active" },
+      { left: "engine", right: "v1.1.0", state: "active" },
       { left: "changelog", right: "versioned" },
       { left: "source", right: "per signal", state: "dim" },
       { left: "cite", right: "in the note", state: "faint" },

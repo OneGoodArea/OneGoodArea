@@ -463,7 +463,7 @@ function ToWork() {
                 <pre className="oga-scr-flow__code-body">{`POST /v1/score
 { "area": "M1 1AE", "preset": "moving" }
 
-200 → score 58 · engine v1.0.0`}</pre>
+200 → score 58 · engine v1.1.0`}</pre>
               </div>
             </div>
             <p className="oga-scr-flow__cap">Get a score from one API call, or ask in plain English through Claude.</p>

@@ -64,7 +64,7 @@ export function CtaSection() {
 
         <div className="oga-cta__foot" aria-hidden>
           <span className="oga-status-dot" />
-          Engine v1.0.0 · 1.8M postcodes · 43,916 neighbourhoods · monthly snapshots
+          Engine v1.1.0 · 1.8M postcodes · 43,916 neighbourhoods · monthly snapshots
         </div>
       </div>
     </section>

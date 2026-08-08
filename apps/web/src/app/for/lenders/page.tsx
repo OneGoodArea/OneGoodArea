@@ -52,7 +52,7 @@ const faqLd = {
       name: "How is the methodology versioned?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Semver. MAJOR is breaking (would invalidate prior scores), MINOR is additive, PATCH is formula tuning. Supported version today is 1.0.0. The registry is public on /methodology and stamped on every response.",
+        text: "Semver. MAJOR is breaking (would invalidate prior scores), MINOR is additive, PATCH is formula tuning. Supported version today is 1.1.0. The registry is public on /methodology and stamped on every response.",
       },
     },
     {

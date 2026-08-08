@@ -192,7 +192,7 @@ export const TOPICS: Topic[] = [
       },
       {
         q: "What is the methodology version today?",
-        a: "v1.0.0. Released 2026-07-08. Registry of supported versions is on /methodology. We publish breaking changes through SemVer: major bump = new methodology, minor bump = new signal or dimension, patch bump = bug fix in a fixed formula.",
+        a: "v1.1.0. Released 2026-08-04. Registry of supported versions is on /methodology. We publish breaking changes through SemVer: major bump = new methodology, minor bump = new signal or dimension, patch bump = bug fix in a fixed formula.",
       },
     ],
   },

@@ -125,7 +125,7 @@ const SURFACES: Surface[] = [
       `// 200 OK`,
       `{`,
       `  "geo_code": "E01005132",`,
-      `  "engine_version": "1.0.0",`,
+      `  "engine_version": "1.1.0",`,
       `  "signals": {`,
       `    "deprivation.imd_decile": {`,
       `      "value": 2,`,
@@ -305,7 +305,7 @@ export function IntegrationSection() {
                   <span className="oga-status-dot" aria-hidden /> Live
                 </span>
                 <span className="oga-code-panel__path">{current.codePanelHeader}</span>
-                <span className="oga-code-panel__meta">v1.0.0</span>
+                <span className="oga-code-panel__meta">v1.1.0</span>
               </div>
               <pre className="oga-code-panel__body">
                 {current.codeLines.map((line, i) => (
@@ -347,7 +347,7 @@ export function IntegrationSection() {
 
             <div className="oga-int__panel-meta">
               <span className="oga-int__panel-meta-label">Engine</span>
-              <span className="oga-int__panel-meta-val">v1.0.0 · Pinnable per org</span>
+              <span className="oga-int__panel-meta-val">v1.1.0 · Pinnable per org</span>
             </div>
           </div>
         </div>

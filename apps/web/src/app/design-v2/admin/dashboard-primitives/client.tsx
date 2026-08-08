@@ -227,8 +227,8 @@ function FormGroupSection() {
               htmlFor="demo-engine"
               help="Owner-only. Change from the Methodology page."
             >
-              <Select id="demo-engine" value="1.0.0" disabled>
-                <option value="1.0.0">v1.0.0 (current)</option>
+              <Select id="demo-engine" value="1.1.0" disabled>
+                <option value="1.1.0">v1.1.0 (current)</option>
               </Select>
             </FormGroup>
           </Variant>
@@ -656,7 +656,7 @@ function ToastSection() {
                   toast({ variant: "success", title: "Webhook delivered", body: "signal.changed → https://hooks.acme.dev/oga" });
                   toast({ variant: "info", title: "Cron run completed", body: "Re-scored 1,283 postcodes. Run id run_2026_06_05." });
                   toast({ variant: "success", title: "Bundle updated", body: "Lender-only bundle now includes 12 signals." });
-                  toast({ variant: "warning", title: "Methodology pin will affect 4 future calls", body: "Your org pinned to v1.0.0." });
+                  toast({ variant: "warning", title: "Methodology pin will affect 4 future calls", body: "Your org pinned to v1.1.0." });
                   toast({ variant: "success", title: "API key copied", body: "oga_live_*** copied to clipboard." });
                 }}
               >
@@ -1335,7 +1335,7 @@ const ACTIVITY_ROWS: ActivityRow[] = [
   { id: "ev_1", when: "00:38", actor: "ptengelmann", action: "Created preset", target: "lender-default" },
   { id: "ev_2", when: "00:31", actor: "system", action: "Re-scored 1,283 postcodes", target: "run_2026_06_05" },
   { id: "ev_3", when: "00:14", actor: "marcos", action: "Updated bundle", target: "lender-only" },
-  { id: "ev_4", when: "23:58", actor: "ptengelmann", action: "Pinned methodology", target: "v1.0.0" },
+  { id: "ev_4", when: "23:58", actor: "ptengelmann", action: "Pinned methodology", target: "v1.1.0" },
   { id: "ev_5", when: "23:42", actor: "ops@acmeunderwriting.com", action: "Added IP to allowlist", target: "192.168.1.42/32" },
   { id: "ev_6", when: "23:11", actor: "system", action: "Delivered webhook", target: "signal.changed -> hooks.acme.dev" },
 ];
@@ -1936,7 +1936,7 @@ function TooltipSection() {
 
         <div className="oga-prim-doc">
           <Variant label="Default" caption="Hover the trigger (250ms delay) or tab to it (instant). Mono label, flat ink solid, 6px arrow pointing at the trigger.">
-            <Tooltip content="Owner-only. Pinned to engine v1.0.0.">
+            <Tooltip content="Owner-only. Pinned to engine v1.1.0.">
               <button type="button" className="oga-btn oga-btn-secondary">
                 Methodology pin
               </button>
@@ -2051,7 +2051,7 @@ const SHOWCASE_CURL = `curl -H "Authorization: Bearer oga_..." \\
 const SHOWCASE_JSON = `// 200 OK
 {
   "geo_code": "E01005132",
-  "engine_version": "1.0.0",
+  "engine_version": "1.1.0",
   "signals": {
     "deprivation.imd_decile": {
       "value": 2,
@@ -2131,7 +2131,7 @@ npm run dev`}
           <Variant label="No header" caption="Header is optional — for minimal inline snippets.">
             <CodeBlock
               code={`POSTCODE=M1 1AE
-curl -H "X-Engine-Version: 1.0.0" \\
+curl -H "X-Engine-Version: 1.1.0" \\
   "https://onegoodarea.onrender.com/v1/area?postcode=$POSTCODE"`}
               language="bash"
             />

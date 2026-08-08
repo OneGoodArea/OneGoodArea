@@ -139,7 +139,7 @@ function SectionShowcase() {
 
             <div className="oga-ins-book__foot">
               <span>signal.changed · signed webhook</span>
-              <span>engine v1.0.0</span>
+              <span>engine v1.1.0</span>
             </div>
           </article>
           </div>
@@ -277,9 +277,9 @@ const TRUST: TrustCol[] = [
     rows: [
       { left: "back-test Q1", right: "62" },
       { left: "back-test Q2", right: "62", state: "active" },
-      { left: "engine", right: "v1.0.0" },
+      { left: "engine", right: "v1.1.0" },
       { left: "pin", right: "owner-only", state: "dim" },
-      { left: "X-Engine-Version", right: "v1.0.0", state: "faint" },
+      { left: "X-Engine-Version", right: "v1.1.0", state: "faint" },
     ],
   },
   {

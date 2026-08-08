@@ -116,7 +116,7 @@ function SectionShowcase() {
             <div className="oga-lnd-audit__replay">
               <div className="oga-lnd-audit__pinchip">
                 <span>engine_version</span>
-                <span>1.0.0 · pinned</span>
+                <span>1.1.0 · pinned</span>
               </div>
               <div className="oga-lnd-audit__rrow">
                 <span className="oga-lnd-audit__rrow-when">Recorded</span>
@@ -131,7 +131,7 @@ function SectionShowcase() {
             </div>
 
             <div className="oga-lnd-audit__foot">
-              <span>X-Engine-Version 1.0.0</span>
+              <span>X-Engine-Version 1.1.0</span>
               <span>plan stored</span>
             </div>
           </article>
@@ -175,7 +175,7 @@ function SectionIntegration() {
               <div className="oga-lnd-pin">
                 <div className="oga-lnd-pin__row">
                   <span className="oga-lnd-pin__k">engine_version</span>
-                  <span className="oga-lnd-pin__v">1.0.0</span>
+                  <span className="oga-lnd-pin__v">1.1.0</span>
                 </div>
                 <div className="oga-lnd-pin__row oga-lnd-pin__row--on">
                   <span className="oga-lnd-pin__k">status</span>
@@ -278,9 +278,9 @@ const TRUST: TrustCol[] = [
     rows: [
       { left: "deploy 47", right: "62" },
       { left: "deploy 52", right: "62", state: "active" },
-      { left: "engine", right: "v1.0.0" },
+      { left: "engine", right: "v1.1.0" },
       { left: "pin", right: "owner-only", state: "dim" },
-      { left: "X-Engine-Version", right: "v1.0.0", state: "faint" },
+      { left: "X-Engine-Version", right: "v1.1.0", state: "faint" },
     ],
   },
   {
