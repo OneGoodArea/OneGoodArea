@@ -847,8 +847,7 @@ if (invokedDirectly) {
   runDerivations()
     .then((s) => {
       logger.info(`[derive] catalog: ${s.catalog} signals; ${s.derivedSignals.length} derived signals normalized; ${s.rowsAfter} total YoY rows (+${s.appended} new)`);
-      console.log(`[derive] catalog=${s.catalog} signals derived=${s.derivedSignals.join(",")} rows=${s.rowsAfter} (+${s.appended} new)`);
       process.exit(0);
     })
-    .catch((err) => { console.error("[derive] failed:", err); process.exit(1); });
+    .catch((err) => { logger.error("[derive] failed:", err); process.exit(1); });
 }

@@ -273,12 +273,12 @@ const invokedDirectly = Boolean(process.argv[1]?.endsWith("deprivation.ts"));
 if (invokedDirectly) {
   runDeprivationRefresh()
     .then((s) => {
-      console.log(`[refresh:deprivation] catalog: ${s.catalog} signals; ${s.totalSignalValues} values across ${s.countries.length} countries`);
-      for (const c of s.countries) console.log(`  ✓ ${c.country}: ${c.geoEntities} geo, ${c.signalValues} values (snapshot ${c.snapshotId})`);
+      logger.info(`[refresh:deprivation] catalog: ${s.catalog} signals; ${s.totalSignalValues} values across ${s.countries.length} countries`);
+      for (const c of s.countries) logger.debug(`  ✓ ${c.country}: ${c.geoEntities} geo, ${c.signalValues} values (snapshot ${c.snapshotId})`);
       process.exit(0);
     })
     .catch((err) => {
-      console.error("[refresh:deprivation] failed:", err);
+      logger.error("[refresh:deprivation] failed:", err);
       process.exit(1);
     });
 }

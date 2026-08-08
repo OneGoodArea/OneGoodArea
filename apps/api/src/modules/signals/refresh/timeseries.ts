@@ -16,6 +16,7 @@
 
 import { query as defaultQuery } from "../../../infrastructure/db/client";
 import type { QueryRunner } from "./store-writer";
+import { logger } from "../../tracking/structured-logger";
 
 const runDefault: QueryRunner = (text, params) => defaultQuery(text, params);
 
@@ -61,6 +62,6 @@ export async function appendTimeseries(run: QueryRunner = runDefault): Promise<T
 const invokedDirectly = Boolean(process.argv[1]?.endsWith("timeseries.ts"));
 if (invokedDirectly) {
   appendTimeseries()
-    .then((s) => { console.log(`[timeseries:append] +${s.appended} new history rows (total ${s.total})`); process.exit(0); })
-    .catch((err) => { console.error("[timeseries:append] failed:", err); process.exit(1); });
+    .then((s) => { logger.info(`[timeseries:append] +${s.appended} new history rows (total ${s.total})`); process.exit(0); })
+    .catch((err) => { logger.error("[timeseries:append] failed:", err); process.exit(1); });
 }

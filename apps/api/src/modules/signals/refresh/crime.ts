@@ -228,12 +228,12 @@ export async function runCrimeRefresh(deps: CrimeRefreshDeps = {}): Promise<Crim
 const invokedDirectly = Boolean(process.argv[1]?.endsWith("crime.ts"));
 if (invokedDirectly) {
   const source = process.argv[2];
-  if (!source) { console.error("usage: npm run refresh:crime -w @onegoodarea/api -- <dir-or-file>"); process.exit(1); }
+  if (!source) { logger.error("usage: npm run refresh:crime -w @onegoodarea/api -- <dir-or-file>"); process.exit(1); }
   runCrimeRefresh({ source })
     .then((s) => {
-      console.log(`[refresh:crime] ${s.parsed} crimes (${s.files} files) -> ${s.lsoas} LSOAs x ${s.months} months`);
-      console.log(`  current: ${s.signalValues} values (latest ${s.latestPeriod}); history: ${s.timeseriesRows} rows; snapshot ${s.snapshotId}`);
+      logger.info(`[refresh:crime] ${s.parsed} crimes (${s.files} files) -> ${s.lsoas} LSOAs x ${s.months} months`);
+      logger.debug(`  current: ${s.signalValues} values (latest ${s.latestPeriod}); history: ${s.timeseriesRows} rows; snapshot ${s.snapshotId}`);
       process.exit(0);
     })
-    .catch((err) => { console.error("[refresh:crime] failed:", err); process.exit(1); });
+    .catch((err) => { logger.error("[refresh:crime] failed:", err); process.exit(1); });
 }

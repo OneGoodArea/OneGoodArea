@@ -227,13 +227,12 @@ if (invokedDirectly) {
     const tick = Math.max(1, Math.floor(p.totalChunks / 20));
     if (p.chunkIndex - lastLogged >= tick || p.chunkIndex === p.totalChunks) {
       lastLogged = p.chunkIndex;
-      console.log(`[refresh:peers] chunk ${p.chunkIndex}/${p.totalChunks} -> processed=${p.targetsProcessed}`);
+      logger.debug(`[refresh:peers] chunk ${p.chunkIndex}/${p.totalChunks} -> processed=${p.targetsProcessed}`);
     }
   })
     .then((s) => {
       logger.info(`[refresh:peers] targets=${s.targetsCovered} rows=${s.rowsAfter} k=${s.k} min_dims=${s.minDims} chunks=${s.chunks}`);
-      console.log(`[refresh:peers] DONE targets=${s.targetsCovered} rows=${s.rowsAfter} k=${s.k} min_dims=${s.minDims} chunks=${s.chunks}`);
       process.exit(0);
     })
-    .catch((err) => { console.error("[refresh:peers] failed:", err); process.exit(1); });
+    .catch((err) => { logger.error("[refresh:peers] failed:", err); process.exit(1); });
 }

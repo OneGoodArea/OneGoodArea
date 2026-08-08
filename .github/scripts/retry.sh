@@ -9,6 +9,10 @@
 #   bash .github/scripts/retry.sh npm run normalize:signals -w @onegoodarea/api
 set -uo pipefail
 
+# Log-level + color helpers (OGA_LOG_LEVEL, see logging.sh).
+# shellcheck disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/logging.sh"
+
 max="${RETRY_MAX:-3}"
 delay="${RETRY_DELAY:-30}"
 attempt=1
@@ -17,10 +21,10 @@ while true; do
   "$@" && exit 0
   code=$?
   if [ "$attempt" -ge "$max" ]; then
-    echo "retry: '$*' failed after $attempt attempts (exit $code)" >&2
+    log_error "retry: '$*' failed after $attempt attempts (exit $code)"
     exit "$code"
   fi
-  echo "retry: '$*' failed (exit $code); attempt $attempt/$max, retrying in ${delay}s ..." >&2
+  log_warn "retry: '$*' failed (exit $code); attempt $attempt/$max, retrying in ${delay}s ..."
   sleep "$delay"
   attempt=$((attempt + 1))
 done

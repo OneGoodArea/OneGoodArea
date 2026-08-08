@@ -62,6 +62,9 @@ services:
       OGA_SIGNALS_API: "true"
       OGA_SIGNALS_STORE_READ: "true"
       CRON_SECRET: replace-me
+      # Log level for the structured logger + shell helpers (see logging.sh).
+      # Make passes OGA_LOG_LEVEL via LOG_LEVEL (default info).
+      OGA_LOG_LEVEL: ${OGA_LOG_LEVEL:-info}
       # Env-gated showcase seed (see schema.ts SEEDS). Unset -> skipped, so
       # local dev stays clean unless SEED_SHOWCASE_API_KEY is exported.
       SEED_SHOWCASE_API_KEY: ${SEED_SHOWCASE_API_KEY:-}
@@ -95,6 +98,8 @@ services:
       # Cloud. (AR-247)
       NEON_FETCH_ENDPOINT: http://neon-proxy:55433/sql
       REFRESH_CACHE_DIR: /cache
+      # Log level for the refresh CLIs (structured logger) + shell helpers.
+      OGA_LOG_LEVEL: ${OGA_LOG_LEVEL:-info}
     volumes:
       - ..:/app:z
       - /app/node_modules

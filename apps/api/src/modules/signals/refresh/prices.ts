@@ -333,9 +333,9 @@ if (invokedDirectly) {
   const source = arg && /^\d{4}$/.test(arg) ? landRegistryYearUrl(Number(arg)) : arg;
   runPricesRefresh({ source })
     .then((s) => {
-      console.log(`[refresh:prices] ${s.parsed} sales (${s.unmapped} unmapped) -> ${s.lsoas} LSOAs x ${s.periods} months`);
-      console.log(`  current: ${s.signalValues} values (latest ${s.latestPeriod}); history: ${s.timeseriesRows} rows; snapshot ${s.snapshotId}`);
+      logger.info(`[refresh:prices] ${s.parsed} sales (${s.unmapped} unmapped) -> ${s.lsoas} LSOAs x ${s.periods} months`);
+      logger.debug(`  current: ${s.signalValues} values (latest ${s.latestPeriod}); history: ${s.timeseriesRows} rows; snapshot ${s.snapshotId}`);
       process.exit(0);
     })
-    .catch((err) => { console.error("[refresh:prices] failed:", err); process.exit(1); });
+    .catch((err) => { logger.error("[refresh:prices] failed:", err); process.exit(1); });
 }

@@ -24,6 +24,7 @@ import {
   type GeoLookupRow,
   type GeoEntityRow,
 } from "./store-writer";
+import { logger } from "../../tracking/structured-logger";
 
 /** geo_lookup field -> NSPL/ONSPD CSV header. Set to the NSPL FEB 2026 UK header
     (the newer `<geog><year>cd` naming). Verify against your ONS release if it
@@ -168,8 +169,8 @@ export async function loadGeoSpine(
 const invokedDirectly = Boolean(process.argv[1]?.endsWith("geo-spine.ts"));
 if (invokedDirectly) {
   const file = process.argv[2];
-  if (!file) { console.error("usage: npm run load:geo -w @onegoodarea/api -- <path-to-NSPL.csv>"); process.exit(1); }
+  if (!file) { logger.error("usage: npm run load:geo -w @onegoodarea/api -- <path-to-NSPL.csv>"); process.exit(1); }
   loadGeoSpine(file)
-    .then((s) => { console.log(`[load:geo] loaded ${s.postcodes} postcodes, ${s.lsoas} LSOAs from ${file}`); process.exit(0); })
-    .catch((err) => { console.error("[load:geo] failed:", err); process.exit(1); });
+    .then((s) => { logger.info(`[load:geo] loaded ${s.postcodes} postcodes, ${s.lsoas} LSOAs from ${file}`); process.exit(0); })
+    .catch((err) => { logger.error("[load:geo] failed:", err); process.exit(1); });
 }

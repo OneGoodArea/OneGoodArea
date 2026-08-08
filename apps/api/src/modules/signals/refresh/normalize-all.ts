@@ -15,6 +15,7 @@ import { DEPRIVATION_SIGNAL_KEYS } from "./normalize";
 import { PRICES_NORMALIZE_KEYS } from "./prices";
 import { CRIME_NORMALIZE_KEYS } from "./crime";
 import { DERIVED_NORMALIZE_KEYS } from "./derive";
+import { logger } from "../../tracking/structured-logger";
 
 /** Every signal that goes through the normalize job. Each key writes into
     signal_values.normalized_value + signal_percentiles rows for BOTH
@@ -34,9 +35,9 @@ const invokedDirectly = Boolean(process.argv[1]?.endsWith("normalize-all.ts"));
 if (invokedDirectly) {
   normalizeSignals(ALL_NORMALIZE_KEYS)
     .then((s) => {
-      console.log(`[normalize:signals] normalized ${s.signals.length} signals (scopes: national + regional):`);
-      for (const k of s.signals) console.log(`  ✓ ${k}`);
+      logger.info(`[normalize:signals] normalized ${s.signals.length} signals (scopes: national + regional):`);
+      for (const k of s.signals) logger.debug(`  ✓ ${k}`);
       process.exit(0);
     })
-    .catch((err) => { console.error("[normalize:signals] failed:", err); process.exit(1); });
+    .catch((err) => { logger.error("[normalize:signals] failed:", err); process.exit(1); });
 }
