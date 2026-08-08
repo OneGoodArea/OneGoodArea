@@ -8,7 +8,6 @@ import { Wordmark } from "./wordmark";
 import { SignalsIcon, ScoresIcon, MonitorIcon, IntelligenceIcon } from "./product-icons";
 import { DocsHomeIcon, ApiReferenceIcon, McpServerIcon, ChangelogIcon, MethodologyIcon } from "./docs-icons";
 import { ProptechIcon, LendersIcon, InsuranceIcon, CreIcon, PublicSectorIcon, EstateAgentsIcon } from "./icp-icons";
-import { McpLogo } from "./editor-icons";
 import { BookDemo } from "./book-demo";
 import "./nav.css";
 
@@ -329,27 +328,27 @@ export function Nav() {
 
 /* ---------- Announcement bar ---------- */
 
-/* Thin band above the nav. Whole bar is one link to /docs/mcp. Not
+/* Thin band above the nav. Whole bar is one link to /pricing. Not
    sticky - scrolls away as the user moves down the page, leaving the
    regular nav stuck to top. Visible on every public page that mounts
-   <Nav />. Copy points at the live MCP server (@oga-mcp/server@1.0.1
-   on npm, e2e-proven via Claude Code, /docs/mcp documents all 11
-   tools). */
+   <Nav />. Copy recruits the founding pilot cohort (ten partners, one
+   40-day sprint); the pulsing dot is the "applications open" signal.
+   Plan 075. */
 
 function AnnouncementBar() {
   return (
-    <Link href="/docs/mcp" className="oga-announce" aria-label="OneGoodArea is live as an MCP server. Read the docs.">
+    <Link href="/pricing" className="oga-announce" aria-label="We are taking on ten founding pilot partners. Apply for the pilot.">
       <span className="oga-announce__inner">
-        <span className="oga-announce__badge">NEW</span>
-        <McpLogo className="oga-announce__icon" />
+        <span className="oga-announce__badge">Pilot</span>
+        <span className="oga-announce__pulse" aria-hidden />
         <span className="oga-announce__copy oga-announce__copy--full">
-          Bring OneGoodArea to your favorite AI agent. MCP support is now live.
+          We&rsquo;re taking on ten founding pilot partners. Free 40-day pilot, hands-on.
         </span>
         <span className="oga-announce__copy oga-announce__copy--short">
-          MCP server is live for Claude Desktop, Cursor, and Claude Code.
+          Ten founding pilot spots. Apply now.
         </span>
         <span className="oga-announce__cta">
-          Read the docs
+          Apply
           <span aria-hidden className="oga-announce__arrow">→</span>
         </span>
       </span>
