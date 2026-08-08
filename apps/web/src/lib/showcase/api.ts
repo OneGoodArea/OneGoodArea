@@ -10,6 +10,7 @@ import type {
   PortfolioDetail,
   PortfolioEnrichItem,
   ChangeReport,
+  ForecastResult,
 } from "@/lib/showcase/types";
 
 const BASE_URL = process.env.INTERNAL_API_URL ?? "https://onegoodarea.onrender.com";
@@ -156,6 +157,65 @@ export async function getTransactions(postcode?: string): Promise<TransactionsRe
       propertyType: t.property_type,
       estateType: t.estate_type,
     })),
+  };
+}
+
+interface ApiForecastPoint {
+  observed_period: string;
+  projected_value: number;
+  lower_bound: number;
+  upper_bound: number;
+}
+
+interface ApiForecastResponse {
+  signal_key: string;
+  points: ApiForecastPoint[];
+  meta: {
+    window_months: number;
+    horizon_months: number;
+    n_observations: number;
+    r2: number | null;
+    slope_per_month: number;
+    latest_observed_period: string;
+  };
+}
+
+/* AR-786: linear-regression projection of property.median_price (POST
+   /v1/forecast, Intelligence product). Stamped proptech like the other
+   showcase calls. A data-less area 404s — the BFF maps that to null. */
+export async function getForecast(
+  postcode: string,
+  options: { signalKey?: string; horizonMonths?: number } = {},
+): Promise<ForecastResult> {
+  const area = postcode || "M1 1AE";
+  const data = await apiFetch<ApiForecastResponse>(
+    "/v1/forecast",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        target: { postcode: area },
+        signal_key: options.signalKey ?? "property.median_price",
+        ...(options.horizonMonths ? { horizon_months: options.horizonMonths } : {}),
+      }),
+    },
+    SHOWCASE_PROP_TECH_USER_AGENT,
+  );
+  return {
+    signalKey: data.signal_key,
+    points: (data.points ?? []).map((p) => ({
+      observed_period: p.observed_period,
+      projected_value: p.projected_value,
+      lower_bound: p.lower_bound,
+      upper_bound: p.upper_bound,
+    })),
+    meta: {
+      window_months: data.meta.window_months,
+      horizon_months: data.meta.horizon_months,
+      n_observations: data.meta.n_observations,
+      r2: data.meta.r2,
+      slope_per_month: data.meta.slope_per_month,
+      latest_observed_period: data.meta.latest_observed_period,
+    },
   };
 }
 

@@ -1,13 +1,7 @@
 "use client";
 
-import type { Signal, TransactionsResult } from "@/lib/showcase/types";
+import type { Signal } from "@/lib/showcase/types";
 import { SIGNAL_CATEGORY_LABELS } from "./constants";
-
-const priceFmt = new Intl.NumberFormat("en-GB", {
-  style: "currency",
-  currency: "GBP",
-  maximumFractionDigits: 0,
-});
 
 function formatValue(s: Signal): string {
   if (s.value === null || s.value === undefined) return "N/A";
@@ -27,13 +21,12 @@ function groupByCategory(signals: Signal[]): Record<string, Signal[]> {
 
 interface SignalsTabProps {
   signals: Signal[];
-  transactions: TransactionsResult | null;
 }
 
-export function SignalsTab({ signals, transactions }: SignalsTabProps) {
+export function SignalsTab({ signals }: SignalsTabProps) {
   const grouped = groupByCategory(signals);
 
-  if (signals.length === 0 && !transactions) {
+  if (signals.length === 0) {
     return (
       <div className="prx-signals">
         <p className="prx-signals__hint">Enter a postcode to see area signals.</p>
@@ -63,36 +56,6 @@ export function SignalsTab({ signals, transactions }: SignalsTabProps) {
           </div>
         ))}
       </section>
-
-      {transactions && (
-        <section className="prx-history" aria-label="Recent sales">
-          <div className="prx-history__head">
-            <h4 className="prx-history__title">Recent sales</h4>
-            <span className="prx-history__meta">
-              {transactions.transactionCount} ·{" "}
-              {new Date(transactions.period.from).toLocaleDateString("en-GB", {
-                month: "short",
-                year: "numeric",
-              })}{" "}
-              –{" "}
-              {new Date(transactions.period.to).toLocaleDateString("en-GB", {
-                month: "short",
-                year: "numeric",
-              })}
-            </span>
-          </div>
-          <ul className="prx-history__list">
-            {transactions.transactions.slice(0, 8).map((t) => (
-              <li key={`${t.date}-${t.price}-${t.propertyType}`} className="prx-history__row">
-                <span className="prx-history__date">{t.date}</span>
-                <span className="prx-history__type">{t.propertyType}</span>
-                <span className="prx-history__estate">{t.estateType}</span>
-                <span className="prx-history__price">{priceFmt.format(t.price)}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
     </div>
   );
 }
