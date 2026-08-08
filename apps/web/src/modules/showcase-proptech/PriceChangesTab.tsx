@@ -42,9 +42,9 @@ function ForecastChart({ forecast }: { forecast: ForecastResult }) {
   const x = (i: number) => (i / Math.max(1, pts.length - 1)) * W;
   const y = (v: number) => H - ((v - lo) / (hi - lo)) * H;
 
-  const line = pts.map((p, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(p.projected_value).toFixed(1)}`).join(" ");
-  const bandTop = pts.map((p, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(p.upper_bound).toFixed(1)}`).join(" ");
-  const bandBottom = [...pts].reverse().map((p, i) => `L${x(pts.length - 1 - i).toFixed(1)},${y(p.lower_bound).toFixed(1)}`).join(" ");
+  const line = pts.map((p, i) => `${x(i).toFixed(1)},${y(p.projected_value).toFixed(1)}`).join(" ");
+  const bandTop = pts.map((p, i) => `${x(i).toFixed(1)},${y(p.upper_bound).toFixed(1)}`).join(" ");
+  const bandBottom = [...pts].reverse().map((p, i) => `${x(pts.length - 1 - i).toFixed(1)},${y(p.lower_bound).toFixed(1)}`).join(" ");
 
   const last = pts[pts.length - 1]!;
   const tick = (t: number) => {
