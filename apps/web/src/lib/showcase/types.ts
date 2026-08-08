@@ -105,3 +105,25 @@ export interface ChangeReport {
   changes: PortfolioChange[];
   generated_at: string;
 }
+
+/* ── Price forecast (POST /v1/forecast) ── */
+
+export interface ForecastPoint {
+  observed_period: string;
+  projected_value: number;
+  lower_bound: number;
+  upper_bound: number;
+}
+
+export interface ForecastResult {
+  signalKey: string;
+  points: ForecastPoint[];
+  meta: {
+    window_months: number;
+    horizon_months: number;
+    n_observations: number;
+    r2: number | null;
+    slope_per_month: number;
+    latest_observed_period: string;
+  };
+}
