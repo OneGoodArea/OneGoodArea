@@ -1,0 +1,41 @@
+# compose/compose.dev-bind.yml -- dev stack with host bind-mounted source (AR-774).
+#
+# Rides on compose.yml + compose.override.yml. Replaces the prod-mirror api/web
+# images with `deps`-stage images (manifests + node_modules, NO source baked in)
+# and bind-mounts the host source over them, so `tsx watch` / `next dev` hot-reload
+# on every edit with NO image rebuild.
+#
+# Usage (see build/stack.mk):
+#   make stack-dev-up BUILD_FLAG=--build   # first boot builds the deps images
+#   make stack-dev-down
+#   make stack-dev-logs
+#
+# Caveats:
+#   - A host-local apps/api/node_modules (from a host `npm install`) would shadow
+#     the image's hoisted deps -- usually absent since npm workspaces hoist to root.
+#   - apps/web/.next is written into the host dir (gitignored).
+#   - Adding a new dependency requires rebuilding the dev image (node_modules come
+#     from the image).
+#
+# `:z` relabels the bind mount for SELinux hosts, matching compose.override.yml.
+
+services:
+  api:
+    build:
+      target: deps
+    image: onegoodarea/api-dev:local
+    command: sh -c "npm run migrate -w @onegoodarea/api && npm run dev -w @onegoodarea/api"
+    volumes:
+      - ../apps/api:/app/apps/api:z
+      - ../packages/contracts:/app/packages/contracts:z
+
+  web:
+    build:
+      target: deps
+    image: onegoodarea/web-dev:local
+    environment:
+      NODE_ENV: development
+    command: npm run dev -w @onegoodarea/web -- -H 0.0.0.0
+    volumes:
+      - ../apps/web:/app/apps/web:z
+      - ../packages/contracts:/app/packages/contracts:z
