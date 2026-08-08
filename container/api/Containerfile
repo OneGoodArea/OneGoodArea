@@ -10,16 +10,19 @@
 # was too slow/heavy to bind a port in time. The prebuilt bundle boots in
 # milliseconds with low memory.
 #
-# Plan 017: MULTI-STAGE — build stage does full install (needed for test target)
-# + esbuild bundle; runtime stage does its own slim `npm install --omit=dev`
-# and carries only dist/server.cjs + slim node_modules + curl.
+# Plan 017: MULTI-STAGE — deps stage does full install (also the dev-bind
+# image target + needed for test target), build stage esbuild-bundles it;
+# runtime stage does its own slim `npm install --omit=dev` and carries only
+# dist/server.cjs + slim node_modules + curl.
 # compose.test.yml targets the `build` stage for tests (full source + deps).
 
-# --- BUILD STAGE ----------------------------------------------------------
-# Full npm install — includes devDeps so this stage can also serve as the
-# api-test target in compose.test.yml. The runtime stage below does its own
-# slim install, so the full node_modules here are never shipped to prod.
-FROM node:22-slim AS build
+# --- DEPS STAGE -----------------------------------------------------------
+# Manifests + full `npm install` only — NO source COPY, NO bundle. Includes
+# devDeps so this stage serves both the api-test target in compose.test.yml
+# (via the `build` stage that rebases on it) and the dev-bind image target in
+# compose.dev-bind.yml (AR-774). The runtime stage below does its own slim
+# install, so the full node_modules here are never shipped to prod.
+FROM node:22-slim AS deps
 WORKDIR /app
 
 # No NODE_ENV=production here — npm with that env omits devDeps even without
@@ -41,6 +44,11 @@ COPY packages/contracts/package.json ./packages/contracts/
 # `npm install` resolves the platform deps.
 # Full install (no --omit=dev) so this stage doubles as the api-test target.
 RUN npm install --no-audit --no-fund
+
+# --- BUILD STAGE ----------------------------------------------------------
+# Rebased on `deps` (AR-774): node_modules + manifests already present, so only
+# the source the API build needs is copied here.
+FROM deps AS build
 
 # Only the backend + its shared contracts source (NOT apps/web source).
 COPY packages/contracts ./packages/contracts
