@@ -25,7 +25,7 @@ help: ## Display available Make targets
 	@grep -hE '^app-[a-zA-Z0-9._-]+:.*## ' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*## "}; {printf "  $(MK_BLUE)%-32s$(MK_RESET) %s\n", $$1, $$2}'
 	@printf '%s\n' ''
 	@printf '%s%s%s\n' '$(MK_CYAN)' 'Stack (compose)' '$(MK_RESET)'
-	@grep -hE '^stack-(up|down|logs|clean)[a-zA-Z0-9._-]*:.*## ' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*## "}; {printf "  $(MK_BLUE)%-32s$(MK_RESET) %s\n", $$1, $$2}'
+	@grep -hE '^stack-(up|down|logs|clean|dev)[a-zA-Z0-9._-]*:.*## ' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*## "}; {printf "  $(MK_BLUE)%-32s$(MK_RESET) %s\n", $$1, $$2}'
 	@printf '%s\n' ''
 	@printf '%s%s%s\n' '$(MK_CYAN)' 'Build images' '$(MK_RESET)'
 	@grep -hE '^build-[a-zA-Z0-9._-]+:.*## ' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*## "}; {printf "  $(MK_BLUE)%-32s$(MK_RESET) %s\n", $$1, $$2}'

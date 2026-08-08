@@ -1,4 +1,4 @@
-.PHONY: stack-up-min stack-up-full stack-down stack-logs stack-clean build-api-image build-web-image signal-refresh-build signal-refresh
+.PHONY: stack-up-min stack-up-full stack-down stack-logs stack-clean build-api-image build-web-image signal-refresh-build signal-refresh stack-dev-up stack-dev-down stack-dev-logs
 
 stack-up-min: ## Boot minimal stack (postgres, neon-proxy, api, web)
 	$(CTR_COMPOSE_CMD) --profile minimal up -d $(BUILD_FLAG)
@@ -36,3 +36,12 @@ signal-refresh-build: ## Build the tooling-only signal-refresh image (refresh st
 signal-refresh: ## Run the containerized signal-refresh pipeline (boots postgres + neon-proxy first)
 	$(CTR_COMPOSE_CMD) --profile minimal --profile refresh up -d postgres neon-proxy
 	$(CTR_COMPOSE_CMD) --profile minimal --profile refresh run --rm signal-refresh
+
+stack-dev-up: ## Boot dev stack from host source (bind-mounted, hot reload)
+	$(CTR_COMPOSE_DEV) --profile minimal --profile full up -d $(BUILD_FLAG)
+
+stack-dev-down: ## Stop dev stack and remove orphan containers
+	$(CTR_COMPOSE_DEV) down --remove-orphans
+
+stack-dev-logs: ## Follow logs for dev stack services
+	$(CTR_COMPOSE_DEV) logs -f
