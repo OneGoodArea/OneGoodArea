@@ -367,6 +367,97 @@
   font-weight: 600;
 }
 
+/* ---------- Price changes ---------- */
+.prx-price__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.prx-price__stat {
+  background: var(--prx-card);
+  border: 1px solid var(--prx-line);
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.prx-price__stat-label {
+  font-size: 12.5px;
+  color: var(--prx-ink-soft);
+}
+
+.prx-price__stat-value {
+  font-family: var(--prx-mono);
+  font-size: 18px;
+  color: var(--prx-ink-strong);
+  font-weight: 600;
+}
+
+.prx-price__yoy--up {
+  color: var(--prx-up);
+}
+
+.prx-price__yoy--down {
+  color: var(--prx-down);
+}
+
+.prx-price__yoy--na {
+  color: var(--prx-ink-muted);
+}
+
+.prx-price__forecast {
+  background: var(--prx-card);
+  border: 1px solid var(--prx-line);
+  border-radius: 8px;
+  padding: 18px 20px;
+  margin-bottom: 32px;
+}
+
+.prx-price__forecast-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.prx-price__chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.prx-price__line {
+  stroke: var(--prx-accent);
+  stroke-width: 2;
+}
+
+.prx-price__band {
+  fill: var(--prx-accent-soft);
+}
+
+.prx-price__grid {
+  stroke: var(--prx-line);
+  stroke-width: 1;
+}
+
+.prx-price__tick {
+  font-family: var(--prx-mono);
+  font-size: 10px;
+  fill: var(--prx-ink-soft);
+}
+
+.prx-price__last {
+  font-family: var(--prx-mono);
+  font-size: 11px;
+  fill: var(--prx-ink-strong);
+}
+
+
 /* ---------- Scores ---------- */
 .prx-scores__presets {
   display: flex;

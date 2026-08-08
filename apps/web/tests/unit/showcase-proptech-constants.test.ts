@@ -26,5 +26,12 @@ describe("showcase-proptech constants", () => {
       const portfolio = TABS.find((t) => t.id === "portfolio");
       expect(portfolio?.blurb).toContain("20 areas");
     });
+
+    it("exposes a price changes tab", () => {
+      const ids = TABS.map((t) => t.id);
+      expect(ids).toContain("price");
+      const price = TABS.find((t) => t.id === "price");
+      expect(price?.blurb).toContain("Forecast");
+    });
   });
 });
