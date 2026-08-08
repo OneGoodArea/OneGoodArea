@@ -88,14 +88,15 @@ export default function RootLayout({
                 url: "https://www.onegoodarea.com",
                 applicationCategory: "BusinessApplication",
                 operatingSystem: "Web",
-                description: "UK area intelligence. Scored reports for moving, business, investing, and research.",
-                offers: {
-                  "@type": "AggregateOffer",
-                  lowPrice: "0",
-                  highPrice: "249",
-                  priceCurrency: "GBP",
-                  offerCount: 4,
-                },
+                description:
+                  "UK area intelligence over one deterministic engine. Turn any UK postcode into signals, a versioned 0-100 score, portfolio monitoring, and natural-language answers, by API and as an MCP server.",
+                featureList: [
+                  "Signals: normalized UK area data with source attribution",
+                  "Scores: versioned 0-100 area scores per intent",
+                  "Monitor: portfolio change alerts",
+                  "Intelligence: natural-language area questions",
+                  "MCP server and REST API",
+                ],
               }),
             }}
           />
@@ -109,11 +110,17 @@ export default function RootLayout({
                 "@type": "Organization",
                 name: "OneGoodArea",
                 url: "https://www.onegoodarea.com",
-                logo: "https://www.onegoodarea.com/favicon.ico",
-                description: "UK area intelligence platform. Scored reports for moving, business, investing, and research.",
+                logo: "https://www.onegoodarea.com/brand/mark.svg",
+                description:
+                  "The data and intelligence layer underneath UK property workflows. Deterministic, versioned area scoring by API and MCP.",
+                sameAs: [
+                  "https://x.com/onegoodarea",
+                  "https://www.linkedin.com/company/onegoodarea",
+                ],
                 contactPoint: {
                   "@type": "ContactPoint",
                   contactType: "customer service",
+                  email: "operation@onegoodarea.co.uk",
                   url: "https://www.onegoodarea.com/help",
                 },
               }),
