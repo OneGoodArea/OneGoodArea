@@ -24,6 +24,38 @@ make stack-down-min
 make stack-clean
 ```
 
+## Dev Bind-Mount Stack (hot reload, AR-774)
+
+For day-to-day development, run the same stack but read code from **host bind
+mounts** instead of a copy baked into the image — `tsx watch` / `next dev`
+hot-reload on every edit with **no image rebuild**.
+
+```bash
+# First boot (builds the dev deps images once)
+make stack-dev-up BUILD_FLAG=--build
+
+# Subsequent boots reuse the images (no rebuild)
+make stack-dev-up
+
+# Follow logs
+make stack-dev-logs
+
+# Stop
+make stack-dev-down
+```
+
+- Api runs `npm run migrate && npm run dev` on **host** `apps/api` + `packages/contracts`.
+- Web runs `next dev` on **host** `apps/web` + `packages/contracts`.
+- Same infra as the prod-mirror stack: postgres, neon-proxy, mailhog, stripe-mock.
+
+**Caveats**
+
+- A host-local `apps/api/node_modules` (from a host `npm install`) would shadow
+  the image's hoisted deps — usually absent since npm workspaces hoist to root.
+- `apps/web/.next` is written into the host dir (gitignored).
+- Adding a new dependency requires rebuilding the dev image (`node_modules`
+  comes from the image): `make stack-dev-up BUILD_FLAG=--build`.
+
 ## Stack Targets
 
 | Target | Description |
@@ -31,6 +63,9 @@ make stack-clean
 | `make stack-up-min` | Boot minimal stack (postgres, neon-proxy, api, web, pgadmin) |
 | `make stack-up-full` | Boot full stack (minimal + mailhog, stripe-mock) |
 | `make stack-up-db` | Boot db-only stack (postgres + full profile services) |
+| `make stack-dev-up` | Boot dev stack from host source (bind-mounted, hot reload) |
+| `make stack-dev-down` | Stop dev stack |
+| `make stack-dev-logs` | Follow logs for dev stack |
 | `make stack-down-min` | Stop minimal stack |
 | `make stack-down-full` | Stop full stack |
 | `make stack-down` | Stop all compose services |
@@ -90,7 +125,8 @@ Lightweight proxy between API and PostgreSQL providing Neon-compatible wire prot
 - Depends on: postgres (healthy), neon-proxy (healthy)
 
 **Image architecture (Plan 017):** Multi-stage build.
-- **Build stage:** Full npm install + TypeScript source → esbuild bundles to `dist/server.cjs`. Also used as the `api-test` target in `compose.test.yml`.
+- **Deps stage:** Manifests + full `npm install` (devDeps included) — no source, no bundle. Rebased by the `build` stage and reused as the dev-bind image target (AR-774).
+- **Build stage:** Full npm install (inherited from `deps`) + TypeScript source → esbuild bundles to `dist/server.cjs`. Also used as the `api-test` target in `compose.test.yml`.
 - **Runtime stage:** Fresh `node:22-slim`, slim `npm install --omit=dev` (production deps only), `dist/server.cjs`, `curl` for healthchecks. No source code, no TypeScript, no dev tooling.
 
 ### Web
