@@ -265,11 +265,11 @@ const TRUST: TrustCol[] = [
     title: "Versioned",
     body: "Every response is stamped with the exact model that produced it.",
     rows: [
-      { left: "GET /v1/area", right: "v1.0.0" },
-      { left: "POST /v1/score", right: "v1.0.0", state: "active" },
-      { left: "POST /v1/query", right: "v1.0.0" },
-      { left: "POST /v1/peers", right: "v1.0.0", state: "dim" },
-      { left: "GET /v1/meta", right: "v1.0.0", state: "faint" },
+      { left: "GET /v1/area", right: "v1.1.0" },
+      { left: "POST /v1/score", right: "v1.1.0", state: "active" },
+      { left: "POST /v1/query", right: "v1.1.0" },
+      { left: "POST /v1/peers", right: "v1.1.0", state: "dim" },
+      { left: "GET /v1/meta", right: "v1.1.0", state: "faint" },
     ],
   },
   {

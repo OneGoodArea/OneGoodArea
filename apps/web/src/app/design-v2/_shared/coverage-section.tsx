@@ -19,7 +19,7 @@ const STATS: Array<{ value: string; label: string }> = [
   { value: "1.8M",     label: "Postcodes resolved" },
   { value: "43,916",   label: "Neighbourhoods covered" },
   { value: "Monthly",  label: "Snapshots" },
-  { value: "v1.0.0",   label: "Engine, versioned" },
+  { value: "v1.1.0",   label: "Engine, versioned" },
 ];
 
 export function CoverageSection() {

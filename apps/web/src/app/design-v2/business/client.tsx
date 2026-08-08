@@ -137,14 +137,14 @@ X-OneGoodArea-Signature: t=...,v1=<sha256>
     proof: {
       title: "Engine version pinning",
       snippet: `# Pin per request
-curl -H "X-Engine-Version: 1.0.0" /v1/score
+curl -H "X-Engine-Version: 1.1.0" /v1/score
 
 # Pin org-wide (owner only)
 PUT /v1/orgs/:id/methodology
-{ "engine_version": "1.0.0" }
+{ "engine_version": "1.1.0" }
 
 # Response header on every call
-X-Engine-Version: 1.0.0`,
+X-Engine-Version: 1.1.0`,
       foot: "Audit anchor. Compliance-grade.",
     },
   },
@@ -509,7 +509,7 @@ function VizLender() {
         <circle cx="158" cy="148" r="5" />
       </g>
       <line x1="80" y1="132" x2="160" y2="132" stroke="currentColor" strokeWidth="1" opacity="0.55" />
-      <text x="118" y="132" fontFamily="var(--oga-font-mono)" fontSize="10" fill="currentColor">v1.0.0</text>
+      <text x="118" y="132" fontFamily="var(--oga-font-mono)" fontSize="10" fill="currentColor">v1.1.0</text>
     </svg>
   );
 }
