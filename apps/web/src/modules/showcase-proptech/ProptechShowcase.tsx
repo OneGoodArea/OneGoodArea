@@ -6,7 +6,7 @@ import type { ScoreResult, Signal, TransactionsResult } from "@/lib/showcase/typ
 import { TABS, UK_POSTCODE_RE, type TabId } from "./constants";
 import { SignalsTab } from "./SignalsTab";
 import { ScoresTab } from "./ScoresTab";
-import { MonitorTab } from "./MonitorTab";
+import { PortfolioTab } from "./PortfolioTab";
 
 interface ProptechShowcaseProps {
   initialPostcode?: string;
@@ -98,7 +98,7 @@ export function ProptechShowcase({
       {activeTab === "scores" && (
         <ScoresTab postcode={initialPostcode ?? ""} initialResult={initialScore} />
       )}
-      {activeTab === "monitor" && <MonitorTab postcode={initialPostcode ?? ""} />}
+      {activeTab === "portfolio" && <PortfolioTab postcode={initialPostcode ?? ""} />}
     </div>
   );
 }

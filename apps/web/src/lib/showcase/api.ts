@@ -207,7 +207,7 @@ export async function addPortfolioAreas(
 }
 
 export async function removePortfolioArea(id: string, area: string): Promise<void> {
-  await apiFetch<{ removed: true }>(
+  await apiFetch<{ removed: boolean }>(
     `/v1/portfolios/${encodeURIComponent(id)}/areas/${encodeURIComponent(area)}`,
     { method: "DELETE" },
     SHOWCASE_PROP_TECH_USER_AGENT,
@@ -229,6 +229,23 @@ export async function getPortfolioChanges(id: string): Promise<ChangeReport> {
   return apiFetch<ChangeReport>(
     `/v1/portfolios/${encodeURIComponent(id)}/changes`,
     {},
+    SHOWCASE_PROP_TECH_USER_AGENT,
+  );
+}
+
+/* AR-764: side-effect-capable variant of /changes. The demo defaults
+   `emit` to false so a "Re-scan" never fires material-change webhooks —
+   the read-only GET probe (AR-399) already covers emit:false peeks. */
+export async function triggerPortfolioChanges(
+  id: string,
+  options: { baseline?: "previous" | "first"; threshold_pct?: number; min_transactions?: number; emit?: boolean } = {},
+): Promise<ChangeReport> {
+  return apiFetch<ChangeReport>(
+    `/v1/portfolios/${encodeURIComponent(id)}/changes`,
+    {
+      method: "POST",
+      body: JSON.stringify({ ...options, emit: options.emit ?? false }),
+    },
     SHOWCASE_PROP_TECH_USER_AGENT,
   );
 }

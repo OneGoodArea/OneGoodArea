@@ -14,7 +14,6 @@ interface ScoresTabProps {
 export function ScoresTab({ postcode, initialResult }: ScoresTabProps) {
   const [preset, setPreset] = useState<Preset>(initialResult?.preset ?? "business");
   const [result, setResult] = useState<ScoreResult | null>(initialResult ?? null);
-  const [explainOpen, setExplainOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +36,6 @@ export function ScoresTab({ postcode, initialResult }: ScoresTabProps) {
         const data = (await res.json()) as ScoreResult;
         if (!cancelled) {
           setResult(await remember(data));
-          setExplainOpen(false);
         }
       } catch {
         if (!cancelled) setError("Failed to load scores.");
@@ -121,23 +119,13 @@ export function ScoresTab({ postcode, initialResult }: ScoresTabProps) {
             ))}
           </ul>
 
-          <button
-            type="button"
-            className="prx-scores__explain-toggle"
-            onClick={() => setExplainOpen((open) => !open)}
-            aria-expanded={explainOpen}
-          >
-            {explainOpen ? "Hide" : "Why this score?"}
-          </button>
-          {explainOpen && (
-            <p className="prx-scores__explain">
-              Each dimension is a country-scoped percentile. The score is the
-              weighted mean of those percentiles, normalised to 100. Weights come
-              from the selected preset, or a custom weighting if you bring one.
-              Confidence reflects how recent and complete the underlying sources
-              were at capture.
-            </p>
-          )}
+          <p className="prx-scores__explain">
+            Each dimension is a country-scoped percentile. The score is the
+            weighted mean of those percentiles, normalised to 100. Weights come
+            from the selected preset, or a custom weighting if you bring one.
+            Confidence reflects how recent and complete the underlying sources
+            were at capture.
+          </p>
         </>
       )}
     </div>

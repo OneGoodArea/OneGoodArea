@@ -1,4 +1,4 @@
-export type TabId = "signals" | "scores" | "monitor";
+export type TabId = "signals" | "scores" | "portfolio";
 
 export const TABS: { id: TabId; label: string; blurb: string }[] = [
   {
@@ -12,9 +12,9 @@ export const TABS: { id: TabId; label: string; blurb: string }[] = [
     blurb: "One headline number, weighted for the decision you are making.",
   },
   {
-    id: "monitor",
-    label: "Monitor",
-    blurb: "Track up to 10 areas in a shared demo portfolio, scored live.",
+    id: "portfolio",
+    label: "Portfolio",
+    blurb: "Track up to 20 areas in a shared demo portfolio, scored live.",
   },
 ];
 

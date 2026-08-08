@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatPercentage } from "@/modules/showcase-proptech/constants";
+import { formatPercentage, TABS } from "@/modules/showcase-proptech/constants";
 
 describe("showcase-proptech constants", () => {
   describe("formatPercentage", () => {
@@ -12,6 +12,19 @@ describe("showcase-proptech constants", () => {
     it("rounds to the nearest whole percent", () => {
       expect(formatPercentage(0.225)).toBe("23%");
       expect(formatPercentage(0.224)).toBe("22%");
+    });
+  });
+
+  describe("tabs", () => {
+    it("uses a portfolio tab instead of the old monitor tab", () => {
+      const ids = TABS.map((t) => t.id);
+      expect(ids).toContain("portfolio");
+      expect(ids).not.toContain("monitor");
+    });
+
+    it("mentions the 20-area cap in the portfolio blurb", () => {
+      const portfolio = TABS.find((t) => t.id === "portfolio");
+      expect(portfolio?.blurb).toContain("20 areas");
     });
   });
 });
