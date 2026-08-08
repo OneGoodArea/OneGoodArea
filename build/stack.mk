@@ -25,10 +25,10 @@ stack-clean: ## Stop stack and remove named volumes
 	$(CTR_COMPOSE_CMD) down --remove-orphans --volumes
 
 build-api-image: ## Build the api Docker image from current branch sources
-	$(CTR_COMPOSE_CMD) build api
+	$(CTR_COMPOSE_CMD) --profile minimal build api
 
 build-web-image: ## Build the web Docker image from current branch sources
-	$(CTR_COMPOSE_CMD) build web
+	$(CTR_COMPOSE_CMD) --profile minimal build web
 
 signal-refresh-build: ## Build the tooling-only signal-refresh image (refresh stage)
 	$(CTR_COMPOSE_CMD) --profile refresh build signal-refresh
