@@ -5,6 +5,13 @@ import Link from "next/link";
 import { Wordmark } from "./wordmark";
 import { XIcon, LinkedInIcon, EmailIcon } from "./social-icons";
 import { BookDemo } from "./book-demo";
+import {
+  ClaudeLogo,
+  OpenAiLogo,
+  PerplexityLogo,
+  GeminiLogo,
+  CopilotLogo,
+} from "./editor-icons";
 import "./footer.css";
 
 /* Footer — Plotted brand v3, reorganized (AR-204 PR 2 commit 8).
@@ -126,6 +133,58 @@ export function Footer() {
               </li>
             ))}
           </FooterColumn>
+        </div>
+
+        {/* Built to be read by AI (AR-773). Signals agent-readiness: OGA
+            publishes llms.txt, an MCP server, and an OpenAPI spec. Logos are a
+            "readable by" statement, not a product integration or endorsement. */}
+        <div className="oga-footer__ai">
+          <div className="oga-footer__ai-copy">
+            <span className="oga-footer__ai-eyebrow">Built to be read by AI</span>
+            <p className="oga-footer__ai-line">
+              OneGoodArea publishes an llms.txt, an MCP server, and an OpenAPI
+              spec, so AI assistants can find, read, and cite us accurately.
+            </p>
+            <Link href="/ai" className="oga-footer__ai-link">
+              How we are built for agents
+              <span aria-hidden>→</span>
+            </Link>
+          </div>
+          <ul
+            className="oga-footer__ai-logos"
+            aria-label="AI assistants that can read OneGoodArea"
+          >
+            <li>
+              <Link href="/ai" className="oga-footer__ai-logo">
+                <OpenAiLogo />
+                <span>ChatGPT</span>
+              </Link>
+            </li>
+            <li>
+              <Link href="/ai" className="oga-footer__ai-logo">
+                <ClaudeLogo />
+                <span>Claude</span>
+              </Link>
+            </li>
+            <li>
+              <Link href="/ai" className="oga-footer__ai-logo">
+                <PerplexityLogo />
+                <span>Perplexity</span>
+              </Link>
+            </li>
+            <li>
+              <Link href="/ai" className="oga-footer__ai-logo">
+                <GeminiLogo />
+                <span>Gemini</span>
+              </Link>
+            </li>
+            <li>
+              <Link href="/ai" className="oga-footer__ai-logo">
+                <CopilotLogo />
+                <span>Copilot</span>
+              </Link>
+            </li>
+          </ul>
         </div>
 
         <div className="oga-footer__bottom">

@@ -58,8 +58,10 @@ const nextConfig: NextConfig = {
       // notes surface ships under a future epic.
       { source: "/blog", destination: "/", permanent: true },
       { source: "/blog/:slug", destination: "/", permanent: true },
-      // AR-568: static openapi.json deleted — redirect to live BFF endpoint
-      { source: "/openapi.json", destination: "/api/openapi-spec", permanent: true },
+      // AR-568 redirected /openapi.json to the /api/openapi-spec BFF. AR-773
+      // replaced that with a real route handler at app/openapi.json/route.ts so
+      // the spec is served at a clean, crawlable path (the old target lives
+      // under the robots-disallowed /api/ tree, hiding it from agents).
     ];
   },
 };

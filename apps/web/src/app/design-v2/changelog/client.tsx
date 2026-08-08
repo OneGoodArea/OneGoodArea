@@ -63,6 +63,12 @@ const RELEASES: Release[] = [
         description:
           "Re-weight the same seven categories for any preset, so a score can follow your own priorities. Every response is still stamped with the engine version that produced it, so numbers stay reproducible for audits.",
       },
+      {
+        type: "improvement",
+        title: "Published for AI agents",
+        description:
+          "OneGoodArea now publishes an llms.txt, a documented page for AI agents, and a crawlable OpenAPI spec, so the AI assistants your team uses can read, query, and cite us accurately. The scoring stays deterministic and version-stamped, so any answer they give reproduces.",
+      },
     ],
   },
   {
