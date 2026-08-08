@@ -30,6 +30,7 @@ OneGoodArea is four composable products over one engine:
 - [MCP server](${SITE}/docs/mcp): use OneGoodArea from inside Claude, Cursor, and any MCP client.
 - [OpenAPI spec](${SITE}/openapi.json): machine-readable description of the API.
 - [Changelog](${SITE}/changelog): what shipped and when.
+- [Full text](${SITE}/llms-full.txt): everything above inlined as one markdown file, for a single-fetch read.
 
 ## Product
 - [Home](${SITE}/): overview and a live postcode demo.

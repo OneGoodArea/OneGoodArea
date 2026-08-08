@@ -1,0 +1,18 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "OneGoodArea",
+  "name_for_model": "onegoodarea",
+  "description_for_human": "UK area intelligence: signals, scores, monitoring, and natural-language answers for any UK postcode.",
+  "description_for_model": "Deterministic UK area-intelligence API. Score any UK postcode for an intent (moving, business, investing, research) across seven categories (safety and crime, deprivation, property, schools, amenities, transport, environment); pull raw signals with named public sources; compare, find, and monitor areas. Every response is stamped with the engine version and is reproducible. Also available as a Model Context Protocol server. A full index is at https://www.onegoodarea.com/llms.txt and the complete reference at https://www.onegoodarea.com/llms-full.txt.",
+  "auth": {
+    "type": "user_http",
+    "authorization_type": "bearer"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://www.onegoodarea.com/openapi.json"
+  },
+  "logo_url": "https://www.onegoodarea.com/brand/mark.svg",
+  "contact_email": "operation@onegoodarea.co.uk",
+  "legal_info_url": "https://www.onegoodarea.com/terms"
+}
