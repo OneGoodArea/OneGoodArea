@@ -98,8 +98,10 @@ CMD ["sh", "-c", "node apps/api/dist/migrate.cjs && node apps/api/dist/server.cj
 FROM node:22-slim AS refresh
 WORKDIR /app
 
-# curl for downloads, unzip for the police.uk archive.
-RUN apt-get update && apt-get install -y --no-install-recommends curl unzip \
+# curl for downloads, unzip for the police.uk archive. ca-certificates so
+# curl trusts public TLS endpoints (node's fetch bundles its own CAs, curl
+# does not).
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Workspace manifests only (full tree resolution) — NO source.
