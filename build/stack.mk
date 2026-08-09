@@ -31,7 +31,7 @@ build-web-image: ## Build the web Docker image from current branch sources
 	$(CTR_COMPOSE_CMD) --profile minimal build web
 
 signal-refresh-build: ## Build the tooling-only signal-refresh image (refresh stage)
-	$(CTR_COMPOSE_CMD) --profile refresh build signal-refresh
+	$(CTR_COMPOSE_CMD) --profile minimal --profile refresh build signal-refresh
 
 signal-refresh: ## Run the containerized signal-refresh pipeline (boots postgres + neon-proxy first)
 	$(CTR_COMPOSE_CMD) --profile minimal --profile refresh up -d postgres neon-proxy
