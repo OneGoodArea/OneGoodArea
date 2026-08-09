@@ -434,22 +434,18 @@ export function PortfolioTab({ postcode = "" }: PortfolioTabProps) {
               void handleAddArea(areaInput);
             }}
           >
-            {(!selectedId || creatingNew) && (
-              <label className="prx-portfolio__add-label" htmlFor="prx-portfolio-name">
-                Portfolio name
-              </label>
-            )}
-            {(!selectedId || creatingNew) && (
-              <input
-                id="prx-portfolio-name"
-                className="prx-postcode__input prx-portfolio__add-input"
-                type="text"
-                value={nameInput}
-                onChange={(e) => setNameInput(e.target.value)}
-                placeholder="e.g. North West pipeline"
-                disabled={busy !== null}
-              />
-            )}
+            <label className="prx-portfolio__add-label" htmlFor="prx-portfolio-name">
+              Portfolio name
+            </label>
+            <input
+              id="prx-portfolio-name"
+              className="prx-postcode__input prx-portfolio__add-input"
+              type="text"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              placeholder="e.g. North West pipeline"
+              disabled={busy !== null}
+            />
             <label className="prx-portfolio__add-label" htmlFor="prx-portfolio-area">
               Track an area
             </label>
