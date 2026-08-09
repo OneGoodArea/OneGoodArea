@@ -12,6 +12,7 @@ vi.mock("@/modules/tracking/activity", () => ({ trackEvent: vi.fn() }));
 vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn(), query: vi.fn() }));
 vi.mock("@/modules/monitor", () => ({
   createPortfolio: vi.fn(), listPortfolios: vi.fn(), getPortfolio: vi.fn(),
+  renamePortfolio: vi.fn(),
   deletePortfolio: vi.fn(), addAreas: vi.fn(), removeArea: vi.fn(), enrichPortfolio: vi.fn(),
   detectPortfolioChanges: vi.fn(),
   PORTFOLIO_ADD_MAX: 200, PORTFOLIO_ENRICH_MAX: 50,
@@ -83,6 +84,21 @@ describe("portfolios CRUD", () => {
     expect((await app.inject({ method: "DELETE", url: "/v1/portfolios/pf_x", headers: auth })).statusCode).toBe(404);
     vi.mocked(monitor.deletePortfolio).mockResolvedValue(true);
     expect((await app.inject({ method: "DELETE", url: "/v1/portfolios/pf_1", headers: auth })).statusCode).toBe(200);
+  });
+
+  it("rename: 400 without name, 404 when not owned, 200 with updated portfolio", async () => {
+    const noName = await app.inject({ method: "PATCH", url: "/v1/portfolios/pf_1", headers: { ...auth, "content-type": "application/json" }, payload: "{}" });
+    expect(noName.statusCode).toBe(400);
+
+    vi.mocked(monitor.renamePortfolio).mockResolvedValue(null);
+    const notOwned = await app.inject({ method: "PATCH", url: "/v1/portfolios/pf_x", headers: { ...auth, "content-type": "application/json" }, payload: JSON.stringify({ name: "New name" }) });
+    expect(notOwned.statusCode).toBe(404);
+
+    vi.mocked(monitor.renamePortfolio).mockResolvedValue({ id: "pf_1", name: "New name", area_count: 2 });
+    const ok = await app.inject({ method: "PATCH", url: "/v1/portfolios/pf_1", headers: { ...auth, "content-type": "application/json" }, payload: JSON.stringify({ name: "New name" }) });
+    expect(ok.statusCode).toBe(200);
+    expect(ok.json().name).toBe("New name");
+    expect(monitor.renamePortfolio).toHaveBeenCalledWith("user_1", "pf_1", "New name");
   });
 });
 

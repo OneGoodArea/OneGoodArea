@@ -255,6 +255,14 @@ export async function deletePortfolio(id: string): Promise<void> {
   );
 }
 
+export async function renamePortfolio(id: string, name: string): Promise<Portfolio> {
+  return apiFetch<Portfolio>(
+    `/v1/portfolios/${encodeURIComponent(id)}`,
+    { method: "PATCH", body: JSON.stringify({ name }) },
+    SHOWCASE_PROP_TECH_USER_AGENT,
+  );
+}
+
 export async function addPortfolioAreas(
   id: string,
   areas: { area: string; label?: string | null }[],

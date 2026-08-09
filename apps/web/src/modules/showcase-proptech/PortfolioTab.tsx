@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   ChangeReport,
   Portfolio,
@@ -40,8 +40,11 @@ export function PortfolioTab({ postcode = "" }: PortfolioTabProps) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [creatingNew, setCreatingNew] = useState(false);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const renameRef = useRef<HTMLInputElement>(null);
 
   /** Load a portfolio's areas and (re)score them. */
   const selectAndLoad = useCallback(async (id: string) => {
@@ -175,28 +178,74 @@ export function PortfolioTab({ postcode = "" }: PortfolioTabProps) {
     }
   }
 
-  async function handleDelete() {
-    if (!selectedId) return;
-    if (!confirmDelete) {
-      setConfirmDelete(true);
-      window.setTimeout(() => setConfirmDelete(false), 3000);
+  async function handleDeletePortfolio(id: string) {
+    if (confirmDelete !== id) {
+      setConfirmDelete(id);
+      window.setTimeout(() => setConfirmDelete((prev) => (prev === id ? null : prev)), 3000);
       return;
     }
     setBusy("deleting");
     setError(null);
     try {
-      await bff(`/api/showcase/portfolios/${selectedId}`, { method: "DELETE" });
+      await bff(`/api/showcase/portfolios/${id}`, { method: "DELETE" });
       setDetail(null);
       setEnrichments(null);
       setChanges(null);
-      setSelectedId(null);
-      setConfirmDelete(false);
+      setConfirmDelete(null);
       const list = await refreshList();
       const next = list[0]?.id ?? null;
       setSelectedId(next);
       if (next) await selectAndLoad(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete portfolio.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function handleRename(id: string) {
+    const name = renameValue.trim();
+    if (!name) {
+      setRenamingId(null);
+      return;
+    }
+    setBusy("renaming");
+    setError(null);
+    try {
+      await bff(`/api/showcase/portfolios/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ name }),
+      });
+      setRenamingId(null);
+      await refreshList();
+      if (selectedId === id) {
+        const p = await bff<PortfolioDetail>(`/api/showcase/portfolios/${id}`);
+        setDetail(p);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to rename portfolio.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function handleCreateFromChip() {
+    const name = nameInput.trim();
+    if (!name) return;
+    setBusy("creating");
+    setError(null);
+    try {
+      const created = await bff<Portfolio>("/api/showcase/portfolios", {
+        method: "POST",
+        body: JSON.stringify({ name }),
+      });
+      setCreatingNew(false);
+      setNameInput("");
+      setSelectedId(created.id);
+      await refreshList();
+      await selectAndLoad(created.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create portfolio.");
     } finally {
       setBusy(null);
     }
@@ -233,10 +282,6 @@ export function PortfolioTab({ postcode = "" }: PortfolioTabProps) {
     }
   }
 
-  /* AR-764: POST /changes (side-effect-capable variant) surfaced for the demo.
-     The BFF hardcodes emit:false, so this never fires material-change
-     webhooks. The per-area removal above is the only portfolio delete — the
-     watchlist DELETE /me/watchlist/:id is a separate saved_areas feature. */
   async function handleRescanChanges() {
     if (!selectedId) return;
     setBusy("rescanning");
@@ -272,56 +317,112 @@ export function PortfolioTab({ postcode = "" }: PortfolioTabProps) {
 
       {!loading && (
         <>
-          <div className="prx-portfolio__toolbar">
-            <label className="prx-portfolio__select-label" htmlFor="prx-portfolio-select">
-              Portfolio
-            </label>
-            <select
-              id="prx-portfolio-select"
-              className="prx-portfolio__select"
-              value={selectedId ?? ""}
-              onChange={(e) => {
-                const id = e.target.value;
-                if (!id) return;
-                setSelectedId(id);
-                setCreatingNew(false);
-                void selectAndLoad(id);
-              }}
-              disabled={portfolios.length === 0}
-            >
-              {portfolios.length === 0 && <option value="">No portfolio yet</option>}
-              {portfolios.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} · {p.area_count ?? 0} areas
-                </option>
-              ))}
-            </select>
-            {selectedId && (
-              <>
-                <button
-                  type="button"
-                  className="prx-portfolio__btn"
-                  onClick={() => {
-                    setCreatingNew(true);
-                    setSelectedId(null);
-                    setNameInput("");
-                    setDetail(null);
-                    setEnrichments(null);
-                    setChanges(null);
+          {/* Portfolio chip selector */}
+          <div className="prx-portfolio__chips">
+            {portfolios.map((p) => (
+              <div
+                key={p.id}
+                className={`prx-portfolio__chip ${selectedId === p.id ? "prx-portfolio__chip--active" : ""}`}
+              >
+                {renamingId === p.id ? (
+                  <input
+                    ref={renameRef}
+                    className="prx-portfolio__chip-rename"
+                    type="text"
+                    value={renameValue}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    onBlur={() => void handleRename(p.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") void handleRename(p.id);
+                      if (e.key === "Escape") setRenamingId(null);
+                    }}
+                    maxLength={100}
+                    autoFocus
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    className="prx-portfolio__chip-btn"
+                    onClick={() => {
+                      setSelectedId(p.id);
+                      setCreatingNew(false);
+                      void selectAndLoad(p.id);
+                    }}
+                    onDoubleClick={() => {
+                      setRenamingId(p.id);
+                      setRenameValue(p.name);
+                    }}
+                    disabled={busy !== null}
+                    title={`${p.name} · ${p.area_count ?? 0} areas — double-click to rename`}
+                  >
+                    <span className="prx-portfolio__chip-name">{p.name}</span>
+                    <span className="prx-portfolio__chip-count">{p.area_count ?? 0}</span>
+                  </button>
+                )}
+                {confirmDelete === p.id ? (
+                  <button
+                    type="button"
+                    className="prx-portfolio__chip-delete prx-portfolio__chip-delete--confirm"
+                    onClick={() => void handleDeletePortfolio(p.id)}
+                    disabled={busy !== null}
+                    title="Click again to confirm"
+                  >
+                    ?
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="prx-portfolio__chip-delete"
+                    onClick={() => void handleDeletePortfolio(p.id)}
+                    disabled={busy !== null}
+                    title={`Delete ${p.name}`}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+
+            {creatingNew ? (
+              <div className="prx-portfolio__chip prx-portfolio__chip--new">
+                <input
+                  className="prx-portfolio__chip-rename"
+                  type="text"
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  onBlur={() => {
+                    if (!nameInput.trim()) setCreatingNew(false);
                   }}
-                  disabled={busy !== null}
-                >
-                  New portfolio
-                </button>
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void handleCreateFromChip();
+                    if (e.key === "Escape") setCreatingNew(false);
+                  }}
+                  placeholder="Portfolio name…"
+                  maxLength={200}
+                  autoFocus
+                />
                 <button
                   type="button"
-                  className="prx-portfolio__btn prx-portfolio__btn--danger"
-                  onClick={() => void handleDelete()}
-                  disabled={busy !== null}
+                  className="prx-portfolio__chip-confirm"
+                  onClick={() => void handleCreateFromChip()}
+                  disabled={busy !== null || !nameInput.trim()}
+                  title="Create portfolio"
                 >
-                  {confirmDelete ? "Confirm delete?" : "Delete portfolio"}
+                  ✓
                 </button>
-              </>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="prx-portfolio__chip prx-portfolio__chip--add"
+                onClick={() => {
+                  setCreatingNew(true);
+                  setNameInput("");
+                }}
+                disabled={busy !== null}
+              >
+                + New
+              </button>
             )}
           </div>
 

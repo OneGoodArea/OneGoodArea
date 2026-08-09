@@ -50,6 +50,18 @@ export async function getPortfolio(userId: string, id: string): Promise<Portfoli
   return { id: p.id, name: p.name, created_at: p.created_at, area_count: areas.length, areas };
 }
 
+export async function renamePortfolio(userId: string, id: string, name: string): Promise<Portfolio | null> {
+  const result = rows<PortfolioRow>(await sql`
+    UPDATE portfolios SET name = ${name}, updated_at = NOW()
+    WHERE id = ${id} AND user_id = ${userId}
+    RETURNING id, name, created_at
+  `);
+  if (result.length === 0) return null;
+  const p = result[0];
+  const areaCount = rows<{ count: number }>(await sql`SELECT COUNT(*)::int AS count FROM portfolio_areas WHERE portfolio_id = ${id}`);
+  return { id: p.id, name: p.name, area_count: areaCount[0]?.count ?? 0 };
+}
+
 export async function deletePortfolio(userId: string, id: string): Promise<boolean> {
   const owned = rows(await sql`SELECT id FROM portfolios WHERE id = ${id} AND user_id = ${userId}`);
   if (owned.length === 0) return false;
