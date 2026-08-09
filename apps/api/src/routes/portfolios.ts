@@ -5,7 +5,7 @@ import { effectiveEngineVersionForCaller } from "../shared/bundles";
 import { sendAppError } from "../shared/errors";
 import { logger } from "../modules/tracking/structured-logger";
 import { getConfig } from "../infrastructure/config";
-import { createPortfolio, listPortfolios, getPortfolio, deletePortfolio, addAreas, removeArea, enrichPortfolio, detectPortfolioChanges, PORTFOLIO_ADD_MAX, type Baseline } from "../modules/monitor";
+import { createPortfolio, listPortfolios, getPortfolio, renamePortfolio, deletePortfolio, addAreas, removeArea, enrichPortfolio, detectPortfolioChanges, PORTFOLIO_ADD_MAX, type Baseline } from "../modules/monitor";
 import { trackEvent } from "../modules/tracking/activity";
 
 import type { Intent } from "@onegoodarea/contracts";
@@ -156,6 +156,48 @@ export function registerPortfoliosRoutes(app: FastifyInstance): void {
       } catch (error) {
         if (sendAppError(reply, error)) return;
         logger.error("[v1/portfolios/:id] delete error:", error);
+        return reply.code(500).send({ error: "Internal server error" });
+      }
+    });
+
+    app.patch("/v1/portfolios/:id",
+      {
+      schema: {
+            "tags": [
+                "Portfolios"
+            ],
+            "summary": "Rename portfolio",
+            "description": "Rename an existing portfolio.",
+            "security": [{ "bearerAuth": [] }],
+            "params": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } },
+            "body": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string", "minLength": 1, "maxLength": 100, "description": "Required. Rejected by the handler when missing." },
+              },
+              "example": { "name": "Renamed portfolio" },
+            },
+            response: {
+              200: PortfolioSchema,
+              400: z.object({ error: z.string() }),
+              404: z.object({ error: z.string() }),
+              500: z.object({ error: z.string() }),
+            },
+        },
+      }, async (request, reply) => {
+      try {
+        const userId = await guardSignals(request, reply);
+        if (!userId) return reply;
+        const { id } = request.params as { id: string };
+        const name = typeof (request.body as { name?: unknown })?.name === "string" ? (request.body as { name: string }).name.trim() : "";
+        if (!name) return reply.code(400).send({ error: "Missing required 'name'." });
+        if (name.length > 100) return reply.code(400).send({ error: "name too long (max 100 chars)." });
+        const portfolio = await renamePortfolio(userId, id, name);
+        if (!portfolio) return reply.code(404).send({ error: "Portfolio not found" });
+        return reply.code(200).send(portfolio);
+      } catch (error) {
+        if (sendAppError(reply, error)) return;
+        logger.error("[v1/portfolios/:id] rename error:", error);
         return reply.code(500).send({ error: "Internal server error" });
       }
     });

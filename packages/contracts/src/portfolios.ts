@@ -25,6 +25,12 @@ export const CreatePortfolioRequestSchema = z.object({
 }).strict();
 export type CreatePortfolioRequest = z.infer<typeof CreatePortfolioRequestSchema>;
 
+/** PATCH /v1/portfolios/:id — rename a portfolio. */
+export const UpdatePortfolioRequestSchema = z.object({
+  name: z.string().min(1).max(100),
+}).strict();
+export type UpdatePortfolioRequest = z.infer<typeof UpdatePortfolioRequestSchema>;
+
 /** POST /v1/portfolios/:id/areas — add areas to a portfolio. */
 export const AddAreaRequestSchema = z.object({
   areas: z.array(z.object({

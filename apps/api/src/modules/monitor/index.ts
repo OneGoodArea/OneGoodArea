@@ -4,6 +4,7 @@ export {
   createPortfolio,
   listPortfolios,
   getPortfolio,
+  renamePortfolio,
   deletePortfolio,
   addAreas,
   removeArea,
