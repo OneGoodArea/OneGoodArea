@@ -688,6 +688,52 @@ export const MIGRATIONS: Migration[] = [
     ],
   },
   {
+    name: "signal_fk_constraints",
+    statements: [
+      // AR-809: FK constraints on signal tables + drop dead column from signal_timeseries.
+      // Idempotent: DO blocks swallow duplicate_object / duplicate_table errors.
+      `DO $$ BEGIN
+        ALTER TABLE signal_values ADD CONSTRAINT fk_signal_values_signal_key
+          FOREIGN KEY (signal_key) REFERENCES signals(key) NOT VALID;
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE signal_timeseries ADD CONSTRAINT fk_signal_timeseries_signal_key
+          FOREIGN KEY (signal_key) REFERENCES signals(key) NOT VALID;
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE signal_percentiles ADD CONSTRAINT fk_signal_percentiles_signal_key
+          FOREIGN KEY (signal_key) REFERENCES signals(key) NOT VALID;
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE signal_values VALIDATE CONSTRAINT fk_signal_values_signal_key;
+      EXCEPTION WHEN undefined_object THEN NULL;
+      END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE signal_timeseries VALIDATE CONSTRAINT fk_signal_timeseries_signal_key;
+      EXCEPTION WHEN undefined_object THEN NULL;
+      END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE signal_percentiles VALIDATE CONSTRAINT fk_signal_percentiles_signal_key;
+      EXCEPTION WHEN undefined_object THEN NULL;
+      END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE signal_values ADD CONSTRAINT fk_signal_values_source_snapshot
+          FOREIGN KEY (source_snapshot_id) REFERENCES source_snapshots(id) NOT VALID;
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE signal_values VALIDATE CONSTRAINT fk_signal_values_source_snapshot;
+      EXCEPTION WHEN undefined_object THEN NULL;
+      END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE signal_timeseries DROP COLUMN IF EXISTS source_snapshot_id;
+      END $$`,
+    ],
+  },
+  {
     name: "peer_assignments",
     statements: [
       `CREATE TABLE IF NOT EXISTS peer_assignments (
