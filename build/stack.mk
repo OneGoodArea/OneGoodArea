@@ -36,6 +36,12 @@ signal-refresh-build: ## Build the tooling-only signal-refresh image (refresh st
 signal-refresh: ## Run the containerized signal-refresh pipeline (boots postgres + neon-proxy first)
 	$(CTR_COMPOSE_CMD) --profile minimal --profile refresh up -d postgres neon-proxy
 	$(CTR_COMPOSE_CMD) --profile minimal --profile refresh run --rm -T signal-refresh
+
+load-geo: ## Load ONS NSPL spine into local DB (usage: make load-geo FILE=apps/api/seed/nspl-sample.csv)
+	$(CTR_COMPOSE_CMD) --profile minimal --profile refresh up -d postgres neon-proxy
+	$(CTR_COMPOSE_CMD) --profile minimal --profile refresh run --rm -T signal-refresh \
+	  bash -c "npm run load:geo -w @onegoodarea/api -- $(FILE)"
+
 stack-dev-up: ## Boot dev stack from host source (bind-mounted, hot reload)
 	$(CTR_COMPOSE_DEV) --profile minimal --profile full up -d $(BUILD_FLAG)
 

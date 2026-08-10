@@ -86,6 +86,7 @@ Set `BUILD_FLAG=--build` to force rebuild: `make stack-up-min BUILD_FLAG=--build
 | `make db-seed` | Load framework + baseline seed SQL |
 | `make signal-refresh-build` | Build the tooling-only signal-refresh image (refresh stage) |
 | `make signal-refresh` | Run the containerized signal-refresh pipeline (boots postgres + neon-proxy first) |
+| `make load-geo` | Load ONS NSPL spine into local DB (boots postgres + neon-proxy first) |
 | `make api-test-coverage-container` | Run API coverage in ephemeral container |
 | `make web-test-coverage-container` | Run web coverage in ephemeral container |
 
