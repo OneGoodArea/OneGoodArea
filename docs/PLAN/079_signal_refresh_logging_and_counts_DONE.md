@@ -6,8 +6,8 @@ the missing `.github/scripts/logging.sh`, and add before/after row-count reporti
 plus timestamped run-log persistence for the tables the refresh touches.
 
 - Jira ticket: AR-792 "Implement LOGGING levels in the refresh jobs, and containers"
-- Status: **In Progress** (moved from To Do on the active sprint per jira-github-lifecycle)
-- Branch: `fix/signal-refresh-logging-counts` off `main` (main @ 5b0a802, PR #543 merged)
+- Status: **DONE** (moved In Progress → Done on PR #544 merge, commit 0efbd7c/3c71fab)
+- Branch: `fix/signal-refresh-logging-counts` → merged to `main` (main now @ 0efbd7c; PR #543 already merged)
 
 ## Why it breaks today
 Commit `82ec20e` ("Implemented AR-792") added `source .github/scripts/logging.sh`
