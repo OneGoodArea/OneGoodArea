@@ -7,8 +7,12 @@
  * apps/api/src/infrastructure/db/client.ts, so it runs identically inside the
  * container (DATABASE_URL + NEON_FETCH_ENDPOINT) and in prod (DATABASE_URL only).
  *
+ * AR-792 follow-up: also reports a per-signal-type breakdown
+ * (signals + signal_values grouped by signals.category), so new signal types
+ * such as amenities appear in the before/after/delta.
+ *
  * Usage:
- *   npm run row-counts            # print a markdown table to stdout
+ *   npm run row-counts            # print the totals table + category breakdown to stdout
  *   npm run row-counts -- print   #   ("print" is the default)
  *   npm run row-counts -- snapshot > data/logs/rowcounts.before.json
  *   npm run row-counts -- snapshot > data/logs/rowcounts.after.json
@@ -45,6 +49,11 @@ function getClient() {
 
 type Counts = Record<string, number>;
 
+type Breakdown = {
+  signals: Record<string, number>;
+  signal_values: Record<string, number>;
+};
+
 async function fetchCounts(client: ReturnType<typeof getClient>): Promise<Counts> {
   const out: Counts = {};
   for (const table of TABLES) {
@@ -56,8 +65,61 @@ async function fetchCounts(client: ReturnType<typeof getClient>): Promise<Counts
   return out;
 }
 
-function pad(n: number, width: number): string {
-  return String(n).padStart(width, " ");
+async function fetchBreakdown(client: ReturnType<typeof getClient>): Promise<Breakdown> {
+  type CatRow = { category: string | null; n: number };
+  const byCat = (rows: CatRow[]) =>
+    Object.fromEntries(rows.map((r) => [r.category ?? "uncategorized", r.n]));
+
+  // client.query returns the rows array directly (see fetchCounts: res[0]).
+  // Plain-string form (not tagged template) so the (text, params) overload
+  // resolves cleanly under strict tsc.
+  const sig = (await client.query(
+    `SELECT COALESCE(category, 'uncategorized') AS category, COUNT(*)::int AS n
+     FROM signals GROUP BY 1 ORDER BY 1`,
+  )) as CatRow[];
+  const vals = (await client.query(
+    `SELECT COALESCE(s.category, 'uncategorized') AS category, COUNT(*)::int AS n
+     FROM signal_values sv
+     LEFT JOIN signals s ON s.key = sv.signal_key
+     GROUP BY 1 ORDER BY 1`,
+  )) as CatRow[];
+
+  return { signals: byCat(sig), signal_values: byCat(vals) };
+}
+
+function padEnd(s: string, width: number): string {
+  return s.padEnd(width, " ");
+}
+
+const BREAKDOWN_TABLES: ReadonlyArray<"signals" | "signal_values"> = [
+  "signals",
+  "signal_values",
+];
+
+function printBreakdown(bd: Breakdown): void {
+  const cats = Array.from(
+    new Set([...Object.keys(bd.signals), ...Object.keys(bd.signal_values)]),
+  ).sort();
+  const catW = Math.max(
+    "category".length,
+    ...cats.map((c) => c.length),
+  );
+  const numWidth = Math.max(
+    "count".length,
+    ...BREAKDOWN_TABLES.flatMap((t) =>
+      cats.map((c) => String(bd[t][c] ?? 0).length),
+    ),
+  );
+
+  console.log("by signal type (category):");
+  for (const table of BREAKDOWN_TABLES) {
+    console.log(`${padEnd(table, catW)} | count`);
+    console.log("-".repeat(catW + numWidth + 3));
+    for (const cat of cats) {
+      const n = bd[table][cat] ?? 0;
+      console.log(`${padEnd(cat, catW)} | ${String(n).padStart(numWidth)}`);
+    }
+  }
 }
 
 function printTable(counts: Counts): void {
@@ -72,8 +134,10 @@ function printTable(counts: Counts): void {
   }
 }
 
-function printSnapshot(counts: Counts): void {
-  process.stdout.write(JSON.stringify(counts, null, 2) + "\n");
+function printSnapshot(counts: Counts, breakdown?: Breakdown): void {
+  const out: Record<string, unknown> = { ...counts };
+  if (breakdown) out.__breakdown__ = breakdown;
+  process.stdout.write(JSON.stringify(out, null, 2) + "\n");
 }
 
 function printDiff(before: Counts, after: Counts): void {
@@ -120,13 +184,16 @@ async function main() {
     const client = getClient();
     const counts = await fetchCounts(client);
     printTable(counts);
+    const breakdown = await fetchBreakdown(client);
+    printBreakdown(breakdown);
     return;
   }
 
   if (mode === "snapshot") {
     const client = getClient();
     const counts = await fetchCounts(client);
-    printSnapshot(counts);
+    const breakdown = await fetchBreakdown(client);
+    printSnapshot(counts, breakdown);
     return;
   }
 
@@ -137,10 +204,10 @@ async function main() {
     }
     const before = JSON.parse(
       readFileSync(beforePath, "utf-8"),
-    ) as Counts;
+    ) as Counts & { __breakdown__?: Breakdown };
     const after = JSON.parse(
       readFileSync(afterPath, "utf-8"),
-    ) as Counts;
+    ) as Counts & { __breakdown__?: Breakdown };
     printDiff(before, after);
     return;
   }
