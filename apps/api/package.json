@@ -11,6 +11,7 @@
     "build": "esbuild src/server.ts --bundle --platform=node --format=cjs --outfile=dist/server.cjs --target=node22 && esbuild src/infrastructure/db/migrate.ts --bundle --platform=node --format=cjs --outfile=dist/migrate.cjs --target=node22",
     "start:prod": "node dist/server.cjs",
     "migrate": "tsx src/infrastructure/db/migrate.ts",
+    "row-counts": "tsx ./scripts/row-counts.ts",
     "refresh:deprivation": "tsx src/modules/signals/refresh/deprivation.ts",
     "refresh:prices": "tsx src/modules/signals/refresh/prices.ts",
     "refresh:crime": "tsx src/modules/signals/refresh/crime.ts",

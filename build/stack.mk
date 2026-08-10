@@ -35,8 +35,7 @@ signal-refresh-build: ## Build the tooling-only signal-refresh image (refresh st
 
 signal-refresh: ## Run the containerized signal-refresh pipeline (boots postgres + neon-proxy first)
 	$(CTR_COMPOSE_CMD) --profile minimal --profile refresh up -d postgres neon-proxy
-	$(CTR_COMPOSE_CMD) --profile minimal --profile refresh run --rm signal-refresh
-
+	$(CTR_COMPOSE_CMD) --profile minimal --profile refresh run --rm -T signal-refresh
 stack-dev-up: ## Boot dev stack from host source (bind-mounted, hot reload)
 	$(CTR_COMPOSE_DEV) --profile minimal --profile full up -d $(BUILD_FLAG)
 
