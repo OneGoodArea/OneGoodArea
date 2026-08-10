@@ -115,7 +115,7 @@ export async function readDeprivationNormalization(
     non-positive. */
 export function computeYoY(
   points: ReadonlyArray<{ signal_key: string; observed_period: string; raw_value: number | null }>,
-): { price_change_pct: number | null; prior_median: number | null } {
+): { price_change_pct: number | null; prior_median: number | null; latest_median: number | null } {
   const byPeriod = new Map<string, { median?: number; count?: number }>();
   for (const p of points) {
     if (p.raw_value === null || p.raw_value === undefined) continue;
@@ -135,18 +135,18 @@ export function computeYoY(
     byYear.set(year, agg);
   }
 
-  const years = [...byYear.keys()].sort().reverse();
-  if (years.length < 2) return { price_change_pct: null, prior_median: null };
-  const latest = byYear.get(years[0]!)!;
-  const prior = byYear.get(years[1]!)!;
-  if (latest.csum === 0 || prior.csum === 0) return { price_change_pct: null, prior_median: null };
+   const years = [...byYear.keys()].sort().reverse();
+   if (years.length < 2) return { price_change_pct: null, prior_median: null, latest_median: null };
+   const latest = byYear.get(years[0]!)!;
+   const prior = byYear.get(years[1]!)!;
+   if (latest.csum === 0 || prior.csum === 0) return { price_change_pct: null, prior_median: null, latest_median: null };
 
-  const annualLatest = latest.wsum / latest.csum;
-  const annualPrior = prior.wsum / prior.csum;
-  if (annualPrior <= 0) return { price_change_pct: null, prior_median: null };
+   const annualLatest = latest.wsum / latest.csum;
+   const annualPrior = prior.wsum / prior.csum;
+   if (annualPrior <= 0) return { price_change_pct: null, prior_median: null, latest_median: null };
 
-  const pct = ((annualLatest - annualPrior) / annualPrior) * 100;
-  return { price_change_pct: Math.round(pct * 100) / 100, prior_median: Math.round(annualPrior) };
+   const pct = ((annualLatest - annualPrior) / annualPrior) * 100;
+   return { price_change_pct: Math.round(pct * 100) / 100, prior_median: Math.round(annualPrior), latest_median: Math.round(annualLatest) };
 }
 
 /** Read property prices for an LSOA from the store, or null if absent / no
@@ -192,24 +192,27 @@ export async function readPropertyFromStore(
         AND observed_period ~ '^[0-9]{4}-[0-9]{2}$'`,
     [geoCode],
   );
-  const { price_change_pct, prior_median } = computeYoY(
-    tsRows.map((r) => ({
-      signal_key: r.signal_key as string,
-      observed_period: r.observed_period as string,
-      raw_value: r.raw_value === null || r.raw_value === undefined ? null : Number(r.raw_value),
-    })),
-  );
+   const { price_change_pct, prior_median, latest_median } = computeYoY(
+     tsRows.map((r) => ({
+       signal_key: r.signal_key as string,
+       observed_period: r.observed_period as string,
+       raw_value: r.raw_value === null || r.raw_value === undefined ? null : Number(r.raw_value),
+     })),
+   );
 
-  const txns = count === null || Number.isNaN(count) ? 0 : count;
-  return {
-    postcode_area: geoCode, // the LSOA — only used in human-readable reasoning
-    median_price: median,
+   const txns = count === null || Number.isNaN(count) ? 0 : count;
+   // Use the latest year's annual weighted median (consistent with YoY %) when
+   // available. Falls back to the window median from signal_values — see AR-806.
+   const headlinePrice = latest_median ?? median;
+   return {
+     postcode_area: geoCode, // the LSOA — only used in human-readable reasoning
+     median_price: headlinePrice,
     mean_price: median, // not read by the mapper/engine; safe fill
     transaction_count: txns,
     price_change_pct,
-    by_property_type: [],
-    tenure_split: { freehold: 0, leasehold: 0 },
-    price_range: { min: median, max: median },
+by_property_type: [],
+     tenure_split: { freehold: 0, leasehold: 0 },
+     price_range: { min: headlinePrice, max: headlinePrice },
     period,
     prior_median,
   };
