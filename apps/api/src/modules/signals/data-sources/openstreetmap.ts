@@ -1,5 +1,6 @@
 import type { AmenitiesData } from "../inputs";
 import { logger } from "../../tracking/structured-logger";
+import { getConfig } from "../../../infrastructure/config";
 
 /* Migrated VERBATIM from legacy src/lib/data-sources/openstreetmap.ts. Changes:
    AmenitiesData imported from ../inputs (canonical) instead of re-declared, and
@@ -32,7 +33,7 @@ interface OverpassElement {
    A direct curl with the same query returns 920KB of real data in ~5s,
    so the upstream is fine; our IP gets soft-rate-limited or Overpass
    returns 200 with a remark field on heavy queries. Layered fix:
-     1. 5-min TTL cache keyed by rounded (lat, lng), same shape as
+      1. TTL cache (config: amenities.liveCacheTtlMs) keyed by rounded (lat, lng), same shape as
         AR-396 flood. Cold hit per LSOA per instance; warm thereafter.
      2. Detect Overpass remark field (server-side timeout that comes
         back HTTP 200 with empty elements). Log it as a warning so
@@ -50,7 +51,7 @@ interface OverpassElement {
 const OVERPASS_QUERY_TIMEOUT_SECONDS = 10;
 const OVERPASS_FETCH_TIMEOUT_MS = 8000;
 
-const OVERPASS_CACHE_TTL_MS = 5 * 60 * 1000;
+const OVERPASS_CACHE_TTL_MS = getConfig().amenities.liveCacheTtlMs;
 const OVERPASS_CACHE_MAX = 1000;
 const OVERPASS_COORD_PRECISION = 1000; /* 3 decimal places, ~110m */
 

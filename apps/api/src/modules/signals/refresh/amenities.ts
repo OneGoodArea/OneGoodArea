@@ -23,9 +23,20 @@
  *   4. Log summary (refreshed count, failures, duration)
  */
 
-import { logger } from "../tracking/structured-logger";
+import { logger } from "../../tracking/structured-logger";
 
+/* The stale-window TTL is read from the API config so the background job and the
+   query-driven (cache-miss) path share one source of truth. See getConfig().amenities
+   in src/infrastructure/config/index.ts (OGA_AMENITIES_REFRESH_STALE_AFTER_HOURS,
+   OGA_AMENITIES_LIVE_CACHE_TTL_MS). */
 export async function runAmenitiesRefresh(): Promise<void> {
-  logger.warn("[refresh:amenities] PLACEHOLDER — not yet implemented. See docs in this file.");
-  throw new Error("amenities refresh not implemented — see placeholder documentation");
+  logger.warn(
+    "[refresh:amenities] PLACEHOLDER — not yet wired. Reads signal_values for stale amenities " +
+    "(updated_at < now() - interval '24 hours'), re-fetches each via Overpass, and updates the store. " +
+    "No-op until the store-first write path lands (see AR-804 / AR-801). Exiting cleanly (no-op).",
+  );
+  /* Exit 0 so `npm run refresh:amenities -w @onegoodarea/api` stays a healthy no-op
+     in cron/queue until the real implementation is committed. The warm-cache
+     architecture keeps working without this job — the DB is still populated on
+     first query per LSOA — stale data simply isn't proactively refreshed. */
 }

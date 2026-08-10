@@ -59,6 +59,18 @@ export interface ApiConfig {
   // 0 disables purging (kept indefinitely). Default 365.
   trainingDataRetentionDays: number;
 
+  // AR-804: amenities warm-cache TTLs.
+  // refreshStaleAfterHours — staleness window used by the background amenities
+  //   refresh job (refresh/amenities.ts): refresh signal_values rows whose
+  //   updated_at < now() - interval '<refreshStaleAfterHours hours'>.
+  // liveCacheTtlMs — TTL of the live Overpass response cache in
+  //   data-sources/openstreetmap.ts (replaces the hardcoded OVERPASS_CACHE_TTL_MS).
+  // Both env-overridable; defaults preserve the existing 24h / 5min behaviour.
+  amenities: {
+    refreshStaleAfterHours: number;
+    liveCacheTtlMs: number;
+  };
+
   // Logging
   logLevel: string;
   localRuntimeEnabled: boolean;
@@ -127,6 +139,12 @@ export function getConfig(): ApiConfig {
       const parsed = raw ? parseInt(raw, 10) : NaN;
       return Number.isFinite(parsed) && parsed >= 0 ? parsed : 365;
     })(),
+
+    // AR-804: amenities warm-cache TTLs (env-overridable, 24h / 5min defaults).
+    amenities: {
+      refreshStaleAfterHours: Number(process.env.OGA_AMENITIES_REFRESH_STALE_AFTER_HOURS ?? 24),
+      liveCacheTtlMs: Number(process.env.OGA_AMENITIES_LIVE_CACHE_TTL_MS ?? 5 * 60 * 1000),
+    },
 
     // Logging
     logLevel: process.env.OGA_LOG_LEVEL ?? (process.env.OGA_LOCAL_RUNTIME_ENABLED === "true" ? "debug" : "info"),
