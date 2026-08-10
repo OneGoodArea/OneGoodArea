@@ -182,8 +182,8 @@ export function bucketsToRows(buckets: PriceBuckets, snapshotId: string): PriceS
       const monthCount = prices.length;
       const monthConf = priceConfidence(monthCount);
       timeseriesRows.push(
-        { signal_key: "property.median_price", geo_type: "lsoa", geo_code: lsoa, observed_period: ym, raw_value: monthMedian, raw_value_text: null, normalized_value: null, confidence: monthConf, source_snapshot_id: snapshotId, engine_version: METHODOLOGY_VERSION },
-        { signal_key: "property.transaction_count", geo_type: "lsoa", geo_code: lsoa, observed_period: ym, raw_value: monthCount, raw_value_text: null, normalized_value: null, confidence: monthConf, source_snapshot_id: snapshotId, engine_version: METHODOLOGY_VERSION },
+        { signal_key: "property.median_price", geo_type: "lsoa", geo_code: lsoa, observed_period: ym, raw_value: monthMedian, raw_value_text: null, normalized_value: null, confidence: monthConf, engine_version: METHODOLOGY_VERSION },
+        { signal_key: "property.transaction_count", geo_type: "lsoa", geo_code: lsoa, observed_period: ym, raw_value: monthCount, raw_value_text: null, normalized_value: null, confidence: monthConf, engine_version: METHODOLOGY_VERSION },
       );
     }
     if (latestYm > (latestPeriod ?? "")) latestPeriod = latestYm;

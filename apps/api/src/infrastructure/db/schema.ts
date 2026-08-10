@@ -630,7 +630,7 @@ export const MIGRATIONS: Migration[] = [
     name: "signal_values",
     statements: [
       `CREATE TABLE IF NOT EXISTS signal_values (
-        signal_key TEXT NOT NULL,
+        signal_key TEXT NOT NULL REFERENCES signals(key),
         geo_type TEXT NOT NULL,
         geo_code TEXT NOT NULL,
         raw_value DOUBLE PRECISION,
@@ -638,7 +638,7 @@ export const MIGRATIONS: Migration[] = [
         normalized_value DOUBLE PRECISION,
         confidence NUMERIC(3,2),
         confidence_reason TEXT,
-        source_snapshot_id TEXT,
+        source_snapshot_id TEXT REFERENCES source_snapshots(id),
         observed_period TEXT,
         engine_version TEXT,
         updated_at TIMESTAMPTZ DEFAULT NOW(),
@@ -654,7 +654,7 @@ export const MIGRATIONS: Migration[] = [
     name: "signal_percentiles",
     statements: [
       `CREATE TABLE IF NOT EXISTS signal_percentiles (
-        signal_key TEXT NOT NULL,
+        signal_key TEXT NOT NULL REFERENCES signals(key),
         geo_type TEXT NOT NULL,
         geo_code TEXT NOT NULL,
         scope TEXT NOT NULL,
@@ -671,7 +671,7 @@ export const MIGRATIONS: Migration[] = [
     name: "signal_timeseries",
     statements: [
       `CREATE TABLE IF NOT EXISTS signal_timeseries (
-        signal_key TEXT NOT NULL,
+        signal_key TEXT NOT NULL REFERENCES signals(key),
         geo_type TEXT NOT NULL,
         geo_code TEXT NOT NULL,
         observed_period TEXT NOT NULL,
@@ -679,7 +679,6 @@ export const MIGRATIONS: Migration[] = [
         raw_value_text TEXT,
         normalized_value DOUBLE PRECISION,
         confidence NUMERIC(3,2),
-        source_snapshot_id TEXT,
         engine_version TEXT,
         captured_at TIMESTAMPTZ DEFAULT NOW(),
         PRIMARY KEY (signal_key, geo_type, geo_code, observed_period)
