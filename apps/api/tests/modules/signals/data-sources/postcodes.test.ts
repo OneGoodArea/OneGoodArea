@@ -346,3 +346,114 @@ describe("lookupTerminatedPostcode (AR-711/712)", () => {
     });
   });
 });
+
+/* ── AR-808: Islington geocoding — substring ambiguity + district-match ranking ──
+
+   postcodes.io /places?q=Islington returns 4 results. The top-ranked one
+   (by PLACE_TYPE_RANK) is Tilney cum Islington (Norfolk, Village rank 4)
+   which beats Islington London (Other Settlement rank 8). This gives a
+   Norfolk LSOA with £170k median and no OSM data — not what users expect.
+
+   The fix: (A) boost results where district_borough matches the query,
+   (B) widen ambiguity to catch substring name collisions. */
+describe("AR-808: Islington geocoding (substring ambiguity + district-match ranking)", () => {
+  /* Real postcodes.io /places?q=Islington response (2026-08-10). */
+  const ISLINGTON_PLACES = [
+    { name_1: "Islington", latitude: 53.781520862889465, longitude: -1.5645366664684401, local_type: "Suburban Area", district_borough: "Leeds", county_unitary: null, region: "Yorkshire and the Humber", country: "England" },
+    { name_1: "Islington", latitude: 53.890779569853876, longitude: -1.2397048467295604, local_type: "Suburban Area", district_borough: null, county_unitary: "North Yorkshire", region: "Yorkshire and the Humber", country: "England" },
+    { name_1: "Islington", latitude: 51.53754638138807, longitude: -0.10288225250548222, local_type: "Other Settlement", district_borough: "Islington", county_unitary: "Greater London", region: "London", country: "England" },
+    { name_1: "Tilney cum Islington", latitude: 52.7002432625724, longitude: 0.328619814608834, local_type: "Village", district_borough: "King's Lynn and West Norfolk", county_unitary: "Norfolk", region: "Eastern", country: "England" },
+  ];
+
+  function reverseGeocode(lat: string) {
+    const lats: Record<string, { postcode: string; admin_district: string; region: string; lsoa: string; codes: { lsoa: string; lsoa11: string; msoa: string } }> = {
+      "53.78": { postcode: "LS11 0EE", admin_district: "Leeds", region: "Yorkshire and the Humber", lsoa: "Leeds 001A", codes: { lsoa: "E01011290", lsoa11: "", msoa: "" } },
+      "53.89": { postcode: "LS24 9AA", admin_district: "Hambleton", region: "Yorkshire and the Humber", lsoa: "Hambleton 001A", codes: { lsoa: "E01027625", lsoa11: "", msoa: "" } },
+      "51.54": { postcode: "N1 2XQ", admin_district: "Islington", region: "London", lsoa: "Islington 020B", codes: { lsoa: "E01002794", lsoa11: "E01002794", msoa: "E02000573" } },
+      "52.70": { postcode: "PE34 3BJ", admin_district: "King's Lynn and West Norfolk", region: "Eastern", lsoa: "King's Lynn and West Norfolk 015B", codes: { lsoa: "E01026697", lsoa11: "", msoa: "" } },
+    };
+    // Match on prefix (51.537... starts with "51.53", but the mock key is "51.54")
+    const key = Object.keys(lats).find((k) => lat?.startsWith(k.slice(0, 4))) ?? "51.54";
+    return lats[key];
+  }
+
+  function mockIslington() {
+    server.use(
+      http.get(AUTOCOMPLETE, () => HttpResponse.json({ result: [] })),
+      http.get(PLACES, () =>
+        HttpResponse.json({ status: 200, result: ISLINGTON_PLACES })
+      ),
+      http.get(REVERSE, ({ request }) => {
+        const url = new URL(request.url);
+        const lat = url.searchParams.get("lat") ?? "51.54";
+        const g = reverseGeocode(lat);
+        return HttpResponse.json({ result: [g] });
+      }),
+    );
+  }
+
+  /* TEST 1: geocodeAreaStrict("Islington") — currently returns ok with wrong result.
+     After fix: should return ambiguous with 4 candidates. */
+  it("returns ambiguous for 'Islington' (not silently picks Tilney cum Islington)", async () => {
+    mockIslington();
+    const r = await geocodeAreaStrict("Islington");
+    // After fix: kind should be "ambiguous" (not "ok" with Norfolk)
+    expect(r.kind).toBe("ambiguous");
+    if (r.kind === "ambiguous") {
+      expect(r.candidates.length).toBe(4);
+    }
+  });
+
+  /* TEST 2: London Islington present in the ambiguity candidate list. */
+  it("includes London Islington in the ambiguity candidates", async () => {
+    mockIslington();
+    const r = await geocodeAreaStrict("Islington");
+    expect(r.kind).toBe("ambiguous");
+    if (r.kind === "ambiguous") {
+      const districts = r.candidates.map((c) => c.district);
+      expect(districts).toContain("Islington");           // London
+      expect(districts).toContain("Leeds");                // Yorkshire
+      expect(districts).toContain("King's Lynn and West Norfolk"); // Norfolk
+    }
+  });
+
+  /* TEST 3: geocodeArea (non-strict) — currently returns Norfolk result.
+     After fix: should return null (district validation rejects mismatch) or London result (ranking fix). */
+  it("does not return a Norfolk result for query 'Islington'", async () => {
+    mockIslington();
+    const r = await geocodeArea("Islington");
+    if (r !== null) {
+      // If it returns something, it should NOT be the Norfolk district
+      expect(r.admin_district).not.toBe("King's Lynn and West Norfolk");
+    }
+  });
+
+  /* TEST 4: Substring ambiguity — 'Tilney cum Islington' should be caught
+     when querying 'Islington' (substring match). */
+  it("catches Tilney cum Islington via substring match on 'Islington'", async () => {
+    server.use(
+      http.get(AUTOCOMPLETE, () => HttpResponse.json({ result: [] })),
+      http.get(PLACES, () =>
+        HttpResponse.json({
+          status: 200,
+          result: [
+            // Only Tilney cum Islington + Islington London — no other Islingtons
+            ISLINGTON_PLACES[3], // Tilney cum Islington (Village)
+            ISLINGTON_PLACES[2], // Islington London (Other Settlement)
+          ],
+        })
+      ),
+      http.get(REVERSE, ({ request }) => {
+        const url = new URL(request.url);
+        const lat = url.searchParams.get("lat") ?? "51.54";
+        const g = reverseGeocode(lat);
+        return HttpResponse.json({ result: [g] });
+      }),
+    );
+    const r = await geocodeAreaStrict("Islington");
+    expect(r.kind).toBe("ambiguous");
+    if (r.kind === "ambiguous") {
+      expect(r.candidates.length).toBe(2);
+    }
+  });
+});

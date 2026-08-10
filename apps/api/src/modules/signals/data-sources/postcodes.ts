@@ -346,9 +346,15 @@ async function fetchPlaces(query: string): Promise<RankedPlace[] | null> {
       // at all (would crash normalisePlaceName downstream).
       .filter((p) => p.name.length > 0);
     if (normalized.length === 0) return null;
-    return normalized.sort(
-      (a, b) => (PLACE_TYPE_RANK[a.local_type] ?? 9) - (PLACE_TYPE_RANK[b.local_type] ?? 9),
-    );
+    // AR-808: boost results where district_borough matches the query name.
+    // Prevents obscure places (e.g. Tilney cum Islington, Village rank 4)
+    // from beating well-known places with matching district (e.g. Islington London).
+    const qLower = query.toLowerCase();
+    return normalized.sort((a, b) => {
+      const aBoost = a.district?.toLowerCase() === qLower ? -100 : 0;
+      const bBoost = b.district?.toLowerCase() === qLower ? -100 : 0;
+      return aBoost - bBoost || (PLACE_TYPE_RANK[a.local_type] ?? 9) - (PLACE_TYPE_RANK[b.local_type] ?? 9);
+    });
   } catch {
     return null;
   }
@@ -498,13 +504,20 @@ export async function geocodeAreaStrict(query: string): Promise<GeocodeAreaResul
   const ranked = await fetchPlaces(q);
   if (!ranked || ranked.length === 0) return { kind: "not_found" };
 
-  // Ambiguity = ≥2 hits with the same canonical name. Anything else
-  // (single hit, or top hit dominates by name uniqueness) is OK.
+  // AR-808: Ambiguity = ≥2 hits with the same canonical name, OR where the
+  // query is a suffix of another result's name (e.g. "Islington" is a suffix
+  // of "Tilney cum Islington") with a different canonical name. Suffix-only
+  // avoids false positives like "Manchester Hamlet" matching query "Manchester".
   const target = normalisePlaceName(ranked[0].name);
   const sameName = ranked.filter((p) => normalisePlaceName(p.name) === target);
-  if (sameName.length >= 2) {
+  const substringMatches = ranked.filter(
+    (p) => normalisePlaceName(p.name) !== target &&
+      (normalisePlaceName(p.name).endsWith(target) || target.endsWith(normalisePlaceName(p.name))),
+  );
+  const allAmbiguous = [...sameName, ...substringMatches];
+  if (allAmbiguous.length >= 2) {
     const candidates = await Promise.all(
-      sameName.slice(0, MAX_AMBIGUOUS_CANDIDATES).map(buildAmbiguousCandidate),
+      allAmbiguous.slice(0, MAX_AMBIGUOUS_CANDIDATES).map(buildAmbiguousCandidate),
     );
     return { kind: "ambiguous", candidates };
   }
