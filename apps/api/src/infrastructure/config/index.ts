@@ -49,6 +49,7 @@ export interface ApiConfig {
   // Feature flags
   signalsApiEnabled: boolean;
   signalsStoreRead: boolean;
+  signalsStoreMode: "live-only" | "store-only" | "store-first";
 
   // Cron
   cronSecret: string | undefined;
@@ -65,10 +66,16 @@ export interface ApiConfig {
   //   updated_at < now() - interval '<refreshStaleAfterHours hours'>.
   // liveCacheTtlMs — TTL of the live Overpass response cache in
   //   data-sources/openstreetmap.ts (replaces the hardcoded OVERPASS_CACHE_TTL_MS).
-  // Both env-overridable; defaults preserve the existing 24h / 5min behaviour.
+  // gapMsBetweenCalls — minimum gap between live Overpass calls during sweep.
+  // sweepIntervalMs — daemon loop sleep between sweeps.
+  // batchLimit — max candidates per sweep batch.
+  // Both env-overridable; defaults preserve the existing behaviour.
   amenities: {
     refreshStaleAfterHours: number;
     liveCacheTtlMs: number;
+    gapMsBetweenCalls: number;
+    sweepIntervalMs: number;
+    batchLimit: number;
   };
 
   // Logging
@@ -131,6 +138,12 @@ export function getConfig(): ApiConfig {
     // Feature flags
     signalsApiEnabled: process.env.OGA_SIGNALS_API === "true",
     signalsStoreRead: process.env.OGA_SIGNALS_STORE_READ === "true",
+    signalsStoreMode: (() => {
+      const raw = process.env.OGA_SIGNALS_STORE_MODE;
+      if (raw === "live-only" || raw === "store-only" || raw === "store-first") return raw;
+      // Back-compat: unset → derive from legacy boolean
+      return process.env.OGA_SIGNALS_STORE_READ === "true" ? "store-first" : "live-only";
+    })(),
 
     // Cron
     cronSecret: process.env.CRON_SECRET,
@@ -140,10 +153,13 @@ export function getConfig(): ApiConfig {
       return Number.isFinite(parsed) && parsed >= 0 ? parsed : 365;
     })(),
 
-    // AR-804: amenities warm-cache TTLs (env-overridable, 24h / 5min defaults).
+    // AR-804: amenities warm-cache TTLs (env-overridable, 7d / 5min defaults).
     amenities: {
-      refreshStaleAfterHours: Number(process.env.OGA_AMENITIES_REFRESH_STALE_AFTER_HOURS ?? 24),
+      refreshStaleAfterHours: Number(process.env.OGA_AMENITIES_REFRESH_STALE_AFTER_HOURS ?? 168),
       liveCacheTtlMs: Number(process.env.OGA_AMENITIES_LIVE_CACHE_TTL_MS ?? 5 * 60 * 1000),
+      gapMsBetweenCalls: Number(process.env.OGA_AMENITIES_GAP_MS_BETWEEN_CALLS ?? 1000),
+      sweepIntervalMs: Number(process.env.OGA_AMENITIES_SWEEP_INTERVAL_MS ?? 3_600_000),
+      batchLimit: Number(process.env.OGA_AMENITIES_BATCH_LIMIT ?? 50),
     },
 
     // Logging
