@@ -751,6 +751,42 @@ export const MIGRATIONS: Migration[] = [
         ON peer_assignments (geo_type, geo_code, peer_rank)`,
     ],
   },
+  {
+    name: "geo_fk_constraints",
+    statements: [
+      // AR-810: FK constraints from peer_assignments + geo_lookup to geo_entities,
+      // plus the geo_type discriminator column geo_lookup needs to reference the
+      // composite PK. Backfill is DDL-only (DEFAULT 'lsoa'), no runtime DML.
+      `ALTER TABLE geo_lookup ADD COLUMN IF NOT EXISTS geo_type TEXT NOT NULL DEFAULT 'lsoa'`,
+      `DO $$ BEGIN
+        ALTER TABLE peer_assignments ADD CONSTRAINT fk_peer_geo
+          FOREIGN KEY (geo_type, geo_code) REFERENCES geo_entities(geo_type, geo_code) NOT VALID;
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE peer_assignments ADD CONSTRAINT fk_peer_peer_geo
+          FOREIGN KEY (geo_type, peer_geo_code) REFERENCES geo_entities(geo_type, geo_code) NOT VALID;
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE geo_lookup ADD CONSTRAINT fk_geo_lookup_entity
+          FOREIGN KEY (geo_type, lsoa_code) REFERENCES geo_entities(geo_type, geo_code) NOT VALID;
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE peer_assignments VALIDATE CONSTRAINT fk_peer_geo;
+      EXCEPTION WHEN undefined_object THEN NULL;
+      END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE peer_assignments VALIDATE CONSTRAINT fk_peer_peer_geo;
+      EXCEPTION WHEN undefined_object THEN NULL;
+      END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE geo_lookup VALIDATE CONSTRAINT fk_geo_lookup_entity;
+      EXCEPTION WHEN undefined_object THEN NULL;
+      END $$`,
+    ],
+  },
 
   /* ====================================================================
      MONITOR (restructure Phase 5, AR-169)
