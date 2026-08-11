@@ -32,9 +32,9 @@ const runDefault: QueryRunner = (text, params) => defaultQuery(text, params);
 export function buildTimeseriesAppendSql(): string {
   return `INSERT INTO signal_timeseries
             (signal_key, geo_type, geo_code, observed_period, raw_value, raw_value_text,
-             normalized_value, confidence, source_snapshot_id, engine_version, captured_at)
+             normalized_value, confidence, engine_version, captured_at)
           SELECT signal_key, geo_type, geo_code, observed_period, raw_value, raw_value_text,
-                 normalized_value, confidence, source_snapshot_id, engine_version, NOW()
+                 normalized_value, confidence, engine_version, NOW()
             FROM signal_values
            WHERE observed_period IS NOT NULL
              AND signal_key NOT LIKE 'property.%'

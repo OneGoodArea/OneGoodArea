@@ -679,13 +679,58 @@ export const MIGRATIONS: Migration[] = [
         raw_value_text TEXT,
         normalized_value DOUBLE PRECISION,
         confidence NUMERIC(3,2),
-        source_snapshot_id TEXT,
         engine_version TEXT,
         captured_at TIMESTAMPTZ DEFAULT NOW(),
         PRIMARY KEY (signal_key, geo_type, geo_code, observed_period)
       )`,
       `CREATE INDEX IF NOT EXISTS idx_signal_timeseries_series
         ON signal_timeseries (signal_key, geo_type, geo_code, observed_period DESC)`,
+    ],
+  },
+  {
+    name: "signal_fk_constraints",
+    statements: [
+      // AR-809: FK constraints on signal tables + drop dead column from signal_timeseries.
+      // Idempotent: DO blocks swallow duplicate_object / duplicate_table errors.
+      `DO $$ BEGIN
+        ALTER TABLE signal_values ADD CONSTRAINT fk_signal_values_signal_key
+          FOREIGN KEY (signal_key) REFERENCES signals(key) NOT VALID;
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE signal_timeseries ADD CONSTRAINT fk_signal_timeseries_signal_key
+          FOREIGN KEY (signal_key) REFERENCES signals(key) NOT VALID;
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE signal_percentiles ADD CONSTRAINT fk_signal_percentiles_signal_key
+          FOREIGN KEY (signal_key) REFERENCES signals(key) NOT VALID;
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE signal_values VALIDATE CONSTRAINT fk_signal_values_signal_key;
+      EXCEPTION WHEN undefined_object THEN NULL;
+      END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE signal_timeseries VALIDATE CONSTRAINT fk_signal_timeseries_signal_key;
+      EXCEPTION WHEN undefined_object THEN NULL;
+      END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE signal_percentiles VALIDATE CONSTRAINT fk_signal_percentiles_signal_key;
+      EXCEPTION WHEN undefined_object THEN NULL;
+      END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE signal_values ADD CONSTRAINT fk_signal_values_source_snapshot
+          FOREIGN KEY (source_snapshot_id) REFERENCES source_snapshots(id) NOT VALID;
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE signal_values VALIDATE CONSTRAINT fk_signal_values_source_snapshot;
+      EXCEPTION WHEN undefined_object THEN NULL;
+      END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE signal_timeseries DROP COLUMN IF EXISTS source_snapshot_id;
+      END $$`,
     ],
   },
   {

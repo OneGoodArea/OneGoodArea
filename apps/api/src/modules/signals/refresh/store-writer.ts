@@ -127,7 +127,6 @@ export type SignalTimeseriesRow = {
   raw_value_text: string | null;
   normalized_value: number | null;
   confidence: number | null;
-  source_snapshot_id: string | null;
   engine_version: string | null;
 };
 
@@ -212,7 +211,7 @@ export function upsertSignalTimeseries(rows: SignalTimeseriesRow[], run: QueryRu
     table: "signal_timeseries",
     columns: [
       "signal_key", "geo_type", "geo_code", "observed_period", "raw_value",
-      "raw_value_text", "normalized_value", "confidence", "source_snapshot_id", "engine_version",
+      "raw_value_text", "normalized_value", "confidence", "engine_version",
     ],
     conflict: {
       target: ["signal_key", "geo_type", "geo_code", "observed_period"],
@@ -221,7 +220,6 @@ export function upsertSignalTimeseries(rows: SignalTimeseriesRow[], run: QueryRu
         "raw_value_text = EXCLUDED.raw_value_text",
         "normalized_value = EXCLUDED.normalized_value",
         "confidence = EXCLUDED.confidence",
-        "source_snapshot_id = EXCLUDED.source_snapshot_id",
         "engine_version = EXCLUDED.engine_version",
       ],
     },

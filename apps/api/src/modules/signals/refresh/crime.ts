@@ -107,7 +107,7 @@ export function crimeBucketsToRows(buckets: CrimeBuckets, snapshotId: string): C
       timeseriesRows.push({
         signal_key: "crime.monthly_count", geo_type: "lsoa", geo_code: lsoa, observed_period: m,
         raw_value: byMonth.get(m)!, raw_value_text: null, normalized_value: null, confidence: 0.85,
-        source_snapshot_id: snapshotId, engine_version: METHODOLOGY_VERSION,
+        engine_version: METHODOLOGY_VERSION,
       });
     }
     // trailing window: the most recent up-to-12 months
