@@ -644,8 +644,8 @@ export const MIGRATIONS: Migration[] = [
         updated_at TIMESTAMPTZ DEFAULT NOW(),
         PRIMARY KEY (signal_key, geo_type, geo_code)
       )`,
-      `CREATE INDEX IF NOT EXISTS idx_signal_values_geo
-        ON signal_values (geo_type, geo_code)`,
+      `CREATE INDEX IF NOT EXISTS idx_signal_values_lsoa_signal
+        ON signal_values (geo_type, geo_code, signal_key)`,
       `CREATE INDEX IF NOT EXISTS idx_signal_values_signal
         ON signal_values (signal_key)`,
     ],
@@ -685,6 +685,8 @@ export const MIGRATIONS: Migration[] = [
       )`,
       `CREATE INDEX IF NOT EXISTS idx_signal_timeseries_series
         ON signal_timeseries (signal_key, geo_type, geo_code, observed_period DESC)`,
+      `CREATE INDEX IF NOT EXISTS idx_signal_timeseries_lsoa_signal_period
+        ON signal_timeseries (geo_type, geo_code, signal_key, observed_period DESC)`,
     ],
   },
   {
