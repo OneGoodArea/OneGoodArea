@@ -690,6 +690,16 @@ export const MIGRATIONS: Migration[] = [
     ],
   },
   {
+    name: "signal_index_cleanup",
+    statements: [
+      // AR-811: Drop redundant index fully covered by idx_signal_values_lsoa_signal.
+      // Idempotent: DO block swallows undefined_object error on fresh DBs.
+      `DO $$ BEGIN
+        DROP INDEX IF EXISTS idx_signal_values_geo;
+      END $$`,
+    ],
+  },
+  {
     name: "signal_fk_constraints",
     statements: [
       // AR-809: FK constraints on signal tables + drop dead column from signal_timeseries.
