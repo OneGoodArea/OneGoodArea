@@ -90,6 +90,23 @@ describe("db migrate", () => {
     expect(names.indexOf("signals")).toBeLessThan(names.indexOf("signal_fk_constraints"));
   });
 
+  it("orders the geo FK constraints (AR-810) after the geo + peer tables", () => {
+    const names = MIGRATIONS.map((m) => m.name);
+    expect(names.indexOf("geo_fk_constraints")).toBeGreaterThan(names.indexOf("geo_entities"));
+    expect(names.indexOf("geo_fk_constraints")).toBeGreaterThan(names.indexOf("geo_lookup"));
+    expect(names.indexOf("geo_fk_constraints")).toBeGreaterThan(names.indexOf("peer_assignments"));
+  });
+
+  it("geo_fk_constraints adds geo_type to geo_lookup and FKs to geo_entities (AR-810)", () => {
+    const geoFk = MIGRATIONS.find((m) => m.name === "geo_fk_constraints");
+    expect(geoFk, "geo_fk_constraints migration must exist").toBeDefined();
+    const ddl = geoFk!.statements.join("\n");
+    expect(ddl).toMatch(/geo_lookup ADD COLUMN IF NOT EXISTS geo_type TEXT NOT NULL DEFAULT 'lsoa'/);
+    expect(ddl).toMatch(/ADD CONSTRAINT fk_peer_geo\b/);
+    expect(ddl).toMatch(/ADD CONSTRAINT fk_peer_peer_geo\b/);
+    expect(ddl).toMatch(/ADD CONSTRAINT fk_geo_lookup_entity\b/);
+  });
+
   it("includes the Monitor tables (restructure Phase 5)", () => {
     const names = MIGRATIONS.map((m) => m.name);
     expect(names).toContain("portfolios");
