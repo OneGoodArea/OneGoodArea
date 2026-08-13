@@ -30,6 +30,7 @@ import {
   readPropertyNormalization,
   readCrimeFromStore,
   readCrimeNormalization,
+  readAmenitiesFromStore,
 } from "./store-reader";
 import type { AreaProfile } from "@onegoodarea/contracts";
 
@@ -47,6 +48,7 @@ export interface FetchedArea {
   depFromStore: boolean;
   propertyFromStore: boolean;
   crimeFromStore: boolean;
+  amenitiesFromStore: boolean;
 }
 
 /** Time a promise; resolves to [result, duration_ms]. Never rejects: a
@@ -66,9 +68,11 @@ async function timed<T>(label: string, p: Promise<T>): Promise<[T | null, number
 
 /** Geocode an area and gather its six source structs. Deprivation, property and
     crime are read from the persisted store when OGA_SIGNALS_STORE_READ is on and
-    present (skipping the live fetch); everything else is live. Returns null if
-    the area cannot be geocoded. See ADR 0004 (deprivation), 0012 (property),
-    0016 (crime).
+    present (skipping the live fetch). Amenities follow the tri-valued
+    OGA_SIGNALS_STORE_MODE (AR-820): live-only always hits live, store-only only
+    serves the store, store-first serves the store when present and falls back to
+    live on a miss. Everything else is live. Returns null if the area cannot be
+    geocoded. See ADR 0004 (deprivation), 0012 (property), 0016 (crime).
 
     AR-394: per-source timings are captured and emitted as a single
     structured log line. Used to identify the latency tail (E2E #6).
@@ -78,30 +82,55 @@ export async function fetchAreaSources(area: string): Promise<FetchedArea | null
   const [geo, geoMs] = await timed("geocode", geocodeArea(area));
   if (!geo) return null;
 
-  const storeRead = getConfig().signalsStoreRead;
+  const cfg = getConfig();
+  const storeRead = cfg.signalsStoreRead;
+  const storeMode = cfg.signalsStoreMode;
   const storeT0 = performance.now();
-  const [storedDeprivation, storedProperty, storedCrime] = await Promise.all([
+  const [storedDeprivation, storedProperty, storedCrime, storedAmenities] = await Promise.all([
     storeRead ? readDeprivationFromStore(geo.lsoa) : Promise.resolve(null),
     storeRead ? readPropertyFromStore(geo.lsoa) : Promise.resolve(null),
     storeRead ? readCrimeFromStore(geo.lsoa) : Promise.resolve(null),
+    /* Amenities follow the tri-valued mode: only live-only skips the store
+       read entirely (store-only and store-first both consult it). */
+    storeMode === "live-only" ? Promise.resolve(null) : readAmenitiesFromStore(geo.lsoa),
   ]);
   const storeMs = Math.round(performance.now() - storeT0);
+
+  /* Amenities source choice — the mode x store-state matrix (AR-820):
+       live-only   + store hit  -> live   (store is ignored)
+       live-only   + store miss -> live
+       store-only  + store hit  -> store
+       store-only  + store miss -> null   (no live fallback at all)
+       store-first + store hit  -> store  (live is skipped; a stored row is
+                                           never overwritten by a live call,
+                                           regardless of age)
+       store-first + store miss -> live
+       ...and either "live" slot that throws is swallowed by timed() and served
+       as null — a failed live call never displaces a stored value.
+     Checkpoint rule: freshness is the refresh job's concern (Phase 4), not the
+     read path's; a present stored row always wins in store-first/store-only. */
+  const amenitiesFromStore = storedAmenities !== null;
+  const liveAmenities =
+    storeMode === "store-only" || amenitiesFromStore
+      ? (Promise.resolve([null, 0]) as Promise<[null, number]>)
+      : timed("amenities", getNearbyAmenities(geo.latitude, geo.longitude));
 
   const [
     [liveCrime, crimeMs],
     [liveDeprivation, depMs],
-    [amenities, amenitiesMs],
+    [liveAmenitiesResolved, amenitiesMs],
     [flood, floodMs],
     [liveProperty, propertyMs],
     [ofsted, ofstedMs],
   ] = await Promise.all([
     storedCrime ? Promise.resolve([null, 0] as [null, number]) : timed("crime", getCrimeData(geo.latitude, geo.longitude)),
     storedDeprivation ? Promise.resolve([null, 0] as [null, number]) : timed("deprivation", getDeprivationData(geo.lsoa, geo.lsoa11)),
-    timed("amenities", getNearbyAmenities(geo.latitude, geo.longitude)),
+    liveAmenities,
     timed("flood", getFloodRisk(geo.latitude, geo.longitude)),
     storedProperty ? Promise.resolve([null, 0] as [null, number]) : timed("property", getPropertyPrices(geo.query)),
     timed("ofsted", getOfstedSchools(geo.latitude, geo.longitude, geo.country)),
   ]);
+  const amenities = storedAmenities ?? liveAmenitiesResolved;
 
   const totalMs = Math.round(performance.now() - t0);
   /* One structured line per request. The fan-out time is roughly
@@ -119,6 +148,8 @@ export async function fetchAreaSources(area: string): Promise<FetchedArea | null
     crime_from_store: !!storedCrime,
     dep_from_store: !!storedDeprivation,
     property_from_store: !!storedProperty,
+    amenities_from_store: amenitiesFromStore,
+    amenities_store_mode: storeMode,
   });
 
   return {
@@ -134,16 +165,17 @@ export async function fetchAreaSources(area: string): Promise<FetchedArea | null
     depFromStore: !!storedDeprivation,
     propertyFromStore: !!storedProperty,
     crimeFromStore: !!storedCrime,
+    amenitiesFromStore,
   };
 }
 
 /** Resolve an area and return its full signal profile, or null if the query
     could not be geocoded (the endpoint maps null to 404).
 
-    `fetch_mode` reports provenance honestly: "hybrid" when deprivation is
-    store-backed and the rest are live, "live" otherwise. Store-backed signals
-    are enriched with their normalized_value + national percentile + regional
-    percentile (AR-408). See ADR 0004. */
+    `fetch_mode` reports provenance honestly: "store" when every source is
+    store-backed, "hybrid" when some are, "live" when none are. Store-backed
+    signals are enriched with their normalized_value + national percentile +
+    regional percentile (AR-408). See ADR 0004. */
 export interface AreaNotFoundBody {
   error: string;
   terminated?: { year_terminated: number; month_terminated: number };
@@ -166,7 +198,7 @@ export async function areaNotFoundBody(area: string): Promise<AreaNotFoundBody> 
 export async function getAreaProfile(area: string): Promise<AreaProfile | null> {
   const fetched = await fetchAreaSources(area);
   if (!fetched) return null;
-  const { geo, sources, depFromStore, propertyFromStore, crimeFromStore } = fetched;
+  const { geo, sources, depFromStore, propertyFromStore, crimeFromStore, amenitiesFromStore } = fetched;
 
   type NormMap = Record<string, { normalized_value: number | null; percentile: number | null; regional_percentile: number | null }>;
   const emptyNorm: NormMap = {};
@@ -175,9 +207,10 @@ export async function getAreaProfile(area: string): Promise<AreaProfile | null> 
     propertyFromStore ? readPropertyNormalization(geo.lsoa) : Promise.resolve(emptyNorm),
     crimeFromStore ? readCrimeNormalization(geo.lsoa) : Promise.resolve(emptyNorm),
   ]);
-  const fetchMode = depFromStore || propertyFromStore || crimeFromStore ? "hybrid" : "live";
+  const storeBacked = [depFromStore, propertyFromStore, crimeFromStore, amenitiesFromStore];
+  const fetchMode = storeBacked.every(Boolean) ? "store" : storeBacked.some(Boolean) ? "hybrid" : "live";
 
-  logger.info(`[signals] /v1/area "${area}": mode=${fetchMode}, dep=${depFromStore ? "store" : "live"}, property=${propertyFromStore ? "store" : "live"}, crime=${crimeFromStore ? "store" : "live"}, imd=${sources.deprivation?.imd_decile ?? "n/a"}, crimes=${sources.crime?.total_crimes ?? "n/a"}, amenities=${sources.amenities?.total ?? "n/a"}`);
+  logger.info(`[signals] /v1/area "${area}": mode=${fetchMode}, dep=${depFromStore ? "store" : "live"}, property=${propertyFromStore ? "store" : "live"}, crime=${crimeFromStore ? "store" : "live"}, amenities=${amenitiesFromStore ? "store" : "live"}, imd=${sources.deprivation?.imd_decile ?? "n/a"}, crimes=${sources.crime?.total_crimes ?? "n/a"}, amenities_total=${sources.amenities?.total ?? "n/a"}`);
 
   const profile = buildAreaProfile(geo, sources, fetchMode);
 

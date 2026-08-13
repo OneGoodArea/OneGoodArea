@@ -15,6 +15,7 @@ vi.mock("@/modules/signals/store-reader", () => ({
   readPropertyNormalization: vi.fn(),
   readCrimeFromStore: vi.fn(),
   readCrimeNormalization: vi.fn(),
+  readAmenitiesFromStore: vi.fn(),
 }));
 vi.mock("@/modules/tracking/structured-logger", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 
@@ -23,6 +24,7 @@ import { geocodeArea, lookupTerminatedPostcode } from "@/modules/signals/data-so
 import { getDeprivationData } from "@/modules/signals/data-sources/deprivation";
 import { getPropertyPrices } from "@/modules/signals/data-sources/land-registry";
 import { getCrimeData } from "@/modules/signals/data-sources/police";
+import { getNearbyAmenities } from "@/modules/signals/data-sources/openstreetmap";
 import {
   readDeprivationFromStore,
   readDeprivationNormalization,
@@ -30,6 +32,7 @@ import {
   readPropertyNormalization,
   readCrimeFromStore,
   readCrimeNormalization,
+  readAmenitiesFromStore,
 } from "@/modules/signals/store-reader";
 
 const mockGeocode = vi.mocked(geocodeArea);
@@ -37,12 +40,14 @@ const mockTerminated = vi.mocked(lookupTerminatedPostcode);
 const mockLiveDep = vi.mocked(getDeprivationData);
 const mockLiveProperty = vi.mocked(getPropertyPrices);
 const mockLiveCrime = vi.mocked(getCrimeData);
+const mockLiveAmenities = vi.mocked(getNearbyAmenities);
 const mockStoreDep = vi.mocked(readDeprivationFromStore);
 const mockStoreNorm = vi.mocked(readDeprivationNormalization);
 const mockStoreProperty = vi.mocked(readPropertyFromStore);
 const mockStorePropertyNorm = vi.mocked(readPropertyNormalization);
 const mockStoreCrime = vi.mocked(readCrimeFromStore);
 const mockStoreCrimeNorm = vi.mocked(readCrimeNormalization);
+const mockStoreAmenities = vi.mocked(readAmenitiesFromStore);
 
 const GEO = {
   query: "M1 1AE", latitude: 53.47, longitude: -2.23, admin_district: "Manchester",
@@ -53,13 +58,27 @@ const GEO = {
 const STORE_DEP = { lsoa_code: "E01005207", lsoa_name: "", local_authority: "", imd_rank: 5000, imd_decile: 5 };
 const LIVE_DEP = { lsoa_code: "E01005207", lsoa_name: "Manchester 1", local_authority: "Manchester", imd_rank: 6000, imd_decile: 6 };
 
+const STORE_AMENITIES = {
+  schools: 4, restaurants_cafes: 22, pubs_bars: 3, healthcare: 2, shops: 15,
+  parks_leisure: 6, transport_stations: 1, bus_stops: 9, total: 62, highlights: ["Corner Bakery"],
+};
+const LIVE_AMENITIES = {
+  schools: 5, restaurants_cafes: 25, pubs_bars: 4, healthcare: 3, shops: 18,
+  parks_leisure: 7, transport_stations: 2, bus_stops: 11, total: 75, highlights: ["Fresh Bake"],
+};
+
 function decile(signals: Signal[]): number | string | null {
   return signals.find((s) => s.key === "deprivation.imd_decile")!.value;
+}
+
+function amenityTotal(signals: Signal[]): number | string | null {
+  return signal(signals, "amenities.total").value;
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
   delete process.env.OGA_SIGNALS_STORE_READ;
+  delete process.env.OGA_SIGNALS_STORE_MODE;
   mockGeocode.mockResolvedValue(GEO);
   mockTerminated.mockResolvedValue(null);
   mockLiveDep.mockResolvedValue(LIVE_DEP);
@@ -71,12 +90,14 @@ beforeEach(() => {
   mockLiveCrime.mockResolvedValue(null);
   mockStoreCrime.mockResolvedValue(null);
   mockStoreCrimeNorm.mockResolvedValue({});
+  mockLiveAmenities.mockResolvedValue(LIVE_AMENITIES);
+  mockStoreAmenities.mockResolvedValue(null);
 });
 
 function signal(signals: import("@onegoodarea/contracts").Signal[], key: string) {
   return signals.find((s) => s.key === key)!;
 }
-afterAll(() => { delete process.env.OGA_SIGNALS_STORE_READ; });
+afterAll(() => { delete process.env.OGA_SIGNALS_STORE_READ; delete process.env.OGA_SIGNALS_STORE_MODE; });
 
 describe("getAreaProfile (store-read flip)", () => {
   it("returns null when the area cannot be geocoded", async () => {
@@ -171,6 +192,113 @@ describe("getAreaProfile (store-read flip)", () => {
     expect(total.percentile).toBe(41.5);
     // monthly rate derives from the stored total + months_covered
     expect(signal(profile.signals, "crime.monthly_rate").value).toBe(20); // 240 / 12
+  });
+});
+
+describe("amenities store-first matrix (AR-820)", () => {
+  it("live-only serves live even when a stored row exists (store ignored)", async () => {
+    process.env.OGA_SIGNALS_STORE_MODE = "live-only";
+    mockStoreAmenities.mockResolvedValue(STORE_AMENITIES);
+
+    const profile = (await getAreaProfile("M1 1AE"))!;
+
+    expect(mockStoreAmenities).not.toHaveBeenCalled();
+    expect(mockLiveAmenities).toHaveBeenCalledOnce();
+    expect(amenityTotal(profile.signals)).toBe(75); // live value
+    expect(profile.meta.fetch_mode).toBe("live");
+  });
+
+  it("store-only serves the stored row and never calls live on a hit", async () => {
+    process.env.OGA_SIGNALS_STORE_MODE = "store-only";
+    mockStoreAmenities.mockResolvedValue(STORE_AMENITIES);
+
+    const profile = (await getAreaProfile("M1 1AE"))!;
+
+    expect(mockStoreAmenities).toHaveBeenCalledWith("E01005207");
+    expect(mockLiveAmenities).not.toHaveBeenCalled();
+    expect(amenityTotal(profile.signals)).toBe(62); // stored value
+    expect(profile.meta.fetch_mode).toBe("hybrid"); // dep/prop/crime are still live
+  });
+
+  it("store-only serves null on a miss (no live fallback at all)", async () => {
+    process.env.OGA_SIGNALS_STORE_MODE = "store-only";
+    mockStoreAmenities.mockResolvedValue(null);
+
+    const profile = (await getAreaProfile("M1 1AE"))!;
+
+    expect(mockStoreAmenities).toHaveBeenCalledOnce();
+    expect(mockLiveAmenities).not.toHaveBeenCalled();
+    expect(amenityTotal(profile.signals)).toBeNull();
+    expect(profile.meta.fetch_mode).toBe("live");
+  });
+
+  it("store-first serves the stored row and skips live on a hit", async () => {
+    process.env.OGA_SIGNALS_STORE_MODE = "store-first";
+    mockStoreAmenities.mockResolvedValue(STORE_AMENITIES);
+
+    const profile = (await getAreaProfile("M1 1AE"))!;
+
+    expect(mockStoreAmenities).toHaveBeenCalledWith("E01005207");
+    expect(mockLiveAmenities).not.toHaveBeenCalled();
+    expect(amenityTotal(profile.signals)).toBe(62);
+    expect(profile.meta.fetch_mode).toBe("hybrid");
+  });
+
+  it("store-first falls back to live on a miss", async () => {
+    process.env.OGA_SIGNALS_STORE_MODE = "store-first";
+    mockStoreAmenities.mockResolvedValue(null);
+
+    const profile = (await getAreaProfile("M1 1AE"))!;
+
+    expect(mockStoreAmenities).toHaveBeenCalledOnce();
+    expect(mockLiveAmenities).toHaveBeenCalledOnce();
+    expect(amenityTotal(profile.signals)).toBe(75); // live value
+    expect(profile.meta.fetch_mode).toBe("live");
+  });
+
+  it("store-first miss + failed live call serves null (never displaces a stored value)", async () => {
+    process.env.OGA_SIGNALS_STORE_MODE = "store-first";
+    mockStoreAmenities.mockResolvedValue(null);
+    mockLiveAmenities.mockRejectedValue(new Error("overpass timeout"));
+
+    const profile = (await getAreaProfile("M1 1AE"))!;
+
+    expect(mockLiveAmenities).toHaveBeenCalledOnce();
+    expect(amenityTotal(profile.signals)).toBeNull();
+  });
+
+  it("back-compat: OGA_SIGNALS_STORE_READ=true derives store-first for amenities too", async () => {
+    process.env.OGA_SIGNALS_STORE_READ = "true";
+    mockStoreAmenities.mockResolvedValue(STORE_AMENITIES);
+
+    const profile = (await getAreaProfile("M1 1AE"))!;
+
+    expect(mockStoreAmenities).toHaveBeenCalledWith("E01005207");
+    expect(mockLiveAmenities).not.toHaveBeenCalled();
+    expect(amenityTotal(profile.signals)).toBe(62);
+  });
+
+  it("reports fetch_mode=store when every source is store-backed", async () => {
+    process.env.OGA_SIGNALS_STORE_READ = "true";
+    process.env.OGA_SIGNALS_STORE_MODE = "store-only";
+    mockStoreDep.mockResolvedValue(STORE_DEP);
+    mockStoreProperty.mockResolvedValue({
+      postcode_area: "E01005207", median_price: 285000, mean_price: 285000, transaction_count: 42,
+      price_change_pct: null, by_property_type: [], tenure_split: { freehold: 0, leasehold: 0 },
+      price_range: { min: 285000, max: 285000 }, period: "2025-01 to 2025-12", prior_median: null,
+    });
+    mockStoreCrime.mockResolvedValue({
+      total_crimes: 240, months_covered: 12, by_category: { "Violence and sexual offences": 40 },
+      top_streets: [], outcome_breakdown: {},
+      monthly_trend: [{ month: "2025-01", count: 18 }, { month: "2025-12", count: 22 }],
+    });
+    mockStoreAmenities.mockResolvedValue(STORE_AMENITIES);
+
+    const profile = (await getAreaProfile("M1 1AE"))!;
+
+    expect(profile.meta.fetch_mode).toBe("store");
+    expect(amenityTotal(profile.signals)).toBe(62);
+    expect(mockLiveAmenities).not.toHaveBeenCalled();
   });
 });
 
