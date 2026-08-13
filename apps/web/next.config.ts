@@ -1,6 +1,21 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
+const devOrigins = (process.env.ALLOWED_DEV_ORIGINS ?? "localhost")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+const baseConnectSrc = [
+  "'self'",
+  "https://onegoodarea.onrender.com",
+  "https://api.stripe.com",
+  "https://va.vercel-scripts.com",
+  "https://vitals.vercel-insights.com",
+  "https://*.ingest.de.sentry.io",
+  "https://challenges.cloudflare.com",
+];
+
 const securityHeaders = [
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -13,17 +28,16 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      /* challenges.cloudflare.com: Turnstile widget (AR-435). Script,
-         iframe and XHRs. */
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://va.vercel-scripts.com https://challenges.cloudflare.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: https: blob:",
       "font-src 'self' data: https://fonts.gstatic.com",
-      /* onegoodarea.onrender.com: apps/api. Scalar's "Try it" in /playground
-         sends requests directly from the browser to the live API (AR-605) —
-         without this, the browser blocks the fetch before it's even sent,
-         independent of apps/api's own CORS headers (AR-602). */
-      "connect-src 'self' https://onegoodarea.onrender.com https://api.stripe.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://*.ingest.de.sentry.io https://challenges.cloudflare.com",
+      "connect-src " + [
+        ...baseConnectSrc,
+        ...(process.env.NODE_ENV !== "production"
+          ? devOrigins.map((o) => `ws://${o}:${process.env.PORT ?? "3000"}`)
+          : []),
+      ].join(" "),
       "frame-src https://js.stripe.com https://hooks.stripe.com https://challenges.cloudflare.com",
       "object-src 'none'",
       "base-uri 'self'",
@@ -32,10 +46,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  // Self-contained server bundle in .next/standalone -- powers
-  // container/web/Containerfile (Plan 008). Vercel ignores this flag and
-  // builds its own way, so production deploys are unaffected.
   output: "standalone",
+  allowedDevOrigins: devOrigins,
   async headers() {
     return [
       {
@@ -44,24 +56,12 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  // AR-327: legacy /report surface retired in favour of the four-product
-  // dashboard (Signals / Scores / Monitor / Intelligence). Permanent
-  // redirects keep any inbound traffic from blog posts, search-action
-  // results, or bookmarks landing on something useful instead of 404
-  // during the marketing-sweep gap (Phase 8 of epic AR-324).
   async redirects() {
     return [
       { source: "/report", destination: "/dashboard", permanent: true },
       { source: "/report/:id", destination: "/dashboard", permanent: true },
-      // AR-334: the legacy B2C blog retired. Existing indexed blog URLs
-      // (5 posts + the index) redirect home until a dedicated research-
-      // notes surface ships under a future epic.
       { source: "/blog", destination: "/", permanent: true },
       { source: "/blog/:slug", destination: "/", permanent: true },
-      // AR-568 redirected /openapi.json to the /api/openapi-spec BFF. AR-773
-      // replaced that with a real route handler at app/openapi.json/route.ts so
-      // the spec is served at a clean, crawlable path (the old target lives
-      // under the robots-disallowed /api/ tree, hiding it from agents).
     ];
   },
 };

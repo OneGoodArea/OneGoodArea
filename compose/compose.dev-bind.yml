@@ -35,6 +35,7 @@ services:
     image: onegoodarea/web-dev:local
     environment:
       NODE_ENV: development
+      ALLOWED_DEV_ORIGINS: ${HOSTNAME:-}
     command: npm run dev -w @onegoodarea/web -- -H 0.0.0.0
     volumes:
       - ../apps/web:/app/apps/web:z
