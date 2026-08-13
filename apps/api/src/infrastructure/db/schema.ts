@@ -43,9 +43,6 @@ export const MIGRATIONS: Migration[] = [
   {
     name: "users",
     statements: [
-      /* v1: all onboarding (AR-218), superuser (AR-312) and user_type/tier
-         (AR-500, AR-654) columns are inline CREATE columns — a fresh DB now
-         matches Neon in a single migration. */
       `CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         email TEXT UNIQUE NOT NULL,
@@ -64,28 +61,10 @@ export const MIGRATIONS: Migration[] = [
         user_type TEXT NOT NULL DEFAULT 'user'
           CHECK (user_type IN ('user','engineering','admin','superuser'))
       )`,
-      // AR-312 self-healing backfill: ONLY runs if no superuser currently
-      // exists. After first deploy, ptengelmann@gmail.com gets the flag.
-      // Subsequent boots no-op. If admins later add more superusers this
-      // still no-ops (NOT EXISTS clause). The only path that re-promotes
-      // ptengelmann is "all superusers demoted" — useful safety net
-      // against an accidental UPDATE that strips superuser from everyone.
-      `UPDATE users SET is_superuser = TRUE
-         WHERE email = 'ptengelmann@gmail.com'
-           AND NOT EXISTS (SELECT 1 FROM users WHERE is_superuser = TRUE)`,
-      // AR-654 backfill 1: promote is_superuser rows to user_type='superuser'.
-      // Guarded by "NOT EXISTS a non-'user' user_type" so re-runs no-op once a
-      // row is promoted (idempotent — matches the migrator's contract) and so
-      // the engineering pass below can't demote an already-promoted row.
-      `UPDATE users u SET user_type = 'superuser'
-         WHERE u.is_superuser = TRUE
-           AND NOT EXISTS (SELECT 1 FROM users WHERE id = u.id AND user_type <> 'user')`,
-      // AR-654 backfill 2: promote tier='engineering' rows to
-      // user_type='engineering'. Runs AFTER the superuser pass so a row that
-      // is both is_superuser=TRUE and tier='engineering' keeps 'superuser'.
-      `UPDATE users u SET user_type = 'engineering'
-         WHERE u.tier = 'engineering'
-           AND NOT EXISTS (SELECT 1 FROM users WHERE id = u.id AND user_type <> 'user')`,
+      `DO $$ BEGIN
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS user_type TEXT NOT NULL DEFAULT 'user'
+          CHECK (user_type IN ('user','engineering','admin','superuser'));
+      END $$;`
     ],
   },
   {
