@@ -1,4 +1,4 @@
-.PHONY: stack-up-min stack-up-full stack-down stack-logs stack-clean build-api-image build-web-image signal-refresh-build signal-refresh stack-dev-up stack-dev-down stack-dev-logs
+.PHONY: stack-up-min stack-up-full stack-down stack-logs stack-clean build-api-image build-web-image signal-refresh-build signal-refresh amenities-refresh-build amenities-refresh stack-dev-up stack-dev-down stack-dev-logs
 
 stack-up-min: ## Boot minimal stack (postgres, neon-proxy, api, web)
 	$(CTR_COMPOSE_CMD) --profile minimal up -d $(BUILD_FLAG)
@@ -36,6 +36,13 @@ signal-refresh-build: ## Build the tooling-only signal-refresh image (refresh st
 signal-refresh: ## Run the containerized signal-refresh pipeline (boots postgres + neon-proxy first)
 	$(CTR_COMPOSE_CMD) --profile minimal --profile refresh up -d postgres neon-proxy
 	$(CTR_COMPOSE_CMD) --profile minimal --profile refresh run --rm -T signal-refresh
+
+amenities-refresh-build: ## Build the minimal amenities-refresh daemon image (amenities-refresh stage)
+	$(CTR_COMPOSE_CMD) --profile minimal --profile refresh build amenities-refresh
+
+amenities-refresh: ## Run the amenities warm-cache daemon (boots postgres + neon-proxy first)
+	$(CTR_COMPOSE_CMD) --profile minimal --profile refresh up -d postgres neon-proxy
+	$(CTR_COMPOSE_CMD) --profile minimal --profile refresh run --rm -T amenities-refresh
 
 load-geo: ## Load ONS NSPL spine into local DB (usage: make load-geo FILE=apps/api/seed/nspl-sample.csv)
 	$(CTR_COMPOSE_CMD) --profile minimal --profile refresh up -d postgres neon-proxy
