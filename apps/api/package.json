@@ -17,6 +17,8 @@
     "refresh:crime": "tsx src/modules/signals/refresh/crime.ts",
     "refresh:ofsted": "tsx src/modules/signals/refresh/ofsted.ts",
     "refresh:peers": "tsx src/modules/signals/refresh/peers-refresh.ts",
+    "refresh:amenities": "tsx src/modules/signals/refresh/amenities.ts",
+    "refresh:amenities:daemon": "tsx src/modules/signals/refresh/amenities-daemon.ts",
     "derive:signals": "tsx src/modules/signals/refresh/derive.ts",
     "normalize:deprivation": "tsx src/modules/signals/refresh/normalize.ts",
     "normalize:signals": "tsx src/modules/signals/refresh/normalize-all.ts",
