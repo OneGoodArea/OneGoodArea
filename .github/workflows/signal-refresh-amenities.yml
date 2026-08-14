@@ -1,0 +1,47 @@
+# Daily amenities warm-cache refresh — the free, host-agnostic cron for the
+# amenities store (AR-822).
+#
+# The long-running daemon lives in the container/Prod (Render worker). This
+# one-shot daily sweep is the belt-and-braces freshness guarantee: even if a
+# daemon instance was down, any stale amenities rows get refreshed here.
+#
+# IMPORTANT: GitHub only fires `schedule` from the repo's DEFAULT branch (main).
+# Until this workflow is on main, use the manual "Run workflow" button
+# (workflow_dispatch), which works from any branch. The schedule activates
+# automatically once merged to main.
+#
+# Setup: add a repo secret DATABASE_URL (Settings -> Secrets -> Actions) = the
+# Neon connection string.
+
+name: signal-refresh-amenities
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # 05:00 UTC daily. The amenities refresh job is idempotent and paces itself
+    # (gapMsBetweenCalls) under the Overpass mirror rate limits; a no-op when
+    # nothing is stale.
+    - cron: "0 5 * * *"
+
+concurrency:
+  group: signal-refresh-amenities
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # Log level for the refresh CLI (structured logger). Default info:
+      # summaries + errors. Bump to debug on manual runs to diagnose.
+      OGA_LOG_LEVEL: info
+      FORCE_COLOR: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --no-audit --no-fund
+      - name: Refresh amenities (stale rows -> Overpass -> upsert, one-shot)
+        run: bash .github/scripts/retry.sh npm run refresh:amenities -w @onegoodarea/api
