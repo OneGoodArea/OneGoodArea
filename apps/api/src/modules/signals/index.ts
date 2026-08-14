@@ -22,6 +22,8 @@ import { getPropertyPrices } from "./data-sources/land-registry";
 import { getOfstedSchools } from "./data-sources/ofsted";
 import { logger } from "../tracking/structured-logger";
 import { getConfig } from "../../infrastructure/config";
+import { METHODOLOGY_VERSION } from "../engine/methodology";
+import { writeAmenitiesToStore } from "./refresh/store-writer";
 import { buildAreaProfile, type AreaSources } from "./area-profile";
 import {
   readDeprivationFromStore,
@@ -107,8 +109,9 @@ export async function fetchAreaSources(area: string): Promise<FetchedArea | null
        store-first + store miss -> live
        ...and either "live" slot that throws is swallowed by timed() and served
        as null — a failed live call never displaces a stored value.
-     Checkpoint rule: freshness is the refresh job's concern (Phase 4), not the
-     read path's; a present stored row always wins in store-first/store-only. */
+     Checkpoint rule: a present stored row always wins in store-first/store-only.
+     In store-first a store miss that resolves live primes the store via
+     write-on-miss (AR-836); live-only/store-only never write. */
   const amenitiesFromStore = storedAmenities !== null;
   const liveAmenities =
     storeMode === "store-only" || amenitiesFromStore
@@ -131,6 +134,19 @@ export async function fetchAreaSources(area: string): Promise<FetchedArea | null
     timed("ofsted", getOfstedSchools(geo.latitude, geo.longitude, geo.country)),
   ]);
   const amenities = storedAmenities ?? liveAmenitiesResolved;
+
+  /* Write-on-miss (AR-836): in store-first, a store miss that resolves live
+     primes the store for the next request. Fire-and-forget — never block or
+     fail the request; a rejected write (e.g. FK until the signals catalog is
+     seeded, AR-834) is logged and the live result still serves. store-only
+     never writes (it has no live fallback), live-only never consults the
+     store, and a present stored row never reaches this branch (checkpoint
+     rule: stored always wins). */
+  if (storeMode === "store-first" && storedAmenities === null && liveAmenitiesResolved !== null) {
+    writeAmenitiesToStore(geo.lsoa, liveAmenitiesResolved, METHODOLOGY_VERSION).catch((err) => {
+      logger.warn(`[signals/fetch] amenities write-on-miss failed for "${area}"`, { error: err });
+    });
+  }
 
   const totalMs = Math.round(performance.now() - t0);
   /* One structured line per request. The fan-out time is roughly

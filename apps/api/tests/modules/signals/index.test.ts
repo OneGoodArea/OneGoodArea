@@ -18,6 +18,7 @@ vi.mock("@/modules/signals/store-reader", () => ({
   readAmenitiesFromStore: vi.fn(),
 }));
 vi.mock("@/modules/tracking/structured-logger", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
+vi.mock("@/modules/signals/refresh/store-writer", () => ({ writeAmenitiesToStore: vi.fn() }));
 
 import { getAreaProfile, areaNotFoundBody } from "@/modules/signals/index";
 import { geocodeArea, lookupTerminatedPostcode } from "@/modules/signals/data-sources/postcodes";
@@ -34,6 +35,7 @@ import {
   readCrimeNormalization,
   readAmenitiesFromStore,
 } from "@/modules/signals/store-reader";
+import { writeAmenitiesToStore } from "@/modules/signals/refresh/store-writer";
 
 const mockGeocode = vi.mocked(geocodeArea);
 const mockTerminated = vi.mocked(lookupTerminatedPostcode);
@@ -48,6 +50,7 @@ const mockStorePropertyNorm = vi.mocked(readPropertyNormalization);
 const mockStoreCrime = vi.mocked(readCrimeFromStore);
 const mockStoreCrimeNorm = vi.mocked(readCrimeNormalization);
 const mockStoreAmenities = vi.mocked(readAmenitiesFromStore);
+const mockWriteAmenities = vi.mocked(writeAmenitiesToStore);
 
 const GEO = {
   query: "M1 1AE", latitude: 53.47, longitude: -2.23, admin_district: "Manchester",
@@ -92,6 +95,7 @@ beforeEach(() => {
   mockStoreCrimeNorm.mockResolvedValue({});
   mockLiveAmenities.mockResolvedValue(LIVE_AMENITIES);
   mockStoreAmenities.mockResolvedValue(null);
+  mockWriteAmenities.mockResolvedValue(9);
 });
 
 function signal(signals: import("@onegoodarea/contracts").Signal[], key: string) {
@@ -299,6 +303,69 @@ describe("amenities store-first matrix (AR-820)", () => {
     expect(profile.meta.fetch_mode).toBe("store");
     expect(amenityTotal(profile.signals)).toBe(62);
     expect(mockLiveAmenities).not.toHaveBeenCalled();
+  });
+});
+
+describe("amenities write-on-miss (AR-836)", () => {
+  it("primes the store on store-first miss + live success", async () => {
+    process.env.OGA_SIGNALS_STORE_MODE = "store-first";
+    mockStoreAmenities.mockResolvedValue(null);
+
+    await getAreaProfile("M1 1AE");
+
+    expect(mockWriteAmenities).toHaveBeenCalledOnce();
+    const [geoCode, data, engineVersion] = mockWriteAmenities.mock.calls[0];
+    expect(geoCode).toBe("E01005207");
+    expect(data).toBe(LIVE_AMENITIES);
+    expect(typeof engineVersion).toBe("string");
+  });
+
+  it("does not write on a store hit (checkpoint rule: stored wins)", async () => {
+    process.env.OGA_SIGNALS_STORE_MODE = "store-first";
+    mockStoreAmenities.mockResolvedValue(STORE_AMENITIES);
+
+    await getAreaProfile("M1 1AE");
+
+    expect(mockWriteAmenities).not.toHaveBeenCalled();
+  });
+
+  it("does not write in live-only (store ignored entirely)", async () => {
+    process.env.OGA_SIGNALS_STORE_MODE = "live-only";
+    mockStoreAmenities.mockResolvedValue(STORE_AMENITIES);
+
+    await getAreaProfile("M1 1AE");
+
+    expect(mockWriteAmenities).not.toHaveBeenCalled();
+  });
+
+  it("does not write in store-only (no live fallback to cache)", async () => {
+    process.env.OGA_SIGNALS_STORE_MODE = "store-only";
+    mockStoreAmenities.mockResolvedValue(null);
+
+    await getAreaProfile("M1 1AE");
+
+    expect(mockWriteAmenities).not.toHaveBeenCalled();
+  });
+
+  it("does not write when the live call fails", async () => {
+    process.env.OGA_SIGNALS_STORE_MODE = "store-first";
+    mockStoreAmenities.mockResolvedValue(null);
+    mockLiveAmenities.mockRejectedValue(new Error("overpass timeout"));
+
+    await getAreaProfile("M1 1AE");
+
+    expect(mockWriteAmenities).not.toHaveBeenCalled();
+  });
+
+  it("serves the live result even when the write rejects (fire-and-forget)", async () => {
+    process.env.OGA_SIGNALS_STORE_MODE = "store-first";
+    mockStoreAmenities.mockResolvedValue(null);
+    mockWriteAmenities.mockRejectedValue(new Error("FK violation until catalog seeded"));
+
+    const profile = (await getAreaProfile("M1 1AE"))!;
+
+    expect(mockWriteAmenities).toHaveBeenCalledOnce();
+    expect(amenityTotal(profile.signals)).toBe(75); // live value still served
   });
 });
 
