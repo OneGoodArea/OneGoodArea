@@ -11,13 +11,20 @@
 #   source scripts/setup-test-tokens.sh
 #   ./scripts/api-test-suite.sh localhost:8080
 #
+# This script is designed to be SOURCED so the OGA_* tokens it exports land in
+# your current shell. When sourced, it must never call `exit` (that would kill
+# the shell that ran it) — see the failure path below.
+#
 # Environment:
 #   API_DOMAIN - API endpoint (default: http://localhost:8080)
 #   TEST_EMAIL - Test user email (default: testuser+$(date +%s)@test.com)
 #
 ################################################################################
 
-set -e
+# NOTE: do NOT set -e here. This script is meant to be sourced, and `set -e`
+# would persist into the caller's shell and abort it on the first non-zero
+# command. Every fallible call below already guards with `|| echo ""`, so the
+# explicit failure path at the end is the only hard stop.
 
 API_DOMAIN="${API_DOMAIN:-http://localhost:8080}"
 TEST_EMAIL="${TEST_EMAIL:-testuser+$(date +%s)@test.com}"
@@ -69,6 +76,9 @@ elif echo "$REGISTER_RESPONSE" | grep -q "ok"; then
 else
   echo "✗ Failed to register user"
   echo "$REGISTER_RESPONSE"
+  if [ "${BASH_SOURCE[0]}" != "$0" ]; then
+    return 1
+  fi
   exit 1
 fi
 

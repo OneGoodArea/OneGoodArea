@@ -21,7 +21,11 @@
 #
 ################################################################################
 
-set -e
+# NOTE: do NOT set -e here. This script is safe to `source` (the final block
+# uses `return` when sourced so it never kills the caller), and `set -e` would
+# persist into the caller's shell and abort it on the first non-zero command —
+# including the non-zero `return` on a failing run. The suite is designed to
+# run every endpoint and report, so an early abort is unwanted anyway.
 
 # === Configuration ===
 DOMAIN="${1:-localhost:8080}"
@@ -282,8 +286,17 @@ echo -e "Failed: ${RED}$FAILED${NC}"
 SKIPPED=$((TOTAL - PASSED - FAILED))
 echo -e "Skipped: ${YELLOW}$SKIPPED${NC}"
 
-if [ $FAILED -eq 0 ]; then
-  exit 0
-else
-  exit 1
+RESULT=0
+if [ "$FAILED" -ne 0 ]; then
+  RESULT=1
 fi
+
+# When sourced (`source scripts/api-test-suite.sh`), use `return` so the
+# caller's shell stays open — `exit` would terminate it. When run standalone
+# (./scripts/api-test-suite.sh) the script is a child process, so `exit` only
+# sets its own exit code and control returns to the caller's shell. The result
+# code (0 pass / 1 any failure) is preserved for CI and scripted callers.
+if [ "${BASH_SOURCE[0]}" != "$0" ]; then
+  return "$RESULT"
+fi
+exit "$RESULT"
