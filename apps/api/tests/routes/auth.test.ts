@@ -19,7 +19,18 @@ vi.mock("@/modules/usage", () => ({
 vi.mock("@/modules/billing/stripe-client", () => ({
   stripe: { subscriptions: { retrieve: vi.fn() } },
 }));
-vi.mock("@/infrastructure/db/client", () => ({ sql: vi.fn() }));
+vi.mock("@/infrastructure/db/client", () => {
+  const sql = vi.fn();
+  // Route-level `transaction()` builds its queries with the in-transaction
+  // sql fn; route them through the mocked `sql` so the assertions below can
+  // still inspect the generated DELETE statements.
+  const transaction = vi.fn(async (build: (txn: (strings: TemplateStringsArray, ...values: unknown[]) => unknown) => unknown) => {
+    const txn = (strings: TemplateStringsArray, ...values: unknown[]) => sql(strings, ...values);
+    await build(txn);
+    return [];
+  });
+  return { sql, transaction };
+});
 
 import { buildApp } from "@/app";
 import { rateLimit } from "@/infrastructure/rate-limit";
