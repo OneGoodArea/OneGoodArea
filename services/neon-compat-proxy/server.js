@@ -137,6 +137,44 @@ const server = http.createServer(async (req, res) => {
           return json(res, 400, { error: "query must be a non-empty string" });
         }
 
+        // Multi-statement transaction block (e.g. `BEGIN; DELETE …; COMMIT;`).
+        // pg's extended protocol rejects more than one command per query, so we
+        // strip the explicit control statements and run each remaining statement
+        // inside a real Postgres transaction. This is what makes a single
+        // `sql\`BEGIN; …; COMMIT;\`` template literal execute correctly instead
+        // of 500-ing (the HTTP driver can't submit one otherwise). (AR-842)
+        const statements = text
+          .split(";")
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0 && !/^(begin|commit|rollback|end)$/i.test(s));
+        if (statements.length > 1) {
+          const client = await pool.connect();
+          try {
+            await client.query("BEGIN");
+            let last = null;
+            for (const stmt of statements) {
+              const stmtValues = /\$\d+/.test(stmt) ? values : [];
+              if (DEBUG) {
+                console.log(`[neon-proxy] [${reqId}] SQL: ${truncate(interpolateSQL(stmt, stmtValues))}`);
+              }
+              last = await client.query({ text: stmt, values: stmtValues, rowMode: "array" });
+            }
+            await client.query("COMMIT");
+            const result = last || { command: "COMMIT", rowCount: null, rows: [], fields: [] };
+            return json(res, 200, {
+              command: result.command,
+              rowCount: result.rowCount,
+              rows: formatRows(result),
+              fields: result.fields.map((field) => ({ name: field.name, dataTypeID: field.dataTypeID })),
+            });
+          } catch (multiError) {
+            await client.query("ROLLBACK");
+            throw multiError;
+          } finally {
+            client.release();
+          }
+        }
+
         if (DEBUG) {
           console.log(`[neon-proxy] [${reqId}] SQL: ${truncate(interpolateSQL(text, values))}`);
         }
