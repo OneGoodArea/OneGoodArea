@@ -61,7 +61,7 @@ export function registerOrgMethodologyRoutes(app: FastifyInstance): void {
             "body": SetMethodologyPinRequestSchema,
             "response": {
                 200: z.object({ engine_version: z.string(), pinned: z.literal(true) }),
-                400: z.object({ error: z.string(), code: z.string().optional(), supported_versions: z.array(z.string()).readonly() }),
+                400: z.object({ error: z.string(), code: z.string().optional(), supported_versions: z.array(z.string()).readonly().optional() }),
                 403: z.object({ error: z.string(), code: z.string() }),
                 404: z.object({ error: z.string() }),
                 500: z.object({ error: z.string() }),

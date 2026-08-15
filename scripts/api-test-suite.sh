@@ -190,7 +190,7 @@ test_endpoint "DELETE" "/v1/orgs/org_123/presets/pre_123" "API" "" "Delete prese
 
 print_section "Orgs: Methodology (3)"
 test_endpoint "GET" "/v1/orgs/org_123/methodology" "API" "" "Get methodology pin"
-test_endpoint "PUT" "/v1/orgs/org_123/methodology" "API" '{"version":"2"}' "Pin methodology"
+test_endpoint "PUT" "/v1/orgs/org_123/methodology" "API" '{"engine_version":"1.0.0"}' "Pin methodology"
 test_endpoint "DELETE" "/v1/orgs/org_123/methodology" "API" "" "Clear methodology"
 
 print_section "Orgs: Cohorts (5)"
