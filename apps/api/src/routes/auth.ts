@@ -35,15 +35,13 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         const userId = await authenticateSession(request, reply);
         if (!userId) return reply; // 401 already sent
 
-        await sql`
-          BEGIN;
-          DELETE FROM api_keys WHERE user_id = ${userId};
-          DELETE FROM activity_events WHERE user_id = ${userId};
-          DELETE FROM email_verification_tokens WHERE user_id = ${userId};
-          DELETE FROM subscriptions WHERE user_id = ${userId};
-          DELETE FROM users WHERE id = ${userId};
-          COMMIT;
-        `;
+        await sql.transaction([
+          sql`DELETE FROM api_keys WHERE user_id = ${userId}`,
+          sql`DELETE FROM activity_events WHERE user_id = ${userId}`,
+          sql`DELETE FROM email_verification_tokens WHERE user_id = ${userId}`,
+          sql`DELETE FROM subscriptions WHERE user_id = ${userId}`,
+          sql`DELETE FROM users WHERE id = ${userId}`,
+        ]);
 
         return reply.send({ success: true });
       } catch (error) {
