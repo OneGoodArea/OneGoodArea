@@ -3,7 +3,7 @@ import { z } from "zod";
 import { hashPassword, verifyPassword, generateToken } from "../modules/auth/crypto";
 import { normalizeSignupSource } from "../modules/auth/signup-source";
 import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendMagicLinkEmail } from "../infrastructure/email/senders";
-import { sql } from "../infrastructure/db/client";
+import { transaction, sql } from "../infrastructure/db/client";
 import { row, type UserRow, type PasswordResetTokenRow } from "../infrastructure/db/types";
 import { rateLimit, rateLimitHeaders } from "../infrastructure/rate-limit";
 import { RATE_LIMITS } from "../infrastructure/config";
@@ -35,15 +35,13 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         const userId = await authenticateSession(request, reply);
         if (!userId) return reply; // 401 already sent
 
-        await sql`
-          BEGIN;
-          DELETE FROM api_keys WHERE user_id = ${userId};
-          DELETE FROM activity_events WHERE user_id = ${userId};
-          DELETE FROM email_verification_tokens WHERE user_id = ${userId};
-          DELETE FROM subscriptions WHERE user_id = ${userId};
-          DELETE FROM users WHERE id = ${userId};
-          COMMIT;
-        `;
+        await transaction((txn) => [
+          txn`DELETE FROM api_keys WHERE user_id = ${userId}`,
+          txn`DELETE FROM activity_events WHERE user_id = ${userId}`,
+          txn`DELETE FROM email_verification_tokens WHERE user_id = ${userId}`,
+          txn`DELETE FROM subscriptions WHERE user_id = ${userId}`,
+          txn`DELETE FROM users WHERE id = ${userId}`,
+        ]);
 
         return reply.send({ success: true });
       } catch (error) {

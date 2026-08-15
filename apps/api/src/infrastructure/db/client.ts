@@ -1,4 +1,4 @@
-import { neon, neonConfig, types, type NeonQueryFunction } from "@neondatabase/serverless";
+import { neon, neonConfig, types, type NeonQueryFunction, type NeonQueryFunctionInTransaction, type NeonQueryInTransaction } from "@neondatabase/serverless";
 import { getConfig } from "./../../infrastructure/config";
 
 /* Backend DB client. Ported from the legacy src/lib/db.ts (behaviour-identical)
@@ -55,4 +55,19 @@ export async function query<T = Record<string, unknown>>(
   params: unknown[] = [],
 ): Promise<T[]> {
   return (await getClient().query(text, params)) as T[];
+}
+
+/** Run multiple statements as a single atomic Neon HTTP transaction.
+    The builder receives a query function `txn` and must return the
+    (unevaluated) query objects, e.g.
+    `transaction((txn) => [txn\`DELETE FROM t WHERE id = ${id}\`])`.
+    Maps directly onto @neondatabase/serverless `neon().transaction()`, which
+    is the supported way to submit multiple commands in one non-interactive
+    transaction — a single BEGIN..COMMIT template literal is rejected by the
+    HTTP driver. (AR-842) */
+export async function transaction(
+  build: (txn: NeonQueryFunctionInTransaction<boolean, boolean>) => NeonQueryInTransaction[],
+): Promise<void> {
+  const client = getClient();
+  await client.transaction(build);
 }

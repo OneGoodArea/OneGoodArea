@@ -643,7 +643,7 @@ export function registerMeRoutes(app: FastifyInstance): void {
         if (!userId) return reply; // 401 already sent
 
         const usage = await canMakeApiCall(userId);
-        return reply.send(usage);
+        return reply.send({ ...usage, limit: usage.limit === Infinity ? null : usage.limit });
       } catch (error) {
         logger.error("Usage check error:", error);
         return reply.code(500).send({ error: "Failed to check usage" });

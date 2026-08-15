@@ -190,7 +190,7 @@ test_endpoint "DELETE" "/v1/orgs/org_123/presets/pre_123" "API" "" "Delete prese
 
 print_section "Orgs: Methodology (3)"
 test_endpoint "GET" "/v1/orgs/org_123/methodology" "API" "" "Get methodology pin"
-test_endpoint "PUT" "/v1/orgs/org_123/methodology" "API" '{"version":"2"}' "Pin methodology"
+test_endpoint "PUT" "/v1/orgs/org_123/methodology" "API" '{"engine_version":"1.0.0"}' "Pin methodology"
 test_endpoint "DELETE" "/v1/orgs/org_123/methodology" "API" "" "Clear methodology"
 
 print_section "Orgs: Cohorts (5)"
@@ -268,15 +268,18 @@ if [ -n "$ADMIN_SESSION" ]; then
   test_endpoint "POST" "/admin/users/user_123/tier" "Admin" '{"tier":"business"}' "Set user tier"
 else
   echo -e "${YELLOW}⊘ SKIPPED${NC} Admin endpoints - missing OGA_ADMIN_SESSION_TOKEN"
-  SKIPPED=$((SKIPPED + 8))
+  TOTAL=$((TOTAL + 8))
 fi
-
 # === Summary ===
 echo ""
 echo -e "${BLUE}=== Test Summary ===${NC}"
 echo "Total:  $TOTAL"
 echo -e "Passed: ${GREEN}$PASSED${NC}"
 echo -e "Failed: ${RED}$FAILED${NC}"
+# Single source of truth: skipped = total - passed - failed. Keeps the
+# summary correct even when a block bumps TOTAL without calling
+# test_endpoint (e.g. missing admin token). (AR-847)
+SKIPPED=$((TOTAL - PASSED - FAILED))
 echo -e "Skipped: ${YELLOW}$SKIPPED${NC}"
 
 if [ $FAILED -eq 0 ]; then

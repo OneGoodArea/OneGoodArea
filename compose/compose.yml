@@ -68,11 +68,19 @@ services:
       # Env-gated showcase seed (see schema.ts SEEDS). Unset -> skipped, so
       # local dev stays clean unless SEED_SHOWCASE_API_KEY is exported.
       SEED_SHOWCASE_API_KEY: ${SEED_SHOWCASE_API_KEY:-}
+      # Stripe TEST-mode billing against the local stripe-mock container
+      # (official stripe/stripe-mock image — serves real API fixtures).
+      # Test secrets only; production values come from env files. (AR-840/841)
+      STRIPE_SECRET_KEY: sk_test_mock
+      STRIPE_WEBHOOK_SECRET: whsec_test_mock
+      STRIPE_API_BASE_URL: http://stripe-mock:12111
     depends_on:
       neon-proxy:
         condition: service_healthy
       postgres:
         condition: service_healthy
+      stripe-mock:
+        condition: service_started
 
   # Containerized signal-refresh pipeline (AR-766). Builds the tooling-only
   # `refresh` stage of the api Containerfile (no source COPY), then runs the
@@ -143,7 +151,7 @@ services:
 
   stripe-mock:
     image: stripe/stripe-mock:latest
-    profiles: ["full"]
+    profiles: ["minimal", "full"]
 
   pgadmin:
     image: dpage/pgadmin4:latest
