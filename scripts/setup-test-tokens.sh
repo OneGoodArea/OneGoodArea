@@ -23,6 +23,22 @@ API_DOMAIN="${API_DOMAIN:-http://localhost:8080}"
 TEST_EMAIL="${TEST_EMAIL:-testuser+$(date +%s)@test.com}"
 TEST_PASSWORD="TestPass1234"
 
+# Load local runtime config (.env.local.test, gitignored) if present so host-run
+# scripts (bootstrap-test-key, promote-superuser, mint-session-token) get the DB
+# connection + auth secret without manual exports.
+if [ -f ".env.local.test" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  source .env.local.test
+  set +a
+fi
+
+# Local container stack defaults (compose/compose.override.yml). Override any of
+# these in .env.local.test if your stack differs.
+export DATABASE_URL="${DATABASE_URL:-postgres://oga_user:oga_test_password_local@localhost:55432/oga_local}"
+export NEON_FETCH_ENDPOINT="${NEON_FETCH_ENDPOINT:-http://localhost:55433/sql}"
+AUTH_SECRET="${AUTH_SECRET:-replace-me}"
+
 echo "Setting up test tokens..."
 echo "API: $API_DOMAIN"
 echo "User: $TEST_EMAIL"
@@ -57,19 +73,16 @@ else
 fi
 
 # === 3. Get Session Token ===
-echo "Step 3/5: Getting session token..."
+echo "Step 3/5: Getting session token (bridge JWT)..."
 
-COOKIE_JAR=$(mktemp)
-trap "rm -f $COOKIE_JAR" EXIT
-
-curl -s -c "$COOKIE_JAR" -X POST "$API_DOMAIN/auth/login" \
-  -H "Content-Type: application/json" \
-  -d "{\"email\":\"$TEST_EMAIL\",\"password\":\"$TEST_PASSWORD\"}" > /dev/null
-
-SESSION=$(grep -oP 'next-auth\.session-token\s+\K\S+' "$COOKIE_JAR" | tail -1 || echo "")
+# The API authenticates browser-user (Session/Admin) calls via a short-lived
+# bridge JWT signed with AUTH_SECRET (apps/api/src/shared/auth-session.ts) — it
+# does NOT issue next-auth cookies. Mint the JWT directly for the test user.
+SESSION=$(AUTH_SECRET="$AUTH_SECRET" DATABASE_URL="$DATABASE_URL" NEON_FETCH_ENDPOINT="$NEON_FETCH_ENDPOINT" \
+  node scripts/mint-session-token.mjs --email "$TEST_EMAIL" 2>/dev/null | tail -1 || echo "")
 
 if [ -z "$SESSION" ]; then
-  echo "⚠ Could not extract session token. Try logging in manually via dashboard."
+  echo "⚠ Could not mint session token. Check DATABASE_URL / AUTH_SECRET (see .env.local.test.example)."
   SESSION=""
 else
   echo "✓ SESSION_TOKEN: ${SESSION:0:20}..."
@@ -79,7 +92,6 @@ fi
 echo "Step 4/5: Promoting to superuser..."
 
 ADMIN_SESSION=""
-NEON_FETCH_ENDPOINT="${NEON_FETCH_ENDPOINT:-}"
 PROMOTE_DB_URL="${DATABASE_URL:-}"
 
 if [ -n "$PROMOTE_DB_URL" ]; then
@@ -87,19 +99,14 @@ if [ -n "$PROMOTE_DB_URL" ]; then
   if echo "$PROMOTE_OUTPUT" | grep -q "✓"; then
     echo "$PROMOTE_OUTPUT"
 
-    # Re-login to get a superuser session token
-    ADMIN_COOKIE_JAR=$(mktemp)
-    curl -s -c "$ADMIN_COOKIE_JAR" -X POST "$API_DOMAIN/auth/login" \
-      -H "Content-Type: application/json" \
-      -d "{\"email\":\"$TEST_EMAIL\",\"password\":\"$TEST_PASSWORD\"}" > /dev/null
-
-    ADMIN_SESSION=$(grep -oP 'next-auth\.session-token\s+\K\S+' "$ADMIN_COOKIE_JAR" | tail -1 || echo "")
-    rm -f "$ADMIN_COOKIE_JAR"
+    # Admin authorization is DB-driven (isSuperuser reads user_type from the DB
+    # for the JWT's sub), so the same session JWT works for admin routes.
+    ADMIN_SESSION="$SESSION"
 
     if [ -n "$ADMIN_SESSION" ]; then
       echo "✓ ADMIN_SESSION_TOKEN: ${ADMIN_SESSION:0:20}..."
     else
-      echo "⚠ Could not extract admin session token"
+      echo "⚠ Could not mint admin session token"
     fi
   else
     echo "⚠ Could not promote to superuser"
@@ -116,9 +123,12 @@ echo "Step 5/5: Loading CRON secret..."
 CRON=""
 if [ -f "apps/api/.env.local" ]; then
   CRON=$(grep -oP 'CRON_SECRET=\K.+' apps/api/.env.local || echo "")
-  if [ -n "$CRON" ]; then
-    echo "✓ CRON_SECRET: ${CRON:0:15}..."
-  fi
+fi
+# Local stack uses CRON_SECRET=replace-me (compose.yml); fall back to it when no
+# apps/api/.env.local exists.
+CRON="${CRON:-replace-me}"
+if [ -n "$CRON" ]; then
+  echo "✓ CRON_SECRET: ${CRON:0:15}..."
 fi
 
 # === Export ===
