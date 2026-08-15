@@ -32,6 +32,39 @@ const truncate = (str, n = 100) => {
   return str.slice(0, n) + "..." + str.slice(-n);
 };
 
+// Convert pg result rows into the string-cell shape the
+// @neondatabase/serverless driver expects (rowMode "array"):
+//  - Convert pg-native booleans (true/false) to "t"/"f" strings so the
+//    driver's pg-types parser gets the string format it expects. Without
+//    this, the parser receives a JS boolean, fails all its string
+//    comparisons, and returns undefined → falsy for any true value. (AR-653)
+//  - Re-encode types the driver expects as strings but that pg hands back as
+//    live values: JSON/JSONB (114/3802) → JSON.stringify (the driver runs
+//    JSON.parse on the cell, so a JS object would become "[object Object]"
+//    → throw → 500 on JSONB routes). DATE (1082) → "YYYY-MM-DD" (the driver's
+//    DATE parser expects that format and returns null otherwise). (AR-844/845)
+const BOOL_OID = 16;
+const JSON_OID = 114;
+const JSONB_OID = 3802;
+const DATE_OID = 1082;
+const toDateString = (d) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+const formatRows = (result) =>
+  result.rows.map((row) =>
+    row.map((val, i) => {
+      const field = result.fields[i];
+      const oid = field && field.dataTypeID;
+      if (oid === BOOL_OID && typeof val === "boolean") return val ? "t" : "f";
+      if ((oid === JSON_OID || oid === JSONB_OID) && val !== null) return JSON.stringify(val);
+      if (oid === DATE_OID && val instanceof Date) return toDateString(val);
+      return val;
+    }),
+  );
+
 const json = (res, status, body) => {
   res.writeHead(status, { "content-type": "application/json" });
   res.end(JSON.stringify(body));
@@ -58,6 +91,45 @@ const server = http.createServer(async (req, res) => {
       const reqId = crypto.randomUUID().slice(0, 8);
       try {
         const payload = raw ? JSON.parse(raw) : {};
+
+        // Neon HTTP batch / transaction protocol: a `queries` array is sent
+        // for `sql.transaction([...])`. The driver then expects the response
+        // shape `{ results: [ {command,rowCount,rows,fields}, ... ] }`. Each
+        // element is run in a single PostgreSQL transaction (BEGIN..COMMIT) so
+        // a failure rolls all back — this is what `transaction()` guarantees.
+        // (AR-842)
+        if (Array.isArray(payload.queries) && payload.queries.length > 0) {
+          const client = await pool.connect();
+          try {
+            await client.query("BEGIN");
+            const results = [];
+            for (const q of payload.queries) {
+              const qtext = q && q.query;
+              const qvalues = Array.isArray(q && q.params) ? q.params : [];
+              if (!qtext || typeof qtext !== "string") {
+                throw new Error("each batch query must be a non-empty string");
+              }
+              if (DEBUG) {
+                console.log(`[neon-proxy] [${reqId}] SQL: ${truncate(interpolateSQL(qtext, qvalues))}`);
+              }
+              const r = await client.query({ text: qtext, values: qvalues, rowMode: "array" });
+              results.push({
+                command: r.command,
+                rowCount: r.rowCount,
+                rows: formatRows(r),
+                fields: r.fields.map((field) => ({ name: field.name, dataTypeID: field.dataTypeID })),
+              });
+            }
+            await client.query("COMMIT");
+            return json(res, 200, { results });
+          } catch (batchError) {
+            await client.query("ROLLBACK");
+            throw batchError;
+          } finally {
+            client.release();
+          }
+        }
+
         const text = payload.query;
         const values = Array.isArray(payload.params) ? payload.params : [];
 
@@ -80,47 +152,10 @@ const server = http.createServer(async (req, res) => {
           const resultStr = JSON.stringify(result.rows);
           console.log(`[neon-proxy] [${reqId}] rows: ${result.rowCount}, duration: ${Date.now() - start}ms, result: ${truncate(resultStr)}`);
         }
-        // Convert pg-native booleans (true/false) to "t"/"f" strings so the
-        // @neondatabase/serverless driver's pg-types parser gets the string
-        // format it expects. Without this, the parser receives a JS boolean,
-        // fails all its string comparisons, and returns undefined → falsy
-        // for any true value. (AR-653)
-        //
-        // Also re-encode types the driver expects as strings but that the
-        // pg client hands back as live values:
-        //  - JSON/JSONB (114/3802): pg returns a parsed JS object; the driver
-        //    runs JSON.parse on the cell, so a JS object becomes "[object
-        //    Object]" → JSON.parse throws → 500 on any route returning JSONB
-        //    (e.g. /me/activity, /admin/analytics). Stringify it back so the
-        //    driver's JSON.parse produces the object. (AR-844)
-        //  - DATE (1082): pg returns a JS Date; the driver's DATE parser
-        //    (xt) expects "YYYY-MM-DD" and returns null for anything else,
-        //    silently nulling date cells (e.g. /admin/traffic-analytics day).
-        //    Format the local date to "YYYY-MM-DD". (AR-845)
-        const BOOL_OID = 16;
-        const JSON_OID = 114;
-        const JSONB_OID = 3802;
-        const DATE_OID = 1082;
-        const toDateString = (d) => {
-          const y = d.getFullYear();
-          const m = String(d.getMonth() + 1).padStart(2, "0");
-          const day = String(d.getDate()).padStart(2, "0");
-          return `${y}-${m}-${day}`;
-        };
-        const rows = result.rows.map((row) =>
-          row.map((val, i) => {
-            const field = result.fields[i];
-            const oid = field && field.dataTypeID;
-            if (oid === BOOL_OID && typeof val === "boolean") return val ? "t" : "f";
-            if ((oid === JSON_OID || oid === JSONB_OID) && val !== null) return JSON.stringify(val);
-            if (oid === DATE_OID && val instanceof Date) return toDateString(val);
-            return val;
-          }),
-        );
         return json(res, 200, {
           command: result.command,
           rowCount: result.rowCount,
-          rows,
+          rows: formatRows(result),
           fields: result.fields.map((field) => ({ name: field.name, dataTypeID: field.dataTypeID })),
         });
       } catch (error) {
