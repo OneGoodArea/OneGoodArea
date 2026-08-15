@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
-import fs from "node:fs";
-import path from "node:path";
+import { buildSecurityHeaders, getCspConnectSrc, parseDevOrigins } from "@/lib/csp.mts";
 
 /* AR-605: Scalar's "Try it" in /playground fetches directly from the
    browser to apps/api's live origin. The CSP connect-src directive
@@ -9,15 +8,63 @@ import path from "node:path";
    headers (AR-602). Without the API origin here, every Try-It request
    was blocked by the browser itself, confirmed via console:
    "Connecting to 'https://onegoodarea.onrender.com/...' violates ...
-   connect-src ... The action has been blocked." */
+   connect-src ... The action has been blocked."
 
-const CONFIG_PATH = path.join(__dirname, "../../next.config.ts");
+   We assert the *effective* rendered CSP (via buildSecurityHeaders)
+   rather than grepping the source text, so the guard survives config
+   refactors (e.g. extracting baseConnectSrc into an array). */
 
-describe("next.config.ts — CSP connect-src (AR-605)", () => {
+describe("CSP connect-src (AR-605)", () => {
+  const headers = buildSecurityHeaders({ NODE_ENV: "production" });
+  const connectSrc = getCspConnectSrc(headers);
+
+  it("contains a connect-src directive", () => {
+    expect(connectSrc).toBeDefined();
+  });
+
   it("allows the apps/api origin so Scalar Try-It can reach it", () => {
-    const config = fs.readFileSync(CONFIG_PATH, "utf-8");
-    const connectSrcLine = config.split("\n").find((line) => line.includes("connect-src"));
-    expect(connectSrcLine).toBeDefined();
-    expect(connectSrcLine).toContain("https://onegoodarea.onrender.com");
+    expect(connectSrc).toContain("https://onegoodarea.onrender.com");
+  });
+
+  it("keeps the app-origin and payment/analytics hosts in production", () => {
+    expect(connectSrc).toContain("'self'");
+    expect(connectSrc).toContain("https://api.stripe.com");
+    expect(connectSrc).toContain("https://va.vercel-scripts.com");
+    expect(connectSrc).toContain("https://vitals.vercel-insights.com");
+    expect(connectSrc).toContain("https://*.ingest.de.sentry.io");
+    expect(connectSrc).toContain("https://challenges.cloudflare.com");
+  });
+
+  it("does not leak dev ws:// origins into production CSP", () => {
+    expect(connectSrc).not.toMatch(/ws:\/\//);
+  });
+
+  describe("dev mode", () => {
+    const devHeaders = buildSecurityHeaders({
+      NODE_ENV: "development",
+      ALLOWED_DEV_ORIGINS: "tengelmann,localhost",
+      PORT: "3000",
+    });
+
+    it("adds dev ws:// origins for each allowed host", () => {
+      const devConnectSrc = getCspConnectSrc(devHeaders);
+      expect(devConnectSrc).toContain("ws://tengelmann:3000");
+      expect(devConnectSrc).toContain("ws://localhost:3000");
+    });
+
+    it("still includes the apps/api origin", () => {
+      const devConnectSrc = getCspConnectSrc(devHeaders);
+      expect(devConnectSrc).toContain("https://onegoodarea.onrender.com");
+    });
+  });
+
+  describe("parseDevOrigins", () => {
+    it("defaults to localhost", () => {
+      expect(parseDevOrigins({})).toEqual(["localhost"]);
+    });
+
+    it("splits, trims, and drops empties", () => {
+      expect(parseDevOrigins({ ALLOWED_DEV_ORIGINS: " a, b ,, " })).toEqual(["a", "b"]);
+    });
   });
 });
