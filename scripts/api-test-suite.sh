@@ -15,8 +15,8 @@
 #
 # Environment variables (fallbacks):
 #   OGA_API_KEY              - API Bearer token (oga_...)
-#   OGA_SESSION_TOKEN        - Session JWT cookie value
-#   OGA_ADMIN_SESSION_TOKEN  - Admin session JWT cookie value (superuser)
+#   OGA_SESSION_TOKEN        - Session bridge JWT (Bearer)
+#   OGA_ADMIN_SESSION_TOKEN  - Admin bridge JWT for a superuser (Bearer)
 #   OGA_CRON_SECRET          - CRON_SECRET Bearer token
 #
 ################################################################################
@@ -77,7 +77,7 @@ test_endpoint() {
         SKIPPED=$((SKIPPED + 1))
         return
       fi
-      cmd="$cmd -H 'Cookie: next-auth.session-token=$SESSION_TOKEN'"
+      cmd="$cmd -H 'Authorization: Bearer $SESSION_TOKEN'"
       ;;
     "Admin")
       if [ -z "$ADMIN_SESSION" ]; then
@@ -85,7 +85,7 @@ test_endpoint() {
         SKIPPED=$((SKIPPED + 1))
         return
       fi
-      cmd="$cmd -H 'Cookie: next-auth.session-token=$ADMIN_SESSION'"
+      cmd="$cmd -H 'Authorization: Bearer $ADMIN_SESSION'"
       ;;
     "CRON")
       if [ -z "$CRON_SECRET" ]; then
