@@ -85,13 +85,36 @@ const server = http.createServer(async (req, res) => {
         // format it expects. Without this, the parser receives a JS boolean,
         // fails all its string comparisons, and returns undefined → falsy
         // for any true value. (AR-653)
+        //
+        // Also re-encode types the driver expects as strings but that the
+        // pg client hands back as live values:
+        //  - JSON/JSONB (114/3802): pg returns a parsed JS object; the driver
+        //    runs JSON.parse on the cell, so a JS object becomes "[object
+        //    Object]" → JSON.parse throws → 500 on any route returning JSONB
+        //    (e.g. /me/activity, /admin/analytics). Stringify it back so the
+        //    driver's JSON.parse produces the object. (AR-844)
+        //  - DATE (1082): pg returns a JS Date; the driver's DATE parser
+        //    (xt) expects "YYYY-MM-DD" and returns null for anything else,
+        //    silently nulling date cells (e.g. /admin/traffic-analytics day).
+        //    Format the local date to "YYYY-MM-DD". (AR-845)
         const BOOL_OID = 16;
+        const JSON_OID = 114;
+        const JSONB_OID = 3802;
+        const DATE_OID = 1082;
+        const toDateString = (d) => {
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, "0");
+          const day = String(d.getDate()).padStart(2, "0");
+          return `${y}-${m}-${day}`;
+        };
         const rows = result.rows.map((row) =>
           row.map((val, i) => {
             const field = result.fields[i];
-            return field && field.dataTypeID === BOOL_OID && typeof val === "boolean"
-              ? val ? "t" : "f"
-              : val;
+            const oid = field && field.dataTypeID;
+            if (oid === BOOL_OID && typeof val === "boolean") return val ? "t" : "f";
+            if ((oid === JSON_OID || oid === JSONB_OID) && val !== null) return JSON.stringify(val);
+            if (oid === DATE_OID && val instanceof Date) return toDateString(val);
+            return val;
           }),
         );
         return json(res, 200, {
