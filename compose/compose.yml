@@ -118,6 +118,35 @@ services:
       postgres:
         condition: service_healthy
 
+  # Amenities warm-cache daemon (AR-822). Builds the minimal amenities-refresh
+  # stage (no source COPY), then runs the long-running refresh loop against the
+  # LOCAL stack. Same bind-mount + anonymous node_modules pattern as
+  # signal-refresh, minus the police.uk cache volume (amenities needs none).
+  amenities-refresh:
+    build:
+      context: ..
+      dockerfile: container/api/Containerfile
+      target: amenities-refresh
+    image: onegoodarea/api-amenities-refresh:local
+    profiles: ["refresh"]
+    command: ["npm", "run", "refresh:amenities:daemon", "-w", "@onegoodarea/api"]
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://oga_user:oga_test_password_local@postgres:5432/oga_local
+      # Route the @neondatabase/serverless driver's HTTPS fetch through the
+      # local neon-compat-proxy (same POST /sql protocol) instead of Neon
+      # Cloud. (AR-247)
+      NEON_FETCH_ENDPOINT: http://neon-proxy:55433/sql
+      OGA_LOG_LEVEL: ${OGA_LOG_LEVEL:-info}
+    volumes:
+      - ..:/app:z
+      - /app/node_modules
+    depends_on:
+      neon-proxy:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
   web:
     build:
       context: ..

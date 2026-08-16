@@ -26,18 +26,31 @@
 # command. Every fallible call below already guards with `|| echo ""`, so the
 # explicit failure path at the end is the only hard stop.
 
+# --- Logging helpers ----------------------------------------------------------
+# Every step logs three things: what is running (STEP), which branch/path was
+# taken (PATH), and the outcome (OK/WARN/FAIL).
+_step() { echo; echo "──────── $1 ────────"; }
+_path() { echo "  · path: $1"; }
+_ok()   { echo "  ✓ $1"; }
+_warn() { echo "  ⚠ $1"; }
+_fail() { echo "  ✗ $1"; }
+_hint() { echo "  → $1"; }
+
 API_DOMAIN="${API_DOMAIN:-http://localhost:8080}"
 TEST_EMAIL="${TEST_EMAIL:-testuser+$(date +%s)@test.com}"
-TEST_PASSWORD="TestPass1234"
+TEST_PASSWORD="${TEST_PASSWORD:-TestPass1234}"
 
 # Load local runtime config (.env.local.test, gitignored) if present so host-run
 # scripts (bootstrap-test-key, promote-superuser, mint-session-token) get the DB
 # connection + auth secret without manual exports.
 if [ -f ".env.local.test" ]; then
+  _path ".env.local.test present -> sourcing overrides"
   set -a
   # shellcheck disable=SC1091
   source .env.local.test
   set +a
+else
+  _path "no .env.local.test -> using local-stack defaults"
 fi
 
 # Local container stack defaults (compose/compose.override.yml). Override any of
@@ -46,36 +59,49 @@ export DATABASE_URL="${DATABASE_URL:-postgres://oga_user:oga_test_password_local
 export NEON_FETCH_ENDPOINT="${NEON_FETCH_ENDPOINT:-http://localhost:55433/sql}"
 AUTH_SECRET="${AUTH_SECRET:-replace-me}"
 
-echo "Setting up test tokens..."
-echo "API: $API_DOMAIN"
-echo "User: $TEST_EMAIL"
+echo "──────── Setup test tokens ────────"
+echo "  API_DOMAIN           API endpoint                             : $API_DOMAIN"
+echo "  TEST_EMAIL           Test user email (created on first run)   : $TEST_EMAIL"
+echo "  TEST_PASSWORD        Test user password                       : ${TEST_PASSWORD:0:4}... (${#TEST_PASSWORD} chars)"
+echo "  DATABASE_URL         Postgres DSN for DB scripts              : postgres://***@${DATABASE_URL#*@}"
+echo "  NEON_FETCH_ENDPOINT  Neon fetch proxy for DB scripts          : $NEON_FETCH_ENDPOINT"
+echo "  AUTH_SECRET          Signs the bridge JWT (must match api)    : ${AUTH_SECRET:0:3}... (${#AUTH_SECRET} chars)"
 echo ""
+echo "  Override any of these as env vars or in .env.local.test."
 
 # === 1. Bootstrap API Key ===
-echo "Step 1/5: Creating API key..."
-API_KEY=$(make scripts-bootstrap-test-key ARGS="--email $TEST_EMAIL --plan sandbox" 2>/dev/null | grep -oP 'oga_\w+' | head -1 || echo "")
+_step "1/5 — Bootstrap API key"
+echo "  Running: make scripts-bootstrap-test-key --email $TEST_EMAIL --plan sandbox"
+BOOTSTRAP_OUTPUT=$(make scripts-bootstrap-test-key ARGS="--email $TEST_EMAIL --plan sandbox" 2>&1 || echo "")
+API_KEY=$(echo "$BOOTSTRAP_OUTPUT" | grep -oP 'oga_\w+' | head -1 || echo "")
 
 if [ -z "$API_KEY" ]; then
-  echo "⚠ Could not bootstrap API key via make. Trying direct DB approach..."
-  echo "Run 'make scripts-bootstrap-test-key' manually and set OGA_API_KEY"
-  API_KEY=""
+  _path "make bootstrap failed -> no key generated"
+  _fail "API key not created (see output below)"
+  echo "$BOOTSTRAP_OUTPUT" | sed 's/^/  | /' | grep -v '^  | $'
+  _hint "Run 'make scripts-bootstrap-test-key' manually and set OGA_API_KEY"
 else
-  echo "✓ API_KEY: ${API_KEY:0:15}..."
+  _path "make bootstrap succeeded -> key extracted"
+  _ok "API_KEY: ${API_KEY:0:15}..."
 fi
 
 # === 2. Register Test User ===
-echo "Step 2/5: Registering test user..."
+_step "2/5 — Register test user"
+echo "  Running: POST $API_DOMAIN/auth/register"
 REGISTER_RESPONSE=$(curl -s -X POST "$API_DOMAIN/auth/register" \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"$TEST_EMAIL\",\"password\":\"$TEST_PASSWORD\"}")
 
 if echo "$REGISTER_RESPONSE" | grep -q "email_taken"; then
-  echo "⚠ User already exists; using existing account"
+  _path "POST /auth/register -> email_taken (existing account)"
+  _warn "User already exists; using existing account"
 elif echo "$REGISTER_RESPONSE" | grep -q "ok"; then
-  echo "✓ User registered"
+  _path "POST /auth/register -> ok (new account created)"
+  _ok "User registered: $TEST_EMAIL"
 else
-  echo "✗ Failed to register user"
-  echo "$REGISTER_RESPONSE"
+  _path "POST /auth/register -> unexpected response"
+  _fail "Failed to register user"
+  echo "  $REGISTER_RESPONSE"
   if [ "${BASH_SOURCE[0]}" != "$0" ]; then
     return 1
   fi
@@ -83,87 +109,108 @@ else
 fi
 
 # === 3. Get Session Token ===
-echo "Step 3/5: Getting session token (bridge JWT)..."
+_step "3/5 — Session token (bridge JWT)"
+echo "  Running: node scripts/mint-session-token.mjs --email $TEST_EMAIL"
 
 # The API authenticates browser-user (Session/Admin) calls via a short-lived
 # bridge JWT signed with AUTH_SECRET (apps/api/src/shared/auth-session.ts) — it
 # does NOT issue next-auth cookies. Mint the JWT directly for the test user.
-SESSION=$(AUTH_SECRET="$AUTH_SECRET" DATABASE_URL="$DATABASE_URL" NEON_FETCH_ENDPOINT="$NEON_FETCH_ENDPOINT" \
-  node scripts/mint-session-token.mjs --email "$TEST_EMAIL" 2>/dev/null | tail -1 || echo "")
+MINT_OUTPUT=$(AUTH_SECRET="$AUTH_SECRET" DATABASE_URL="$DATABASE_URL" NEON_FETCH_ENDPOINT="$NEON_FETCH_ENDPOINT" \
+  node scripts/mint-session-token.mjs --email "$TEST_EMAIL" 2>&1 || echo "")
+SESSION=$(echo "$MINT_OUTPUT" | tail -1)
 
 if [ -z "$SESSION" ]; then
-  echo "⚠ Could not mint session token. Check DATABASE_URL / AUTH_SECRET (see .env.local.test.example)."
+  _path "mint-session-token -> no token returned"
+  _warn "Could not mint session token. Check DATABASE_URL / AUTH_SECRET (see .env.local.test.example)."
+  [ -n "$MINT_OUTPUT" ] && echo "$MINT_OUTPUT" | tail -3 | sed 's/^/  | /'
   SESSION=""
 else
-  echo "✓ SESSION_TOKEN: ${SESSION:0:20}..."
+  _path "mint-session-token -> token issued"
+  _ok "SESSION_TOKEN: ${SESSION:0:20}..."
 fi
 
 # === 4. Promote to Superuser ===
-echo "Step 4/5: Promoting to superuser..."
+_step "4/5 — Promote to superuser"
 
 ADMIN_SESSION=""
 PROMOTE_DB_URL="${DATABASE_URL:-}"
 
 if [ -n "$PROMOTE_DB_URL" ]; then
+  echo "  Running: node scripts/promote-superuser.mjs --email $TEST_EMAIL"
   PROMOTE_OUTPUT=$(NEON_FETCH_ENDPOINT="$NEON_FETCH_ENDPOINT" DATABASE_URL="$PROMOTE_DB_URL" node scripts/promote-superuser.mjs --email "$TEST_EMAIL" 2>&1 || echo "")
   if echo "$PROMOTE_OUTPUT" | grep -q "✓"; then
-    echo "$PROMOTE_OUTPUT"
+    _path "promote-superuser -> OK (isSuperuser now true in DB)"
+    _ok "User promoted to superuser"
+    echo "$PROMOTE_OUTPUT" | sed 's/^/  | /' | grep -v '^  | $'
 
     # Admin authorization is DB-driven (isSuperuser reads user_type from the DB
     # for the JWT's sub), so the same session JWT works for admin routes.
     ADMIN_SESSION="$SESSION"
 
     if [ -n "$ADMIN_SESSION" ]; then
-      echo "✓ ADMIN_SESSION_TOKEN: ${ADMIN_SESSION:0:20}..."
+      _path "admin token -> reuses session JWT (DB-driven auth)"
+      _ok "ADMIN_SESSION_TOKEN: ${ADMIN_SESSION:0:20}..."
     else
-      echo "⚠ Could not mint admin session token"
+      _warn "Could not mint admin session token"
     fi
   else
-    echo "⚠ Could not promote to superuser"
-    echo "  Set DATABASE_URL and NEON_FETCH_ENDPOINT to enable admin endpoint testing"
+    _path "promote-superuser -> failed"
+    _fail "Could not promote to superuser"
+    echo "$PROMOTE_OUTPUT" | sed 's/^/  | /' | grep -v '^  | $'
+    _hint "Set DATABASE_URL and NEON_FETCH_ENDPOINT to enable admin endpoint testing"
   fi
 else
-  echo "⚠ DATABASE_URL not set; skipping superuser promotion"
-  echo "  Set DATABASE_URL and NEON_FETCH_ENDPOINT to enable admin endpoint testing"
+  _path "DATABASE_URL not set -> skipped"
+  _warn "Superuser promotion skipped (no DATABASE_URL)"
+  _hint "Set DATABASE_URL and NEON_FETCH_ENDPOINT to enable admin endpoint testing"
 fi
 
 # === 5. Get CRON Secret ===
-echo ""
-echo "Step 5/5: Loading CRON secret..."
+_step "5/5 — CRON secret"
 CRON=""
 if [ -f "apps/api/.env.local" ]; then
   CRON=$(grep -oP 'CRON_SECRET=\K.+' apps/api/.env.local || echo "")
+  if [ -n "$CRON" ]; then
+    _path "apps/api/.env.local -> CRON_SECRET found"
+  else
+    _path "apps/api/.env.local -> CRON_SECRET absent, falling back to default"
+  fi
+else
+  _path "no apps/api/.env.local -> using local-stack default"
 fi
 # Local stack uses CRON_SECRET=replace-me (compose.yml); fall back to it when no
 # apps/api/.env.local exists.
 CRON="${CRON:-replace-me}"
-if [ -n "$CRON" ]; then
-  echo "✓ CRON_SECRET: ${CRON:0:15}..."
-fi
+_ok "CRON_SECRET: ${CRON:0:15}..."
 
 # === Export ===
-echo ""
-echo "Exporting environment variables..."
-
+_step "Export"
 if [ -n "$API_KEY" ]; then
   export OGA_API_KEY="$API_KEY"
-  echo "  export OGA_API_KEY='$API_KEY'"
+  _ok "export OGA_API_KEY='${API_KEY:0:15}...'"
 fi
 
 if [ -n "$SESSION" ]; then
   export OGA_SESSION_TOKEN="$SESSION"
-  echo "  export OGA_SESSION_TOKEN='$SESSION'"
+  _ok "export OGA_SESSION_TOKEN='${SESSION:0:15}...'"
 fi
 
 if [ -n "$ADMIN_SESSION" ]; then
   export OGA_ADMIN_SESSION_TOKEN="$ADMIN_SESSION"
-  echo "  export OGA_ADMIN_SESSION_TOKEN='$ADMIN_SESSION'"
+  _ok "export OGA_ADMIN_SESSION_TOKEN='${ADMIN_SESSION:0:15}...'"
 fi
 
 if [ -n "$CRON" ]; then
   export OGA_CRON_SECRET="$CRON"
-  echo "  export OGA_CRON_SECRET='$CRON'"
+  _ok "export OGA_CRON_SECRET='${CRON:0:15}...'"
 fi
+
+echo
+echo "──────── Summary ────────"
+[ -n "$API_KEY" ]        && _ok "OGA_API_KEY              ${API_KEY:0:15}..."        || _warn "OGA_API_KEY              NOT SET"
+[ -n "$SESSION" ]        && _ok "OGA_SESSION_TOKEN        ${SESSION:0:15}..."        || _warn "OGA_SESSION_TOKEN        NOT SET"
+[ -n "$ADMIN_SESSION" ]  && _ok "OGA_ADMIN_SESSION_TOKEN  ${ADMIN_SESSION:0:15}..."  || _warn "OGA_ADMIN_SESSION_TOKEN  NOT SET"
+[ -n "$CRON" ]           && _ok "OGA_CRON_SECRET          ${CRON:0:15}..."           || _warn "OGA_CRON_SECRET          NOT SET"
 
 echo ""
 echo "✅ Ready to test!"

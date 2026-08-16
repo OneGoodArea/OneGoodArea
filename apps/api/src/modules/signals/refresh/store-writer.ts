@@ -10,6 +10,7 @@
    exactly what "refresh on schedule" needs. See ADR 0003. */
 
 import { query as defaultQuery } from "../../../infrastructure/db/client";
+import type { AmenitiesData } from "../inputs";
 
 /** Parameterized query runner ($1, $2, …). Injected in tests. */
 export type QueryRunner = (text: string, params: unknown[]) => Promise<unknown[]>;
@@ -249,4 +250,69 @@ export function upsertSignalValues(rows: SignalValueRow[], run: QueryRunner = ru
       ],
     },
   }, rows);
+}
+
+/* ── amenities writer ──
+
+   Each amenity category is stored as a separate signal_values row keyed
+   by 'amenities.<category>'. The highlights array is JSON-serialised
+   into raw_value_text for the 'amenities.highlights' row. The writer
+   uses the existing upsertSignalValues primitive (ON CONFLICT DO UPDATE)
+   so repeated refreshes overwrite in place. */
+
+const AMENITY_KEYS = [
+  "schools",
+  "restaurants_cafes",
+  "pubs_bars",
+  "healthcare",
+  "shops",
+  "parks_leisure",
+  "transport_stations",
+  "bus_stops",
+  "total",
+] as const;
+
+/** Write amenities data for an area into signal_values. Each category
+    becomes its own row; highlights are stored as a JSON string. */
+export async function writeAmenitiesToStore(
+  geoCode: string,
+  data: AmenitiesData,
+  engineVersion: string,
+  geoType = "lsoa",
+  run: QueryRunner = runDefault,
+): Promise<number> {
+  const rows: SignalValueRow[] = [];
+
+  for (const key of AMENITY_KEYS) {
+    rows.push({
+      signal_key: `amenities.${key}`,
+      geo_type: geoType,
+      geo_code: geoCode,
+      raw_value: data[key as keyof AmenitiesData] as number,
+      raw_value_text: null,
+      normalized_value: null,
+      confidence: null,
+      confidence_reason: null,
+      source_snapshot_id: null,
+      observed_period: null,
+      engine_version: engineVersion,
+    });
+  }
+
+  // Highlights stored as JSON text
+  rows.push({
+    signal_key: "amenities.highlights",
+    geo_type: geoType,
+    geo_code: geoCode,
+    raw_value: null,
+    raw_value_text: JSON.stringify(data.highlights),
+    normalized_value: null,
+    confidence: null,
+    confidence_reason: null,
+    source_snapshot_id: null,
+    observed_period: null,
+    engine_version: engineVersion,
+  });
+
+  return upsertSignalValues(rows, run);
 }

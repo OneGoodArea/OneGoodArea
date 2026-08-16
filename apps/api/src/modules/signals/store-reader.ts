@@ -12,7 +12,7 @@
    normalizes boundaries). See ADR 0004. */
 
 import { query as defaultQuery } from "../../infrastructure/db/client";
-import type { DeprivationData, PropertyPriceData, CrimeSummary } from "./inputs";
+import type { DeprivationData, PropertyPriceData, CrimeSummary, AmenitiesData } from "./inputs";
 
 /** Parameterized read runner ($1, $2, …). Injected in tests. */
 export type Reader = (text: string, params: unknown[]) => Promise<Record<string, unknown>[]>;
@@ -251,6 +251,86 @@ export async function readPropertyNormalization(
     };
   }
   return out;
+}
+
+/* ── amenities (OSM Overpass) ──
+
+   Amenities are stored as individual signal_values rows keyed by
+   'amenities.<category>' (e.g. 'amenities.schools'). The highlights
+   array is stored as a JSON string in raw_value_text for the
+   'amenities.highlights' row. */
+
+const AMENITY_SIGNAL_KEYS = [
+  "amenities.schools",
+  "amenities.restaurants_cafes",
+  "amenities.pubs_bars",
+  "amenities.healthcare",
+  "amenities.shops",
+  "amenities.parks_leisure",
+  "amenities.transport_stations",
+  "amenities.bus_stops",
+  "amenities.total",
+  "amenities.highlights",
+] as const;
+
+/** Read amenities for an area from the store, or null if absent (caller
+    falls back to a live fetch). Reconstructs the AmenitiesData fields
+    the mapper + scoring engine read. Returns null if the store has no
+    amenities rows or if the total is missing/invalid. */
+export async function readAmenitiesFromStore(
+  geoCode: string,
+  geoType: string = "lsoa",
+  run: Reader = runDefault,
+): Promise<AmenitiesData | null> {
+  if (!geoCode) return null;
+
+  const rows = await run(
+    `SELECT signal_key, raw_value, raw_value_text
+       FROM signal_values
+      WHERE geo_type = $1 AND geo_code = $2
+        AND signal_key = ANY($3)`,
+    [geoType, geoCode, AMENITY_SIGNAL_KEYS],
+  );
+
+  if (rows.length === 0) return null;
+
+  const map = new Map<string, { raw_value: number | null; raw_value_text: string | null }>();
+  for (const r of rows) {
+    map.set(r.signal_key as string, {
+      raw_value: r.raw_value === null || r.raw_value === undefined ? null : Number(r.raw_value),
+      raw_value_text: typeof r.raw_value_text === "string" ? r.raw_value_text : null,
+    });
+  }
+
+  const num = (key: string): number => {
+    const v = map.get(key)?.raw_value;
+    return v === null || v === undefined || Number.isNaN(v) ? 0 : v;
+  };
+
+  const total = num("amenities.total");
+  if (total <= 0) return null;
+
+  let highlights: string[] = [];
+  const hlText = map.get("amenities.highlights")?.raw_value_text;
+  if (hlText) {
+    try {
+      const parsed = JSON.parse(hlText);
+      if (Array.isArray(parsed)) highlights = parsed.filter((h): h is string => typeof h === "string");
+    } catch { /* ignore corrupt JSON */ }
+  }
+
+  return {
+    schools: num("amenities.schools"),
+    restaurants_cafes: num("amenities.restaurants_cafes"),
+    pubs_bars: num("amenities.pubs_bars"),
+    healthcare: num("amenities.healthcare"),
+    shops: num("amenities.shops"),
+    parks_leisure: num("amenities.parks_leisure"),
+    transport_stations: num("amenities.transport_stations"),
+    bus_stops: num("amenities.bus_stops"),
+    total,
+    highlights,
+  };
 }
 
 /* ── crime (police.uk) ──
