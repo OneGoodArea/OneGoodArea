@@ -1,9 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ################################################################################
-# OneGoodArea API Test Suite
-# 
-# Tests all 84 endpoints with curl, using parameterized domain and auth tokens.
+# OneGoodArea API Test Suite  (AR-849: dynamic endpoints)
+#
+# Discovers and tests the live API by generating a plan from $DOMAIN/docs/json
+# (the OpenAPI document Fastify builds from the Zod route schemas) merged with
+# the curated scripts/api-test-manifest.json, then running every endpoint with
+# curl. No endpoint list is hardcoded here — add/adjust routes in the manifest
+# or they are auto-caught from OpenAPI.
 #
 # Usage:
 #   ./scripts/api-test-suite.sh DOMAIN [API_KEY] [SESSION_COOKIE] [CRON_SECRET]
@@ -19,6 +23,9 @@
 #   OGA_ADMIN_SESSION_TOKEN  - Admin bridge JWT for a superuser (Bearer)
 #   OGA_CRON_SECRET          - CRON_SECRET Bearer token
 #
+# In a container (make scripts-api-test-suite) this also regenerates the plan
+# via node first; on a host without node it falls back to the container runner.
+#
 ################################################################################
 
 # NOTE: do NOT set -e here. This script is safe to `source` (the final block
@@ -26,6 +33,10 @@
 # persist into the caller's shell and abort it on the first non-zero command —
 # including the non-zero `return` on a failing run. The suite is designed to
 # run every endpoint and report, so an early abort is unwanted anyway.
+
+# Resolve own location so cwd does not matter (host checkout or container /work).
+SUITE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SUITE_DIR/.." && pwd)"
 
 # === Configuration ===
 DOMAIN="${1:-localhost:8080}"
@@ -60,12 +71,12 @@ test_endpoint() {
   local auth=$3
   local body=$4
   local description=$5
-  
+
   TOTAL=$((TOTAL + 1))
-  
+
   # Build curl command
   local cmd="curl -s -w '\n%{http_code}' -X $method '$DOMAIN$path'"
-  
+
   case $auth in
     "API")
       if [ -z "$API_KEY" ]; then
@@ -100,17 +111,17 @@ test_endpoint() {
       cmd="$cmd -H 'Authorization: Bearer $CRON_SECRET'"
       ;;
   esac
-  
+
   cmd="$cmd -H 'Content-Type: application/json'"
-  
+
   if [ -n "$body" ]; then
     cmd="$cmd -d '$body'"
   fi
-  
+
   # Execute and capture status
   local output=$(eval "$cmd")
   local http_code=$(echo "$output" | tail -n 1)
-  
+
   # Check for success (2xx) or known error (4xx)
   if [[ $http_code =~ ^[24] ]]; then
     echo -e "${GREEN}✓ $http_code${NC} $method $path ${BLUE}($auth)${NC}"
@@ -126,154 +137,48 @@ print_section() {
   echo -e "${BLUE}=== $1 ===${NC}"
 }
 
-# === Tests ===
+# Generate the plan from $DOMAIN/docs/json + the curated manifest.
+# Prefers a local node; falls back to the container runner (make scripts-run)
+# when node is unavailable on the host.
+generate_plan() {
+  mkdir -p "$REPO_ROOT/.artifacts"
+  if command -v node >/dev/null 2>&1; then
+    ( cd "$REPO_ROOT" && DOMAIN="$DOMAIN" node scripts/gen-api-test-plan.mjs )
+    return $?
+  fi
+  if command -v make >/dev/null 2>&1 && command -v docker >/dev/null 2>&1; then
+    ( cd "$REPO_ROOT" && DOMAIN="$DOMAIN" make scripts-run SCRIPT=gen-api-test-plan.mjs )
+    return $?
+  fi
+  echo -e "${RED}ERROR${NC}: node not found; install node or docker+make to generate the plan" >&2
+  return 1
+}
+
+# === Run ===
 
 echo -e "${BLUE}OneGoodArea API Test Suite${NC}"
 echo "Domain: $DOMAIN"
 echo "Auth tokens: API=$([ -n "$API_KEY" ] && echo "✓" || echo "✗") Session=$([ -n "$SESSION_TOKEN" ] && echo "✓" || echo "✗") Admin=$([ -n "$ADMIN_SESSION" ] && echo "✓" || echo "✗") CRON=$([ -n "$CRON_SECRET" ] && echo "✓" || echo "✗")"
 
-print_section "Health & Meta"
-test_endpoint "GET" "/health" "Public" "" "Liveness probe"
-test_endpoint "GET" "/v1/meta" "Public" "" "Service metadata"
-
-print_section "Signals (3)"
-test_endpoint "GET" "/v1/area?postcode=SW1A1AA" "API" "" "Get area profile"
-test_endpoint "GET" "/v1/signals/deprivation?area=SW1A1AA" "API" "" "Get signal category"
-test_endpoint "GET" "/v1/areas?signal=crime&country=England" "API" "" "Cross-area query"
-
-print_section "Scores (1)"
-test_endpoint "POST" "/v1/score" "API" '{"area":"SW1A1AA","preset":"moving"}' "Score an area"
-
-print_section "Monitor Portfolio (7) [OGA_SIGNALS_API=true]"
-test_endpoint "POST" "/v1/portfolios" "API" '{"name":"Test Portfolio"}' "Create portfolio"
-test_endpoint "GET" "/v1/portfolios" "API" "" "List portfolios"
-test_endpoint "GET" "/v1/portfolios/pf_test123" "API" "" "Get portfolio (will 404)"
-test_endpoint "POST" "/v1/portfolios/pf_test123/areas" "API" '{"postcodes":["SW1A1AA"]}' "Add areas to portfolio"
-test_endpoint "POST" "/v1/portfolios/pf_test123/enrich" "API" "" "Enrich portfolio"
-test_endpoint "POST" "/v1/portfolios/pf_test123/changes" "API" "" "Detect changes"
-test_endpoint "DELETE" "/v1/portfolios/pf_test123" "API" "" "Delete portfolio"
-
-print_section "Intelligence (4) [OGA_SIGNALS_API=true]"
-test_endpoint "POST" "/v1/query" "API" '{"question":"Find areas with high crime"}' "Query (NL)"
-test_endpoint "POST" "/v1/peers" "API" '{"area":"SW1A1AA"}' "Find peers (k-NN)"
-test_endpoint "POST" "/v1/insights" "API" '{"area":"SW1A1AA"}' "Anomaly screening"
-test_endpoint "POST" "/v1/forecast" "API" '{"area":"SW1A1AA","signal":"deprivation"}' "Forecast"
-
-print_section "Caller (1)"
-test_endpoint "GET" "/v1/me" "API" "" "Get caller (API key)"
-
-print_section "Webhooks (3)"
-test_endpoint "POST" "/v1/webhooks" "API" '{"event":"signal.changed","url":"https://example.com/webhook"}' "Create webhook"
-test_endpoint "GET" "/v1/webhooks" "API" "" "List webhooks"
-test_endpoint "DELETE" "/v1/webhooks/wh_123" "API" "" "Delete webhook"
-
-print_section "Orgs: CRUD (4)"
-test_endpoint "POST" "/v1/orgs" "API" '{"name":"Test Org"}' "Create org"
-test_endpoint "GET" "/v1/orgs" "API" "" "List orgs"
-test_endpoint "GET" "/v1/orgs/org_123" "API" "" "Get org"
-test_endpoint "PATCH" "/v1/orgs/org_123" "API" '{"name":"Updated"}' "Update org"
-
-print_section "Orgs: Members (3)"
-test_endpoint "GET" "/v1/orgs/org_123/members" "API" "" "List members"
-test_endpoint "POST" "/v1/orgs/org_123/members" "API" '{"email":"user@example.com","role":"member"}' "Invite member"
-test_endpoint "DELETE" "/v1/orgs/org_123/members/user_456" "API" "" "Remove member"
-
-print_section "Orgs: Bundles (5)"
-test_endpoint "POST" "/v1/orgs/org_123/bundles" "API" '{"name":"Bundle","signals":["crime","deprivation"]}' "Create bundle"
-test_endpoint "GET" "/v1/orgs/org_123/bundles" "API" "" "List bundles"
-test_endpoint "GET" "/v1/orgs/org_123/bundles/bnd_123" "API" "" "Get bundle"
-test_endpoint "PATCH" "/v1/orgs/org_123/bundles/bnd_123" "API" '{"name":"Updated"}' "Update bundle"
-test_endpoint "DELETE" "/v1/orgs/org_123/bundles/bnd_123" "API" "" "Delete bundle"
-
-print_section "Orgs: Presets (5)"
-test_endpoint "POST" "/v1/orgs/org_123/presets" "API" '{"name":"Preset","weights":{"crime":0.5}}' "Create preset"
-test_endpoint "GET" "/v1/orgs/org_123/presets" "API" "" "List presets"
-test_endpoint "GET" "/v1/orgs/org_123/presets/pre_123" "API" "" "Get preset"
-test_endpoint "PATCH" "/v1/orgs/org_123/presets/pre_123" "API" '{"name":"Updated"}' "Update preset"
-test_endpoint "DELETE" "/v1/orgs/org_123/presets/pre_123" "API" "" "Delete preset"
-
-print_section "Orgs: Methodology (3)"
-test_endpoint "GET" "/v1/orgs/org_123/methodology" "API" "" "Get methodology pin"
-test_endpoint "PUT" "/v1/orgs/org_123/methodology" "API" '{"engine_version":"1.0.0"}' "Pin methodology"
-test_endpoint "DELETE" "/v1/orgs/org_123/methodology" "API" "" "Clear methodology"
-
-print_section "Orgs: Cohorts (5)"
-test_endpoint "POST" "/v1/orgs/org_123/cohorts" "API" '{"name":"Cohort","criteria":{}}' "Create cohort"
-test_endpoint "GET" "/v1/orgs/org_123/cohorts" "API" "" "List cohorts"
-test_endpoint "GET" "/v1/orgs/org_123/cohorts/coh_123" "API" "" "Get cohort"
-test_endpoint "PATCH" "/v1/orgs/org_123/cohorts/coh_123" "API" '{"name":"Updated"}' "Update cohort"
-test_endpoint "DELETE" "/v1/orgs/org_123/cohorts/coh_123" "API" "" "Delete cohort"
-
-print_section "Stripe (5)"
-test_endpoint "POST" "/stripe/webhook" "Public" '{"type":"charge.succeeded","data":{}}' "Stripe webhook"
-test_endpoint "POST" "/stripe/portal" "Session" "" "Create portal session"
-test_endpoint "POST" "/stripe/cancel" "Session" "" "Cancel subscription"
-test_endpoint "POST" "/stripe/checkout" "Session" '{"plan":"pro"}' "Create checkout"
-test_endpoint "POST" "/stripe/addon-checkout" "Session" '{"addon":"mcp"}' "Create addon checkout"
-
-print_section "Auth: Credentials (4) [Public, IP Rate-Limited]"
-test_endpoint "POST" "/auth/register" "Public" '{"email":"test@example.com","password":"Test1234"}' "Register"
-test_endpoint "POST" "/auth/resend-verification" "Public" '{"email":"test@example.com"}' "Resend verification"
-test_endpoint "POST" "/auth/forgot-password" "Public" '{"email":"test@example.com"}' "Forgot password"
-test_endpoint "POST" "/auth/reset-password" "Public" '{"token":"xyz","password":"NewPass1234"}' "Reset password"
-
-print_section "Account Dashboard: API Usage (4)"
-test_endpoint "GET" "/usage" "Session" "" "Get usage dashboard"
-test_endpoint "GET" "/keys/usage" "Session" "" "Get key usage"
-test_endpoint "GET" "/keys" "Session" "" "List API keys"
-test_endpoint "POST" "/keys" "Session" '{"name":"Test Key"}' "Create API key"
-
-print_section "Account Dashboard: Settings (3)"
-test_endpoint "GET" "/settings/subscription" "Session" "" "Get subscription"
-test_endpoint "POST" "/settings/password" "Session" '{"currentPassword":"old","newPassword":"New1234"}' "Change password"
-test_endpoint "DELETE" "/settings/delete-account" "Session" "" "Delete account"
-
-print_section "Account Dashboard: API Keys & Watchlist (2)"
-test_endpoint "DELETE" "/keys/key_123" "Session" "" "Revoke API key"
-test_endpoint "GET" "/watchlist" "Session" "" "List watchlist"
-
-print_section "Account Dashboard: Watchlist (2)"
-test_endpoint "POST" "/watchlist" "Session" '{"postcode":"SW1A1AA","label":"My Area"}' "Save area"
-test_endpoint "DELETE" "/watchlist/area_123" "Session" "" "Remove area"
-
-print_section "Public: Tracking (1)"
-test_endpoint "POST" "/track" "Public" '{"path":"/report","referrer":"https://google.com"}' "Track pageview"
-# AR-379: /widget removed. Cache infrastructure deleted. See plan/030.
-
-print_section "Cron (1)"
-test_endpoint "GET" "/cron/rescore?dry_run=true&limit=5" "CRON" "" "Rescore (dry run)"
-
-print_section "Me: Activity (1)"
-test_endpoint "GET" "/me/activity" "Session" "" "My activity log"
-
-print_section "Me: User Info (2)"
-test_endpoint "GET" "/me/user-type" "Session" "" "My user type"
-test_endpoint "GET" "/me/tier" "Session" "" "My tier"
-
-print_section "Me: Webhooks (4)"
-test_endpoint "GET" "/me/webhooks" "Session" "" "List my webhooks"
-test_endpoint "POST" "/me/webhooks" "Session" '{"url":"https://example.com/hook","events":["signal.changed"]}' "Create my webhook"
-test_endpoint "DELETE" "/me/webhooks/wh_123" "Session" "" "Delete my webhook"
-test_endpoint "POST" "/me/webhooks/wh_123/rotate-secret" "Session" "" "Rotate webhook secret"
-
-print_section "Me: Portfolios (1)"
-test_endpoint "GET" "/me/portfolios" "Session" "" "List my portfolios"
-
-print_section "Admin (8) [Requires Superuser]"
-ADMIN_SESSION="${OGA_ADMIN_SESSION_TOKEN:-}"
-if [ -n "$ADMIN_SESSION" ]; then
-  test_endpoint "GET" "/admin/analytics" "Admin" "" "Admin analytics"
-  test_endpoint "GET" "/admin/traffic-analytics" "Admin" "" "Admin traffic analytics"
-  test_endpoint "GET" "/admin/audience" "Admin" "" "Admin audience"
-  test_endpoint "GET" "/admin/usage" "Admin" "" "Admin usage"
-  test_endpoint "GET" "/admin/revenue" "Admin" "" "Admin revenue"
-  test_endpoint "GET" "/admin/mcp-adoption" "Admin" "" "Admin MCP adoption"
-  test_endpoint "GET" "/admin/training-corpus" "Admin" "" "Admin training corpus"
-  test_endpoint "POST" "/admin/users/user_123/tier" "Admin" '{"tier":"business"}' "Set user tier"
-else
-  echo -e "${YELLOW}⊘ SKIPPED${NC} Admin endpoints - missing OGA_ADMIN_SESSION_TOKEN"
-  TOTAL=$((TOTAL + 8))
+print_section "Generate Plan"
+if ! generate_plan; then
+  echo -e "${RED}ERROR${NC}: plan generation failed" >&2
+  RESULT=1
+  if [ "${BASH_SOURCE[0]}" != "$0" ]; then return "$RESULT"; fi
+  exit "$RESULT"
 fi
+
+PLAN_SH="$REPO_ROOT/.artifacts/api-test-plan.sh"
+if [ ! -f "$PLAN_SH" ]; then
+  echo -e "${RED}ERROR${NC}: generated plan not found at $PLAN_SH" >&2
+  RESULT=1
+  if [ "${BASH_SOURCE[0]}" != "$0" ]; then return "$RESULT"; fi
+  exit "$RESULT"
+fi
+
+# Source the generated plan; it issues print_section() + test_endpoint() calls.
+source "$PLAN_SH"
+
 # === Summary ===
 echo ""
 echo -e "${BLUE}=== Test Summary ===${NC}"
