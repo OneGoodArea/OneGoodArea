@@ -1,0 +1,106 @@
+{
+  "endpoints": {
+    "GET /health": { "auth": "Public", "body": null, "description": "Liveness probe" },
+    "GET /v1/meta": { "auth": "Public", "body": null, "description": "Service metadata" },
+
+    "GET /v1/area?postcode=SW1A1AA": { "auth": "API", "body": null, "description": "Get area profile" },
+    "GET /v1/signals/{category}?area=SW1A1AA": { "path": "/v1/signals/deprivation?area=SW1A1AA", "auth": "API", "body": null, "description": "Get signal category" },
+    "GET /v1/areas?signal=crime&country=England": { "auth": "API", "body": null, "description": "Cross-area query" },
+
+    "POST /v1/score": { "auth": "API", "body": { "area": "SW1A1AA", "preset": "moving" }, "description": "Score an area" },
+
+    "POST /v1/portfolios": { "auth": "API", "body": { "name": "Test Portfolio" }, "description": "Create portfolio" },
+    "GET /v1/portfolios": { "auth": "API", "body": null, "description": "List portfolios" },
+    "GET /v1/portfolios/pf_test123": { "auth": "API", "body": null, "description": "Get portfolio (will 404)" },
+    "POST /v1/portfolios/pf_test123/areas": { "auth": "API", "body": { "postcodes": ["SW1A1AA"] }, "description": "Add areas to portfolio" },
+    "POST /v1/portfolios/pf_test123/enrich": { "auth": "API", "body": null, "description": "Enrich portfolio" },
+    "POST /v1/portfolios/pf_test123/changes": { "auth": "API", "body": null, "description": "Detect changes" },
+    "DELETE /v1/portfolios/pf_test123": { "auth": "API", "body": null, "description": "Delete portfolio" },
+
+    "POST /v1/query": { "auth": "API", "body": { "question": "Find areas with high crime" }, "description": "Query (NL)" },
+    "POST /v1/peers": { "auth": "API", "body": { "area": "SW1A1AA" }, "description": "Find peers (k-NN)" },
+    "POST /v1/insights": { "auth": "API", "body": { "area": "SW1A1AA" }, "description": "Anomaly screening" },
+    "POST /v1/forecast": { "auth": "API", "body": { "area": "SW1A1AA", "signal": "deprivation" }, "description": "Forecast" },
+
+    "GET /v1/me": { "auth": "API", "body": null, "description": "Get caller (API key)" },
+
+    "POST /v1/webhooks": { "auth": "API", "body": { "event": "signal.changed", "url": "https://example.com/webhook" }, "description": "Create webhook" },
+    "GET /v1/webhooks": { "auth": "API", "body": null, "description": "List webhooks" },
+    "DELETE /v1/webhooks/wh_123": { "auth": "API", "body": null, "description": "Delete webhook" },
+
+    "POST /v1/orgs": { "auth": "API", "body": { "name": "Test Org" }, "description": "Create org" },
+    "GET /v1/orgs": { "auth": "API", "body": null, "description": "List orgs" },
+    "GET /v1/orgs/org_123": { "auth": "API", "body": null, "description": "Get org" },
+    "PATCH /v1/orgs/org_123": { "auth": "API", "body": { "name": "Updated" }, "description": "Update org" },
+
+    "GET /v1/orgs/org_123/members": { "auth": "API", "body": null, "description": "List members" },
+    "POST /v1/orgs/org_123/members": { "auth": "API", "body": { "email": "user@example.com", "role": "member" }, "description": "Invite member" },
+    "DELETE /v1/orgs/org_123/members/user_456": { "auth": "API", "body": null, "description": "Remove member" },
+
+    "POST /v1/orgs/org_123/bundles": { "auth": "API", "body": { "name": "Bundle", "signals": ["crime", "deprivation"] }, "description": "Create bundle" },
+    "GET /v1/orgs/org_123/bundles": { "auth": "API", "body": null, "description": "List bundles" },
+    "GET /v1/orgs/org_123/bundles/bnd_123": { "auth": "API", "body": null, "description": "Get bundle" },
+    "PATCH /v1/orgs/org_123/bundles/bnd_123": { "auth": "API", "body": { "name": "Updated" }, "description": "Update bundle" },
+    "DELETE /v1/orgs/org_123/bundles/bnd_123": { "auth": "API", "body": null, "description": "Delete bundle" },
+
+    "POST /v1/orgs/org_123/presets": { "auth": "API", "body": { "name": "Preset", "weights": { "crime": 0.5 } }, "description": "Create preset" },
+    "GET /v1/orgs/org_123/presets": { "auth": "API", "body": null, "description": "List presets" },
+    "GET /v1/orgs/org_123/presets/pre_123": { "auth": "API", "body": null, "description": "Get preset" },
+    "PATCH /v1/orgs/org_123/presets/pre_123": { "auth": "API", "body": { "name": "Updated" }, "description": "Update preset" },
+    "DELETE /v1/orgs/org_123/presets/pre_123": { "auth": "API", "body": null, "description": "Delete preset" },
+
+    "GET /v1/orgs/org_123/methodology": { "auth": "API", "body": null, "description": "Get methodology pin" },
+    "PUT /v1/orgs/org_123/methodology": { "auth": "API", "body": { "engine_version": "1.0.0" }, "description": "Pin methodology" },
+    "DELETE /v1/orgs/org_123/methodology": { "auth": "API", "body": null, "description": "Clear methodology" },
+
+    "POST /stripe/webhook": { "auth": "Public", "body": { "type": "charge.succeeded", "data": {} }, "description": "Stripe webhook" },
+    "POST /stripe/portal": { "auth": "Session", "body": null, "description": "Create portal session" },
+    "POST /stripe/cancel": { "auth": "Session", "body": null, "description": "Cancel subscription" },
+    "POST /stripe/checkout": { "auth": "Session", "body": { "plan": "pro" }, "description": "Create checkout" },
+    "POST /stripe/addon-checkout": { "auth": "Session", "body": { "addon": "mcp" }, "description": "Create addon checkout" },
+
+    "POST /auth/register": { "auth": "Public", "body": { "email": "test@example.com", "password": "Test1234" }, "description": "Register" },
+    "POST /auth/resend-verification": { "auth": "Public", "body": { "email": "test@example.com" }, "description": "Resend verification" },
+    "POST /auth/forgot-password": { "auth": "Public", "body": { "email": "test@example.com" }, "description": "Forgot password" },
+    "POST /auth/reset-password": { "auth": "Public", "body": { "token": "xyz", "password": "NewPass1234" }, "description": "Reset password" },
+
+    "GET /usage": { "auth": "Session", "body": null, "description": "Get usage dashboard" },
+    "GET /keys/usage": { "auth": "Session", "body": null, "description": "Get key usage" },
+    "GET /keys": { "auth": "Session", "body": null, "description": "List API keys" },
+    "POST /keys": { "auth": "Session", "body": { "name": "Test Key" }, "description": "Create API key" },
+
+    "GET /settings/subscription": { "auth": "Session", "body": null, "description": "Get subscription" },
+    "POST /settings/password": { "auth": "Session", "body": { "currentPassword": "old", "newPassword": "New1234" }, "description": "Change password" },
+    "DELETE /settings/delete-account": { "auth": "Session", "body": null, "description": "Delete account" },
+
+    "DELETE /keys/key_123": { "auth": "Session", "body": null, "description": "Revoke API key" },
+    "GET /watchlist": { "auth": "Session", "body": null, "description": "List watchlist" },
+
+    "POST /watchlist": { "auth": "Session", "body": { "postcode": "SW1A1AA", "label": "My Area" }, "description": "Save area" },
+    "DELETE /watchlist/area_123": { "auth": "Session", "body": null, "description": "Remove area" },
+
+    "POST /track": { "auth": "Public", "body": { "path": "/report", "referrer": "https://google.com" }, "description": "Track pageview" },
+
+    "GET /cron/rescore?dry_run=true&limit=5": { "auth": "CRON", "body": null, "description": "Rescore (dry run)" },
+
+    "GET /me/activity": { "auth": "Session", "body": null, "description": "My activity log" },
+    "GET /me/user-type": { "auth": "Session", "body": null, "description": "My user type" },
+    "GET /me/tier": { "auth": "Session", "body": null, "description": "My tier" },
+
+    "GET /me/webhooks": { "auth": "Session", "body": null, "description": "List my webhooks" },
+    "POST /me/webhooks": { "auth": "Session", "body": { "url": "https://example.com/hook", "events": ["signal.changed"] }, "description": "Create my webhook" },
+    "DELETE /me/webhooks/wh_123": { "auth": "Session", "body": null, "description": "Delete my webhook" },
+    "POST /me/webhooks/wh_123/rotate-secret": { "auth": "Session", "body": null, "description": "Rotate webhook secret" },
+
+    "GET /me/portfolios": { "auth": "Session", "body": null, "description": "List my portfolios" },
+
+    "GET /admin/analytics": { "auth": "Admin", "body": null, "description": "Admin analytics" },
+    "GET /admin/traffic-analytics": { "auth": "Admin", "body": null, "description": "Admin traffic analytics" },
+    "GET /admin/audience": { "auth": "Admin", "body": null, "description": "Admin audience" },
+    "GET /admin/usage": { "auth": "Admin", "body": null, "description": "Admin usage" },
+    "GET /admin/revenue": { "auth": "Admin", "body": null, "description": "Admin revenue" },
+    "GET /admin/mcp-adoption": { "auth": "Admin", "body": null, "description": "Admin MCP adoption" },
+    "GET /admin/training-corpus": { "auth": "Admin", "body": null, "description": "Admin training corpus" },
+    "POST /admin/users/user_123/tier": { "auth": "Admin", "body": { "tier": "business" }, "description": "Set user tier" }
+  }
+}

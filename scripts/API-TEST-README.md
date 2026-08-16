@@ -1,12 +1,46 @@
-# API Test Suite
+# API Test Suite (AR-849: dynamic endpoints)
 
-Complete curl-based test coverage for all 73 OneGoodArea API endpoints.
+Complete curl-based test coverage for **every** OneGoodArea API endpoint. The
+endpoint list is **not hardcoded**: the suite generates a plan at runtime from
+`$DOMAIN/docs/json` (the OpenAPI 3 document Fastify builds from the Zod route
+schemas) merged with the curated `scripts/api-test-manifest.json`. New routes are
+exercised automatically; refine them in the manifest over time.
 
 ## Usage
 
 ```bash
 ./scripts/api-test-suite.sh DOMAIN [API_KEY] [SESSION_TOKEN] [CRON_SECRET]
 ```
+
+### Containerized (recommended)
+
+```bash
+make scripts-api-test-suite
+# => runs the full suite inside node:22-alpine (generates the plan, then
+#    exercises every endpoint with curl). Forwards DOMAIN / OGA_* tokens.
+```
+
+This replaces the old generate-only target — it runs the **tests**, not just the
+plan generator.
+
+### Generate the plan only (inspection / CI)
+
+```bash
+make scripts-run SCRIPT=gen-api-test-plan.mjs
+# => writes .artifacts/api-test-plan.json + .artifacts/api-test-plan.sh
+```
+
+## How it works
+
+1. `generate_plan()` runs `scripts/gen-api-test-plan.mjs` (needs `node`; falls
+   back to the container runner if node is absent on the host).
+2. The generator fetches `$DOMAIN/docs/json`, merges it with the manifest, and
+   emits a sourceable bash include at `.artifacts/api-test-plan.sh`.
+3. The suite `source`s that file, which issues `print_section()` + `test_endpoint()`
+   calls — no JSON parsing / `jq` required.
+
+_Add or adjust endpoints in `scripts/api-test-manifest.json`; anything discovered
+in OpenAPI but missing from the manifest is auto-caught._
 
 ## Arguments
 
@@ -195,21 +229,12 @@ source scripts/setup-test-tokens.sh
 - **✗ CODE** — Unexpected error (5xx)
 - **⊘ SKIPPED** — Auth token missing; endpoint cannot be tested
 
-## Test Categories (73 endpoints)
+## Test Categories
 
-1. **Health & Meta** (2) — liveness & service info
-2. **Signals** (3) — area data, cross-area queries
-3. **Scores** (1) — composite scoring
-4. **Monitor** (7) — portfolio CRUD + enrichment
-5. **Intelligence** (4) — query, peers, insights, forecast
-6. **Orgs** (25) — org management, bundles, presets, methodology, cohorts
-7. **Legacy Report API** (6) — report generation, history
-8. **Webhooks** (3) — subscription CRUD
-9. **Stripe** (5) — payments & subscriptions
-10. **Auth** (4) — register, password reset
-11. **Account Dashboard** (9) — API keys, usage, settings, watchlist
-12. **Tracking & Widget** (3) — analytics, cached embeds
-13. **Cron** (1) — time-series re-scoring
+The suite currently exercises **113 endpoints** (79 curated in the manifest + 34
+auto-caught from OpenAPI). Counts are printed in the summary and depend on the
+live `$DOMAIN`. Groupings (section headings) are derived from the path and can be
+overridden per endpoint via the manifest's `group` field.
 
 ## Notes
 
