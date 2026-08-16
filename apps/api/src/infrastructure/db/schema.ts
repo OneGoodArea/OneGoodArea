@@ -61,10 +61,8 @@ export const MIGRATIONS: Migration[] = [
         user_type TEXT NOT NULL DEFAULT 'user'
           CHECK (user_type IN ('user','engineering','admin','superuser'))
       )`,
-      `DO $$ BEGIN
-        ALTER TABLE users ADD COLUMN IF NOT EXISTS user_type TEXT NOT NULL DEFAULT 'user'
-          CHECK (user_type IN ('user','engineering','admin','superuser'));
-      END $$;`
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS user_type TEXT NOT NULL DEFAULT 'user'
+        CHECK (user_type IN ('user','engineering','admin','superuser'));`
     ],
   },
   {
@@ -672,56 +670,29 @@ export const MIGRATIONS: Migration[] = [
     name: "signal_index_cleanup",
     statements: [
       // AR-811: Drop redundant index fully covered by idx_signal_values_lsoa_signal.
-      // Idempotent: DO block swallows undefined_object error on fresh DBs.
-      `DO $$ BEGIN
-        DROP INDEX IF EXISTS idx_signal_values_geo;
-      END $$`,
+      // Idempotent: DROP INDEX IF EXISTS is natively idempotent.
+      `DROP INDEX IF EXISTS idx_signal_values_geo;`,
     ],
   },
   {
     name: "signal_fk_constraints",
     statements: [
       // AR-809: FK constraints on signal tables + drop dead column from signal_timeseries.
-      // Idempotent: DO blocks swallow duplicate_object / duplicate_table errors.
-      `DO $$ BEGIN
-        ALTER TABLE signal_values ADD CONSTRAINT fk_signal_values_signal_key
-          FOREIGN KEY (signal_key) REFERENCES signals(key) NOT VALID;
-      EXCEPTION WHEN duplicate_object THEN NULL;
-      END $$`,
-      `DO $$ BEGIN
-        ALTER TABLE signal_timeseries ADD CONSTRAINT fk_signal_timeseries_signal_key
-          FOREIGN KEY (signal_key) REFERENCES signals(key) NOT VALID;
-      EXCEPTION WHEN duplicate_object THEN NULL;
-      END $$`,
-      `DO $$ BEGIN
-        ALTER TABLE signal_percentiles ADD CONSTRAINT fk_signal_percentiles_signal_key
-          FOREIGN KEY (signal_key) REFERENCES signals(key) NOT VALID;
-      EXCEPTION WHEN duplicate_object THEN NULL;
-      END $$`,
-      `DO $$ BEGIN
-        ALTER TABLE signal_values VALIDATE CONSTRAINT fk_signal_values_signal_key;
-      EXCEPTION WHEN undefined_object THEN NULL;
-      END $$`,
-      `DO $$ BEGIN
-        ALTER TABLE signal_timeseries VALIDATE CONSTRAINT fk_signal_timeseries_signal_key;
-      EXCEPTION WHEN undefined_object THEN NULL;
-      END $$`,
-      `DO $$ BEGIN
-        ALTER TABLE signal_percentiles VALIDATE CONSTRAINT fk_signal_percentiles_signal_key;
-      EXCEPTION WHEN undefined_object THEN NULL;
-      END $$`,
-      `DO $$ BEGIN
-        ALTER TABLE signal_values ADD CONSTRAINT fk_signal_values_source_snapshot
-          FOREIGN KEY (source_snapshot_id) REFERENCES source_snapshots(id) NOT VALID;
-      EXCEPTION WHEN duplicate_object THEN NULL;
-      END $$`,
-      `DO $$ BEGIN
-        ALTER TABLE signal_values VALIDATE CONSTRAINT fk_signal_values_source_snapshot;
-      EXCEPTION WHEN undefined_object THEN NULL;
-      END $$`,
-      `DO $$ BEGIN
-        ALTER TABLE signal_timeseries DROP COLUMN IF EXISTS source_snapshot_id;
-      END $$`,
+      // NOT VALID + VALIDATE pattern avoids locks; IF NOT EXISTS not supported for FK.
+      // Proxy-safe: no DO blocks (which break semicolon splitting).
+      `ALTER TABLE signal_values ADD CONSTRAINT fk_signal_values_signal_key
+        FOREIGN KEY (signal_key) REFERENCES signals(key) NOT VALID;`,
+      `ALTER TABLE signal_timeseries ADD CONSTRAINT fk_signal_timeseries_signal_key
+        FOREIGN KEY (signal_key) REFERENCES signals(key) NOT VALID;`,
+      `ALTER TABLE signal_percentiles ADD CONSTRAINT fk_signal_percentiles_signal_key
+        FOREIGN KEY (signal_key) REFERENCES signals(key) NOT VALID;`,
+      `ALTER TABLE signal_values VALIDATE CONSTRAINT fk_signal_values_signal_key;`,
+      `ALTER TABLE signal_timeseries VALIDATE CONSTRAINT fk_signal_timeseries_signal_key;`,
+      `ALTER TABLE signal_percentiles VALIDATE CONSTRAINT fk_signal_percentiles_signal_key;`,
+      `ALTER TABLE signal_values ADD CONSTRAINT fk_signal_values_source_snapshot
+        FOREIGN KEY (source_snapshot_id) REFERENCES source_snapshots(id) NOT VALID;`,
+      `ALTER TABLE signal_values VALIDATE CONSTRAINT fk_signal_values_source_snapshot;`,
+      `ALTER TABLE signal_timeseries DROP COLUMN IF EXISTS source_snapshot_id;`,
     ],
   },
   {
@@ -748,34 +719,17 @@ export const MIGRATIONS: Migration[] = [
       // AR-810: FK constraints from peer_assignments + geo_lookup to geo_entities,
       // plus the geo_type discriminator column geo_lookup needs to reference the
       // composite PK. Backfill is DDL-only (DEFAULT 'lsoa'), no runtime DML.
+      // Proxy-safe: no DO blocks (which break semicolon splitting).
       `ALTER TABLE geo_lookup ADD COLUMN IF NOT EXISTS geo_type TEXT NOT NULL DEFAULT 'lsoa'`,
-      `DO $$ BEGIN
-        ALTER TABLE peer_assignments ADD CONSTRAINT fk_peer_geo
-          FOREIGN KEY (geo_type, geo_code) REFERENCES geo_entities(geo_type, geo_code) NOT VALID;
-      EXCEPTION WHEN duplicate_object THEN NULL;
-      END $$`,
-      `DO $$ BEGIN
-        ALTER TABLE peer_assignments ADD CONSTRAINT fk_peer_peer_geo
-          FOREIGN KEY (geo_type, peer_geo_code) REFERENCES geo_entities(geo_type, geo_code) NOT VALID;
-      EXCEPTION WHEN duplicate_object THEN NULL;
-      END $$`,
-      `DO $$ BEGIN
-        ALTER TABLE geo_lookup ADD CONSTRAINT fk_geo_lookup_entity
-          FOREIGN KEY (geo_type, lsoa_code) REFERENCES geo_entities(geo_type, geo_code) NOT VALID;
-      EXCEPTION WHEN duplicate_object THEN NULL;
-      END $$`,
-      `DO $$ BEGIN
-        ALTER TABLE peer_assignments VALIDATE CONSTRAINT fk_peer_geo;
-      EXCEPTION WHEN undefined_object THEN NULL;
-      END $$`,
-      `DO $$ BEGIN
-        ALTER TABLE peer_assignments VALIDATE CONSTRAINT fk_peer_peer_geo;
-      EXCEPTION WHEN undefined_object THEN NULL;
-      END $$`,
-      `DO $$ BEGIN
-        ALTER TABLE geo_lookup VALIDATE CONSTRAINT fk_geo_lookup_entity;
-      EXCEPTION WHEN undefined_object THEN NULL;
-      END $$`,
+      `ALTER TABLE peer_assignments ADD CONSTRAINT fk_peer_geo
+        FOREIGN KEY (geo_type, geo_code) REFERENCES geo_entities(geo_type, geo_code) NOT VALID;`,
+      `ALTER TABLE peer_assignments ADD CONSTRAINT fk_peer_peer_geo
+        FOREIGN KEY (geo_type, peer_geo_code) REFERENCES geo_entities(geo_type, geo_code) NOT VALID;`,
+      `ALTER TABLE geo_lookup ADD CONSTRAINT fk_geo_lookup_entity
+        FOREIGN KEY (geo_type, lsoa_code) REFERENCES geo_entities(geo_type, geo_code) NOT VALID;`,
+      `ALTER TABLE peer_assignments VALIDATE CONSTRAINT fk_peer_geo;`,
+      `ALTER TABLE peer_assignments VALIDATE CONSTRAINT fk_peer_peer_geo;`,
+      `ALTER TABLE geo_lookup VALIDATE CONSTRAINT fk_geo_lookup_entity;`,
     ],
   },
 
