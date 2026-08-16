@@ -22,7 +22,7 @@ SCRIPTS_ENV_VARS  ?= DOMAIN OGA_API_KEY OGA_SESSION_TOKEN OGA_CRON_SECRET OGA_LO
 scripts-env-flags = $(foreach v,$(SCRIPTS_ENV_VARS),$(if $(filter undefined,$(origin $(v))),,-e $(v)))
 
 .PHONY: scripts-run
-scripts-run: ## Run scripts/<SCRIPT>.mjs in node:22-alpine (SCRIPT=name.mjs [ARGS=...])
+scripts-run: ## Run a scripts/<SCRIPT>.mjs (repo scripts/ dir) in node:22-alpine (SCRIPT=name.mjs [ARGS=...])
 	@test -n "$(SCRIPT)" || { echo "usage: make scripts-run SCRIPT=<name>.mjs [ARGS='...']"; exit 1; }
 	@test -f "$(SCRIPTS_MOUNT_SRC)/$(SCRIPT)" || { echo "scripts/$(SCRIPT) not found"; exit 1; }
 	$(CTR_ENGINE) run --rm --network host \
@@ -38,7 +38,7 @@ scripts-run: ## Run scripts/<SCRIPT>.mjs in node:22-alpine (SCRIPT=name.mjs [ARG
 # lacks bash/curl, so they are installed on the fly before the run.
 #   make scripts-api-test-suite
 .PHONY: scripts-api-test-suite
-scripts-api-test-suite: ## Run the full API test suite in node:22-alpine (container)
+scripts-api-test-suite: ## Run scripts/api-test-suite.sh (full suite) in node:22-alpine (container)
 	$(CTR_ENGINE) run --rm --network host \
 	  -v "$(CURDIR)/scripts:/work/scripts:ro" \
 	  -v "$(CURDIR)/.artifacts:/work/.artifacts:rw" \
