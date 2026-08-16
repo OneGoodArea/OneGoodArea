@@ -8,7 +8,7 @@ You operate in a strict **Specification-Driven Development** environment. Planni
 2. **Directory Isolation:** Production code lives in `src/`, test code lives in `test/`. Never mix them.
 3. **Conciseness:** Documentation, Jira descriptions, PRs, and plans must be succinct and direct. Avoid fluff.
 4. **Safety First:** Ask explicit confirmation before any destructive action (git reset/force-push, file deletion, out-of-bounds edits).
-
+1. **Code Comments:** DO NOT CREATE them, unless strictly needed, when code is not clear enough, otherwise do not comment code
 ---
 
 ## Modular Skills Index
