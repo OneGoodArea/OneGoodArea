@@ -3,6 +3,7 @@
 **Branch (plan phase):** `plan/AR-458-playground-tests`
 **Implementation branch:** `test/AR-458-playground-rate-limit-tests` (created from this plan)
 **Depends on:** AR-464 (DONE) — 3-tier playground rate limiter `checkPlaygroundLimits`.
+**Status:** implemented (covered by worktree `ar-817-amenities-warm-cache`, WIP)
 
 ## Goal
 
