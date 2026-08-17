@@ -25,10 +25,18 @@ describe("db migrate", () => {
     expect(applied.map((a) => a.name)).toEqual(MIGRATIONS.map((m) => m.name));
   });
 
-  it("every DDL statement is idempotent (safe to re-run)", () => {
+it("every DDL statement is idempotent (safe to re-run)", () => {
     for (const migration of MIGRATIONS) {
+      // AR-809/AR-810: FK ADD CONSTRAINT has no IF NOT EXISTS, so each bare ADD is
+      // guarded by a DROP CONSTRAINT IF EXISTS earlier in the same migration.
+      const dropped = new Set(
+        migration.statements
+          .map((s) => /DROP CONSTRAINT IF EXISTS\s+(\w+)/i.exec(s)?.[1])
+          .filter((n): n is string => Boolean(n)),
+      );
       for (const statement of migration.statements) {
         const s = statement.toUpperCase();
+        const addName = /ADD CONSTRAINT\s+(\w+)\s+FOREIGN KEY/i.exec(statement)?.[1];
         const idempotent =
           s.includes("IF NOT EXISTS") || // CREATE TABLE / CREATE INDEX / ADD COLUMN
           s.includes("IF EXISTS") || // AR-331: DROP TABLE IF EXISTS / ALTER TABLE IF EXISTS / ALTER INDEX IF EXISTS
@@ -36,7 +44,9 @@ describe("db migrate", () => {
           s.includes("SET DEFAULT") || // ALTER COLUMN ... SET DEFAULT is a no-op once the default matches (subscriptions reconciliation)
           s.includes("CREATE OR REPLACE VIEW") || // AR-375: view DDL is idempotent by definition
           s.includes("DO $$") || // AR-809: PL/pgSQL blocks with EXCEPTION handler are idempotent (catch + swallow errors)
-          /ON CONFLICT[\s\S]*DO NOTHING/.test(s) || // backfill INSERTs (target-free OR target-keyed e.g. ON CONFLICT (a,b) DO NOTHING)
+          (addName !== undefined && dropped.has(addName)) || // AR-809/AR-810: ADD CONSTRAINT preceded by an idempotent DROP CONSTRAINT IF EXISTS
+          s.includes("VALIDATE CONSTRAINT") || // AR-809/AR-810: re-validating an existing constraint is a no-op (runs after its ADD)
+          /ON CONFLICT[\s\S]*DO NOTHING/.test(s) || // backfill INSERTs (target-free or target-keyed e.g. ON CONFLICT (a,b) DO NOTHING)
           /(WHERE|AND) [A-Z_.]+ IS NULL/.test(s) || // backfill UPDATEs guarded by "not already done" predicate (AR-193/AR-408: alias-tolerant; column-agnostic)
           /AND NOT EXISTS \(SELECT/.test(s); // AR-312: self-healing backfills guarded by NOT EXISTS — no-op once the post-condition holds
         expect(idempotent, `non-idempotent statement: ${statement.slice(0, 70)}`).toBe(true);
