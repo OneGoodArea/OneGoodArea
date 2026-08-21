@@ -76,7 +76,7 @@ export default function TermsClient() {
 
       <LegalSection id="subscriptions" n={3} title="Subscriptions and payments">
         <LegalP>
-          OneGoodArea is offered as workflow packages. A free Developer tier
+          OneGoodArea is offered as workflow packages. A free Developer Sandbox
           is available for evaluation and prototyping and is not licensed
           for production, customer-facing, or revenue-generating use.
           Production access is provided under our paid packages. Current
@@ -134,7 +134,7 @@ export default function TermsClient() {
       <LegalSection id="api" n={5} title="API usage">
         <LegalP>
           API access is available on every plan, including the free
-          Developer tier. API keys are personal to your account and must not
+          Developer Sandbox. API keys are personal to your account and must not
           be shared or published publicly. You are responsible for all
           usage associated with your API keys.
         </LegalP>

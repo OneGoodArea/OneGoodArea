@@ -133,7 +133,7 @@ export const PLANS = {
     apiCallsPerMonth: 200, // AR-488: sized for the free-tier growth loop (was 35)
     priceId: null,
     apiAccess: true,
-    mcpAccess: true, // AR-487: free Developer tier includes MCP (matches apps/api plans.ts)
+    mcpAccess: true, // AR-487: free Developer Sandbox includes MCP (matches apps/api plans.ts)
     generation: "v2",
     overageMode: "hard" as const,
     overagePence: 0,

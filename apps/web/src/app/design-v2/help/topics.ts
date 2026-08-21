@@ -10,11 +10,12 @@
    New IA: by product (Signals/Scores/Monitor/Intelligence) +
    cross-cutting (Methodology / API / Plans / Account).
 
-   AR-479: pricing/plans section realigned to the demo-led B2B
-   packages on /pricing (Developer free eval + Core API / Decision
-   Intelligence / Enterprise Monitor, annual, no self-serve checkout).
-   The old self-serve 6-tier story (Sandbox/Starter/Build/Scale/Growth
-   with prices, soft caps, and the £29 MCP add-on) was removed. */
+   AR-479 + AR-866: pricing/plans section realigned to the demo-led B2B
+   packages on /pricing (Developer Sandbox free eval + Build / Decision /
+   Assured, annual, no self-serve checkout). Assured is the audit-grade
+   regulated tier for lenders and insurers. The old self-serve 6-tier story
+   (Sandbox/Starter/Build/Scale/Growth with prices, soft caps, and the £29
+   MCP add-on) was removed. */
 
 export type QA = { q: string; a: string };
 export type Topic = {
@@ -28,7 +29,7 @@ export const TOPICS: Topic[] = [
   {
     num: "01",
     title: "Getting started",
-    lead: "What OneGoodArea is, what the free Developer tier includes, and how to start.",
+    lead: "What OneGoodArea is, what the free Developer Sandbox includes, and how to start.",
     items: [
       {
         q: "What is OneGoodArea?",
@@ -36,11 +37,11 @@ export const TOPICS: Topic[] = [
       },
       {
         q: "Do I need a card to try it?",
-        a: "No. The Developer tier is free with no card required, for evaluating the API and exploring the MCP server. It is not licensed for production use. When you are ready for production, book a demo and we scope a paid pilot or an annual contract.",
+        a: "No. The Developer Sandbox is free with no card required, for evaluating the API and exploring the MCP server. It is not licensed for production use. When you are ready for production, book a demo and we run a 40-day pilot on one real workflow, moving to an annual contract if it works.",
       },
       {
         q: "How do I make my first API call?",
-        a: "On the free Developer tier, generate an evaluation key, then curl POST https://onegoodarea.onrender.com/v1/score with body { \"area\": \"M1 1AE\", \"preset\": \"residential_origination\" } and Authorization: Bearer <your_key>. Full code samples in cURL, Node, Python, and Go live at /docs/api-reference.",
+        a: "On the free Developer Sandbox, generate an evaluation key, then curl POST https://onegoodarea.onrender.com/v1/score with body { \"area\": \"M1 1AE\", \"preset\": \"residential_origination\" } and Authorization: Bearer <your_key>. Full code samples in cURL, Node, Python, and Go live at /docs/api-reference.",
       },
       {
         q: "What is the difference between the four products?",
@@ -204,7 +205,7 @@ export const TOPICS: Topic[] = [
     items: [
       {
         q: "How do I get API access?",
-        a: "The free Developer tier lets you generate an evaluation key to try the API and MCP server, no card required. It is for evaluation, not production. Pass the key as Authorization: Bearer <key> on every request. For production access, book a demo and we scope a paid pilot or an annual contract.",
+        a: "The free Developer Sandbox lets you generate an evaluation key to try the API and MCP server, no card required. It is for evaluation, not production. Pass the key as Authorization: Bearer <key> on every request. For production access, book a demo and we run a 40-day pilot, moving to an annual contract if it works.",
       },
       {
         q: "What is the rate limit?",
@@ -236,7 +237,7 @@ export const TOPICS: Topic[] = [
     items: [
       {
         q: "What plans are available?",
-        a: "Four workflow packages. Developer (free, evaluation only: the API and MCP server, no card, not for production). Core API (from £2,000 per month, billed annually: Signals and deterministic Scores in production). Decision Intelligence (from £5,000 per month, billed annually: full Scores and Intelligence, ranked search, peer comparison, insights, forecasts, and the natural-language planner). Enterprise Monitor (custom annual contract: portfolio monitoring, webhooks, methodology pinning, IP allowlisting, SLA, and security review). Full comparison at /pricing.",
+        a: "A free Developer Sandbox plus three annual packages. Developer Sandbox (free, evaluation only: the API and MCP server, no card, not for production). Build (from £2,000 per month, billed annually: Signals and deterministic Scores in production, with the MCP server). Decision (from £5,000 per month, billed annually: full Scores and Intelligence, ranked search, peer comparison, insights, forecasts, the natural-language planner, and Monitor with portfolios and webhooks). Assured (custom annual contract, audit-grade for regulated lending and underwriting: everything in Decision plus version pinning locked for the term, full provenance for your model file, a signed DPA, security review, and an SLA). A data partnership adds redistribution rights for embedding OGA in your own product. Full comparison at /pricing.",
       },
       {
         q: "How is OneGoodArea priced?",
@@ -244,15 +245,15 @@ export const TOPICS: Topic[] = [
       },
       {
         q: "How do I get started?",
-        a: "Book a demo. We look at your use case, then either run a paid pilot or move straight to an annual contract. Developer access is free if you just want to evaluate the API or explore the MCP server first.",
+        a: "Book a demo. We look at your use case, then run a 40-day pilot on one real workflow, moving to an annual contract if it works. The Developer Sandbox is free if you just want to evaluate the API or explore the MCP server first.",
       },
       {
-        q: "What is a paid pilot?",
-        a: "A short, paid, time-boxed evaluation against one defined use case and one success metric agreed up front. You buy on evidence, not a demo. If you convert, part of the pilot fee is credited to your first annual contract.",
+        q: "What is the 40-day pilot?",
+        a: "A short, hands-on evaluation against one real workflow and one success metric agreed up front, run over a 40-day sprint. You decide on the evidence, not a demo. If it works, you move to an annual contract.",
       },
       {
-        q: "Is the Developer tier enough to build on?",
-        a: "It is for evaluation and prototyping, not production, customer-facing, or revenue-generating use. It covers the API and the MCP server so you can test the integration. For a production evaluation we run a paid pilot, and production use is licensed under one of the paid packages.",
+        q: "Is the Developer Sandbox enough to build on?",
+        a: "It is for evaluation and prototyping, not production, customer-facing, or revenue-generating use. It covers the API and the MCP server so you can test the integration. For a production evaluation we run a 40-day pilot, and production use is licensed under one of the annual packages.",
       },
       {
         q: "Do you support procurement and security review?",
@@ -268,7 +269,7 @@ export const TOPICS: Topic[] = [
     items: [
       {
         q: "How do I sign up?",
-        a: "Sign up with email and password at /sign-up, or use Google. We send a verification email; you must verify before generating an evaluation key on the free Developer tier.",
+        a: "Sign up with email and password at /sign-up, or use Google. We send a verification email; you must verify before generating an evaluation key on the free Developer Sandbox.",
       },
       {
         q: "How do I reset my password?",

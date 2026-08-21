@@ -7,9 +7,11 @@ import { Footer } from "../_shared/footer";
 import { BookDemo } from "../_shared/book-demo";
 import "./pricing.css";
 
-/* /pricing - Founding Pilot Partners (Plan 075). A compact recruitment surface:
-   the pilot is the lead (ten founding partners, one 40-day sprint), the
-   enterprise plans sit right alongside it, and the FAQ carries the detail.
+/* /pricing - Founding Pilot Partners (Plan 075) + AR-866 elite repackage.
+   The pilot is the lead (ten founding partners, one 40-day sprint); the three
+   annual tiers (Build, Decision, Assured) sit alongside it, with Developer
+   Sandbox and Data partnership as bars, and the FAQ carries the detail.
+   Assured is the audit-grade regulated tier for lenders and insurers.
    Marketing-only; Stripe billing is unchanged.
 
    Hard rules: zero non-data inline styles, no em dashes, no invented claims.
@@ -44,60 +46,64 @@ const SPRINT: { days: string; title: string; body: string }[] = [
 
 const PLANS: Plan[] = [
   {
-    id: "core",
-    name: "Core API",
+    id: "build",
+    name: "Build",
     price: "From £2,000",
     priceUnit: "/ month",
     priceNote: "Billed annually",
-    tagline: "Clean UK area signals and deterministic scoring inside your product.",
-    features: ["Signals API and area lookup", "Deterministic Scores", "Version-stamped methodology", "Production use"],
+    tagline: "Clean UK area signals and deterministic scoring, in production inside your product.",
+    features: ["Signals API and area lookup", "Deterministic Scores with confidence", "Version-stamped methodology", "MCP server", "Production use"],
     cta: "demo",
   },
   {
-    id: "intelligence",
-    name: "Decision Intelligence",
+    id: "decision",
+    name: "Decision",
     price: "From £5,000",
     priceUnit: "/ month",
     priceNote: "Billed annually",
-    tagline: "Rank, compare, explain and forecast areas with a versioned methodology.",
-    features: ["Everything in Core API", "Full Scores and Intelligence", "Ranked search and peer comparison", "Insights, forecasts and the query planner"],
+    tagline: "Rank, compare, explain and forecast areas, and monitor them over time.",
+    features: ["Everything in Build", "Full Scores and Intelligence", "Ranked search and peer comparison", "Insights, forecasts and the query planner", "Monitor, portfolios and webhooks"],
     cta: "demo",
     highlight: true,
     badge: "Where most teams start",
   },
   {
-    id: "enterprise",
-    name: "Enterprise Monitor",
+    id: "assured",
+    name: "Assured",
     price: "Custom",
     priceNote: "Annual contract",
-    tagline: "Portfolio monitoring, controls and support for regulated, high-volume workflows.",
-    features: ["Everything in Decision Intelligence", "Monitor and webhooks", "Methodology pinning and IP allowlisting", "Custom cohorts, SLA and security review"],
+    tagline: "Audit-grade area risk for regulated lending and underwriting decisions.",
+    features: ["Everything in Decision", "Methodology and version pinning, locked for your contract term", "Full provenance and version registry for your model file", "Signed DPA, security review and SLA", "Dedicated and audit support"],
     cta: "sales",
   },
 ];
 
-/* Collapsible plan comparison. Developer's "Trial" tokens mark the time-boxed
-   30-day evaluation, not a permanent grant, so the free column never out-features
-   Core. Highlight column is Decision Intelligence (index 2). */
-const COMPARE_COLS = ["Developer", "Core API", "Decision Intelligence", "Enterprise Monitor"];
+/* Collapsible plan comparison. The Developer Sandbox column is evaluation
+   access (the "Eval" tokens), a capped, non-production grant, so the free
+   column never out-features a paid plan. Highlight column is Decision (index 2). */
+const COMPARE_COLS = ["Developer Sandbox", "Build", "Decision", "Assured"];
 const COMPARE_HIGHLIGHT = 2;
 type CompareCell = string | boolean;
 const COMPARE_ROWS: { label: string; values: CompareCell[] }[] = [
-  { label: "Price", values: ["Free · 30 days", "From £2,000 / mo", "From £5,000 / mo", "Custom"] },
+  { label: "Price", values: ["Free", "From £2,000 / mo", "From £5,000 / mo", "Custom"] },
   { label: "MCP server", values: [true, true, true, true] },
-  { label: "Signals", values: ["Trial", true, true, true] },
-  { label: "Scores", values: ["Trial", "Basic", "Full", "Full"] },
-  { label: "Intelligence", values: ["Trial", "Limited", "Full", "Full"] },
-  { label: "Ranked area search", values: ["Trial", "Limited", true, true] },
-  { label: "Peer comparison", values: ["Trial", "Limited", true, true] },
-  { label: "Insights and anomaly detection", values: ["Trial", false, true, true] },
-  { label: "Forecasts", values: ["Trial", false, true, true] },
-  { label: "Natural-language planner", values: ["Trial", false, true, true] },
-  { label: "Monitor and webhooks", values: ["Trial", false, "Add-on", true] },
+  { label: "Signals", values: ["Eval", true, true, true] },
+  { label: "Scores", values: ["Eval", "Basic", "Full", "Full"] },
+  { label: "Intelligence", values: ["Eval", false, true, true] },
+  { label: "Ranked area search", values: ["Eval", false, true, true] },
+  { label: "Peer comparison", values: ["Eval", false, true, true] },
+  { label: "Insights and anomaly detection", values: ["Eval", false, true, true] },
+  { label: "Forecasts", values: ["Eval", false, true, true] },
+  { label: "Natural-language planner", values: ["Eval", false, true, true] },
+  { label: "Monitor, portfolios and webhooks", values: ["Eval", false, true, true] },
+  { label: "Batch scoring", values: [false, false, true, true] },
   { label: "Custom presets", values: [false, false, true, true] },
-  { label: "Custom cohorts", values: [false, false, "Add-on", true] },
-  { label: "Methodology pinning", values: [false, false, false, true] },
-  { label: "IP allowlisting", values: [false, false, false, true] },
+  { label: "Version and methodology pinning", values: [false, false, true, true] },
+  { label: "IP allowlisting", values: [false, false, true, true] },
+  { label: "Pinning locked for contract term", values: [false, false, false, true] },
+  { label: "Full provenance and version registry", values: [false, false, false, true] },
+  { label: "Signed DPA and security review", values: [false, false, false, true] },
+  { label: "SLA", values: [false, false, false, true] },
   { label: "Production use", values: [false, true, true, true] },
 ];
 
@@ -116,7 +122,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "What happens after the 40 days?",
-    a: "You decide. Continue at the founding rate on an annual plan, or walk away with no obligation. Developer stays free for 30 days if you just want to keep evaluating the API.",
+    a: "You decide. Continue at the founding rate on an annual plan, or walk away with no obligation. Developer Sandbox stays free to keep evaluating the API whenever you want.",
   },
   {
     q: "Is our data safe, and can you handle procurement?",
@@ -186,8 +192,8 @@ function SectionPlans() {
       <div className="oga-pricing__wrap">
         <PriceHead num="01" kicker="The plans" title="Where founding partners land.">
           After the pilot you move onto an annual plan, priced to the job. Founding
-          partners lock a founding rate on whichever plan fits. Developer stays free
-          for 30 days if you just want to evaluate the API first.
+          partners lock a founding rate on whichever plan fits. Developer Sandbox stays free
+          to evaluate the API first.
         </PriceHead>
 
         <div className="oga-pricing-plans__grid">
@@ -198,17 +204,32 @@ function SectionPlans() {
 
         <div className="oga-pricing-devbar">
           <div className="oga-pricing-devbar__lead">
-            <span className="oga-pricing-devbar__name">Developer</span>
-            <span className="oga-pricing-devbar__price">Free · 30 days</span>
+            <span className="oga-pricing-devbar__name">Developer Sandbox</span>
+            <span className="oga-pricing-devbar__price">Free</span>
           </div>
           <p className="oga-pricing-devbar__tag">
-            Full access to all four products and the MCP server for 30 days, free.
-            For evaluation, not licensed for production use.
+            Full access to all four products and the MCP server, free, to evaluate.
+            Not licensed for production use.
           </p>
           <Link href="/docs" className="oga-btn oga-btn-secondary oga-pricing-devbar__cta">
             View the docs
             <span aria-hidden>→</span>
           </Link>
+        </div>
+
+        <div className="oga-pricing-devbar">
+          <div className="oga-pricing-devbar__lead">
+            <span className="oga-pricing-devbar__name">Data partnership</span>
+            <span className="oga-pricing-devbar__price">Licensed</span>
+          </div>
+          <p className="oga-pricing-devbar__tag">
+            Embedding OGA signals inside your own product for your customers? A data
+            partnership adds redistribution rights, a licensed feed and co-marketing.
+          </p>
+          <BookDemo className="oga-btn oga-btn-secondary oga-pricing-devbar__cta">
+            Talk to us
+            <span aria-hidden>→</span>
+          </BookDemo>
         </div>
 
         <Comparison />

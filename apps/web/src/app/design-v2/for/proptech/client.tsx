@@ -350,7 +350,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Is there a free way to try it?",
-    a: "Yes. The free Developer tier gives you full access for 30 days, no card, to build and evaluate against. Pricing for production is at /pricing.",
+    a: "Yes. The free Developer Sandbox gives you full access for 30 days, no card, to build and evaluate against. Pricing for production is at /pricing.",
   },
 ];
 

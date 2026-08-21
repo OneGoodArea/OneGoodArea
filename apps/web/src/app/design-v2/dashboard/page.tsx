@@ -41,7 +41,7 @@ export default function DesignV2DashboardPage() {
         created_at: "2026-06-09T18:37:00Z",
       }}
       plan="sandbox"
-      planName="Sandbox"
+      planName="Developer Sandbox"
       used={12}
       limit={200}
       mcp={{

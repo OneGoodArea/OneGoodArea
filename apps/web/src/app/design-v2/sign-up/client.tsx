@@ -169,8 +169,8 @@ export default function SignUpClient() {
     <AuthShell>
       <AuthTitle
         eyebrow="Create an account"
-        title="Start your free Sandbox."
-        sub="35 API calls a month for evaluation. Free forever, no card, no timer, no trial."
+        title="Start your free Developer Sandbox."
+        sub="Free to evaluate the API and MCP server, no card required."
       />
 
       <OAuthButtons onProvider={handleOAuth} />
