@@ -376,7 +376,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Is there a free way to try it?",
-    a: "Yes. The free Developer tier gives you full access for 30 days, no card. Or enter a postcode on the live demo at /showcase/estate-agents and see real signals right now.",
+    a: "Yes. The free Developer Sandbox gives you full access for 30 days, no card. Or enter a postcode on the live demo at /showcase/estate-agents and see real signals right now.",
   },
 ];
 

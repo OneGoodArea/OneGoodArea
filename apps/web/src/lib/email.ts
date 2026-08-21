@@ -172,17 +172,17 @@ export async function sendWelcomeEmail(email: string, name: string) {
       Welcome to <em style="font-style:italic; color:${COLORS.ink}; border-bottom:2px solid ${COLORS.signal}; padding-bottom:1px;">OneGoodArea</em>.
     </h1>
     <p style="font-family:${FONT_SANS}; font-size:15px; line-height:1.55; color:${COLORS.text2}; margin:0 0 24px 0;">
-      ${safeName}, your account is verified. You start on the Sandbox tier: 200 API calls a month for evaluation, no card required. Make your first call whenever you&apos;re ready.
+      ${safeName}, your account is verified. You start on the Developer Sandbox: free to evaluate the API and MCP server, no card required. Make your first call whenever you&apos;re ready.
     </p>
     <div style="background-color:${COLORS.bg}; border:1px solid ${COLORS.border}; border-radius:4px; padding:18px 20px; margin-bottom:24px;">
       <p style="font-family:${FONT_MONO}; font-size:10px; color:${COLORS.text3}; margin:0 0 6px 0; text-transform:uppercase; letter-spacing:2px;">
         Your plan
       </p>
       <p style="font-family:${FONT_SERIF}; font-size:22px; font-weight:500; color:${COLORS.inkDeep}; margin:0 0 4px 0;">
-        Sandbox
+        Developer Sandbox
       </p>
       <p style="font-family:${FONT_SANS}; font-size:13px; color:${COLORS.text2}; margin:0; line-height:1.5;">
-        200 API calls per month. All seven public datasets. Engine version pinning, per-dimension confidence, OpenAPI 3.0 spec. No card required.
+        Full access to evaluate the API and MCP server. All seven public datasets, engine version pinning, per-dimension confidence, and the OpenAPI 3.0 spec. No card required.
       </p>
     </div>
     ${ctaButton("Make your first call", "https://www.onegoodarea.com/report")}

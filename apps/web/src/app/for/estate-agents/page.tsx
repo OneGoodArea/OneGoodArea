@@ -75,7 +75,7 @@ const faqLd = {
       name: "Is there a free way to try it?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. The free Developer tier gives you full access for 30 days, no card, to evaluate against. Pricing for production is at /pricing.",
+        text: "Yes. The free Developer Sandbox gives you full access for 30 days, no card, to evaluate against. Pricing for production is at /pricing.",
       },
     },
   ],

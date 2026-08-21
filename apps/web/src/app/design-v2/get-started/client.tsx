@@ -285,7 +285,7 @@ function GetStartedForm() {
         }
         sub={
           step === "email"
-            ? "Sign in or create a free Sandbox account. 200 API calls a month for evaluation. No card to start."
+            ? "Sign in or create a free Developer Sandbox account. Full access to evaluate the API and MCP server, no card to start."
             : mode === "signin"
               ? "Pick up where you left off. Your API keys, portfolios, and saved scoring presets are waiting."
               : "Name your workspace next and you're in. We'll send a verification link to your inbox — verify whenever you're ready to make your first API call."

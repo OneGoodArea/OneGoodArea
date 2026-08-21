@@ -4,7 +4,7 @@ import PricingClient from "@/app/design-v2/pricing/client";
 export const metadata: Metadata = {
   title: "Pricing | OneGoodArea",
   description:
-    "OneGoodArea is packaged around how your team uses UK area intelligence. Developer (free, 30-day full-access evaluation), Core API from £2,000/mo, Decision Intelligence from £5,000/mo, and Enterprise Monitor (custom). Annual contracts, paid pilots, demo-led.",
+    "OneGoodArea is packaged around how your team uses UK area intelligence. Developer Sandbox (free evaluation), Build from £2,000/mo, Decision from £5,000/mo, and Assured (custom, audit-grade for regulated lending and underwriting). Annual contracts, 40-day pilots, demo-led.",
   keywords: [
     "OneGoodArea pricing",
     "UK area intelligence pricing",
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Pricing | OneGoodArea",
     description:
-      "Packaged around how your team uses UK area intelligence. Developer, Core API, Decision Intelligence, Enterprise Monitor. Annual contracts, paid pilots, demo-led.",
+      "Packaged around how your team uses UK area intelligence. Developer Sandbox, Build, Decision, Assured. Annual contracts, 40-day pilots, demo-led.",
     type: "website",
     url: "https://www.onegoodarea.com/pricing",
     images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Pricing | OneGoodArea",
     description:
-      "Packaged around how your team uses UK area intelligence. Annual contracts, paid pilots, demo-led.",
+      "Packaged around how your team uses UK area intelligence. Annual contracts, 40-day pilots, demo-led.",
   },
   alternates: { canonical: "https://www.onegoodarea.com/pricing" },
 };

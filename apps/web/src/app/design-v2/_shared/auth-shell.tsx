@@ -54,7 +54,7 @@ function BrandPanel() {
         <p className="oga-auth__brand-lead">
           Four products on one engine: Signals, Scores, Monitor, and a typed
           AI query plane. Methodology version-pinned per organisation. Sandbox
-          is free, 35 API calls a month, no card to start.
+          is free to evaluate the API and MCP server, no card to start.
         </p>
       </div>
 

@@ -14,7 +14,7 @@ import GetStartedClient from "@/app/design-v2/get-started/client";
 export const metadata: Metadata = {
   title: "Get started | OneGoodArea",
   description:
-    "Sign in or create your free Sandbox account. 200 API calls a month for evaluation. No card to start.",
+    "Sign in or create your free Developer Sandbox account. Full access to evaluate the API and MCP server, no card to start.",
   alternates: { canonical: "https://www.onegoodarea.com/get-started" },
 };
 
